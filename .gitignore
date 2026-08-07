@@ -42,3 +42,4 @@ results/*.parquet
 results/*.json
 !results/*.md
 !results/*.log
+!results/figures/*.png
