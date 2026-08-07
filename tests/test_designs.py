@@ -252,3 +252,65 @@ def test_identical_points_for_all_four_models():
     assert pts.shape == (48, 6)
     assert bool(torch.all(pts >= 0.0))
     assert bool(torch.all(pts <= bounds[1] + 1e-12))
+
+
+# --------------------------------------------------------------------------
+# extended_box_bounds — built for OPEN-QUESTIONS Q12, decides nothing
+# --------------------------------------------------------------------------
+
+def test_default_reproduces_todays_behaviour_exactly():
+    """**Nothing changes unless someone asks.** The default is the unit cube."""
+    from boec.designs import extended_box_bounds
+
+    x_star = torch.tensor([0.4, 0.5, 0.3], dtype=torch.double)
+    b = extended_box_bounds(x_star, kappa=0.6)
+    assert torch.allclose(b[0], torch.zeros(3, dtype=torch.double))
+    assert torch.allclose(b[1], torch.ones(3, dtype=torch.double))
+
+
+def test_rho_controls_how_far_past_the_corner_we_ask():
+    from boec.designs import extended_box_bounds, sub_box_bounds
+
+    x_star = torch.tensor([0.4, 0.5], dtype=torch.double)
+    sub = sub_box_bounds(x_star, 0.6)
+    for rho in (1.2, 1.5, 2.0):
+        b = extended_box_bounds(x_star, 0.6, rho=rho)
+        assert torch.allclose(b[1], rho * sub[1])
+        # Always strictly outside the training corner — there is something to
+        # extrapolate to.
+        assert bool(torch.all(b[1] > sub[1]))
+
+
+def test_larger_rho_asks_about_more_territory():
+    from boec.designs import extended_box_bounds
+
+    x_star = torch.tensor([0.4, 0.5], dtype=torch.double)
+    near = extended_box_bounds(x_star, 0.6, rho=1.2)
+    far = extended_box_bounds(x_star, 0.6, rho=2.0)
+    assert bool(torch.all(near[1] < far[1]))
+
+
+def test_never_leaves_the_unit_cube():
+    from boec.designs import extended_box_bounds
+
+    x_star = torch.tensor([0.55, 0.5], dtype=torch.double)
+    b = extended_box_bounds(x_star, 0.9, rho=10.0)
+    assert bool(torch.all(b[1] <= 1.0 + 1e-12))
+
+
+def test_rho_below_one_is_refused():
+    """It would put the scoring box inside the training corner — no
+    extrapolation at all, which is not a regime, it is a mistake."""
+    from boec.designs import extended_box_bounds
+
+    with pytest.raises(ValueError, match="rho must be at least 1"):
+        extended_box_bounds(torch.tensor([0.4], dtype=torch.double), 0.6, rho=0.8)
+
+
+def test_rho_one_lands_exactly_on_the_corner_edge():
+    from boec.designs import extended_box_bounds, sub_box_bounds
+
+    x_star = torch.tensor([0.4, 0.5], dtype=torch.double)
+    assert torch.allclose(
+        extended_box_bounds(x_star, 0.6, rho=1.0)[1], sub_box_bounds(x_star, 0.6)[1]
+    )

@@ -57,6 +57,7 @@ from torch import Tensor
 __all__ = [
     "Design",
     "central_composite",
+    "extended_box_bounds",
     "fractional_factorial",
     "full_factorial",
     "scale_to_box",
@@ -393,3 +394,53 @@ def defining_relation_words(d: int, n_derived: int) -> list[tuple[int, ...]]:
             if sym:
                 words.add(tuple(sorted(sym)))
     return sorted(words, key=len)
+
+
+def extended_box_bounds(x_star: Tensor, kappa: float, rho: float = float("inf")) -> Tensor:
+    """How far beyond the training corner the models get asked about.
+
+    Requested by Person A for OPEN-QUESTIONS Q12. **Built so the decision can
+    go either way without further code.** The default reproduces exactly what
+    Experiment 4 does today, so nothing changes unless someone asks for it to.
+
+    **Why this exists.** Experiment 4 trains inside ``[0, kappa * x*]`` and then
+    asks every model where the best recipe in the whole space is. Today "the
+    whole space" means the entire unit cube — which at kappa = 0.6 is asking
+    about territory 2 to 4 times further out than anything measured, in every
+    ingredient at once. The published study that motivates this project
+    extrapolated **1.2 times, in one ingredient**.
+
+    That regime is not wrong, but it changes what can be claimed. Out there the
+    traditional method's error bars grow enormous — around seven times the
+    entire range of the response — so "the traditional method is overconfident"
+    stops being available as a finding, because its interval covers almost
+    anything. A reviewer would reasonably say the comparison was staged.
+
+    ``rho`` sets how far past the training corner to go. ``rho = 1.2`` is the
+    published study's regime; ``rho = 2.0`` is where Person A measured the
+    effect to be both real and geometrically arguable; the default infinity
+    gives the whole cube, unchanged.
+
+    **This does not decide anything.** Changing what Experiment 4 actually uses
+    requires bumping ``preregistration_version`` in the config and stating the
+    reason, because Q10 locked the current settings with a date. This function
+    exists so that decision is a config change rather than a code change.
+
+    Args:
+        x_star: ``(d,)`` each factor's peak location.
+        kappa: the training-corner fraction, matching :func:`sub_box_bounds`.
+        rho: how many times the training corner's width to extend to. Must be
+            at least 1 — below that the scoring box would sit inside the
+            training corner and there would be nothing to extrapolate to.
+
+    Returns:
+        ``(2, d)`` bounds, clipped to the unit cube.
+    """
+    if rho < 1.0:
+        raise ValueError(
+            f"rho must be at least 1 — below that the scoring box falls inside "
+            f"the training corner and nothing is being extrapolated. Got {rho}."
+        )
+    sub = sub_box_bounds(x_star, kappa)
+    upper = torch.clamp(rho * sub[1], max=1.0) if rho != float("inf") else torch.ones_like(sub[1])
+    return torch.stack([torch.zeros_like(upper), upper])
