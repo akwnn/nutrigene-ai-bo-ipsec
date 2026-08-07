@@ -38,3 +38,7 @@ data/oracles/*.pt
 
 # scratch
 COMMIT_MSG.txt
+results/*.parquet
+results/*.json
+!results/*.md
+!results/*.log
