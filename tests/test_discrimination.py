@@ -241,3 +241,80 @@ def test_bootstrap_ignores_non_finite_values():
     point, lo, hi = instance_bootstrap_ci([0.1, 0.2, np.nan, 0.3, np.inf], seed=0)
     assert point == pytest.approx(0.2)
     assert np.isfinite(lo) and np.isfinite(hi)
+
+
+# --------------------------------------------------------------------------
+# Paired comparison — the actual claim needs this, not two separate CIs
+# --------------------------------------------------------------------------
+
+def test_paired_test_finds_effects_separate_intervals_would_miss():
+    """**The reason this function exists.**
+
+    Two scorers measured on the same landscapes share most of their variation.
+    Comparing their error bars side by side throws that cancellation away and
+    hides a real difference. Taking the difference per landscape first does not.
+    """
+    from boec.discrimination import instance_bootstrap_ci, paired_difference_ci
+
+    rng = np.random.default_rng(0)
+    shared = rng.normal(0.5, 0.25, 10)              # landscape difficulty
+    gp = shared + 0.06 + rng.normal(0, 0.01, 10)    # consistently a bit better
+    nn = shared + rng.normal(0, 0.01, 10)
+
+    _, g_lo, g_hi = instance_bootstrap_ci(gp.tolist())
+    _, n_lo, n_hi = instance_bootstrap_ci(nn.tolist())
+    assert g_lo < n_hi, "setup: the separate intervals should overlap"
+
+    mean, lo, hi, sig = paired_difference_ci(gp.tolist(), nn.tolist())
+    assert sig, "the paired test must find the effect the naive comparison misses"
+    assert lo > 0 and mean == pytest.approx(0.06, abs=0.02)
+
+
+def test_paired_test_reports_no_difference_when_there_is_none():
+    from boec.discrimination import paired_difference_ci
+
+    rng = np.random.default_rng(1)
+    shared = rng.normal(0.5, 0.2, 12)
+    a = shared + rng.normal(0, 0.05, 12)
+    b = shared + rng.normal(0, 0.05, 12)
+    _, lo, hi, sig = paired_difference_ci(a.tolist(), b.tolist())
+    assert not sig
+    assert lo < 0 < hi
+
+
+def test_paired_test_is_directional():
+    """Swapping the arguments must flip the verdict, not keep it."""
+    from boec.discrimination import paired_difference_ci
+
+    a = [0.5, 0.6, 0.7, 0.55, 0.65]
+    b = [0.3, 0.4, 0.5, 0.35, 0.45]
+    _, _, _, forward = paired_difference_ci(a, b)
+    mean_back, _, _, backward = paired_difference_ci(b, a)
+    assert forward and not backward
+    assert mean_back < 0
+
+
+def test_paired_test_requires_matched_lengths():
+    from boec.discrimination import paired_difference_ci
+
+    with pytest.raises(ValueError, match="one value per landscape"):
+        paired_difference_ci([0.1, 0.2, 0.3], [0.1, 0.2])
+
+
+def test_paired_test_is_reproducible_and_handles_degenerate_input():
+    from boec.discrimination import paired_difference_ci
+
+    a, b = [0.5, 0.6, 0.7], [0.4, 0.5, 0.6]
+    assert paired_difference_ci(a, b, seed=3) == paired_difference_ci(a, b, seed=3)
+    assert not paired_difference_ci([0.5], [0.4])[3]
+    assert np.isnan(paired_difference_ci([], [])[0])
+
+
+def test_paired_test_ignores_non_finite_pairs():
+    """A landscape where the practitioner fit failed must not poison the test."""
+    from boec.discrimination import paired_difference_ci
+
+    a = [0.5, 0.6, np.nan, 0.7]
+    b = [0.3, 0.4, 0.2, 0.5]
+    mean, lo, hi, _ = paired_difference_ci(a, b)
+    assert np.isfinite(mean) and np.isfinite(lo) and np.isfinite(hi)

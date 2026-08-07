@@ -6,12 +6,9 @@
 
 ## The problem it solves
 
-This is the **rival** in the comparison — the classical statistics approach the
-machine-learning model is being measured against.
+This is the **rival** in the comparison, the classical statistics approach the machine-learning model is being measured against.
 
-It has to be good. The entire finding rests on comparing against a competently
-fitted classical model, not a straw man. If someone can say "well, you did the
-statistics badly," the result is worthless.
+It has to be good. The entire finding rests on comparing against a competently fitted classical model, not a straw man. If someone can say "well, you did the statistics badly," the result is worthless.
 
 ## What it does
 

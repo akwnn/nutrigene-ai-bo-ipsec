@@ -54,7 +54,7 @@ from boec.parametric import fit_practitioner_parametric
 from boec.rsm import fit_second_order, fit_stepwise_third_order
 from boec.surrogate import build_gp, predictive
 
-__all__ = ["E4Config", "E4Result", "Oracle", "run_e4_cell"]
+__all__ = ["E4Config", "E4Result", "E4bResult", "Oracle", "run_e4_cell", "run_e4b_cell", "summarise"]
 
 MODEL_NAMES = ("second_order", "stepwise_third_order", "gp", "parametric")
 
@@ -285,7 +285,7 @@ def summarise(results: list[E4Result], model: str = "second_order") -> dict:
     extrapolation actually happened, the turning-point breakdown, and the
     discrimination comparison against the model-free null.
     """
-    from boec.discrimination import instance_bootstrap_ci
+    from boec.discrimination import instance_bootstrap_ci, paired_difference_ci
 
     over = [r.over_prediction.get(model, float("nan")) for r in results]
     point, lo, hi = instance_bootstrap_ci(over)
@@ -312,6 +312,13 @@ def summarise(results: list[E4Result], model: str = "second_order") -> dict:
         "spearman_gp": instance_bootstrap_ci(gp_rho),
         "spearman_nearest_neighbour": instance_bootstrap_ci(nn_rho),
         "spearman_poly_pi": instance_bootstrap_ci(poly_rho),
+        # THE HEADLINE COMPARISON. Do NOT read it off the three intervals above
+        # by checking whether they overlap — the scorers are measured on the
+        # same landscapes, so most of their variation is shared and cancels in
+        # the difference. Comparing the intervals side by side throws that
+        # cancellation away and can hide a real effect entirely.
+        "gp_beats_null_paired": paired_difference_ci(gp_rho, nn_rho),
+        "gp_beats_poly_paired": paired_difference_ci(gp_rho, poly_rho),
         "n_cells_without_headroom": sum(
             1 for r in usable if not r.discrimination.agreement.has_headroom
         ),
@@ -319,3 +326,154 @@ def summarise(results: list[E4Result], model: str = "second_order") -> dict:
             np.mean([not r.parametric_converged for r in results])
         ),
     }
+
+
+# ===========================================================================
+# E4b — the design-boundary variant. REPORTED, NOT CLAIMED.
+# ===========================================================================
+#
+# WHAT THIS IS, IN PLAIN LANGUAGE
+#
+# E4a is about a model guessing badly outside what it has seen. E4b is about a
+# completely different failure, and it is the one that actually happened in the
+# published study.
+#
+# There, one ingredient's best amount was LOWER than the lowest amount they
+# were able to test. Below a certain concentration the cells would not stick to
+# the plate at all, so the experiment could not go there. The best recipe was
+# outside the range, not because anyone modelled anything badly, but because
+# the range itself excluded it.
+#
+# WHY WE REPORT THIS AND DO NOT CLAIM IT
+#
+# **The traditional method handles this case correctly.** Its fitted
+# coefficient for that ingredient comes out clearly negative — "less is better"
+# — and that signal is right there for anyone to read. The original authors DID
+# read it, and did test the recipe with that ingredient removed, and it worked
+# very well.
+#
+# So this is not a failure of the modelling. It is a limit of the experimental
+# range. The sophisticated model has no advantage here whatsoever, and claiming
+# otherwise would be indefensible to anyone who has read the source paper.
+#
+# We measure it, we report it, and we say plainly that it is not our result.
+# Claim E4a. Report E4b.
+# ===========================================================================
+
+
+@dataclass
+class E4bResult:
+    """The design-boundary case. Descriptive.
+
+    Attributes:
+        factor: which ingredient had its best amount excluded.
+        true_optimum: where that ingredient actually wanted to be.
+        design_floor: the lowest amount the design could test.
+        polynomial_slope: the fitted coefficient for that ingredient. Negative
+            means the model is correctly saying "less is better".
+        polynomial_signals_lower_is_better: whether it got it right.
+        argmax_at_floor: whether every model piled up against the boundary,
+            which is the visible symptom.
+        gp_signals_lower_is_better: whether the sophisticated model adds
+            anything. **Expected to be no.**
+        note: the honest framing, carried with the result.
+    """
+
+    factor: int
+    true_optimum: float
+    design_floor: float
+    polynomial_slope: float
+    polynomial_signals_lower_is_better: bool
+    argmax_at_floor: dict[str, bool]
+    gp_signals_lower_is_better: bool
+    note: str
+
+
+def run_e4b_cell(
+    oracle: Oracle,
+    config: E4Config,
+    *,
+    excluded_factor: int = 0,
+    floor_multiplier: float = 1.6,
+) -> E4bResult:
+    """Run the design-boundary variant for one landscape.
+
+    Builds a design whose **lower** bound for one ingredient sits above that
+    ingredient's true best amount, so the best recipe is unreachable by
+    construction — the published study's situation.
+
+    Args:
+        oracle: the landscape.
+        config: settings.
+        excluded_factor: which ingredient to put out of reach.
+        floor_multiplier: how far above its true best the floor sits. Must
+            exceed 1.
+
+    Returns:
+        An :class:`E4bResult`.
+    """
+    if floor_multiplier <= 1.0:
+        raise ValueError(
+            f"floor_multiplier must exceed 1 or the optimum is still reachable, "
+            f"got {floor_multiplier}"
+        )
+    x_star = oracle.x_star.double()
+    d = int(x_star.shape[0])
+    j = excluded_factor
+
+    # Design box: normal for every ingredient except one, whose floor is pushed
+    # above its true best. That best is now unreachable, by construction.
+    lo = torch.zeros(d, dtype=torch.double)
+    hi = config.kappa * x_star.clone()
+    floor = float(min(x_star[j] * floor_multiplier, 0.9))
+    lo[j] = floor
+    hi[j] = max(floor + 0.05, float(x_star[j] * floor_multiplier + 0.1))
+    box = torch.stack([lo, hi])
+
+    design = central_composite(
+        d, n_centre=config.n_centre, n_derived=config.n_derived,
+        face_centred=config.face_centred,
+    )
+    train_X = scale_to_box(design.coded, box)
+    train_Y, train_Yvar = oracle.observe(train_X)
+
+    second = fit_second_order(train_X, train_Y)
+    gp = build_gp(train_X, train_Y, train_Yvar, box)
+
+    # The polynomial's linear coefficient for the excluded ingredient. Negative
+    # means it is correctly saying "less would be better" — the signal the
+    # original authors read and acted on.
+    slope = float(second.beta[1 + j])
+
+    # Does the GP say the same? Compare its prediction at the floor against a
+    # little way above it. This is the fair test of whether it adds anything.
+    probe_lo = ((box[0] + box[1]) / 2).clone().unsqueeze(0)
+    probe_hi = probe_lo.clone()
+    probe_lo[0, j] = box[0][j]
+    probe_hi[0, j] = box[0][j] + 0.25 * (box[1][j] - box[0][j])
+    gp_slope = float(predictive(gp, probe_hi).mean - predictive(gp, probe_lo).mean)
+
+    at_floor: dict[str, bool] = {}
+    for name, fn in (("second_order", second.predict), ("gp", lambda X: predictive(gp, X).mean)):
+        res = over_prediction_at_constrained_argmax(
+            fn, oracle.truth, box,
+            n_restarts=max(4, config.n_restarts // 2),
+            raw_samples=config.raw_samples, seed=config.seed,
+        )
+        at_floor[name] = bool(abs(float(res.x_argmax[j]) - floor) < 1e-3)
+
+    return E4bResult(
+        factor=j,
+        true_optimum=float(x_star[j]),
+        design_floor=floor,
+        polynomial_slope=slope,
+        polynomial_signals_lower_is_better=slope < 0,
+        argmax_at_floor=at_floor,
+        gp_signals_lower_is_better=gp_slope < 0,
+        note=(
+            "REPORTED, NOT CLAIMED. This is a limit of the experimental range, "
+            "not a modelling failure. The polynomial signals 'lower is better' "
+            "correctly, which is exactly what the original authors observed and "
+            "acted on. The GP has no advantage here and we do not claim one."
+        ),
+    )

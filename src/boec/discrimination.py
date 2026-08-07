@@ -79,6 +79,7 @@ __all__ = [
     "discrimination_test",
     "instance_bootstrap_ci",
     "nearest_neighbour_distance",
+    "paired_difference_ci",
     "scorer_agreement",
 ]
 
@@ -373,3 +374,65 @@ def instance_bootstrap_ci(
         float(np.quantile(means, alpha / 2.0)),
         float(np.quantile(means, 1.0 - alpha / 2.0)),
     )
+
+
+def paired_difference_ci(
+    a: list[float],
+    b: list[float],
+    *,
+    n_bootstrap: int = 2000,
+    alpha: float = 0.05,
+    seed: int = 0,
+) -> tuple[float, float, float, bool]:
+    """Test whether scorer ``a`` beats scorer ``b`` — **paired, not side by side.**
+
+    **Why this exists and a pair of separate error bars does not do the job.**
+
+    The obvious thing is to compute an error bar for the model's score, another
+    for plain distance, and check whether they overlap. That is a genuinely
+    common mistake and it is wrong in both directions: overlapping error bars
+    can still be a real difference, and non-overlapping ones can be produced by
+    a shared source of variation rather than a real gap.
+
+    The reason is that the two scores are measured **on the same landscapes**.
+    A landscape that is hard for one scorer is usually hard for the other, so
+    most of the spread in each is shared and cancels out when you subtract.
+    Comparing the two spreads separately throws that cancellation away and
+    hides a real effect behind noise the comparison should never have seen.
+
+    So: take the difference **on each landscape first**, then put the error bar
+    on the differences. Resample whole landscapes, never points within a run —
+    points within a run were chosen one after another and are not
+    interchangeable.
+
+    Args:
+        a: one value per landscape, for the scorer being claimed.
+        b: one value per landscape, for the scorer that must be beaten.
+        n_bootstrap: resamples.
+        alpha: 0.05 gives a 95% interval.
+        seed: fixes the resampling.
+
+    Returns:
+        ``(mean_difference, lower, upper, is_significant)``. ``is_significant``
+        is True only when the whole interval sits above zero.
+    """
+    va = np.asarray(a, dtype=np.float64)
+    vb = np.asarray(b, dtype=np.float64)
+    if va.shape != vb.shape:
+        raise ValueError(
+            f"paired test needs one value per landscape from each scorer; "
+            f"got {va.shape} and {vb.shape}"
+        )
+    diff = va - vb
+    diff = diff[np.isfinite(diff)]
+    if diff.size == 0:
+        return float("nan"), float("nan"), float("nan"), False
+    if diff.size == 1:
+        return float(diff[0]), float("nan"), float("nan"), False
+
+    rng = np.random.default_rng(seed)
+    idx = rng.integers(0, diff.size, size=(n_bootstrap, diff.size))
+    means = diff[idx].mean(axis=1)
+    lo = float(np.quantile(means, alpha / 2.0))
+    hi = float(np.quantile(means, 1.0 - alpha / 2.0))
+    return float(diff.mean()), lo, hi, bool(lo > 0.0)

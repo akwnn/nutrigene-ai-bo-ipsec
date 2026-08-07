@@ -201,3 +201,81 @@ def test_summary_reports_cells_without_headroom():
     results = [run_e4_cell(StandInOracle(seed=s), E4Config(kappa=0.7, seed=s, **FAST)) for s in range(2)]
     s = summarise(results)
     assert 0 <= s["n_cells_without_headroom"] <= 2
+
+
+# --------------------------------------------------------------------------
+# E4b — the design-boundary case. REPORTED, NOT CLAIMED.
+# --------------------------------------------------------------------------
+
+E4B_FAST = dict(n_candidates=128, n_restarts=6, raw_samples=512)
+
+
+def test_e4b_puts_the_optimum_out_of_reach():
+    """The construction: the best amount is below the lowest testable amount."""
+    from boec.e4 import run_e4b_cell
+
+    r = run_e4b_cell(StandInOracle(seed=0), E4Config(kappa=0.7, **E4B_FAST))
+    assert r.true_optimum < r.design_floor
+
+
+def test_the_traditional_method_gets_this_case_RIGHT():
+    """**The honest finding, and the reason we report rather than claim.**
+
+    The polynomial's coefficient comes out clearly negative — 'less is better'
+    — which is exactly the signal the original authors read and acted on. This
+    is a limit of the experimental range, not a modelling failure, and the
+    sophisticated model has no advantage here.
+    """
+    from boec.e4 import run_e4b_cell
+
+    signalled = [
+        run_e4b_cell(StandInOracle(seed=s), E4Config(kappa=0.7, seed=s, **E4B_FAST))
+        .polynomial_signals_lower_is_better
+        for s in range(4)
+    ]
+    assert all(signalled), (
+        "the polynomial must correctly signal 'lower is better' — if it does "
+        "not, our honest framing of E4b needs revisiting"
+    )
+
+
+def test_e4b_carries_its_framing_with_it():
+    """The caveat travels with the number, so it cannot be quoted without it."""
+    from boec.e4 import run_e4b_cell
+
+    r = run_e4b_cell(StandInOracle(seed=0), E4Config(kappa=0.7, **E4B_FAST))
+    assert "NOT CLAIMED" in r.note
+    assert "not a modelling failure" in r.note
+
+
+def test_e4b_rejects_a_reachable_floor():
+    """floor_multiplier <= 1 leaves the optimum reachable, so there is no case."""
+    from boec.e4 import run_e4b_cell
+
+    with pytest.raises(ValueError, match="floor_multiplier must exceed 1"):
+        run_e4b_cell(StandInOracle(), E4Config(kappa=0.7, **E4B_FAST), floor_multiplier=1.0)
+
+
+def test_e4b_can_target_any_factor():
+    from boec.e4 import run_e4b_cell
+
+    for j in (0, 3, 5):
+        r = run_e4b_cell(StandInOracle(seed=0), E4Config(kappa=0.7, **E4B_FAST), excluded_factor=j)
+        assert r.factor == j
+        assert r.true_optimum < r.design_floor
+
+
+def test_summary_reports_the_paired_comparison_not_just_separate_intervals():
+    """**The headline claim needs a paired test.** Two overlapping intervals are
+    not evidence of no difference when both are measured on the same
+    landscapes."""
+    results = [
+        run_e4_cell(StandInOracle(seed=s), E4Config(kappa=k, seed=s, **FAST))
+        for s in range(3) for k in (0.6, 0.8)
+    ]
+    s = summarise(results)
+    for key in ("gp_beats_null_paired", "gp_beats_poly_paired"):
+        mean, lo, hi, sig = s[key]
+        assert np.isfinite(mean)
+        assert isinstance(sig, bool)
+        assert lo <= mean <= hi
