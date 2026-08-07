@@ -86,7 +86,21 @@ kappa: [0.6, 0.7, 0.8, 0.9]
 sub_box_design: ccd       # NOT space-filling: (X'X)^-1 IS the comparator
 
 # --- PRE-REGISTERED (v2) ------------------------------------------------------
-n_instances: 40           # v1 was 10. See CHANGE 2.
+#
+# AMENDMENT, made BEFORE the confirmatory run, for a reason independent of any
+# result: Person A's committed ensemble contains 25 landscapes at d=6, not 40.
+# Extending it is A's call — it is A's module and A's data — and requires
+# re-running scripts/generate_oracles.py with a larger --n-instances.
+#
+# 25 is not a fallback chosen for convenience. It is 2.5x the pilot's 10, which
+# is exactly Simonsohn's multiplier for 80% power to reject the pre-registered
+# smallest effect of interest (0.08). The 40 above corresponded to ~92%.
+#
+# So: run at 25 now, and if A extends the ensemble, re-run at 40 as originally
+# specified. Both numbers and their power are fixed here in advance, so neither
+# can be chosen later on the basis of which one gave a nicer answer.
+n_instances: 25           # v1 was 10. 2.5x the pilot -> ~80% power.
+n_instances_if_ensemble_extended: 40   # 4x -> ~92% power. Needs A.
 rho: 2.0                  # v1 was the unit cube. See CHANGE 1.
 rho_reported_also: [inf]  # unit cube kept as a limiting case
 primary_cell: {kappa: 0.6, rho: 2.0}

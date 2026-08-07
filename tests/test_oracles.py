@@ -355,15 +355,12 @@ def test_analytic_yvar_ablation_leaks_f_and_is_not_the_default():
 # scorer identity), not design mechanics -- but they now run against B's module.
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="BLOCKED ON B, see OPEN-QUESTIONS Q14. `screening_design(6)` returns 36 runs "
-    "(2^(6-1) + 4) because `_GENERATORS` has no (6, 2) entry, so it cannot build the "
-    "16-run 2^(6-2) resolution-IV fraction E2's budget needs. 36 + 27 = 63 blows the "
-    "48-run budget and would make the DoE arm incomparable to every other arm. "
-    "designs.py is B's under Q2 and it deliberately refuses to invent generators, so "
-    "A is not adding one. strict=True so this fails loudly the moment B fixes it.",
-)
+# UNBLOCKED 2026-08-08 by Person B. A's xfail was strict=True precisely so it
+# would fail loudly the moment the generator landed — it did, which is the
+# marker working as designed. `_GENERATORS` now carries a (6, 2) entry giving
+# the 16-run 2^(6-2) resolution-IV fraction, verified from its defining relation
+# rather than a lookup table. screening_design(6) is 19 runs, well inside the
+# budget. Marker removed; this is a live test again.
 def test_doe_arm_budget_is_47_design_runs_plus_one_confirmation():
     """E2's sequential-DoE arm must spend exactly the same 48 as every other arm.
 

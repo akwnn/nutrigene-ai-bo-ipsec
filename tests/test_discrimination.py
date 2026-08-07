@@ -318,3 +318,119 @@ def test_paired_test_ignores_non_finite_pairs():
     b = [0.3, 0.4, 0.2, 0.5]
     mean, lo, hi, _ = paired_difference_ci(a, b)
     assert np.isfinite(mean) and np.isfinite(lo) and np.isfinite(hi)
+
+
+# --------------------------------------------------------------------------
+# The two functions that carry the headline claim. They had NO tests.
+# --------------------------------------------------------------------------
+
+def test_sign_flip_is_exact_below_the_enumeration_limit():
+    from boec.discrimination import sign_flip_test
+
+    p, n, exact, se = sign_flip_test([0.1] * 5)
+    assert exact is True and n == 5 and se == 0.0
+    # All five positive and identical: only the all-plus arrangement is as
+    # extreme, so p is exactly 1/32.
+    assert p == pytest.approx(1 / 32)
+
+
+def test_sign_flip_switches_to_sampling_above_the_limit():
+    """**The bug that made us report sampled p-values as exact.**"""
+    from boec.discrimination import sign_flip_test
+
+    assert sign_flip_test([0.1] * 20)[2] is True
+    p, n, exact, se = sign_flip_test([0.1] * 21)
+    assert exact is False and n == 21
+    assert se > 0.0, "a sampled p-value must carry its Monte Carlo error"
+
+
+def test_sign_flip_is_one_sided_and_directional():
+    from boec.discrimination import sign_flip_test
+
+    up = sign_flip_test([0.2, 0.3, 0.25, 0.4, 0.35])[0]
+    down = sign_flip_test([-0.2, -0.3, -0.25, -0.4, -0.35])[0]
+    assert up < 0.05 < down
+
+
+def test_sign_flip_on_noise_is_unremarkable():
+    from boec.discrimination import sign_flip_test
+
+    rng = np.random.default_rng(0)
+    assert sign_flip_test(rng.normal(0, 1, 15).tolist())[0] > 0.05
+
+
+def test_equivalence_bounds_a_small_advantage():
+    from boec.discrimination import equivalence_bound_test
+
+    rng = np.random.default_rng(0)
+    upper, below, verdict = equivalence_bound_test(
+        rng.normal(0.01, 0.02, 25).tolist(), bound=0.08
+    )
+    assert below is True and upper < 0.08
+    assert "below 0.08" in verdict
+
+
+def test_equivalence_refuses_to_bound_a_large_advantage():
+    from boec.discrimination import equivalence_bound_test
+
+    rng = np.random.default_rng(0)
+    _, below, verdict = equivalence_bound_test(rng.normal(0.30, 0.05, 25).tolist(), bound=0.08)
+    assert below is False
+    assert "cannot rule out" in verdict
+
+
+def test_equivalence_says_so_when_the_other_scorer_may_be_better():
+    """A one-sided bound cannot tell 'no advantage' from 'confidently worse'.
+    The verdict must not read as reassuring in the second case."""
+    from boec.discrimination import equivalence_bound_test
+
+    rng = np.random.default_rng(0)
+    _, below, verdict = equivalence_bound_test(rng.normal(-0.30, 0.05, 25).tolist(), bound=0.08)
+    assert below is True
+    assert "DISADVANTAGE" in verdict and "not equivalence" in verdict
+
+
+def test_equivalence_rejects_a_nonpositive_bound():
+    from boec.discrimination import equivalence_bound_test
+
+    with pytest.raises(ValueError, match="bound must be positive"):
+        equivalence_bound_test([0.1, 0.2], bound=0.0)
+
+
+def test_interaction_test_catches_the_significant_here_not_there_fallacy():
+    """**Two results either side of a threshold are not thereby different.**
+    Gelman & Stern 2006. The claim needs its own test."""
+    from boec.discrimination import regime_interaction_test
+
+    rng = np.random.default_rng(0)
+    shared = rng.normal(0, 0.15, 20)
+    a = shared + 0.30
+    b = shared + 0.02
+    mean, lo, hi, differ = regime_interaction_test(a.tolist(), b.tolist())
+    assert differ is True and mean == pytest.approx(0.28, abs=0.02) and lo > 0
+
+
+def test_interaction_test_reports_no_difference_when_there_is_none():
+    from boec.discrimination import regime_interaction_test
+
+    rng = np.random.default_rng(1)
+    shared = rng.normal(0, 0.15, 20)
+    a, b = shared + rng.normal(0, 0.02, 20), shared + rng.normal(0, 0.02, 20)
+    assert regime_interaction_test(a.tolist(), b.tolist())[3] is False
+
+
+def test_interaction_test_requires_aligned_landscapes():
+    from boec.discrimination import regime_interaction_test
+
+    with pytest.raises(ValueError, match="same landscapes"):
+        regime_interaction_test([0.1, 0.2, 0.3], [0.1, 0.2])
+
+
+def test_fisher_z_mean_differs_from_a_plain_average_when_spread_is_wide():
+    """Correlations are not on an additive scale. Kept as a robustness check."""
+    from boec.discrimination import fisher_z_mean
+
+    tight = [0.50, 0.52, 0.48]
+    wide = [0.10, 0.50, 0.90]
+    assert fisher_z_mean(tight) == pytest.approx(np.mean(tight), abs=1e-3)
+    assert abs(fisher_z_mean(wide) - np.mean(wide)) > 1e-3

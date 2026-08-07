@@ -43,7 +43,12 @@ import numpy as np
 import torch
 from torch import Tensor
 
-from boec.designs import central_composite, scale_to_box, sub_box_bounds
+from boec.designs import (
+    central_composite,
+    extended_box_bounds,
+    scale_to_box,
+    sub_box_bounds,
+)
 from boec.discrimination import (
     DiscriminationResult,
     discrimination_test,
@@ -90,6 +95,17 @@ class E4Config:
     """Settings. The two pre-registered ones are locked — see the yaml file."""
 
     kappa: float
+    # PRE-REGISTERED v2 PRIMARY. How far past the training corner every model
+    # is asked about. 2.0 is far enough that extrapolation is real, near enough
+    # that the geometry is defensible against the published study's 1.2x.
+    #
+    # **The default is 2.0 and must stay matched to configs/experiment/e4.yaml.**
+    # It was inf, which silently ran the regime the pre-registration deprecates
+    # — the scripts got the wrong regime and the results were labelled as though
+    # they were the pre-registered one. There is now a test pinning this.
+    #
+    # inf gives the whole unit cube, reported as a limiting case.
+    rho: float = 2.0
     n_centre: int = 4
     n_derived: int = 1               # half fraction: 32 + 12 + 4 = 48
     face_centred: bool = True
@@ -109,6 +125,7 @@ class E4Result:
 
     Attributes:
         kappa: how much was hidden.
+        rho: how far past the training corner the models were asked about.
         instance_id: which landscape.
         n_train: how many measurements (48).
         over_prediction: model name to how much it overshot. **Headline.**
@@ -131,6 +148,7 @@ class E4Result:
     """
 
     kappa: float
+    rho: float
     instance_id: str
     n_train: int
     over_prediction: dict[str, float]
@@ -173,6 +191,12 @@ def run_e4_cell(oracle: Oracle, config: E4Config, instance_id: str = "i0") -> E4
     unit_cube = torch.stack(
         [torch.zeros(d, dtype=torch.double), torch.ones(d, dtype=torch.double)]
     )
+    # The region every model is asked about. At rho = inf this is the whole
+    # cube, which is what version 1 did. At rho = 2.0 it stops well short —
+    # still a genuine extrapolation, but not one a reviewer can call staged.
+    # The GP is still FITTED against the unit cube's bounds so that its input
+    # scaling does not change with rho; only the question changes.
+    scoring_box = extended_box_bounds(x_star, config.kappa, config.rho)
     notes: list[str] = []
 
     # --- 1 & 2: hide the space, then measure inside what is left ------------
@@ -194,7 +218,7 @@ def run_e4_cell(oracle: Oracle, config: E4Config, instance_id: str = "i0") -> E4
     #
     # So find the real optimum and look.
     true_x, true_best, _ = constrained_argmax(
-        oracle.truth, unit_cube,
+        oracle.truth, scoring_box,
         n_restarts=config.n_restarts, raw_samples=config.raw_samples,
         seed=config.seed,
     )
@@ -242,7 +266,7 @@ def run_e4_cell(oracle: Oracle, config: E4Config, instance_id: str = "i0") -> E4
     results: dict[str, OverPrediction] = {}
     for name, fn in predictors.items():
         res = over_prediction_at_constrained_argmax(
-            fn, oracle.truth, unit_cube,
+            fn, oracle.truth, scoring_box,
             n_restarts=config.n_restarts, raw_samples=config.raw_samples,
             seed=config.seed,
         )
@@ -282,7 +306,7 @@ def run_e4_cell(oracle: Oracle, config: E4Config, instance_id: str = "i0") -> E4
     }
 
     # --- 7: the discrimination test — the actual measurement ----------------
-    cand = _sobol(unit_cube, config.n_candidates, seed=config.seed + 991)
+    cand = _sobol(scoring_box, config.n_candidates, seed=config.seed + 991)
     gp_sd = predictive(gp, cand, noise=_plugin_noise(gp, cand, config)).stddev
     poly_pi = second.prediction_interval_width(cand)
     nn_dist = nearest_neighbour_distance(cand, train_X)
@@ -298,6 +322,7 @@ def run_e4_cell(oracle: Oracle, config: E4Config, instance_id: str = "i0") -> E4
 
     return E4Result(
         kappa=config.kappa,
+        rho=config.rho,
         instance_id=instance_id,
         n_train=int(train_X.shape[0]),
         over_prediction=over_prediction,
@@ -373,7 +398,8 @@ def _paired_on_shared(a: dict[str, float], b: dict[str, float]):
     return [a[k] for k in shared], [b[k] for k in shared]
 
 
-def summarise(results: list[E4Result], model: str = "second_order") -> dict:
+def summarise(results: list[E4Result], model: str = "second_order",
+              equivalence_bound: float = 0.08) -> dict:
     """Pool cells into the numbers that go in the paper.
 
     Returns a dict with the mean overshoot, the fraction of cells where
@@ -381,7 +407,8 @@ def summarise(results: list[E4Result], model: str = "second_order") -> dict:
     discrimination comparison against the model-free null.
     """
     from boec.discrimination import (
-        exact_paired_sign_test,
+        equivalence_bound_test,
+        sign_flip_test,
         instance_bootstrap_ci,
         paired_difference_ci,
     )
@@ -423,8 +450,10 @@ def summarise(results: list[E4Result], model: str = "second_order") -> dict:
     gp_rho, nn_rho, poly_rho = list(gp_by.values()), list(nn_by.values()), list(poly_by.values())
     gp_v_nn = _paired_on_shared(gp_by, nn_by)
     gp_v_poly = _paired_on_shared(gp_by, poly_by)
-    sign_p, sign_n, sign_exact = exact_paired_sign_test(
-        [a - b for a, b in zip(*gp_v_nn, strict=True)]
+    gp_nn_diffs = [a - b for a, b in zip(*gp_v_nn, strict=True)]
+    sign_p, sign_n, sign_exact, sign_se = sign_flip_test(gp_nn_diffs)
+    equiv_upper, equiv_below, equiv_verdict = equivalence_bound_test(
+        gp_nn_diffs, equivalence_bound
     )
 
     return {
@@ -456,6 +485,14 @@ def summarise(results: list[E4Result], model: str = "second_order") -> dict:
         "gp_beats_null_exact_p": sign_p,
         "gp_beats_null_exact_n_landscapes": sign_n,
         "gp_beats_null_exact_is_enumerated": sign_exact,
+        # Non-zero when the p-value was sampled rather than enumerated. Quote
+        # the p to more digits than this and you are quoting noise.
+        "gp_beats_null_p_monte_carlo_se": sign_se,
+        # Turns "not significant" into an actual claim about the world.
+        # Bound pre-registered in configs/experiment/e4.yaml.
+        "gp_advantage_upper_limit": equiv_upper,
+        "gp_advantage_below_bound": equiv_below,
+        "gp_advantage_verdict": equiv_verdict,
         "n_cells_without_headroom": sum(
             1 for r in usable if not r.discrimination.agreement.has_headroom
         ),

@@ -78,7 +78,10 @@ __all__ = [
     "ScorerAgreement",
     "auc_against_threshold",
     "discrimination_test",
-    "exact_paired_sign_test",
+    "equivalence_bound_test",
+    "fisher_z_mean",
+    "regime_interaction_test",
+    "sign_flip_test",
     "instance_bootstrap_ci",
     "nearest_neighbour_distance",
     "paired_difference_ci",
@@ -440,47 +443,197 @@ def paired_difference_ci(
     return float(diff.mean()), lo, hi, bool(lo > 0.0)
 
 
-def exact_paired_sign_test(differences: Sequence[float]) -> tuple[float, int, bool]:
-    """Exact p-value for "is this difference really above zero", by enumeration.
+def sign_flip_test(
+    differences: Sequence[float],
+    *,
+    n_samples: int = 200_000,
+    seed: int = 0,
+) -> tuple[float, int, bool, float]:
+    """Is this difference really above zero? By re-randomising the signs.
 
     **With few landscapes this is better than a bootstrap, not merely different.**
 
     A bootstrap builds its answer out of the handful of numbers you gave it, so
-    with ten landscapes its tail estimates rest on ten points and it can be
-    optimistic. This instead enumerates **every possible way the signs could
-    have come out** — with ten landscapes that is 1024 arrangements, few enough
-    to check all of them — and asks how many are as extreme as what we saw.
+    with ten landscapes its tail estimates rest on ten points and can be
+    optimistic. This instead asks: if the GP had no real advantage, the sign of
+    each landscape's difference would be a coin flip. So flip them and see how
+    often you get something as extreme as what was actually observed.
 
-    No approximation, no resampling, no assumption about the shape of the
-    distribution. The answer is exact.
+    **Read the returned ``is_exact`` flag before describing this anywhere.**
+    Up to 20 landscapes every possible arrangement of signs is checked and the
+    answer really is exact. Beyond that there are too many — 25 landscapes is
+    33 million arrangements — so it samples instead, and the p-value carries a
+    Monte Carlo error which is returned alongside it. An earlier version of
+    this function was called "exact" unconditionally and its results were
+    reported that way at 25 landscapes, where they were not exact. Hence the
+    flag, the standard error, and the rename.
 
-    Recommended for this project because it needs no asymptotics at a cluster
-    count where cluster-robust methods are known to be optimistic (Cameron &
-    Miller 2015; MacKinnon & Webb on few-cluster inference).
+    Note this is a magnitude-weighted randomisation test, not the textbook
+    binomial sign test that counts signs only.
 
     Args:
         differences: one value per landscape — scorer A minus scorer B.
+        n_samples: sign arrangements to draw when exact enumeration is out of
+            reach.
+        seed: fixes the sampling.
 
     Returns:
-        ``(p_value, n_used, is_exact)``. ``is_exact`` is False when there were
-        too many landscapes to enumerate and sampling was used instead.
+        ``(p_value, n_landscapes, is_exact, monte_carlo_se)``. The standard
+        error is 0.0 when the answer was enumerated.
     """
     vals = np.asarray([d for d in differences if np.isfinite(d)], dtype=np.float64)
     n = vals.size
     if n == 0:
-        return float("nan"), 0, False
+        return float("nan"), 0, False, float("nan")
     observed = float(vals.mean())
 
-    if n <= 20:  # 2**20 is a million; beyond that, sample instead
+    if n <= 20:  # 2**20 arrangements is about a million — enumerable
         signs = np.array(
             [[1 if (i >> b) & 1 else -1 for b in range(n)] for i in range(2**n)],
             dtype=np.float64,
         )
-        means = (signs * vals).mean(axis=1)
-        p = float((means >= observed).mean())
-        return p, n, True
+        p = float(((signs * vals).mean(axis=1) >= observed).mean())
+        return p, n, True, 0.0
 
-    rng = np.random.default_rng(0)
-    signs = rng.choice([-1.0, 1.0], size=(20000, n))
-    means = (signs * vals).mean(axis=1)
-    return float((means >= observed).mean()), n, False
+    rng = np.random.default_rng(seed)
+    signs = rng.choice([-1.0, 1.0], size=(n_samples, n))
+    p = float(((signs * vals).mean(axis=1) >= observed).mean())
+    se = float(np.sqrt(max(p * (1.0 - p), 1e-12) / n_samples))
+    return p, n, False, se
+
+
+def equivalence_bound_test(
+    differences: Sequence[float],
+    bound: float,
+    *,
+    alpha: float = 0.05,
+    n_bootstrap: int = 2000,
+    seed: int = 0,
+) -> tuple[float, bool, str]:
+    """Can we say the advantage is SMALLER than some threshold?
+
+    **This turns "we found nothing" into an actual claim.** "Not significant"
+    is a statement about our evidence; "the advantage is below 0.08" is a
+    statement about the world, and it is the one a reader can use.
+
+    The logic is one-sided: if the top of the confidence interval sits below
+    the threshold, then whatever advantage exists is too small to be worth
+    having — and that is established, not merely unrefuted.
+
+    This is the one-sided form of an equivalence test (Lakens 2017). It is
+    pre-registered in ``configs/experiment/e4.yaml`` with the bound fixed in
+    advance, because a bound chosen after seeing the answer would prove nothing.
+
+    Args:
+        differences: one value per landscape.
+        bound: the smallest advantage that would be worth having.
+        alpha: 0.05 gives a one-sided 95% upper limit.
+        n_bootstrap: resamples.
+        seed: fixes the resampling.
+
+    Returns:
+        ``(upper_limit, is_below_bound, plain_english_verdict)``.
+    """
+    if bound <= 0:
+        raise ValueError(f"bound must be positive, got {bound}")
+    vals = np.asarray([d for d in differences if np.isfinite(d)], dtype=np.float64)
+    if vals.size < 2:
+        return float("nan"), False, "too few landscapes to bound anything"
+
+    rng = np.random.default_rng(seed)
+    idx = rng.integers(0, vals.size, size=(n_bootstrap, vals.size))
+    upper = float(np.quantile(vals[idx].mean(axis=1), 1.0 - alpha))
+
+    lower = float(np.quantile(vals[idx].mean(axis=1), alpha))
+    if upper < bound:
+        if lower < -bound:
+            # Both directions are open: we have bounded the ADVANTAGE but the
+            # data are also consistent with the other scorer being meaningfully
+            # better. Saying only "no advantage" would read as reassuring when
+            # it should not.
+            verdict = (
+                f"no advantage above {bound:g} (upper limit {upper:+.4f}) — but "
+                f"the lower limit is {lower:+.4f}, so a meaningful DISADVANTAGE "
+                "cannot be ruled out either. This is not equivalence."
+            )
+            return upper, True, verdict
+        verdict = (
+            f"the advantage is below {bound:g} (upper limit {upper:+.4f}). "
+            "Established, not merely unrefuted — any real advantage is too "
+            "small to be worth having."
+        )
+        return upper, True, verdict
+    return upper, False, (
+        f"cannot rule out an advantage of {bound:g} — the upper limit is "
+        f"{upper:+.4f}. More landscapes would be needed to bound it."
+    )
+
+
+def fisher_z_mean(rhos: Sequence[float]) -> float:
+    """Average correlations on the scale where averaging them is legitimate.
+
+    Correlations are not on an additive scale — the distance between 0.1 and
+    0.2 is not the same as between 0.8 and 0.9 — so a plain average of them is
+    biased. The standard fix is to transform, average, and transform back.
+
+    Kept as a robustness check rather than the default: the transform is convex,
+    so it pulls up whichever scorer varies more across settings, which is its
+    own kind of thumb on the scale. Report both and say which is which.
+    """
+    vals = np.asarray([r for r in rhos if np.isfinite(r)], dtype=np.float64)
+    if vals.size == 0:
+        return float("nan")
+    clipped = np.clip(vals, -0.999999, 0.999999)
+    return float(np.tanh(np.arctanh(clipped).mean()))
+
+
+def regime_interaction_test(
+    diffs_a: Sequence[float],
+    diffs_b: Sequence[float],
+    *,
+    n_bootstrap: int = 2000,
+    alpha: float = 0.05,
+    seed: int = 0,
+) -> tuple[float, float, float, bool]:
+    """Is the difference between two regimes itself real?
+
+    **This exists because "significant here, not significant there" does not
+    establish that the two differ.** That inference is a well-known fallacy
+    (Gelman & Stern 2006): one result can sit just inside a threshold and the
+    other just outside while being statistically indistinguishable from each
+    other. To claim the regimes differ you have to test *the difference between
+    the differences*, which is what this does.
+
+    Both regimes are measured on the SAME landscapes — the models are even
+    fitted to the same data, since only the question changes, not the training
+    — so this is paired at the landscape level, and the shared landscape
+    difficulty cancels.
+
+    Args:
+        diffs_a: per-landscape GP-minus-null difference in one regime.
+        diffs_b: the same landscapes, other regime. Must be aligned.
+        n_bootstrap: resamples.
+        alpha: 0.05 gives a 95% interval.
+        seed: fixes the resampling.
+
+    Returns:
+        ``(mean_gap, lower, upper, regimes_differ)``.
+    """
+    a = np.asarray(diffs_a, dtype=np.float64)
+    b = np.asarray(diffs_b, dtype=np.float64)
+    if a.shape != b.shape:
+        raise ValueError(
+            f"the two regimes must cover the same landscapes in the same "
+            f"order; got {a.shape} and {b.shape}"
+        )
+    gap = a - b
+    gap = gap[np.isfinite(gap)]
+    if gap.size < 2:
+        return float("nan"), float("nan"), float("nan"), False
+
+    rng = np.random.default_rng(seed)
+    idx = rng.integers(0, gap.size, size=(n_bootstrap, gap.size))
+    means = gap[idx].mean(axis=1)
+    lo = float(np.quantile(means, alpha / 2.0))
+    hi = float(np.quantile(means, 1.0 - alpha / 2.0))
+    return float(gap.mean()), lo, hi, bool(lo > 0 or hi < 0)

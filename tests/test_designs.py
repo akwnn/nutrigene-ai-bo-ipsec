@@ -314,3 +314,29 @@ def test_rho_one_lands_exactly_on_the_corner_edge():
     assert torch.allclose(
         extended_box_bounds(x_star, 0.6, rho=1.0)[1], sub_box_bounds(x_star, 0.6)[1]
     )
+
+
+def test_quarter_fraction_at_d6_fits_the_doe_budget():
+    """**Was missing, and it blocked Person A's DoE arm at d=6.**
+
+    Without a quarter fraction, screening fell back to the half fraction (36
+    runs), and 36 plus a second stage overruns the 48-run budget. 16 runs at
+    resolution IV leaves room.
+    """
+    pts, res = fractional_factorial(6, 2)
+    assert pts.shape == (16, 6)
+    assert res == 4, "main effects must stay clean of two-factor interactions"
+    assert torch.unique(pts, dim=0).shape[0] == 16
+
+    des = screening_design(6)
+    assert des.n_runs <= 24, f"{des.n_runs} runs leaves no room for stage 2 in a 48 budget"
+
+
+def test_quarter_fraction_resolution_verified_from_the_generator():
+    words = defining_relation_words(6, 2)
+    assert min(len(w) for w in words) == 4
+
+
+def test_quarter_fraction_columns_stay_balanced():
+    pts, _ = fractional_factorial(6, 2)
+    assert torch.allclose(pts.sum(0), torch.zeros(6, dtype=torch.double))

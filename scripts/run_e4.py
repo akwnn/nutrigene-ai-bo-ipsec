@@ -26,6 +26,7 @@ os.environ.setdefault("OMP_NUM_THREADS", "1")
 
 import time
 import warnings
+from pathlib import Path
 
 import numpy as np
 import torch
@@ -44,18 +45,26 @@ RULE = "=" * 72
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--dim", type=int, default=6, help="E4 is d=6 only; see spec §6")
-    ap.add_argument("--instances", type=int, default=10, help="PRE-REGISTERED at 10")
+    ap.add_argument("--instances", type=int, default=25,
+                    help="PRE-REGISTERED at 25 (v2). 40 needs A to extend the ensemble.")
+    ap.add_argument("--rho", type=float, default=2.0,
+                    help="PRE-REGISTERED primary is 2.0. Pass inf for the limiting case.")
     ap.add_argument("--kappas", type=float, nargs="+", default=list(KAPPAS))
     args = ap.parse_args()
 
-    if args.instances != 10:
-        print(
-            f"\n!!! --instances={args.instances} deviates from the pre-registered 10.\n"
-            "!!! Bump preregistration_version and state the reason. See this file's docstring.\n"
-        )
+    # Refuse to silently run something other than the pre-registration.
+    import yaml
+    cfg_path = Path(__file__).resolve().parents[1] / "configs" / "experiment" / "e4.yaml"
+    cfg = yaml.safe_load(cfg_path.read_text())
+    for name, got, want in (("--instances", args.instances, cfg["n_instances"]),
+                            ("--rho", args.rho, cfg["rho"])):
+        if got != want:
+            print(f"\n!!! {name}={got} deviates from the pre-registered {want}.")
+            print("!!! Bump preregistration_version and state the reason.\n")
 
     instances = load_ensemble(args.dim)[: args.instances]
-    print(f"{len(instances)} instances at d={args.dim}, kappa in {args.kappas}")
+    regime = "unit cube (limiting case)" if args.rho == float("inf") else f"rho={args.rho} (PRE-REGISTERED PRIMARY)"
+    print(f"{len(instances)} instances at d={args.dim}, kappa in {args.kappas}, {regime}")
 
     t0 = time.perf_counter()
     results = []
@@ -64,7 +73,7 @@ def main() -> None:
             results.append(
                 run_e4_cell(
                     BiphasicOracle(inst),
-                    E4Config(kappa=kappa, seed=i),
+                    E4Config(kappa=kappa, rho=args.rho, seed=i),
                     instance_id=inst.instance_id[:8],
                 )
             )
@@ -118,6 +127,10 @@ def main() -> None:
                        ("vs polynomial PI  ", "gp_beats_poly_paired")):
         d, lo, hi, sig = s[key]
         print(f"  GP {label}: {d:+.4f} [{lo:+.4f}, {hi:+.4f}]  significant={sig}")
+    exact = s["gp_beats_null_exact_is_enumerated"]
+    label = "EXACT (all arrangements enumerated)" if exact else "sampled, not exact"
+    print(f"  sign-flip test     : p={s['gp_beats_null_exact_p']:.4f}  [{label}]")
+    print(f"  advantage bounded  : {s['gp_advantage_verdict']}")
 
 
 if __name__ == "__main__":

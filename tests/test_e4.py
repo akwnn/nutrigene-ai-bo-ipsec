@@ -14,6 +14,8 @@ outcome, not a bug.
 
 from __future__ import annotations
 
+from pathlib import Path
+
 import numpy as np
 import pytest
 import torch
@@ -422,13 +424,21 @@ def test_paired_alignment_survives_a_missing_landscape():
     assert (a, b) == ([1.0, 3.0], [0.5, 1.5])
 
 
-def test_exact_sign_test_is_enumerated_at_this_scale(results_valid):
-    """At ten landscapes every arrangement of signs can be checked, so the
-    answer needs no asymptotics — better than a bootstrap at this cluster
-    count, not merely different."""
+def test_sign_flip_test_reports_whether_it_was_exact(results_valid):
+    """**Do not describe this as exact without reading the flag.**
+
+    It enumerates every arrangement only up to 20 landscapes. At 25 — the
+    pre-registered count — there are 33 million, so it samples, and an earlier
+    version reported those p-values as exact. The flag and the Monte Carlo
+    standard error exist so that cannot happen again.
+    """
     s = summarise(results_valid)
-    assert s["gp_beats_null_exact_is_enumerated"] is True
+    assert isinstance(s["gp_beats_null_exact_is_enumerated"], bool)
     assert 0.0 <= s["gp_beats_null_exact_p"] <= 1.0
+    if s["gp_beats_null_exact_is_enumerated"]:
+        assert s["gp_beats_null_p_monte_carlo_se"] == 0.0
+    else:
+        assert s["gp_beats_null_p_monte_carlo_se"] > 0.0
 
 
 @pytest.fixture
@@ -438,3 +448,22 @@ def results_valid():
                     instance_id=f"i{i}")
         for k in (0.6, 0.8) for i in range(3)
     ]
+
+
+def test_config_default_matches_the_preregistration():
+    """**Pins a drift that silently ran the deprecated regime.**
+
+    E4Config.rho defaulted to inf while the pre-registration named 2.0 as
+    primary. Nothing loaded the yaml, so the scripts ran the regime the
+    pre-registration deprecates and the output was labelled as though it were
+    the pre-registered one. This test makes that impossible to repeat.
+    """
+    import yaml
+
+    cfg = yaml.safe_load(
+        (Path(__file__).resolve().parents[1] / "configs" / "experiment" / "e4.yaml").read_text()
+    )
+    assert E4Config(kappa=0.6).rho == cfg["rho"]
+    assert E4Config(kappa=0.6).n_candidates == cfg["discrimination"]["n_candidates"]
+    assert E4Config(kappa=0.6).tau_quantile == cfg["discrimination"]["auc_tau_quantile"]
+    assert E4Config(kappa=0.6).headroom_threshold == cfg["discrimination"]["no_headroom_threshold"]

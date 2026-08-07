@@ -78,6 +78,10 @@ __all__ = [
 _GENERATORS: dict[tuple[int, int], list[tuple[int, tuple[int, ...]]]] = {
     (5, 1): [(4, (0, 1, 2, 3))],                    # 2^(5-1), resolution V
     (6, 1): [(5, (0, 1, 2, 3, 4))],                 # 2^(6-1), resolution VI
+    # 16 runs. Needed because the half fraction (36 runs) plus a second stage
+    # overruns the 48-run budget for Person A's sequential-DoE arm at d=6.
+    # Its absence was the cause of a failing test in A's lane.
+    (6, 2): [(4, (0, 1, 2)), (5, (1, 2, 3))],       # 2^(6-2), resolution IV
     (7, 1): [(6, (0, 1, 2, 3, 4, 5))],              # 2^(7-1), resolution VII
     (7, 2): [(5, (0, 1, 2, 3)), (6, (0, 1, 4))],    # 2^(7-2), resolution IV
     (8, 2): [(6, (0, 1, 2, 3)), (7, (0, 1, 4, 5))],  # 2^(8-2), resolution V
@@ -86,6 +90,7 @@ _GENERATORS: dict[tuple[int, int], list[tuple[int, tuple[int, ...]]]] = {
 _RESOLUTION: dict[tuple[int, int], int] = {
     (5, 1): 5,
     (6, 1): 6,
+    (6, 2): 4,
     (7, 1): 7,
     (7, 2): 4,
     (8, 2): 5,
