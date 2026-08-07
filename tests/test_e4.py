@@ -279,3 +279,56 @@ def test_summary_reports_the_paired_comparison_not_just_separate_intervals():
         assert np.isfinite(mean)
         assert isinstance(sig, bool)
         assert lo <= mean <= hi
+
+
+# --------------------------------------------------------------------------
+# The validity check A flagged as landing in B's lane (OPEN-QUESTIONS Q13)
+# --------------------------------------------------------------------------
+
+class PeakInsideOracle(StandInOracle):
+    """A landscape whose true best recipe sits INSIDE the training corner.
+
+    Stands in for the risk A raised: an oracle that modulates each factor's
+    peak according to the others can put the joint optimum somewhere the
+    per-factor peaks do not predict — possibly inside the corner we trained on.
+    Such a cell tests nothing and must not be pooled.
+    """
+
+    def truth(self, X: torch.Tensor) -> torch.Tensor:
+        # Peak parked deep inside [0, 0.6 * x_star].
+        target = torch.from_numpy(self._x_star * 0.3)
+        return (-((X.double() - target) ** 2).sum(-1, keepdim=True) * 20).exp()
+
+
+def test_a_valid_cell_is_marked_valid():
+    r = run_e4_cell(StandInOracle(seed=0), E4Config(kappa=0.6, **FAST))
+    assert r.peak_inside_subbox is False
+    assert r.is_valid
+    assert np.isfinite(r.true_optimum_value)
+
+
+def test_a_cell_whose_peak_is_inside_the_corner_is_caught():
+    """**Silent-correctness hole, now closed.** Before this check, such a cell
+    produced numbers that looked fine and tested nothing."""
+    r = run_e4_cell(PeakInsideOracle(seed=0), E4Config(kappa=0.6, **FAST))
+    assert r.peak_inside_subbox is True
+    assert not r.is_valid
+    assert any("INSIDE THE TRAINING CORNER" in n for n in r.notes)
+
+
+def test_invalid_cells_are_excluded_from_the_headline_and_counted():
+    good = [run_e4_cell(StandInOracle(seed=s), E4Config(kappa=0.6, seed=s, **FAST)) for s in range(2)]
+    bad = [run_e4_cell(PeakInsideOracle(seed=s), E4Config(kappa=0.6, seed=s, **FAST)) for s in range(2)]
+    s = summarise(good + bad)
+    assert s["n_cells_total"] == 4
+    assert s["n_cells"] == 2
+    assert s["n_cells_excluded_peak_inside_subbox"] == 2
+
+
+def test_summary_refuses_rather_than_returning_a_meaningless_number():
+    """If nothing tested extrapolation, say so — do not average nothing."""
+    bad = [run_e4_cell(PeakInsideOracle(seed=s), E4Config(kappa=0.6, seed=s, **FAST)) for s in range(2)]
+    s = summarise(bad)
+    assert s["n_cells"] == 0
+    assert "Lower kappa" in s["error"]
+    assert "over_prediction_mean" not in s

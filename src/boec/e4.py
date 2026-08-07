@@ -49,7 +49,11 @@ from boec.discrimination import (
     discrimination_test,
     nearest_neighbour_distance,
 )
-from boec.metrics import OverPrediction, over_prediction_at_constrained_argmax
+from boec.metrics import (
+    OverPrediction,
+    constrained_argmax,
+    over_prediction_at_constrained_argmax,
+)
 from boec.parametric import fit_practitioner_parametric
 from boec.rsm import fit_second_order, fit_stepwise_third_order
 from boec.surrogate import build_gp, predictive
@@ -116,6 +120,13 @@ class E4Result:
         stationary_kind: what sort of turning point each polynomial found.
         discrimination: the actual measurement. **Read `.agreement` first.**
         parametric_converged: whether the practitioner-form fit worked.
+        peak_inside_subbox: **the cell's own validity check.** True means the
+            true best recipe was inside the region the models trained on, so
+            there was nothing to extrapolate towards and this cell tests
+            nothing. Such cells MUST be excluded from the headline pooling —
+            `summarise` does that and reports how many it dropped.
+        true_optimum_value: the best value actually achievable anywhere in the
+            space. Over-prediction is only interpretable against this.
         notes: anything that went wrong, recorded rather than dropped.
     """
 
@@ -128,7 +139,14 @@ class E4Result:
     stationary_kind: dict[str, str]
     discrimination: DiscriminationResult | None
     parametric_converged: bool
+    peak_inside_subbox: bool = False
+    true_optimum_value: float = float("nan")
     notes: list[str] = field(default_factory=list)
+
+    @property
+    def is_valid(self) -> bool:
+        """Can this cell say anything about extrapolation at all?"""
+        return not self.peak_inside_subbox
 
 
 def _sobol(bounds: Tensor, n: int, seed: int) -> Tensor:
@@ -159,6 +177,37 @@ def run_e4_cell(oracle: Oracle, config: E4Config, instance_id: str = "i0") -> E4
 
     # --- 1 & 2: hide the space, then measure inside what is left ------------
     sub = sub_box_bounds(x_star, config.kappa)
+
+    # --- 1b: CHECK THE ASSUMPTION THE WHOLE EXPERIMENT RESTS ON --------------
+    #
+    # E4 only means anything if the true best recipe lies OUTSIDE the corner we
+    # trained on. Otherwise there is nothing to extrapolate towards, the models
+    # are being asked about territory that contains no surprise, and the cell
+    # silently measures nothing while still looking like a data point.
+    #
+    # The sub-box is built from each factor's peak taken one at a time. That is
+    # only the true joint optimum when the factors do not interact. Person A's
+    # oracle modulates each factor's peak according to the others, so the joint
+    # optimum can sit somewhere the per-factor peaks do not predict — possibly
+    # INSIDE the corner. A flagged this as landing in B's lane (OPEN-QUESTIONS
+    # Q13) and they were right: nothing here was checking it.
+    #
+    # So find the real optimum and look.
+    true_x, true_best, _ = constrained_argmax(
+        oracle.truth, unit_cube,
+        n_restarts=config.n_restarts, raw_samples=config.raw_samples,
+        seed=config.seed,
+    )
+    peak_inside = bool(
+        torch.all(true_x >= sub[0] - 1e-9) and torch.all(true_x <= sub[1] + 1e-9)
+    )
+    if peak_inside:
+        notes.append(
+            "TRUE OPTIMUM LIES INSIDE THE TRAINING CORNER — this cell cannot "
+            "test extrapolation at all and must be excluded from the headline "
+            "pooling. Lower kappa if it happens often. (Never raise x*.)"
+        )
+
     design = central_composite(
         d, n_centre=config.n_centre, n_derived=config.n_derived,
         face_centred=config.face_centred,
@@ -257,6 +306,8 @@ def run_e4_cell(oracle: Oracle, config: E4Config, instance_id: str = "i0") -> E4
         stationary_kind=stationary,
         discrimination=discrimination,
         parametric_converged=para.converged,
+        peak_inside_subbox=peak_inside,
+        true_optimum_value=true_best,
         notes=notes,
     )
 
@@ -287,6 +338,25 @@ def summarise(results: list[E4Result], model: str = "second_order") -> dict:
     """
     from boec.discrimination import instance_bootstrap_ci, paired_difference_ci
 
+    # EXCLUDE cells where the true optimum sat inside the training corner.
+    # Those cells had nothing to extrapolate towards, so pooling them in would
+    # dilute the headline with data points that tested nothing. The count is
+    # reported, never silently dropped — a high count means kappa is too high.
+    n_all = len(results)
+    excluded = [r for r in results if not r.is_valid]
+    results = [r for r in results if r.is_valid]
+    if not results:
+        return {
+            "model": model,
+            "n_cells": 0,
+            "n_cells_total": n_all,
+            "n_cells_excluded_peak_inside_subbox": len(excluded),
+            "error": (
+                "every cell had its true optimum inside the training corner, so "
+                "none of them tested extrapolation. Lower kappa. Never raise x*."
+            ),
+        }
+
     over = [r.over_prediction.get(model, float("nan")) for r in results]
     point, lo, hi = instance_bootstrap_ci(over)
 
@@ -303,6 +373,10 @@ def summarise(results: list[E4Result], model: str = "second_order") -> dict:
     return {
         "model": model,
         "n_cells": len(results),
+        "n_cells_total": n_all,
+        # A high exclusion count is itself a finding: it means the training
+        # corner was not actually excluding the peak, so kappa is too high.
+        "n_cells_excluded_peak_inside_subbox": len(excluded),
         "over_prediction_mean": point,
         "over_prediction_ci": (lo, hi),
         "fraction_extrapolated": float(
