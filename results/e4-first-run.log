@@ -1,0 +1,61 @@
+loaded 25 instances at d=6
+  kappa=0.6 done (19s)
+  kappa=0.7 done (37s)
+  kappa=0.8 done (57s)
+  kappa=0.9 done (78s)
+
+TOTAL 78s for 40 cells
+
+========================================================================
+VALIDITY
+========================================================================
+cells where true optimum was INSIDE the training corner: 0/40
+  kappa=0.6: 0/10 invalid
+  kappa=0.7: 0/10 invalid
+  kappa=0.8: 0/10 invalid
+  kappa=0.9: 0/10 invalid
+
+========================================================================
+HEADROOM  (must be < 0.95 or the comparison can show nothing)
+========================================================================
+  kappa=0.6: max-agreement median 0.864  range [0.788,0.889]  no-headroom 0/10
+  kappa=0.7: max-agreement median 0.875  range [0.761,0.914]  no-headroom 0/10
+  kappa=0.8: max-agreement median 0.825  range [0.779,0.941]  no-headroom 0/10
+  kappa=0.9: max-agreement median 0.828  range [0.796,0.890]  no-headroom 0/10
+
+========================================================================
+OVER-PREDICTION  (headline; response max is ~1.0)
+========================================================================
+  kappa=0.6 second_order   median   +9.217  escaped 10/10
+  kappa=0.6 gp             median   +0.492  escaped 10/10
+  kappa=0.7 second_order   median   +5.551  escaped 10/10
+  kappa=0.7 gp             median   +0.383  escaped 10/10
+  kappa=0.8 second_order   median   +3.339  escaped 10/10
+  kappa=0.8 gp             median   +0.268  escaped 10/10
+  kappa=0.9 second_order   median   +2.009  escaped 10/10
+  kappa=0.9 gp             median   +0.245  escaped 10/10
+
+========================================================================
+DISCRIMINATION  — the pre-registered primary
+========================================================================
+  kappa=0.6: GP rho +0.494 [+0.344,+0.662] | NN rho +0.441 [+0.347,+0.540]
+           PAIRED GP-NN +0.0537 [-0.0420,+0.1476]  SIGNIFICANT=False
+  kappa=0.7: GP rho +0.383 [+0.268,+0.510] | NN rho +0.374 [+0.322,+0.427]
+           PAIRED GP-NN +0.0093 [-0.0996,+0.1046]  SIGNIFICANT=False
+  kappa=0.8: GP rho +0.466 [+0.349,+0.600] | NN rho +0.419 [+0.353,+0.491]
+           PAIRED GP-NN +0.0471 [-0.0495,+0.1484]  SIGNIFICANT=False
+  kappa=0.9: GP rho +0.584 [+0.444,+0.721] | NN rho +0.489 [+0.406,+0.581]
+           PAIRED GP-NN +0.0946 [-0.0034,+0.1896]  SIGNIFICANT=False
+
+========================================================================
+POOLED ACROSS ALL VALID CELLS
+========================================================================
+  cells 40/40  (excluded 0)
+  over-prediction  +5.123 (4.219357806516201, 6.036904655539649)
+  fraction extrapolated  1.00
+  stationary kinds  {'saddle': 40}
+  parametric failure rate  0.00
+  no-headroom cells  0
+
+  *** GP beats the model-free null: +0.0512 [-0.0028,+0.0995]  SIGNIFICANT=False ***
+  *** GP beats polynomial PI width: +0.0035 [-0.0610,+0.0599]  SIGNIFICANT=False ***
