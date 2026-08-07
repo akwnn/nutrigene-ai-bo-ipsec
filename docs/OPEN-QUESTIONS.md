@@ -45,13 +45,19 @@ A argued the unit cube is indefensible: 2–4× extrapolation in all six coordin
 
 ---
 
-## 🟡 Q13 [ALAN] · A's oracle deviates from spec §4 three ways — B's veto, still unexercised
+## ✅ Q13 [RESOLVED 2026-08-08] · A's three deviations from spec §4 — **ACCEPTED by Alan. B does not exercise the veto.**
 
-**B's position: accept.** A's evidence is measured, not asserted — the spec's interaction term provably cannot move the optimum (0.00e+00 shift over 276 instances), which makes §4.6's own non-separability check unpassable. The risk A flagged as landing in B's lane is now **tested and did not occur** (0/40).
+**Decision: A's v8 stands. Port it, use it, cite it as the ensemble.**
 
-**Alan holds the veto.** Nothing further from B is needed here.
+Reasoning on the record, so the paper can state it:
 
----
+1. **The interaction term.** A showed by differentiation that the spec's `β` product **cannot move the optimum** — the bracket multiplying each factor's derivative contains no dependence on that factor. Measured shift over 276 instances: `0.00e+00`. This is not a preference; it means §4.6's own non-separability acceptance check **can never pass**, and in the 8% with a negative bracket the cached optimum was landing below the true one, driving regret negative. Reverting would mean knowingly shipping that.
+2. **Weight structure.** Equal weights cap depth at `1/d`, which kills the d=8 arm outright at σ_rel=0.25 — A measured 0 of 50 instances clearing the required depth. The 4-active/90% structure also matches the published 6→4 screening, giving the DoE arm something real to find, and gives ARD a 4.5–5.4× active-to-inert ratio against 1.0× under the spec. Under the spec the kernel comparison on the critical path had **no signal to discriminate on**.
+3. **Depth formula.** Overstated true depth by a median 28.4%.
+
+**The risk A flagged as landing in B's lane is now tested and did not occur.** `run_e4_cell` locates the true optimum and refuses to pool any cell whose optimum sits inside the training corner: **0/40 across all four κ**. The check stays regardless — it costs one optimisation per cell and is the difference between a null result and a silently meaningless one.
+
+**Consequence for the write-up:** the ensemble is `biphasic-hill-v8`, not spec §4 as written. Doc 1 §4 is now historical and must be marked as superseded before anyone cites it.
 
 ## 🟡 Q7 [ALAN] · Author order, and whether the code can be released publicly
 
@@ -72,6 +78,7 @@ Neither blocks building. Both block posting the preprint.
 | **Q9** | Face-centred vs rotatable? | Face-centred — rotatable axials leave the sub-box. |
 | **Q10** | The two pre-registered numbers | 512 candidates, τ = within-instance 0.80 quantile. **Version 2 now proposed — see Q14.** |
 | **Q11** | First commit / layout | Done, pushed, shared. |
+| **Q13** | Accept A's oracle deviations? | **Accepted 2026-08-08.** v8 is the ensemble. Risk to B's lane tested: 0/40. |
 | **C1** | `observation_noise=True` at unrun points? | Silently averages training noise. Never used. |
 | **C2** | Units for supplied noise? | Standardized, not raw. Off by 161× otherwise. |
 | **C3** | `Normalize` without bounds? | Learns from data. Always pass explicit bounds. |
