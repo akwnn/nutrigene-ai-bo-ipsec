@@ -1,0 +1,28 @@
+25 landscapes, kappa in (0.6, 0.7, 0.8, 0.9)
+
+  rho=2.0 (PRIMARY)      100/100 valid, 25 landscapes, raw mean -0.0269 (145s)
+  unit cube (limiting)   100/100 valid, 25 landscapes, raw mean +0.0548 (336s)
+
+========================================================================
+1. IS THE DIFFERENCE BETWEEN REGIMES REAL?
+   (two separate tests either side of a threshold do not establish this)
+========================================================================
+  [raw     ] cube minus rho2: +0.0817 [+0.0454, +0.1171]  REGIMES DIFFER = True
+  [fisher_z] cube minus rho2: +0.1024 [+0.0657, +0.1394]  REGIMES DIFFER = True
+
+========================================================================
+2. THE PRIMARY RESULT, UNDER BOTH AGGREGATIONS
+========================================================================
+  [raw     ] mean -0.0269 | sign-flip p=0.8611 [sampled, MC se 0.00077]
+             the advantage is below 0.08 (upper limit +0.0113). Established, not merely unrefuted — any real advantage is too small to be worth having.
+  [fisher_z] mean -0.0172 | sign-flip p=0.7450 [sampled, MC se 0.00097]
+             the advantage is below 0.08 (upper limit +0.0231). Established, not merely unrefuted — any real advantage is too small to be worth having.
+
+========================================================================
+3. SENSITIVITY: does the conclusion depend on the aggregation?
+========================================================================
+  primary regime, both aggregations agree in sign: True
+  absolute gap between aggregations: 0.0097 (bound is 0.08)
+  -> conclusion is ROBUST to the choice
+
+per-landscape values written to results/e4-robustness.json
