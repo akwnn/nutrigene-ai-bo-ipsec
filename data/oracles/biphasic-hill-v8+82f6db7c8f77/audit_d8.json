@@ -1,0 +1,21 @@
+{
+  "dim": 8,
+  "requested": 25,
+  "accepted": 25,
+  "candidates_tried": 30,
+  "acceptance_rate": 0.8333333333333334,
+  "rejections": {
+    "depth": 5
+  },
+  "oracle_version": "biphasic-hill-v8+82f6db7c8f77",
+  "nominal_xstar_mean": 0.4,
+  "nominal_n_mean": 2.0,
+  "accepted_xstar_mean": 0.3658877763199436,
+  "accepted_n_mean": 2.279358434722095,
+  "mean_factor_resamples": 13.28,
+  "true_depth_median": 0.11773509731942,
+  "true_depth_min": 0.11107704045964273,
+  "n_active": 4,
+  "active_share": 0.9,
+  "influence_ratio_median": 9.000000000000002
+}

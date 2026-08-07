@@ -1,0 +1,205 @@
+"""The bridge between A's numpy oracle and B's torch interfaces.
+
+Person A owns this. Every test here asserts a contract B's code depends on, so a
+refactor that breaks one should fail here rather than silently produce believable
+numbers three modules downstream.
+
+The traps these exist to catch are all silent ones: Yvar as a standard deviation
+rather than a variance, Yvar computed from the noiseless value rather than the
+observed one, and `truth` returning something noisy.
+"""
+
+from __future__ import annotations
+
+import numpy as np
+import pytest
+import torch
+
+from boec.campaign import Evaluator
+from boec.designs import sub_box_bounds
+from boec.e4 import Oracle
+from boec.oracles import ENSEMBLE_VERSION, load_ensemble, load_instance
+from boec.torch_oracle import BiphasicOracle
+
+KAPPAS = (0.6, 0.7, 0.8, 0.9)
+
+
+@pytest.fixture(scope="module")
+def d6():
+    return load_ensemble(dim=6)
+
+
+@pytest.fixture(scope="module")
+def oracle(d6):
+    return BiphasicOracle(d6[0])
+
+
+# ------------------------------------------------------------------ the contract
+def test_adapter_satisfies_b_s_structural_oracle_protocol(oracle):
+    """B's `run_e4_cell` consumes anything with these three members."""
+    assert isinstance(oracle, Oracle)
+
+
+def test_adapter_satisfies_the_campaign_evaluator_protocol(oracle):
+    """The two-method version the BO loop uses."""
+    assert isinstance(oracle, Evaluator)
+
+
+def test_x_star_is_the_unmodulated_peak_with_shape_d(oracle, d6):
+    xs = oracle.x_star
+    assert isinstance(xs, torch.Tensor)
+    assert xs.shape == (6,)
+    np.testing.assert_allclose(xs.numpy(), d6[0].xstar)
+
+
+def test_truth_returns_n_by_one(oracle):
+    assert oracle.truth(torch.rand(7, 6, dtype=torch.double)).shape == (7, 1)
+
+
+def test_evaluate_returns_n_by_m_pairs(oracle):
+    Y, Yvar = oracle.evaluate(torch.rand(5, 6, dtype=torch.double))
+    assert Y.shape == (5, 1) and Yvar.shape == (5, 1)
+
+
+# ------------------------------------------------------------------- noiselessness
+def test_truth_is_noiseless(oracle):
+    """If `truth` were noisy, E4's whole over-prediction distribution widens for a
+    reason that has nothing to do with extrapolation."""
+    X = torch.rand(20, 6, dtype=torch.double)
+    a, b = oracle.truth(X), oracle.truth(X)
+    assert torch.equal(a, b)
+
+
+def test_truth_at_the_cached_optimum_is_exactly_one(d6):
+    """Peak normalisation plus the fixed-point optimum: f(x_opt) == 1."""
+    for inst in d6[:5]:
+        o = BiphasicOracle(inst)
+        x = torch.from_numpy(np.asarray(inst.optimum_x, dtype=float)).reshape(1, -1)
+        assert float(o.truth(x)) == pytest.approx(1.0, abs=1e-9)
+
+
+def test_observe_is_actually_noisy(oracle):
+    X = torch.rand(30, 6, dtype=torch.double)
+    assert not torch.allclose(oracle.observe(X)[0], oracle.truth(X))
+
+
+# -------------------------------------------------------------------------- Yvar
+def test_yvar_is_a_variance_not_a_standard_deviation(d6):
+    """The classic fixed-noise GP bug, checked against the analytic truth.
+
+    The empirical spread of repeated observations at one point must match the
+    *variance* `f^2*sigma_rel^2 + sigma_add^2`, and be nowhere near its square root.
+    """
+    sr, sa = 0.25, 0.01
+    o = BiphasicOracle(d6[0], sigma_rel=sr, sigma_add=sa, seed=1)
+    X = torch.full((1, 6), 0.3, dtype=torch.double)
+    f = float(o.truth(X))
+
+    draws = np.array([float(o.observe(X)[0]) for _ in range(20_000)])
+    analytic = f**2 * sr**2 + sa**2
+    assert draws.var(ddof=1) == pytest.approx(analytic, rel=0.05)
+    assert draws.var(ddof=1) != pytest.approx(np.sqrt(analytic), rel=0.5)
+
+
+def test_the_plug_in_over_estimates_by_exactly_the_documented_amount(d6):
+    """`E[y^2] = f^2*(1 + sigma_rel^2) + sigma_add^2`, so the plug-in runs ~6% high at
+    sigma_rel = 0.25 and ~1% at 0.10.
+
+    Asserted rather than described, because the docstring says calibration is expected
+    to show mild over-coverage at the higher noise level and that this is the first
+    candidate. That is only a usable diagnostic if the size of the bias is pinned.
+    """
+    X = torch.full((1, 6), 0.3, dtype=torch.double)
+    for sr, expected_excess in ((0.10, 0.010), (0.25, 0.062)):
+        o = BiphasicOracle(d6[0], sigma_rel=sr, sigma_add=0.01, seed=2)
+        f = float(o.truth(X))
+        analytic = f**2 * sr**2 + 0.01**2
+        mean_plug_in = np.mean([float(o.observe(X)[1]) for _ in range(20_000)])
+        assert mean_plug_in / analytic - 1.0 == pytest.approx(expected_excess, abs=0.01)
+
+
+def test_yvar_is_the_plug_in_computed_from_the_observed_value(d6):
+    """Not the analytic variance. The analytic form is a function of the noiseless
+    f(x), from which |f(x)| is exactly recoverable — handing the model the truth at
+    every training point and corrupting E3."""
+    o = BiphasicOracle(d6[0], sigma_rel=0.10, sigma_add=0.01, seed=3)
+    X = torch.rand(50, 6, dtype=torch.double)
+    Y, Yvar = o.observe(X)
+    expected = Y**2 * 0.10**2 + 0.01**2
+    torch.testing.assert_close(Yvar, expected.clamp_min(0.01**2))
+
+
+def test_analytic_ablation_differs_from_the_plug_in_and_leaks_the_truth(d6):
+    """Kept behind a flag as an upper bound on calibration under perfect noise
+    knowledge — and demonstrably a leak, which is why it is not the default."""
+    X = torch.rand(40, 6, dtype=torch.double)
+    plug = BiphasicOracle(d6[0], seed=5, yvar_mode="plugin")
+    ana = BiphasicOracle(d6[0], seed=5, yvar_mode="analytic")
+    assert not torch.allclose(plug.observe(X)[1], ana.observe(X)[1])
+    recovered = ((ana.observe(X)[1] - 0.01**2) / 0.10**2).sqrt()
+    torch.testing.assert_close(recovered, ana.truth(X).abs())
+
+
+def test_yvar_is_floored_at_sigma_add_squared(d6):
+    """OPEN-QUESTIONS Q8. The floor is the assay's additive noise variance, not a
+    numerical epsilon — non-binding in Phase 1 by construction, and the guard that
+    stops a Phase 2 lookup table or a Phase 3 human returning a zero variance."""
+    o = BiphasicOracle(d6[0], sigma_rel=0.10, sigma_add=0.01)
+    assert o.yvar_floor == pytest.approx(1e-4)
+    _, Yvar = o.observe(torch.rand(200, 6, dtype=torch.double))
+    assert float(Yvar.min()) >= 1e-4
+
+
+def test_observe_is_reproducible_from_the_seed(d6):
+    X = torch.rand(10, 6, dtype=torch.double)
+    a = BiphasicOracle(d6[0], seed=11).observe(X)
+    b = BiphasicOracle(d6[0], seed=11).observe(X)
+    torch.testing.assert_close(a[0], b[0])
+    torch.testing.assert_close(a[1], b[1])
+
+
+# ------------------------------------------------------- the containment invariant
+@pytest.mark.parametrize("dim", (6, 8))
+def test_the_effective_peak_never_falls_inside_the_training_box(dim):
+    """**E4's premise, locked as a regression test.**
+
+    Under peak modulation the effective peak is `x*_i * m_i(x)`, so the joint optimum
+    sits at the fixed point and B's `sub_box_bounds` no longer *automatically* stops
+    short of it. `x_opt[i] <= kappa*x*[i]` iff `m_i(x_opt) <= kappa`, so this checks
+    the whole ensemble in closed form. If it ever fails, E4 measures nothing on the
+    affected cells and the fix is lower kappa or tighter gamma — **never a raised
+    x_star**, which would flatten the landscape and break E2.
+    """
+    for inst in load_ensemble(dim=dim):
+        x_opt = np.asarray(inst.optimum_x, dtype=float)
+        for kappa in KAPPAS:
+            upper = sub_box_bounds(
+                torch.from_numpy(inst.xstar), kappa
+            )[1].numpy()
+            assert (x_opt > upper).any(), (
+                f"{inst.instance_id} kappa={kappa}: the whole optimum lies inside the "
+                "training box, so there is nothing to extrapolate to"
+            )
+
+
+# ----------------------------------------------------------------- the committed data
+def test_the_committed_ensemble_loads_and_is_the_declared_version():
+    for dim in (6, 8):
+        ens = load_ensemble(dim=dim)
+        assert len(ens) == 25
+        assert all(i.dim == dim for i in ens)
+        assert all(i.oracle_version == ENSEMBLE_VERSION for i in ens)
+
+
+def test_a_sidecar_round_trips_through_the_loader(tmp_path):
+    """A clean clone must rebuild the exact landscape, or A/B numbers diverge."""
+    inst = load_ensemble(dim=6)[0]
+    import json
+
+    p = tmp_path / "x.json"
+    p.write_text(json.dumps(inst.sidecar()))
+    back = load_instance(p)
+    assert back.instance_id == inst.instance_id
+    np.testing.assert_allclose(back.gamma, inst.gamma)
+    X = torch.rand(16, 6, dtype=torch.double)
+    torch.testing.assert_close(BiphasicOracle(back).truth(X), BiphasicOracle(inst).truth(X))

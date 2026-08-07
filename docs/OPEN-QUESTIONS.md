@@ -57,6 +57,57 @@ Needed: the biphasic oracle with the depth inversion, feasibility scan, acceptan
 >
 > Adapter is a spike, not committed. Porting it properly is A's day-2 work.
 
+> ### ✅ PORTED — Q1 IS CLOSED. B can run E4 from a clean clone.
+>
+> One `boec` package. `space.py`, `oracles.py`, `evaluators.py` and a new
+> `torch_oracle.py` merged into B's tree; A's `designs.py` deleted per Q2. The ensemble
+> is **committed** at `data/oracles/biphasic-hill-v8+82f6db7c8f77/` (25 instances at each
+> of d ∈ {6, 8}, 456 KB) alongside `scripts/generate_oracles.py`.
+>
+> **`OMP_NUM_THREADS=1 pytest -q` → 288 passed, 1 xfailed.** B's 233 are untouched; 37 of
+> A's 42 migrated, 4 were dropped as exact duplicates of B's `test_designs.py` (mapping
+> recorded in the file), 1 is the strict xfail under Q14, and 18 are new contract tests
+> on the adapter.
+>
+> **Why the ensemble is committed rather than regenerated** — the acceptance loop is
+> rejection sampling around scipy's L-BFGS-B, and `oracle_version` hashes the
+> construction parameters, *not* the optimiser's behaviour. Two machines on different
+> scipy builds could accept different instances from the same seed under the same version
+> string with nothing downstream noticing. That is the silent-mixing failure the version
+> field exists to prevent, displaced from the config to the platform.
+>
+> **PF1 · d=6, 10 instances, σ_rel = 0.10, scoring box = unit cube** (B's shared metric):
+>
+> | κ | over-prediction, median [IQR] | > 0 | argmax escaped | PI width |
+> |---|---|---|---|---|
+> | 0.6 | **11.52** [9.99, 13.66] | 100% | 100% | 13.77 |
+> | 0.7 | 7.62 [5.28, 8.75] | 100% | 100% | 11.12 |
+> | 0.8 | 4.96 [3.08, 5.72] | 100% | 100% | 9.01 |
+> | 0.9 | 3.19 [1.72, 3.67] | 100% | 100% | 6.77 |
+>
+> **The mechanism is present and monotone in κ.** Nothing near zero, so E4 is not
+> replanned. But read it with Q12 open: the response maximum is 1.0, so an over-prediction
+> of 11.5 and an interval of 13.8 are the unit cube's geometry as much as the model's
+> behaviour. **These are not the E4 result.**
+>
+> **Turning-point breakdown, and it contradicts what `person_a_spec.md` predicted.** The
+> spec says low κ should produce *minima*, because the Hill function is convex below its
+> inflection. Measured: **saddle in 39 of 40 cells**, one maximum at κ = 0.9, **zero
+> minima**, and the stationary point is outside the sub-box in **100%** of cells. In six
+> dimensions a mixed Hessian is far likelier than a pure minimum. The prediction was
+> 1-D reasoning applied to a 6-D surface — worth correcting in the spec, and it vindicates
+> B's choice of the *constrained argmax* over the stationary point as the metric, since
+> "did the stationary point escape" would have been asking about a saddle.
+>
+> **PF2 · the four maths checks**
+>
+> 1. `(x* = 0.4, n = 2, δ = 0.414)` → **s = 3.9917**, r = 3.9917 ✓. Round-trip error 1.7e-16, and max 5.0e-16 over 2,000 random draws.
+> 2. On a γ = 0 variant of all 50 instances, the numerical optimum equals `√(EC50·IC50)` to **1.1e-16**, with `f(x_opt) − 1` at **3.3e-16**.
+> 3. **Acceptance rate — this is the number that justified the v8 weight change.** Under the specification's own procedure (independent draws, then test `min_i w_i·δ_i ≥ 0.045`): **6.395% at d=6 and 0.105% at d=8** — 952 draws per accepted instance. §4.6's claim that acceptance "should be high" is false as written. Under the shipped sampler: **100% at both**, 40/40.
+> 4. `δ_max` over the nominal draw spans p0 = 0.084 to p100 = 0.922, median 0.472. Realised depth on the shipped ensemble is median **0.1147** (d=6) and **0.1177** (d=8), minimum 0.1086 / 0.1111 — so **100% of instances clear the σ_rel = 0.25 threshold of 0.1083**, which no v7 instance did. Active/inert influence ratio is **4.50× (d=6) and 9.00× (d=8)**, against 1.0× under flat weights.
+>
+> The §4.6 closed form over-states true depth by **6.1% (d=6) / 3.0% (d=8)** on this ensemble — smaller than the 28% measured under the product interaction, because peak modulation perturbs depth far less, but still the reason acceptance is computed numerically.
+
 ### Q13 [EITHER] · A's oracle deviates from `phase1_build.md` §4 in three structural ways. Accept, or revert to spec?
 
 **This needs answering before A ports anything in, because the two versions are different ensembles and cannot be mixed.** Each deviation below is a fix for a defect A measured in the spec as written. None is a preference. **The spec is the technical authority, so B gets a veto** — but reverting means knowingly shipping the defect named in each item.
@@ -103,6 +154,25 @@ Related, and worth saying plainly: **§4.6's claim that acceptance "should be hi
 > `e4.py` already detects the symptom — it appends *"every model's answer fell inside the region it had seen"* — but that fires after the fact and per model, not as a guard.
 >
 > **A owes B a measured answer before E4 runs:** across the generated ensemble, the fraction of (instance, κ) cells where the effective peak falls inside `[0, κ·x*]`. If it is non-zero, the fix is A's, and per the shared invariant it is **lower κ or tighter γ — never a raised `x*`.** A is treating this as a blocking item on the port.
+>
+> #### ✅ MEASURED — not material. E4's premise holds everywhere. No change needed.
+>
+> `x_opt[i] ≤ κ·x*[i]` iff `m_i(x_opt) ≤ κ`, so the whole ensemble can be checked in closed form. Across **50 instances × 350 (instance, coordinate) pairs**:
+>
+> | | value |
+> |---|---|
+> | `m(x_opt)` range | **[0.849, 1.174]**, median 1.008 |
+> | `m < 0.6` (tightest κ) | **0.00%** |
+> | `m > 1.0` (peak pushed further out, harmless) | 53.7% |
+> | whole optimum inside the box, any κ, any instance | **0 / 200 cells** |
+>
+> Per-coordinate containment is **0.00% at κ ∈ {0.6, 0.7, 0.8}** and 18.0% (d=6) / 10.5% (d=8) at **κ = 0.9 only**. Verified a second, independent way — maximising `f` directly inside the sub-box and comparing to the global optimum — which agrees: the gap is strictly positive everywhere, minimum **0.0021**.
+>
+> **A's earlier worst-case estimate of `m ≈ 0.37` was wrong** — it assumed every γ and every `f̃` at its extreme simultaneously, which the fixed point does not do. The measured floor is 0.849. Reported because the loose bound is what prompted this check, and B should not carry it around.
+>
+> Two things for B to keep. Near-misses cluster at **high |γ| and at κ = 0.9 only** (Spearman(max|γ|, min m) = −0.44), so if γ's range ever widens this needs re-running. And at κ = 0.9 the response headroom outside the box is tiny anyway (global − sub-box max ≈ 0.009 median, well under one σ at either noise level), so κ = 0.9 is a weak cell for reasons beyond containment.
+>
+> Locked as `test_the_effective_peak_never_falls_inside_the_training_box`, parametrised over both dimensions and all four κ, so a future γ change fails the suite instead of silently emptying E4.
 
 ---
 
@@ -188,6 +258,18 @@ Across A's earlier κ×ρ sweep the pattern is consistent: over the unit cube th
 **A's proposal (not a decision — this touches a dated pre-registration):** keep the unit cube as a reported limiting case, and add **ρ as a declared factor with κ = 0.6, ρ = 2.0 as primary**. That is the cell where the effect is real and the geometry is arguable. Requires `extended_box_bounds` from Q2 moving into B's `designs.py`, and a **`preregistration_version` bump to 2 with the reason stated in the paper** — Q10 is explicit that the locked values do not move silently, and A is not proposing to move them silently.
 
 **If B prefers to leave the pre-registration untouched, A will not push.** Reporting one absurd-but-honest regime with the geometry stated is defensible; what is not defensible is discovering the objection at review.
+
+---
+
+### Q14 [B] · `screening_design(6)` cannot build the 16-run fraction E2's budget needs
+
+`_GENERATORS` has `(6, 1)` but no `(6, 2)`, so `screening_design(6)` falls back to a half fraction and returns **36 runs** (32 corners + 4 centre). E2's sequential-DoE arm needs the **16-run 2^(6−2) resolution-IV** fraction: stage 1 is 16 + 4 centre = 20, stage 2 is a face-centred CCD on 4 factors = 16 + 8 + 3 = 27, and 20 + 27 + 1 confirmation = **48**, identical to every other arm's budget. At 36 the arm spends 36 + 27 = 63 and is no longer comparable to anything.
+
+`2^(6−2)_IV` is a standard minimum-aberration design — generators `E = ABC`, `F = BCD`. **A is not adding it**: `designs.py` is B's under Q2, and the module deliberately raises rather than inventing a generator, which is the right behaviour and not one A should route around from the outside.
+
+**The ask:** add `(6, 2): [(4, (0,1,2)), (5, (1,2,3))]` with resolution 4 to `_GENERATORS`/`_RESOLUTION`, or tell A the budget should change instead.
+
+Recorded in code as `test_doe_arm_budget_is_47_design_runs_plus_one_confirmation`, marked `xfail(strict=True)` — so it fails loudly the moment B adds the generator, and retires itself rather than lingering as a stale skip.
 
 ---
 
