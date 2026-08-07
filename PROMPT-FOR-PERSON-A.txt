@@ -1,0 +1,94 @@
+I'm Person A on a 2-person research project. My teammate (Person B) has finished
+their half and pushed it. I'm blocked on them; they're now blocked on me.
+
+Repo: https://github.com/akwnn/nutrigene-ai-bo-ipsec
+
+SETUP FIRST
+  git clone https://github.com/akwnn/nutrigene-ai-bo-ipsec
+  cd nutrigene-ai-bo-ipsec
+  uv venv --python 3.11 && uv pip install -r requirements.txt
+  OMP_NUM_THREADS=1 .venv/bin/python -m pytest -q     # expect 233 passing
+
+READ IN THIS ORDER, BEFORE WRITING ANY CODE
+  1. START-HERE-PERSON-A.md      (repo root - written for me specifically)
+  2. docs/OPEN-QUESTIONS.md      (every decision outstanding; three are mine)
+  3. docs/preflight-findings.md  (two silent library bugs that land in MY lane)
+  4. docs/person_a_spec.md       (my work package)
+  5. docs/phase1_build.md S4     (the oracle spec - the technical authority)
+
+Then tell me what you understand my lane to be before you start building.
+
+WHAT I OWN
+  src/boec/space.py        SearchSpace from YAML, coded [0,1], constraint hooks
+  src/boec/oracles.py      the biphasic oracle  <-- THE CRITICAL PATH
+  src/boec/evaluators.py   Evaluator ABC + SyntheticEvaluator
+  src/boec/diagnostics.py  calibration diagnostics
+  Experiments E2 (efficiency) and E3 (calibration)
+
+BUILD THE ORACLE FIRST. It blocks four things: my own pre-flight check PF1, my
+E2, my E3, and Person B's E4. PF1 also decides whether B's experiment has any
+mechanism at all, so it needs answering today, not on day 8 of 14.
+
+THE INTERFACE - structural, I import nothing from B's code:
+    x_star   -> (d,)                    where each factor's response peaks
+    truth(X) -> (n, 1)                  NOISELESS value. Scoring only, never fitting.
+    observe(X) -> ((n, 1), (n, 1))      noisy measurement + its variance
+  A worked example is `StandInOracle` in tests/test_e4.py. Copy its shape.
+  For the campaign loop the matching interface is just evaluate(X) -> (Y, Yvar).
+
+DO NOT REIMPLEMENT - these exist, are tested, and A/B agreement depends on
+there being exactly one copy:
+  boec.metrics.over_prediction_at_constrained_argmax   <-- THE SHARED FUNCTION
+  boec.rsm.fit_second_order / classify_stationary_point
+  boec.designs.central_composite / sub_box_bounds / screening_design
+  boec.surrogate.build_gp / predictive
+  boec.campaign.Campaign, boec.runner.Runner
+If you think you need a variant that doesn't exist, ASK me - don't fork a
+second copy. That rule is in the team plan for a reason.
+
+TRAPS IN MY LANE (all silent - no error, no warning, believable output)
+  - NEVER call model.posterior(..., observation_noise=True). It substitutes
+    mean(train_Yvar) flat across all points. Use boec.surrogate.predictive.
+  - Yvar is a VARIANCE, not a standard deviation, in RAW outcome units.
+  - Return the PLUG-IN Yvar computed from the OBSERVED value, not the analytic
+    one from the noiseless value - the analytic version leaks the truth at
+    every training point and corrupts E3.
+  - truth() must be noiseless or E4's whole distribution widens spuriously.
+  - Never use loo_cv for a published number; use batch_cross_validation.
+
+THEN RUN AND REPORT
+  PF1: over-prediction vs kappa in {0.6,0.7,0.8,0.9} across 10 instances, using
+       B's shared metric - PLUS the turning-point breakdown (max/min/saddle/
+       ridge). A bare rate hides that low kappa produces minima, and the two
+       cases mean different things. If over-prediction is ~0 everywhere, B's
+       experiment has no mechanism and we replan together.
+  PF2: does (x*=0.4, n=2, delta=0.414) give s=3.9917 -> r=4? Does the closed
+       form hold on a beta=0 variant? Instance acceptance rate? delta_max
+       distribution?
+
+ANSWER THESE THREE IN docs/OPEN-QUESTIONS.md (edit the file, don't reply only
+in chat - that file is our single source of truth):
+  Q2  designs.py - B wrote it because PF1 was otherwise blocked, though it was
+      specced as mine. Keep B's / replace / co-own? ONE SENTENCE. If I've
+      already started my own, say so immediately - that's the one thing here
+      that wastes a day.
+  Q5  The spec mandates qLogEI, which assumes noiseless measurements, but ours
+      are deliberately noisy. BoTorch's qLogNEI exists for exactly this case.
+      B implemented both and left the spec's choice as default rather than
+      deviating silently. My call, under E2's no-tuning fairness rule.
+  Q8  The Yvar floor value. The spec says "a floor" and never gives a number.
+
+HOUSE RULES
+  - Outcome tensors are always (n, m), even at m=1.
+  - Everything internal in coded [0,1]. Physical units are labels only.
+  - Seed python, numpy and torch; log the seed on every row.
+  - No Ax, no Docker, no GPU. Raw BoTorch.
+  - Type hints, docstrings stating tensor shapes, fail loudly on shape
+    mismatches. This code gets read by biologists - clarity over cleverness.
+  - Write tests as you go; the suite is at 233 and shouldn't go backwards.
+  - Anything needing a decision from B or from me goes in docs/OPEN-QUESTIONS.md
+    and nowhere else.
+
+CONTEXT: 14-day project, this is day 1. Phase 3 (wet lab) is out of scope. We
+are NOT contacting the original paper's authors. Compute is ~10x cheaper than
+the spec assumed, so nothing needs to shrink and re-running is cheap.
