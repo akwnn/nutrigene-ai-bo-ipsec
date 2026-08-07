@@ -65,6 +65,7 @@ anyone sees who won.
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from dataclasses import dataclass, field
 
 import numpy as np
@@ -77,6 +78,7 @@ __all__ = [
     "ScorerAgreement",
     "auc_against_threshold",
     "discrimination_test",
+    "exact_paired_sign_test",
     "instance_bootstrap_ci",
     "nearest_neighbour_distance",
     "paired_difference_ci",
@@ -436,3 +438,49 @@ def paired_difference_ci(
     lo = float(np.quantile(means, alpha / 2.0))
     hi = float(np.quantile(means, 1.0 - alpha / 2.0))
     return float(diff.mean()), lo, hi, bool(lo > 0.0)
+
+
+def exact_paired_sign_test(differences: Sequence[float]) -> tuple[float, int, bool]:
+    """Exact p-value for "is this difference really above zero", by enumeration.
+
+    **With few landscapes this is better than a bootstrap, not merely different.**
+
+    A bootstrap builds its answer out of the handful of numbers you gave it, so
+    with ten landscapes its tail estimates rest on ten points and it can be
+    optimistic. This instead enumerates **every possible way the signs could
+    have come out** — with ten landscapes that is 1024 arrangements, few enough
+    to check all of them — and asks how many are as extreme as what we saw.
+
+    No approximation, no resampling, no assumption about the shape of the
+    distribution. The answer is exact.
+
+    Recommended for this project because it needs no asymptotics at a cluster
+    count where cluster-robust methods are known to be optimistic (Cameron &
+    Miller 2015; MacKinnon & Webb on few-cluster inference).
+
+    Args:
+        differences: one value per landscape — scorer A minus scorer B.
+
+    Returns:
+        ``(p_value, n_used, is_exact)``. ``is_exact`` is False when there were
+        too many landscapes to enumerate and sampling was used instead.
+    """
+    vals = np.asarray([d for d in differences if np.isfinite(d)], dtype=np.float64)
+    n = vals.size
+    if n == 0:
+        return float("nan"), 0, False
+    observed = float(vals.mean())
+
+    if n <= 20:  # 2**20 is a million; beyond that, sample instead
+        signs = np.array(
+            [[1 if (i >> b) & 1 else -1 for b in range(n)] for i in range(2**n)],
+            dtype=np.float64,
+        )
+        means = (signs * vals).mean(axis=1)
+        p = float((means >= observed).mean())
+        return p, n, True
+
+    rng = np.random.default_rng(0)
+    signs = rng.choice([-1.0, 1.0], size=(20000, n))
+    means = (signs * vals).mean(axis=1)
+    return float((means >= observed).mean()), n, False

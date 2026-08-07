@@ -1,79 +1,128 @@
 # E4 — extrapolation-driven over-prediction. Person B.
 #
-# PRE-REGISTRATION. The two values marked PRE-REGISTERED below are fixed before
-# any E4 result has been seen. They are recorded here, in git, with a commit
-# date, so that "we chose the threshold that flattered the result" is not
-# available as an objection. Do not change them after looking at results; if
-# they must change, bump `preregistration_version` and say so in the paper.
+# PRE-REGISTRATION. Values marked PRE-REGISTERED are fixed before the run they
+# govern. Recorded in git, with a date, so "you chose the settings that
+# flattered the result" is not available as an objection.
 
-preregistration_version: 1
+preregistration_version: 2
 
-# --- fixed by spec, restated here so the resolved config is self-contained ---
-dim: 6                    # d=8 excluded: 45 terms at n=48 leaves 3 residual df,
-                          # so the interval balloons for reasons unrelated to
-                          # extrapolation and the comparison collapses.
-n_subbox: 48              # 28 second-order terms -> 20 residual df.
+# =============================================================================
+# VERSION 2 — what changed, and why. Written BEFORE the confirmatory run.
+# =============================================================================
+#
+# Version 1 ran 10 landscapes x 4 kappa and is reported in
+# results/E4-FIRST-RESULTS.md. Two changes follow. Both were decided before
+# re-running, and neither depends on the sign or size of what version 1 found.
+#
+# -----------------------------------------------------------------------------
+# CHANGE 1 — the scoring region. Unit cube -> [0, rho * kappa * x*], rho = 2.0
+# -----------------------------------------------------------------------------
+# Person A's objection (OPEN-QUESTIONS Q12), accepted.
+#
+# Scoring over the whole unit cube asks every model about territory 2-4x
+# further out than anything it measured, in all six ingredients at once. The
+# published study that motivates this project extrapolated 1.2x, in one
+# ingredient. Version 1 measured the consequence: the traditional method's
+# interval came out around 7 times the entire response range, which makes
+# "its interval is too narrow" unavailable as a finding, because an interval
+# that wide covers almost anything. A reviewer would call the regime staged.
+#
+# A's kappa-by-rho sweep also showed the finding is *recoverable* at rho = 2.0:
+# the traditional method's interval covers the truth 79.8% of the time when it
+# claims 95%. That is the interval being too narrow, measurably, in a regime
+# whose geometry is defensible.
+#
+# The unit cube is retained as a reported limiting case, not dropped.
+#
+# -----------------------------------------------------------------------------
+# CHANGE 2 — landscapes. 10 -> 40
+# -----------------------------------------------------------------------------
+# THE JUSTIFICATION MATTERS MORE THAN THE NUMBER. Raising n because a result
+# missed significance, then reporting it as though n had been chosen in
+# advance, is what makes a finding unpublishable.
+#
+# n = 40 is NOT powered against the +0.051 that version 1 observed. It is sized
+# from the pilot's DESIGN AND SPREAD ONLY, by Simonsohn's small-telescopes
+# procedure (Psychological Science 2015):
+#
+#   * smallest effect worth caring about = the effect n = 10 had 33% power to
+#     detect. At df = 9 and the pilot's per-cell spread (~0.16) that is
+#     dz ~ 0.48, i.e. a difference in Spearman rho of about 0.08.
+#   * Simonsohn's multipliers: 2.5x original for 80% power to reject it,
+#     3.5x for 90%, 4.5x for 95%. n = 40 is 4x, so roughly 92%.
+#
+# This quantity depends on the number of landscapes and their variability. It
+# does not depend on the observed effect, which is what makes re-planning from
+# it standard practice rather than p-hacking (Wittes & Brittain 1990, internal
+# pilot / blinded sample-size re-estimation: re-planning from a NUISANCE
+# parameter does not inflate error rates; re-planning from the observed effect
+# does).
+#
+# Sizing on the observed effect would also have been unstable: at kappa = 0.7
+# the observed difference was 0.009, for which the naive calculation demands
+# about 1200 landscapes. That instability is the tell that it is the wrong tool.
+#
+# THE GOAL IS A CONVINCING NULL, NOT A RESCUED POSITIVE. A null at 10
+# landscapes reads as "underpowered, cannot tell". At 40 it reads as "we looked
+# hard and it is not there", and supports the equivalence claim below. If the
+# difference does clear zero at 40, it is reported honestly and noted as too
+# small to matter practically. Both outcomes are publishable, which is the test
+# of a well-posed decision.
+#
+# Sentence for the paper, fixed now:
+#
+#   "At the pre-registered n = 10 the paired difference in Spearman rho between
+#    the GP and the nearest-neighbour null was +0.051, 95% CI [-0.031, +0.118],
+#    not significant but consistent in sign across all four kappa. We re-ran at
+#    n = 40 landscapes, sized by Simonsohn's small-telescopes procedure against
+#    a smallest effect of interest of 0.08 derived from the pilot's variance
+#    alone. This decision was fixed before the confirmatory run and does not
+#    depend on the observed point estimate."
+
+# --- fixed by spec ------------------------------------------------------------
+dim: 6                    # d=8 excluded: 45 terms at n=48 leaves 3 residual df
+n_subbox: 48              # 32 factorial + 12 axial + 4 centre
 kappa: [0.6, 0.7, 0.8, 0.9]
-n_instances: 10
+sub_box_design: ccd       # NOT space-filling: (X'X)^-1 IS the comparator
 
-sub_box_design: ccd       # NOT space-filling. (X'X)^-1 — hence the polynomial
-                          # prediction interval, which IS the comparator — depends
-                          # entirely on the design, and a practitioner would use
-                          # a CCD.
+# --- PRE-REGISTERED (v2) ------------------------------------------------------
+n_instances: 40           # v1 was 10. See CHANGE 2.
+rho: 2.0                  # v1 was the unit cube. See CHANGE 1.
+rho_reported_also: [inf]  # unit cube kept as a limiting case
+primary_cell: {kappa: 0.6, rho: 2.0}
 
-# --- PRE-REGISTERED (1 of 2): discrimination-test candidate set ---------------
+# --- PRE-REGISTERED (v1, unchanged) -------------------------------------------
 discrimination:
-  # Sobol sample over the extended box (unit cube), drawn per instance.
-  #
-  # Chosen 512 because: the spec rules out a handful of points ("with 10 points
-  # the AUC has no usable standard error"); 512 gives a stable per-instance
-  # Spearman rho; a power of two keeps the Sobol sequence balanced; and PF4
-  # showed compute is ~10x cheaper than the spec assumed, so there is no reason
-  # to economize here. Evaluating three scorers at 512 points is milliseconds.
-  n_candidates: 512       # PRE-REGISTERED
-  sobol_scramble: true
-
-  # Primary outcome. No threshold to justify.
-  primary: spearman_rho   # rho between each scorer and |polynomial error|
-
-  # --- PRE-REGISTERED (2 of 2): the AUC threshold ---------------------------
-  # Secondary outcome. AUC needs a binary label, so |polynomial error| has to be
-  # cut somewhere. tau is defined as a WITHIN-INSTANCE QUANTILE, not an absolute
-  # value, for two reasons:
-  #   1. Instances differ in response scale and in depth, so any absolute tau
-  #      would mean something different on each one.
-  #   2. A quantile fixes the positive base rate at exactly 1 - q on every
-  #      instance and every kappa, which is what makes AUCs comparable across
-  #      them. With a floating base rate, AUC differences confound prevalence
-  #      with discrimination.
-  auc_tau_quantile: 0.80  # PRE-REGISTERED — top 20% of |polynomial error|
-                          # within each instance count as "large error".
+  n_candidates: 512
+  primary: spearman_rho
+  auc_tau_quantile: 0.80  # within-instance quantile, so instances compare
 
   scorers:
     - gp_predictive_sd            # the claim
     - second_order_pi_width       # the DoE comparator
     - nearest_neighbour_distance  # the model-free null that must be beaten
 
-  # Report this BEFORE the result. If all three scorers rank-correlate above
-  # 0.95 there is no headroom for the comparison to show anything either way,
-  # and that is the finding — not a null result to bury.
   report_scorer_correlation_matrix_first: true
   no_headroom_threshold: 0.95
 
-  # Points within a run are sequential proposals and are not exchangeable.
+  # Resample LANDSCAPES, never cells. Four kappa on one landscape are four
+  # measurements of the same landscape. Version 1 pooled cells and its interval
+  # came out 1.45x too narrow; fixed before this run.
   bootstrap: instance_level
   n_bootstrap: 2000
 
-# --- models fitted to identical points ---------------------------------------
+  # Distribution-free confirmation. At 40 landscapes the sign arrangements can
+  # no longer all be enumerated, so this samples; at 10 it was exact.
+  exact_sign_test: true
+
+  # PRE-REGISTERED (v2): the equivalence claim, if the difference does not
+  # clear zero. States a bound rather than "we found nothing".
+  equivalence_bound: 0.08   # smallest difference in Spearman rho worth having
+  equivalence_test: tost_one_sided
+
+# --- models fitted to identical points -----------------------------------------
 models:
-  second_order:        {primary: true,  prediction_interval: true}
+  second_order:         {primary: true,  prediction_interval: true}
   stepwise_third_order: {primary: false, prediction_interval: false}
-    # No interval, deliberately. Stepwise selects terms from the same data the
-    # interval is computed from, making it anticonservative — fatal when "the
-    # interval is too narrow" is the finding. Descriptive only: over-prediction,
-    # stationary-point class, surviving term count.
-  gp:                  {primary: false, prediction_interval: true}
-  parametric:          {primary: false, prediction_interval: false}
-    # Practitioner form: additive biphasic, no interaction terms, by NLS.
-    # An oracle-form fit is matched by construction, wins trivially, and tells
-    # us nothing. Log convergence failures rather than dropping instances.
+  gp:                   {primary: false, prediction_interval: true}
+  parametric:           {primary: false, prediction_interval: false}

@@ -329,6 +329,50 @@ def _plugin_noise(gp, X: Tensor, config: E4Config) -> Tensor:
     )
 
 
+
+def _aggregate_by_instance(rows, extract) -> dict[str, float]:
+    """Collapse each landscape's cells to one number before any error bar.
+
+    **This is a correctness fix, not a refinement.** Cells from the same
+    landscape at different κ are four measurements *of the same landscape* —
+    they are not four independent things. Handing all of them to a bootstrap
+    as if they were independent inflates the effective sample size fourfold
+    and makes the interval too narrow. Measured here: **1.45× too narrow.**
+
+    The project spec already states the rule ("bootstrap at the instance level
+    only"). It was applied correctly to points within a run and then missed
+    across κ — right principle, wrong place.
+
+    Aggregating first is not a compromise. For a mean or a paired mean
+    difference on a balanced design — which is exactly what is computed here —
+    it is *mathematically equivalent* to the cluster bootstrap (Field & Welsh
+    2007), and it needs no new machinery. What it gives up is the trend across
+    κ, which is reported separately and per-κ anyway, so nothing is lost.
+
+    Args:
+        rows: cells, each carrying an ``instance_id``.
+        extract: pulls the number of interest out of one cell.
+
+    Returns:
+        instance id to its mean, skipping non-finite values.
+    """
+    by_instance: dict[str, list[float]] = {}
+    for r in rows:
+        by_instance.setdefault(r.instance_id, []).append(float(extract(r)))
+    out: dict[str, float] = {}
+    for key, vals in by_instance.items():
+        finite = [v for v in vals if np.isfinite(v)]
+        if finite:
+            out[key] = float(np.mean(finite))
+    return out
+
+
+def _paired_on_shared(a: dict[str, float], b: dict[str, float]):
+    """Line two scorers up landscape by landscape before differencing them."""
+    shared = sorted(set(a) & set(b))
+    return [a[k] for k in shared], [b[k] for k in shared]
+
+
 def summarise(results: list[E4Result], model: str = "second_order") -> dict:
     """Pool cells into the numbers that go in the paper.
 
@@ -336,7 +380,11 @@ def summarise(results: list[E4Result], model: str = "second_order") -> dict:
     extrapolation actually happened, the turning-point breakdown, and the
     discrimination comparison against the model-free null.
     """
-    from boec.discrimination import instance_bootstrap_ci, paired_difference_ci
+    from boec.discrimination import (
+        exact_paired_sign_test,
+        instance_bootstrap_ci,
+        paired_difference_ci,
+    )
 
     # EXCLUDE cells where the true optimum sat inside the training corner.
     # Those cells had nothing to extrapolate towards, so pooling them in would
@@ -357,8 +405,11 @@ def summarise(results: list[E4Result], model: str = "second_order") -> dict:
             ),
         }
 
-    over = [r.over_prediction.get(model, float("nan")) for r in results]
-    point, lo, hi = instance_bootstrap_ci(over)
+    # One value per landscape, never one per cell — see _aggregate_by_instance.
+    over_by_instance = _aggregate_by_instance(
+        results, lambda r: r.over_prediction.get(model, float("nan"))
+    )
+    point, lo, hi = instance_bootstrap_ci(list(over_by_instance.values()))
 
     kinds: dict[str, int] = {}
     for r in results:
@@ -366,9 +417,15 @@ def summarise(results: list[E4Result], model: str = "second_order") -> dict:
         kinds[k] = kinds.get(k, 0) + 1
 
     usable = [r for r in results if r.discrimination is not None]
-    gp_rho = [r.discrimination.spearman["gp_predictive_sd"] for r in usable]
-    nn_rho = [r.discrimination.spearman["nearest_neighbour_distance"] for r in usable]
-    poly_rho = [r.discrimination.spearman["second_order_pi_width"] for r in usable]
+    gp_by = _aggregate_by_instance(usable, lambda r: r.discrimination.spearman["gp_predictive_sd"])
+    nn_by = _aggregate_by_instance(usable, lambda r: r.discrimination.spearman["nearest_neighbour_distance"])
+    poly_by = _aggregate_by_instance(usable, lambda r: r.discrimination.spearman["second_order_pi_width"])
+    gp_rho, nn_rho, poly_rho = list(gp_by.values()), list(nn_by.values()), list(poly_by.values())
+    gp_v_nn = _paired_on_shared(gp_by, nn_by)
+    gp_v_poly = _paired_on_shared(gp_by, poly_by)
+    sign_p, sign_n, sign_exact = exact_paired_sign_test(
+        [a - b for a, b in zip(*gp_v_nn, strict=True)]
+    )
 
     return {
         "model": model,
@@ -391,8 +448,14 @@ def summarise(results: list[E4Result], model: str = "second_order") -> dict:
         # same landscapes, so most of their variation is shared and cancels in
         # the difference. Comparing the intervals side by side throws that
         # cancellation away and can hide a real effect entirely.
-        "gp_beats_null_paired": paired_difference_ci(gp_rho, nn_rho),
-        "gp_beats_poly_paired": paired_difference_ci(gp_rho, poly_rho),
+        "gp_beats_null_paired": paired_difference_ci(*gp_v_nn),
+        "gp_beats_poly_paired": paired_difference_ci(*gp_v_poly),
+        # Distribution-free confirmation. At this many landscapes every possible
+        # arrangement of signs can be enumerated, so this needs no asymptotics
+        # at a cluster count where bootstrap methods are known to be optimistic.
+        "gp_beats_null_exact_p": sign_p,
+        "gp_beats_null_exact_n_landscapes": sign_n,
+        "gp_beats_null_exact_is_enumerated": sign_exact,
         "n_cells_without_headroom": sum(
             1 for r in usable if not r.discrimination.agreement.has_headroom
         ),

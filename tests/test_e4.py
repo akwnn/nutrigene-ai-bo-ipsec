@@ -270,7 +270,8 @@ def test_summary_reports_the_paired_comparison_not_just_separate_intervals():
     not evidence of no difference when both are measured on the same
     landscapes."""
     results = [
-        run_e4_cell(StandInOracle(seed=s), E4Config(kappa=k, seed=s, **FAST))
+        run_e4_cell(StandInOracle(seed=s), E4Config(kappa=k, seed=s, **FAST),
+                    instance_id=f"i{s}")
         for s in range(3) for k in (0.6, 0.8)
     ]
     s = summarise(results)
@@ -279,6 +280,21 @@ def test_summary_reports_the_paired_comparison_not_just_separate_intervals():
         assert np.isfinite(mean)
         assert isinstance(sig, bool)
         assert lo <= mean <= hi
+
+
+def test_one_landscape_gives_no_interval_rather_than_a_fake_one():
+    """Found while fixing the clustering bug: if every cell carries the same
+    landscape id there is only ONE independent unit, and no honest interval
+    exists. It must return nan rather than an interval computed from the
+    within-landscape spread, which would be exactly the bug we just fixed."""
+    results = [
+        run_e4_cell(StandInOracle(seed=0), E4Config(kappa=k, seed=0, **FAST))
+        for k in (0.6, 0.8)
+    ]
+    assert len({r.instance_id for r in results}) == 1
+    _, lo, hi, sig = summarise(results)["gp_beats_null_paired"]
+    assert np.isnan(lo) and np.isnan(hi)
+    assert sig is False
 
 
 # --------------------------------------------------------------------------
@@ -332,3 +348,93 @@ def test_summary_refuses_rather_than_returning_a_meaningless_number():
     assert s["n_cells"] == 0
     assert "Lower kappa" in s["error"]
     assert "over_prediction_mean" not in s
+
+
+# --------------------------------------------------------------------------
+# Nested-structure bug: cells within a landscape are not independent
+# --------------------------------------------------------------------------
+
+def test_pooling_collapses_to_one_value_per_landscape():
+    """**The correctness fix.** Four κ on one landscape are four measurements
+    of the same landscape, not four independent things. Treating them as
+    independent inflates the sample size fourfold and narrows the interval."""
+    from boec.e4 import _aggregate_by_instance
+
+    class Row:
+        def __init__(self, iid, v): self.instance_id = iid; self.v = v
+
+    rows = [Row("a", 1.0), Row("a", 3.0), Row("b", 10.0), Row("b", 20.0)]
+    agg = _aggregate_by_instance(rows, lambda r: r.v)
+    assert agg == {"a": 2.0, "b": 15.0}
+
+
+def test_aggregation_skips_non_finite_without_losing_the_landscape():
+    from boec.e4 import _aggregate_by_instance
+
+    class Row:
+        def __init__(self, iid, v): self.instance_id = iid; self.v = v
+
+    agg = _aggregate_by_instance(
+        [Row("a", 1.0), Row("a", float("nan")), Row("b", float("nan"))],
+        lambda r: r.v,
+    )
+    assert agg == {"a": 1.0}, "a landscape with no usable value must drop out entirely"
+
+
+def test_pooled_interval_is_wider_than_the_naive_one():
+    """Guards the fix from being reverted. If someone pools cells again this
+    fails, because the naive interval is measurably too narrow (1.45x)."""
+    from boec.discrimination import paired_difference_ci
+    from boec.e4 import _aggregate_by_instance, _paired_on_shared
+
+    class Row:
+        def __init__(self, iid, gp, nn):
+            self.instance_id = iid; self.gp = gp; self.nn = nn
+
+    # The GP's ADVANTAGE must vary by landscape, not just the overall level —
+    # a landscape effect common to both scorers cancels in the difference and
+    # leaves nothing to cluster on. The real data behaves this way: per-landscape
+    # differences ranged from -0.202 to +0.168.
+    rng = np.random.default_rng(0)
+    rows = []
+    for i in range(10):
+        level = rng.normal(0.45, 0.10)              # shared level, cancels
+        advantage = rng.normal(0.05, 0.13)          # varies BY LANDSCAPE
+        for _ in range(4):
+            rows.append(Row(f"i{i}",
+                            level + advantage + rng.normal(0, 0.01),
+                            level + rng.normal(0, 0.01)))
+
+    naive = paired_difference_ci([r.gp for r in rows], [r.nn for r in rows])
+    correct = paired_difference_ci(
+        *_paired_on_shared(_aggregate_by_instance(rows, lambda r: r.gp),
+                           _aggregate_by_instance(rows, lambda r: r.nn))
+    )
+    assert (correct[2] - correct[1]) > (naive[2] - naive[1]), (
+        "the correctly-clustered interval must be WIDER than the naive one"
+    )
+
+
+def test_paired_alignment_survives_a_missing_landscape():
+    from boec.e4 import _paired_on_shared
+
+    a, b = _paired_on_shared({"x": 1.0, "y": 2.0, "z": 3.0}, {"x": 0.5, "z": 1.5})
+    assert (a, b) == ([1.0, 3.0], [0.5, 1.5])
+
+
+def test_exact_sign_test_is_enumerated_at_this_scale(results_valid):
+    """At ten landscapes every arrangement of signs can be checked, so the
+    answer needs no asymptotics — better than a bootstrap at this cluster
+    count, not merely different."""
+    s = summarise(results_valid)
+    assert s["gp_beats_null_exact_is_enumerated"] is True
+    assert 0.0 <= s["gp_beats_null_exact_p"] <= 1.0
+
+
+@pytest.fixture
+def results_valid():
+    return [
+        run_e4_cell(StandInOracle(seed=i), E4Config(kappa=k, seed=i, **FAST),
+                    instance_id=f"i{i}")
+        for k in (0.6, 0.8) for i in range(3)
+    ]
