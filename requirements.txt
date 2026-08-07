@@ -1,0 +1,26 @@
+# Exact pins — spec §10 "Environment". Both people must run the same versions or
+# the numbers do not compare. Verified working on macOS/arm64, CPU only.
+#
+#   uv venv --python 3.11
+#   uv pip install -r requirements.txt
+#
+# Python 3.11.15. No GPU, no Docker, no Hydra, no Ax.
+
+# --- core ---
+botorch==0.18.1
+gpytorch==1.15.2
+linear-operator==0.6.1
+torch==2.13.0
+
+# --- stats / data ---
+numpy==2.4.6
+scipy==1.17.1
+pandas==3.0.5
+pyarrow==25.0.0
+statsmodels==0.14.6
+patsy==1.0.2
+scikit-learn==1.9.0
+
+# --- config + test ---
+pyyaml==6.0.3
+pytest==9.1.1

@@ -1,0 +1,79 @@
+# E4 — extrapolation-driven over-prediction. Person B.
+#
+# PRE-REGISTRATION. The two values marked PRE-REGISTERED below are fixed before
+# any E4 result has been seen. They are recorded here, in git, with a commit
+# date, so that "we chose the threshold that flattered the result" is not
+# available as an objection. Do not change them after looking at results; if
+# they must change, bump `preregistration_version` and say so in the paper.
+
+preregistration_version: 1
+
+# --- fixed by spec, restated here so the resolved config is self-contained ---
+dim: 6                    # d=8 excluded: 45 terms at n=48 leaves 3 residual df,
+                          # so the interval balloons for reasons unrelated to
+                          # extrapolation and the comparison collapses.
+n_subbox: 48              # 28 second-order terms -> 20 residual df.
+kappa: [0.6, 0.7, 0.8, 0.9]
+n_instances: 10
+
+sub_box_design: ccd       # NOT space-filling. (X'X)^-1 — hence the polynomial
+                          # prediction interval, which IS the comparator — depends
+                          # entirely on the design, and a practitioner would use
+                          # a CCD.
+
+# --- PRE-REGISTERED (1 of 2): discrimination-test candidate set ---------------
+discrimination:
+  # Sobol sample over the extended box (unit cube), drawn per instance.
+  #
+  # Chosen 512 because: the spec rules out a handful of points ("with 10 points
+  # the AUC has no usable standard error"); 512 gives a stable per-instance
+  # Spearman rho; a power of two keeps the Sobol sequence balanced; and PF4
+  # showed compute is ~10x cheaper than the spec assumed, so there is no reason
+  # to economize here. Evaluating three scorers at 512 points is milliseconds.
+  n_candidates: 512       # PRE-REGISTERED
+  sobol_scramble: true
+
+  # Primary outcome. No threshold to justify.
+  primary: spearman_rho   # rho between each scorer and |polynomial error|
+
+  # --- PRE-REGISTERED (2 of 2): the AUC threshold ---------------------------
+  # Secondary outcome. AUC needs a binary label, so |polynomial error| has to be
+  # cut somewhere. tau is defined as a WITHIN-INSTANCE QUANTILE, not an absolute
+  # value, for two reasons:
+  #   1. Instances differ in response scale and in depth, so any absolute tau
+  #      would mean something different on each one.
+  #   2. A quantile fixes the positive base rate at exactly 1 - q on every
+  #      instance and every kappa, which is what makes AUCs comparable across
+  #      them. With a floating base rate, AUC differences confound prevalence
+  #      with discrimination.
+  auc_tau_quantile: 0.80  # PRE-REGISTERED — top 20% of |polynomial error|
+                          # within each instance count as "large error".
+
+  scorers:
+    - gp_predictive_sd            # the claim
+    - second_order_pi_width       # the DoE comparator
+    - nearest_neighbour_distance  # the model-free null that must be beaten
+
+  # Report this BEFORE the result. If all three scorers rank-correlate above
+  # 0.95 there is no headroom for the comparison to show anything either way,
+  # and that is the finding — not a null result to bury.
+  report_scorer_correlation_matrix_first: true
+  no_headroom_threshold: 0.95
+
+  # Points within a run are sequential proposals and are not exchangeable.
+  bootstrap: instance_level
+  n_bootstrap: 2000
+
+# --- models fitted to identical points ---------------------------------------
+models:
+  second_order:        {primary: true,  prediction_interval: true}
+  stepwise_third_order: {primary: false, prediction_interval: false}
+    # No interval, deliberately. Stepwise selects terms from the same data the
+    # interval is computed from, making it anticonservative — fatal when "the
+    # interval is too narrow" is the finding. Descriptive only: over-prediction,
+    # stationary-point class, surviving term count.
+  gp:                  {primary: false, prediction_interval: true}
+  parametric:          {primary: false, prediction_interval: false}
+    # Practitioner form: additive biphasic, no interaction terms, by NLS.
+    # An oracle-form fit is matched by construction, wins trivially, and tells
+    # us nothing. Log convergence failures rather than dropping instances.
