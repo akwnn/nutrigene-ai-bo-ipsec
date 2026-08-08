@@ -58,6 +58,38 @@ the model form is right. Disagreement across model families expresses doubt
 about the form itself** — which is exactly the quantity our whole scientific
 argument says the polynomial's interval cannot represent.
 
+## It does not collapse far from data — the documented failure mode, tested
+
+The obvious way this idea dies: if all four models revert toward the same flat
+answer far from data, they stop disagreeing exactly where you need the warning.
+That is documented behaviour for neural-net ensembles (Kang et al.,
+arXiv:2310.00873), so it had to be checked rather than assumed.
+
+Swept over how far out we ask, 15 landscapes, κ = 0.6:
+
+| how far out | GP's uncertainty | plain distance | **disagreement** | disagreement advantage | size of disagreement |
+|---|---|---|---|---|---|
+| 1.2× | +0.020 | +0.080 | **+0.299** | +0.219 [+0.165, +0.270] | 0.026 |
+| 1.5× | +0.412 | +0.351 | **+0.525** | +0.175 [+0.129, +0.221] | 0.088 |
+| 2.0× | +0.795 | +0.486 | +0.767 | +0.281 [+0.225, +0.343] | 0.163 |
+| 3.0× | +0.827 | +0.650 | +0.776 | +0.125 [+0.044, +0.207] | 0.594 |
+| whole cube | +0.661 | +0.572 | **+0.755** | +0.183 [+0.108, +0.257] | 3.104 |
+
+**No collapse.** The disagreement grows steadily the further out you ask
+(0.026 → 3.104) and beats plain distance at every distance tested.
+
+### The row that matters most is the first one
+
+**At 1.2× — the distance the published study actually extrapolated — both
+pre-registered warning systems are close to useless.** The GP's own uncertainty
+scores +0.020 and plain distance +0.080; neither tells you much. Disagreement
+scores +0.299.
+
+So the regime where our motivating case study actually lived is the regime where
+single-model uncertainty fails hardest, and where disagreement helps most in
+relative terms. If that holds up under a proper pre-registered test, it is the
+practically useful version of this whole line of work.
+
 ## What this does NOT license
 
 - **It is not a result.** It was found by looking at the data after the
