@@ -54,6 +54,7 @@ from torch import Tensor
 
 __all__ = [
     "ParametricFit",
+    "biphasic_response_torch",
     "biphasic_response",
     "fit_practitioner_parametric",
 ]
@@ -263,3 +264,29 @@ def fit_practitioner_parametric(
         converged=True, n_restarts_converged=n_ok,
         residual_sum_squares=rss, message="converged",
     )
+
+
+def biphasic_response_torch(
+    x: Tensor, ec50: Tensor, ic50: Tensor, n: Tensor
+) -> Tensor:
+    """The rise-plateau-decline curve, in torch so a GP can use it as its mean.
+
+    Same formula as :func:`biphasic_response`, ported because a GP's mean has
+    to be a torch computation. Kept beside the original deliberately: if one is
+    edited and the other is not, a test comparing them fails.
+
+    Args:
+        x: ``(..., d)`` concentrations, coded 0 to 1.
+        ec50: ``(d,)`` where the helping effect kicks in.
+        ic50: ``(d,)`` where the hurting effect kicks in.
+        n: ``(d,)`` steepness.
+
+    Returns:
+        ``(..., d)`` each factor peaking at 1.
+    """
+    xs = x.clamp_min(_EPS)
+    xn = xs.pow(n)
+    helping = xn / (ec50.pow(n) + xn)
+    hurting = 1.0 / (1.0 + (xs / ic50).pow(n))
+    s = (ic50 / ec50).pow(n / 2.0)
+    return helping * hurting * ((1.0 + s) / s).pow(2)

@@ -291,3 +291,72 @@ def test_deterministic_given_a_seed(data):
     torch.manual_seed(11)
     b = lengthscales(build_gp(*data, UNIT, fit=True)).clone()
     assert torch.allclose(a, b)
+
+
+# --------------------------------------------------------------------------
+# The shape-aware fallback. Kept despite being a NEGATIVE result — see
+# results/NEGATIVE-shape-aware-mean.md. It is worse than a flat fallback, and
+# these tests exist so the machinery stays correct for anyone who revisits it.
+# --------------------------------------------------------------------------
+
+def test_shape_fallback_collapses_to_the_plain_model_when_its_weight_is_zero():
+    """The bounded-downside argument, at least mechanically.
+
+    (It does not hold in practice: the weight is fitted in-sample, where the
+    shape IS helpful, so it never shrinks. That is the negative result.)
+    """
+    from boec.surrogate import BiphasicMean
+
+    d = 4
+    m = BiphasicMean(
+        torch.full((d,), 0.2, dtype=torch.double),
+        torch.full((d,), 0.9, dtype=torch.double),
+        torch.full((d,), 2.0, dtype=torch.double),
+        torch.full((d,), 0.25, dtype=torch.double),
+    )
+    with torch.no_grad():
+        m.raw_scale.zero_()
+        m.offset.fill_(0.7)
+    out = m(torch.rand(5, d, dtype=torch.double))
+    assert torch.allclose(out, torch.full((5,), 0.7, dtype=torch.double))
+
+
+def test_shape_fallback_needs_no_unit_conversion():
+    """Designed so the rescaling trap cannot arise: the learned scale absorbs
+    whatever conversion would otherwise have to be got right by hand."""
+    from boec.surrogate import BiphasicMean
+
+    d = 3
+    m = BiphasicMean(*(torch.full((d,), v, dtype=torch.double)
+                       for v in (0.2, 0.9, 2.0, 0.3)))
+    assert m.raw_scale.requires_grad and m.offset.requires_grad
+    for name in ("ec50", "ic50", "n_exp", "weights"):
+        assert not getattr(m, name).requires_grad, f"{name} must stay frozen"
+
+
+def test_shape_fallback_refuses_a_failed_fit():
+    """A fallback built from a fit that never converged would be arbitrary,
+    and arbitrary is worse than flat."""
+    from boec.parametric import fit_practitioner_parametric
+    from boec.surrogate import biphasic_mean_from_fit
+
+    bad = fit_practitioner_parametric(torch.rand(5, 3, dtype=torch.double),
+                                      torch.rand(5, 1, dtype=torch.double))
+    assert not bad.converged
+    with pytest.raises(ValueError, match="did not converge"):
+        biphasic_mean_from_fit(bad)
+
+
+def test_torch_and_numpy_response_curves_agree():
+    """Two copies of the same formula. If one is edited and the other is not,
+    this fails."""
+    import numpy as np
+
+    from boec.parametric import biphasic_response, biphasic_response_torch
+
+    rng = np.random.default_rng(0)
+    ec, ic, n = rng.uniform(0.1, 0.4, 4), rng.uniform(0.6, 1.4, 4), rng.uniform(1, 3, 4)
+    X = rng.uniform(0.01, 1.0, (30, 4))
+    a = biphasic_response(X, ec, ic, n)
+    b = biphasic_response_torch(*(torch.as_tensor(v) for v in (X, ec, ic, n))).numpy()
+    assert np.abs(a - b).max() < 1e-12

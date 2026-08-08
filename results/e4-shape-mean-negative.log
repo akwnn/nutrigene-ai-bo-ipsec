@@ -1,0 +1,12 @@
+SHAPE-AWARE GP MEAN — does falling back on biology beat falling back on flat?
+15 landscapes, kappa 0.6 & 0.8, rho=2.0. Over-promise, lower is better.
+
+  plain GP (flat fallback)      +0.302
+  GP + biphasic fallback        +0.563
+  practitioner form alone       +0.606
+
+  shaped minus plain: +0.2605 [+0.1468,+0.3730]  significant=True
+  -> SHAPED IS WORSE
+
+  learned weight on the shape: mean 5.332, min 4.862, max 5.863
+  (near zero would mean the model rejected the shape; it did not)

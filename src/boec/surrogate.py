@@ -63,6 +63,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+import gpytorch
 import torch
 from botorch.fit import fit_gpytorch_mll
 from botorch.models import SingleTaskGP
@@ -75,7 +76,9 @@ from torch import Tensor
 
 __all__ = [
     "Predictive",
+    "BiphasicMean",
     "base_kernel",
+    "biphasic_mean_from_fit",
     "build_gp",
     "kernel_is_matern",
     "lengthscale_lower_bound",
@@ -194,6 +197,7 @@ def build_gp(
     *,
     use_scale_kernel: bool = True,
     fit: bool = True,
+    mean_module=None,
 ) -> SingleTaskGP:
     """Build and fit the model. All five traps are handled here.
 
@@ -231,6 +235,10 @@ def build_gp(
             has nothing to do with the hypothesis being tested. Leaving it free
             avoids confounding the result with the setting.
         fit: whether to fit. False gives an unfitted model, for tests.
+        mean_module: what the model assumes where it has no data. ``None`` is
+            the default flat fallback. Pass a :class:`BiphasicMean` to have it
+            fall back onto the biology's shape instead — see that class for why
+            the downside is bounded.
 
     Returns:
         A fitted model.
@@ -273,6 +281,7 @@ def build_gp(
         # base_kernel() must be used to read anything back.
         covar = ScaleKernel(covar)
 
+    extra = {"mean_module": mean_module} if mean_module is not None else {}
     model = SingleTaskGP(
         train_X.double(),
         train_Y.double(),
@@ -281,6 +290,7 @@ def build_gp(
         # TRAP 3: explicit bounds, always.
         input_transform=Normalize(d=d, bounds=bounds.double()),
         outcome_transform=Standardize(m=m),
+        **extra,
     )
 
     if fit:
@@ -396,3 +406,89 @@ def predictive(
         scale2 = outcome_scale(model).pow(2)
         post = model.posterior(X.double(), observation_noise=noise.double() / scale2)
         return Predictive(post.mean, post.variance, includes_noise=True)
+
+
+# ---------------------------------------------------------------------------
+# Giving the model a shape to fall back on
+# ---------------------------------------------------------------------------
+
+class BiphasicMean(gpytorch.means.Mean):
+    """Tells the model what shape to assume where it has no data.
+
+    **The problem this solves.** Far from anything measured, a standard GP
+    reverts to a flat guess. That is honest but useless: it is exactly where
+    we need a prediction, and "flat" is the one thing the biology certainly is
+    not. Every ingredient helps, plateaus, then hurts.
+
+    So instead of falling back to flat, it falls back to *that shape* — fitted
+    from the data by the practitioner-form model. Near the data the GP does
+    what it always did; far away it settles onto biology rather than onto zero.
+
+    **Why there is a learned weight on it, and why that matters.** The shape
+    might be wrong, and a confidently wrong fallback is worse than a flat one.
+    So the shape is multiplied by a weight the model learns for itself:
+
+        mean(x) = scale * shape(x) + offset
+
+    If the shape is not helping, ``scale`` shrinks toward zero and what is left
+    is a constant — **exactly the model we already had**. So this cannot do
+    worse than the current setup other than by the optimiser landing badly. The
+    downside is bounded by construction, which is the only reason it is worth
+    trying on a short timeline.
+
+    **The trap this design avoids.** The obvious implementation freezes the
+    fitted shape and inserts it directly. That fails silently, because the model
+    works internally on rescaled measurements — so a mean supplied in the
+    original units is wrong by whatever the rescaling factor happens to be, and
+    nothing complains. Learning ``scale`` and ``offset`` absorbs that
+    conversion, so there is no unit to get wrong. Same class of trap as the two
+    already documented above; designed out rather than documented around.
+
+    Args:
+        ec50: ``(d,)`` fitted rise points, from the practitioner-form model.
+        ic50: ``(d,)`` fitted decline points.
+        n: ``(d,)`` fitted steepness.
+        weights: ``(d,)`` per-ingredient contribution.
+    """
+
+    def __init__(self, ec50: Tensor, ic50: Tensor, n: Tensor, weights: Tensor) -> None:
+        super().__init__()
+        # Frozen: fitted beforehand, not re-fitted here. Fitting the shape and
+        # the kernel together at 48 points invites them to explain each other.
+        self.register_buffer("ec50", ec50.double())
+        self.register_buffer("ic50", ic50.double())
+        self.register_buffer("n_exp", n.double())
+        self.register_buffer("weights", weights.double())
+        # Learned. These are what make the fallback optional rather than forced.
+        self.register_parameter("raw_scale", torch.nn.Parameter(torch.zeros(1, dtype=torch.double)))
+        self.register_parameter("offset", torch.nn.Parameter(torch.zeros(1, dtype=torch.double)))
+
+    @property
+    def shape_weight(self) -> float:
+        """How much the model ended up trusting the shape. Near 0 means not at all."""
+        return float(self.raw_scale.detach())
+
+    def forward(self, x: Tensor) -> Tensor:
+        from boec.parametric import biphasic_response_torch
+
+        per_factor = biphasic_response_torch(x, self.ec50, self.ic50, self.n_exp)
+        shape = (per_factor * self.weights).sum(-1)
+        return self.raw_scale * shape + self.offset
+
+
+def biphasic_mean_from_fit(fit) -> BiphasicMean:
+    """Build the fallback shape from an already-fitted practitioner-form model.
+
+    Raises:
+        ValueError: if that fit never converged. A fallback built from a failed
+            fit would be arbitrary, and arbitrary is worse than flat.
+    """
+    if not fit.converged:
+        raise ValueError(
+            "cannot build a fallback shape from a fit that did not converge — "
+            f"it would be arbitrary. Optimizer said: {fit.message}"
+        )
+    return BiphasicMean(
+        torch.as_tensor(fit.ec50), torch.as_tensor(fit.ic50),
+        torch.as_tensor(fit.n), torch.as_tensor(fit.weights),
+    )
