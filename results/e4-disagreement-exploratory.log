@@ -1,0 +1,12 @@
+EXPLORATORY — does MODEL DISAGREEMENT beat single-model uncertainty?
+rho=2.0 (pre-registered regime), 25 landscapes, 512 candidates each
+
+  GP predictive sd               rho = +0.4370
+  plain distance                 rho = +0.4120
+  disagreement (all 4 models)    rho = +0.5285
+  disagreement (no GP)           rho = +0.4081
+
+PAIRED COMPARISONS (25 landscapes):
+  disagreement  vs  plain distance         +0.1165 [+0.0976,+0.1362]  sig=True p=0.0000 ***
+  disagreement  vs  GP uncertainty         +0.0915 [+0.0676,+0.1144]  sig=True p=0.0000 ***
+  disagreement w/o GP  vs  plain distance  -0.0039 [-0.0315,+0.0246]  sig=False p=0.6021
