@@ -110,3 +110,99 @@ def test_bo_beats_random_on_hartmann6():
         f"BO {np.mean(bo):.4f} did not beat random {np.mean(rand):.4f} on Hartmann6 "
         "-- this is a bug in the loop, not a finding"
     )
+
+
+# ---------------------------------------------------------------------------
+# T7 / spec §E1's FOURTH check — the only one that touches our own landscape
+# ---------------------------------------------------------------------------
+#
+# The three functions above are borrowed. **They would pass identically if the Hill
+# oracle were broken**, because they never touch it. Spec §E1 therefore requires a
+# fourth check on a zero-interaction instance, where the optimum is known in closed
+# form from the construction rather than from a table:
+#
+#     ft = h*g*((1+s)/s)^2  with  h = x^n/(EC50^n + x^n),  g = 1/(1+(x/IC50)^n)
+#     => derivative numerator is  EC50^n * IC50^n - x^(2n),  so  x* = sqrt(EC50*IC50)
+#
+# The shipped v8 ensemble is `peak_modulation`, so the beta=0 case of the spec is
+# gamma = 0 here: the modulation exp((f0 - 1/2) @ gamma^T / k) collapses to 1, the
+# effective peaks fall back to xstar, and the response is a weighted sum of
+# peak-normalised factors that each hit exactly 1.0 at their own optimum.
+#
+# TASKS.md T7. Never run before: run_e1.py executes only the three textbook
+# functions.
+
+def _zero_interaction_instance(dim: int = 6):
+    """A shipped instance with the interaction switched off. Nothing else changed."""
+    import copy
+
+    from boec.oracles import load_ensemble
+
+    inst = copy.deepcopy(load_ensemble(dim=dim)[0])
+    inst.gamma = np.zeros((dim, dim))
+    return inst
+
+
+def test_the_zero_interaction_optimum_is_exactly_sqrt_ec50_times_ic50():
+    """The construction identity, at machine precision. If this drifts, every
+    'distance to the optimum' number in the project is measured against the wrong
+    point and nothing else would reveal it."""
+    inst = _zero_interaction_instance()
+    np.testing.assert_allclose(
+        np.sqrt(inst.ec50 * inst.ic50), inst.xstar, rtol=0, atol=1e-12
+    )
+
+
+def test_the_zero_interaction_response_peaks_at_exactly_one():
+    """Peak-normalisation is what makes over-prediction interpretable against a
+    ceiling of 1.0 — the entire E4 mechanism is stated relative to it."""
+    from boec.oracles import HillOracle
+
+    inst = _zero_interaction_instance()
+    o = HillOracle(inst)
+    assert float(np.asarray(o.f(inst.xstar.reshape(1, -1))).ravel()[0]) == pytest.approx(
+        1.0, abs=1e-12
+    )
+
+
+def test_switching_the_interaction_off_actually_changed_something():
+    """Guards the guard. If gamma were already ~0 on the shipped ensemble, the two
+    tests above would pass without exercising the zero-interaction case at all —
+    the 'test that cannot fail' pattern this project has now hit three times."""
+    from boec.oracles import HillOracle, load_ensemble
+
+    shipped = load_ensemble(dim=6)[0]
+    X = np.full((1, 6), 0.3)
+    assert not np.isclose(
+        float(np.asarray(HillOracle(shipped).f(X)).ravel()[0]),
+        float(np.asarray(HillOracle(_zero_interaction_instance()).f(X)).ravel()[0]),
+        atol=1e-6,
+    )
+
+
+@pytest.mark.slow
+def test_bo_converges_toward_sqrt_ec50_ic50_on_a_zero_interaction_instance():
+    """**Spec §E1's fourth check, run at last.** BO on our own landscape family, with
+    the optimum known in closed form.
+
+    Scored on `truth()` at the recipe the method would report (Q17), never on the
+    noisy observation. The bar is deliberately loose — 48 evaluations in six
+    dimensions is not many and this is a smoke test, not a performance claim — but a
+    gross failure here would mean the oracle, the evaluator or the loop is wrong in a
+    way the three borrowed functions cannot see."""
+    from boec.campaign import Campaign, CampaignConfig
+    from boec.torch_oracle import BiphasicOracle
+
+    inst = _zero_interaction_instance()
+    o = BiphasicOracle(inst, sigma_rel=0.10, seed=0)
+    b = torch.stack([torch.zeros(6, dtype=torch.double), torch.ones(6, dtype=torch.double)])
+
+    c = Campaign(o, b, CampaignConfig(d=6, budget=48, q=4, seed=0)).run()
+    X, Y = c.train_X, c.train_Y
+    reported = X[int(torch.argmax(Y.ravel()))]
+    true_at_reported = float(o.truth(reported.unsqueeze(0)))
+
+    assert true_at_reported > 0.80, (
+        f"BO reported a recipe worth {true_at_reported:.3f} against a known ceiling "
+        f"of 1.0 on a zero-interaction instance — suspect the oracle or the loop"
+    )
