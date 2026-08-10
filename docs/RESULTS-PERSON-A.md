@@ -204,9 +204,18 @@ measurement code, not bad luck.
 | 4 | A reported a **100% acceptance rate measured at the wrong floor** (bare `SamplerConfig()` carries the v6 value 0.045, not the shipped 0.1083) | A wrong number in a commit message; corrected to 70%/80% |
 | 5 | A's E2 scored **best true value among visited points** | Credits an arm for a recipe it cannot identify → space-filling arms win by construction |
 | 6 | **B's T9:** the paired opening batch never existed, and the test that promised it asserted determinism instead | E2's fairness rule was false; the primary comparison was unpaired |
+| 7 | **B's Q23:** `coord` was a **second** unpaired arm and undeclared — A's `coordinate_descent` starts from a random interior point and never calls `initial_design` | `identical_initial_design_per_seed: true` was false for **two** arms, one declared and one silent — the same defect as #6, one arm over |
 
 Guards now in the suite for every one. Defect 3 is the worst of them — a pre-registration
 is the one document a reader trusts not to contain a test that cannot fail.
+
+Defect 7 is worth dwelling on because A introduced it *while fixing* #6. The random start
+was deliberate and the reasoning was sound — "a centre start would be a hidden advantage on
+an oracle whose optimum sits near the middle" — but a sound local decision made a global
+fairness claim false, and A did not go back and check the claim. B declared the exemption
+rather than repairing it, correctly: seeding coordinate descent from the best of the shared
+opening would make it a stronger, different algorithm rather than the textbook baseline it
+is there to represent, and changing an arm after its numbers exist is its own problem.
 
 Two things A believed and had to withdraw, both recorded rather than quietly dropped:
 
