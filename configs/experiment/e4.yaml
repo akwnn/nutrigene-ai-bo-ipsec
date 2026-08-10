@@ -172,19 +172,48 @@ n_instances_rationale: equivalence_margin_not_power   # NOT the stale Q14 table
 # a ratio of medians is NOT the coverage rate, so this is a well-posedness risk,
 # not a proof. preflight_pf1.py already records `over` and `pi` per cell, so the
 # real rate is a reporting change rather than a new experiment.
+# AMENDED after the rate was computed (scripts/pf1_coverage.py, 800 cells). The
+# first version of this block registered a single coverage surface and made the
+# crossing conditional on monotonicity. Both were superseded:
+#
+#   * There are ZERO crossings, not the two the ratio-of-medians suggested.
+#     Coverage never reaches nominal anywhere -- highest cell 0.625 against 0.95,
+#     including at rho=1.2. The crossing is undefined because the interval never
+#     had nominal coverage to lose. The objection's conclusion survived; its
+#     stated mechanism did not, and the correction is recorded in Q16.
+#
+#   * THE DECISIVE DEFECT: the registered sentence never named the POINT SET.
+#     Coverage at the model's own argmax and coverage over the domain are both
+#     "coverage of the second-order prediction interval", and they return
+#     OPPOSITE verdicts -- A's 96-98% at rho=1.2 is domain-wide, the 0.475 above
+#     is at the argmax. A primary two people can compute correctly and disagree
+#     about is not a pre-registration.
+#
+# NOTE ON ORDER, which is the part that matters for the record: the amendment
+# structure below was written and committed BEFORE the coverage rate existed.
+# Seeing the numbers changed the mechanism and added the point-set split; it did
+# not choose the endpoint.
 interval_coverage:
-  # The estimand is a SURFACE on the registered grid, not a point — the same
-  # logic Q16 applies to over-prediction, applied to its own replacement primary
-  # instead of exempting it.
-  estimand: coverage_surface_over_kappa_rho_grid
   nominal: 0.95
   computed_as: fraction_of_cells_with_abs_over_prediction_le_half_interval
-  # The crossing is reported ONLY where coverage is monotone in rho. Where it is
-  # not, the non-monotonicity IS the reported finding.
-  report_crossing_rho: where_monotone_in_rho_only
-  monotonicity_check: required_before_reporting_any_crossing
-  # What would falsify the claim outright.
-  falsified_if: coverage_flat_near_nominal_across_the_whole_grid
+  # BOTH point sets, each a surface on the registered grid. Mirrors the structure
+  # E3 already uses, and applies Q16's own "the grid is the result" logic to its
+  # replacement primary instead of exempting it.
+  point_sets:
+    constrained_argmax:  # decision-relevant, and the worst case -- the argmax is
+                         # selected for high predicted value, so this carries a
+                         # selection effect BY DESIGN. It is the recipe a
+                         # practitioner would actually run.
+      estimand: coverage_surface_over_kappa_rho_grid
+      role: primary
+    held_out_sobol:      # domain-wide, no selection effect.
+      estimand: coverage_surface_over_kappa_rho_grid
+      role: primary
+  # The gap between the two surfaces is itself reported: it is the difference
+  # between "well calibrated" and "well calibrated except where it sends you".
+  report_gap_between_point_sets: true
+  report_crossing_rho: where_one_exists
+  falsified_if: coverage_flat_near_nominal_across_the_whole_grid_at_both_point_sets
 
 # -----------------------------------------------------------------------------
 # T2 / Q15 — the DoE arm's dropped-factor hold level. B's call.

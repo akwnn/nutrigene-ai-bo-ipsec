@@ -9,13 +9,14 @@ import pytest
 import torch
 
 from boec.campaign import CampaignConfig
-from boec.optimizers import AcqConfig
+from boec.optimizers import AcqConfig, initial_design, sobol_design
 from boec.runner import (
     STATIC_METHODS,
     GridCell,
     Runner,
     load_results,
     run_static_baseline,
+    static_design,
 )
 
 FAST = AcqConfig(num_restarts=2, raw_samples=32, mc_samples=16)
@@ -37,6 +38,19 @@ class Formula:
 class NoNoise:
     def evaluate(self, X):
         return torch.rand(X.shape[0], 1, dtype=torch.double), None
+
+
+class Deterministic:
+    """A pure function of X — same points in, same values out, no RNG anywhere.
+
+    Needed for the Q18 pairing tests: they assert that two arms agree over the
+    shared opening, which is only evidence if the evaluator actually depends on
+    the points it is given.
+    """
+
+    def evaluate(self, X):
+        y = (-((X - 0.35) ** 2).sum(-1, keepdim=True)).exp()
+        return y, torch.full_like(y, 1e-4)
 
 
 def _bounds():
@@ -294,3 +308,74 @@ def test_every_static_method_still_dispatches(tmp_path, method):
     r = Runner(tmp_path)
     frame = r.run_cell(_cell(method=method), Formula(), _bounds(), _cfg())
     assert frame is not None and set(frame["method"]) == {method}
+
+
+# --------------------------------------------------------------------------
+# T9 / Q18 — the paired opening batch
+# --------------------------------------------------------------------------
+
+def test_sobol_pairing_is_free_and_stays_free():
+    """The Sobol arm's natural 48-point design ALREADY opens on `initial_design`,
+    because `initial_design` IS a Sobol design of 2d+2 at the same seed and the
+    sequence prefix is stable. Guarded because it is the reason Q18's policy costs
+    nothing on this arm, and a change to either function would silently end it."""
+    b = _bounds()
+    assert torch.allclose(sobol_design(b, 20, seed=0)[: 2 * D + 2],
+                          initial_design(b, seed=0))
+
+
+@pytest.mark.parametrize("method", ["sobol", "random"])
+def test_paired_arms_open_on_the_identical_batch(method):
+    """Q18, PRE-REGISTERED. Spec §E2: 'the initial design must be identical across
+    methods for a given seed'. It was not — `run_static_baseline` never called
+    `initial_design`, so random and LHS shared no opening with qLogEI at all."""
+    b = _bounds()
+    X = static_design(b, method, budget=20, seed=0)
+    assert torch.allclose(X[: 2 * D + 2], initial_design(b, seed=0))
+
+
+def test_the_shared_opening_is_not_shuffled_into_the_curve():
+    """The second half of the defect. Even Sobol's free pairing was destroyed
+    downstream: `run_static_baseline` permuted all `budget` points, scattering the
+    shared opening through the curve. Pairing that survives design but not scoring
+    is not pairing."""
+    b, n_init = _bounds(), 2 * D + 2
+    # A DETERMINISTIC function of X. `NoNoise` returns torch.rand ignoring its
+    # input, so two arms would differ there even on identical points and the test
+    # would pass without demonstrating anything.
+    a = run_static_baseline(Deterministic(), b, "sobol", 20, seed=0, n_orderings=64)
+    c = run_static_baseline(Deterministic(), b, "random", 20, seed=0, n_orderings=64)
+    # Same opening, same order, unshuffled -> the arms' curves agree exactly over
+    # the opening segment and only diverge once the methods do.
+    assert np.allclose(a[:n_init], c[:n_init])
+
+
+def test_averaging_still_only_shuffles_the_remainder():
+    """The ordering average is what makes a one-shot design comparable to an
+    adaptive one; it must survive the pairing fix rather than be traded away."""
+    b = _bounds()
+    one = run_static_baseline(Formula(), b, "sobol", 20, seed=1, n_orderings=1)
+    many = run_static_baseline(Formula(), b, "sobol", 20, seed=1, n_orderings=200)
+    n_init = 2 * D + 2
+    assert np.allclose(one[:n_init], many[:n_init])      # opening is fixed
+    assert not np.allclose(one[n_init:], many[n_init:])  # remainder still averaged
+
+
+def test_pairing_lhs_raises_because_it_is_a_registered_exemption():
+    """Q18 exempts LHS. A Latin hypercube's stratification is a property of the
+    whole n-point set, so a Sobol prefix plus 34 LHS points is not a Latin
+    hypercube — it is a straw man wearing the name of a baseline. Requesting it
+    is requesting something unregistered, so it raises rather than quietly
+    producing a hybrid under the `lhs` label."""
+    with pytest.raises(ValueError, match="lhs"):
+        static_design(_bounds(), "lhs", budget=20, seed=0, share_opening=True)
+
+
+def test_lhs_unpaired_is_still_a_real_latin_hypercube():
+    """The exemption has to actually buy something: unpaired LHS keeps one point
+    per stratum per dimension, which is the entire reason to include the arm."""
+    b, n = _bounds(), 20
+    X = static_design(b, "lhs", budget=n, seed=0, share_opening=False)
+    for j in range(D):
+        strata = (X[:, j] * n).floor().long().clamp(max=n - 1)
+        assert len(set(strata.tolist())) == n
