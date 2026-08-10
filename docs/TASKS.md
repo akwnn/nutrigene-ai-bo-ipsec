@@ -3,12 +3,69 @@
 **Decisions live in `OPEN-QUESTIONS.md`. This file is only the ordering and the
 owner.** If the two disagree, OPEN-QUESTIONS wins.
 
-Ordered by what blocks what, not by size. Everything in Gate 0 is an hour of
-decisions and it is the whole critical path.
+Ordered by what blocks what, not by size.
+
+## Status — 2026-08-10
+
+**Gate 0 is CLOSED** (`be3cdc5`). All four items answered and pushed. The
+critical path is now Gate 1/2, and the next thing needing a human is T9.
+
+| | | |
+|---|---|---|
+| T1 Q16 | ✅ | Replacement primary accepted; its *reported quantity* objected to. See the caveat below. |
+| T2 Q15 | ✅ | `best_stage1` primary, `zero` a declared sensitivity, both always reported. Registered with neither arm run. |
+| T3 Q14 | ✅ | n=40 for margin, not power. Stale power table marked, not deleted. |
+| T4 Q12 | ✅ | Carried into the config. |
+| T5 | ✅ | **Premise was wrong** — `preregistration_version` was *already* 2 (verified against `e2a93aa:configs/experiment/e4.yaml`). The real gap was that v2's content did not contain what v2 claimed to; fixed as a "VERSION 2 ADDENDUM" rather than a silent re-bump. |
+| T8 | ◐ | Trap closed (`e2a93aa`). Wiring `DoEResult` into a best-so-far curve is still A's. |
+| T12 | ✅ | Measured, d=6 single-threaded: qLogEI **7.4s**, random/sobol/lhs **<0.01s**, DoE arm **0.03s**. ~100 BO cells, so the full 500-cell E2 grid is **~13 minutes**, not a day. |
+| T9 | ⚠ | In progress as **Q18**, but see the warning below. |
+
+### T1 follow-up — the real coverage rate is now computed, and it changes the objection
+
+`scripts/pf1_coverage.py`, log at `results/pf1-coverage.log`. 800 cells,
+instance-level cluster bootstrap. Covered ⟺ `|over| <= pi/2` at the model's own
+constrained argmax.
+
+| κ | ρ=1.2 | 1.5 | 2 | 3 | cube |
+|---|---|---|---|---|---|
+| 0.6 | 0.475 | 0.075 | 0.025 | 0.000 | 0.100 |
+| 0.7 | 0.325 | 0.100 | 0.075 | 0.100 | 0.175 |
+| 0.8 | 0.525 | 0.300 | 0.300 | 0.425 | 0.550 |
+| 0.9 | 0.575 | 0.300 | 0.350 | 0.575 | 0.625 |
+
+**Highest coverage anywhere on the grid: 0.625, against a nominal of 0.95.**
+
+1. **Zero crossings, not two.** Coverage starts below nominal at ρ=1.2 and never
+   approaches it, so "the ρ at which it crosses" is undefined because the
+   interval never had nominal coverage to lose. The objection's *conclusion*
+   holds; its stated mechanism does not.
+2. **The non-monotonicity is real** and reproduces on the actual rate, not just
+   on the ratio of medians — non-monotone at all four κ, dipping then recovering
+   toward the cube. The saturation mechanism argued in Q16 is supported.
+3. **The defect neither of us had.** This does *not* contradict A's 96–98% at
+   ρ=1.2 — it measures a **different point set**. A's is coverage over the
+   design/domain; this is coverage at the recipe the model tells you to run.
+   Both legitimate, and they give **opposite verdicts on the same registered
+   sentence**. The primary never says which. **Naming the point set is the fix,
+   and it matters more than the monotonicity argument.**
+
+**Proposed amendment:** register coverage at *both* point sets as a surface over
+the (κ, ρ) grid — at the constrained argmax (decision-relevant, worst case) and
+at a fixed held-out set (domain-wide, no selection effect) — reporting a
+crossing only where one exists. Same two-point-set structure E3 already uses,
+and the same "the grid is the result" logic Q16 argues for, applied to its own
+primary. **A has not seen this. Q16 is currently owned by the other session.**
+
+**⚠ T9 is marked A+B and is being decided by B alone.** Spec §E2 says the
+pairing choice is worth a significant-vs-non-significant result, which is why it
+carries two owners. It is being registered as Q18 — visible and objectable,
+which is the right pattern — but A has not seen it. **Do not run E2 on it until
+A has.**
 
 ---
 
-## Gate 0 — the version-2 pre-registration · **blocks every remaining run**
+## Gate 0 — the version-2 pre-registration · ✅ CLOSED (`be3cdc5`)
 
 Q12, Q14, Q15 and Q16 each say *decide before the next run*, and all four are
 meant to land as **one** bump. Nothing that produces a headline number can run
