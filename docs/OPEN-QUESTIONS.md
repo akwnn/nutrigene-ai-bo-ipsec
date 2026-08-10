@@ -43,9 +43,79 @@ anchor must too): σ=0.25 **1.013×, p=0.336**; σ=0.10 **1.191×, p=0.0062**.
 
 **Both registered predictions were correct.** σ=0.25 does not discriminate; σ=0.10 does.
 
-### The σ=0.25 negative is stronger than the rule required, and it cuts against me
+### CORRECTIONS AFTER THE SECOND AUDIT — including to what I first wrote here
 
-Matching `n_init` does **not** match points per dimension — it *overshoots* in d=6's favour:
+A three-lens audit of this test returned after the result was written up. It found no
+surviving fatal, because both of its fatals had already been applied before interpretation.
+Five material items survived, and two of them hit claims made in this entry. All verified
+independently before acting.
+
+**C1. "Ruled out at σ=0.25" was too strong and is withdrawn.** The measured excess over null
+is 1.036× (0.037 log). Two things sit at that scale: the bootstrapped minimum detectable
+effect at 80% power and α=0.01 is a separation of about **1.14**, and — because every one of
+the 25 clusters in a cell shares the *same* design and the *same* three permutation indices
+(`sobol_design(..., seed=seed)` and `permutation_null_lengthscales(..., seed=seed)` both key
+on seed alone) — the null carries a common Monte-Carlo component bounded at roughly **0.05
+log**, which does not shrink with more instances. The point estimate is *inside* that bound.
+The defensible statement is **no detectable effect, with a detection floor near 1.14**, not
+"ruled out".
+
+**C2. The registered reasoning was wrong even though the prediction was right.** I registered
+"at 25% noise the binding constraint is signal-to-noise, not sample count". My own Q25 data
+refutes it: at d=6, σ=0.25 the separation runs **0.992 (n=14) → 1.318 (n=30, p=0.020) →
+1.370 (n=46, p=0.0006)**. Sample count buys plenty at σ=0.25. What this test actually showed
+is narrower — the return *between 14 and 18 specifically* is below the detection floor. The
+registration said a wrong prediction would be diagnosable; a right prediction with wrong
+reasoning is the case it did not anticipate, and it is the more dangerous one, because
+nothing in the result flags it.
+
+**C3. THE DECISIVE TEST I HAD NOT RUN. At matched opening size, d=8 still beats d=6 — at
+BOTH noise levels.** Excess over each arm's own null, 25 clusters each, unpaired:
+
+| σ | d=6 @ 18 | d=8 @ 18 | Mann–Whitney (d8 > d6) |
+|---|---|---|---|
+| 0.25 | 1.036× | 1.199× | **p=0.044** |
+| 0.10 | 1.241× | 1.688× | **p=0.0008** |
+
+So **matching the opening size does not close the gap at either noise level.** At σ=0.10 the
+four extra points buy real discrimination against d=6's own null (1.332, p=0.0034) — but
+d=6 still lags d=8 given the same 18 points. Opening size is therefore **part** of the story
+at low noise and **not detectably any of it** at high noise, and at neither level is it the
+whole story. Dimension and per-factor inertness, still fused to each other, contribute at
+both. This is a better answer than the one first written here and it is less favourable to
+the hypothesis.
+
+**C4. The stated justification for the difference-in-differences is false.** I wrote that
+"the null moves with n, so the anchor must move with it". Measured: the null shifts
+**−0.0087 log (σ=0.25, p=0.81)** and **+0.0191 log (σ=0.10, p=0.92)**. It does not move.
+DiD remains the right statistic — it is strictly the more conservative anchoring — but for a
+different reason than the one given.
+
+**C5. Multiplicity, declared late but certifiable.** Six primary p-values are printed. The
+two `n_init=14` cells are **bit-identical reproductions** of Q25's opening checkpoint —
+max |Δ| over all 100 rows is exactly **0.0** — so they are reproductions, not new tests, and
+the correction is ×2 rather than ×4. σ=0.10 at p=0.00336 gives **0.0067**, which clears the
+registered 0.01 bar; at ×4 it would not (0.0134). The declaration rests on the certificate,
+not on convenience, and the certificate is checkable.
+
+**C6. The guard numbers in the registration below are unsourced and wrong.** "Permuted-outcome
+ratio at d=6: 1.042 at n=14, 0.937 at n=18" came from an ad-hoc 10-instance check at one σ
+with a different permutation count, and matches no quantity any script computes. The actual
+nulls are **0.984 / 0.986** (σ=0.25) and **1.001 / 1.007** (σ=0.10). The guard's *conclusion*
+— that the null is centred near 1.0 — holds, and holds better than the quoted numbers
+suggested. The numbers themselves should not have been written down.
+
+**C7. The re-draw magnitude was quoted from one instance and is larger in the cell that
+produced the positive.** Median over 10 instances: **8.4% of sd(Y) at σ=0.25, 12.5% at
+σ=0.10**, not the single 7.4% figure first reported.
+
+**C8. The σ=0.25 regret improvement does not survive multiplicity.** p=0.0173 raw, 0.069
+under Bonferroni across the four regret tests. "n_init=18 still loses to DoE" (p=0.0046)
+does survive.
+
+### Points per dimension — why the σ=0.25 non-result is still informative
+
+Matching `n_init` does not match points per dimension; it *overshoots* in d=6's favour:
 
 | | absolute n | per dimension | per active dim | per inert dim |
 |---|---|---|---|---|
@@ -53,12 +123,9 @@ Matching `n_init` does **not** match points per dimension — it *overshoots* in
 | **d=6, n=18** | **18** | **3.00** | **4.5** | **9.0** |
 | d=8, n=18 | 18 | 2.25 | 4.5 | 4.5 |
 
-At n=18, d=6 **weakly dominates d=8 on every normalisation** — equal on absolute n and per
-active dimension, strictly ahead on per total and per inert dimension. It still fails to
-discriminate at σ=0.25 (1.023, p=0.221) where d=8 succeeds on less (1.295, p=0.001). So at
-the E2 primary cell opening size is not merely unsupported as the explanation — it is
-**ruled out**, and the remaining two candidates (dimension, per-factor inertness) stay fused
-to each other.
+d=6 at 18 weakly dominates d=8 on every normalisation and still shows less separation
+(C3). That is what makes the negative informative despite the detection floor: the
+manipulation was generous and the gap survived it.
 
 ### SECONDARY — regret, and the two effects are ANTI-CORRELATED
 
