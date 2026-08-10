@@ -4,6 +4,52 @@
 
 ---
 
+## 🔴 Q24 [A + B] · **"BO beats current practice" is not supported anywhere it was tested — and the d=8 table reads like the opposite**
+
+### The asymmetry, which is the most misreadable thing in the E2 tables
+
+`e2.yaml` scopes the DoE arm to **d=6 only** (`doe: {dim: [6]}`), on budget arithmetic. So:
+
+| | result | but |
+|---|---|---|
+| **d=6** | BO **loses** to the DoE pipeline | current practice *was* tested here |
+| **d=8** | BO **beats every arm run** | **current practice was not among them** |
+
+**Therefore: "BO beats current practice" is not supported at either dimension.** At d=6 it was tested and went the other way; at d=8 it was never tested. At a glance the d=8 table reads as a clean BO win, and it is not one. **This sentence belongs in the write-up in roughly these words**, because a reader skimming two tables will take the opposite meaning. Credit to A's side for spotting it.
+
+### The d=8 DoE arm is the missing comparison, and it is blocked on a real thing
+
+It is the only run that would test BO against current practice **where BO is actually strong**. It needs the 48-measurement split defined at eight factors, registered before the run (Q20).
+
+**Checked, and it does not currently close.** `screening_design(8, n_centre=4, n_derived=2)` gives **68** runs, so 68 + 27 + 1 = **96**, double the budget. Raising the fraction fails deliberately:
+
+> `ValueError: no known minimum-aberration generator for 2^(8-4). Refusing to invent one: a poorly chosen generator silently confuses effects with each other and nothing downstream notices.`
+
+That refusal is correct behaviour and is why the arm was deferred rather than fudged.
+
+**The split that would close it**, for A to accept or reject **before** any d=8 DoE run:
+
+```
+stage 1   2^(8-4) resolution-IV screen, 16 runs + 4 centre     20
+stage 2   face-centred CCD on the 4 kept factors               27
+stage 4   confirmation                                          1
+                                                          total 48
+```
+
+Identical in structure to d=6, so the two dimensions stay comparable. **It requires adding the standard 2^(8-4)_IV minimum-aberration generators to `designs.py`** — they are textbook (E=BCD, F=ACD, G=ABC, H=ABD) rather than invented, which is exactly the bar `designs.py` refuses to drop below. **Registering the split before the run is not optional here**: the d=6 result already went against BO, so a d=8 DoE arm designed after seeing that is a design chosen with a known incentive.
+
+### Provenance correction — this session ran no E2
+
+Recorded because it bears on how the replication is described, not to relitigate.
+
+**This session did not run E2, sharded or otherwise.** `scripts/run_e2.py` has **no sharding support at all** — no `argparse`, no shard flag — so a sharded run of it is not possible. And the E2 commits (`fbb98e9`, `0aeee09`) are authored by **josephyung6686**, a different account from this session's.
+
+So if two E2 runs exist, they are **A's and the other session's** — not A's and this one's. **The replication may well be genuine, but its provenance has to be re-established before "reproduced across two independent runs" goes into a paper.** The same misattribution ran earlier: `run_e2.py` and its grid design were credited to this session and are A's.
+
+**What does corroborate independently:** the Q21 solver-failure determination. Counted from `results/e2-run1-unfiltered.log` here (9 failures, per-cell rates, max 0.875%) and from the other session's own run (9 / 3400 = 0.26%) — same conclusion by different routes, **too rare to matter**. Q21's repair rule is registered and has nothing to fire on, which should be stated plainly so the result is not re-opened later as an excuse.
+
+---
+
 ## 🟠 Q23 [B raises, A confirms] · **`coord` is a second unpaired arm, and it was not declared**
 
 Found while auditing A's modules during the E2 run. **Registered before the numbers landed; not fixed, deliberately.**
