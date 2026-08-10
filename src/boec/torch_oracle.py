@@ -63,11 +63,83 @@ import numpy as np
 import torch
 from torch import Tensor
 
-from boec.oracles import HillInstance, HillOracle
+from boec.oracles import HillInstance, HillOracle, Oracle
 
-__all__ = ["BiphasicOracle"]
+__all__ = ["BiphasicOracle", "TorchEvaluator"]
 
 YvarMode = Literal["plugin", "analytic"]
+
+
+def _plug_in_yvar(base: np.ndarray, sigma_rel: float, sigma_add: float) -> np.ndarray:
+    """``yhat^2 * sigma_rel^2 + sigma_add^2``, floored at the assay's own noise floor.
+
+    One definition, used by both classes here. The floor is ``sigma_add**2`` rather than
+    a numerical epsilon -- see OPEN-QUESTIONS Q8. It is non-binding in Phase 1 by
+    construction, since that value is the estimator's own infimum.
+    """
+    return np.maximum(base**2 * sigma_rel**2 + sigma_add**2, sigma_add**2)
+
+
+class TorchEvaluator:
+    """Wraps **any** numpy oracle as a torch ``Evaluator``, for E1 and the swap test.
+
+    OPEN-QUESTIONS Q3. The campaign loop was built against Branin, Hartmann6 and Ackley,
+    and the biphasic oracle swaps in later through the same interface. That swap being
+    clean is not a convenience -- it is the evidence that the forward-compatibility
+    design is real, and it is far cheaper to discover a break here than in Phase 2 when
+    a lookup table has to take the same slot.
+
+    **Orientation matters and is asserted in the tests.** B's campaign maximises. Branin
+    and Hartmann6 are minimisation problems as usually written, so the implementations in
+    ``oracles.py`` are already negated. If one were not, BO would faithfully find its
+    worst point and E1 would "fail" for a reason having nothing to do with the optimizer.
+
+    Args:
+        oracle: any :class:`boec.oracles.Oracle` -- ``f(X: (n, d)) -> (n,)``.
+        sigma_rel: relative noise on the observation model ``y = f(1 + eps) + eta``.
+        sigma_add: additive noise floor.
+        seed: fixes the noise draws.
+    """
+
+    def __init__(
+        self,
+        oracle: Oracle,
+        *,
+        sigma_rel: float = 0.10,
+        sigma_add: float = 0.01,
+        seed: int = 0,
+    ) -> None:
+        self.oracle = oracle
+        self.dim = int(oracle.dim)
+        self.sigma_rel = float(sigma_rel)
+        self.sigma_add = float(sigma_add)
+        self.seed = int(seed)
+        self.yvar_floor = float(sigma_add) ** 2
+        self._rng = np.random.default_rng(seed)
+
+    def _check(self, X: Tensor) -> np.ndarray:
+        if X.ndim != 2:
+            raise ValueError(f"X must be (n, d); got {tuple(X.shape)}")
+        if X.shape[1] != self.dim:
+            raise ValueError(f"X has {X.shape[1]} factors; oracle has {self.dim}")
+        return X.detach().double().cpu().numpy()
+
+    def truth(self, X: Tensor) -> Tensor:
+        """``(n, d) -> (n, 1)`` the noiseless value. Scoring only, never fitting."""
+        y = self.oracle.f(self._check(X))
+        return torch.from_numpy(np.asarray(y, dtype=float).reshape(-1, 1))
+
+    def evaluate(self, X: Tensor) -> tuple[Tensor, Tensor]:
+        """``(n, d) -> ((n, 1), (n, 1))`` a noisy measurement and its plug-in variance."""
+        f = np.asarray(self.oracle.f(self._check(X)), dtype=float).reshape(-1, 1)
+        eps = self._rng.normal(0.0, self.sigma_rel, size=f.shape)
+        eta = self._rng.normal(0.0, self.sigma_add, size=f.shape)
+        y = f * (1.0 + eps) + eta
+        return torch.from_numpy(y), torch.from_numpy(
+            _plug_in_yvar(y, self.sigma_rel, self.sigma_add))
+
+    def __repr__(self) -> str:  # pragma: no cover - debugging aid
+        return f"TorchEvaluator({self.oracle.name}, d={self.dim}, seed={self.seed})"
 
 
 class BiphasicOracle:

@@ -6,3 +6,9 @@ requires-python = ">=3.11"
 [tool.pytest.ini_options]
 pythonpath = ["src"]
 testpaths = ["tests"]
+markers = [
+    # Runs a real BO campaign rather than a unit check. Kept IN the default suite on
+    # purpose -- it is the E1 kill condition, and a kill condition that only runs when
+    # someone remembers to ask for it is not a kill condition. Deselect with -m "not slow".
+    "slow: exercises a full optimisation loop (tens of seconds)",
+]
