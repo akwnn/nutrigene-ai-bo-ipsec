@@ -10,7 +10,7 @@ This is what a working scientist does when they do *not* have Bayesian
 optimization: a textbook two-stage design-of-experiments campaign, which is
 exactly the procedure the published study we are benchmarking against ran.
 
-  Stage 1  Measure a cheap screening pattern to find out which of the six
+  Stage 1  Measure a cheap screening pattern to find out which of the
            ingredients matter at all.                        20 measurements
   Stage 2  Build a fuller pattern around the promising region, using only the
            ingredients that survived.                        27 measurements
@@ -21,6 +21,13 @@ Twenty plus twenty-seven plus one is forty-eight — the identical budget every
 other method in Experiment 2 gets. That equality is the whole basis of the
 comparison, so a budget that does not split exactly raises rather than quietly
 spending forty-seven or forty-nine.
+
+**The same three numbers hold at six factors and at eight** (:data:`STAGE1_FRACTION`,
+Q24): a more aggressive fraction absorbs the two extra factors, so stage 1 stays at
+sixteen runs and every other stage is untouched. That was not a convenience. Until it
+was true, this arm existed only at d=6 — and d=8 is precisely where the E2 tables show
+Bayesian optimization winning, so "BO beats current practice" was being read off a
+dimension at which current practice had never been run.
 
 ------------------------------------------------------------------------------
 WHY STAGE 4 IS NOT OPTIONAL
@@ -61,12 +68,36 @@ from boec.designs import central_composite, scale_to_box, screening_design
 from boec.metrics import over_prediction_at_constrained_argmax
 from boec.rsm import fit_second_order
 
-__all__ = ["HOLD_POLICIES", "DoEResult", "run_doe_arm"]
+__all__ = ["HOLD_POLICIES", "STAGE1_FRACTION", "DoEResult", "run_doe_arm"]
 
 #: Q15 (T2). Where screened-out factors sit during stage 2. ``"best_stage1"`` is the
 #: pre-registered primary; ``"zero"`` is the declared sensitivity. Registered before
 #: either was run — see :func:`run_doe_arm` for the asymmetry the choice rests on.
 HOLD_POLICIES = ("best_stage1", "zero")
+
+#: Q24. How aggressive a stage-1 fraction each dimension screens with, chosen so that
+#: stage 1 + stage 2 + confirmation lands on exactly 48 at every dimension the arm
+#: runs at. It is a table and not a formula because the fraction is only admissible
+#: where a minimum-aberration generator exists and has been verified — see
+#: ``_GENERATORS`` in :mod:`boec.designs`.
+#:
+#: ==== ============== ========= ========= ===== =====
+#: d    fraction       stage 1   stage 2   conf. total
+#: ==== ============== ========= ========= ===== =====
+#: 6    2^(6-2)_IV     16 + 4    27        1     48
+#: 8    2^(8-4)_IV     16 + 4    27        1     48
+#: ==== ============== ========= ========= ===== =====
+#:
+#: **The two dimensions are structurally identical**, which is the point: the same
+#: 16-run resolution-IV screen, the same 4 survivors, the same 27-run face-centred
+#: CCD, the same single confirmation. So a d=6 vs d=8 difference in this arm is a
+#: difference in the *landscape*, not in the procedure — the one thing that would
+#: otherwise confound the comparison Q24 asks for.
+#:
+#: A missing dimension raises rather than defaulting: a screen with the wrong
+#: fraction still runs, still fits, and still produces a believable recipe, and the
+#: only symptom is a budget that no longer matches the other arms.
+STAGE1_FRACTION: dict[int, int] = {6: 2, 8: 4}
 
 
 @dataclass
@@ -109,6 +140,11 @@ class DoEResult:
             ``"best_stage1"`` (the pre-registered primary) or ``"zero"`` (the
             declared sensitivity). Recorded on the result so a stored row can never
             be attributed to the wrong arm.
+        n_derived_stage1: the stage-1 fraction actually taken -- ``2`` at d=6, ``4``
+            at d=8 (Q24). Recorded for the same reason as ``hold_dropped_at``: the
+            two dimensions run structurally identical campaigns on different
+            fractions, and a stored row that does not carry which one it used cannot
+            be checked afterwards.
     """
 
     curve: np.ndarray
@@ -129,6 +165,7 @@ class DoEResult:
     search_bounds: Tensor
     stationary_kind: str
     hold_dropped_at: str = "best_stage1"
+    n_derived_stage1: int = 2
     n_confirmation: int = 1
     notes: list[str] = field(default_factory=list)
 
@@ -161,6 +198,7 @@ def run_doe_arm(
     n_centre_stage2: int = 3,
     stage2_half_width: float = 0.25,
     hold_dropped_at: str = "best_stage1",
+    n_derived_stage1: int | None = None,
 ) -> DoEResult:
     """Run the two-stage DoE campaign and measure its predicted optimum.
 
@@ -198,6 +236,11 @@ def run_doe_arm(
             The primary was fixed on that asymmetry -- conservative arm primary,
             flattering arm secondary -- and NOT on which produced the larger number.
             Neither had been run when it was chosen.
+        n_derived_stage1: how aggressive a fraction the stage-1 screen takes.
+            ``None`` reads :data:`STAGE1_FRACTION`, which is registered per
+            dimension (Q24) so the budget closes exactly at 48 at both d=6 and
+            d=8. Passing it explicitly is for tests and sensitivity arms; a
+            dimension absent from the table raises rather than guessing.
 
     Returns:
         A :class:`DoEResult`.
@@ -216,8 +259,18 @@ def run_doe_arm(
 
     d = int(bounds.shape[1])
 
+    if n_derived_stage1 is None:
+        if d not in STAGE1_FRACTION:
+            raise ValueError(
+                f"no registered stage-1 fraction for d={d}; known: "
+                f"{sorted(STAGE1_FRACTION)}. Guessing one would produce a campaign "
+                "that runs, fits and returns a plausible recipe on a budget that no "
+                "longer matches the other E2 arms. Register the split first (Q24)."
+            )
+        n_derived_stage1 = STAGE1_FRACTION[d]
+
     # --- stage 1: which ingredients matter at all? --------------------------
-    s1 = screening_design(d, n_centre=n_centre_stage1, n_derived=2)
+    s1 = screening_design(d, n_centre=n_centre_stage1, n_derived=n_derived_stage1)
     s2_template = central_composite(
         n_keep, n_centre=n_centre_stage2, n_derived=0, face_centred=True
     )
@@ -311,6 +364,7 @@ def run_doe_arm(
         Y_visited=torch.from_numpy(observed).reshape(-1, 1),
         n_stage1=n1, n_stage2=n2,
         kept_factors=kept, dropped_held_at=held, hold_dropped_at=hold_dropped_at,
+        n_derived_stage1=int(n_derived_stage1),
         confirmation_x=x_full,
         predicted_y=op.y_predicted,
         confirmation_y=confirmation_y,

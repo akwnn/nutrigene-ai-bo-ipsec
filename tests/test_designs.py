@@ -105,6 +105,122 @@ def test_unknown_fraction_raises_rather_than_inventing_a_generator():
         fractional_factorial(6, 3)
 
 
+# --------------------------------------------------------------------------
+# 2^(8-4) — the fraction Q24's d=8 DoE arm needs
+#
+# These are the tests that let the entry into the table. The refusal in
+# `fractional_factorial` exists because a badly chosen generator tangles
+# effects together and nothing downstream notices; the answer to that is not
+# to quote a textbook, it is to enumerate the alternatives and show this one
+# wins. That is what the aberration test below does.
+# --------------------------------------------------------------------------
+
+def test_2_8_4_gives_sixteen_runs_and_closes_the_48_budget():
+    """20 + 27 + 1 = 48, the same split the d=6 arm gets. Q24."""
+    pts, res = fractional_factorial(8, 4)
+    assert pts.shape == (16, 8)
+    assert res == 4
+    stage1 = screening_design(8, n_centre=4, n_derived=4)
+    stage2 = central_composite(4, n_centre=3, n_derived=0, face_centred=True)
+    assert stage1.n_runs == 20
+    assert stage2.n_runs == 27
+    assert stage1.n_runs + stage2.n_runs + 1 == 48
+
+
+def test_2_8_4_resolution_iv_verified_from_the_generators_not_the_table():
+    """Every word is at least 4 letters, so no main effect is aliased with a 2fi.
+
+    Resolution IV is the *minimum* a screen may have: it buys main effects
+    clean of two-factor interactions, which is the only thing stage 1 reads.
+    Two-factor interactions are aliased with each other — stage 1 never
+    estimates one, so that is a cost the screen can afford and the stage-2
+    CCD, which is a full factorial on the survivors, does not pay.
+    """
+    words = defining_relation_words(8, 4)
+    assert len(words) == 15  # 2**4 - 1 non-empty products of four generators
+    assert min(len(w) for w in words) == 4
+    # And the shortest word length IS what the table claims.
+    _, res = fractional_factorial(8, 4)
+    assert res == min(len(w) for w in words)
+
+
+def test_2_8_4_is_minimum_aberration():
+    """Not 'a textbook says so' — every admissible alternative is enumerated.
+
+    Minimum aberration ranks designs by word-length pattern (A3, A4, A5, ...),
+    lexicographically smallest wins: first fewest short words, then fewest
+    next-shortest. With four base factors each derived factor is a product of
+    some subset of {A, B, C, D} of size >= 2, giving 11 candidates and 330
+    ways to choose four of them. This asserts the shipped choice is the unique
+    minimiser, and that the runner-up is materially worse rather than a
+    near-tie — so nothing turns on which textbook was consulted.
+    """
+    from itertools import combinations
+
+    from boec.designs import _GENERATORS
+
+    base = (0, 1, 2, 3)
+    candidates = [c for r in (2, 3, 4) for c in combinations(base, r)]
+    assert len(candidates) == 11
+
+    def word_length_pattern(choice):
+        words = [frozenset(sources) | {4 + i} for i, sources in enumerate(choice)]
+        full = set()
+        for r in range(1, len(words) + 1):
+            for combo in combinations(words, r):
+                sym: set[int] = set()
+                for w in combo:
+                    sym ^= set(w)
+                if not sym:
+                    return None          # a product collapses to I: degenerate
+                full.add(frozenset(sym))
+        if min(len(w) for w in full) < 3:
+            return None                  # a derived factor duplicates another
+        return tuple(sum(len(w) == k for w in full) for k in range(3, 9))
+
+    patterns = []
+    for choice in combinations(candidates, 4):
+        p = word_length_pattern(choice)
+        if p is not None:
+            patterns.append((p, choice))
+    assert len(patterns) == 330
+    patterns.sort(key=lambda t: t[0])
+
+    shipped = tuple(sources for _, sources in _GENERATORS[(8, 4)])
+    best_pattern, _ = patterns[0]
+    assert word_length_pattern(shipped) == best_pattern
+    assert best_pattern == (0, 14, 0, 0, 0, 1)   # A3=0, A4=14, A8=1
+
+    # Unique, and by a wide margin: the runner-up has three 3-letter words,
+    # i.e. it is resolution III and aliases main effects with 2fis.
+    ties = [p for p, _ in patterns if p == best_pattern]
+    assert len(ties) == 1
+    assert patterns[1][0][0] == 3
+
+
+def test_2_8_4_columns_are_balanced_and_orthogonal():
+    """Sixteen runs, eight distinct factors, no two of them correlated."""
+    pts, _ = fractional_factorial(8, 4)
+    assert set(torch.unique(pts).tolist()) == {-1.0, 1.0}
+    assert torch.unique(pts, dim=0).shape[0] == 16
+    assert torch.allclose(pts.sum(0), torch.zeros(8, dtype=torch.double))
+    gram = pts.T @ pts
+    off_diagonal = gram - torch.diag(torch.diag(gram))
+    assert torch.allclose(off_diagonal, torch.zeros_like(off_diagonal))
+
+
+def test_screening_default_at_d8_is_unchanged_by_the_new_entry():
+    """Adding (8, 4) must not silently halve anyone's existing screen.
+
+    `screening_design`'s default search is `(2, 1)`, deliberately not `(4, 2,
+    1)`. A sixteenth fraction is a real reduction in what a caller measures,
+    so it stays opt-in.
+    """
+    des = screening_design(8)
+    assert des.n_factorial == 64          # still the quarter fraction
+    assert des.resolution == 5
+
+
 def test_n_derived_zero_gives_the_full_factorial():
     pts, res = fractional_factorial(4, 0)
     assert pts.shape == (16, 4)

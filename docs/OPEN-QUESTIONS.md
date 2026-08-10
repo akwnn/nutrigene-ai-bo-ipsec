@@ -4,6 +4,180 @@
 
 ---
 
+## 🔴 Q27 [B builds, A + B decide] · PRE-REGISTRATION · **The d=8 DoE arm — Q24's missing comparison. Design fixed and committed BEFORE any number exists.**
+
+**A HAS NOT SEEN THIS.** Q24 is marked A + B and the split it proposes is A's to accept or
+reject. It is registered rather than run-then-shown, which is the pattern this project uses
+when one session has to move and the other has not answered — same as T9/Q18. **The run is
+gated on this entry being committed, not on A's reply**, because the alternative is that the
+arm never happens; but if A rejects the split, the numbers go in the bin and are not
+argued down from.
+
+**NO EXISTING E2 NUMBER MOVES.** This *adds* an arm at d=8. It does not re-run, re-score or
+re-scope anything in `results/e2-grid.json`, and `e2.yaml`'s registered primary is untouched.
+Check this entry's commit timestamp against `results/e2-doe-d8.json`.
+
+### Why this run exists
+
+Q24, in one sentence: **"BO beats current practice" is not supported at either dimension** —
+at d=6 it was tested and BO lost, and at d=8 the DoE arm was never run, so the table that
+looks like a clean BO win contains no representative of current practice at all.
+
+| stored, d=8 | mean simple regret, instance-clustered |
+|---|---|
+| qLogNEI | 0.1086 |
+| **qLogEI (registered primary arm)** | **0.1284** |
+| LHS | 0.1627 |
+| random | 0.1712 |
+| Sobol | 0.1804 |
+| coord | 0.1926 |
+| **DoE** | **absent — this is the gap** |
+
+For contrast, at d=6 σ=0.25 the DoE arm returns **0.0958** against qLogEI's **0.1666**.
+
+### Why it was blocked, and what unblocks it
+
+`screening_design(8, n_derived=2)` is 64 runs, so 64 + 27 + 1 = 92 against a budget of 48.
+Going further failed on purpose: `designs.py` refuses to invent a generator it has not
+verified. The sixteenth fraction closes it:
+
+```
+stage 1   2^(8-4)_IV screen, 16 runs + 4 centre     20
+stage 2   face-centred CCD on the 4 kept factors    27
+stage 4   confirmation                               1
+                                                total 48
+```
+
+**Structurally identical to d=6 in every stage.** Both screens are 16 runs, both keep 4
+factors, both stage 2s are the same 27-run CCD, both confirm once. The two extra factors are
+absorbed entirely by the fraction. So a d=6 vs d=8 difference in this arm is a difference in
+the **landscape**, not in the procedure.
+
+**There is no free parameter to tune here, and that is deliberate.** `n_keep = 4` is forced
+by the budget (a CCD on 5 factors is 47 runs on its own), the fraction is forced by the
+budget, `stage2_half_width` and `hold_dropped_at` are carried unchanged from the registered
+d=6 arm. The only genuine choice was the generator, and it is not a matter of taste —
+`test_2_8_4_is_minimum_aberration` enumerates all **330** admissible generator sets, computes
+each word-length pattern, and asserts the shipped one is the **unique** minimiser
+(A₃=0, A₄=14, A₈=1; the runner-up is resolution III). Resolution IV is derived from the
+generators in `test_2_8_4_resolution_iv_verified_from_the_generators_not_the_table`, not read
+off the table it is checking.
+
+### The incentive problem, stated rather than managed away
+
+The d=6 result already went against BO. **A d=8 DoE arm designed after seeing that is a
+design chosen by someone who knows what he wants it to show**, and this entry exists so that
+the design is fixed in a commit before the first number rather than defended afterwards. The
+three things that make it checkable: no free parameters (above), the endpoint and decision
+rule below, and a prediction that can be wrong.
+
+### Primary endpoint
+
+**Simple regret at budget 48, scored on the noiseless value of the point each method
+selected (Q17), at d=8, σ_rel = 0.25 — DoE versus qLogEI, paired on instance and seed,
+Wilcoxon on instance-level means (n = 25, `cluster: instance` per `e2.yaml`).**
+
+σ=0.25 is the primary because it is E2's primary noise level. σ=0.10 is reported as a
+secondary, on the same statistics, and is not used to adjudicate the Q24 sentence.
+
+Also reported, all secondary: DoE against every other stored d=8 arm; AUC over the
+post-initialisation segment; the escape statistics the arm produces anyway
+(`confirmation_inside_stage2`, `confirmation_on_stage2_boundary`, over-prediction at the
+constrained argmax).
+
+**`doe` is a third unpaired arm and it is declared here, not discovered later.** It shares no
+opening batch with qLogEI — its first 20 points are a fixed screen, not `initial_design` —
+exactly as `lhs` and `coord` do not (Q18, Q23). The Wilcoxon pairing above is on instance
+and seed, which is the pairing E2 already uses for `coord`; it is not observation-level
+pairing and is not claimed to be. Cost: a wider interval, not a bias.
+
+### Decision rule — fixed now
+
+| outcome at d=8, σ=0.25 | what goes in the write-up |
+|---|---|
+| DoE regret **lower** than qLogEI, p < 0.05 | **"BO beats current practice" is refuted at BOTH dimensions**, not merely unsupported at one. Q24's sentence strengthens. |
+| DoE regret **higher** than qLogEI, p < 0.05 | **BO beats current practice at d=8 and loses at d=6.** The dimension flip is real and is the headline; Q24's sentence is replaced by a narrower, more interesting one. |
+| p > 0.05 either way | **No detectable difference, reported as such**, with the minimum detectable effect stated. No seeds, instances or noise levels are added afterwards to push it across. |
+
+**No branch of that table is a reason to change the arm.** If DoE loses at d=8 it is not
+re-tuned; if it wins, the d=6 arm is not re-examined for defects that were acceptable while
+it was winning.
+
+### MY PREDICTION, RECORDED BEFORE RUNNING
+
+**σ=0.25: DoE beats qLogEI, p < 0.05, by a smaller margin than at d=6 (−0.071).**
+**σ=0.10: no detectable difference, p > 0.05 — as at d=6, where it is 0.0892 vs 0.0850.**
+
+Reasoning, so a wrong prediction is diagnosable rather than merely wrong. The guard below
+measures the d=8 screen recovering active factors **more** accurately than the d=6 screen,
+not less — because each inert factor at d=8 carries half the weight (0.025 against 0.050),
+and that dominates the "4 of 8 rather than 2 of 6" difficulty. The DoE arm's entire exposure
+to dimension is concentrated in the screen, since everything downstream of it operates on
+exactly 4 factors at either dimension. So the arm should transfer to d=8 essentially intact.
+Against that, BO is genuinely stronger at d=8 than at d=6 (Q25: it enters the adaptive phase
+already discriminating, ARD 1.150 against 1.000), so the gap should close somewhat.
+
+If DoE instead **loses** at σ=0.25, my model is wrong in a specific and informative way: it
+would mean the d=6 DoE win is not "structured coverage beats a blind surrogate at high
+noise" (Q24/Q26's reading) but something that depends on dimension through a channel other
+than screen accuracy — and since the procedure is identical at both dimensions, that channel
+would have to be the landscape's own geometry at d=8, which nothing so far has looked at.
+
+### Guards, run and recorded BEFORE this entry was committed
+
+**G1 — the budget closes exactly.** 20 + 27 + 1 = 48 at both dimensions, asserted in
+`test_2_8_4_gives_sixteen_runs_and_closes_the_48_budget` and enforced at runtime by
+`run_doe_arm`'s existing split check.
+
+**G2 — the generator is minimum aberration**, by enumeration of all 330 alternatives. Above.
+
+**G3 — screen recovery, measured, and it is not what I expected.** Fraction of each
+instance's 4 active factors that survive the screen; 25 instances × 2 seeds; the screen only,
+no campaign, no regret.
+
+| d | σ | active factors recovered | all 4 recovered exactly |
+|---|---|---|---|
+| 6 | 0.25 | 0.860 | 0.460 |
+| 6 | 0.10 | 0.935 | 0.740 |
+| **8** | **0.25** | **0.905** | **0.620** |
+| **8** | **0.10** | **0.995** | **0.980** |
+
+The d=6 row reproduces the 86% / 94% figures already quoted in `doe.py`'s docstring, which
+is what says the guard is measuring the same screen the arm runs. **The d=8 screen is
+better at both noise levels** — a second, completely independent instrument agreeing with
+Q25's ARD finding that d=8's individually-weaker inert factors are easier to identify. Two
+different methods, one two-level contrast and one GP lengthscale, same conclusion.
+
+**G4 — the endpoint can return either answer.** The same arm on the same code wins decisively
+at d=6 σ=0.25 (0.0958 vs 0.1666) and ties at d=6 σ=0.10 (0.0892 vs 0.0850). Nothing about
+this arm forces a win or a loss.
+
+**G5 — fidelity, so the comparison is against numbers this code still produces.** All **400**
+stored d=8 rows for `random`, `sobol`, `lhs` and `coord` regenerate against
+`results/e2-grid.json` with max |Δ| of **exactly 0.0**. The qLogEI arm is the expensive one
+and is checked on a declared subsample in the run script; **if that check fails the run is
+void**, because a DoE number compared against a stale qLogEI number is not a comparison.
+
+**G6 — d=6 is untouched by the change that enables d=8.** `run_doe_arm`'s hardcoded
+`n_derived=2` became a registered per-dimension table. `test_d6_is_bit_identical_to_before_the_d8_change`
+asserts the table reproduces the literal it replaced, to zero tolerance, or every stored d=6
+DoE number stops matching the code that claims to produce it.
+
+### What this CANNOT settle — to be restated in any write-up
+
+- **It is one ensemble.** "Current practice loses at six factors and at eight" is a claim
+  about this benchmark family, not about DoE in general.
+- **The dimension contrast still bundles three things** (Q25, Q26): dimension, opening-design
+  size and per-factor inertness move together in this ensemble, and this arm does not
+  separate them either. What it *does* do is remove the asymmetry that made the two
+  dimensions' tables non-comparable.
+- **The screen is not the published screen.** Hall/Ogle screened 6 → 4. Nothing published
+  screens 8 → 4; that split is ours, chosen for structural equality with d=6 and forced by
+  the budget. It is not "what a practitioner did", it is "what the same practitioner would
+  have to do at eight factors on the same budget".
+
+---
+
 ## 🟢 Q26 RESULT [A] · **Opening size explains the blindness at LOW noise and is RULED OUT at the E2 primary cell. Both registered predictions were correct.**
 
 `scripts/confound_ninit.py` · `results/confound-ninit.log` · rows in
@@ -439,6 +613,12 @@ faces, so a uniform draw is not its operative null. No uniform reference is quot
 ---
 
 ## 🔴 Q24 [A + B] · **"BO beats current practice" is not supported anywhere it was tested — and the d=8 table reads like the opposite**
+
+> **STATUS: the missing d=8 arm is registered as Q27 and built.** The split proposed below
+> is the one registered, unchanged; the 2^(8-4)_IV generators are in `designs.py` with the
+> minimum-aberration claim verified by enumeration rather than citation, and `run_doe_arm`
+> now reads a per-dimension fraction. **A still has not accepted the split** — that part of
+> this entry is open. Everything else here stands as written.
 
 ### The asymmetry, which is the most misreadable thing in the E2 tables
 
