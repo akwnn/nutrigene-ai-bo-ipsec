@@ -19,6 +19,7 @@ from __future__ import annotations
 import numpy as np
 
 from boec.oracles import (
+    SHIPPED_CONFIG,
     HillOracle,
     SamplerConfig,
     accept_instance,
@@ -118,9 +119,13 @@ def q3_acceptance_rate() -> None:
         per = f"{1 / rate:.0f}" if rate else f">{n_big}"
         print(f"    d={dim}: {ok:>6}/{n_big}  = {rate:>7.3%}   {per:>7} draws per instance")
 
-    v8 = SamplerConfig()
+    # SHIPPED_CONFIG, not SamplerConfig(): the bare default carries accept_floor
+    # 0.045 (the v6 value), so an earlier version of this script measured the "v8
+    # shipped" rate at a floor 2.4x easier than the one the ensemble was built at
+    # and reported 100% on that basis.
+    v8 = SHIPPED_CONFIG
     n_small = 40
-    print(f"\n  v8 shipped (4 active factors, numerically computed depth), "
+    print(f"\n  v8 SHIPPED_CONFIG (4 active, numerically computed depth, floor 0.1083), "
           f"{n_small} seeds per dim:")
     for dim in (6, 8):
         ok = 0

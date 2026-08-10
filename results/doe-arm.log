@@ -1,0 +1,28 @@
+
+==============================================================================
+DoE arm · d=6 · sigma_rel=0.1 · 20 runs (10 landscapes x 2 seeds)
+==============================================================================
+  predicted optimum fell OUTSIDE the stage-2 region :   100%
+  confirmation under-delivered vs best design point :   100%
+  over-prediction  median +0.7338   IQR [+0.6401, +1.0025]   >0 in 100%
+  predicted optimum sat ON the stage-2 boundary        :     0%   (constrained-optimiser signature)
+  screen recovered 94% of the planted active factors
+  fitted surface turning point: {'saddle': 20}
+
+  READ: over-prediction here is on the SAME scale as E4a (response max ~1.0),
+        but this arm hid nothing -- the narrowness of stage 2 came from the screen.
+
+==============================================================================
+DoE arm · d=6 · sigma_rel=0.25 · 20 runs (10 landscapes x 2 seeds)
+==============================================================================
+  predicted optimum fell OUTSIDE the stage-2 region :   100%
+  confirmation under-delivered vs best design point :   100%
+  over-prediction  median +1.6564   IQR [+1.4082, +2.0645]   >0 in 100%
+  predicted optimum sat ON the stage-2 boundary        :     0%   (constrained-optimiser signature)
+  screen recovered 86% of the planted active factors
+  fitted surface turning point: {'saddle': 20}
+
+  READ: over-prediction here is on the SAME scale as E4a (response max ~1.0),
+        but this arm hid nothing -- the narrowness of stage 2 came from the screen.
+
+(d=8 skipped: the arm's 20+27+1 split is defined at d=6; a d=8 screen needs its own budget arithmetic and that is a separate decision.)

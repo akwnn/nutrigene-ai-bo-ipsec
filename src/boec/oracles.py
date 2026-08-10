@@ -851,6 +851,27 @@ def generate_ensemble(
 #: field is for. Bump this only alongside ``ORACLE_FAMILY`` or a SamplerConfig change.
 ENSEMBLE_VERSION = "biphasic-hill-v8+82f6db7c8f77"
 
+#: **The config that generated what is on disk. Use this; do not rebuild it by hand.**
+#:
+#: A bare ``SamplerConfig()`` is NOT this object -- its ``accept_floor`` default is
+#: 0.045, the v6 specification's value, while the shipped ensemble was generated at
+#: 0.1083 (``3 * 0.25 / sqrt(48)``, the depth needed at the primary noise level).
+#: Reconstructing the config by hand therefore produces a different ``oracle_version``
+#: and hence different ``instance_id``s for landscapes that are numerically identical,
+#: which is precisely the silent mismatch the version field exists to catch. It caught
+#: it -- after one reported acceptance rate had already been measured at the wrong
+#: floor. Asserted against ``ENSEMBLE_VERSION`` in the test suite.
+SHIPPED_CONFIG = SamplerConfig(
+    interaction="peak_modulation",
+    accept_on="true_depth",
+    draw_order="w_first",
+    accept_floor=0.1083,
+    formula_prefloor=0.120,
+    gamma_max=1.0,
+    n_active=4,
+    active_share=0.90,
+)
+
 #: Repo-root-relative, so a clean clone finds the data without configuration.
 DATA_ROOT = Path(__file__).resolve().parents[2] / "data" / "oracles"
 

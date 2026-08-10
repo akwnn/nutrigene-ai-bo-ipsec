@@ -1,19 +1,19 @@
 {
   "dim": 6,
-  "requested": 25,
-  "accepted": 25,
-  "candidates_tried": 34,
-  "acceptance_rate": 0.7352941176470589,
+  "requested": 40,
+  "accepted": 40,
+  "candidates_tried": 54,
+  "acceptance_rate": 0.7407407407407407,
   "rejections": {
-    "depth": 9
+    "depth": 14
   },
   "oracle_version": "biphasic-hill-v8+82f6db7c8f77",
   "nominal_xstar_mean": 0.4,
   "nominal_n_mean": 2.0,
-  "accepted_xstar_mean": 0.34871018063222065,
-  "accepted_n_mean": 2.337649861003481,
-  "mean_factor_resamples": 10.2,
-  "true_depth_median": 0.11465563265713741,
+  "accepted_xstar_mean": 0.3505979477488631,
+  "accepted_n_mean": 2.371538082997918,
+  "mean_factor_resamples": 10.925,
+  "true_depth_median": 0.11659096071530234,
   "true_depth_min": 0.10858081144194998,
   "n_active": 4,
   "active_share": 0.9,

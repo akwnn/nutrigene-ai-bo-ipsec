@@ -183,12 +183,66 @@ def test_the_effective_peak_never_falls_inside_the_training_box(dim):
 
 
 # ----------------------------------------------------------------- the committed data
-def test_the_committed_ensemble_loads_and_is_the_declared_version():
+def test_the_shipped_config_reproduces_the_committed_version_hash():
+    """**The footgun this closes.** A bare `SamplerConfig()` defaults to
+    `accept_floor = 0.045` — the v6 spec value — while the committed ensemble was
+    generated at 0.1083. Reconstructing the config by hand therefore yields a
+    *different* `oracle_version`, and any instance regenerated from it carries a
+    different `instance_id` while describing an identical landscape.
+
+    A hit this while checking whether the ensemble could be extended, and it had
+    already corrupted one reported number: PF2.3's "v8 shipped" acceptance rate was
+    measured at 0.045 rather than the shipped floor.
+
+    `SHIPPED_CONFIG` is the single object that generated what is on disk. Asserting
+    its hash against the committed ensemble means the two can never silently part.
+    """
+    from boec.oracles import SHIPPED_CONFIG
+
+    assert SHIPPED_CONFIG.version() == ENSEMBLE_VERSION
     for dim in (6, 8):
+        assert all(i.oracle_version == SHIPPED_CONFIG.version()
+                   for i in load_ensemble(dim=dim))
+
+
+def test_a_bare_sampler_config_is_not_the_shipped_one():
+    """Guards the guard: if the defaults are ever changed to match, this fails and
+    whoever did it must decide deliberately whether `SHIPPED_CONFIG` still earns its
+    place, rather than leaving a decorative alias behind."""
+    from boec.oracles import SHIPPED_CONFIG, SamplerConfig
+
+    assert SamplerConfig().version() != SHIPPED_CONFIG.version()
+
+
+def test_regenerating_a_committed_seed_reproduces_it_exactly():
+    """Extending the ensemble with new seeds must not perturb the existing ones.
+
+    Instances are drawn independently per seed and `instance_id` hashes
+    (dim, seed, oracle_version), so this should hold — but "should" is what the
+    version field exists to stop us relying on. Checked on the landscape itself,
+    not just the parameters.
+    """
+    from boec.oracles import SHIPPED_CONFIG, HillOracle, accept_instance, propose_instance
+
+    X = np.random.default_rng(0).uniform(0, 1, (32, 6))
+    for inst in load_ensemble(dim=6)[:3]:
+        got = propose_instance(6, inst.seed, SHIPPED_CONFIG)
+        assert got is not None
+        accepted, _ = accept_instance(got, SHIPPED_CONFIG)
+        assert accepted
+        assert got.instance_id == inst.instance_id
+        np.testing.assert_array_equal(HillOracle(got).f(X), HillOracle(inst).f(X))
+
+
+def test_the_committed_ensemble_loads_and_is_the_declared_version():
+    # d=6 was extended 25 -> 40 for E4's version-2 power (OPEN-QUESTIONS Q14).
+    # d=8 stays at 25: E4 is d=6-only by pre-registration and E2's grid is 25 x 2.
+    for dim, expected in ((6, 40), (8, 25)):
         ens = load_ensemble(dim=dim)
-        assert len(ens) == 25
+        assert len(ens) == expected
         assert all(i.dim == dim for i in ens)
         assert all(i.oracle_version == ENSEMBLE_VERSION for i in ens)
+        assert len({i.seed for i in ens}) == expected, "duplicate seeds in the ensemble"
 
 
 def test_a_sidecar_round_trips_through_the_loader(tmp_path):
