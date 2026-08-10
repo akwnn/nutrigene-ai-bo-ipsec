@@ -4,6 +4,211 @@
 
 ---
 
+## 🟠 Q23 [B raises, A confirms] · **`coord` is a second unpaired arm, and it was not declared**
+
+Found while auditing A's modules during the E2 run. **Registered before the numbers landed; not fixed, deliberately.**
+
+`e2.yaml:53` asserts `identical_initial_design_per_seed: true` without qualification, and `pairing_exempt` listed only `lhs`. **`baselines.py` never calls `initial_design`** — `coordinate_descent` starts from a random interior point. So the claim was false for **two** arms: one declared exempt, one silently.
+
+**This is exactly the defect T9/Q18 found, one arm over.** A fairness field asserting something true of most arms and untrue of one, with nothing failing. The Q18 fix corrected `run_static_baseline` and the field's wording; it did not audit the arms that do not go through `run_static_baseline`, and `coord` is the only one.
+
+### Declared, not fixed — for two reasons
+
+**Pairing it may be wrong on the merits.** The docstring's reasoning for the random start is sound: *"A centre start would be a hidden advantage on an oracle whose optimum sits near the middle."* Seeding coordinate descent from the best of the shared 14-point opening would remove that objection, but it makes the arm **a different and stronger algorithm** — screen-then-descend — rather than the textbook baseline it is there to represent. Given Q22's finding that the landscape is ~93% additive, a coordinate method handed a good starting point would be a *very* strong arm, and the comparison would stop being the one the arm was added to make.
+
+**And the numbers already exist.** `d=6` and `d=8 σ=0.25` are done. Changing an arm now means comparing a repaired `coord` against everything else's stored numbers — the same objection Q21 registers against partial re-runs.
+
+### What this costs
+
+`coord` is unpaired, so its comparison against qLogEI carries the extra variance that pairing exists to remove — the same cost `lhs` pays. It is a **wider interval, not a bias**: the starting point is drawn from the same distribution regardless of arm, so nothing systematically favours either side. **Report `coord` and `lhs` as the two unpaired arms**, with the reason, rather than letting a reader assume the whole table is paired.
+
+**If A wants `coord` paired, that is a full re-grid under Q21's rule**, not a patch to one arm.
+
+---
+
+## 🟠 Q22 [B raises] · **the benchmark landscape is ~93% additive, and that is a limitations-section fact currently living in a test docstring**
+
+**Written before the E2 numbers exist, because it changes how they must be read.**
+
+`tests/test_baselines.py:98` discloses it in prose — *"The oracle is a sum of coordinate-wise-unimodal terms, so coordinate search should get close to the optimum… the limitation is recorded in the suite rather than discovered by a reviewer."* Recording it was right. **It was never quantified, and it is larger than "should get close" suggests.**
+
+### Measured
+
+Fitting a **purely additive** surrogate — a per-coordinate nonparametric mean, no interaction terms of any kind — to 3,000 uniform draws per instance on the shipped ensemble:
+
+| | variance explained by a separable fit | range |
+|---|---|---|
+| d=6 | **0.930** | [0.926, 0.945] |
+| d=8 | **0.927** | [0.907, 0.937] |
+
+**Roughly 93% of the response is separable. Interaction accounts for about 7%.** (In-sample, ~72 additive parameters on 3,000 points, so the true share is maybe a point or two lower. It does not change the reading.)
+
+This is by construction, not a bug: `peak_modulation` enters as `exp((f₀ − ½) · γᵀ / k_pairs)` with `gamma_max = 1.0`, which bounds how far interaction can move each factor's optimum.
+
+### Why it matters, in three places
+
+**1. The `coord` arm is not the straw man its "pre-empts an objection" framing implies.** On a 93%-additive landscape coordinate descent is a *strong* baseline, close to the right model for the problem. If qLogEI beats it, that is a real result. If it does not, the honest statement is **"on a near-separable landscape, cheap coordinate search is competitive with BO"** — a finding, not a failure, and one worth reporting plainly.
+
+**2. It bears directly on E4's null.** The GP's failure to beat nearest-neighbour distance is easier to explain when the surface is nearly additive: a near-additive function is easy for *any* smooth model, so there is less for a GP's structure to exploit. This is a mechanism for the Q19 result, and it is testable — the sign flip across κ should track how much interaction each κ's sub-box actually exposes.
+
+**3. It is the sharpest limit on transfer, and it cuts against the project's own premise.** The motivating study is *about* ECM protein interactions. A benchmark whose interaction term carries ~7% of the variance under-represents the phenomenon the paper exists to study. **Whatever E2 concludes, it is a conclusion about near-separable landscapes.**
+
+### What B recommends
+
+- **Report the 93% figure in limitations, with the method.** "Coordinate search does well" is a hint; a number is a limitation a reviewer can weigh.
+- **Report qLogEI vs `coord` explicitly**, alongside qLogEI vs `doe`, under Alan's report-everything ruling. It is the arm that tests whether BO's machinery earns its complexity *on this landscape*.
+- **Do not fix it by raising `gamma_max`.** That would be changing the benchmark after seeing which way the results went, and the ensemble is committed and version-stamped precisely to stop that. **A higher-interaction ensemble is a Phase 2 question**, generated deliberately and declared in advance as a separate arm of the study — not a patch.
+
+---
+
+## 🔴 Q21 [A + B] · **the acquisition solver is failing. The repair rule is registered NOW, before the failure rate or the regret numbers are known.**
+
+**Written while `run_e2.py` is still executing, with `d=8` unfinished and `results/e2-grid.json` not yet on disk.** Check the timestamp. This entry is worthless if written afterwards, because every question it settles is one whose answer becomes obvious — and self-serving — once you know whether BO won.
+
+### The problem
+
+`results/e2.log` is accumulating BoTorch acquisition failures: *"Optimization failed on the second try, after generating a new set of initial conditions"* — 4 hard failures in the `d=6` half, plus `A not p.d., added jitter`. On a second-try failure BoTorch does not propose the point it wanted; it falls back to whatever candidates it has.
+
+**Only the adaptive arms call `optimize_acqf`.** So this handicaps qLogEI and qLogNEI and nothing else. A "BO loses" result contaminated by it would be measuring a solver, not a method. (It is also why the rate matters and the raw count does not: 4 failures against ~1,800 optimisations in the `d=6` half is ~0.2%, which changes nothing. `d=8` is where this gets worse, and `d=8` had not finished when this was written.)
+
+### Why this needs registering rather than just fixing
+
+`e2.yaml` registers `no_per_method_tuning: true`, and it is the most-cited objection in this literature — tuning your own method while the baselines sit at defaults. **Raising `num_restarts` or `raw_samples` after seeing that BO underperformed is exactly that objection, whatever the intention.** But refusing to repair a genuine numerical failure is also wrong, and would let a solver bug masquerade as a scientific finding.
+
+The distinction is real and it is decidable **only if the decision rule is fixed before the numbers are seen.**
+
+### What is registered
+
+**1. The repair decision is made on the FAILURE RATE ALONE, computed and acted on before the regret numbers are read.**
+
+> Repair is triggered if second-try acquisition failures exceed **1% of BO batches** in any (dim, sigma) cell. Below that, the run stands and the rate is reported as a limitation.
+
+The 1% threshold is set here, with the `d=6` rate (~0.2%) known and the `d=8` rate **not** known. It is deliberately set above the observed `d=6` rate so it cannot be a rule reverse-engineered to trigger, and low enough that a real `d=8` problem trips it.
+
+**2. Permitted repairs are numerical only.** `num_restarts`, `raw_samples`, `retry` policy, jitter — parameters that change *whether the optimiser converges*, not *what it optimises*. Changing the acquisition function, `best_f` policy, kernel, or budget is not a repair.
+
+**3. A repair is applied identically to every arm that uses the solver** — qLogEI and qLogNEI both, never one — and **the whole grid is re-run**, not the BO arms only. Re-running one arm against another arm's stored numbers compares two different computational conditions.
+
+**4. Both runs are reported.** Pre-repair and post-repair, with the failure rate for each. If the repair changes the conclusion, *that is the finding* and it is stated plainly: the result was solver-sensitive.
+
+**5. Repairing bumps `preregistration_version` again**, with the failure rate that triggered it recorded as the reason.
+
+### What is explicitly forbidden
+
+**Deciding to repair because BO lost.** If the failure rate is under the threshold and BO underperforms, the run stands and the solver is not touched. Under this rule that outcome is reported as-is — which is the entire point of writing the rule down while `d=8` is still running.
+
+### ✅ DETERMINATION — computed from the completed run, **before reading the regret table**
+
+Second-try acquisition failures per (dim, σ) cell, against BO acquisition calls (25 instances × 2 seeds × 2 adaptive arms × rounds per campaign — 9 at d=6, 8 at d=8):
+
+| cell | failures | BO acqf calls | rate | vs 1% |
+|---|---|---|---|---|
+| d=6, σ=0.25 | 2 | 900 | 0.222% | below |
+| d=6, σ=0.10 | 0 | 900 | 0.000% | below |
+| **d=8, σ=0.25** | **7** | **800** | **0.875%** | **below — but close** |
+| d=8, σ=0.10 | 0 | 800 | 0.000% | below |
+
+**No cell trips the threshold. Under Q21 as registered, the run STANDS, the solver is NOT touched, and the result is reported as-is — including "BO loses".**
+
+This is the rule doing the job it was written for. The threshold was fixed while `d=8` was still running and before any regret number existed; it now binds against the temptation to repair an unfavourable result. **Had it been written afterwards, 0.875% is exactly the number someone could have argued either side of.**
+
+**Report as a limitation:** `d=8, σ=0.25` reached 0.875%, close enough to the line to be worth stating. All 9 failures fall in the two σ=0.25 cells — the failures concentrate at the higher noise level, which is where the GP fit is worst conditioned.
+
+### ⚠️ The evidence was nearly lost
+
+**`results/e2.log` as committed in `0aeee09` contains ZERO of these warnings** — 77 lines against the run's actual 224, with every BoTorch warning stripped. The determination above is not reproducible from the committed artefact.
+
+The full log is restored as **`results/e2-run1-unfiltered.log`**. **A pre-registered decision rule is worth nothing if the evidence it consumes is filtered out of the record before anyone can check it** — and this one exonerates the run rather than condemning it, which is precisely why it must be auditable.
+
+---
+
+## 🔴 Q20 [A decides, B recommends] · E2 · **written while the grid is still running, deliberately**
+
+**The E2 grid was launched before these were settled. Everything below is recorded with no E2 number in existence, which is the only reason it is worth anything.** If it is read after the numbers land, check the git timestamp against `results/e2-grid.json`.
+
+### 1. `comparator: best_non_bo` is under-specified, and it is not the claim Alan is asking about
+
+`e2.yaml:85` registers `primary_cell: {arm: qlogei, comparator: best_non_bo, dim: 6, sigma_rel: 0.25}`. Two separate problems.
+
+**It is under-specified.** "Best non-BO" does not say best by which endpoint, selected per-instance or pooled, or whether qLogNEI counts. `run_e2.py:178` answers all three — pooled mean regret, `qlognei` excluded — but **those are implementation choices sitting outside the pre-registration**, which is how the point-set defect in Q16 and the primary-cell defect in Q19 both happened. Third occurrence of one pattern.
+
+**It is a max-statistic.** The comparator is chosen after the results, as the strongest of ~5 arms. That direction is *conservative* for a "BO wins" claim — you are beating the best of five, not an average — so it does not inflate false positives, and the choice is defensible. But the interval and Wilcoxon *p* attached to a selected comparator are not those of a fixed comparison, and that has to be said out loud rather than left implicit.
+
+**And it answers the wrong question.** The project's framing is a *domain* claim: BO against the procedure the published study actually ran. That is the **DoE arm**, specifically, not whichever arm happens to score best.
+
+> **B's recommendation — register both, as two named estimands, neither chosen afterwards:**
+>
+> | | comparison | claim type |
+> |---|---|---|
+> | **Primary — domain** | `qlogei` vs `doe`, d=6, σ=0.25 | "BO beats current practice." The paper's actual thesis. Fixed in advance, not selected. |
+> | **Co-primary — methods** | `qlogei` vs `best_non_bo` | "BO beats the strongest alternative we ran." Conservative, and labelled as a selected comparator. |
+>
+> **Per-instance selection of the comparator is forbidden** — that would be an oracle competitor that exists as no method, the same error as the oracle-best scoring that voided E2's first run.
+
+### 2. Wilcoxon vs the bootstrap — which governs
+
+`e2.yaml` registers `test: wilcoxon_signed_rank` **and** `bootstrap: instance_level` and does not say which decides.
+
+> **B's recommendation:** the **Wilcoxon signed-rank test governs the yes/no**; the instance-level bootstrap reports the **magnitude and interval**. They answer different questions and neither is a check on the other. **If they disagree, the disagreement is reported, not resolved** — a signed-rank test disagreeing with a bootstrap of the mean is a fact about skew or an outlying landscape, and that is worth a sentence rather than a silent choice of whichever agrees.
+
+**Verified good, so it is not on the list:** the clustering is right. `run_e2.py:168` averages seeds within an instance *before* testing, so both the Wilcoxon and the bootstrap see n=25, not n=50. That is the exact error `e2.yaml:74` says would be indefensible, and A avoided it.
+
+### 3. Two smaller things in `e2.yaml`
+
+**`preregistration_version` is still 1 after an in-place correction.** The header says *"If any of them must change afterwards, bump `preregistration_version` and say why."* `identical_initial_design_per_seed` was then corrected in place after B's T9/Q18 — the right thing to record, but it is a post-hoc edit to a pre-registration under the version that predates it. **By the file's own rule this is version 2.**
+
+**`regret_on: noiseless_value_at_selected_point` does not define the DoE arm's selected point.** For every other arm the selected point is the observed argmax. The DoE arm's *output* is the stage-4 confirmation recipe, and `run_e2.py:120` scores it as reported-best over all 48 — so the confirmation counts only if it happens to be the observed argmax, which `results/doe-arm.log` says it is not, in 100% of runs at both noise levels. **This is not obviously wrong** — a practitioner does walk away with the best recipe they saw — but it is the more generous of two defensible rules, and it is unregistered. Say which one it is.
+
+---
+
+## 🔴 Q19 [B raises, A + B decide] · **E4's reported headline is not E4's registered primary, and they disagree in sign**
+
+**This may reverse E4's headline. Raised before anything is written up, not after.**
+
+Verified by re-running `scripts/run_e4.py --instances 25 --rho 2.0` on the current ensemble. Reproduces B's v2 pooled numbers exactly, so this is not a version or ensemble difference.
+
+### The discrimination result is not one number, it is a sign flip
+
+| κ | GP ρ | NN ρ | paired difference | interval clears zero |
+|---|---|---|---|---|
+| 0.6 | +0.590 | +0.483 | **+0.1068** [+0.0461, +0.1668] | **yes — GP better** |
+| 0.7 | +0.404 | +0.422 | −0.0173 [−0.0745, +0.0415] | no |
+| 0.8 | +0.272 | +0.368 | **−0.0960** [−0.1450, −0.0470] | **yes — GP worse** |
+| 0.9 | +0.267 | +0.368 | **−0.1011** [−0.1481, −0.0561] | **yes — GP worse** |
+
+Pooled: **−0.0269** [−0.0728, +0.0182]. **Three of four cells have intervals clear of zero, in opposite directions, and the pooled number is their average.** "No advantage" is arithmetically true and describes none of the four cells.
+
+### 🔴 The part that matters: the reported headline is the wrong estimand
+
+`configs/experiment/e4.yaml:106` registers `primary_cell: {kappa: 0.6, rho: 2.0}`, and Q16 restates it — *"E4's primary endpoint remains the discrimination Spearman (GP vs nearest-neighbour distance) at `primary_cell: {kappa: 0.6, rho: 2.0}`, with the equivalence bound at 0.08."* **A single cell, named in advance.**
+
+`results/E4-RESULTS-v2.md:25` reports, labelled "pre-registered primary", the number **pooled across all four κ**: −0.027, "no advantage".
+
+**Those are different quantities and they disagree in sign.** At the cell actually registered as primary, the GP is **better** by +0.1068 with an interval clear of zero — and **+0.107 exceeds the pre-registered equivalence bound of 0.08**, so the standing claim *"the advantage is below 0.08 — established, not merely unrefuted"* is false at the registered primary cell. It is true only of the pooled average.
+
+**This is the same defect three times over in this project**, and B is raising it against B's own experiment rather than waiting for a reviewer: the ρ-trend that could not fail, the coverage primary that never named its point set, and now a primary cell that is named and then not reported. Each time the registered quantity and the reported quantity came apart.
+
+### What B is NOT claiming
+
+**Not that the GP wins.** κ=0.6 is the *most* extrapolated cell, the pooled estimate is negative, the two largest-κ cells are significantly negative, and the prior art in `E4-RESULTS-v2.md` says a null is the expected outcome under GP theory. A single favourable registered cell inside a negative surface is exactly the "corner-shaped claim" Q16 warns against.
+
+**The honest reading is that E4 has no single headline.** The discrimination result is κ-dependent, the dependence is large, and it reverses sign across the registered grid.
+
+### The decision, for A
+
+Two defensible resolutions, and **B is deliberately not choosing**, because either choice made by the person who has seen the numbers is the thing pre-registration exists to prevent:
+
+1. **The registered cell stands.** Report κ=0.6 as the confirmatory result — GP better, +0.107 [+0.046, +0.167], equivalence bound breached — and the other three κ as the pre-specified surface that contradicts it. Most faithful to what was written down. Reverses the headline.
+2. **The pooled estimand was always the intent** and `primary_cell` was a mis-registration. Then say so explicitly, in the paper, with the date the discrepancy was found — and report the sign flip regardless, because pooling across it is what hides the finding.
+
+**What must happen either way:** the per-κ table is reported in full. Pooling a sign flip into "no advantage" is not a summary, it is a cancellation.
+
+### One reporting defect found alongside
+
+`run_e4.py` prints `significant=False` for κ=0.8 and κ=0.9, whose intervals are [−0.145, −0.047] and [−0.148, −0.056] — **clear of zero**. The flag is one-sided and means "significant *advantage*", but it is unlabelled, so the output reads as "nothing here" next to two of the strongest effects on the grid. Anyone scanning this log would conclude the opposite of what it shows.
+
+---
+
 ## 🟠 Q18 [A + B] · T9 · **the paired opening batch did not exist, and the test that said it did tested something else**
 
 **B has implemented the part the spec already decided and is flagging the one part it did not. A: the LHS exemption below is the only genuinely new call and it needs your sign-off.**

@@ -42,6 +42,29 @@ KAPPAS = (0.6, 0.7, 0.8, 0.9)
 RULE = "=" * 72
 
 
+def verdict(lo: float, hi: float) -> str:
+    """A three-way reading of a paired interval, replacing ``significant={bool}``.
+
+    **Q19.** ``paired_difference_ci``'s ``is_significant`` is one-sided by design --
+    its docstring says "True only when the whole interval sits above zero", because
+    the registered question is whether the GP BEATS the null. Printing that as
+    ``significant=False`` was accurate about the flag and misleading about the data:
+    at kappa=0.8 and 0.9 the intervals are [-0.145, -0.047] and [-0.148, -0.056],
+    entirely clear of zero, and the line read as "nothing here" next to two of the
+    strongest effects on the grid. Anyone scanning the log would conclude the
+    opposite of what it shows.
+
+    The flag is unchanged; only the report is. A one-sided test is the right test
+    for the registered claim, but the reader has to be told which direction it
+    can see.
+    """
+    if lo > 0:
+        return "GP BETTER — interval clears zero"
+    if hi < 0:
+        return "GP WORSE — interval clears zero"
+    return "null — interval spans zero"
+
+
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--dim", type=int, default=6, help="E4 is d=6 only; see spec §6")
@@ -104,7 +127,14 @@ def main() -> None:
             esc = sum(1 for r in sub if not r.argmax_inside_subbox.get(m, False))
             print(f"  kappa={k} {m:<14} median {np.median(v):+8.3f}  escaped {esc}/{len(sub)}")
 
-    print("\n" + RULE, "\nDISCRIMINATION — the pre-registered primary\n", RULE, sep="")
+    # Q19: this block is the discrimination result BY KAPPA. The registered primary
+    # is a single cell -- configs/experiment/e4.yaml:106, primary_cell {kappa: 0.6,
+    # rho: 2.0} -- not this table and not the pooled figure below it. Labelling the
+    # whole block "the pre-registered primary" is how the pooled number came to be
+    # reported under that name in E4-RESULTS-v2.md while disagreeing with it in sign.
+    print("\n" + RULE, "\nDISCRIMINATION by kappa "
+          "(registered primary CELL is kappa=0.6; pooled is NOT the primary)\n",
+          RULE, sep="")
     for k in args.kappas:
         sub = [r for r in valid if r.kappa == k]
         if not sub:
@@ -113,7 +143,7 @@ def main() -> None:
         gp, nn = s["spearman_gp"], s["spearman_nearest_neighbour"]
         d, lo, hi, sig = s["gp_beats_null_paired"]
         print(f"  kappa={k}: GP rho {gp[0]:+.3f} | nearest-neighbour rho {nn[0]:+.3f}")
-        print(f"           PAIRED difference {d:+.4f} [{lo:+.4f}, {hi:+.4f}]  significant={sig}")
+        print(f"           PAIRED difference {d:+.4f} [{lo:+.4f}, {hi:+.4f}]  {verdict(lo, hi)}")
 
     print("\n" + RULE, "\nPOOLED\n", RULE, sep="")
     s = summarise(valid)
@@ -126,7 +156,7 @@ def main() -> None:
     for label, key in (("vs model-free null", "gp_beats_null_paired"),
                        ("vs polynomial PI  ", "gp_beats_poly_paired")):
         d, lo, hi, sig = s[key]
-        print(f"  GP {label}: {d:+.4f} [{lo:+.4f}, {hi:+.4f}]  significant={sig}")
+        print(f"  GP {label}: {d:+.4f} [{lo:+.4f}, {hi:+.4f}]  {verdict(lo, hi)}")
     exact = s["gp_beats_null_exact_is_enumerated"]
     label = "EXACT (all arrangements enumerated)" if exact else "sampled, not exact"
     print(f"  sign-flip test     : p={s['gp_beats_null_exact_p']:.4f}  [{label}]")

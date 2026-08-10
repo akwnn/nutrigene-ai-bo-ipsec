@@ -47,6 +47,7 @@ import torch
 from torch import Tensor
 
 from boec.campaign import Campaign, CampaignConfig, Evaluator
+from boec.diagnostics import reported_best_curve
 from boec.optimizers import (
     ACQUISITION_CHOICES,
     initial_design,
@@ -231,6 +232,7 @@ def run_static_baseline(
     *,
     n_orderings: int = 20,
     share_opening: bool | None = None,
+    truth: Callable[[Tensor], Tensor] | None = None,
 ) -> np.ndarray:
     """Run a non-adaptive baseline and produce a fair convergence curve.
 
@@ -271,9 +273,19 @@ def run_static_baseline(
     if Yvar is None:
         raise ValueError("evaluator returned no noise estimate — see contract item 5")
 
+    truth_fn = truth if truth is not None else getattr(evaluator, "truth", None)
+    if truth_fn is None:
+        raise ValueError(
+            "no truth() available, so this curve would be scored on OBSERVED values "
+            "and carry the Q17 winner's-curse inflation — the same defect E1 exposed "
+            "on Branin, where best-so-far read better than the true optimum. Pass "
+            "truth=, or give the evaluator a truth() method. Returning the observed "
+            "curve anyway is what let this survive: it looked like a result."
+        )
+
     paired = (method not in PAIRING_EXEMPT) if share_opening is None else share_opening
-    y = Y.double().numpy().ravel()
     n_init = 2 * int(bounds.shape[1]) + 2 if paired else 0
+    f = torch.as_tensor(truth_fn(X)).double().reshape(-1, 1)
     rng = np.random.default_rng(seed)
     curves = np.empty((n_orderings, budget), dtype=np.float64)
     for i in range(n_orderings):
@@ -281,7 +293,8 @@ def run_static_baseline(
             np.arange(n_init),
             n_init + rng.permutation(budget - n_init),
         ])
-        curves[i] = np.maximum.accumulate(y[order])
+        # Q17: select by what the method could see, score by what was true there.
+        curves[i] = reported_best_curve(f[order], Y[order])
     return curves.mean(axis=0)
 
 
