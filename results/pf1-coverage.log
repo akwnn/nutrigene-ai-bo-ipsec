@@ -1,0 +1,43 @@
+PF1 COVERAGE · 800 cells · 40 instances · d=6
+covered <=> |over| <= pi/2, at the second-order model's own argmax
+
+==============================================================================
+COVERAGE OF THE TRUE RESPONSE (nominal 0.95)
+==============================================================================
+  kappa                 1.2               1.5                 2                 3              cube
+   0.6   0.475 [0.33,0.62] 0.075 [0.00,0.17] 0.025 [0.00,0.07] 0.000 [0.00,0.00] 0.100 [0.03,0.20]
+   0.7   0.325 [0.17,0.47] 0.100 [0.03,0.20] 0.075 [0.00,0.15] 0.100 [0.03,0.20] 0.175 [0.07,0.30]
+   0.8   0.525 [0.38,0.68] 0.300 [0.17,0.45] 0.300 [0.17,0.45] 0.425 [0.28,0.57] 0.550 [0.40,0.70]
+   0.9   0.575 [0.42,0.72] 0.300 [0.17,0.45] 0.350 [0.20,0.50] 0.575 [0.42,0.72] 0.625 [0.47,0.78]
+
+  Highest coverage anywhere on the grid: 0.625, against nominal 0.95.
+
+==============================================================================
+MONOTONE IN rho?
+==============================================================================
+   kappa=0.6: NOT monotone   rises at 3->cube
+   kappa=0.7: NOT monotone   rises at 2->3, 3->cube
+   kappa=0.8: NOT monotone   rises at 2->3, 3->cube
+   kappa=0.9: NOT monotone   rises at 1.5->2, 2->3, 3->cube
+
+==============================================================================
+CROSSINGS OF NOMINAL — the registered quantity
+==============================================================================
+   kappa=0.6: 0 crossings — never reaches nominal at any rho
+   kappa=0.7: 0 crossings — never reaches nominal at any rho
+   kappa=0.8: 0 crossings — never reaches nominal at any rho
+   kappa=0.9: 0 crossings — never reaches nominal at any rho
+
+==============================================================================
+VERDICT
+==============================================================================
+  The registered primary has NO crossing to report, at any kappa.
+  Coverage at the argmax starts below nominal at rho=1.2 and stays there,
+  so the interval never had nominal coverage to lose. 'The rho at which
+  it crosses' is undefined on this point set — a stronger failure than
+  the multiple-crossings objection, and a different one.
+
+  NOT a contradiction of A's 96-98% at rho=1.2: that measures coverage
+  over the design/domain, this measures it at the recipe the model tells
+  you to run. The primary does not say which, and they disagree on the
+  verdict. Name the point set before the run.

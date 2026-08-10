@@ -43,9 +43,19 @@ def test_initial_design_is_2d_plus_2():
     assert initial_design(eight).shape[0] == 18      # d=8: 18 + 7x4 + 2 = 48
 
 
-def test_initial_design_is_identical_across_methods_for_a_seed():
-    """Spec §9 'paired initial design'. A significant vs non-significant result
-    at n=50 turns on this."""
+def test_initial_design_is_deterministic_for_a_seed():
+    """RENAMED (T9/Q18). This was called
+    ``test_initial_design_is_identical_across_methods_for_a_seed`` and cited as the
+    enforcement of spec §E2's paired opening — but it calls ``initial_design``
+    twice and never touches another method, so it tested determinism and nothing
+    else. Meanwhile ``run_static_baseline`` never called ``initial_design`` at all,
+    so the random and LHS arms shared no opening with qLogEI. A test whose NAME
+    carries the guarantee and whose BODY does not is worse than no test: it is
+    where everyone stops looking.
+
+    The real cross-arm assertions now live in ``test_runner.py``
+    (``test_paired_arms_open_on_the_identical_batch``). This keeps only the claim
+    it can actually support."""
     a = initial_design(UNIT, seed=7)
     b = initial_design(UNIT, seed=7)
     assert torch.equal(a, b)

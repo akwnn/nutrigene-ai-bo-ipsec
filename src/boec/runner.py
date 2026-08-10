@@ -47,7 +47,13 @@ import torch
 from torch import Tensor
 
 from boec.campaign import Campaign, CampaignConfig, Evaluator
-from boec.optimizers import ACQUISITION_CHOICES, lhs_design, random_design, sobol_design
+from boec.optimizers import (
+    ACQUISITION_CHOICES,
+    initial_design,
+    lhs_design,
+    random_design,
+    sobol_design,
+)
 
 #: Methods that choose all their points up front. Run through
 #: :func:`run_static_baseline`, which averages over orderings.
@@ -69,12 +75,14 @@ UNWIRED_METHODS: dict[str, str] = {
 }
 
 __all__ = [
+    "PAIRING_EXEMPT",
     "STATIC_METHODS",
     "UNWIRED_METHODS",
     "GridCell",
     "Runner",
     "load_results",
     "run_static_baseline",
+    "static_design",
     "set_single_threaded",
 ]
 
@@ -128,6 +136,92 @@ class GridCell:
         return "__".join(bits)
 
 
+#: Q18 (T9). Arms exempt from the paired opening batch, and why. A Latin
+#: hypercube's stratification is a property of the WHOLE n-point set, so a Sobol
+#: prefix plus a Latin-hypercube remainder is not a Latin hypercube. Pairing this
+#: arm would leave it wearing the name of a baseline it no longer is.
+PAIRING_EXEMPT: dict[str, str] = {
+    "lhs": (
+        "a Latin hypercube stratifies over all n points, so replacing its opening "
+        "with the shared Sobol batch destroys the property the arm exists to test. "
+        "Q18 exempts it: run it with share_opening=False and report it as the one "
+        "unpaired arm, with its wider interval, rather than as a paired hybrid."
+    ),
+}
+
+
+def static_design(
+    bounds: Tensor,
+    method: str,
+    budget: int,
+    seed: int,
+    *,
+    share_opening: bool | None = None,
+) -> Tensor:
+    """The full point set for a non-adaptive arm, opening batch included.
+
+    **Q18 (T9), PRE-REGISTERED: every paired arm opens on the identical batch.**
+    Spec §E2 requires the opening design to be identical across methods for a
+    given seed — "paired comparison at n=50 is the difference between a
+    significant and a non-significant result" — and it was not. Before this,
+    ``run_static_baseline`` generated all ``budget`` points from the method's own
+    generator and never called :func:`~boec.optimizers.initial_design`, so the
+    random and LHS arms shared no opening with qLogEI whatsoever.
+
+    The Sobol arm was already paired **for free** and nobody had noticed:
+    ``initial_design`` IS ``sobol_design(bounds, 2d + 2, seed)``, and a Sobol
+    prefix is stable, so the natural 48-point Sobol design already begins with
+    exactly the shared opening. Pairing costs that arm nothing. It costs the
+    random arm nothing either — random has no global structure to damage. It
+    costs the LHS arm its defining property, which is why LHS is exempt; see
+    :data:`PAIRING_EXEMPT`.
+
+    Args:
+        bounds: ``(2, d)``.
+        method: ``"random"``, ``"sobol"`` or ``"lhs"``.
+        budget: total measurements.
+        seed: fixes the design.
+        share_opening: ``None`` (the default) applies the registered policy — pair
+            the arm unless it is in :data:`PAIRING_EXEMPT`. ``True`` **demands**
+            pairing and raises on an exempt arm, so a caller who believes every arm
+            is paired finds out rather than being quietly right for three arms and
+            wrong for one. ``False`` opts out explicitly.
+
+    Returns:
+        ``(budget, d)``. When paired, rows ``[:2d + 2]`` are exactly
+        ``initial_design(bounds, seed=seed)``.
+
+    Raises:
+        ValueError: on an unknown method, or when pairing is *demanded* of a
+            registered-exempt arm. Silently returning a hybrid under the exempt
+            arm's label would be the same defect class as the ``method``
+            fall-through fixed in ``run_cell``.
+    """
+    makers: dict[str, Callable[..., Tensor]] = {
+        "random": random_design, "sobol": sobol_design, "lhs": lhs_design,
+    }
+    if method not in makers:
+        raise ValueError(f"unknown baseline {method!r}; choose from {sorted(makers)}")
+
+    if share_opening and method in PAIRING_EXEMPT:
+        raise ValueError(
+            f"{method!r} is exempt from the Q18 paired opening — {PAIRING_EXEMPT[method]}"
+        )
+    pair = (method not in PAIRING_EXEMPT) if share_opening is None else share_opening
+
+    full = makers[method](bounds, budget, seed=seed)
+    if not pair:
+        return full
+
+    n_init = 2 * int(bounds.shape[1]) + 2
+    if n_init >= budget:
+        raise ValueError(
+            f"budget {budget} cannot cover an opening design of {n_init} at "
+            f"d={bounds.shape[1]}"
+        )
+    return torch.cat([initial_design(bounds, seed=seed), full[n_init:]], dim=0)
+
+
 def run_static_baseline(
     evaluator: Evaluator,
     bounds: Tensor,
@@ -136,6 +230,7 @@ def run_static_baseline(
     seed: int,
     *,
     n_orderings: int = 20,
+    share_opening: bool | None = None,
 ) -> np.ndarray:
     """Run a non-adaptive baseline and produce a fair convergence curve.
 
@@ -156,26 +251,37 @@ def run_static_baseline(
         budget: how many measurements.
         seed: fixes the design and the shuffles.
         n_orderings: how many shuffles to average over.
+        share_opening: Q18 (T9). Open on the shared batch and hold it fixed. The
+            registered default; pass ``False`` only for a registered exemption.
 
     Returns:
         ``(budget,)`` the averaged best-so-far curve.
-    """
-    makers: dict[str, Callable[..., Tensor]] = {
-        "random": random_design, "sobol": sobol_design, "lhs": lhs_design,
-    }
-    if method not in makers:
-        raise ValueError(f"unknown baseline {method!r}; choose from {sorted(makers)}")
 
-    X = makers[method](bounds, budget, seed=seed)
+    Note:
+        **The shared opening is not shuffled.** Q18's pairing has to survive
+        scoring, not only design: this function previously permuted all ``budget``
+        points, which scattered the opening batch through the curve and undid the
+        pairing even on the Sobol arm, where it had been free all along. Only the
+        method-specific remainder is shuffled, which is also the segment spec §E2
+        computes AUC over — "computing AUC from evaluation 1 would include the
+        shared initial design and dilute the between-method difference".
+    """
+    X = static_design(bounds, method, budget, seed, share_opening=share_opening)
     Y, Yvar = evaluator.evaluate(X)
     if Yvar is None:
         raise ValueError("evaluator returned no noise estimate — see contract item 5")
 
+    paired = (method not in PAIRING_EXEMPT) if share_opening is None else share_opening
     y = Y.double().numpy().ravel()
+    n_init = 2 * int(bounds.shape[1]) + 2 if paired else 0
     rng = np.random.default_rng(seed)
     curves = np.empty((n_orderings, budget), dtype=np.float64)
     for i in range(n_orderings):
-        curves[i] = np.maximum.accumulate(y[rng.permutation(budget)])
+        order = np.concatenate([
+            np.arange(n_init),
+            n_init + rng.permutation(budget - n_init),
+        ])
+        curves[i] = np.maximum.accumulate(y[order])
     return curves.mean(axis=0)
 
 

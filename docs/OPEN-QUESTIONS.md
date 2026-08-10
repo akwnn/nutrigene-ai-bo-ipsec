@@ -4,6 +4,48 @@
 
 ---
 
+## 🟠 Q18 [A + B] · T9 · **the paired opening batch did not exist, and the test that said it did tested something else**
+
+**B has implemented the part the spec already decided and is flagging the one part it did not. A: the LHS exemption below is the only genuinely new call and it needs your sign-off.**
+
+### The defect, in two independent halves
+
+`optimizers.initial_design`'s docstring says *"This must be identical across every method being compared, for a given seed… There is a test for it."* Both clauses were false.
+
+**Half one — the arms shared nothing.** `initial_design` had exactly one caller, `campaign.py:280`, the BO arm. `run_static_baseline` generated all 48 points from the method's own generator and never called it. So random and LHS opened on a completely different batch from qLogEI.
+
+**Half two — the pairing was destroyed at scoring even where it existed.** The ordering average permuted **all** `budget` points, scattering any shared opening through the curve. Pairing that survives design but not scoring is not pairing.
+
+**And the test.** `test_initial_design_is_identical_across_methods_for_a_seed` called `initial_design` twice with the same seed and asserted equality. It tested determinism. It never touched a second method. **A test whose name carries the guarantee and whose body does not is worse than no test — it is where everyone stops looking.** Renamed to `test_initial_design_is_deterministic_for_a_seed`; the real cross-arm assertions are in `test_runner.py`.
+
+### One thing nobody had noticed: **Sobol was already paired, for free**
+
+`initial_design` *is* `sobol_design(bounds, 2d+2, seed)`, and a Sobol prefix is stable, so the natural 48-point Sobol design already began with exactly the shared opening. Verified and now guarded by a test, because it is the reason the policy costs that arm nothing and a change to either function would silently end it.
+
+### What is registered
+
+> **Every arm opens on the identical batch, in the identical order, and that segment is not shuffled.** Only the method-specific remainder is shuffled and averaged — which is also the segment spec §E2 computes AUC over.
+
+**This half is not a new decision.** Spec §E2 already fixed it — *"The initial design must be identical across methods for a given seed — paired comparison at n=50 is the difference between a significant and a non-significant result. Test for it."* It was specified, never implemented, and guarded by a test that did not test it. Implementing it is not B deciding anything.
+
+Cost by arm, which is why this was cheap: **Sobol — free**, already paired. **Random — free**, it has no global structure to damage. **LHS — expensive**, and hence:
+
+### 🔶 THE ONE NEW CALL, AND IT IS A + B: **LHS is exempt**
+
+A Latin hypercube's stratification is a property of the **whole** n-point set. A 14-point Sobol prefix plus a 34-point Latin-hypercube remainder **is not a Latin hypercube** — it is a straw man wearing the name of a baseline. The spec's own scoping is explicit that a baseline has to be good or the result is worthless.
+
+So LHS runs **unpaired**, and is reported as the one unpaired arm with its wider interval and the reason stated. **B's reasoning, A's call.** The alternatives, both worse: pair it and report a hybrid under the `lhs` label, or drop the arm.
+
+**What would change this:** if A can construct a Latin hypercube of 48 whose first 14 points are the shared opening and which still stratifies, the exemption is unnecessary and should go. B could not.
+
+### Implemented
+
+`runner.static_design(bounds, method, budget, seed, share_opening=None)`. `None` applies the registered policy — pair unless exempt. `True` **demands** pairing and raises on an exempt arm, so a caller who believes every arm is paired finds out rather than being quietly right for three arms and wrong for one. `False` opts out explicitly. Six tests, including one asserting unpaired LHS is still a real Latin hypercube — the exemption has to actually buy something — and one asserting the ordering average still applies to the remainder, so the pairing fix does not silently trade away the thing that makes a one-shot design comparable to an adaptive one.
+
+**Deliberately not done:** wiring this into E2's driver. That is T11 and it is A's.
+
+---
+
 ## 🔴 Q16 [EITHER] · PRE-REGISTRATION, WRITTEN BEFORE THE NEXT RUN · **the (κ, ρ) grid is the over-prediction result. No single cell is the headline.**
 
 **Committed before PF1 is re-run at the pre-registered regime, deliberately, so the history shows it was decided in advance and not selected afterwards.**
@@ -105,17 +147,38 @@ Ratio of median over-prediction to median half-width, from `results/pf1-grid.log
 | 0.8 | **0.89** | 1.35 | 1.38 | 1.19 | **0.92** |
 | 0.9 | **0.98** | 1.15 | 1.12 | **0.92** | **0.83** |
 
-**Non-monotone at every κ** — it rises to a peak around ρ=2–3 and falls back. At κ=0.8 and κ=0.9 it crosses 1 upward *and then back down*. If that survives being computed as an actual coverage rate, **the crossing ρ is not a well-defined quantity at half the grid**, and a primary endpoint phrased as "the ρ at which it crosses" has no value to report there.
+**Non-monotone at every κ** — it rises to a peak around ρ=2–3 and falls back. **Caveat stated at the time, because it cut against the objection:** a ratio of two medians is *not* the coverage rate, and can be non-monotone while `P(|over| ≤ pi/2)` is monotone. So this raised a well-posedness risk; it did not establish one.
 
-The mechanism is visible in the same table above: past the point where the box saturates at the unit cube the argmax stops moving outward, while `σ̂·√(1+h)` keeps inflating on the sub-box design's ill-conditioning. The interval overtakes the bias again. That is a real property of extrapolating a designed experiment, not an artefact — which is why it should be reported rather than defined away.
+#### ⚠️ THE RATE HAS NOW BEEN COMPUTED, AND IT CORRECTS THE MECHANISM ABOVE
 
-**Caveat, stated because it cuts against the objection.** This is a ratio of two medians, which is *not* the coverage rate — coverage is `P(|over| ≤ pi/2)` per cell, and a ratio of medians can be non-monotone while the rate is monotone. So this raises a well-posedness risk; it does not establish one. **PF1 already records `over` and `pi` for all 800 cells (`preflight_pf1.py:92`), so computing the real rate is a reporting change, not a new experiment.**
+`scripts/pf1_coverage.py`, all 800 cells, `covered ⟺ |over| ≤ pi/2`, instance-level cluster bootstrap. Log at `results/pf1-coverage.log`. **Independently cross-checked against the median table above: all 20 cells agree in sign about whether coverage sits above or below 50%.**
 
-#### Proposed amendment, for A to accept or reject
+| κ | ρ=1.2 | ρ=1.5 | ρ=2 | ρ=3 | cube |
+|---|---|---|---|---|---|
+| 0.6 | 0.475 | 0.075 | 0.025 | 0.000 | 0.100 |
+| 0.7 | 0.325 | 0.100 | 0.075 | 0.100 | 0.175 |
+| 0.8 | 0.525 | 0.300 | 0.300 | 0.425 | 0.550 |
+| 0.9 | 0.575 | 0.300 | 0.350 | 0.575 | 0.625 |
 
-> **Coverage of the second-order prediction interval is reported as a surface over the registered (κ, ρ) grid.** The crossing ρ is reported only where coverage is monotone in ρ; where it is not, the non-monotonicity is itself the reported finding.
+**The conclusion holds. The mechanism given for it was wrong, and is corrected here rather than quietly restated.**
 
-This is the same logic Q16 already argues for the over-prediction endpoint — the grid is the result, no single cell is the headline — applied to the replacement primary rather than exempting it. **What would falsify the claim:** coverage flat near nominal 95% across the whole grid.
+**There are ZERO crossings, not two.** The ratio table crosses **1**, which is the *50%* coverage mark, not the *nominal 95%* one. Coverage never reaches nominal anywhere on the grid — the highest cell is **0.625 against a nominal 0.95**, including at ρ=1.2. So the crossing ρ is undefined because **the interval never had nominal coverage to lose**, not because it loses it more than once. A stronger result than the objection claimed, arrived at by a worse route.
+
+**The non-monotonicity was real** and reproduces on the actual rate at all four κ — dipping and then recovering toward the cube — so the saturation mechanism (the argmax stops moving outward once the box saturates while `σ̂·√(1+h)` keeps inflating) is supported. It is simply not a statement about crossings.
+
+#### 🔴 THE DECISIVE DEFECT — **the registered sentence never says WHICH POINT SET**
+
+This does **not** contradict A's 96–98% at ρ=1.2. **It measures a different point set.** A's figure is coverage over the design/domain; the table above is coverage **at the recipe the model tells you to run**. Both are legitimate, both are "coverage of the second-order prediction interval", and on the same registered sentence they return **opposite verdicts** — calibrated versus catastrophic.
+
+**That ambiguity matters more than the monotonicity argument.** A primary endpoint that two people can compute correctly and disagree about is not a pre-registration; it is the thing pre-registration exists to prevent, in the one document a reader trusts not to contain it. It is also the third time in this project a registered quantity has turned out under-specified, after the ρ-tautology and the E4 non-separability check.
+
+#### Amendment, for A to accept or reject — **supersedes the one first proposed here**
+
+> **Coverage is registered at BOTH point sets, each as a surface over the (κ, ρ) grid:** at the second-order model's **constrained argmax** (decision-relevant, and the worst case, since the argmax is selected for high predicted value) and at a **fixed held-out set** (domain-wide, no selection effect). The crossing ρ is reported only where one exists.
+
+This mirrors the structure E3 already uses for its two point sets, and applies Q16's own "the grid is the result" logic to its replacement primary instead of exempting it. **The gap between the two surfaces is itself informative** and should be reported — it is the difference between "this model is well calibrated" and "this model is well calibrated everywhere except where it sends you".
+
+**What would falsify the claim:** coverage flat near nominal 95% across the whole grid, at both point sets.
 
 ---
 
