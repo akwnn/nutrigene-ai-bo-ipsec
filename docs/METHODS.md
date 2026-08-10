@@ -23,7 +23,7 @@ Coded space was adopted for three reasons. First, the source study reports its d
 matrices purely as coded levels $(-,0,+)$ and its figure heat-maps as normalised
 concentrations, so a coded representation transfers to Phase 2 without requiring absolute
 units. Second, the source study's text is internally inconsistent for one protein
-(Collagen IV; §2.9), and coding renders that inconsistency irrelevant to the benchmark.
+(Collagen IV; §2.10), and coding renders that inconsistency irrelevant to the benchmark.
 Third, coding equalises the numerical conditioning of the design matrices across factors
 whose physical ranges differ by two orders of magnitude.
 
@@ -184,7 +184,7 @@ ensemble contrast.
 The ensemble identifier hashes the construction parameters *and* the acceptance parameters,
 because under rejection sampling the seed→instance map depends on the acceptance rule.
 Because that hash does not cover the numerical optimiser's behaviour, the generated
-ensembles are committed as artefacts rather than regenerated on demand (§2.10).
+ensembles are committed as artefacts rather than regenerated on demand (§2.11).
 
 ## 2.4 Measurement model
 
@@ -334,7 +334,107 @@ depth spans only $[0.109, 0.139]$ across the ensemble, because the acceptance fl
 compresses it, so the test had limited power and the positive sign should not be
 over-interpreted either.
 
-## 2.9 Source verification
+## 2.9 Falsifiability auditing of registered endpoints
+
+Pre-registration as described in §2.8 protects against one failure mode only: choosing an
+endpoint after seeing which endpoint would give the desired answer. It provides no
+protection against a registered endpoint that **cannot return more than one answer**, and
+in this project that second failure occurred twice under correct pre-registration
+procedure. Because both instances were caught by an explicit check rather than by
+intuition, and because the check is cheap and general, it is reported here as a stated
+practice rather than as two isolated corrections.
+
+**The failure mode.** A registered decision rule partitions the range of a statistic into
+regions and assigns a conclusion to each. The rule is void if any of the following holds,
+and none of them is visible from the rule's text:
+
+1. the region assigned to "hypothesis supported" is unreachable given the construction of
+   the statistic;
+2. the value the statistic takes **when the hypothesised mechanism is absent** falls inside
+   a region assigned to some conclusion other than "absent";
+3. the two quantities being contrasted differ by construction, so their ordering is fixed
+   by the data-generating process rather than by the phenomenon.
+
+The first occurred in the over-prediction endpoint of §2.8: nested scoring regions make the
+statistic monotone in $\rho$ by arithmetic, so the measured Spearman coefficient of exactly
+$+1.0000$ with a zero-width interval was a property of the definition. The second occurred
+in the surrogate diagnostic. Its rule read "fitted lengthscales near the prior median
+$e^{\mu} = 10.08$ implies the prior dominates; materially shorter implies the data
+dominates". Hyperparameters here are obtained by maximum *a posteriori* estimation, not
+maximum likelihood, so the attractor in the absence of likelihood information is the prior
+**mode**, $e^{\mu - \sigma^{2}} = 0.5016$, which is also the value the library uses to
+initialise the kernel. A fit on outcomes carrying no dependence on the inputs returns
+$0.5016$ to four decimal places. The observed opening-design median was $0.502$. Both
+branches of the rule therefore resolved to "the data dominates", and the branch that would
+have implicated the prior was unreachable, because the prior's own gradient at $\ell = 10$
+points downward. The third occurred in the same diagnostic's slice-error measure, where the
+response varies in proportion to each factor's weight, so the contrast between influential
+and inert factors was fixed by the sampler's `active_share` and took the same value in the
+cell where Bayesian optimisation won as in the cell where it lost.
+
+**The practice.** For every registered endpoint, before data collection:
+
+- **State the null value of the statistic, not only the decision rule.** Derive, or obtain
+  by simulation, the value the statistic takes when the hypothesised mechanism is absent,
+  and check that this value lies in the region the rule assigns to absence. This is a
+  single computation and it would have caught all three failures above.
+- **Prefer statistics whose null is structural.** The diagnostic's deciding statistic was
+  replaced with the ratio of inert to active fitted lengthscale. The prior is identical on
+  every input dimension, so any fit that has not learned dimension-specific structure —
+  prior-dominated, badly initialised, or otherwise — returns a ratio of $1$ by symmetry.
+  A null fixed by construction cannot be mis-specified by the analyst.
+- **Where no structural null exists, obtain an empirical one by breaking the link under
+  test, not by summarising the model.** Refitting the identical design and identical noise
+  with permuted outcomes gives the distribution of the statistic under "no signal" while
+  holding sample size, design geometry, outcome marginal and noise level exactly fixed.
+  A closed-form quantity taken from the model's prior is not a substitute: with $n$
+  observations present the likelihood term always displaces the estimate, and by how much
+  is an empirical question. The measured null ratio was $1.006$ (interquartile range $[0.72, 1.50]$ over 200
+  runs), confirming the structural argument and quantifying the finite-sample dispersion
+  around it.
+- **Distinguish a distributional summary from an optimisation target.** The specific error
+  above was using the prior's median where its mode was required. Any reference value read
+  off a prior must be the one the estimator actually moves toward under the estimation
+  procedure in use.
+- **Include at least one condition that varies the hypothesised cause.** A design in which
+  every model is built with the same prior can describe what the fitted values are; it
+  cannot attribute anything to the prior. A counterfactual condition was added in which the
+  same recovered designs are refit under $\mathrm{Gamma}(3,6)$, constructed so that exactly
+  one factor differs — the library's convenience constructor would have changed the kernel
+  wrapper, the outputscale prior and the parameter constraint simultaneously, and a
+  contrast that moves three factors attributes to none of them.
+- **Normalise contrasts to a scale-free score with a principled zero, or remove them.** The
+  slice-error measure was replaced by $1 - \operatorname{Var}(\text{residual}) /
+  \operatorname{Var}(f)$ along the corresponding axis, on which a shape-blind predictor
+  scores $0$ irrespective of its level error. Measures that could not be repaired this way
+  were deleted rather than reported with a caveat.
+
+**Adversarial audit is scheduled between producing numbers and interpreting them.** The
+diagnostic's numbers existed for the duration of the audit and were deliberately not read
+until it returned. Four independent readings were commissioned with disjoint remits —
+whether any reported quantity could fail; whether the claims about the inference library
+hold against the installed source and the cited primary literature; whether the secondary
+measures are confounded; and whether the artefacts inspected are the ones the experiment
+actually produced. The two readings whose remits covered the decision rule — falsifiability
+and library provenance — both identified the maximum *a posteriori* anchoring error, and
+did so independently of one another; the remaining two did not, their remits lying
+elsewhere. Disjoint remits buy coverage rather than replication, and the count of
+concurring readers is therefore not evidence of the finding's strength: it was accepted
+because the claim was reproduced directly against the installed library, not because two
+readers agreed. Placing the audit before interpretation is what makes its verdict usable:
+an audit commissioned after a conclusion has been formed is answering a different question,
+and its finding cannot be distinguished from post-hoc rationalisation by a reader.
+
+**Reporting.** Endpoints found void are reported as void, with the arithmetic that makes
+them so, rather than being silently replaced. Of eight such constructs identified across
+this project, five originated with the present author, one was introduced while repairing
+another, and one — the lengthscale anchor — repeated in a new place the exact failure whose
+guard the same author had written. That rate is reported because it is the relevant prior
+for a reader deciding how much of the remaining apparatus to take on trust: the appropriate
+inference is not that these particular measurements are unusually fragile, but that
+measurement code is, and that the defect rate is only observable where someone looks.
+
+## 2.10 Source verification
 
 Design matrices, response readout, replication statement and reported optimum were verified
 against the published article by four independent readings, with disagreements recorded
@@ -359,7 +459,7 @@ attachment floor, and its reported optimum sits at that floor. Boundary constrai
 extrapolation therefore both operated, on different factors; they are not competing
 explanations.
 
-## 2.10 Reproducibility
+## 2.11 Reproducibility
 
 All randomness is seeded per (configuration, instance, seed). All runs are single-threaded,
 with thread counts pinned before framework import; this is a correctness requirement rather
@@ -374,7 +474,7 @@ version string, with nothing downstream detecting it. Committing the artefact ma
 ensemble authoritative and the generator an audit trail. Regeneration is asserted in the
 test suite to reproduce committed landscapes exactly.
 
-## 2.11 Limitations
+## 2.12 Limitations
 
 The benchmark is a control experiment, not a model of hiPSC differentiation. The defensible
 claim is that its responses are *shaped like* published dose-response behaviour, with stated

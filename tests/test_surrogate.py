@@ -10,6 +10,8 @@ Trap numbering matches surrogate.py and phase1_build.md §5.
 
 from __future__ import annotations
 
+import math
+
 import pytest
 import torch
 from gpytorch.kernels import MaternKernel, RBFKernel, ScaleKernel
@@ -360,3 +362,92 @@ def test_torch_and_numpy_response_curves_agree():
     a = biphasic_response(X, ec, ic, n)
     b = biphasic_response_torch(*(torch.as_tensor(v) for v in (X, ec, ic, n))).numpy()
     assert np.abs(a - b).max() < 1e-12
+
+
+# ---------------------------------------------------------------------------
+# The lengthscale-prior counterfactual (A, for the Q25 diagnostic)
+#
+# `build_gp` hardcoded `get_covar_module_with_dim_scaled_prior`, so no analysis
+# could vary the prior and therefore none could say the prior caused anything.
+# This adds ONE selectable alternative and pins down that it changes exactly one
+# thing. The naive swap -- calling `get_matern_kernel_with_gamma_prior` -- would
+# change three at once: it returns an ALREADY-wrapped ScaleKernel (so build_gp
+# would double-wrap), it attaches an outputscale prior the production model does
+# not have, and its constraint is Positive() rather than GreaterThan(0.025,
+# transform=None), which changes the optimiser's box. A counterfactual that moves
+# three variables cannot attribute a difference to any of them.
+# ---------------------------------------------------------------------------
+
+def _gp(prior, d=6, n=14):
+    import torch
+    from boec.surrogate import build_gp
+    b = torch.stack([torch.zeros(d, dtype=torch.double),
+                     torch.ones(d, dtype=torch.double)])
+    g = torch.Generator().manual_seed(0)
+    X = torch.rand(n, d, dtype=torch.double, generator=g)
+    Y = torch.rand(n, 1, dtype=torch.double, generator=g)
+    V = torch.full((n, 1), 0.01, dtype=torch.double)
+    return build_gp(X, Y, V, b, fit=False, lengthscale_prior=prior)
+
+
+def test_default_lengthscale_prior_is_unchanged():
+    from gpytorch.priors import LogNormalPrior
+    from boec.surrogate import base_kernel
+    k = base_kernel(_gp("dim_scaled"))
+    assert isinstance(k.lengthscale_prior, LogNormalPrior)
+    assert float(k.lengthscale_prior.loc) == pytest.approx(
+        math.sqrt(2) + 0.5 * math.log(6), abs=1e-4)
+
+
+def test_gamma_option_changes_the_prior_and_nothing_else():
+    from gpytorch.kernels import MaternKernel, ScaleKernel
+    from gpytorch.priors import GammaPrior
+    from boec.surrogate import base_kernel
+
+    a, b = _gp("dim_scaled"), _gp("gamma")
+    ka, kb = base_kernel(a), base_kernel(b)
+
+    # the one intended difference
+    assert isinstance(kb.lengthscale_prior, GammaPrior)
+    assert float(kb.lengthscale_prior.concentration) == pytest.approx(3.0)
+    assert float(kb.lengthscale_prior.rate) == pytest.approx(6.0)
+
+    # everything else identical
+    assert type(ka) is type(kb) is MaternKernel
+    assert ka.nu == kb.nu == 2.5
+    assert ka.ard_num_dims == kb.ard_num_dims == 6
+    ca, cb = ka.raw_lengthscale_constraint, kb.raw_lengthscale_constraint
+    assert type(ca) is type(cb)
+    assert float(ca.lower_bound) == float(cb.lower_bound) == pytest.approx(0.025)
+    assert ca.enforced == cb.enforced          # transform=None on both
+    # exactly one ScaleKernel wrapper, and no outputscale prior on either
+    assert type(a.covar_module) is type(b.covar_module) is ScaleKernel
+    assert not isinstance(b.covar_module.base_kernel, ScaleKernel)
+    assert [p[0] for p in a.named_priors()] == [p[0] for p in b.named_priors()]
+
+
+def test_gamma_prior_penalises_long_lengthscales_far_harder():
+    """The actual mechanism, quantified — and the reason the swap is a real lever.
+
+    The dim-scaled LogNormal is PERMISSIVE of long lengthscales, not attracted to
+    them: it prefers 0.5 over 10 by only ~1.5 nats per dimension, where Gamma(3,6)
+    prefers it by ~51. Their MODES are nearly the same place (0.502 vs 0.333), so
+    swapping priors changes the penalty on the tail, not the starting belief.
+    """
+    import torch
+    from boec.surrogate import base_kernel
+
+    pa = base_kernel(_gp("dim_scaled")).lengthscale_prior
+    pb = base_kernel(_gp("gamma")).lengthscale_prior
+    lo, hi = torch.tensor(0.5, dtype=torch.double), torch.tensor(10.0, dtype=torch.double)
+
+    gap_lognormal = float(pa.log_prob(lo) - pa.log_prob(hi))
+    gap_gamma = float(pb.log_prob(lo) - pb.log_prob(hi))
+    assert 1.0 < gap_lognormal < 2.5
+    assert gap_gamma > 40.0
+    assert gap_gamma > 20 * gap_lognormal
+
+
+def test_unknown_lengthscale_prior_is_rejected():
+    with pytest.raises(ValueError, match="lengthscale_prior"):
+        _gp("matern")

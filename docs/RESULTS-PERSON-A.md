@@ -45,12 +45,38 @@ genuinely paired, the gap is nearly **four times larger**. The artefact hypothes
 
 **Read it carefully.** The only difference between d=6 and d=8 is **two synthetic factors
 that do not matter** — `n_active = 4` is held fixed at both dimensions precisely so this
-comparison isolates the cost of nuisance dimensions. So BO's advantage here comes from
-**coping with irrelevant ingredients**, not from optimising the relevant ones better.
+comparison isolates the cost of nuisance dimensions. So whatever BO gains here, it does
+not gain by optimising the relevant factors better.
 
-That is still a real capability — a practitioner rarely knows in advance which ingredients
-matter, and ARD is the machinery for exactly that. But it is a narrower claim than "BO
-optimises this biology better", and the paper should say the narrower thing.
+**The mechanism has since been measured, and it is real but not the one stated.** It was
+natural to attribute the gain to ARD coping with irrelevant ingredients, and an earlier
+draft of this document said so without evidence. The lengthscale diagnostic (§6b, Q25)
+measured ARD's active-versus-inert separation directly on these same campaigns, against a
+permutation null. Two findings:
+
+- **At the opening design, d=8 has already worked out which factors matter and d=6 has
+  not.** d=6 sits exactly on its no-signal null (1.000 vs 1.000, p=0.29); d=8 is above it
+  (1.150 vs 1.000, p=0.00035). The dimension contrast is significant — p=7.3e-04 at σ=0.25,
+  p=8.6e-06 at σ=0.10.
+- **By the final model that difference is gone** (1.403 vs 1.471, p=0.62). Both dimensions
+  end up discriminating equally well.
+
+So the advantage is one of **timing, not capability**: at d=6 the surrogate is blind for
+roughly the first 30 of 48 evaluations, of which only 34 are adaptive at all. It is not that
+ARD "copes better" at higher dimension — asymptotically it copes identically.
+
+Two things follow, and they should both be in the paper rather than one of them.
+
+1. The effect is real and now has a stated mechanism, which is worth reporting.
+2. **It is confounded three ways and the confound should be printed, not buried.**
+   `n_init = 2d+2`, so d=8 opens with 18 points against d=6's 14; and the 0.10 inert weight
+   share is split 4 ways at d=8 versus 2, making each nuisance factor individually *more*
+   inert and easier to detect. Dimension, opening-design size and per-factor inertness move
+   together. Separating them needs a d=6 arm at n_init=18 — a new experiment, not proposed
+   here. Separately, the DoE arm is d=6 only (`e2.yaml`: `doe: {dim: [6]}`), so the arm that
+   beat BO at six factors was not in the race at eight; LHS does flip sign on its own
+   (−0.0282 → +0.0380), so that is not the whole story, but the comparison is missing its
+   strongest opponent from one side and should be written that way.
 
 Context that makes the six-factor loss less surprising: in the published optimum four of
 six ingredients sit at their limits — fibronectin pinned at its 22 µg/mL attachment floor,
@@ -190,11 +216,77 @@ Median over-prediction, against a response whose maximum is 1.0:
 
 ---
 
+## 6b. Lengthscale diagnostic — why BO lost at d=6
+
+`scripts/diagnostic_lengthscales.py`; report in `results/diagnostic-lengthscales.log`; full
+write-up in **Q25**. **Changes no E2 number.** Fidelity is asserted, not promised:
+**200/200 regenerated campaigns reproduce their stored E2 `best` to 1e-9**, each row
+carrying a hash of its design matrix, and the script aborts on any mismatch.
+
+**Version 1 of this diagnostic was void and its conclusion was withdrawn.** It anchored on
+the prior *median* (10.08) when the fit is MAP and the no-data attractor is the prior *mode*
+(0.5016 — also the kernel's initialisation). Its opening-design median was 0.502, i.e. the
+untrained value, which it scored as maximal learning. See defect 8 in §7 and `METHODS.md`
+§2.9. Version 2 replaces the anchor with an **empirical no-signal null** — the same design
+and noise refit on permuted outcomes — and decides on the **ARD separation ratio**, which
+is immune to the error because the prior is identical on every dimension, so any uninformed
+fit gives 1.00 by symmetry. Measured null over 200 runs: **1.006**.
+
+### The finding
+
+**d=8 begins the adaptive search already knowing which factors matter. d=6 begins blind.**
+
+| cell | opening design | | final (n=46) | |
+|---|---|---|---|---|
+| | fit | p vs null | fit | p vs null |
+| **d=6 σ=0.25** | **1.000** | **0.29 — nothing** | 1.403 | 0.00032 |
+| d=8 σ=0.25 | **1.150** | **0.00035** | 1.471 | 0.00049 |
+| d=6 σ=0.10 | 1.028 | 0.25 — nothing | 3.412 | 6.2e-14 |
+| d=8 σ=0.10 | **1.718** | **8.1e-08** | 3.438 | 2.2e-14 |
+
+At the opening design the dimension contrast is significant (p=7.3e-04 at σ=0.25, p=8.6e-06
+at σ=0.10). **By the final model it has vanished** (p=0.62 and p=0.75). So the earlier
+framing — mine — that "ARD copes better with nuisance dimensions at d=8" was wrong in its
+mechanism: asymptotically the two dimensions discriminate identically. What differs is
+*when*. At d=6 it takes ~30 evaluations of a 48 budget before ARD separates anything, and
+only 34 of those are adaptive.
+
+**Confound, declared:** `n_init = 2d+2` gives d=8 an 18-point opening against d=6's 14, and
+the 0.10 inert share is split 4 ways at d=8 versus 2, so each nuisance factor is *more*
+inert and easier to spot. Dimension, opening-design size and per-factor inertness move
+together here and this diagnostic does not separate them.
+
+### The prior is exonerated by a varied condition, not by a lengthscale value
+
+The same recovered designs refit under `Gamma(3,6)` — one variable changed, by hand, because
+the library's convenience constructor would have moved three. **Gamma roughly halves ARD
+separation in every cell** (1.40→1.15, 3.41→1.84, 1.47→1.14, 3.44→1.85; all p ≤ 4.3e-06) and
+is indistinguishable on posterior-mean argmax error (p = 0.15, 0.33, 0.40, 0.41 over 25
+clustered instances). **The registered sensitivity re-run is not triggered and was not
+performed** — and the counterfactual says running it would have made BO worse, which is
+worth stating plainly given it was the change most likely to be demanded after a BO loss.
+
+### What it cost
+
+Shape skill on the active axes — 1 − var(residual)/var(truth), so a shape-blind predictor
+scores 0 — is **0.162** in the primary cell against 0.530 at low noise, with no dimension
+effect (p=0.22, 0.40). The surrogate captures a sixth of the shape variance along the axes
+that matter, at a level error of 0.28, at points 0.41 from its nearest observation.
+**Surrogate quality here is governed by noise, not dimension.**
+
+qLogEI itself behaves sensibly: proposals close from 0.266 to 0.242 per-coordinate RMS on
+the active subspace against a uniform null of 0.333, and boundary pinning falls on *inert*
+coordinates 2.3× more often than active — correct behaviour. (Version 1's "36% of proposals
+on the box against a 1.2% uniform reference" is withdrawn: a uniform draw is not the
+operative null for a bounded acquisition maximiser.)
+
+---
+
 ## 7. Defects found — the recurring pattern, which is the most useful output
 
-**Six constructs that could not fail, or were unfair, caught before they reached a paper.**
-Three were A's own. The consistency is the point: this is the default failure mode of
-measurement code, not bad luck.
+**Eight constructs that could not fail, or were unfair, caught before they reached a
+paper.** Five were A's own. The consistency is the point: this is the default failure mode
+of measurement code, not bad luck.
 
 | # | defect | consequence had it shipped |
 |---|---|---|
@@ -205,9 +297,37 @@ measurement code, not bad luck.
 | 5 | A's E2 scored **best true value among visited points** | Credits an arm for a recipe it cannot identify → space-filling arms win by construction |
 | 6 | **B's T9:** the paired opening batch never existed, and the test that promised it asserted determinism instead | E2's fairness rule was false; the primary comparison was unpaired |
 | 7 | **B's Q23:** `coord` was a **second** unpaired arm and undeclared — A's `coordinate_descent` starts from a random interior point and never calls `initial_design` | `identical_initial_design_per_seed: true` was false for **two** arms, one declared and one silent — the same defect as #6, one arm over |
+| 8 | **A's lengthscale diagnostic anchored its decision rule on the prior MEDIAN (10.08) when the fit is MAP and its no-data attractor is the prior MODE (0.5016)** | The "prior is dominating" branch was unreachable and the "data is winning" branch was where an untrained model sits. Measured opening-design median: **0.502**. A conclusion was written, and committed, from a rule that could return only one answer |
 
 Guards now in the suite for every one. Defect 3 is the worst of them — a pre-registration
 is the one document a reader trusts not to contain a test that cannot fail.
+
+**Defect 8 is the same failure as 3, committed by the same person who wrote the guard
+against it**, and it is the most instructive one here. The rule was fixed in advance, in
+the module docstring, before any number was read — which is the correct discipline and is
+exactly what made it dangerous: registering an endpoint in advance guarantees only that you
+cannot tune it afterwards, not that it can distinguish anything. The specific error was
+using a *distributional* summary of the prior (its median) where the *optimisation* target
+was needed (its mode, `exp(loc − scale²)`, which is also gpytorch's kernel initialisation
+and is therefore literally the untrained value). It was caught by a four-lens adversarial
+audit run deliberately **before** the numbers were interpreted; three of the four lenses
+found it independently. What version 2 does about it:
+
+- the anchor is no longer a formula at all but an **empirical no-signal null** — the same
+  design and noise refit on permuted outcomes, so "has this learned anything" is measured
+  rather than asserted;
+- the deciding statistic is the **ARD separation ratio against that null**, which is immune
+  to the whole class of error because the prior is identical on every dimension, so any
+  uninformed fit gives 1.00 by symmetry (measured null: 1.11);
+- a **counterfactual arm** was added — the same recovered designs refit under Gamma(3, 6) —
+  because with no condition varying the prior, no lengthscale value could attribute
+  anything *to* the prior. `build_gp` gained one defaulted argument to make that possible,
+  built by hand rather than by swapping in `get_matern_kernel_with_gamma_prior`, which
+  would have changed three things at once;
+- `slice_rmse` was **deleted rather than normalised**: it is ~97% level error, and its
+  active-versus-inert ordering is fixed by the oracle's `active_share = 0.90`, so it came
+  out identically in the cell where BO wins and the cell where it loses. A shape-skill
+  score with a principled zero replaced it.
 
 Defect 7 is worth dwelling on because A introduced it *while fixing* #6. The random start
 was deliberate and the reasoning was sound — "a centre start would be a hidden advantage on

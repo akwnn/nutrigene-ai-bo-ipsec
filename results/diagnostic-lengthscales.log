@@ -1,0 +1,196 @@
+200 qLogEI campaigns to regenerate, 7 workers
+/Users/jy/BO/nutrigene-ai-bo-ipsec/.venv/lib/python3.11/site-packages/botorch/optim/optimize.py:844: RuntimeWarning: Optimization failed in `gen_candidates_scipy` with the following warning(s):
+[NumericalWarning('A not p.d., added jitter of 1.0e-08 to the diagonal'), OptimizationWarning('Optimization failed within `scipy.optimize.minimize` with status 2 and message ABNORMAL: .')]
+Trying again with a new set of initial conditions.
+  return _optimize_acqf_batch(opt_inputs=opt_inputs)
+/Users/jy/BO/nutrigene-ai-bo-ipsec/.venv/lib/python3.11/site-packages/botorch/optim/optimize.py:844: RuntimeWarning: Optimization failed in `gen_candidates_scipy` with the following warning(s):
+[OptimizationWarning('Optimization failed within `scipy.optimize.minimize` with status 2 and message ABNORMAL: .')]
+Trying again with a new set of initial conditions.
+  return _optimize_acqf_batch(opt_inputs=opt_inputs)
+/Users/jy/BO/nutrigene-ai-bo-ipsec/.venv/lib/python3.11/site-packages/botorch/optim/optimize.py:844: RuntimeWarning: Optimization failed in `gen_candidates_scipy` with the following warning(s):
+[NumericalWarning('A not p.d., added jitter of 1.0e-08 to the diagonal'), OptimizationWarning('Optimization failed within `scipy.optimize.minimize` with status 2 and message ABNORMAL: .')]
+Trying again with a new set of initial conditions.
+  return _optimize_acqf_batch(opt_inputs=opt_inputs)
+/Users/jy/BO/nutrigene-ai-bo-ipsec/.venv/lib/python3.11/site-packages/botorch/optim/optimize.py:844: RuntimeWarning: Optimization failed in `gen_candidates_scipy` with the following warning(s):
+[OptimizationWarning('Optimization failed within `scipy.optimize.minimize` with status 2 and message ABNORMAL: .')]
+Trying again with a new set of initial conditions.
+  return _optimize_acqf_batch(opt_inputs=opt_inputs)
+/Users/jy/BO/nutrigene-ai-bo-ipsec/.venv/lib/python3.11/site-packages/botorch/optim/optimize.py:844: RuntimeWarning: Optimization failed on the second try, after generating a new set of initial conditions.
+  return _optimize_acqf_batch(opt_inputs=opt_inputs)
+/Users/jy/BO/nutrigene-ai-bo-ipsec/.venv/lib/python3.11/site-packages/botorch/optim/optimize.py:844: RuntimeWarning: Optimization failed in `gen_candidates_scipy` with the following warning(s):
+[OptimizationWarning('Optimization failed within `scipy.optimize.minimize` with status 2 and message ABNORMAL: .')]
+Trying again with a new set of initial conditions.
+  return _optimize_acqf_batch(opt_inputs=opt_inputs)
+  25/200
+/Users/jy/BO/nutrigene-ai-bo-ipsec/.venv/lib/python3.11/site-packages/botorch/optim/optimize.py:844: RuntimeWarning: Optimization failed in `gen_candidates_scipy` with the following warning(s):
+[OptimizationWarning('Optimization failed within `scipy.optimize.minimize` with status 2 and message ABNORMAL: .')]
+Trying again with a new set of initial conditions.
+  return _optimize_acqf_batch(opt_inputs=opt_inputs)
+/Users/jy/BO/nutrigene-ai-bo-ipsec/.venv/lib/python3.11/site-packages/botorch/optim/optimize.py:844: RuntimeWarning: Optimization failed in `gen_candidates_scipy` with the following warning(s):
+[OptimizationWarning('Optimization failed within `scipy.optimize.minimize` with status 2 and message ABNORMAL: .')]
+Trying again with a new set of initial conditions.
+  return _optimize_acqf_batch(opt_inputs=opt_inputs)
+  50/200
+/Users/jy/BO/nutrigene-ai-bo-ipsec/.venv/lib/python3.11/site-packages/botorch/optim/optimize.py:844: RuntimeWarning: Optimization failed in `gen_candidates_scipy` with the following warning(s):
+[OptimizationWarning('Optimization failed within `scipy.optimize.minimize` with status 2 and message ABNORMAL: .')]
+Trying again with a new set of initial conditions.
+  return _optimize_acqf_batch(opt_inputs=opt_inputs)
+/Users/jy/BO/nutrigene-ai-bo-ipsec/.venv/lib/python3.11/site-packages/botorch/optim/optimize.py:844: RuntimeWarning: Optimization failed in `gen_candidates_scipy` with the following warning(s):
+[OptimizationWarning('Optimization failed within `scipy.optimize.minimize` with status 2 and message ABNORMAL: .')]
+Trying again with a new set of initial conditions.
+  return _optimize_acqf_batch(opt_inputs=opt_inputs)
+  75/200
+/Users/jy/BO/nutrigene-ai-bo-ipsec/.venv/lib/python3.11/site-packages/botorch/optim/optimize.py:844: RuntimeWarning: Optimization failed in `gen_candidates_scipy` with the following warning(s):
+[OptimizationWarning('Optimization failed within `scipy.optimize.minimize` with status 2 and message ABNORMAL: .')]
+Trying again with a new set of initial conditions.
+  return _optimize_acqf_batch(opt_inputs=opt_inputs)
+  100/200
+/Users/jy/BO/nutrigene-ai-bo-ipsec/.venv/lib/python3.11/site-packages/botorch/optim/optimize.py:844: RuntimeWarning: Optimization failed in `gen_candidates_scipy` with the following warning(s):
+[OptimizationWarning('Optimization failed within `scipy.optimize.minimize` with status 2 and message ABNORMAL: .')]
+Trying again with a new set of initial conditions.
+  return _optimize_acqf_batch(opt_inputs=opt_inputs)
+/Users/jy/BO/nutrigene-ai-bo-ipsec/.venv/lib/python3.11/site-packages/botorch/optim/optimize.py:844: RuntimeWarning: Optimization failed in `gen_candidates_scipy` with the following warning(s):
+[OptimizationWarning('Optimization failed within `scipy.optimize.minimize` with status 2 and message ABNORMAL: .'), OptimizationWarning('Optimization failed within `scipy.optimize.minimize` with status 2 and message ABNORMAL: .'), OptimizationWarning('Optimization failed within `scipy.optimize.minimize` with status 2 and message ABNORMAL: .')]
+Trying again with a new set of initial conditions.
+  return _optimize_acqf_batch(opt_inputs=opt_inputs)
+/Users/jy/BO/nutrigene-ai-bo-ipsec/.venv/lib/python3.11/site-packages/botorch/optim/optimize.py:844: RuntimeWarning: Optimization failed on the second try, after generating a new set of initial conditions.
+  return _optimize_acqf_batch(opt_inputs=opt_inputs)
+  125/200
+/Users/jy/BO/nutrigene-ai-bo-ipsec/.venv/lib/python3.11/site-packages/botorch/optim/optimize.py:844: RuntimeWarning: Optimization failed in `gen_candidates_scipy` with the following warning(s):
+[OptimizationWarning('Optimization failed within `scipy.optimize.minimize` with status 2 and message ABNORMAL: .'), OptimizationWarning('Optimization failed within `scipy.optimize.minimize` with status 2 and message ABNORMAL: .')]
+Trying again with a new set of initial conditions.
+  return _optimize_acqf_batch(opt_inputs=opt_inputs)
+/Users/jy/BO/nutrigene-ai-bo-ipsec/.venv/lib/python3.11/site-packages/botorch/optim/optimize.py:844: RuntimeWarning: Optimization failed on the second try, after generating a new set of initial conditions.
+  return _optimize_acqf_batch(opt_inputs=opt_inputs)
+/Users/jy/BO/nutrigene-ai-bo-ipsec/.venv/lib/python3.11/site-packages/botorch/optim/optimize.py:844: RuntimeWarning: Optimization failed in `gen_candidates_scipy` with the following warning(s):
+[OptimizationWarning('Optimization failed within `scipy.optimize.minimize` with status 2 and message ABNORMAL: .')]
+Trying again with a new set of initial conditions.
+  return _optimize_acqf_batch(opt_inputs=opt_inputs)
+/Users/jy/BO/nutrigene-ai-bo-ipsec/.venv/lib/python3.11/site-packages/botorch/optim/optimize.py:844: RuntimeWarning: Optimization failed in `gen_candidates_scipy` with the following warning(s):
+[OptimizationWarning('Optimization failed within `scipy.optimize.minimize` with status 2 and message ABNORMAL: .')]
+Trying again with a new set of initial conditions.
+  return _optimize_acqf_batch(opt_inputs=opt_inputs)
+/Users/jy/BO/nutrigene-ai-bo-ipsec/.venv/lib/python3.11/site-packages/botorch/optim/optimize.py:844: RuntimeWarning: Optimization failed in `gen_candidates_scipy` with the following warning(s):
+[OptimizationWarning('Optimization failed within `scipy.optimize.minimize` with status 2 and message ABNORMAL: .')]
+Trying again with a new set of initial conditions.
+  return _optimize_acqf_batch(opt_inputs=opt_inputs)
+/Users/jy/BO/nutrigene-ai-bo-ipsec/.venv/lib/python3.11/site-packages/botorch/optim/optimize.py:844: RuntimeWarning: Optimization failed in `gen_candidates_scipy` with the following warning(s):
+[OptimizationWarning('Optimization failed within `scipy.optimize.minimize` with status 2 and message ABNORMAL: .'), OptimizationWarning('Optimization failed within `scipy.optimize.minimize` with status 2 and message ABNORMAL: .')]
+Trying again with a new set of initial conditions.
+  return _optimize_acqf_batch(opt_inputs=opt_inputs)
+  150/200
+  175/200
+/Users/jy/BO/nutrigene-ai-bo-ipsec/.venv/lib/python3.11/site-packages/botorch/optim/optimize.py:844: RuntimeWarning: Optimization failed in `gen_candidates_scipy` with the following warning(s):
+[OptimizationWarning('Optimization failed within `scipy.optimize.minimize` with status 2 and message ABNORMAL: .'), OptimizationWarning('Optimization failed within `scipy.optimize.minimize` with status 2 and message ABNORMAL: .')]
+Trying again with a new set of initial conditions.
+  return _optimize_acqf_batch(opt_inputs=opt_inputs)
+/Users/jy/BO/nutrigene-ai-bo-ipsec/.venv/lib/python3.11/site-packages/botorch/optim/optimize.py:844: RuntimeWarning: Optimization failed on the second try, after generating a new set of initial conditions.
+  return _optimize_acqf_batch(opt_inputs=opt_inputs)
+  200/200
+
+FIDELITY: 200/200 regenerated campaigns reproduce their stored E2 `best` to within 1e-09.
+
+PROPERTIES OF THE PRIOR AND THE ENSEMBLE (fit-independent — not results)
+  d=6: prior median 10.08  |  prior MODE 0.5016 = the MAP attractor AND the kernel's initialisation  |  lengthscale floor 0.025
+        true active feature width (censored FWHM) 0.739; prior mode / width 0.68
+  d=8: prior median 11.63  |  prior MODE 0.5792 = the MAP attractor AND the kernel's initialisation  |  lengthscale floor 0.025
+        true active feature width (censored FWHM) 0.736; prior mode / width 0.79
+  Version 1 anchored on the MEDIAN. That was void: a fit that has learned
+  nothing sits at the MODE, which v1 scored as maximal learning.
+
+====================================================================================================
+2.1  ARD SEPARATION vs ITS OWN NO-SIGNAL NULL   <-- THE DECIDING STATISTIC
+====================================================================================================
+The prior is identical on every dimension, so ANY uninformed fit — prior-
+dominated, badly initialised, whatever — gives inert/active = 1.00 by
+symmetry. Measured on permuted outcomes the null is 1.11 at n=46. Anything
+above that is data-driven discrimination and cannot be an artefact of the
+anchoring error that voided version 1.
+
+         cell  stage   n         FIT inert/active        NULL inert/active  p(fit>null)
+   d=6 s=0.25   init  14      1.000 [0.847,1.134]      1.000 [0.880,1.080]     2.89e-01
+   d=6 s=0.25    mid  30      1.442 [0.885,2.011]      1.076 [0.805,1.284]     7.45e-03
+   d=6 s=0.25  final  46      1.403 [1.087,2.208]      1.090 [0.883,1.466]     3.23e-04  <-- primary
+    d=6 s=0.1   init  14      1.028 [0.769,1.378]      0.932 [0.776,1.344]     2.45e-01
+    d=6 s=0.1    mid  30      2.667 [1.585,3.742]      1.067 [0.747,1.694]     7.25e-10
+    d=6 s=0.1  final  46      3.412 [2.494,5.135]      0.879 [0.563,1.489]     6.22e-14
+   d=8 s=0.25   init  18      1.150 [1.000,1.511]      1.000 [0.907,1.075]     3.49e-04
+   d=8 s=0.25    mid  30      1.537 [1.180,2.147]      1.000 [0.855,1.217]     3.36e-08
+   d=8 s=0.25  final  46      1.471 [1.038,2.638]      1.003 [0.783,1.538]     4.94e-04
+    d=8 s=0.1   init  18      1.718 [1.153,2.437]      0.942 [0.805,1.129]     8.10e-08
+    d=8 s=0.1    mid  30      2.857 [2.116,3.531]      1.028 [0.769,1.177]     1.32e-12
+    d=8 s=0.1  final  46      3.438 [2.745,4.315]      1.059 [0.737,1.483]     2.22e-14
+
+====================================================================================================
+2.2  LENGTHSCALE LEVELS, and what a no-signal fit on the same design gives
+====================================================================================================
+         cell  stage             ACTIVE fit            ACTIVE null              INERT fit             INERT null
+   d=6 s=0.25   init    0.502 [0.450,0.575]    0.502 [0.482,0.576]    0.502 [0.439,0.551]    0.511 [0.474,0.557]
+   d=6 s=0.25  final    0.493 [0.375,0.572]    0.481 [0.422,0.592]    0.726 [0.529,0.946]    0.517 [0.435,0.643]
+    d=6 s=0.1   init    0.630 [0.499,0.766]    0.632 [0.532,0.763]    0.626 [0.519,0.804]    0.648 [0.477,0.778]
+    d=6 s=0.1  final    0.404 [0.340,0.461]    0.380 [0.301,0.492]    1.403 [1.090,1.915]    0.330 [0.239,0.502]
+   d=8 s=0.25   init    0.563 [0.484,0.658]    0.697 [0.582,0.773]    0.688 [0.579,0.799]    0.729 [0.583,0.823]
+   d=8 s=0.25  final    0.535 [0.443,0.700]    0.651 [0.515,0.739]    0.862 [0.674,1.100]    0.662 [0.527,0.825]
+    d=8 s=0.1   init    0.630 [0.484,0.914]    0.810 [0.710,0.929]    1.070 [0.943,1.281]    0.742 [0.650,0.880]
+    d=8 s=0.1  final    0.459 [0.406,0.503]    0.559 [0.436,0.690]    1.575 [1.279,1.854]    0.573 [0.486,0.702]
+
+  Read the LEVELS with care — they are the part version 1 got wrong.
+  Learning does NOT mean 'shorter': on an active factor the right
+  lengthscale is near the feature width, which is close to where the MAP
+  attractor already sits, so the level barely has to move. On an inert
+  factor the right lengthscale is LONG. That is why 2.1 decides and not this.
+
+====================================================================================================
+2.3  DID IT COST ANYTHING?  (n=46, the model that chose the final batch)
+====================================================================================================
+  SHAPE SKILL = 1 - var(residual)/var(truth) along a slice through the true
+  optimum. A shape-blind predictor scores 0 whatever its level error, so
+  active and inert are comparable and so are d=6 and d=8. Raw slice RMSE is
+  NOT reported: it is ~97% level error and its active/inert ordering is
+  fixed by the oracle's weights, identical in the winning and losing cells.
+  CAVEAT: skill on INERT coordinates has a near-zero denominator by
+  construction — the truth is almost flat there — so it goes large and
+  negative and is NOT comparable to the active column. Only the ACTIVE
+  column is interpretable as a skill; the inert one is reported for
+  completeness and should be read as 'the GP moves where the truth does not'.
+
+         cell              skill act            skill inert  level err  x_opt->train
+   d=6 s=0.25    0.162 [0.010,0.385]  -0.144 [-5.972,0.197]     0.2798        0.4047
+    d=6 s=0.1    0.530 [0.195,0.669]   0.007 [-1.580,0.344]     0.1543        0.3267
+   d=8 s=0.25    0.215 [0.048,0.420] -1.206 [-11.534,0.291]     0.2578        0.4309
+    d=8 s=0.1    0.471 [0.252,0.652]  -0.499 [-4.519,0.275]     0.1817        0.5038
+
+         cell   |argmax-opt| act     null  CF gamma |  proposals: act 1st      2nd     null |  @bound act  @bound inert
+   d=6 s=0.25             0.1976   0.3327    0.1766 |              0.2662   0.2422   0.3327 |       0.062         0.145
+    d=6 s=0.1             0.1257   0.3327    0.1215 |              0.2318   0.1934   0.3327 |       0.059         0.251
+   d=8 s=0.25             0.1775   0.3377    0.1655 |              0.2409   0.2333   0.3377 |       0.051         0.120
+    d=8 s=0.1             0.1438   0.3377    0.1440 |              0.2087   0.1862   0.3377 |       0.047         0.289
+
+  All distances are per-coordinate RMS on the ACTIVE subspace, so d=6 and
+  d=8 are comparable and the nuisance coordinates BO is right to ignore do
+  not dilute the signal. 'null' = a uniform random point in the box.
+  '@bound' is the fraction of proposed COORDINATE VALUES on a face, split by
+  group: an inert coordinate on a bound is near-costless by the oracle's own
+  design and must not be pooled with an active one. No uniform reference is
+  quoted — qLogEI is a bounded maximiser of an acquisition whose exploration
+  term peaks at faces, so a uniform draw is not its operative null.
+
+====================================================================================================
+2.4  COUNTERFACTUAL: the same recovered designs, Gamma(3,6) lengthscale prior
+====================================================================================================
+  No campaign is re-run and no E2 number is touched. Without a condition
+  that varies the prior, no lengthscale value can attribute anything TO the
+  prior. Gamma(3,6) penalises ls=10 by ~51 nats/dim where the shipped prior
+  penalises it by ~1.5, so this isolates the tail penalty; their modes are
+  0.502 and 0.333, nearly the same place.
+
+         cell            shipped act              gamma act   shipped in/act   gamma in/act          p
+   d=6 s=0.25    0.493 [0.375,0.572]    0.328 [0.308,0.344]             1.40           1.15   4.27e-07
+    d=6 s=0.1    0.404 [0.340,0.461]    0.326 [0.307,0.370]             3.41           1.84   5.33e-15
+   d=8 s=0.25    0.535 [0.443,0.700]    0.338 [0.313,0.349]             1.47           1.14   3.80e-06
+    d=8 s=0.1    0.459 [0.406,0.503]    0.334 [0.311,0.370]             3.44           1.85   1.78e-15
+
+  controls: lengthscales pinned to the floor = 0.000. The true
+  optimum's closest approach to any face, over all 200 runs, is 0.221 —
+  the ensemble's xstar range makes a boundary optimum impossible, so that
+  control could not have failed and is reported as a margin, not a pass.

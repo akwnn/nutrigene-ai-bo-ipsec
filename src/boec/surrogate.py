@@ -70,7 +70,9 @@ from botorch.models import SingleTaskGP
 from botorch.models.transforms.input import Normalize
 from botorch.models.transforms.outcome import Standardize
 from botorch.models.utils.gpytorch_modules import get_covar_module_with_dim_scaled_prior
+from gpytorch.constraints import GreaterThan
 from gpytorch.kernels import Kernel, MaternKernel, RBFKernel, ScaleKernel
+from gpytorch.priors import GammaPrior
 from gpytorch.mlls import ExactMarginalLogLikelihood
 from torch import Tensor
 
@@ -198,6 +200,7 @@ def build_gp(
     use_scale_kernel: bool = True,
     fit: bool = True,
     mean_module=None,
+    lengthscale_prior: str = "dim_scaled",
 ) -> SingleTaskGP:
     """Build and fit the model. All five traps are handled here.
 
@@ -272,9 +275,33 @@ def build_gp(
 
     # TRAP 1: use_rbf_kernel defaults to True. This override is what makes the
     # methods section true. Removing it is a silent change of model.
-    covar: Kernel = get_covar_module_with_dim_scaled_prior(
-        ard_num_dims=d, use_rbf_kernel=False
-    )
+    if lengthscale_prior == "dim_scaled":
+        covar: Kernel = get_covar_module_with_dim_scaled_prior(
+            ard_num_dims=d, use_rbf_kernel=False
+        )
+    elif lengthscale_prior == "gamma":
+        # The pre-Hvarfner default, built by hand rather than via
+        # `get_matern_kernel_with_gamma_prior`, because that factory would move
+        # THREE variables at once: it returns an already-wrapped ScaleKernel (so
+        # this function would double-wrap), it attaches an outputscale prior the
+        # production model does not have, and it installs Positive() instead of
+        # GreaterThan(0.025, transform=None), changing the optimiser's box. A
+        # counterfactual that moves three things cannot attribute a difference to
+        # any of them, so everything except the prior is held identical here.
+        gp = GammaPrior(3.0, 6.0)
+        covar = MaternKernel(
+            nu=2.5,
+            ard_num_dims=d,
+            lengthscale_prior=gp,
+            lengthscale_constraint=GreaterThan(
+                2.5e-2, transform=None, initial_value=gp.mode
+            ),
+        )
+    else:
+        raise ValueError(
+            f"lengthscale_prior={lengthscale_prior!r}; expected 'dim_scaled' "
+            "(production) or 'gamma' (the pre-Hvarfner default, for counterfactuals)"
+        )
     if use_scale_kernel:
         # The factory returns a BARE kernel (trap 2). We add the wrapper that
         # lets the model learn its own overall magnitude. This is why

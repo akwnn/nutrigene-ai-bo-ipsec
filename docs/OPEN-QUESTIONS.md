@@ -4,6 +4,157 @@
 
 ---
 
+## 🟢 Q25 [A, B should second-read] · **The prior is not why BO lost at d=6 — and the nuisance-dimension story is right for a reason nobody had stated. Also: A registered an endpoint that could not fail, for the second time.**
+
+**Nothing in E2 changes. No number, no arm, no config.** Reproduce with
+`scripts/diagnostic_lengthscales.py`; rows in `results/diagnostic-lengthscales.json`;
+report in `results/diagnostic-lengthscales.log`.
+
+**Fidelity, asserted rather than promised: 200/200 regenerated campaigns reproduce their
+stored E2 `best` to 1e-9**, and each row also carries a hash of its design matrix. The
+script fails loudly on any mismatch, so these are the runs E2 scored or there is no report.
+
+---
+
+### READ THIS FIRST: version 1 of this diagnostic was void, and I had already written up its conclusion
+
+The rule was registered in the module docstring before any number was read — correct
+procedure — and it could only return one answer.
+
+It compared fitted lengthscales against the **prior median**, `exp(loc) = 10.08` at d=6, and
+read "far below 10" as *the data is winning*. But `fit_gpytorch_mll` is **MAP**, not maximum
+likelihood: `ExactMarginalLogLikelihood` adds `log p(lengthscale)`, the constraint carries
+`transform=None` so raw and constrained coincide, and the argmax of the prior term alone is
+the **mode**, `exp(loc − scale²) = 0.5016`. That is also the value gpytorch **initialises
+the kernel to**. Measured: a 14-point fit on outcomes with no dependence on X returns
+0.5016 on every dimension.
+
+**Version 1's measured opening-design median was 0.502.** It scored a model that had learned
+nothing as a model that had learned everything. The "prior is dominating" branch was
+unreachable — the prior's own gradient at ℓ=10 points *down*.
+
+This is defect #8 and it is the same failure as Q16, committed by the person who wrote the
+guard against it. Caught by a four-lens adversarial audit run deliberately **before** the
+numbers were interpreted. The general practice this produced is now written into
+`docs/METHODS.md` §2.9 as a stated method, not a quiet fix.
+
+### What version 2 measures instead
+
+The anchor is no longer a formula but an **empirical no-signal null**: the same design, the
+same noise, refit with outcomes **permuted**. And the deciding statistic is the **ARD
+separation ratio**, inert ÷ active lengthscale — immune to this whole class of error,
+because the prior is identical on every dimension, so *any* uninformed fit gives 1.00 by
+symmetry. Measured null, pooled over 200 runs: **1.006** [0.718, 1.498]. The symmetry
+argument holds.
+
+Checkpoints are now only models the campaign actually built — the opening design, n=30 and
+n=46, all real round boundaries at both dimensions. (`Campaign.run` fits before each `ask`
+and never after the final `tell`, so v1's n=48 model made no decision, and its n=31/33
+sliced through a jointly-optimised batch.)
+
+---
+
+### THE RESULT: d=8 enters the adaptive phase already knowing which factors matter. d=6 does not.
+
+ARD separation (inert ÷ active), paired against each run's own permutation null:
+
+| cell | stage | n | FIT | NULL | p(fit > null) |
+|---|---|---|---|---|---|
+| **d=6 σ=0.25** | opening | 14 | **1.000** | 1.000 | **0.29 — nothing** |
+| | mid | 30 | 1.442 | 1.076 | 0.0075 |
+| | final | 46 | 1.403 | 1.090 | 0.00032 |
+| **d=8 σ=0.25** | opening | 18 | **1.150** | 1.000 | **0.00035** |
+| | mid | 30 | 1.537 | 1.000 | 3.4e-08 |
+| | final | 46 | 1.471 | 1.003 | 0.00049 |
+| **d=6 σ=0.10** | opening | 14 | 1.028 | 0.932 | 0.25 — nothing |
+| | final | 46 | 3.412 | 0.879 | 6.2e-14 |
+| **d=8 σ=0.10** | opening | 18 | **1.718** | 0.942 | **8.1e-08** |
+| | final | 46 | 3.438 | 1.059 | 2.2e-14 |
+
+Two facts, and together they are the answer:
+
+1. **At the opening design, d=8 discriminates and d=6 does not.** d=6 sits exactly on its
+   null (1.000 vs 1.000). The dimension contrast is significant: **p=7.3e-04** at σ=0.25 and
+   **p=8.6e-06** at σ=0.10.
+2. **By the final model the dimension difference is gone.** 1.403 vs 1.471 (p=0.62) and
+   3.412 vs 3.438 (p=0.75).
+
+So it was never "ARD copes better at higher dimension" — asymptotically the two are
+identical. **It is that d=8 starts the adaptive search already knowing, and d=6 starts
+blind and needs about 30 evaluations to catch up.** At a budget of 48 with only 34 adaptive
+evaluations at d=6, that head start is most of the run.
+
+**Declared confound, and it is not small.** `n_init = 2d+2`, so the d=8 opening design has
+18 points against d=6's 14, and the 0.10 inert weight share is split 4 ways at d=8 versus
+2 ways at d=6 — each individual nuisance factor is *more* inert at d=8 and therefore easier
+to identify. Both follow from the dimension change, so the contrast is honest as stated, but
+"dimension" here bundles three things and this diagnostic does not separate them. Separating
+them needs a d=6 arm at n_init=18, which is a new experiment and is not proposed here.
+
+### Hypothesis (B) is refuted by a varied condition, not by a lengthscale value
+
+Version 1 had no arm in which the prior differed, so nothing in it could attribute anything
+*to* the prior. §2.4 adds one: the same recovered designs refit under `Gamma(3,6)`, built by
+hand so that **exactly one** thing differs (the library's convenience constructor would have
+changed the kernel wrapper, the outputscale prior and the parameter constraint at once).
+
+| cell | shipped active ℓ | Gamma active ℓ | shipped in/act | Gamma in/act | p |
+|---|---|---|---|---|---|
+| d=6 σ=0.25 | 0.493 | 0.328 | **1.40** | **1.15** | 4.3e-07 |
+| d=6 σ=0.10 | 0.404 | 0.326 | **3.41** | **1.84** | 5.3e-15 |
+| d=8 σ=0.25 | 0.535 | 0.338 | 1.47 | 1.14 | 3.8e-06 |
+| d=8 σ=0.10 | 0.459 | 0.334 | 3.44 | 1.85 | 1.8e-15 |
+
+**Gamma(3,6) is significantly WORSE at the thing BO needs here** — it roughly halves ARD's
+active-versus-inert separation in every cell. And on posterior-mean argmax error it is
+indistinguishable: +0.0102, +0.0063, +0.0026, −0.0018 (Wilcoxon p = 0.15, 0.33, 0.40, 0.41,
+clustered on 25 instances). So the shipped prior is not the problem, and the registered
+sensitivity re-run is **NOT triggered and was NOT performed**. Had it been run on the old
+reasoning, it would have made things worse and we would have had a "BO improves" number
+obtained by switching priors after seeing BO lose.
+
+### What the loss actually cost, measured
+
+At n=46, the model that chose the final batch. Shape skill = 1 − var(residual)/var(truth)
+along each axis through the true optimum; a shape-blind predictor scores 0 whatever its
+level error.
+
+| cell | shape skill, active axes | level error | x_opt → nearest training point |
+|---|---|---|---|
+| **d=6 σ=0.25** | **0.162** [0.010, 0.385] | 0.280 | 0.405 |
+| d=6 σ=0.10 | 0.530 [0.195, 0.669] | 0.154 | 0.327 |
+| d=8 σ=0.25 | 0.215 [0.048, 0.420] | 0.258 | 0.431 |
+| d=8 σ=0.10 | 0.471 [0.252, 0.652] | 0.182 | 0.504 |
+
+In the primary cell the surrogate captures **16% of the shape variance along the axes that
+matter**, and is off by 0.28 in level at a point 0.41 from its nearest observation. There is
+no dimension effect (p=0.22, 0.40) — surrogate quality here is governed by **noise**.
+
+qLogEI's own behaviour is sane and it is not corner-chasing: proposals sit at per-coordinate
+RMS distance 0.266 → 0.242 from the optimum on the active subspace against a uniform null of
+0.333, the posterior-mean argmax is at 0.198 against the same null, and boundary pinning
+falls on **inert** coordinates 2.3× more often than active (0.145 vs 0.062) — which is
+correct behaviour, not a pathology. (Version 1 reported 36% of proposals "on the box"
+against a uniform reference of 1.2%. That reference was wrong by roughly two orders of
+magnitude: qLogEI is a bounded maximiser of an acquisition whose exploration term peaks at
+faces, so a uniform draw is not its operative null. No uniform reference is quoted now.)
+
+### Consequences
+
+1. **Nothing to change in E2.** The registered sensitivity is untriggered, and the
+   counterfactual says it would have hurt.
+2. **SAASBO is not indicated.** Its premise is that a better lengthscale prior helps. A
+   different lengthscale prior measurably does not.
+3. **`RESULTS-PERSON-A.md` §6b rewritten** with the corrected mechanism, and §7 carries
+   defect #8.
+4. **For B:** the d=6→d=8 flip now has a stated mechanism — timing of ARD discrimination,
+   not its eventual strength — but the confound above means the paper should say
+   "dimension, opening-design size and per-factor inertness move together here". The
+   separate point from Q24 still stands: the DoE arm is d=6 only, so the arm that beat BO at
+   six factors was absent at eight.
+
+---
+
 ## 🔴 Q24 [A + B] · **"BO beats current practice" is not supported anywhere it was tested — and the d=8 table reads like the opposite**
 
 ### The asymmetry, which is the most misreadable thing in the E2 tables
