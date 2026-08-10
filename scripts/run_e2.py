@@ -32,7 +32,8 @@ from boec.campaign import Campaign, CampaignConfig
 from boec.diagnostics import instance_bootstrap, reported_best_curve
 from boec.doe import run_doe_arm
 from boec.oracles import load_ensemble
-from boec.optimizers import AcqConfig, lhs_design, random_design, sobol_design
+from boec.optimizers import AcqConfig
+from boec.runner import PAIRING_EXEMPT, static_design
 from boec.torch_oracle import BiphasicOracle
 
 # --- PRE-REGISTERED (configs/experiment/e2.yaml). Do not edit after seeing results. ---
@@ -41,7 +42,7 @@ SIGMAS = (0.25, 0.10)          # 0.25 primary
 N_INSTANCES = 25
 N_SEEDS = 2
 BUDGET = 48
-STATIC = {"random": random_design, "sobol": sobol_design, "lhs": lhs_design}
+STATIC = ("random", "sobol", "lhs")
 
 
 def unit_bounds(d):
@@ -61,19 +62,33 @@ def scored_curve(orc, X: torch.Tensor, Y: torch.Tensor) -> np.ndarray:
     return reported_best_curve(orc.truth(X), Y)
 
 
-def static_curve(orc, bounds, maker, budget, seed, n_orderings=20) -> np.ndarray:
-    """Non-adaptive arm, averaged over random orderings, scored on truth.
+def static_curve(orc, bounds, method, budget, seed, n_orderings=20) -> np.ndarray:
+    """Non-adaptive arm: B's pairing policy, A's scoring rule.
 
-    A one-shot design has no natural running order, so a best-so-far curve read off an
-    arbitrary one is meaningless -- put the winner first and it looks brilliant.
+    Two separate corrections compose here and BOTH are needed.
+
+    **Q18 (B, T9)** -- every paired arm opens on the identical batch, and that opening
+    is NOT shuffled. `run_static_baseline` previously drew all 48 points from the
+    method's own generator, so random and LHS shared no opening with qLogEI at all;
+    and permuting all 48 scattered the opening through the curve, undoing the pairing
+    even on the Sobol arm where it had been free. LHS is exempt -- pairing would cost
+    it its defining property.
+
+    **Q17 (A)** -- the curve is scored by picking with the OBSERVED value and reading
+    off the TRUE one. B's `run_static_baseline` still accumulates observed values,
+    which is the incumbent inflation E1 exposed, so this does not call it; it calls
+    `static_design` for the point set and scores here.
     """
-    X = maker(bounds, budget, seed=seed)
+    X = static_design(bounds, method, budget, seed)
     Y, _ = orc.evaluate(X)
+    paired = method not in PAIRING_EXEMPT
+    n_init = 2 * int(bounds.shape[1]) + 2 if paired else 0
     rng = np.random.default_rng(seed)
     curves = []
     for _ in range(n_orderings):
-        p = rng.permutation(budget)
-        curves.append(scored_curve(orc, X[p], Y[p]))
+        order = np.concatenate([np.arange(n_init),
+                                n_init + rng.permutation(budget - n_init)])
+        curves.append(scored_curve(orc, X[order], Y[order]))
     return np.stack(curves).mean(axis=0)
 
 
@@ -89,9 +104,9 @@ def run_cell(inst, dim, sigma, seed) -> dict:
         c.run()
         out[arm] = scored_curve(orc, c.train_X, c.train_Y)
 
-    for arm, maker in STATIC.items():
+    for arm in STATIC:
         out[arm] = static_curve(BiphasicOracle(inst, sigma_rel=sigma, seed=seed),
-                                bounds, maker, BUDGET, seed)
+                                bounds, arm, BUDGET, seed)
 
     orc = BiphasicOracle(inst, sigma_rel=sigma, seed=seed)
     cd = coordinate_descent(orc, bounds, budget=BUDGET, seed=seed)

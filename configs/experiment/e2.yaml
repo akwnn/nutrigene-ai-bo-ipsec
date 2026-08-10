@@ -33,8 +33,20 @@ arms:
 # --- fairness, enforced in the harness --------------------------------------
 fairness:
   identical_budget: true
-  identical_initial_design_per_seed: true   # paired comparison at n=50 is the
-                                            # difference between significant and not
+
+  # CORRECTED after B's T9/Q18. This field originally read simply `true`, and it was
+  # FALSE when written: `run_static_baseline` drew all 48 points from each method's own
+  # generator and never called `initial_design`, so random and LHS shared no opening
+  # with qLogEI at all. The test that appeared to guarantee it called `initial_design`
+  # twice with one seed and asserted equality — it tested determinism, never a second
+  # method. E2's first run is void on this alone, independently of the scoring bug.
+  identical_initial_design_per_seed: true
+  opening_batch_is_not_shuffled: true       # pairing must survive SCORING, not only
+                                            # design; permuting all 48 scattered the
+                                            # shared opening through the curve
+  pairing_exempt: [lhs]                     # pairing would cost LHS its defining
+                                            # stratification. Sobol and random pay
+                                            # nothing — a Sobol prefix IS the opening.
   no_per_method_tuning: true                # including qLogEI. Tuning your own method
                                             # while baselines sit at defaults is the
                                             # most cited objection in this literature.
