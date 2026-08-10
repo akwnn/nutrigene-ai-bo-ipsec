@@ -71,6 +71,12 @@ class DoEResult:
     Attributes:
         curve: ``(budget,)`` best-so-far of the **observed** values, in the order
             the measurements were taken. The last entry includes stage 4.
+        curve_true: ``(budget,)`` best-so-far of the **noiseless** values at the same
+            points. **This is what E2 scores** -- see OPEN-QUESTIONS Q17. Unlike
+            ``curve`` it can never exceed the true optimum, which is precisely how the
+            observation-scored version was caught being wrong.
+        X_visited: ``(budget, d)`` every point measured, in order.
+        Y_visited: ``(budget, 1)`` what the lab saw at each of them.
         n_stage1: measurements spent screening.
         n_stage2: measurements spent on the response-surface design.
         n_confirmation: always 1 -- named rather than assumed, because dropping it
@@ -97,6 +103,9 @@ class DoEResult:
     """
 
     curve: np.ndarray
+    curve_true: np.ndarray
+    X_visited: Tensor
+    Y_visited: Tensor
     n_stage1: int
     n_stage2: int
     kept_factors: tuple[int, ...]
@@ -252,8 +261,13 @@ def run_doe_arm(
     observed = np.concatenate([
         Y1.double().numpy().ravel(), Y2.double().numpy().ravel(), [confirmation_y]
     ])
+    X_all = torch.cat([X1, X2, x_full.unsqueeze(0)])
+    truth_all = truth(X_all).double().numpy().ravel()
     return DoEResult(
         curve=np.maximum.accumulate(observed),
+        curve_true=np.maximum.accumulate(truth_all),
+        X_visited=X_all,
+        Y_visited=torch.from_numpy(observed).reshape(-1, 1),
         n_stage1=n1, n_stage2=n2,
         kept_factors=kept, dropped_held_at=held,
         confirmation_x=x_full,

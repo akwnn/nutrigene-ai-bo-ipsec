@@ -1,0 +1,57 @@
+25 instances at d=6, kappa in [0.6, 0.7, 0.8, 0.9], rho=2.0 (PRE-REGISTERED PRIMARY)
+  kappa=0.6 done (42s)
+  kappa=0.7 done (101s)
+  kappa=0.8 done (169s)
+  kappa=0.9 done (242s)
+
+100 cells in 242s
+
+========================================================================
+VALIDITY — was there anything to extrapolate towards?
+========================================================================
+  invalid (true optimum inside the training corner): 0/100
+
+========================================================================
+HEADROOM — could the comparison show anything? (< 0.95)
+========================================================================
+  kappa=0.6: median 0.872  no-headroom 0/25
+  kappa=0.7: median 0.872  no-headroom 0/25
+  kappa=0.8: median 0.872  no-headroom 0/25
+  kappa=0.9: median 0.872  no-headroom 0/25
+
+========================================================================
+OVER-PREDICTION — the mechanism (response max ~1.0)
+========================================================================
+  kappa=0.6 second_order   median   +1.290  escaped 25/25
+  kappa=0.6 gp             median   +0.329  escaped 25/25
+  kappa=0.7 second_order   median   +1.184  escaped 25/25
+  kappa=0.7 gp             median   +0.337  escaped 25/25
+  kappa=0.8 second_order   median   +1.019  escaped 25/25
+  kappa=0.8 gp             median   +0.258  escaped 25/25
+  kappa=0.9 second_order   median   +0.872  escaped 25/25
+  kappa=0.9 gp             median   +0.252  escaped 25/25
+
+========================================================================
+DISCRIMINATION — the pre-registered primary
+========================================================================
+  kappa=0.6: GP rho +0.590 | nearest-neighbour rho +0.483
+           PAIRED difference +0.1068 [+0.0461, +0.1668]  significant=True
+  kappa=0.7: GP rho +0.404 | nearest-neighbour rho +0.422
+           PAIRED difference -0.0173 [-0.0745, +0.0415]  significant=False
+  kappa=0.8: GP rho +0.272 | nearest-neighbour rho +0.368
+           PAIRED difference -0.0960 [-0.1450, -0.0470]  significant=False
+  kappa=0.9: GP rho +0.267 | nearest-neighbour rho +0.368
+           PAIRED difference -0.1011 [-0.1481, -0.0561]  significant=False
+
+========================================================================
+POOLED
+========================================================================
+  cells                100/100
+  over-prediction      +1.103 [+1.024, +1.182]
+  fraction extrapolated 1.00
+  stationary kinds     {'saddle': 100}
+  parametric failures  0.00
+  GP vs model-free null: -0.0269 [-0.0728, +0.0182]  significant=False
+  GP vs polynomial PI  : -0.0543 [-0.0866, -0.0204]  significant=False
+  sign-flip test     : p=0.8611  [sampled, not exact]
+  advantage bounded  : the advantage is below 0.08 (upper limit +0.0113). Established, not merely unrefuted — any real advantage is too small to be worth having.

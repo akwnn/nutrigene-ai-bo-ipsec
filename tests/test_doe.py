@@ -202,6 +202,27 @@ def test_the_predicted_optimum_is_searched_beyond_the_stage_two_region(result):
     assert torch.any(hi - lo > s_hi - s_lo)
 
 
+def test_it_also_reports_a_truth_scored_curve(result):
+    """OPEN-QUESTIONS Q17. Every E2 arm must be scored on the noiseless value of the
+    points it selected, or an arm can win by drawing lucky noise — and the size of
+    that advantage differs by arm, so it does not cancel.
+
+    `curve` is what the lab saw; `curve_true` is what was really there. The second is
+    what E2 uses, and unlike the first it can never exceed the true optimum.
+    """
+    _, res = result
+    assert res.curve_true.shape == res.curve.shape
+    assert np.all(np.diff(res.curve_true) >= -1e-12)
+    assert res.X_visited.shape == (BUDGET, D)
+
+
+def test_the_truth_scored_curve_cannot_beat_the_optimum(result):
+    """The check that catches the bug E1 exposed: an observation-scored curve CAN
+    exceed the optimum, which is how we found the problem in the first place."""
+    o, res = result
+    assert float(res.curve_true[-1]) <= float(o._o.instance.optimum_value) + 1e-9
+
+
 def test_it_returns_the_documented_shape(result):
     _, res = result
     assert isinstance(res, DoEResult)

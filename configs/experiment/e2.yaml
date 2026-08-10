@@ -1,0 +1,73 @@
+# E2 — sample efficiency. Person A.
+#
+# PRE-REGISTRATION, written and committed BEFORE E2 has been run even once.
+# Every value below was fixed without any E2 number in hand. If any of them must
+# change afterwards, bump `preregistration_version` and say why in the paper.
+
+preregistration_version: 1
+
+# --- the grid ---------------------------------------------------------------
+dim: [6, 8]
+sigma_rel: [0.10, 0.25]     # 0.25 primary, 0.10 the optimistic bound (Q13 item 4)
+n_instances: 25             # NOT the 40 now available. 40 was generated for E4's
+                            # power under Q14; using it here would be raising n on a
+                            # different experiment without a stated reason.
+n_seeds: 2
+budget: 48
+
+# 25 x 2 rather than 10 x 5, at the same 50 runs. Across-landscape variance
+# dominates within-landscape variance roughly 10:1, so at fixed compute the
+# relative SE of the mean effect is 1.010 at 10x5, 0.804 at 16x3 and 0.648 at
+# 25x2. Same cost, 36% tighter, and the paired structure is kept.
+
+# --- arms -------------------------------------------------------------------
+arms:
+  qlogei:   {primary: true,  note: "the spec's mandated acquisition"}
+  qlognei:  {primary: false, note: "Q5 declared secondary; assumes noisy observations"}
+  random:   {primary: false}
+  sobol:    {primary: false}
+  lhs:      {primary: false}
+  coord:    {primary: false, note: "Q3; pre-empts 'your oracle is separable'"}
+  doe:      {primary: false, dim: [6], note: "20+27+1; d=8 budget arithmetic undefined"}
+
+# --- fairness, enforced in the harness --------------------------------------
+fairness:
+  identical_budget: true
+  identical_initial_design_per_seed: true   # paired comparison at n=50 is the
+                                            # difference between significant and not
+  no_per_method_tuning: true                # including qLogEI. Tuning your own method
+                                            # while baselines sit at defaults is the
+                                            # most cited objection in this literature.
+  randomise_order_for_static_arms: true     # a one-shot design has no regret CURVE;
+                                            # best-so-far is otherwise a step function
+                                            # determined by arbitrary listing order
+
+# --- scoring ----------------------------------------------------------------
+# OPEN-QUESTIONS Q17, decided before any E2 run. Regret is scored at the NOISELESS
+# value of the point the method selected, never at the noisy observation. E1 showed
+# the bias is real: Branin's BO best-so-far read -0.3747 against a true optimum of
+# -0.3979, i.e. better than possible. It does not cancel across arms, because the
+# bias grows with how many DISTINCT high-value points an arm samples and that differs
+# by arm by design.
+scoring:
+  regret_on: noiseless_value_at_selected_point
+  primary_endpoint: simple_regret_at_budget
+  secondary_endpoint: auc_post_initialisation   # AUC from evaluation 1 would include
+                                                # the shared opening design and dilute
+                                                # the between-method difference
+  report: [median, iqr]
+
+# --- inference --------------------------------------------------------------
+inference:
+  cluster: instance          # 25 instances x 2 seeds has effective n = 25, NOT 50.
+                             # This project criticises the source paper for exactly
+                             # this error; committing it here would be indefensible.
+  test: wilcoxon_signed_rank
+  bootstrap: instance_level
+  n_bootstrap: 2000
+
+# --- declared multiplicity --------------------------------------------------
+# 7 arms x 2 dims x 2 noise levels. The PRIMARY comparison is qlogei vs the best
+# non-BO arm, at d=6, sigma_rel=0.25, on simple regret at budget. Everything else is
+# secondary and reported as such.
+primary_cell: {arm: qlogei, comparator: best_non_bo, dim: 6, sigma_rel: 0.25}
