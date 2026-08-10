@@ -22,10 +22,31 @@ think to run against it.
 
 | | GP minus plain distance | verdict |
 |---|---|---|
-| **rho = 2.0** — pre-registered primary | **−0.027** [−0.073, +0.018] | no advantage |
+| **rho = 2.0** — **pooled across all four κ** | **−0.027** [−0.073, +0.018] | no advantage |
 | unit cube — limiting case | **+0.055** [+0.017, +0.089] | significant |
 
 **The GP's apparent advantage exists only in the regime nobody would defend.**
+
+> ### ⚠️ CORRECTION — this row was labelled "pre-registered primary" and it is not
+>
+> **The row above is the figure pooled across κ. The registered primary is a single cell** — `configs/experiment/e4.yaml:106`, `primary_cell: {kappa: 0.6, rho: 2.0}`, restated in Q16. The two are different quantities **and they disagree in sign.**
+>
+> The label is corrected here rather than the number, because **which of the two is the estimand is not for whoever has already seen both to decide.** Raised as **Q19** for A. Nothing downstream in this document has been rewritten on the strength of it.
+>
+> **Pooling hides a sign flip.** Three of the four κ have intervals clear of zero, in opposite directions:
+>
+> | κ | GP minus plain distance | verdict |
+> |---|---|---|
+> | 0.6 | **+0.1068** [+0.0461, +0.1668] | **GP better** — and above the 0.08 equivalence bound |
+> | 0.7 | −0.0173 [−0.0745, +0.0415] | null |
+> | 0.8 | **−0.0960** [−0.1450, −0.0470] | **GP worse** |
+> | 0.9 | **−0.1011** [−0.1481, −0.0561] | **GP worse** |
+>
+> So the equivalence claim below — *"the advantage is below 0.08, established rather than merely unrefuted"* — **holds for the pooled average and fails at the registered primary cell**, where the advantage is +0.107 with an interval clear of zero.
+>
+> **This does not mean the GP wins.** κ=0.6 is the most extrapolated cell, the surface is negative at larger κ, and a single favourable cell inside a negative surface is precisely the corner-shaped claim Q16 warns against. The defensible reading is that **the discrimination result is κ-dependent and reverses sign across the registered grid**, and that E4 does not have one headline number.
+>
+> Reproduced independently at n=25, ρ=2.0 on the current ensemble; the pooled figures match this document exactly, so this is not a version or ensemble difference.
 
 The unit cube asks every model about territory 2–4× beyond anything it
 measured, in six ingredients at once; the study motivating this project

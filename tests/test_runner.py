@@ -28,6 +28,11 @@ class Formula:
         self.sigma_rel = sigma_rel
         self.gen = torch.Generator().manual_seed(seed)
 
+    def truth(self, X):
+        """The noiseless value. Q17 scoring needs it, so a double without one can
+        no longer stand in for an evaluator in a comparison."""
+        return (-((X - 0.35) ** 2).sum(-1, keepdim=True)).exp()
+
     def evaluate(self, X):
         y = (-((X - 0.35) ** 2).sum(-1, keepdim=True)).exp()
         eps = torch.randn(y.shape, dtype=torch.double, generator=self.gen) * self.sigma_rel
@@ -40,6 +45,30 @@ class NoNoise:
         return torch.rand(X.shape[0], 1, dtype=torch.double), None
 
 
+class NoisyKnownOptimum:
+    """Noisy readings, a known true optimum, and a real `truth()`.
+
+    The Q17 tests need all three: selection must see noise, scoring must see truth,
+    and the true ceiling must be known so "the curve exceeded the optimum" is
+    checkable rather than merely plausible.
+    """
+
+    optimum = 1.0
+
+    def __init__(self, sigma=0.25, seed=0):
+        self.sigma = sigma
+        self.gen = torch.Generator().manual_seed(seed)
+
+    def truth(self, X):
+        return (-((X - 0.35) ** 2).sum(-1, keepdim=True) * 3.0).exp()
+
+    def evaluate(self, X):
+        f = self.truth(X)
+        eps = torch.randn(f.shape, dtype=torch.double, generator=self.gen) * self.sigma
+        y = f * (1 + eps)
+        return y, (y**2 * self.sigma**2 + 1e-6).clamp_min(1e-8)
+
+
 class Deterministic:
     """A pure function of X — same points in, same values out, no RNG anywhere.
 
@@ -48,8 +77,11 @@ class Deterministic:
     the points it is given.
     """
 
+    def truth(self, X):
+        return (-((X - 0.35) ** 2).sum(-1, keepdim=True)).exp()
+
     def evaluate(self, X):
-        y = (-((X - 0.35) ** 2).sum(-1, keepdim=True)).exp()
+        y = self.truth(X)
         return y, torch.full_like(y, 1e-4)
 
 
@@ -195,10 +227,24 @@ def test_load_empty_directory(tmp_path):
 # --------------------------------------------------------------------------
 
 @pytest.mark.parametrize("method", ["random", "sobol", "lhs"])
-def test_baselines_produce_a_monotone_curve(method):
-    curve = run_static_baseline(Formula(), _bounds(), method, 20, seed=0)
+def test_baselines_produce_a_curve_bounded_by_the_truth(method):
+    """RENAMED from ``test_baselines_produce_a_monotone_curve`` (Q17).
+
+    It asserted the curve never decreases, which was true only because the curve
+    was a running max of OBSERVED values — i.e. it encoded the winner's-curse
+    inflation as a requirement. Under Q17 scoring the curve is the TRUE value at
+    the running observed-argmax, and it is deliberately **not** monotone: a later
+    point that drew lucky noise can displace a genuinely better incumbent, and the
+    curve must be allowed to fall when it does. Forcing it upward would smuggle
+    oracle-best scoring back in, which is the error that voided E2's first run.
+
+    What can still be asserted is the thing that actually matters: the curve is a
+    real value of the objective at a point the method visited."""
+    o = Formula()
+    curve = run_static_baseline(o, _bounds(), method, 20, seed=0)
     assert curve.shape == (20,)
-    assert np.all(np.diff(curve) >= -1e-12)
+    assert np.all(np.isfinite(curve))
+    assert curve.max() <= float(o.truth(sobol_design(_bounds(), 4096, seed=1)).max()) + 1e-6
 
 
 def test_averaging_over_orderings_changes_the_answer():
@@ -379,3 +425,49 @@ def test_lhs_unpaired_is_still_a_real_latin_hypercube():
     for j in range(D):
         strata = (X[:, j] * n).floor().long().clamp(max=n - 1)
         assert len(set(strata.tolist())) == n
+
+
+# --------------------------------------------------------------------------
+# Q17 — the static arms' curves were scored on OBSERVED values
+# --------------------------------------------------------------------------
+
+def test_a_static_curve_is_scored_on_truth_not_on_the_observation():
+    """Q17. `run_static_baseline` accumulated observed values, so every static curve
+    carried the winner's-curse inflation E1 exposed on Branin — a best-so-far that
+    can exceed the true optimum. E2 routed around this function for exactly that
+    reason; `Runner.run_cell` did not, so any static cell run through the grid
+    produced an inflated curve under a `method-random` filename.
+
+    The curve must never exceed the true optimum, because it is now the TRUE value
+    at the point the method would report."""
+    b = _bounds()
+    o = NoisyKnownOptimum()
+    curve = run_static_baseline(o, b, "random", 20, seed=0, n_orderings=8)
+    assert curve.max() <= o.optimum + 1e-9
+
+
+def test_a_static_curve_is_not_forced_monotone():
+    """Reused from `diagnostics.reported_best_curve`: forcing the curve upward would
+    smuggle the oracle back in. A later point that drew lucky noise can displace a
+    genuinely better incumbent, and the curve must be allowed to fall when it does —
+    that IS the cost of noise, and hiding it flatters every arm."""
+    b = _bounds()
+    curve = run_static_baseline(NoisyKnownOptimum(), b, "random", 24, seed=3,
+                                n_orderings=1)
+    assert np.any(np.diff(curve) < -1e-12)
+
+
+class NoTruth:
+    """Supplies noise estimates but no truth() — the case the Q17 guard exists for."""
+
+    def evaluate(self, X):
+        y = torch.rand(X.shape[0], 1, dtype=torch.double)
+        return y, torch.full_like(y, 1e-4)
+
+
+def test_scoring_a_static_arm_without_truth_raises():
+    """An evaluator that cannot supply `truth()` cannot produce a comparison-grade
+    curve. Returning the observed-value curve anyway is what made this defect
+    survive: it looked like a result. Fail loudly instead."""
+    with pytest.raises(ValueError, match="truth"):
+        run_static_baseline(NoTruth(), _bounds(), "random", 20, seed=0)
