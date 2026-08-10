@@ -471,3 +471,32 @@ def test_scoring_a_static_arm_without_truth_raises():
     survive: it looked like a result. Fail loudly instead."""
     with pytest.raises(ValueError, match="truth"):
         run_static_baseline(NoTruth(), _bounds(), "random", 20, seed=0)
+
+
+def test_the_bo_arm_opens_on_initial_design_too():
+    """Q18's pairing is a claim about EVERY arm, and the BO side of it was unasserted.
+
+    `campaign.py` used to build its opening as
+    ``initial_design(bounds, seed)[:n_init]``. It now calls
+    ``sobol_design(bounds, n_init, seed)`` directly — behaviourally identical today,
+    because `initial_design` IS a Sobol design of ``2d + 2`` at the same seed and a
+    Sobol prefix is stable. **But the coupling is gone.** The static arms follow
+    `initial_design`; the BO arm no longer does. If `initial_design` is ever changed —
+    and being the shared opening is its entire job — the arms would silently stop
+    sharing an opening, E2's pairing would break, and
+    ``test_paired_arms_open_on_the_identical_batch`` would still pass, because it only
+    checks the static side against `initial_design`.
+
+    This pins the invariant from the BO end so that divergence fails a test instead of
+    quietly costing the paired comparison E2 is registered on.
+    """
+    from boec.campaign import Campaign, batch_plan
+
+    b = _bounds()
+    n_init, _ = batch_plan(D, 2 * D + 2 + 3, 3)
+    c = Campaign(Formula(), b, CampaignConfig(d=D, budget=2 * D + 2 + 3, q=3,
+                                              acq=FAST, n_holdout=4, seed=0)).run()
+    assert torch.allclose(c.train_X[:n_init], initial_design(b, seed=0)), (
+        "the BO arm's opening batch has diverged from initial_design — Q18 pairing "
+        "is broken and every static-arm comparison in E2 is no longer paired"
+    )

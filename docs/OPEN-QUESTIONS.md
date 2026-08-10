@@ -748,6 +748,20 @@ So LHS runs **unpaired**, and is reported as the one unpaired arm with its wider
 
 **Deliberately not done:** wiring this into E2's driver. That is T11 and it is A's.
 
+### ⚠️ FOLLOW-UP — the BO side of this guarantee lost its coupling, and was never asserted
+
+Found while checking whether E2's numbers are still reproducible after `campaign.py` and `surrogate.py` were modified **post-E2** (Q26 / the lengthscale diagnostic).
+
+**Reproducibility: confirmed fine.** Both changes are backward-compatible by default — `surrogate.build_gp` gained `lengthscale_prior="dim_scaled"`, which is the original path, and `batch_plan`/`CampaignConfig` gained `n_init=None`, which keeps `2d + 2`. The default opening is **bit-identical** across the change, so the committed E2 numbers reproduce from current `main`.
+
+**But the coupling is gone.** `campaign.py` used to build its opening as `initial_design(bounds, seed)[:n_init]`; it now calls `sobol_design(bounds, n_init, seed)` directly. Identical today — `initial_design` *is* a Sobol design of `2d + 2` at the same seed, and the prefix is stable. **The static arms still follow `initial_design`; the BO arm no longer does.**
+
+So Q18's pairing now rests on two independent code paths *happening* to agree. `initial_design` exists for exactly one purpose — to be the shared opening — so it is precisely the function someone would change. If it were changed, the arms would silently stop sharing an opening, E2's paired comparison would quietly become unpaired, and **`test_paired_arms_open_on_the_identical_batch` would still pass**, because it only checks the static side.
+
+**Fixed:** `test_the_bo_arm_opens_on_initial_design_too` pins the invariant from the BO end. Verified discriminating rather than vacuous — it fails against a different seed and against a different design family.
+
+**The general point, since this is now the fourth instance:** a guarantee enforced by two code paths agreeing is not enforced. It needs one shared source or a test that spans both. This one had neither.
+
 ---
 
 ## 🔴 Q16 [EITHER] · PRE-REGISTRATION, WRITTEN BEFORE THE NEXT RUN · **the (κ, ρ) grid is the over-prediction result. No single cell is the headline.**
