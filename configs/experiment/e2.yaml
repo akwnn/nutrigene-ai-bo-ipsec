@@ -54,9 +54,32 @@ fairness:
   opening_batch_is_not_shuffled: true       # pairing must survive SCORING, not only
                                             # design; permuting all 48 scattered the
                                             # shared opening through the curve
-  pairing_exempt: [lhs]                     # pairing would cost LHS its defining
+  pairing_exempt: [lhs, coord]              # lhs: pairing would cost it its defining
                                             # stratification. Sobol and random pay
                                             # nothing — a Sobol prefix IS the opening.
+                                            #
+                                            # Q23 — `coord` ADDED. It was unpaired and
+                                            # undeclared: baselines.py never calls
+                                            # initial_design, it starts from a random
+                                            # interior point ("a centre start would be
+                                            # a hidden advantage on an oracle whose
+                                            # optimum sits near the middle" — sound
+                                            # reasoning, but it makes the arm unpaired).
+                                            # So `identical_initial_design_per_seed:
+                                            # true` above was asserted without
+                                            # qualification and was false for TWO arms,
+                                            # one declared and one silent. That is the
+                                            # same defect T9/Q18 found in the first
+                                            # place, one arm over.
+                                            #
+                                            # Declared rather than fixed, because
+                                            # pairing it is not obviously right: seeding
+                                            # coordinate descent from the best of the
+                                            # shared opening would make it a different
+                                            # and stronger algorithm, not the textbook
+                                            # baseline it is meant to represent. Fixing
+                                            # it mid-flight would also change an arm
+                                            # after its numbers exist. See Q23.
   no_per_method_tuning: true                # including qLogEI. Tuning your own method
                                             # while baselines sit at defaults is the
                                             # most cited objection in this literature.
