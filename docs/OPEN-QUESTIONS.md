@@ -248,6 +248,25 @@ This is by construction, not a bug: `peak_modulation` enters as `exp((f₀ − �
 
 **2. It bears directly on E4's null.** The GP's failure to beat nearest-neighbour distance is easier to explain when the surface is nearly additive: a near-additive function is easy for *any* smooth model, so there is less for a GP's structure to exploit. This is a mechanism for the Q19 result, and it is testable — the sign flip across κ should track how much interaction each κ's sub-box actually exposes.
 
+#### ❌ THAT PREDICTION WAS TESTED AND IT FAILED
+
+**EXPLORATORY and post-hoc** — proposed after the sign flip was already known, so it was never confirmatory. Reported because a mechanism that was offered and then quietly dropped is worse than one that was offered and refuted.
+
+Additive-fit R² *inside each κ's training sub-box* `[0, κ·x*]`, 2,000 draws per instance, 25 instances at d=6:
+
+| κ | median additive R² in the sub-box | GP − NN (E4) |
+|---|---|---|
+| 0.6 | 0.9652 | **+0.1068** |
+| 0.7 | 0.9670 | −0.0173 |
+| 0.8 | 0.9656 | −0.0960 |
+| 0.9 | 0.9645 | −0.1011 |
+
+**Interaction exposure is flat across κ** — the whole range is 0.0025, while the discrimination difference swings by 0.21 and changes sign. **Separability does not explain the sign flip.** The proposed mechanism is refuted, and Q19's result remains unexplained.
+
+**What survives:** the ~93% figure is still a transfer limitation, and it is still a candidate explanation for why the *pooled* GP-vs-distance difference is small. It is simply not the explanation for the *κ-dependence*.
+
+**Still open, and worth someone's attention:** κ changes the training data, not only the scoring box, so the fitted surface genuinely differs — but what about it flips the GP's advantage between κ=0.6 and κ=0.8 is not established. **Do not let the 93% figure be cited as though it answered this.**
+
 **3. It is the sharpest limit on transfer, and it cuts against the project's own premise.** The motivating study is *about* ECM protein interactions. A benchmark whose interaction term carries ~7% of the variance under-represents the phenomenon the paper exists to study. **Whatever E2 concludes, it is a conclusion about near-separable landscapes.**
 
 ### What B recommends
