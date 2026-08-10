@@ -1,0 +1,38 @@
+
+============================================================================================
+PF1 · REGISTERED (kappa x rho) GRID · d=6 · 40 instances · sigma_rel=0.1
+============================================================================================
+
+Median over-prediction (response max is 1.0)
+
+  kappa      rho 1.2     rho 1.5       rho 2       rho 3    rho cube
+    0.6        0.182       0.557       1.466       4.049      11.527
+    0.7        0.233       0.611       1.501       3.796       7.022
+    0.8        0.197       0.546       1.218       2.805       4.147
+    0.9        0.233       0.496       1.050       2.073       2.742
+
+Median second-order PI width at the argmax
+
+  kappa      rho 1.2     rho 1.5       rho 2       rho 3    rho cube
+    0.6        0.350       0.639       1.391       3.693      15.340
+    0.7        0.385       0.704       1.517       4.243      11.800
+    0.8        0.445       0.809       1.759       4.724       9.004
+    0.9        0.476       0.865       1.881       4.506       6.615
+
+============================================================================================
+REGISTERED PRIMARY — monotone trend, per instance, instance-level cluster bootstrap
+============================================================================================
+  trend in rho   (expect POSITIVE): +1.0000  [+1.0000, +1.0000]   -> HOLDS
+  trend in kappa (expect NEGATIVE): -0.2712  [-0.3988, -0.1450]   -> HOLDS
+
+============================================================================================
+REGISTERED SECONDARY — over-prediction vs instance true depth
+============================================================================================
+  kappa=0.6: Spearman(true_depth, over-prediction) = +0.3893   (expect NEGATIVE)
+  kappa=0.9: Spearman(true_depth, over-prediction) = +0.1285   (expect NEGATIVE)
+  depth range across instances: [0.1086, 0.1390]  -- narrow depth range limits this test's power
+
+  turning points across all cells: {'maximum': 0, 'minimum': 0, 'saddle': 800, 'ridge': 0}
+  argmax escaped the training sub-box: 100% of cells
+
+written to results/pf1-grid.json
