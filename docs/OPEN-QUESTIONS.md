@@ -97,6 +97,29 @@ The 1% threshold is set here, with the `d=6` rate (~0.2%) known and the `d=8` ra
 
 **Deciding to repair because BO lost.** If the failure rate is under the threshold and BO underperforms, the run stands and the solver is not touched. Under this rule that outcome is reported as-is — which is the entire point of writing the rule down while `d=8` is still running.
 
+### ✅ DETERMINATION — computed from the completed run, **before reading the regret table**
+
+Second-try acquisition failures per (dim, σ) cell, against BO acquisition calls (25 instances × 2 seeds × 2 adaptive arms × rounds per campaign — 9 at d=6, 8 at d=8):
+
+| cell | failures | BO acqf calls | rate | vs 1% |
+|---|---|---|---|---|
+| d=6, σ=0.25 | 2 | 900 | 0.222% | below |
+| d=6, σ=0.10 | 0 | 900 | 0.000% | below |
+| **d=8, σ=0.25** | **7** | **800** | **0.875%** | **below — but close** |
+| d=8, σ=0.10 | 0 | 800 | 0.000% | below |
+
+**No cell trips the threshold. Under Q21 as registered, the run STANDS, the solver is NOT touched, and the result is reported as-is — including "BO loses".**
+
+This is the rule doing the job it was written for. The threshold was fixed while `d=8` was still running and before any regret number existed; it now binds against the temptation to repair an unfavourable result. **Had it been written afterwards, 0.875% is exactly the number someone could have argued either side of.**
+
+**Report as a limitation:** `d=8, σ=0.25` reached 0.875%, close enough to the line to be worth stating. All 9 failures fall in the two σ=0.25 cells — the failures concentrate at the higher noise level, which is where the GP fit is worst conditioned.
+
+### ⚠️ The evidence was nearly lost
+
+**`results/e2.log` as committed in `0aeee09` contains ZERO of these warnings** — 77 lines against the run's actual 224, with every BoTorch warning stripped. The determination above is not reproducible from the committed artefact.
+
+The full log is restored as **`results/e2-run1-unfiltered.log`**. **A pre-registered decision rule is worth nothing if the evidence it consumes is filtered out of the record before anyone can check it** — and this one exonerates the run rather than condemning it, which is precisely why it must be auditable.
+
 ---
 
 ## 🔴 Q20 [A decides, B recommends] · E2 · **written while the grid is still running, deliberately**
