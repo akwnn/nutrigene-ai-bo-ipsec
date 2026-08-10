@@ -60,6 +60,32 @@ fairness:
   no_per_method_tuning: true                # including qLogEI. Tuning your own method
                                             # while baselines sit at defaults is the
                                             # most cited objection in this literature.
+
+  # Q21 — the one carve-out, registered BEFORE the failure rate or the regret numbers
+  # were known (d=8 was still running). Only the adaptive arms call optimize_acqf, so
+  # a solver failure handicaps qLogEI/qLogNEI alone and a "BO loses" result would be
+  # measuring the solver rather than the method. Refusing to repair that is as wrong
+  # as tuning. The distinction is decidable only if the rule predates the numbers.
+  solver_repair:
+    trigger_on: second_try_acqf_failure_rate   # NOT on whether BO underperformed
+    threshold: 0.01                            # >1% of BO batches in any (dim, sigma)
+                                               # cell. Set with the d=6 rate (~0.2%)
+                                               # known and d=8 unknown, so it is above
+                                               # what was observed and cannot have been
+                                               # reverse-engineered to trigger.
+    permitted: [num_restarts, raw_samples, retry_policy, jitter]  # whether it
+                                               # converges, not what it optimises
+    forbidden: [acquisition, best_f_policy, kernel, budget]
+    applied_to: all_arms_using_the_solver      # qlogei AND qlognei, never one
+    requires_full_regrid: true                 # re-running one arm against another
+                                               # arm's stored numbers compares two
+                                               # different computational conditions
+    report: both_runs_with_failure_rates       # if repair changes the conclusion, THAT
+                                               # is the finding: the result was
+                                               # solver-sensitive
+    bumps_preregistration_version: true
+  # FORBIDDEN: repairing because BO lost. Under threshold and BO underperforms -> the
+  # run stands, untouched, and is reported as-is.
   randomise_order_for_static_arms: true     # a one-shot design has no regret CURVE;
                                             # best-so-far is otherwise a step function
                                             # determined by arbitrary listing order
@@ -135,6 +161,20 @@ inference:
 #
 # So two estimands are named, neither selected afterwards, and both reported whatever
 # they show.
+# ALAN'S RULING, received while the grid was running: "if it's unclear what's better
+# for the project then do all." REPORT EVERY COMPARISON — qLogEI against every arm,
+# both tests for each, with no headline designated after the numbers are seen. That is
+# a superset of the two estimands below, and it removes the selection problem outright
+# rather than managing it. The estimands stay named because "report everything" still
+# needs to say which comparison answers WHICH QUESTION, and because `best_non_bo` must
+# be labelled a post-hoc-selected comparator wherever it appears — its conservatism is
+# a property that only exists once the results are in, so it is not a pre-registered
+# identifiable arm. Reporting all costs nothing: e2-grid.json persists every per-cell
+# row, so further analysis is a reporting change, never a re-run.
+report_all_comparisons: true
+report_both_tests_for_every_comparison: true
+designate_headline_after_seeing_results: forbidden
+
 estimands:
   primary_domain:                       # "BO beats current practice." The thesis.
     arm: qlogei

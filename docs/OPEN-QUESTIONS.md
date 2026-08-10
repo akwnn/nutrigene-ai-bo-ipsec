@@ -4,6 +4,44 @@
 
 ---
 
+## 🔴 Q21 [A + B] · **the acquisition solver is failing. The repair rule is registered NOW, before the failure rate or the regret numbers are known.**
+
+**Written while `run_e2.py` is still executing, with `d=8` unfinished and `results/e2-grid.json` not yet on disk.** Check the timestamp. This entry is worthless if written afterwards, because every question it settles is one whose answer becomes obvious — and self-serving — once you know whether BO won.
+
+### The problem
+
+`results/e2.log` is accumulating BoTorch acquisition failures: *"Optimization failed on the second try, after generating a new set of initial conditions"* — 4 hard failures in the `d=6` half, plus `A not p.d., added jitter`. On a second-try failure BoTorch does not propose the point it wanted; it falls back to whatever candidates it has.
+
+**Only the adaptive arms call `optimize_acqf`.** So this handicaps qLogEI and qLogNEI and nothing else. A "BO loses" result contaminated by it would be measuring a solver, not a method. (It is also why the rate matters and the raw count does not: 4 failures against ~1,800 optimisations in the `d=6` half is ~0.2%, which changes nothing. `d=8` is where this gets worse, and `d=8` had not finished when this was written.)
+
+### Why this needs registering rather than just fixing
+
+`e2.yaml` registers `no_per_method_tuning: true`, and it is the most-cited objection in this literature — tuning your own method while the baselines sit at defaults. **Raising `num_restarts` or `raw_samples` after seeing that BO underperformed is exactly that objection, whatever the intention.** But refusing to repair a genuine numerical failure is also wrong, and would let a solver bug masquerade as a scientific finding.
+
+The distinction is real and it is decidable **only if the decision rule is fixed before the numbers are seen.**
+
+### What is registered
+
+**1. The repair decision is made on the FAILURE RATE ALONE, computed and acted on before the regret numbers are read.**
+
+> Repair is triggered if second-try acquisition failures exceed **1% of BO batches** in any (dim, sigma) cell. Below that, the run stands and the rate is reported as a limitation.
+
+The 1% threshold is set here, with the `d=6` rate (~0.2%) known and the `d=8` rate **not** known. It is deliberately set above the observed `d=6` rate so it cannot be a rule reverse-engineered to trigger, and low enough that a real `d=8` problem trips it.
+
+**2. Permitted repairs are numerical only.** `num_restarts`, `raw_samples`, `retry` policy, jitter — parameters that change *whether the optimiser converges*, not *what it optimises*. Changing the acquisition function, `best_f` policy, kernel, or budget is not a repair.
+
+**3. A repair is applied identically to every arm that uses the solver** — qLogEI and qLogNEI both, never one — and **the whole grid is re-run**, not the BO arms only. Re-running one arm against another arm's stored numbers compares two different computational conditions.
+
+**4. Both runs are reported.** Pre-repair and post-repair, with the failure rate for each. If the repair changes the conclusion, *that is the finding* and it is stated plainly: the result was solver-sensitive.
+
+**5. Repairing bumps `preregistration_version` again**, with the failure rate that triggered it recorded as the reason.
+
+### What is explicitly forbidden
+
+**Deciding to repair because BO lost.** If the failure rate is under the threshold and BO underperforms, the run stands and the solver is not touched. Under this rule that outcome is reported as-is — which is the entire point of writing the rule down while `d=8` is still running.
+
+---
+
 ## 🔴 Q20 [A decides, B recommends] · E2 · **written while the grid is still running, deliberately**
 
 **The E2 grid was launched before these were settled. Everything below is recorded with no E2 number in existence, which is the only reason it is worth anything.** If it is read after the numbers land, check the git timestamp against `results/e2-grid.json`.
