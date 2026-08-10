@@ -7,8 +7,19 @@ Ordered by what blocks what, not by size.
 
 ## Status — 2026-08-10
 
-**Gate 0 is CLOSED** (`be3cdc5`). All four items answered and pushed. The
-critical path is now Gate 1/2, and the next thing needing a human is T9.
+**Gate 0 is CLOSED** (`be3cdc5`). All four items answered and pushed.
+
+**Gate 1 and Gate 2 are closed too, and this section below them is stale in
+that respect** — E2 has run, on both dimensions, and T9 was settled as Q18.
+The table below is kept as the record of how they closed, not as a to-do list.
+
+**The critical path is now T15**, the one comparison the paper's central
+sentence depends on and does not have.
+
+| | Task | Owner | Done when |
+|---|---|---|---|
+| **T15** | **The d=8 DoE arm** — Q24 found that "BO beats current practice" is unsupported at *both* dimensions: at d=6 it was tested and BO lost, at d=8 current practice was never run, and the d=8 table reads at a glance like a clean BO win. Registered as **Q27** with the design fixed in a commit beforehand, because a d=8 arm designed after seeing d=6 go against BO is an arm designed with a known incentive. | **B builds, A + B decide** | Registered ✅ (`1b064e8`), built ✅ (2^(8-4)_IV in `designs.py`, per-dimension fraction in `doe.py`), run ✅ — DoE wins the primary cell, −0.0321, p=0.0003. **A has not accepted the split**, which is the open half. |
+| **T16** | **Choose the DoE arm's estimand — Q28, and it governs the headline.** `regret_on` never defined the DoE arm's selected point (Q20 §3 flagged it and it was left open). Rule A, best-so-far over all 48, is what E2 scores; Rule B, the stage-4 recipe, is what the method produces. **They reverse the sign at every cell at both dimensions**, so "current practice beats BO" is currently a statement about an unregistered choice. Rule B as measured is *not* like-for-like — the symmetric version needs BO's posterior-mean argmax, which E2 never records. | **A decides, B has measured it** | Both estimands named in the pre-registration and reported side by side, and the symmetric Rule B registered *before* it is run — Rule A is already known to favour DoE and asymmetric Rule B to favour BO. |
 
 | | | |
 |---|---|---|
