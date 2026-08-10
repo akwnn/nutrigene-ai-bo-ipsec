@@ -47,9 +47,30 @@ import torch
 from torch import Tensor
 
 from boec.campaign import Campaign, CampaignConfig, Evaluator
-from boec.optimizers import lhs_design, random_design, sobol_design
+from boec.optimizers import ACQUISITION_CHOICES, lhs_design, random_design, sobol_design
+
+#: Methods that choose all their points up front. Run through
+#: :func:`run_static_baseline`, which averages over orderings.
+STATIC_METHODS = ("random", "sobol", "lhs")
+
+#: Methods known to :meth:`Runner.run_cell` but not implemented there yet.
+#: Mapping name -> what to do instead. Kept explicit so an unimplemented arm
+#: fails loudly rather than falling through to the adaptive branch: ``GridCell``
+#: already documents ``"doe"`` as a valid method, and before this existed a
+#: ``doe`` cell ran a **Bayesian optimization campaign** and wrote a
+#: believable-looking parquet file under a ``method-doe`` filename.
+UNWIRED_METHODS: dict[str, str] = {
+    "doe": (
+        "the sequential-DoE arm is implemented in boec.doe.run_doe_arm but is "
+        "not wired into the Runner. Call it directly (see scripts/run_doe_arm.py), "
+        "or add a branch here that converts DoEResult into a best-so-far curve. "
+        "See docs/TASKS.md T8."
+    ),
+}
 
 __all__ = [
+    "STATIC_METHODS",
+    "UNWIRED_METHODS",
     "GridCell",
     "Runner",
     "load_results",
@@ -204,14 +225,26 @@ class Runner:
         set_single_threaded()
         started = time.perf_counter()
 
-        if cell.method in {"random", "sobol", "lhs"}:
+        if cell.method in STATIC_METHODS:
             curve = run_static_baseline(
                 evaluator, bounds, cell.method, config.budget, cell.seed
             )
             frame = self._frame_from_curve(cell, config, curve)
-        else:
+        elif cell.method in ACQUISITION_CHOICES:
             campaign = Campaign(evaluator, bounds, config).run()
             frame = self._frame_from_campaign(cell, config, campaign)
+        elif cell.method in UNWIRED_METHODS:
+            raise NotImplementedError(
+                f"method {cell.method!r} is not runnable here — {UNWIRED_METHODS[cell.method]}"
+            )
+        else:
+            # Never fall through to the adaptive branch. An unrecognised name
+            # used to silently become a BO campaign, so a typo in one arm of an
+            # E2 grid would have been reported as that arm's result.
+            raise ValueError(
+                f"unknown method {cell.method!r}; choose from "
+                f"{sorted((*STATIC_METHODS, *ACQUISITION_CHOICES, *UNWIRED_METHODS))}"
+            )
 
         elapsed = time.perf_counter() - started
         frame["wall_clock_s"] = elapsed

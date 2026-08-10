@@ -105,6 +105,117 @@ rho: 2.0                  # v1 was the unit cube. See CHANGE 1.
 rho_reported_also: [inf]  # unit cube kept as a limiting case
 primary_cell: {kappa: 0.6, rho: 2.0}
 
+# =============================================================================
+# VERSION 2 ADDENDUM — T1-T4 carried in. Written BEFORE the confirmatory run.
+# =============================================================================
+#
+# TASKS.md Gate 0 requires Q12, Q14, Q15 and Q16 to land as ONE bump. The four
+# blocks below carry them. `preregistration_version` was already 2 when this was
+# written, so this is not a version change — it is the v2 content finally
+# matching what v2 was declared to contain. Recorded that way rather than
+# silently re-bumping, because a version number that moves without a diff is
+# exactly what a pre-registration is supposed to make impossible.
+#
+# -----------------------------------------------------------------------------
+# T4 / Q12 — the regime. A proposed, B agreed. Recorded as decided.
+# -----------------------------------------------------------------------------
+# Already live below as `rho: 2.0` and `primary_cell`. Nothing changes; this
+# note exists so the decision has a date and an owner rather than only a value.
+#
+# -----------------------------------------------------------------------------
+# T3 / Q14 — n. THE POWER TABLE IN Q14 IS STALE AND MUST NOT BE USED AS WRITTEN.
+# -----------------------------------------------------------------------------
+# Those n's (~31, ~44) were computed on the UNIT-CUBE effect (+0.051), which is
+# the regime v2 deprecates. In the pre-registered primary regime the point
+# estimate is NEGATIVE (-0.027). No n produces a GP advantage, because there is
+# no advantage to find.
+#
+# What n = 40 actually buys is MARGIN ON THE EQUIVALENCE BOUND, not power. At
+# n = 25 the one-sided limits are -0.0658 / +0.0112 against a bound of +/-0.08,
+# so the lower limit clears by only ~0.014 — thin enough to be sensitive to the
+# bootstrap seed. At n = 40 it moves to roughly -0.058.
+#
+# Recomputed independently from results/e4-robustness.json by B; the upper limit
+# reproduces A's to within rounding (+0.0112 vs A's +0.0113), which is the check
+# that the two sides are computing the same estimand.
+#
+# DECISION: n_instances stays 25 for the confirmatory run, 40 when A's ensemble
+# extension is in hand. Both numbers and both rationales were fixed in advance,
+# so neither can be selected later on which gave the nicer answer.
+n_instances_rationale: equivalence_margin_not_power   # NOT the stale Q14 table
+
+# -----------------------------------------------------------------------------
+# T1 / Q16 — the replacement primary, and B's registered amendment to it.
+# -----------------------------------------------------------------------------
+# A's original rho-trend primary was WITHDRAWN as a tautology: boxes are nested
+# in rho, the fitted surface is identical across rho, and y_true <= 1, so
+# over-prediction rises with rho by arithmetic. The kappa trend stands.
+#
+# A's replacement: the second-order prediction interval loses nominal coverage
+# as rho increases, and we report the rho at which it crosses.
+#
+# B ACCEPTED the claim and OBJECTED to the reported quantity. Both are recorded
+# in OPEN-QUESTIONS Q16; the operative part is here.
+#
+# Accepted because it is genuinely falsifiable, for a structural reason: for a
+# second-order model the regressor vector already contains the quadratic terms,
+# so leverage scales as lambda^4 and the half-width as lambda^2 — the SAME order
+# as the fitted surface's divergence from a bounded truth. Neither dominates by
+# construction. Confirmed in results/pf1-grid.log: from rho=1.2 to the cube,
+# over-prediction grows x63/x30/x21/x12 against interval x44/x31/x20/x14 at
+# kappa 0.6/0.7/0.8/0.9.
+#
+# Objected to because "the rho at which it crosses" presumes ONE crossing. The
+# ratio of median over-prediction to median half-width is non-monotone at every
+# kappa — it peaks around rho=2-3 and falls back — and at kappa 0.8 and 0.9 it
+# crosses 1 upward and then back down. Caveat stated in Q16 and repeated here:
+# a ratio of medians is NOT the coverage rate, so this is a well-posedness risk,
+# not a proof. preflight_pf1.py already records `over` and `pi` per cell, so the
+# real rate is a reporting change rather than a new experiment.
+interval_coverage:
+  # The estimand is a SURFACE on the registered grid, not a point — the same
+  # logic Q16 applies to over-prediction, applied to its own replacement primary
+  # instead of exempting it.
+  estimand: coverage_surface_over_kappa_rho_grid
+  nominal: 0.95
+  computed_as: fraction_of_cells_with_abs_over_prediction_le_half_interval
+  # The crossing is reported ONLY where coverage is monotone in rho. Where it is
+  # not, the non-monotonicity IS the reported finding.
+  report_crossing_rho: where_monotone_in_rho_only
+  monotonicity_check: required_before_reporting_any_crossing
+  # What would falsify the claim outright.
+  falsified_if: coverage_flat_near_nominal_across_the_whole_grid
+
+# -----------------------------------------------------------------------------
+# T2 / Q15 — the DoE arm's dropped-factor hold level. B's call.
+# -----------------------------------------------------------------------------
+# Governs E2's DoE arm, whose stage-4 confirmation IS E4a viewed from the other
+# end, which is why it is registered here rather than nowhere. **A: carry these
+# into configs/experiment/e2.yaml when T11 lands — an inherited default is not a
+# pre-registration.**
+#
+# Registered with NEITHER ARM RUN: the `zero` policy did not exist in doe.py
+# when this was decided, so there was no number to choose between.
+#
+# The two policies are not symmetric. `best_stage1` is CONSERVATIVE — stage 2
+# stays near the region stage 1 found good, so there is less distance to
+# extrapolate and the over-promise is HARDER to demonstrate. `zero` is
+# FLATTERING, through screen error: the screen recovers 94% of planted active
+# factors at sigma_rel=0.10 and 86% at 0.25, and pinning a wrongly-dropped
+# ACTIVE factor to zero drags stage 2 somewhere genuinely worse. The
+# conservative arm is the primary, on the same principle that rejected
+# stage2_half_width = 0.5.
+doe_arm:
+  hold_dropped_at: best_stage1        # PRE-REGISTERED PRIMARY (doe.py default)
+  hold_dropped_at_sensitivity: zero   # DECLARED, reported always — not only if it agrees
+  # Fixed per Q15. At 0.5 stage 2 spans the whole range, the predicted optimum
+  # cannot fall outside it, and the escape statistic is vacuously 0%.
+  stage2_half_width: 0.25
+  # If `zero` over-promises LESS, the screen-error argument above is wrong and
+  # that is reported as a failed prediction. It does not license swapping the
+  # primary.
+  swapping_primary_on_result: forbidden
+
 # --- PRE-REGISTERED (v1, unchanged) -------------------------------------------
 discrimination:
   n_candidates: 512

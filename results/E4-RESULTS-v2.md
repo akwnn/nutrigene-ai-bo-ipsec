@@ -131,9 +131,22 @@ specified.
   holds 25. That is 2.5× the pilot — the 80% power tier — and the amendment was
   recorded before the run, for a reason independent of any result. Extending to
   40 needs A.
-- **Bounds an advantage, not equivalence.** The point estimate is negative and
-  the lower limit does not clear −0.08, so a meaningful *disadvantage* is not
-  excluded either.
+- **Two-sided equivalence holds, but with thin margin.** *Corrected 2026-08-10 —
+  this bullet previously read "the lower limit does not clear −0.08, so a
+  meaningful disadvantage is not excluded either", which contradicts this
+  document's own log.* `equivalence_bound_test` printed the **`Established, not
+  merely unrefuted`** verdict, and that branch is only reachable when
+  `lower >= -bound` (`discrimination.py`); the "not equivalence" wording belongs
+  to the other branch, which did not fire. Recomputed from
+  `results/e4-robustness.json`: one-sided limits **−0.0658 / +0.0112**,
+  two-sided **[−0.0737, +0.0187]**, both inside ±0.08. So the *disadvantage*
+  direction is excluded too, and the result is stronger than was claimed here.
+
+  The honest caveat is a different one. This is **not** bootstrap-seed noise —
+  across seeds 0/1/7 the lower limit moves by only ~0.0006. It is that the
+  **two-sided margin to the bound is ~0.006**, so equivalence in that direction
+  is established but not comfortably. The one-sided margin, which is what the
+  registered test uses, is ~0.014.
 - **One oracle family.** Whether this holds on landscapes with different
   structure is untested.
 - **d=6 only**, per spec.

@@ -130,6 +130,56 @@ def test_dropped_factors_are_held_at_a_recorded_level(result):
         assert 0.0 <= level <= 1.0
 
 
+def test_the_registered_default_holds_dropped_factors_at_the_best_stage_one_level(result):
+    """Q15 T2, PRE-REGISTERED: ``best_stage1`` is the primary and therefore the default.
+
+    Registered on conservatism, before either arm was run — see OPEN-QUESTIONS Q15.
+    A default that silently became ``zero`` would swap the primary for the sensitivity
+    without anything failing, which is exactly the class of silent substitution T8 was
+    written to stop.
+    """
+    o, res = result
+    assert res.hold_dropped_at == "best_stage1"
+    # Not all-zero: the best stage-1 run is a factorial corner or a centre point, so
+    # at least one dropped factor sits off zero. If every level were 0.0 the default
+    # would be indistinguishable from the sensitivity arm.
+    assert any(level != 0.0 for level in res.dropped_held_at.values())
+
+
+def test_holding_dropped_factors_at_zero_actually_holds_them_at_zero(bounds):
+    """Q15's declared sensitivity arm — closer to Hall/Ogle, whose reported optimum
+    sits at zero for both dropped laminins."""
+    o = CountingOracle()
+    res = run_doe_arm(o, bounds, truth=o.truth, budget=BUDGET, seed=0,
+                      hold_dropped_at="zero")
+    assert res.hold_dropped_at == "zero"
+    dropped = set(range(D)) - set(res.kept_factors)
+    assert set(res.dropped_held_at) == dropped
+    assert all(level == 0.0 for level in res.dropped_held_at.values())
+    assert o.n_evaluated == BUDGET  # the sensitivity arm is not cheaper
+
+
+def test_an_unrecognised_hold_policy_raises_rather_than_defaulting(bounds):
+    """A typo must not silently fall back to the primary — that would report the
+    sensitivity arm's filename against the primary arm's numbers."""
+    o = CountingOracle()
+    with pytest.raises(ValueError, match="hold_dropped_at"):
+        run_doe_arm(o, bounds, truth=o.truth, budget=BUDGET, seed=0,
+                    hold_dropped_at="centre")
+
+
+def test_the_two_hold_policies_are_genuinely_different_runs(bounds):
+    """If both policies produced identical confirmation points the sensitivity would
+    be vacuous — the Q15 stage2_half_width=0.5 failure mode in a new place."""
+    o1 = CountingOracle()
+    a = run_doe_arm(o1, bounds, truth=o1.truth, budget=BUDGET, seed=0,
+                    hold_dropped_at="best_stage1")
+    o2 = CountingOracle()
+    b = run_doe_arm(o2, bounds, truth=o2.truth, budget=BUDGET, seed=0,
+                    hold_dropped_at="zero")
+    assert not torch.allclose(a.confirmation_x, b.confirmation_x)
+
+
 def test_the_screen_finds_the_oracles_genuinely_active_factors():
     """A sanity check on the arm, not on the oracle: with a 4.5x influence ratio the
     screen should mostly recover the planted active set. Not all four every time --

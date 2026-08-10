@@ -61,7 +61,12 @@ from boec.designs import central_composite, scale_to_box, screening_design
 from boec.metrics import over_prediction_at_constrained_argmax
 from boec.rsm import fit_second_order
 
-__all__ = ["DoEResult", "run_doe_arm"]
+__all__ = ["HOLD_POLICIES", "DoEResult", "run_doe_arm"]
+
+#: Q15 (T2). Where screened-out factors sit during stage 2. ``"best_stage1"`` is the
+#: pre-registered primary; ``"zero"`` is the declared sensitivity. Registered before
+#: either was run — see :func:`run_doe_arm` for the asymmetry the choice rests on.
+HOLD_POLICIES = ("best_stage1", "zero")
 
 
 @dataclass
@@ -100,6 +105,10 @@ class DoEResult:
         search_bounds: ``(2, n_keep)`` the region the predicted optimum was sought
             over. Strictly wider than ``stage2_bounds``, or escape is impossible.
         stationary_kind: maximum / minimum / saddle / ridge, descriptive.
+        hold_dropped_at: which Q15 policy produced ``dropped_held_at`` --
+            ``"best_stage1"`` (the pre-registered primary) or ``"zero"`` (the
+            declared sensitivity). Recorded on the result so a stored row can never
+            be attributed to the wrong arm.
     """
 
     curve: np.ndarray
@@ -119,6 +128,7 @@ class DoEResult:
     stage2_bounds: Tensor
     search_bounds: Tensor
     stationary_kind: str
+    hold_dropped_at: str = "best_stage1"
     n_confirmation: int = 1
     notes: list[str] = field(default_factory=list)
 
@@ -150,6 +160,7 @@ def run_doe_arm(
     n_centre_stage1: int = 4,
     n_centre_stage2: int = 3,
     stage2_half_width: float = 0.25,
+    hold_dropped_at: str = "best_stage1",
 ) -> DoEResult:
     """Run the two-stage DoE campaign and measure its predicted optimum.
 
@@ -169,6 +180,24 @@ def run_doe_arm(
             a modelling choice, not a constant** -- at 0.5 stage 2 covers the whole
             space, the predicted optimum can never fall outside it, and the escape
             statistic silently becomes zero.
+        hold_dropped_at: where the screened-out factors sit during stage 2. **Q15,
+            registered before either arm was run** (OPEN-QUESTIONS Q15, T2):
+
+            * ``"best_stage1"`` -- the level they took in the best stage-1 run.
+              **The pre-registered primary**, and the default. It is what a
+              practitioner does, and it is the *conservative* choice: stage 2 stays
+              near the region the data speaks to, so the confirmation point has less
+              distance to extrapolate and the over-promise is harder to demonstrate.
+            * ``"zero"`` -- a nominal zero. **The declared sensitivity.** Closer to
+              Hall/Ogle, whose reported optimum sits at zero for both dropped
+              laminins. It bites through screen error: the screen recovers 94% of
+              planted active factors at sigma_rel=0.10 and 86% at 0.25, and a wrongly
+              dropped *active* factor pinned to zero drags stage 2 into a genuinely
+              worse region, so this arm should over-promise more.
+
+            The primary was fixed on that asymmetry -- conservative arm primary,
+            flattering arm secondary -- and NOT on which produced the larger number.
+            Neither had been run when it was chosen.
 
     Returns:
         A :class:`DoEResult`.
@@ -178,6 +207,13 @@ def run_doe_arm(
             make this arm incomparable to every other arm in E2 and nothing
             downstream would notice.
     """
+    if hold_dropped_at not in HOLD_POLICIES:
+        raise ValueError(
+            f"hold_dropped_at={hold_dropped_at!r} is not a registered policy; "
+            f"choose from {sorted(HOLD_POLICIES)}. Falling back to the default would "
+            "report the sensitivity arm's label against the primary arm's numbers."
+        )
+
     d = int(bounds.shape[1])
 
     # --- stage 1: which ingredients matter at all? --------------------------
@@ -201,11 +237,16 @@ def run_doe_arm(
     dropped = [i for i in range(d) if i not in kept]
 
     # --- stage 2: a fuller design on the survivors --------------------------
-    # Dropped factors are held at the level of the best stage-1 run rather than at a
-    # nominal zero: that is what a practitioner does, and it keeps the confirmation
-    # point inside a region the data actually speaks to. Recorded either way.
+    # Q15 (T2), pre-registered: dropped factors are held at the best stage-1 run's
+    # level by default -- what a practitioner does, and the conservative arm, since it
+    # keeps the confirmation point inside a region the data actually speaks to. The
+    # `zero` policy is the declared sensitivity. Recorded either way, and the policy
+    # itself is recorded on the result so a row cannot be attributed to the wrong arm.
     best_row = int(torch.argmax(Y1.ravel()))
-    held = {int(i): float(X1[best_row, i]) for i in dropped}
+    if hold_dropped_at == "zero":
+        held = {int(i): 0.0 for i in dropped}
+    else:
+        held = {int(i): float(X1[best_row, i]) for i in dropped}
 
     # Stage 2 is a LOCAL exploration centred on the best stage-1 run, not a second
     # sweep of the whole space -- that is what "centred on the best stage-1 region"
@@ -269,7 +310,7 @@ def run_doe_arm(
         X_visited=X_all,
         Y_visited=torch.from_numpy(observed).reshape(-1, 1),
         n_stage1=n1, n_stage2=n2,
-        kept_factors=kept, dropped_held_at=held,
+        kept_factors=kept, dropped_held_at=held, hold_dropped_at=hold_dropped_at,
         confirmation_x=x_full,
         predicted_y=op.y_predicted,
         confirmation_y=confirmation_y,

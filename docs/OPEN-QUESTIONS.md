@@ -73,6 +73,50 @@ Reported as a failed prediction, not quietly dropped. Caveat that cuts both ways
 
 **Turning point was a saddle in 800 of 800 cells.** Zero maxima, zero minima, across 40 instances and four κ. That is now the fourth independent confirmation, after PF1's first run, B's E4 run, and the DoE arm. The spec's prediction of minima at low κ was 1-D reasoning applied to a 6-D surface and is comprehensively wrong.
 
+### ✅ B'S ANSWER (T1) — **the replacement primary is accepted; the reported quantity is objected to**
+
+A asked for an objection before the run rather than agreement, so both halves are here.
+
+#### The direction claim IS falsifiable — and for a reason stronger than the one given
+
+A's defence was that coverage came back 96–98% at ρ=1.2, so the claim *can* return null. That is evidence, not a proof, and it is the same kind of evidence the ρ-trend had before it was shown to be forced. The structural argument is available and it is three lines, in the same style as A's:
+
+For a second-order model the regressor vector `x₀ = [1, x, x², xx']` **already contains the quadratic terms**. Scale `x` by λ and the quadratic block scales λ², so leverage `h = x₀ᵀ(XᵀX)⁻¹x₀` scales λ⁴ and the half-width `t·σ̂·√(1 + h)` scales **λ²**. The fitted surface's own divergence from a bounded truth also scales **λ²**. **Same order.** Neither term dominates by construction, and which one wins is decided by `σ̂`, the design geometry and the true curvature — none of which are forced.
+
+Contrast with the withdrawn ρ-trend, where `y_true ≤ 1` was bounded and `y_pred` was monotone in ρ by box nesting, so the sign was arithmetic. **This one is a genuine race.** Confirmed in the committed grid — bias and interval grow at near-identical rates from ρ=1.2 to the cube:
+
+| κ | over-prediction | PI width |
+|---|---|---|
+| 0.6 | ×63 | ×44 |
+| 0.7 | ×30 | ×31 |
+| 0.8 | ×21 | ×20 |
+| 0.9 | ×12 | ×14 |
+
+Had the interval grown an order slower, the claim would have been another tautology. It does not.
+
+#### The objection: **"the ρ at which it crosses" presumes one crossing, and there appear to be two**
+
+Ratio of median over-prediction to median half-width, from `results/pf1-grid.log`. Above 1 means the bias exceeds the interval:
+
+| κ | ρ=1.2 | ρ=1.5 | ρ=2 | ρ=3 | cube |
+|---|---|---|---|---|---|
+| 0.6 | 1.04 | 1.74 | 2.11 | 2.19 | 1.50 |
+| 0.7 | 1.21 | 1.74 | 1.98 | 1.79 | 1.19 |
+| 0.8 | **0.89** | 1.35 | 1.38 | 1.19 | **0.92** |
+| 0.9 | **0.98** | 1.15 | 1.12 | **0.92** | **0.83** |
+
+**Non-monotone at every κ** — it rises to a peak around ρ=2–3 and falls back. At κ=0.8 and κ=0.9 it crosses 1 upward *and then back down*. If that survives being computed as an actual coverage rate, **the crossing ρ is not a well-defined quantity at half the grid**, and a primary endpoint phrased as "the ρ at which it crosses" has no value to report there.
+
+The mechanism is visible in the same table above: past the point where the box saturates at the unit cube the argmax stops moving outward, while `σ̂·√(1+h)` keeps inflating on the sub-box design's ill-conditioning. The interval overtakes the bias again. That is a real property of extrapolating a designed experiment, not an artefact — which is why it should be reported rather than defined away.
+
+**Caveat, stated because it cuts against the objection.** This is a ratio of two medians, which is *not* the coverage rate — coverage is `P(|over| ≤ pi/2)` per cell, and a ratio of medians can be non-monotone while the rate is monotone. So this raises a well-posedness risk; it does not establish one. **PF1 already records `over` and `pi` for all 800 cells (`preflight_pf1.py:92`), so computing the real rate is a reporting change, not a new experiment.**
+
+#### Proposed amendment, for A to accept or reject
+
+> **Coverage of the second-order prediction interval is reported as a surface over the registered (κ, ρ) grid.** The crossing ρ is reported only where coverage is monotone in ρ; where it is not, the non-monotonicity is itself the reported finding.
+
+This is the same logic Q16 already argues for the over-prediction endpoint — the grid is the result, no single cell is the headline — applied to the replacement primary rather than exempting it. **What would falsify the claim:** coverage flat near nominal 95% across the whole grid.
+
 ---
 
 ## 🔴 Q14 [EITHER] · E4 HAS RUN. The mechanism is huge; the headline claim is null. Decide n BEFORE rerunning.
@@ -173,6 +217,40 @@ The headline moves 0% → 100% on one argument. **A has deliberately run no othe
 
 **One thing B should call:** dropped factors are currently held at the **best stage-1 run's** level. Holding them at **zero** is arguably closer to the published procedure, since Hall/Ogle's own optimum sits at zero for both dropped laminins. A chose the best-run level because it is what a practitioner does and keeps the confirmation point where the data speaks. Recorded either way in `DoEResult.dropped_held_at`.
 
+### ✅ B'S CALL (T2) — **`best_stage1` is the primary, `zero` is a declared sensitivity. Both are reported.**
+
+**Registered with neither arm run.** The `zero` policy did not exist in the code when this was decided — `doe.py` hardcoded the best-stage-1 level — so there was no number to choose between. That is the point, and it is why this entry can be trusted in a way the four moves of the over-prediction endpoint in Q16 cannot.
+
+#### The decision rests on an asymmetry that is knowable in advance
+
+The two policies are not symmetric candidates where one picks the more realistic. **One is conservative and one is flattering, and which is which follows from the screen's error rate without running either.**
+
+- **`best_stage1` is conservative.** Stage 2 stays near the region stage 1 found good, so the fitted surface has *less* distance to extrapolate and the confirmation point is closer to data. **The over-promise is harder to demonstrate under this policy.**
+- **`zero` is flattering, and the mechanism is screen error.** The screen recovers 94% of planted active factors at σ_rel = 0.10 and **86% at 0.25** (the table above). A wrongly dropped factor is an *active* one, and pinning an active factor to zero drags stage 2 into a genuinely worse region of the space. The fitted surface then has further to reach and **should over-promise more.**
+
+**The conservative arm is the primary.** This is the same principle as the `stage2_half_width = 0.5` near-miss recorded above: the policy that makes the headline easiest to obtain is the one that must not be the default. Choosing the flattering arm as primary would be defensible on fidelity grounds and indefensible on every other.
+
+#### Why fidelity to Hall/Ogle does not win here
+
+It is the better argument for `zero` and it is real — their optimum does sit at zero for both dropped laminins. It loses for two reasons. **Their optimum sitting at zero is an output, not a held input**; the PDF cross-check established that fibronectin was boundary-clamped and Collagen IV extrapolated, so their zeros are what a constrained profiler *returned*, not what the design *held*. Reading a held level off a reported optimum assumes the answer. And fidelity to a procedure whose failure we are characterising is a weak reason to adopt its most failure-prone variant as the primary — **especially when we can simply report both.**
+
+#### What is registered
+
+| | policy | role |
+|---|---|---|
+| primary | `hold_dropped_at="best_stage1"` | the default in `doe.py`; every headline DoE number |
+| sensitivity | `hold_dropped_at="zero"` | reported alongside, always, not only if it agrees |
+
+**Both arms are reported whatever they show.** If `zero` over-promises more, that is the screen-error mechanism confirmed and it strengthens the finding. If it over-promises *less*, the a priori argument above is wrong and that is reported as a failed prediction, in the same way Q16's registered secondary was. **Neither outcome licenses swapping the primary.**
+
+Cost is not a consideration: the DoE arm runs in **0.03 s per cell** (measured, d=6, single-threaded), so the sensitivity arm is free.
+
+#### Implemented
+
+`doe.py` takes `hold_dropped_at`, exports `HOLD_POLICIES`, records the policy on `DoEResult.hold_dropped_at` so a stored row can never be attributed to the wrong arm, and **raises on an unrecognised value rather than falling back to the default** — the same silent-substitution class as the T8 `runner.py` fall-through. Four tests, including one asserting the two policies produce genuinely different confirmation points, so the sensitivity cannot go vacuous the way `stage2_half_width = 0.5` did.
+
+**For A:** the default carries the registered primary, so this needs nothing from `e2.yaml` to be correct. Carry `hold_dropped_at` into the E2 config explicitly anyway when T11 lands — an inherited default is not a pre-registration.
+
 ---
 
 ## 🟠 Q17 [A, but B should sanity-check] · E1 exposed a bias in how regret is scored. Fix it before E2 runs.
@@ -195,6 +273,37 @@ Nothing beats the optimum. What is being reported is the best **observed** value
 **Not a licence to change anything else.** This is a fix to a *scoring* function, decided and written down **before E2 has been run even once**, so it cannot be a response to seeing an E2 number. Every other setting — kernel, acquisition, initial-design size, batch plan, seeds — stays exactly as pre-registered.
 
 **One incidental E1 note, so nobody chases it:** gpytorch emits *"Very small noise values detected… rounding up to 1e-06"* throughout E1. That is a scale artefact of the standard test functions — Branin and Ackley span hundreds of units, so `Yvar / var(Y)` after `Standardize` falls below 1e-6. The biphasic oracle has range ~1 and does not trigger it. Not a bug in our noise path.
+
+> ### ✅ B's sanity-check — **A's reasoning is right, the gate survives the fix, and the bias is ~12% of the effect**
+>
+> A asked for a sanity-check rather than agreement, so this is the measurement. Same `TorchEvaluator`, same σ_rel = 0.10, same 20 seeds, same budget 48 — **only the scoring changed**. Selection still sees nothing but the noisy observations.
+>
+> | function | known opt | BO (truth) | random (truth) | difference | 95% CI |
+> |---|---|---|---|---|---|
+> | branin | −0.3979 | −0.4116 | −0.9745 | +0.5629 | [+0.3083, +0.8601] |
+> | **hartmann6** | 3.3224 | 2.6606 | 1.7466 | **+0.9140** | **[+0.6693, +1.1623]** |
+> | ackley | 0.0000 | −20.0746 | −20.3301 | +0.2556 | [−1.0059, +1.6794] |
+>
+> **The gate holds.** Hartmann6 moves +1.03 → **+0.914**, interval nowhere near zero. E1's PASS is not an artefact of the bias.
+>
+> **A's non-cancellation argument is confirmed, and now has a number.** Inflation on Hartmann6 was **+0.155 for BO against +0.035 for random** — differential **+0.120**, in exactly the direction A predicted, because BO concentrates and re-samples while random scatters. It is real and it is not self-cancelling. It is also only ~12% of the 1.03 gap, so the fix sharpens E1 rather than rescuing it.
+>
+> **Branin's impossible number resolves cleanly.** Rescored on truth it is **−0.4116**, correctly *below* the optimum instead of above it. That is the fix demonstrated, not merely argued.
+>
+> **Two consequences worth carrying forward.**
+>
+> 1. **Every absolute figure in `results/e1.log` is flattering**, not just Branin's. Hartmann6's BO result is really 2.66, not 2.87 — 80% of the way to the optimum rather than 86%. Anywhere those numbers are quoted needs the debiased ones.
+> 2. **On Ackley the bias is enormous — +4.15 (BO) and +4.47 (random)** — because its values sit near −20 and relative noise scales with magnitude. Best-observed is close to meaningless there, and the sign of the difference actually flips (−0.058 → +0.256) while staying null. This is a *second*, independent reason Ackley should not gate, on top of the one A declared in advance.
+>
+> **Caveat on these numbers.** This is an independent re-run, not a rescoring of A's stored traces, and the BO figures differ from `results/e1.log` by ~0.01 (Branin −0.3659 here vs −0.3747 there) from RNG ordering between the two scripts. It does not touch the conclusion, but it is not a byte-identical reproduction.
+>
+> ### ⚠️ Separately: spec §E1's fourth check is not implemented
+>
+> §E1 is not only the three textbook functions. It also requires: *"on a `β = 0` oracle instance, BO converges toward `sqrt(EC50·IC50)` per dimension."* `scripts/run_e1.py` runs Branin, Hartmann6 and Ackley only, so this one has never run.
+>
+> It matters more than the other three, because it is the only E1 check that exercises **our own landscape family** rather than borrowed benchmarks — the three standard functions would pass identically if the Hill oracle were broken.
+>
+> It is also cheap, and B has verified the construction: the shipped v8 ensemble is `peak_modulation`, so the equivalent of `β = 0` is `gamma = 0`, which makes the effective peak `x*_i · exp(0) = x*_i` in every coordinate. Confirmed on a real accepted instance — `f(x*) = 1.0` exactly, and `x*` equals `sqrt(ec50·ic50)` to machine precision, which is the spec's wording literally. **A's call whether to add it, since E1 is A's lane.**
 
 ---
 
@@ -231,8 +340,14 @@ Neither blocks building. Both block posting the preprint.
 
 ## Where B is up to
 
-**E4 is built, tested, and has produced results on real landscapes.** 310 tests. Reproduce with `python scripts/run_e4.py`.
+**E4 is built, tested, and has produced results on real landscapes** at both regimes. Reproduce with `python scripts/run_e4.py` and `python scripts/run_e4_robustness.py`.
 
-**Blocked on:** the Q14 n-decision and the Q12 regime decision — both must be settled *before* the next run, together, as one pre-registration bump.
+**Figures are built** — `boec.figures`, three PNGs under `results/figures/`. Spec Build Step 7 is done, superseding the note that previously stood here.
 
-**Not yet built:** figures (spec Build Step 7), and an untested `nonlinear_inequality_constraints` path that matters only for Phase 3.
+**Blocked on:** the version-2 pre-registration — Q12, Q14, Q15 and Q16 together, as one bump. Ordering and owners are in `docs/TASKS.md`; two of the four (T1, T2) are waiting specifically on B.
+
+**Latest from B:** Q17 sanity-checked — the E1 gate survives the regret-scoring fix (Hartmann6 +1.03 → +0.914 [+0.669, +1.162]), and A's non-cancellation argument is confirmed at a differential of +0.120. Details in Q17.
+
+**`runner.py` dispatch defect closed (T8).** `run_cell` sent *every* unrecognised method to the adaptive branch, so a `doe` cell — a method `GridCell` already documents as valid — ran a **Bayesian optimization campaign** and wrote a believable parquet under a `method-doe` filename. An E2 grid would have reported BO's numbers as the DoE baseline's. Now `doe` raises `NotImplementedError` pointing at `boec.doe.run_doe_arm`, unknown names raise `ValueError`, and six tests cover the dispatch. **The DoE arm still needs wiring in properly — that is A's, and it is T8's remaining half.**
+
+**Not yet built:** an untested `nonlinear_inequality_constraints` path that matters only for Phase 3.

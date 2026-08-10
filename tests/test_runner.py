@@ -11,6 +11,7 @@ import torch
 from boec.campaign import CampaignConfig
 from boec.optimizers import AcqConfig
 from boec.runner import (
+    STATIC_METHODS,
     GridCell,
     Runner,
     load_results,
@@ -247,3 +248,49 @@ def test_grid_results_are_distinguishable(tmp_path):
     list(r.run_grid(cells, lambda c: Formula(), lambda c: _bounds(), lambda c: _cfg(), verbose=False))
     combined = load_results(tmp_path)
     assert set(combined["method"]) == {"qlogei", "sobol"}
+
+
+# --------------------------------------------------------------------------
+# Method dispatch — an unrunnable arm must fail loudly, not become a BO campaign
+# --------------------------------------------------------------------------
+
+def test_the_doe_arm_refuses_to_run_instead_of_silently_running_bo(tmp_path):
+    """**The trap this dispatch exists to close.**
+
+    ``GridCell`` documents ``"doe"`` as a valid method and the DoE arm lives in
+    ``boec.doe``, not here. Before the explicit branch, a ``doe`` cell fell
+    through to the adaptive path, ran a **Bayesian optimization campaign**, and
+    wrote a believable parquet under a ``method-doe`` filename — an E2 grid
+    would have reported BO's numbers as the DoE baseline's.
+    """
+    r = Runner(tmp_path)
+    with pytest.raises(NotImplementedError, match="not wired into the Runner"):
+        r.run_cell(_cell(method="doe"), Formula(), _bounds(), _cfg())
+    assert not list(tmp_path.glob("*.parquet")), "a refused cell must leave no result"
+
+
+def test_an_unknown_method_raises_rather_than_defaulting_to_bo(tmp_path):
+    """A typo in one arm of a grid must not be reported as that arm's result."""
+    r = Runner(tmp_path)
+    with pytest.raises(ValueError, match="unknown method"):
+        r.run_cell(_cell(method="qlogie"), Formula(), _bounds(), _cfg())   # transposed
+    assert not list(tmp_path.glob("*.parquet"))
+
+
+@pytest.mark.parametrize("method", ["qlogei", "qlognei"])
+def test_both_pre_registered_acquisitions_still_dispatch(tmp_path, method):
+    """Q5 registered qLogEI primary and qLogNEI secondary. Both must run."""
+    r = Runner(tmp_path)
+    frame = r.run_cell(_cell(method=method), Formula(), _bounds(),
+                       CampaignConfig(d=D, budget=2 * D + 2 + 3, q=3,
+                                      acq=AcqConfig(kind=method, num_restarts=2,
+                                                    raw_samples=32, mc_samples=16),
+                                      n_holdout=8))
+    assert frame is not None and len(frame) == 2 * D + 2 + 3
+
+
+@pytest.mark.parametrize("method", list(STATIC_METHODS))
+def test_every_static_method_still_dispatches(tmp_path, method):
+    r = Runner(tmp_path)
+    frame = r.run_cell(_cell(method=method), Formula(), _bounds(), _cfg())
+    assert frame is not None and set(frame["method"]) == {method}
