@@ -4,6 +4,103 @@
 
 ---
 
+## 🔴 Q26 [A] · PRE-REGISTRATION · **Does the opening batch SIZE explain the d=6 blindness? Written and committed BEFORE the first run.**
+
+**E2 IS UNCHANGED AND STAYS UNCHANGED.** The pre-registered primary keeps
+`n_init = 2d+2 = 14` at d=6 whatever this returns. This is a mechanism diagnostic that
+explains the primary; it does not revise it, and no number in `e2.yaml`, `results/e2.log`
+or `results/e2-grid.json` moves. If this test says the seed rule is too small, that is a
+finding ABOUT the standard rule, not a licence to re-run E2 under a better one.
+
+Check this entry's commit timestamp against `results/confound-ninit.json`.
+
+### What Q25 left entangled
+
+Three things move together between d=6 and d=8, and Q25 could not separate them:
+
+| | d=6 | d=8 |
+|---|---|---|
+| opening design size (`2d+2`) | 14 | 18 |
+| dimension | 6 | 8 |
+| influence of **each** inert factor (`0.10 / n_inert`) | **0.050** | **0.025** |
+
+This isolates **one**: run d=6 with an 18-point opening. Everything else identical — same
+ensemble, same instances, same seeds, same kernel, same acquisition, same budget of 48.
+
+**The manipulation is exactly nested and this was verified before registering.**
+`initial_design` returns a Sobol design, and `sobol_design(bounds, 18, seed)[:14]` is
+bit-identical to `initial_design(bounds, seed)` (max abs difference 0.0). So the treatment
+is literally "the same fourteen points, plus four more". Nothing else can differ.
+
+### Primary endpoint
+
+**ARD separation (inert ÷ active fitted lengthscale) on the OPENING DESIGN, against a
+paired permuted-outcome null.** Not regret. The mechanism claim is about what the surrogate
+knows at the moment adaptive search begins, so that is where it is tested.
+
+Pre-specified comparisons, both reported:
+1. d=6 @ n=18 versus its own permutation null (Wilcoxon, one-sided, clustered on instance);
+2. d=6 @ n=18 versus d=6 @ n=14, **paired on the same instances and seeds** — available
+   because the designs are nested, and a stronger test than either against the null alone.
+
+### Decision rule — fixed now
+
+| outcome at d=6, n=18 | conclusion |
+|---|---|
+| p < 0.01 and separation ≳ 1.15 (d=8's value) | **opening size explains the opening-stage blindness**; dimension per se is not the driver |
+| p > 0.05 and separation ≈ 1.0 | **opening size does not explain it**; dimension or per-factor inertness does, and this design cannot separate those two |
+| 0.01 < p < 0.05 | **ambiguous, reported as ambiguous.** No seeds are added to push it across. |
+
+### MY PREDICTION, RECORDED BEFORE RUNNING
+
+**σ_rel = 0.25 (the E2 primary cell): it will NOT discriminate. p > 0.05.**
+**σ_rel = 0.10: it WILL discriminate. p < 0.01.**
+
+Reasoning, so a wrong prediction is diagnosable rather than just wrong. At 25% relative
+noise the binding constraint is signal-to-noise, not sample count: noise holds the *final*
+46-point separation down to 1.40 at d=6, so four extra points at the opening cannot
+plausibly buy what forty-two more could not. At 10% noise the final separation reaches 3.41,
+which shows the information is extractable from this ensemble once enough of it accumulates,
+and the opening value of 1.028 already sits nominally above the null — so the 29% increase
+in data has somewhere to go.
+
+If instead σ=0.25 discriminates, my model of the mechanism is wrong in an informative way:
+it would mean the opening-stage failure is a small-sample problem that noise does not
+govern, and the two regularities Q25 identified (opening tracks dimension, final tracks
+noise) would need re-describing as one.
+
+### What this CANNOT settle — to be restated in any write-up
+
+**Per-factor inertness is untouched.** Each inert factor carries 0.050 of the weight at d=6
+and 0.025 at d=8, so every individual nuisance factor at d=8 is half as influential and
+correspondingly easier to identify as inert. Matching `n_init` does not change that;
+separating it needs a different `active_share` per dimension, hence a new ensemble and fresh
+cached optima. Out of scope.
+
+**So neither outcome is "we isolated the mechanism". One confound of three.**
+
+### Secondary, clearly marked as such
+
+- Simple regret at budget 48, d=6, both noise levels, versus the pre-registered `n_init=14`
+  result and versus the DoE arm. **Not a corrected E2 result and will not be presented as
+  one.**
+- **The budget trade-off.** At `n_init=18` there are 30 adaptive evaluations instead of 34.
+  If separation improves and regret does not, the seed round bought knowledge and spent the
+  budget that would have used it — which is the more interesting outcome, not a null.
+- Final-stage ARD separation, to confirm the noise-governed pattern still holds.
+
+### Guards, run BEFORE this entry was committed
+
+- **Null is centred.** Permuted-outcome ratio at d=6: **1.042 at n=14, 0.937 at n=18**,
+  both ~1.0 as the symmetry argument requires (the prior is identical on every dimension).
+- **The endpoint can return either answer.** Nothing about 18 points at d=6 forces
+  discrimination or forces its absence: the same statistic on the same ensemble reads 1.000
+  at n=14 and 1.403 at n=46, so both branches are reachable at an intermediate n.
+- **Fidelity.** The n=14 baseline arm regenerates and is checked against stored E2 rows.
+- **One variable.** Verified nested designs, above.
+
+---
+
 ## 🟢 Q25 [A, B should second-read] · **The prior is not why BO lost at d=6 — and the nuisance-dimension story is right for a reason nobody had stated. Also: A registered an endpoint that could not fail, for the second time.**
 
 **Nothing in E2 changes. No number, no arm, no config.** Reproduce with
