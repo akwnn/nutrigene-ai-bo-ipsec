@@ -341,3 +341,64 @@ def test_metric_identity_is_carried_and_saved():
 def test_bounds_dimension_mismatch_rejected():
     with pytest.raises(ValueError, match="factors"):
         Campaign(FormulaEvaluator(), _bounds(4), _cfg(d=3))
+
+
+# ---------------------------------------------------------------------------
+# Opening-design size override (A, for the Q26 confound test)
+#
+# Q25 found that at d=6 the surrogate is statistically indistinguishable from a
+# fit to permuted outcomes at the moment adaptive search begins, while at d=8 it
+# is not. Three things differ between those cells and one of them is the opening
+# design size, 14 against 18, because `n_init = 2d+2`. Isolating it needs d=6 run
+# with an 18-point opening and NOTHING else changed.
+#
+# The override is defaulted, so every existing caller — and E2's pre-registered
+# configuration — is untouched.
+# ---------------------------------------------------------------------------
+
+def test_batch_plan_default_is_the_pre_registered_2d_plus_2():
+    assert batch_plan(6, 48, 4) == (14, [4] * 8 + [2])
+    assert batch_plan(8, 48, 4) == (18, [4] * 7 + [2])
+
+
+def test_batch_plan_override_changes_the_opening_and_rebalances_the_rest():
+    n_init, batches = batch_plan(6, 48, 4, n_init=18)
+    assert n_init == 18
+    assert n_init + sum(batches) == 48          # budget is still exactly spent
+    assert batches == [4] * 7 + [2]             # and matches d=8's schedule
+    # the point of the test: FEWER adaptive evaluations, which is the trade-off
+    assert sum(batches) == 30 < sum(batch_plan(6, 48, 4)[1])
+
+
+def test_batch_plan_override_still_refuses_an_impossible_budget():
+    with pytest.raises(ValueError, match="cannot cover an opening design"):
+        batch_plan(6, 12, 4, n_init=18)
+
+
+def test_overridden_opening_is_the_default_opening_plus_extra_points():
+    """The treatment must be nested, or it is not one variable.
+
+    `initial_design` is a Sobol design, so an 18-point draw shares its first 14
+    rows with a 14-point draw at the same seed. If that ever stopped holding, the
+    confound test would be comparing two different designs rather than the same
+    design with four points added, and the manipulation would be confounded with
+    the design itself.
+    """
+    d = 6
+    bounds = torch.stack([torch.zeros(d, dtype=torch.double),
+                          torch.ones(d, dtype=torch.double)])
+
+    class _Flat:
+        def evaluate(self, X):
+            return (torch.zeros(X.shape[0], 1, dtype=torch.double),
+                    torch.full((X.shape[0], 1), 1e-4, dtype=torch.double))
+
+    a = Campaign(_Flat(), bounds, CampaignConfig(d=d, budget=48, q=4, seed=3))
+    b = Campaign(_Flat(), bounds,
+                 CampaignConfig(d=d, budget=48, q=4, seed=3, n_init=18))
+    a.initialize()
+    b.initialize()
+
+    assert a.train_X.shape[0] == 14
+    assert b.train_X.shape[0] == 18
+    assert torch.equal(b.train_X[:14], a.train_X)

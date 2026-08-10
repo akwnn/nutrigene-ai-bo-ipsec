@@ -4,6 +4,117 @@
 
 ---
 
+## 🟢 Q26 RESULT [A] · **Opening size explains the blindness at LOW noise and is RULED OUT at the E2 primary cell. Both registered predictions were correct.**
+
+`scripts/confound_ninit.py` · `results/confound-ninit.log` · rows in
+`results/confound-ninit.json`. Registration is the entry immediately below; check its
+commit timestamp. **FIDELITY: 100/100 `n_init=14` campaigns reproduce their stored E2
+`best` to 1e-9. E2 is unchanged and stays at `n_init = 2d+2`.**
+
+### THREE CORRECTIONS APPLIED BEFORE READING THE RESULT
+
+Found by a three-lens audit run while the numbers computed, and verified independently
+before acting on any of them. **None changes a verdict; all change numbers.**
+
+1. **The inference was pseudo-replicated, in Q25 and nowhere else.** Q25's ARD Wilcoxon ran
+   over all **50 runs**. `e2.yaml` registers `cluster: instance`, and 25 landscapes × 2
+   seeds has effective n = **25**. This is the exact error this project criticises the
+   source paper for, and it is defect **#9**. Both scripts now cluster.
+2. **A signed-rank test on a difference of RATIOS is anti-conservative.** The null
+   differences are right-skewed, so the symmetry assumption fails: measured type-I error
+   **8.9% at a nominal 5%, 2.0% at a nominal 1%**. On the log scale it is 4.9% and 0.9% —
+   nominal. All ratio comparisons are now made in log space.
+3. **Q26 registered `1.150 / 1.718` as d=8's reference. Those are on the wrong scale** —
+   they are Q25's run-level figures. Under the corrected estimator d=8's opening reads
+   **1.295 (σ=0.25)** and **1.768 (σ=0.10)**. The report now computes this live from the
+   committed Q25 rows rather than quoting a remembered number.
+
+### PRIMARY
+
+| σ | n_init | fit | null | p | verdict |
+|---|---|---|---|---|---|
+| 0.25 | 14 | 0.992 | 0.984 | 0.427 | no |
+| **0.25** | **18** | **1.023** | 0.986 | **0.221** | **no** |
+| 0.10 | 14 | 1.036 | 1.001 | 0.317 | no |
+| **0.10** | **18** | **1.332** | 1.007 | **0.00336** | **DISCRIMINATES** |
+
+Difference-in-differences, each arm against its **own** null (the null moves with n, so the
+anchor must too): σ=0.25 **1.013×, p=0.336**; σ=0.10 **1.191×, p=0.0062**.
+
+**Both registered predictions were correct.** σ=0.25 does not discriminate; σ=0.10 does.
+
+### The σ=0.25 negative is stronger than the rule required, and it cuts against me
+
+Matching `n_init` does **not** match points per dimension — it *overshoots* in d=6's favour:
+
+| | absolute n | per dimension | per active dim | per inert dim |
+|---|---|---|---|---|
+| d=6, n=14 | 14 | 2.33 | 3.5 | 7.0 |
+| **d=6, n=18** | **18** | **3.00** | **4.5** | **9.0** |
+| d=8, n=18 | 18 | 2.25 | 4.5 | 4.5 |
+
+At n=18, d=6 **weakly dominates d=8 on every normalisation** — equal on absolute n and per
+active dimension, strictly ahead on per total and per inert dimension. It still fails to
+discriminate at σ=0.25 (1.023, p=0.221) where d=8 succeeds on less (1.295, p=0.001). So at
+the E2 primary cell opening size is not merely unsupported as the explanation — it is
+**ruled out**, and the remaining two candidates (dimension, per-factor inertness) stay fused
+to each other.
+
+### SECONDARY — regret, and the two effects are ANTI-CORRELATED
+
+| σ | arm | adaptive evals | median regret | vs n_init=14 | p |
+|---|---|---|---|---|---|
+| 0.25 | qlogei n_init=14 | 34 | 0.1569 | — | — |
+| **0.25** | **qlogei n_init=18** | **30** | **0.1208** | **−0.0300 better** | **0.0173** |
+| 0.25 | doe (E2) | — | 0.0934 | +0.0295 *(n=18 still worse)* | **0.0046** |
+| 0.10 | qlogei n_init=14 | 34 | 0.0842 | — | — |
+| 0.10 | qlogei n_init=18 | 30 | 0.0868 | +0.0012 | 0.692 |
+| 0.10 | doe (E2) | — | 0.0908 | −0.0007 | 0.812 |
+
+**Where discrimination did not improve, regret did; where discrimination improved sharply,
+regret did not move.** At σ=0.25 the surrogate learned nothing extra yet regret improved
+significantly on **four fewer** adaptive evaluations — so that gain is not the ARD
+mechanism. The likeliest reading is the one Q24 already points at: at high noise, structured
+coverage beats adaptive proposals from a model that cannot tell the factors apart, which is
+also why LHS and DoE win in that cell. At σ=0.10 the seed round bought knowledge and spent
+the budget that would have used it.
+
+**It does not rescue BO. qLogEI at n_init=18 still loses to DoE at the primary cell**
+(+0.0295, p=0.0046).
+
+Final-stage separation at n=46 is unchanged by the manipulation (σ=0.25: 1.582 → 1.648;
+σ=0.10: 4.102 → 3.790), confirming the noise-governed pattern.
+
+### Limits, stated
+
+- **One confound of three, and the residual two remain fused to each other.** Dimension and
+  per-factor inertness need a new ensemble with a per-dimension `active_share` to separate.
+- **At fixed budget, opening size and adaptive count are the same variable with opposite
+  sign.** There is no `n_init=18, budget=52` arm, so the secondary regret delta is a single
+  composite treatment and is unattributable in principle within this design.
+- **The null branch is an underpowered accept-the-null.** Bootstrapped minimum detectable
+  effect at 80% power and α=0.01 is a separation of about **1.14**, so effects smaller than
+  roughly the d=8 effect itself are not ruled out at σ=0.25.
+- **The registered decision table does not partition the outcome space** (it keys on a
+  conjunction of p and magnitude but assigns only the corners), and the script's verdict
+  uses p alone. Both observed results fall in assigned regions, so nothing here turned on
+  it, but the rule was under-specified.
+- **"The same fourteen points plus four more — nothing else can differ" was false for the
+  OUTCOMES.** The design is bit-identically nested; the data is not. `observe` draws the
+  multiplicative noise vector then the additive one from one stateful generator, so an
+  18-row call shifts the additive block by four positions and the shared 14 rows get
+  different y (max |Δ| 0.0177, 7.4% of sd(Y)). A re-draw from the same distribution, not a
+  bias — but the arms are not paired at the observation level. Now pinned by a test; the
+  original guard used a zero-noise evaluator and could not have caught it.
+- **The headline "the 2d+2 rule is insufficient at low dimension" is NOT supported.** One
+  dimension and two values of n_init cannot locate a threshold, cannot show the rule fails
+  at another d, and cannot separate "the d-scaling is wrong" from "absolute n below ~18 is
+  small here". The defensible claim is narrower: *at d=6 on this benchmark, a 14-point
+  opening leaves the surrogate indistinguishable from noise at both noise levels, and 18
+  points fixes that at σ=0.10 but not at σ=0.25.*
+
+---
+
 ## 🔴 Q26 [A] · PRE-REGISTRATION · **Does the opening batch SIZE explain the d=6 blindness? Written and committed BEFORE the first run.**
 
 **E2 IS UNCHANGED AND STAYS UNCHANGED.** The pre-registered primary keeps
@@ -143,6 +254,14 @@ separation ratio**, inert ÷ active lengthscale — immune to this whole class o
 because the prior is identical on every dimension, so *any* uninformed fit gives 1.00 by
 symmetry. Measured null, pooled over 200 runs: **1.006** [0.718, 1.498]. The symmetry
 argument holds.
+
+**CORRECTION (from Q26's audit): Q25's p-values below were pseudo-replicated.** They ran
+over 50 runs where `e2.yaml` registers `cluster: instance` (n=25), and on the ratio rather
+than log scale. Recomputed correctly, every conclusion stands and every number moves:
+opening d=6 **0.992 (p=0.674)** and **1.036 (p=0.190)**; opening d=8 **1.295 (p=1.0e-03)**
+and **1.768 (p=3.2e-05)**; final d=6 **1.370** / **3.886**, d=8 **1.364** / **3.392**. The
+headline contrast survives — opening d=6 vs d=8 **p=8.9e-04** (σ=0.25) and **p=2.7e-05**
+(σ=0.10); final **p=0.669** and **p=0.712**. Defect #9.
 
 Checkpoints are now only models the campaign actually built — the opening design, n=30 and
 n=46, all real round boundaries at both dimensions. (`Campaign.run` fits before each `ask`

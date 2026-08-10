@@ -1,0 +1,51 @@
+FIDELITY: 100/100 n_init=14 campaigns reproduce their stored E2 `best` to 1e-9.
+
+============================================================================================
+PRIMARY — ARD separation on the OPENING DESIGN, d=6, vs a permuted-outcome null
+============================================================================================
+Pre-registered prediction: sigma=0.25 will NOT discriminate (p>0.05);
+                           sigma=0.10 WILL (p<0.01).
+Reference, d=8 at the SAME opening size of 18, recomputed under THIS script's estimator
+(instance-clustered, log scale): sigma=0.25 1.295, sigma=0.10 1.768.
+Q26 registered 1.150 / 1.718 for these. Those were Q25's run-level figures and are
+NOT on this table's scale -- see the correction note in Q26.
+
+ sigma  n_init                    fit                   null  p(fit>null)        verdict
+  0.25      14    0.992 [0.865, 1.112]    0.984 [0.879, 1.070]     4.27e-01             no
+  0.25      18    1.023 [0.921, 1.127]    0.986 [0.884, 1.033]     2.21e-01             no
+   0.1      14    1.036 [0.839, 1.340]    1.001 [0.842, 1.266]     3.17e-01             no
+   0.1      18    1.332 [1.112, 1.495]    1.007 [0.804, 1.304]     3.36e-03  DISCRIMINATES
+
+  PAIRED, same instances and seeds — 18 points against the same 14 plus four.
+  Reported as a DIFFERENCE IN DIFFERENCES: each arm against its OWN null, then
+  differenced. A plain 14->18 comparison is anchored at zero, but the null
+  itself moves with n, so the anchor has to move with it.
+    sigma=0.25: excess over null 1.023x -> 1.036x   DiD 1.013x   wilcoxon p=0.3360
+    sigma=0.1: excess over null 1.043x -> 1.241x   DiD 1.191x   wilcoxon p=0.0062
+
+============================================================================================
+SECONDARY — regret at budget 48. NOT A CORRECTED E2 RESULT.
+============================================================================================
+ sigma                        arm  n_adaptive  median regret               vs n_init=14         p
+  0.25      qlogei n_init=14 (E2)          34         0.1569                          —         —
+  0.25           qlogei n_init=18          30         0.1208    -0.0300 (>0 = worse)    0.0173
+  0.25                   doe (E2)           —         0.0934    +0.0295 (n=18 vs doe)    0.0046
+   0.1      qlogei n_init=14 (E2)          34         0.0842                          —         —
+   0.1           qlogei n_init=18          30         0.0868    +0.0012 (>0 = worse)    0.6915
+   0.1                   doe (E2)           —         0.0908    -0.0007 (n=18 vs doe)    0.8119
+
+============================================================================================
+SECONDARY — final-stage ARD separation at n=46, to confirm the noise pattern
+============================================================================================
+  sigma=0.25 n_init=14: fit 1.582  null 1.232
+  sigma=0.25 n_init=18: fit 1.648  null 1.027
+  sigma=0.1 n_init=14: fit 4.102  null 1.239
+  sigma=0.1 n_init=18: fit 3.790  null 1.546
+
+============================================================================================
+WHAT THIS CANNOT SETTLE
+============================================================================================
+  Per-factor inertness is untouched: each inert factor carries 0.050 of the
+  weight at d=6 and 0.025 at d=8, so every individual nuisance factor at d=8
+  is half as influential and correspondingly easier to identify as inert.
+  ONE CONFOUND OF THREE. This is not 'we isolated the mechanism'.

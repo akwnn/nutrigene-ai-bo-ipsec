@@ -288,6 +288,26 @@ def report(rows: list[dict]) -> None:
         """One number per run: the run's median over that coordinate group."""
         return np.array([np.median(r["checkpoints"][tag][key]) for r in sub])
 
+    def log_ratio_by_instance(sub, tag, src):
+        """Clustered on instance, in log space. Both corrections, one place.
+
+        Version 2 of this report ran its Wilcoxon over all 50 RUNS. `e2.yaml`
+        registers `cluster: instance` and 25 landscapes x 2 seeds has effective
+        n = 25 -- so that was pseudo-replication, the very error this project
+        criticises the source paper for. And a signed-RANK test on a difference
+        of RATIOS is anti-conservative, because the null differences are
+        right-skewed: measured 8.9% at a nominal 5%. Log space fixes the second,
+        averaging seeds within a landscape fixes the first.
+        """
+        insts = sorted({r["instance"] for r in sub})
+        out = []
+        for i in insts:
+            rs = [r for r in sub if r["instance"] == i]
+            out.append(np.mean([
+                np.log(np.median(r["checkpoints"][tag][f"{src}_inert"]) /
+                       np.median(r["checkpoints"][tag][f"{src}_active"])) for r in rs]))
+        return np.array(out)
+
     def med_iqr(v):
         v = np.asarray(v, float)
         return f"{np.median(v):.3f} [{np.percentile(v, 25):.3f},{np.percentile(v, 75):.3f}]"
@@ -328,9 +348,11 @@ def report(rows: list[dict]) -> None:
             continue
         star = "  <-- primary" if (dim, sigma) == (6, 0.25) else ""
         for tag in ("init", "mid", "final"):
-            fr = per_run(sub, tag, "ls_inert") / per_run(sub, tag, "ls_active")
-            nr = per_run(sub, tag, "null_inert") / per_run(sub, tag, "null_active")
-            p = wilcoxon(fr - nr, alternative="greater").pvalue
+            fr = np.exp(log_ratio_by_instance(sub, tag, "ls"))
+            nr = np.exp(log_ratio_by_instance(sub, tag, "null"))
+            p = wilcoxon(log_ratio_by_instance(sub, tag, "ls")
+                         - log_ratio_by_instance(sub, tag, "null"),
+                         alternative="greater").pvalue
             print(f"{f'd={dim} s={sigma}':>13} {tag:>6} "
                   f"{sub[0]['checkpoints'][tag]['n']:>3} "
                   f"{med_iqr(fr):>24} {med_iqr(nr):>24} {p:>12.2e}"

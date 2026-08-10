@@ -74,7 +74,7 @@ import numpy as np
 import torch
 from torch import Tensor
 
-from boec.optimizers import AcqConfig, initial_design, propose, sobol_design
+from boec.optimizers import AcqConfig, propose, sobol_design
 from boec.surrogate import build_gp, predictive
 
 __all__ = [
@@ -108,7 +108,8 @@ class Evaluator(Protocol):
     def evaluate(self, X: Tensor) -> tuple[Tensor, Tensor | None]: ...
 
 
-def batch_plan(d: int, budget: int = 48, q: int = 4) -> tuple[int, list[int]]:
+def batch_plan(d: int, budget: int = 48, q: int = 4,
+               n_init: int | None = None) -> tuple[int, list[int]]:
     """How the budget is split, enforced identically across every method.
 
     The spec fixes this: at 6 ingredients, 14 to start plus eight batches of
@@ -122,11 +123,18 @@ def batch_plan(d: int, budget: int = 48, q: int = 4) -> tuple[int, list[int]]:
         d: number of ingredients.
         budget: total measurements.
         q: batch size after the opening.
+        n_init: override the opening size. ``None`` keeps the ``2d + 2`` rule,
+            which is what every experiment uses and what E2 is pre-registered
+            on. The override exists for one purpose: Q26 needs d=6 run with
+            d=8's 18-point opening to separate opening SIZE from dimension.
+            Overriding does not buy evaluations — the budget is fixed, so a
+            larger opening means correspondingly fewer adaptive rounds, and
+            that trade-off is the point of the test rather than a side effect.
 
     Returns:
         ``(n_initial, [batch sizes])``.
     """
-    n_init = 2 * d + 2
+    n_init = 2 * d + 2 if n_init is None else int(n_init)
     remaining = budget - n_init
     if remaining < 0:
         raise ValueError(
@@ -163,6 +171,7 @@ class CampaignConfig:
     d: int
     budget: int = 48
     q: int = 4
+    n_init: int | None = None
     seed: int = 0
     acq: AcqConfig = field(default_factory=AcqConfig)
     n_holdout: int = 64
@@ -276,8 +285,12 @@ class Campaign:
         """Run the opening design. No model involved — nothing is known yet."""
         if self.n_observed:
             raise RuntimeError("already initialized")
-        n_init, _ = batch_plan(self.config.d, self.config.budget, self.config.q)
-        X = initial_design(self.bounds, seed=self.config.seed)[:n_init]
+        n_init, _ = batch_plan(self.config.d, self.config.budget, self.config.q,
+                               self.config.n_init)
+        # Sobol is a sequence, so a larger draw shares its prefix with a smaller
+        # one at the same seed: an overridden opening is the default opening
+        # plus extra points, never a different design. Asserted in the suite.
+        X = sobol_design(self.bounds, n_init, seed=self.config.seed)
         self.logs.append(
             RoundLog(
                 round_index=0, X_proposed=X.clone(),
@@ -334,7 +347,8 @@ class Campaign:
         """Run the whole thing to budget."""
         if self.n_observed == 0:
             self.initialize()
-        _, batches = batch_plan(self.config.d, self.config.budget, self.config.q)
+        _, batches = batch_plan(self.config.d, self.config.budget, self.config.q,
+                                self.config.n_init)
         for q in batches:
             X = self.ask(q)
             Y, Yvar = self._measure(X)

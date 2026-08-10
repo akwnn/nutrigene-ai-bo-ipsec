@@ -284,8 +284,8 @@ operative null for a bounded acquisition maximiser.)
 
 ## 7. Defects found — the recurring pattern, which is the most useful output
 
-**Eight constructs that could not fail, or were unfair, caught before they reached a
-paper.** Five were A's own. The consistency is the point: this is the default failure mode
+**Nine constructs that could not fail, were unfair, or were inferred wrongly, caught
+before they reached a paper.** Six were A's own. The consistency is the point: this is the default failure mode
 of measurement code, not bad luck.
 
 | # | defect | consequence had it shipped |
@@ -298,6 +298,8 @@ of measurement code, not bad luck.
 | 6 | **B's T9:** the paired opening batch never existed, and the test that promised it asserted determinism instead | E2's fairness rule was false; the primary comparison was unpaired |
 | 7 | **B's Q23:** `coord` was a **second** unpaired arm and undeclared — A's `coordinate_descent` starts from a random interior point and never calls `initial_design` | `identical_initial_design_per_seed: true` was false for **two** arms, one declared and one silent — the same defect as #6, one arm over |
 | 8 | **A's lengthscale diagnostic anchored its decision rule on the prior MEDIAN (10.08) when the fit is MAP and its no-data attractor is the prior MODE (0.5016)** | The "prior is dominating" branch was unreachable and the "data is winning" branch was where an untrained model sits. Measured opening-design median: **0.502**. A conclusion was written, and committed, from a rule that could return only one answer |
+
+| 9 | **A's ARD inference was pseudo-replicated** — Wilcoxon over 50 runs where `e2.yaml` registers `cluster: instance` (n=25) — and run on a difference of ratios, whose skew makes a signed-rank test anti-conservative (measured 8.9% at a nominal 5%) | Every Q25 p-value was overstated. Conclusions survive recomputation; the numbers did not. **This is the error the project criticises the source paper for, committed in the project's own diagnostic** |
 
 Guards now in the suite for every one. Defect 3 is the worst of them — a pre-registration
 is the one document a reader trusts not to contain a test that cannot fail.

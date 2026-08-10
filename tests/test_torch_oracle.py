@@ -257,3 +257,41 @@ def test_a_sidecar_round_trips_through_the_loader(tmp_path):
     np.testing.assert_allclose(back.gamma, inst.gamma)
     X = torch.rand(16, 6, dtype=torch.double)
     torch.testing.assert_close(BiphasicOracle(back).truth(X), BiphasicOracle(inst).truth(X))
+
+
+def test_a_longer_evaluate_call_does_not_reproduce_the_shorter_one_s_outcomes():
+    """Q26's manipulation is nested in X and NOT in Y. Pinned so nobody re-claims it.
+
+    `BiphasicOracle.observe` draws the whole multiplicative noise vector and then
+    the whole additive one from a single stateful generator, so an 18-row call
+    shifts the additive block by four positions relative to a 14-row call. The
+    designs are bit-identical on their shared prefix; the OUTCOMES are not.
+
+    Q26's pre-registration claimed "the same fourteen points, plus four more --
+    nothing else can differ". That is true of the design and false of the data,
+    and the test that was supposed to guard it used a constant zero-noise
+    evaluator, so it could not have caught this. The difference is a re-draw of
+    noise from the same distribution rather than a bias, but it means the two
+    arms are not paired at the observation level and the write-up must say so.
+    """
+    import numpy as np
+    import torch
+
+    from boec.optimizers import sobol_design
+    from boec.oracles import load_ensemble
+    from boec.torch_oracle import BiphasicOracle
+
+    inst = load_ensemble(dim=6)[0]
+    bounds = torch.stack([torch.zeros(6, dtype=torch.double),
+                          torch.ones(6, dtype=torch.double)])
+    X14 = sobol_design(bounds, 14, seed=0)
+    X18 = sobol_design(bounds, 18, seed=0)
+
+    assert torch.equal(X18[:14], X14)          # the design IS nested
+
+    Y14, V14 = BiphasicOracle(inst, sigma_rel=0.25, seed=0).evaluate(X14)
+    Y18, V18 = BiphasicOracle(inst, sigma_rel=0.25, seed=0).evaluate(X18)
+
+    assert not torch.equal(Y18[:14], Y14)      # the OUTCOMES are not
+    # same distribution, not a bias: the discrepancy is small next to the spread
+    assert float((Y18[:14] - Y14).abs().max()) < 0.5 * float(Y14.std())
