@@ -4,7 +4,17 @@
 # Every value below was fixed without any E2 number in hand. If any of them must
 # change afterwards, bump `preregistration_version` and say why in the paper.
 
-preregistration_version: 1
+# BUMPED 1 -> 2 (Q20). Not a change of intent — the file's own header says "If any
+# of them must change afterwards, bump preregistration_version and say why", and
+# `identical_initial_design_per_seed` was corrected IN PLACE after B's T9/Q18 while
+# the version still read 1. A post-hoc edit to a pre-registration under the version
+# that predates it is exactly what the rule exists to prevent, so the rule is applied
+# to the file itself. Version 2 carries: that correction, the two named estimands
+# below, the Wilcoxon-vs-bootstrap precedence, and the DoE arm's selected point.
+#
+# ALL OF IT WAS WRITTEN WHILE THE GRID WAS STILL RUNNING AND BEFORE ANY E2 NUMBER
+# EXISTED. Check this commit's timestamp against results/e2-grid.json.
+preregistration_version: 2
 
 # --- the grid ---------------------------------------------------------------
 dim: [6, 8]
@@ -63,6 +73,24 @@ fairness:
 # by arm by design.
 scoring:
   regret_on: noiseless_value_at_selected_point
+
+  # Q20: "the selected point" was undefined for the DoE arm, and it is the one arm
+  # where the method's OUTPUT and its best observation differ. Its output is the
+  # stage-4 confirmation recipe; results/doe-arm.log records that the confirmation
+  # under-delivers against the arm's own best design point in 100% of runs at both
+  # noise levels, so under reported-best the confirmation is essentially never the
+  # scored point. Both readings are defensible and REPORTED-BEST IS THE MORE
+  # GENEROUS ONE, so it is named rather than inherited.
+  selected_point:
+    default: observed_argmax          # every arm: the recipe the method would hand you
+    doe: observed_argmax              # NOT the confirmation. A practitioner does walk
+                                      # away with the best recipe they saw, and stage 4
+                                      # is a candidate for it like any other point.
+    doe_secondary: confirmation_point # reported alongside, because it is what the
+                                      # PIPELINE produced, and the gap between the two
+                                      # IS the published failure mode (spec E2's reason
+                                      # for spending the 48th evaluation at all).
+
   primary_endpoint: simple_regret_at_budget
   secondary_endpoint: auc_post_initialisation   # AUC from evaluation 1 would include
                                                 # the shared opening design and dilute
@@ -74,12 +102,62 @@ inference:
   cluster: instance          # 25 instances x 2 seeds has effective n = 25, NOT 50.
                              # This project criticises the source paper for exactly
                              # this error; committing it here would be indefensible.
+                             # VERIFIED IMPLEMENTED: run_e2.py:168 averages seeds
+                             # within an instance before testing, so both the test and
+                             # the bootstrap see n=25. Recorded as checked so it is not
+                             # re-audited.
   test: wilcoxon_signed_rank
   bootstrap: instance_level
   n_bootstrap: 2000
 
+  # Q20: the file registered a test AND a bootstrap and never said which decides.
+  governs_significance: wilcoxon_signed_rank   # the yes/no
+  governs_magnitude: instance_level_bootstrap  # the effect size and its interval
+  # They answer different questions and neither is a check on the other. A signed-rank
+  # test disagreeing with a bootstrap of the mean is a fact about skew or an outlying
+  # landscape, so it is REPORTED rather than resolved by taking whichever agrees.
+  on_disagreement: report_both_and_say_so
+
 # --- declared multiplicity --------------------------------------------------
-# 7 arms x 2 dims x 2 noise levels. The PRIMARY comparison is qlogei vs the best
-# non-BO arm, at d=6, sigma_rel=0.25, on simple regret at budget. Everything else is
-# secondary and reported as such.
-primary_cell: {arm: qlogei, comparator: best_non_bo, dim: 6, sigma_rel: 0.25}
+# 7 arms x 2 dims x 2 noise levels. Everything not named below is secondary and
+# reported as such.
+#
+# Q20 — SUPERSEDES the single `comparator: best_non_bo` line this file used to carry.
+# That line had three defects. It was UNDER-SPECIFIED: it never said best by which
+# endpoint, selected per-instance or pooled, or whether qLogNEI counts as non-BO.
+# run_e2.py:178 answers all three (pooled mean regret, qlognei excluded) — but an
+# implementation choice sitting outside the pre-registration is precisely how Q16's
+# unnamed point set and Q19's unreported primary cell happened. Third occurrence.
+# It was a MAX-STATISTIC, chosen after the results as the strongest of ~5 arms. And
+# it ANSWERED THE WRONG QUESTION: this project's thesis is a domain claim about the
+# procedure the published study actually ran, which is the DoE arm specifically and
+# not whichever arm happens to score best.
+#
+# So two estimands are named, neither selected afterwards, and both reported whatever
+# they show.
+estimands:
+  primary_domain:                       # "BO beats current practice." The thesis.
+    arm: qlogei
+    comparator: doe                     # FIXED IN ADVANCE, not selected
+    dim: 6
+    sigma_rel: 0.25
+    endpoint: simple_regret_at_budget
+  coprimary_methods:                    # "BO beats the strongest alternative we ran."
+    arm: qlogei
+    comparator: best_non_bo             # SELECTED — must be labelled as such wherever
+                                        # it is reported, because the interval and the
+                                        # p-value attached to a chosen comparator are
+                                        # not those of a fixed comparison. The
+                                        # direction is conservative for a BO win, which
+                                        # is why it is kept rather than dropped.
+    selection_rule: pooled_mean_regret_over_instances   # NOT per-instance
+    excludes: [qlognei]                 # qLogNEI is BO; it is not a non-BO comparator
+    dim: 6
+    sigma_rel: 0.25
+    endpoint: simple_regret_at_budget
+
+# Per-instance selection of the comparator is FORBIDDEN. It would score qLogEI against
+# an opponent assembled per landscape from whichever arm happened to win there — a
+# competitor that exists as no method. That is the oracle-best error which voided E2's
+# first run, in a new place.
+comparator_selection_per_instance: forbidden
