@@ -262,8 +262,14 @@ Neither blocks building. Both block posting the preprint.
 
 ## Where B is up to
 
-**E4 is built, tested, and has produced results on real landscapes.** 310 tests. Reproduce with `python scripts/run_e4.py`.
+**E4 is built, tested, and has produced results on real landscapes** at both regimes. Reproduce with `python scripts/run_e4.py` and `python scripts/run_e4_robustness.py`.
 
-**Blocked on:** the Q14 n-decision and the Q12 regime decision — both must be settled *before* the next run, together, as one pre-registration bump.
+**Figures are built** — `boec.figures`, three PNGs under `results/figures/`. Spec Build Step 7 is done, superseding the note that previously stood here.
 
-**Not yet built:** figures (spec Build Step 7), and an untested `nonlinear_inequality_constraints` path that matters only for Phase 3.
+**Blocked on:** the version-2 pre-registration — Q12, Q14, Q15 and Q16 together, as one bump. Ordering and owners are in `docs/TASKS.md`; two of the four (T1, T2) are waiting specifically on B.
+
+**Latest from B:** Q17 sanity-checked — the E1 gate survives the regret-scoring fix (Hartmann6 +1.03 → +0.914 [+0.669, +1.162]), and A's non-cancellation argument is confirmed at a differential of +0.120. Details in Q17.
+
+**`runner.py` dispatch defect closed (T8).** `run_cell` sent *every* unrecognised method to the adaptive branch, so a `doe` cell — a method `GridCell` already documents as valid — ran a **Bayesian optimization campaign** and wrote a believable parquet under a `method-doe` filename. An E2 grid would have reported BO's numbers as the DoE baseline's. Now `doe` raises `NotImplementedError` pointing at `boec.doe.run_doe_arm`, unknown names raise `ValueError`, and six tests cover the dispatch. **The DoE arm still needs wiring in properly — that is A's, and it is T8's remaining half.**
+
+**Not yet built:** an untested `nonlinear_inequality_constraints` path that matters only for Phase 3.
