@@ -1,0 +1,41 @@
+================================================================================================
+Q45 / C.2 — polynomial design contrast at a model BOTH designs support
+================================================================================================
+
+  d=6 sigma=0.25   (kept factors: median 4 of 6)
+    cell 3  DoE / 4-factor poly            0.4163
+    cell 6  BO  / 6-factor poly  (Q34)     0.5838
+    cell 6  BO  / 4-FACTOR poly  REFIT     0.3035    <- the fix
+    cell 4  BO  / GP                       0.1232
+      3-6 DESIGN, model now fixed     +0.1129 [ +0.0574, +0.1651] p=0.0008   b better
+      refit - sixfactor (the fix)     -0.2803 [ -0.3363, -0.2229] p=0.0000   a better
+      4-6 SURROGATE, design fixed     -0.1803 [ -0.2371, -0.1285] p=0.0000   a better
+
+  d=6 sigma=0.1   (kept factors: median 4 of 6)
+    cell 3  DoE / 4-factor poly            0.4300
+    cell 6  BO  / 6-factor poly  (Q34)     0.3956
+    cell 6  BO  / 4-FACTOR poly  REFIT     0.1417    <- the fix
+    cell 4  BO  / GP                       0.0703
+      3-6 DESIGN, model now fixed     +0.2883 [ +0.2570, +0.3181] p=0.0000   b better
+      refit - sixfactor (the fix)     -0.2539 [ -0.3204, -0.1885] p=0.0000   a better
+      4-6 SURROGATE, design fixed     -0.0715 [ -0.0997, -0.0446] p=0.0000   a better
+
+  d=8 sigma=0.25   (kept factors: median 4 of 8)
+    cell 3  DoE / 4-factor poly            0.3766
+    cell 6  BO  / 6-factor poly  (Q34)     0.6972
+    cell 6  BO  / 4-FACTOR poly  REFIT     0.2519    <- the fix
+    cell 4  BO  / GP                       0.1056
+      3-6 DESIGN, model now fixed     +0.1247 [ +0.0822, +0.1674] p=0.0000   b better
+      refit - sixfactor (the fix)     -0.4453 [ -0.5120, -0.3785] p=0.0000   a better
+      4-6 SURROGATE, design fixed     -0.1462 [ -0.1852, -0.1117] p=0.0000   a better
+
+  d=8 sigma=0.1   (kept factors: median 4 of 8)
+    cell 3  DoE / 4-factor poly            0.4104
+    cell 6  BO  / 6-factor poly  (Q34)     0.6784
+    cell 6  BO  / 4-FACTOR poly  REFIT     0.1435    <- the fix
+    cell 4  BO  / GP                       0.0876
+      3-6 DESIGN, model now fixed     +0.2669 [ +0.2366, +0.2978] p=0.0000   b better
+      refit - sixfactor (the fix)     -0.5349 [ -0.5760, -0.4950] p=0.0000   a better
+      4-6 SURROGATE, design fixed     -0.0559 [ -0.0851, -0.0279] p=0.0000   a better
+
+  [1128s]  written to results/q45-fourfactor-refit.json

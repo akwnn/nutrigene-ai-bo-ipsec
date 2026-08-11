@@ -3076,3 +3076,56 @@ Q36 voided only Ackley's rule A. **That was insufficient.** Its constrained and 
 **The E2 verdict is no longer "one landscape family".** DoE beats BO on best-observed at d=6 σ=0.25 on **Hill, Levy and Rosenbrock**; BO wins on Hartmann6. The determining property is not additivity per se — Levy and Rosenbrock are both non-additive and multimodal — so the earlier "~93% additive, therefore our oracle" objection is answered by data rather than argument.
 
 **And the scoring-convention finding, which is the paper, now rests on four families rather than one.**
+
+---
+
+## ✅ Q45 RESULT [A] · C.2 · The design effect is NOT null once the model is held fixed — and it favours the adaptive design
+
+`python scripts/run_q45_fourfactor_refit.py` · `results/q45-fourfactor-refit.{log,json}` · registered in `3fd2e88` **before the run**, with a prediction that explicitly disagreed with the close-out brief's.
+
+### The confound, and the fix
+
+Q34's polynomial design contrast compared a **four-factor** quadratic on DoE data against a **six-factor** quadratic on BO data — different models, so it confounded design with model dimensionality. Q44 sharpened it: at six factors the CCD is singular in 50/50 runs. Both polynomial cells are now fitted on **the same four factors the DoE arm's own screen kept**, holding the model fixed and varying only the design.
+
+| cell | d=6 σ=.25 | d=6 σ=.10 | d=8 σ=.25 | d=8 σ=.10 |
+|---|---|---|---|---|
+| 3 · DoE design, 4-factor poly | 0.4163 | 0.4300 | 0.3766 | 0.4104 |
+| 6 · BO design, 6-factor poly *(Q34)* | 0.5838 | 0.3956 | 0.6972 | 0.6784 |
+| **6 · BO design, 4-factor poly — REFIT** | **0.3035** | **0.1417** | **0.2519** | **0.1435** |
+| 4 · BO design, GP | 0.1232 | 0.0703 | 0.1056 | 0.0876 |
+
+| contrast | d=6 σ=.25 | d=6 σ=.10 | d=8 σ=.25 | d=8 σ=.10 |
+|---|---|---|---|---|
+| refit − sixfactor *(the fix)* | −0.2803 | −0.2539 | −0.4453 | −0.5349 |
+| **3 − 6 · DESIGN, model fixed** | **+0.1129** | **+0.2883** | **+0.1247** | **+0.2669** |
+| 4 − 6 · SURROGATE, design fixed | −0.1803 | −0.0715 | −0.1462 | −0.0559 |
+
+All p ≤ 0.0008.
+
+### 📌 Predictions scored — mine 2 of 3; **the brief's, refuted**
+
+**Mine, right (1):** *cell 6 improves a lot.* It improves by **0.25 to 0.53**, at every cell. Fitting 15 parameters with 33 residual df instead of 45 with 3 is worth a great deal, and Q34's cell 6 was substantially measuring model misspecification rather than design.
+
+**Mine, right (2):** *it will still be much worse than the GP on the same data.* The 4−6 surrogate contrast is **−0.056 to −0.180**, significant at every cell. **Better conditioning does not repair the geometry.** The falsifier I registered — cell 6 refitted coming close to cell 4 — did not occur, so the saddle argument stands.
+
+**Mine, WRONG (3):** *the design contrast stays subordinate to the surrogate effect.* It holds at the two **σ=0.25** cells (design +0.113 against surrogate 0.180–0.217 at the registered primary) and **fails badly at both σ=0.10 cells**, where the design effect is **four to five times the surrogate effect** (+0.2883 vs −0.0715; +0.2669 vs −0.0559).
+
+**The brief's prediction — that the design null would STRENGTHEN — is refuted.** The design effect is not null once the model is held fixed. It is large, significant at all four cells, and it **has a sign**: `3 − 6` is **positive**, meaning **the DoE design produces a *worse* polynomial recommendation than the adaptive design does, using the identical model.**
+
+### Why that is not a contradiction of Q44, and what it actually means
+
+Q44 measured the CCD as **~4.4× more D-efficient than the adaptive design at the four-factor model in its own region.** Q45 finds the adaptive design gives better recommendations from the same model. Both are true and together they are the point:
+
+> **D-optimality in a small region is not the same property as usefulness for a recommendation made over the whole factor range — and here the two pull in opposite directions.**
+
+The CCD's excellent local geometry is exactly what confines it. Stage 2 explores a narrow sub-box, so its quadratic is well determined *there* and extrapolates badly *outside*, which is where the recommendation is made. The adaptive design's points are worse-conditioned locally and spread across the space, so the same model extrapolates less. **The DoE arm's design is not bad; it is well-built for the wrong question.**
+
+### Consequence for the paper's decomposition
+
+Q34's headline — *"it is the model, not the points"* — **survives at the registered primary cell and must be qualified at low noise.** The honest three-line version:
+
+- The **surrogate** effect is present at every cell and every family, and is the only effect that never reverses.
+- The **design** effect is real, was previously hidden behind a model-dimensionality confound, and at σ=0.10 it **exceeds** the surrogate effect.
+- The design effect favours **the adaptive design**, which is the opposite of what "structured designs are better conditioned" would predict, and it is explained by region size rather than by design quality.
+
+**Anything in the write-up that says the design does not matter is now wrong and must be changed.**
