@@ -803,6 +803,55 @@ faces, so a uniform draw is not its operative null. No uniform reference is quot
 
 ---
 
+## 🔴 Q29 [B] · PRE-REGISTRATION · **the symmetric comparison: score BOTH methods at their own model's recommendation**
+
+**Written and committed BEFORE the run. Nothing below depends on a number that does not yet exist.** The point of registering it is that the two existing rules are already known to favour opposite arms, so whoever picks the third one after seeing it has picked the answer.
+
+### Why this is the deciding experiment
+
+Q28 measured that **every cell reverses sign** depending on how the DoE arm is scored:
+
+| cell | rule A (best observed) | rule B (its stage-4 recipe) |
+|---|---|---|
+| d=6 σ=0.25 | −0.0708 | **+0.2497** |
+| d=6 σ=0.10 | +0.0042 | **+0.3450** |
+| d=8 σ=0.25 | −0.0321 | **+0.2482** |
+| d=8 σ=0.10 | +0.0015 | **+0.3170** |
+
+Negative = DoE beats qLogEI. **So "BO loses to current practice" — the project's standing headline at both dimensions — rests entirely on an unregistered scoring choice**, which Q20 §3 flagged as open and which was never closed.
+
+**Neither existing rule is the comparison a practitioner cares about.** Rule A scores *both* arms at their best measurement, which throws away the DoE pipeline's actual output — the thing stage 4 exists to produce. Rule B scores DoE at its model's recommendation but qLogEI at its best measurement, which is **not like-for-like** and flatters BO for exactly the reason rule A flatters DoE.
+
+### The estimand
+
+> **Rule C — symmetric.** Each method is scored at the point **its own model recommends**, evaluated on `truth()`:
+> - **DoE** → the stage-4 confirmation recipe (the constrained argmax of its fitted second-order surface). Already computed.
+> - **BO** → the **argmax of the GP posterior mean** over the same box. **E2 never recorded this**, which is why this needs a run rather than a re-analysis: `results/e2-grid.json` stores summary rows only, no visited points.
+>
+> Selection uses only what each method may see; scoring uses `truth()`, never the noisy observation (Q17).
+
+This is the "what recipe would you actually hand the lab" comparison, and it is the only one of the three where both arms are asked the same question.
+
+### The prediction, with its mechanism — **registered, falsifiable**
+
+> **BO beats DoE under rule C**, at both dimensions, at σ=0.25.
+
+Not a guess. E4 measured over-prediction at each model's own constrained argmax on the same oracle family: the **second-order surface over-promises by a median of +0.87 to +1.29** against a response bounded at 1.0, while the **GP over-promises by +0.25 to +0.33** — three to five times less. A method whose recommendation is that badly calibrated should recommend a worse *actual* recipe. Q28's own d=8 figure agrees: the DoE arm's over-prediction is **+1.55** in the cell where it wins under rule A.
+
+**What would falsify it:** DoE matching or beating BO under rule C. That is a real possibility — over-promising at the recommendation and *landing somewhere bad* are different failures, and a badly-calibrated surface can still point uphill.
+
+### The decision rule, fixed now
+
+- **If BO wins under rule C and loses under rule A**, the honest report is that **the verdict is scoring-convention dependent**, both rules are reported with the per-cell table, and neither is promoted to the headline. It is *not* "BO wins after all."
+- **If BO loses under rule C too**, then BO loses under every convention tried and the negative result is **robust** — a materially stronger claim than the current one, and it should be stated that way.
+- **Either way rule A stays the registered primary** (Q20/`e2.yaml`). Rule C is a declared secondary. **This entry does not re-designate the headline**, because the headline cannot be chosen by the person who ran the tiebreak.
+
+### Scope, fixed before running
+
+Primary cell first — **d=6, σ=0.25, 25 instances × 2 seeds, qLogEI vs DoE**, budget 48, identical seeds and openings to E2. Extended to the other three cells only if the primary completes cleanly. Paired Wilcoxon at instance level (n=25) governs significance, instance bootstrap gives the interval, per Q20 §2.
+
+---
+
 ## 🔴 Q24 [A + B] · **"BO beats current practice" is not supported anywhere it was tested — and the d=8 table reads like the opposite**
 
 > **STATUS: the missing d=8 arm is registered (Q27), built, and RUN.** The split proposed
