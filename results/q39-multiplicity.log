@@ -1,15 +1,23 @@
 ================================================================================================================
 Q39 · multiplicity — Holm over every comparison outside the registered primaries
 ================================================================================================================
-  1 registered primary contrast(s), exempt.
-  39 secondary contrasts, Holm-corrected together at alpha=0.05.
+  2 registered primary contrast(s), exempt.
+  54 secondary contrasts, Holm-corrected together at alpha=0.05.
 
 REGISTERED PRIMARIES — not corrected, because they were fixed before the run
 source         cell                        contrast    effect                95% CI         p
     E2   d=6 s=0.25                    doe - qlogei   -0.0595     [-0.0792,-0.0373]    0.0000
+   Q34   d=6 s=0.25                   cell5 - cell3   -0.2171     [-0.2524,-0.1834]    0.0000
 
 SECONDARY — effect and interval first, then raw p, then Holm-adjusted p
 source         cell                        contrast    effect                95% CI    raw p   Holm p  verdict
+   Q34   d=6 s=0.25                   cell4 - cell6   -0.4606     [-0.5083,-0.4080]   0.0000   0.0000  sig CI excl 0 
+   Q34    d=6 s=0.1                   cell4 - cell6   -0.3254     [-0.3795,-0.2719]   0.0000   0.0000  sig CI excl 0 
+   Q34   d=8 s=0.25                   cell5 - cell3   -0.2628     [-0.2976,-0.2299]   0.0000   0.0000  sig CI excl 0 
+   Q34   d=8 s=0.25                   cell4 - cell6   -0.5916     [-0.6386,-0.5424]   0.0000   0.0000  sig CI excl 0 
+   Q34    d=8 s=0.1                   cell5 - cell3   -0.2936     [-0.3193,-0.2665]   0.0000   0.0000  sig CI excl 0 
+   Q34    d=8 s=0.1                   cell4 - cell6   -0.5907     [-0.6189,-0.5614]   0.0000   0.0000  sig CI excl 0 
+   Q34    d=8 s=0.1                   cell3 - cell6   -0.2680     [-0.2988,-0.2379]   0.0000   0.0000  sig CI excl 0 
    Q35   d=6 s=0.25     unconstrained - constrained   +0.2995     [+0.2790,+0.3228]   0.0000   0.0000  sig CI excl 0 
    Q35   d=6 s=0.25     constrained - best observed   +0.0572     [+0.0492,+0.0654]   0.0000   0.0000  sig CI excl 0 
    Q35   d=6 s=0.25   unconstrained - best observed   +0.3567     [+0.3338,+0.3818]   0.0000   0.0000  sig CI excl 0 
@@ -23,28 +31,36 @@ source         cell                        contrast    effect                95%
    Q36       ackley                rule A: doe - bo  -21.0938   [-21.2957,-20.8537]   0.0000   0.0000  sig CI excl 0 
    Q36       ackley         rule C constr: doe - bo   -6.7313     [-8.3635,-5.2696]   0.0000   0.0000  sig CI excl 0 
    Q36    hartmann6       rule C unconstr: doe - bo   +2.1017     [+1.8635,+2.3206]   0.0000   0.0000  sig CI excl 0 
+   Q34    d=6 s=0.1                   cell4 - cell5   -0.2025     [-0.2466,-0.1595]   0.0000   0.0000  sig CI excl 0 
+   Q34   d=8 s=0.25                   cell3 - cell6   -0.3206     [-0.3765,-0.2650]   0.0000   0.0000  sig CI excl 0 
    Q35    d=6 s=0.1     constrained - best observed   +0.0312     [+0.0243,+0.0387]   0.0000   0.0000  sig CI excl 0 
    Q36    hartmann6         rule C constr: doe - bo   +1.0956     [+0.9155,+1.2724]   0.0000   0.0000  sig CI excl 0 
    Q36    hartmann6                rule A: doe - bo   +1.0032     [+0.7935,+1.2080]   0.0000   0.0000  sig CI excl 0 
    Q36       ackley       rule C unconstr: doe - bo   -5.2791     [-7.2966,-3.3789]   0.0000   0.0000  sig CI excl 0 
     E2    d=6 s=0.1                 random - qlogei   +0.0819     [+0.0635,+0.1003]   0.0000   0.0000  sig CI excl 0 
     E2   d=8 s=0.25                  coord - qlogei   +0.0679     [+0.0487,+0.0876]   0.0000   0.0000  sig CI excl 0 
+   Q34    d=6 s=0.1                   cell5 - cell3   -0.1573     [-0.1964,-0.1165]   0.0000   0.0000  sig CI excl 0 
    Q35    d=8 s=0.1     constrained - best observed   +0.0377     [+0.0269,+0.0481]   0.0000   0.0000  sig CI excl 0 
-    E2   d=8 s=0.25                 random - qlogei   +0.0465     [+0.0298,+0.0632]   0.0000   0.0003  sig CI excl 0 
-    E2   d=6 s=0.25                 random - qlogei   +0.0664     [+0.0419,+0.0909]   0.0000   0.0007  sig CI excl 0 
-    E2    d=6 s=0.1                  sobol - qlogei   +0.0336     [+0.0188,+0.0491]   0.0003   0.0056  sig CI excl 0 
-    E2    d=8 s=0.1                 random - qlogei   +0.0301     [+0.0157,+0.0450]   0.0004   0.0069  sig CI excl 0 
-    E2   d=8 s=0.25                  sobol - qlogei   +0.0557     [+0.0283,+0.0822]   0.0006   0.0095  sig CI excl 0 
-    E2    d=8 s=0.1                    lhs - qlogei   +0.0288     [+0.0114,+0.0479]   0.0067   0.0942  ns  CI excl 0   <-- LOST under correction
-    E2   d=6 s=0.25                    lhs - qlogei   -0.0282     [-0.0477,-0.0084]   0.0147   0.1914  ns  CI excl 0   <-- LOST under correction
-    E2   d=8 s=0.25                    lhs - qlogei   +0.0380     [+0.0101,+0.0626]   0.0187   0.2249  ns  CI excl 0   <-- LOST under correction
-    E2    d=8 s=0.1                qlognei - qlogei   -0.0123     [-0.0215,-0.0040]   0.0275   0.3023  ns  CI excl 0   <-- LOST under correction
+   Q34   d=6 s=0.25                   cell3 - cell6   -0.1675     [-0.2085,-0.1200]   0.0000   0.0003  sig CI excl 0 
+    E2   d=8 s=0.25                 random - qlogei   +0.0465     [+0.0298,+0.0632]   0.0000   0.0004  sig CI excl 0 
+    E2   d=6 s=0.25                 random - qlogei   +0.0664     [+0.0419,+0.0909]   0.0000   0.0008  sig CI excl 0 
+   Q34   d=6 s=0.25                   cell4 - cell5   -0.0761     [-0.1067,-0.0455]   0.0000   0.0010  sig CI excl 0 
+    E2    d=6 s=0.1                  sobol - qlogei   +0.0336     [+0.0188,+0.0491]   0.0003   0.0066  sig CI excl 0 
+    E2    d=8 s=0.1                 random - qlogei   +0.0301     [+0.0157,+0.0450]   0.0004   0.0082  sig CI excl 0 
+    E2   d=8 s=0.25                  sobol - qlogei   +0.0557     [+0.0283,+0.0822]   0.0006   0.0114  sig CI excl 0 
+    E2    d=8 s=0.1                    lhs - qlogei   +0.0288     [+0.0114,+0.0479]   0.0067   0.1143  ns  CI excl 0   <-- LOST under correction
+    E2   d=6 s=0.25                    lhs - qlogei   -0.0282     [-0.0477,-0.0084]   0.0147   0.2356  ns  CI excl 0   <-- LOST under correction
+    E2   d=8 s=0.25                    lhs - qlogei   +0.0380     [+0.0101,+0.0626]   0.0187   0.2812  ns  CI excl 0   <-- LOST under correction
+    E2    d=8 s=0.1                qlognei - qlogei   -0.0123     [-0.0215,-0.0040]   0.0275   0.3847  ns  CI excl 0   <-- LOST under correction
+   Q34    d=8 s=0.1                   cell4 - cell5   -0.0292     [-0.0522,-0.0079]   0.0393   0.5114  ns  CI excl 0   <-- LOST under correction
     E2    d=6 s=0.1                    lhs - qlogei   +0.0153     [-0.0010,+0.0320]   0.1135   1.0000  ns  CI incl 0 
     E2   d=8 s=0.25                qlognei - qlogei   -0.0142     [-0.0308,-0.0000]   0.1730   1.0000  ns  CI excl 0 
     E2    d=6 s=0.1                qlognei - qlogei   -0.0066     [-0.0199,+0.0081]   0.1817   1.0000  ns  CI incl 0 
+   Q34    d=6 s=0.1                   cell3 - cell6   +0.0344     [-0.0214,+0.0879]   0.2002   1.0000  ns  CI incl 0 
     E2   d=6 s=0.25                  sobol - qlogei   +0.0171     [-0.0127,+0.0484]   0.3123   1.0000  ns  CI incl 0 
     E2    d=8 s=0.1                  coord - qlogei   +0.0081     [-0.0044,+0.0216]   0.3254   1.0000  ns  CI incl 0 
     E2   d=6 s=0.25                  coord - qlogei   -0.0133     [-0.0415,+0.0136]   0.3388   1.0000  ns  CI incl 0 
+   Q34   d=8 s=0.25                   cell4 - cell5   -0.0082     [-0.0317,+0.0162]   0.5965   1.0000  ns  CI incl 0 
     E2    d=6 s=0.1                    doe - qlogei   +0.0018     [-0.0083,+0.0117]   0.6915   1.0000  ns  CI incl 0 
     E2   d=6 s=0.25                qlognei - qlogei   -0.0020     [-0.0250,+0.0209]   0.7112   1.0000  ns  CI incl 0 
     E2    d=6 s=0.1                  coord - qlogei   +0.0006     [-0.0108,+0.0124]   0.9158   1.0000  ns  CI incl 0 
@@ -53,13 +69,14 @@ source         cell                        contrast    effect                95%
 ================================================================================================================
 WHAT THE CORRECTION ACTUALLY CHANGED
 ================================================================================================================
-  4 contrast(s) significant at raw alpha lose it under Holm:
-    E2 d=8 s=0.1 lhs - qlogei: p=0.0067 -> 0.0942
-    E2 d=6 s=0.25 lhs - qlogei: p=0.0147 -> 0.1914
-    E2 d=8 s=0.25 lhs - qlogei: p=0.0187 -> 0.2249
-    E2 d=8 s=0.1 qlognei - qlogei: p=0.0275 -> 0.3023
+  5 contrast(s) significant at raw alpha lose it under Holm:
+    E2 d=8 s=0.1 lhs - qlogei: p=0.0067 -> 0.1143
+    E2 d=6 s=0.25 lhs - qlogei: p=0.0147 -> 0.2356
+    E2 d=8 s=0.25 lhs - qlogei: p=0.0187 -> 0.2812
+    E2 d=8 s=0.1 qlognei - qlogei: p=0.0275 -> 0.3847
+    Q34 d=8 s=0.1 cell4 - cell5: p=0.0393 -> 0.5114
 
-  the 95% CI and the Holm-adjusted Wilcoxon disagree on 5 of 39 secondary contrasts.
+  the 95% CI and the Holm-adjusted Wilcoxon disagree on 6 of 54 secondary contrasts.
 
   READ THAT DISAGREEMENT CAREFULLY -- IT IS NOT EVIDENCE FOR THE INTERVAL.
   The intervals above are per-contrast 95% intervals. They are NOT simultaneous, so

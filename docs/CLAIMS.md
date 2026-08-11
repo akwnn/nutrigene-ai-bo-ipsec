@@ -112,28 +112,35 @@ authors' statement, and needing a statistician to re-derive before it carries we
 **2.1 Whether BO beats current practice depends on the scoring convention, and nothing
 else.** Same runs, same seeds, same data:
 
-| cell | rule A — best observed *(registered)* | rule C — each model's recommendation |
-|---|---|---|
-| d=6 σ=0.25 | **−0.0595** DoE better | **+0.2915** BO better ⚠️ |
-| d=6 σ=0.10 | +0.0018 null | **+0.3598** BO better ⚠️ |
-| d=8 σ=0.25 | **−0.0321** DoE better ⚠️ | **+0.2689** BO better ⚠️ |
-| d=8 σ=0.10 | +0.0015 null ⚠️ | **+0.3253** BO better ⚠️ |
+| cell | rule A — best observed *(registered)* | rule C — DoE **unconstrained** *(as Q29 scored it)* | rule C — DoE **constrained** *(as practice prescribes)* |
+|---|---|---|---|
+| **d=6 σ=0.25** | **−0.0595** DoE better | +0.2931 BO better | **−0.0063 NULL** (p=0.56) |
+| d=6 σ=0.10 | +0.0018 null | +0.3597 BO better | **+0.0153** BO better (p=0.0088) |
+| d=8 σ=0.25 | −0.0321 DoE better | +0.2710 BO better | **+0.0091 NULL** (p=0.20) |
+| d=8 σ=0.10 | +0.0015 null | +0.3228 BO better | **+0.0001 NULL** (p=0.79) |
 
-> **⚠️ PROVENANCE (T1.4). Every figure above was computed in B's clone, against B's
-> untracked copy of `results/e2-grid.json`.** The two d=6 rule-A cells are corrected
-> here from the now-committed grid: **−0.0595** (was −0.0708) and **+0.0018** (was
-> +0.0042). The d=8 rule-A cells and the whole rule-C column are **not yet recomputed
-> in A's clone** and are marked ⚠️ until they are — the grid has no d=8 `doe` rows, so
-> those need `run_e2_doe_d8.py` re-run, and rule C is separately blocked on T1.4c
-> (the two arms used different locators at a 16× different screening budget, so
-> **+0.2915 is provisional**). Nothing in this table may be quoted while ⚠️ stands.
-
-~~All rule-C results p < 0.0001; rule A regenerates the stored grid at max |Δ| **exactly
-0.0 over 200 rows**.~~ The "regenerates the stored grid at max |Δ| exactly 0.0" gate is
-the one that could not detect any of this: it compared B's regeneration against B's own
-untracked grid, so it reported that a clone agrees with itself. At the low-noise cells
-the convention changes a *tie* into a decisive win — it does not merely rescale the
-effect. **Blocked on Q28 / T16, and now also on T1.4c.**
+> **✅ RESOLVED (T1.1 / T1.2 / T1.4c). Every figure is now from A's clone, on one machine,
+> with one locator (`constrained_argmax`, `n_restarts=20, raw_samples=4096, seed=seed`,
+> asserted over the AST). Sources: `q34-factorial.log`, `q35-constrained-rsm.log`. The two
+> scripts agree on their shared cell to max |Δ| = 0.0e+00.**
+>
+> **The contested estimand is no longer contested in the way this section assumed.** Q29
+> reported BO ahead under rule C by +0.29 to +0.36 at every cell, which made the E2
+> verdict look purely convention-dependent. **That gap was almost entirely an artefact of
+> scoring the classical arm at an unconstrained argmax** — a practice its own literature
+> (Box & Draper; ridge analysis) warns against, and which produces a boundary point
+> because the fitted surface is a saddle in 200/200 runs (Q35).
+>
+> Scored as classical practice prescribes, rule C gives **three nulls and one BO win of
+> +0.0153**. The swing decomposition makes the same point directly: moving from rule A to
+> rule C moves the **DoE** arm by +0.28 to +0.34 and the **BO** arm by only −0.01 to −0.03
+> — a ratio of **10:1 at the primary cell, up to 33:1**, i.e. **91–97% of the verdict swing
+> is the classical arm's scoring**.
+>
+> **So the correct statement is not "the verdict depends on the convention" but
+> "the apparent dependence was one arm being scored badly."** Under both rules, scored
+> competently, the two methods are close — DoE ahead on best-observed at d=6, and
+> statistically indistinguishable on recommendation at three of four cells.
 
 **2.2 The GP's uncertainty versus plain distance is κ-dependent and reverses sign.**
 Pooled −0.0269 [−0.0728, +0.0182], "no advantage". By κ: **+0.1068** [+0.0461, +0.1668]

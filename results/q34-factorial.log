@@ -1,0 +1,134 @@
+
+================================================================================================
+Q34 · d=6 · sigma=0.25 · 25 instances x 2 seeds   <-- REGISTERED PRIMARY CELL
+================================================================================================
+cell                                    mean regret    median    n  dropped
+1  DoE  / --         / observed              0.0958    0.0934   25        0
+2  BO   / --         / observed              0.1553    0.1569   25        0
+3  DoE  / polynomial / recommended           0.4163    0.4104   25        0
+4  BO   / GP         / recommended           0.1232    0.1243   25        0
+5  DoE  / GP         / recommended  <-- NEW       0.1993    0.1919   25        0
+6  BO   / polynomial / recommended  <-- NEW       0.5838    0.6050   25        0
+
+  contrast                               paired difference (>0 = first is worse)
+  5-3 surrogate @ DoE  PRIMARY        -0.2171 [ -0.2524, -0.1834] p=0.0000   n=25  a better
+  4-6 surrogate @ BO                  -0.4606 [ -0.5083, -0.4080] p=0.0000   n=25  a better
+  4-5 design @ GP                     -0.0761 [ -0.1067, -0.0455] p=0.0000   n=25  a better
+  3-6 design @ polynomial             -0.1675 [ -0.2085, -0.1200] p=0.0000   n=25  a better
+  1-2 design @ observed (rule A)      -0.0595 [ -0.0792, -0.0373] p=0.0000   n=25  a better
+
+  cell 6 hard failures: 0/50 runs (0.0%)
+  cond(second-order design matrix), DoE design : median 8.112e+16  max 1.269e+17  n=50
+  cond(second-order design matrix), BO design  : median 3.103e+02  max 1.002e+03  n=50
+  DoE factors kept by the screen: median 4.0 of 6
+  NOTE both conditioning figures are for a FULL d-dimensional second-order
+  model on that design's 48 points, so they are like-for-like with cell 6.
+  Neither is the model the DoE arm fits: after screening it fits a REDUCED
+  surface on the kept factors only, which is precisely how the pipeline
+  avoids the singularity above. Cell 3 is therefore a lower-dimensional
+  polynomial than cell 6, and the 3-6 design contrast confounds design with
+  model dimensionality. It is the weakest of the four; the registered
+  primary (5-3) does not depend on it.
+
+  [1298s elapsed]
+
+================================================================================================
+Q34 · d=6 · sigma=0.1 · 25 instances x 2 seeds
+================================================================================================
+cell                                    mean regret    median    n  dropped
+1  DoE  / --         / observed              0.0892    0.0908   25        0
+2  BO   / --         / observed              0.0874    0.0842   25        0
+3  DoE  / polynomial / recommended           0.4300    0.4358   25        0
+4  BO   / GP         / recommended           0.0703    0.0670   25        0
+5  DoE  / GP         / recommended  <-- NEW       0.2728    0.2593   25        0
+6  BO   / polynomial / recommended  <-- NEW       0.3956    0.3838   25        0
+
+  contrast                               paired difference (>0 = first is worse)
+  5-3 surrogate @ DoE  PRIMARY        -0.1573 [ -0.1964, -0.1165] p=0.0000   n=25  a better
+  4-6 surrogate @ BO                  -0.3254 [ -0.3795, -0.2719] p=0.0000   n=25  a better
+  4-5 design @ GP                     -0.2025 [ -0.2466, -0.1595] p=0.0000   n=25  a better
+  3-6 design @ polynomial             +0.0344 [ -0.0214, +0.0879] p=0.2002   n=25  null
+  1-2 design @ observed (rule A)      +0.0018 [ -0.0083, +0.0117] p=0.6915   n=25  null
+
+  cell 6 hard failures: 0/50 runs (0.0%)
+  cond(second-order design matrix), DoE design : median 7.797e+16  max 2.134e+17  n=50
+  cond(second-order design matrix), BO design  : median 2.402e+02  max 4.201e+02  n=50
+  DoE factors kept by the screen: median 4.0 of 6
+  NOTE both conditioning figures are for a FULL d-dimensional second-order
+  model on that design's 48 points, so they are like-for-like with cell 6.
+  Neither is the model the DoE arm fits: after screening it fits a REDUCED
+  surface on the kept factors only, which is precisely how the pipeline
+  avoids the singularity above. Cell 3 is therefore a lower-dimensional
+  polynomial than cell 6, and the 3-6 design contrast confounds design with
+  model dimensionality. It is the weakest of the four; the registered
+  primary (5-3) does not depend on it.
+
+  [2005s elapsed]
+
+================================================================================================
+Q34 · d=8 · sigma=0.25 · 25 instances x 2 seeds
+================================================================================================
+cell                                    mean regret    median    n  dropped
+1  DoE  / --         / observed              0.0963    0.0960   25        0
+2  BO   / --         / observed              0.1247    0.1113   25        0
+3  DoE  / polynomial / recommended           0.3766    0.3724   25        0
+4  BO   / GP         / recommended           0.1056    0.1059   25        0
+5  DoE  / GP         / recommended  <-- NEW       0.1139    0.1070   25        0
+6  BO   / polynomial / recommended  <-- NEW       0.6972    0.7077   25        0
+
+  contrast                               paired difference (>0 = first is worse)
+  5-3 surrogate @ DoE  PRIMARY        -0.2628 [ -0.2976, -0.2299] p=0.0000   n=25  a better
+  4-6 surrogate @ BO                  -0.5916 [ -0.6386, -0.5424] p=0.0000   n=25  a better
+  4-5 design @ GP                     -0.0082 [ -0.0317, +0.0162] p=0.5965   n=25  null
+  3-6 design @ polynomial             -0.3206 [ -0.3765, -0.2650] p=0.0000   n=25  a better
+  1-2 design @ observed (rule A)      -0.0284 [ -0.0453, -0.0140] p=0.0023   n=25  a better
+
+  cell 6 hard failures: 0/50 runs (0.0%)
+  cond(second-order design matrix), DoE design : median 1.120e+18  max 7.392e+18  n=50
+  cond(second-order design matrix), BO design  : median 3.867e+03  max 1.011e+07  n=50
+  DoE factors kept by the screen: median 4.0 of 8
+  NOTE both conditioning figures are for a FULL d-dimensional second-order
+  model on that design's 48 points, so they are like-for-like with cell 6.
+  Neither is the model the DoE arm fits: after screening it fits a REDUCED
+  surface on the kept factors only, which is precisely how the pipeline
+  avoids the singularity above. Cell 3 is therefore a lower-dimensional
+  polynomial than cell 6, and the 3-6 design contrast confounds design with
+  model dimensionality. It is the weakest of the four; the registered
+  primary (5-3) does not depend on it.
+
+  [2594s elapsed]
+
+================================================================================================
+Q34 · d=8 · sigma=0.1 · 25 instances x 2 seeds
+================================================================================================
+cell                                    mean regret    median    n  dropped
+1  DoE  / --         / observed              0.0948    0.0927   25        0
+2  BO   / --         / observed              0.0972    0.0973   25        0
+3  DoE  / polynomial / recommended           0.4104    0.3974   25        0
+4  BO   / GP         / recommended           0.0876    0.0838   25        0
+5  DoE  / GP         / recommended  <-- NEW       0.1168    0.1138   25        0
+6  BO   / polynomial / recommended  <-- NEW       0.6784    0.6805   25        0
+
+  contrast                               paired difference (>0 = first is worse)
+  5-3 surrogate @ DoE  PRIMARY        -0.2936 [ -0.3193, -0.2665] p=0.0000   n=25  a better
+  4-6 surrogate @ BO                  -0.5907 [ -0.6189, -0.5614] p=0.0000   n=25  a better
+  4-5 design @ GP                     -0.0292 [ -0.0522, -0.0079] p=0.0393   n=25  a better
+  3-6 design @ polynomial             -0.2680 [ -0.2988, -0.2379] p=0.0000   n=25  a better
+  1-2 design @ observed (rule A)      -0.0024 [ -0.0091, +0.0051] p=0.4261   n=25  null
+
+  cell 6 hard failures: 0/50 runs (0.0%)
+  cond(second-order design matrix), DoE design : median 8.999e+17  max 1.863e+19  n=50
+  cond(second-order design matrix), BO design  : median 2.031e+03  max 2.879e+04  n=50
+  DoE factors kept by the screen: median 4.0 of 8
+  NOTE both conditioning figures are for a FULL d-dimensional second-order
+  model on that design's 48 points, so they are like-for-like with cell 6.
+  Neither is the model the DoE arm fits: after screening it fits a REDUCED
+  surface on the kept factors only, which is precisely how the pipeline
+  avoids the singularity above. Cell 3 is therefore a lower-dimensional
+  polynomial than cell 6, and the 3-6 design contrast confounds design with
+  model dimensionality. It is the weakest of the four; the registered
+  primary (5-3) does not depend on it.
+
+  [3526s elapsed]
+
+  written to results/q34-factorial.json

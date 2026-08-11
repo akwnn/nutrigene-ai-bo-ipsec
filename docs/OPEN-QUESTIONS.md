@@ -2788,3 +2788,87 @@ On Ackley the quadratic often fits a genuine interior maximum, because Ackley is
 **Costs:** "current practice beats BO" cannot be stated as a general result. It is a result about one landscape family, and the paper must present it as calibrated to the published endothelial dataset rather than as a claim about optimisation.
 
 **Buys:** the *scoring-convention* claim — the one T1.3 reframes the contribution around — now has support on three landscape families instead of one, including a standard non-additive benchmark. That is the more defensible contribution, and it is the one that generalises.
+
+---
+
+## ✅ Q34 RESULT [A] · T1.1 · The registered primary HELD in all four cells — and the rule-C claim collapses
+
+`python scripts/run_q34_factorial.py --all-cells` · `results/q34-factorial.log`. Registered with its prediction and three-way decision rule in `a1420d4`, **before cells 5 and 6 existed**. One locator, `constrained_argmax` at `n_restarts=20, raw_samples=4096, seed=seed`, for all four recommended cells — asserted over the AST in `tests/test_q34_factorial.py`.
+
+### The six quantities
+
+| cell | d=6 σ=.25 | d=6 σ=.10 | d=8 σ=.25 | d=8 σ=.10 |
+|---|---|---|---|---|
+| 1 DoE / — / observed | 0.0958 | 0.0892 | 0.0963 | 0.0948 |
+| 2 BO / — / observed | 0.1553 | 0.0874 | 0.1247 | 0.0972 |
+| 3 DoE / polynomial / recommended | 0.4163 | 0.4300 | 0.3766 | 0.4104 |
+| 4 BO / GP / recommended | 0.1232 | 0.0703 | 0.1056 | 0.0876 |
+| **5 DoE / GP / recommended** | **0.1993** | **0.2728** | **0.1139** | **0.1168** |
+| **6 BO / polynomial / recommended** | **0.5838** | **0.3956** | **0.6972** | **0.6784** |
+
+### 📌 The registered primary held everywhere
+
+| cell | 5 − 3 (surrogate, design fixed at DoE) | verdict |
+|---|---|---|
+| **d=6 σ=0.25 (registered)** | **−0.2171** [−0.2524, −0.1834] | GP better, p<0.0001 |
+| d=6 σ=0.10 | −0.1573 [−0.1964, −0.1165] | GP better |
+| d=8 σ=0.25 | −0.2628 [−0.2976, −0.2299] | GP better |
+| d=8 σ=0.10 | −0.2936 [−0.3193, −0.2665] | GP better |
+
+**A Gaussian process fitted to the DoE arm's own collected data recommends a materially better condition than the second-order polynomial fitted to the same data — at every cell, by a wide margin.**
+
+### The decision rule, applied — and it does not give one answer
+
+| cell | 4 − 5 (design, surrogate fixed at GP) | branch taken |
+|---|---|---|
+| d=6 σ=0.25 | −0.0761 [−0.1067, −0.0455] | **intermediate — both contribute** |
+| d=6 σ=0.10 | **−0.2025** [−0.2466, −0.1595] | **design dominates** (bigger than the surrogate effect, −0.1573) |
+| d=8 σ=0.25 | −0.0082 [−0.0317, +0.0162] **null** | **the polynomial is the problem, not the design** |
+| d=8 σ=0.10 | −0.0292, **does not survive Holm** (p 0.0393 → 0.5114) | polynomial dominates |
+
+**So the honest answer is not one of the three branches but a fourth: the decomposition is cell-dependent.** The surrogate effect is large and stable everywhere (0.16–0.29). The design effect ranges from **zero** (d=8 σ=0.25) to **larger than the surrogate effect** (d=6 σ=0.10). Reporting a single ratio would be rounding to a story, which the registration forbade.
+
+### ⚠️ The consequence: "BO wins under rule C" does not survive a competently-scored classical arm
+
+Combining cell 4 with Q35's constrained DoE scoring — same machine, same locator, and the two scripts agree on the shared cell to **max |Δ| = 0.0e+00**:
+
+| cell | DoE (constrained) | BO (rule C) | difference | verdict |
+|---|---|---|---|---|
+| d=6 σ=0.25 | 0.1169 | 0.1232 | **−0.0063** [−0.0241, +0.0108] | **NULL** (p=0.56) |
+| d=6 σ=0.10 | 0.0856 | 0.0703 | +0.0153 [+0.0040, +0.0269] | BO better (p=0.0088) |
+| d=8 σ=0.25 | 0.1148 | 0.1056 | +0.0091 [−0.0055, +0.0239] | **NULL** (p=0.20) |
+| d=8 σ=0.10 | 0.0877 | 0.0876 | +0.0001 [−0.0119, +0.0113] | **NULL** (p=0.79) |
+
+**Q29 reported BO ahead under rule C by +0.2915 to +0.3598 at every cell. Scored the way classical practice prescribes, that becomes three nulls and one win of +0.0153.** The rule-C result was almost entirely an artefact of scoring the classical arm at an unconstrained argmax its own literature warns against.
+
+**The swing decomposition, one machine and one locator, all four cells:**
+
+| cell | DoE arm swing (A→C) | BO arm swing | ratio | DoE's share |
+|---|---|---|---|---|
+| d=6 σ=0.25 | +0.3205 | −0.0320 | **10.0 : 1** | **90.9%** |
+| d=6 σ=0.10 | +0.3408 | −0.0171 | 19.9 : 1 | 95.2% |
+| d=8 σ=0.25 | +0.2803 | −0.0191 | 14.7 : 1 | 93.6% |
+| d=8 σ=0.10 | +0.3155 | −0.0096 | 33.0 : 1 | 97.1% |
+
+The brief's ≈7:1 was an underestimate, and it mixed A's DoE arm with B's BO arm. Computed consistently it is **10:1 at the primary cell and up to 33:1**.
+
+### 📌 Prediction scored: headline right, both specifics wrong
+
+**Right:** cell 5 ≫ cell 3, and cell 5 worse than cell 4 — "mostly the polynomial, with a smaller real design contribution". That is what the primary cell shows.
+
+**Wrong 1 — cell 6's failure rate.** I predicted "frequent hard failures", especially at d=8 where p=45 against n=48 leaves 3 residual df. **Zero failures in 200 runs.** Every fit succeeded.
+
+**Wrong 2, and it reverses the standard intuition — the conditioning.** I predicted BO's clustered points would be badly conditioned for a quadratic. The opposite, at every cell:
+
+| | cond(full second-order matrix), median |
+|---|---|
+| **DoE design** | **8.1e16 – 1.1e18** — numerically singular |
+| **BO design** | **2.4e2 – 3.9e3** |
+
+**You can fit a full second-order response surface to BO-collected data. You cannot fit one to the sequential-DoE arm's own 48 points.** The DoE arm's stage 1 is a two-level screen with no interior points and its stage 2 holds the dropped factors at fixed levels, so a full *d*-dimensional quadratic is unidentifiable on its own design — the pipeline is only viable *because* it screens down to 4 factors first. The common objection "you cannot fit a response surface to adaptively-collected data" is, on this benchmark, exactly backwards.
+
+That said, cell 6's *recommendations* are the worst in the table (0.40–0.70). It fits; it just points somewhere terrible. **Estimability and usefulness are separate properties, and only the first ran the way the objection assumes.**
+
+### Caveat carried from the registration
+
+The 3−6 contrast confounds design with model dimensionality — cell 3's polynomial is reduced to the kept factors after screening, cell 6's is full *d*-dimensional, because the BO arm has no screening stage to reduce it. It is the weakest of the four contrasts and the registered primary does not depend on it.
