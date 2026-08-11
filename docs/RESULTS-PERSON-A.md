@@ -284,11 +284,11 @@ operative null for a bounded acquisition maximiser.)
 
 ## 7. Defects found — the recurring pattern, which is the most useful output
 
-**Eleven constructs that could not fail, were unfair, or were inferred wrongly, caught
+**Twelve constructs that could not fail, were unfair, or were inferred wrongly, caught
 before they reached a paper.** Eight were A's own. The consistency is the point: this is the default failure mode
 of measurement code, not bad luck.
 
-**Six of the ten are the same specific pattern — a check whose name carries a guarantee
+**Six of the twelve are the same specific pattern — a check whose name carries a guarantee
 its body does not verify** (1, 2, 3, 6, 8, 10). That is the single most reproducible
 finding in this project, and it is worth more than any individual defect: in every case
 the check *ran*, *passed*, and was *quoted as evidence*. Defect 10 is the cleanest
@@ -308,6 +308,7 @@ was malformed.
 | 8 | **A's lengthscale diagnostic anchored its decision rule on the prior MEDIAN (10.08) when the fit is MAP and its no-data attractor is the prior MODE (0.5016)** | The "prior is dominating" branch was unreachable and the "data is winning" branch was where an untrained model sits. Measured opening-design median: **0.502**. A conclusion was written, and committed, from a rule that could return only one answer |
 
 | 11 | **A's "correction" to stage1_23 LN511 would have overwritten a CORRECT cell.** Reasoning from "the table is the design of record", A inferred the figure strip must be wrong. The paper prints `+ + + + + -` (`pdf_crosscheck.md:129`) — the strip was right and the third-party transcription was the outlier. Caught only by reading the cross-check B had already written, which says in terms: *"Recorded so nobody 'fixes' a correct cell"* | A dataset silently corrupted in a cell no structural check can see — a 22-run D-optimal design stays valid, rank 22, under a single flip. **The failure mode is new: not a check that could not fail, but a plausible authority rule applied without checking the authority** |
+| 12 | **`results/e2-grid.json` was gitignored while five scripts and three fidelity gates anchored to it by path.** A's clone and B's clone therefore held two *different* E2 runs under one filename (qLogEI mean 0.1553 vs 0.1641), and **every gate passed in both** — `q29_symmetric.py` printed `max \|Δ\| 0.000e+00 over 50 rows` in B's clone, and the same gate passes in A's. B's −0.0708 entered the record as an independent recomputation of A's −0.0595, corroborated by two further artefacts that were also B's clone (`doe-scoring.log`, and `e2-run1-unfiltered.log`, which had been **committed with unresolved git conflict markers** holding both runs at once) | The project's most-quoted number contested against itself for a day, and Q29 filed a request that A "reconcile `report()` against the stored grid" — `report()` was correct throughout. **The failure mode is new again: a gate that verifies a regeneration against an untracked file can only report that a clone agrees with itself.** It is unfalsifiable by construction, and unlike defects 1/2/3 the check body is *right* — the defect is in what it is pointed at |
 
 | 10 | **The digitization's design check counted row TYPES and was quoted as proof it "matches the published design structure exactly"** — it never checked corner distinctness or that a response existed. Stage 2 shipped with corner `(-1,+1,+1,-1)` duplicated, `(-1,+1,+1,+1)` missing, and row 2's quartiles `NaN`; the check returned 16/8/1 and passed | The claim in `oracle_defensibility.md` was false, and one of 48 published conditions had no response at all. **Sixth instance of the could-not-fail pattern** (with 1, 2, 3, 6, 8) |
 

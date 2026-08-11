@@ -45,13 +45,12 @@ import torch
 warnings.filterwarnings("ignore")
 torch.set_num_threads(1)
 
-from botorch.acquisition.analytic import PosteriorMean
-from botorch.optim import optimize_acqf
 from scipy.stats import wilcoxon
 
 from boec.campaign import Campaign, CampaignConfig
 from boec.diagnostics import instance_bootstrap, reported_best_curve
 from boec.doe import run_doe_arm
+from boec.metrics import constrained_argmax
 from boec.oracles import load_ensemble
 from boec.torch_oracle import BiphasicOracle
 
@@ -60,20 +59,44 @@ N_INSTANCES = 25
 N_SEEDS = 2
 RULE = "=" * 84
 
+#: Screening budget and restart count for BOTH arms' recommendation locator.
+#: These are `metrics.constrained_argmax`'s defaults, which is what the DoE arm
+#: receives through `over_prediction_at_constrained_argmax` in `doe.py:335`.
+#: `tests/test_q29_locator.py` asserts they still are, so the two arms cannot
+#: drift apart by someone changing a default.
+N_RESTARTS = 20
+RAW_SAMPLES = 4096
 
-def posterior_mean_argmax(campaign: Campaign, bounds: torch.Tensor) -> torch.Tensor:
+
+def posterior_mean_argmax(campaign: Campaign, bounds: torch.Tensor,
+                          seed: int) -> torch.Tensor:
     """The recipe the GP itself recommends: argmax of its posterior MEAN.
 
     Not the acquisition function — acquisition deliberately chases variance, which
     is the right thing when deciding where to look next and the wrong thing when
     naming the recipe you believe is best. This is the GP's analogue of the DoE
     arm's stage-4 point: the model's own claim about where the optimum is.
+
+    **CORRECTED (T1.4c). The two arms were not being asked the same question.**
+    This previously called BoTorch's `optimize_acqf(PosteriorMean(...), q=1,
+    num_restarts=10, raw_samples=256)` — a script-local locator, **unseeded**, at a
+    **16x smaller Sobol screen** than the DoE arm's. The DoE arm goes through
+    `metrics.constrained_argmax` at `n_restarts=20, raw_samples=4096, seed=seed`.
+    A rule that scores each method "at the point its model recommends" is only a
+    comparison of models if the recommendation is *located* the same way; otherwise
+    part of the gap is the search, and it favours whichever arm got the bigger
+    screen. Both arms now use `constrained_argmax` at identical settings and the
+    same per-campaign seed.
     """
     model = campaign.fit()
-    candidate, _ = optimize_acqf(
-        PosteriorMean(model), bounds=bounds, q=1, num_restarts=10, raw_samples=256,
-    )
-    return candidate.detach().reshape(-1)
+
+    def predict(Z: torch.Tensor) -> torch.Tensor:
+        with torch.no_grad():
+            return model.posterior(Z).mean
+
+    x, _, _ = constrained_argmax(predict, bounds, n_restarts=N_RESTARTS,
+                                 raw_samples=RAW_SAMPLES, seed=seed)
+    return x.detach().reshape(-1)
 
 
 def run_cell(dim: int, sigma: float) -> list[dict]:
@@ -89,7 +112,7 @@ def run_cell(dim: int, sigma: float) -> list[dict]:
             # rule A, regenerated so it can be checked against the stored grid
             bo_a = float(reported_best_curve(o.truth(c.train_X), c.train_Y)[-1])
             # rule C — the GP's own recommendation
-            x_rec = posterior_mean_argmax(c, bounds)
+            x_rec = posterior_mean_argmax(c, bounds, seed)
             bo_c = float(o.truth(x_rec.unsqueeze(0)))
 
             # --- DoE ------------------------------------------------------

@@ -8,9 +8,26 @@ separate processes changes no number, only how long you wait. Each shard writes
 `results/e2-grid-d{dim}-s{sigma}.json`; `run_e2.py --merge` reassembles and reports.
 
 Seeds are per (instance, seed) and unaffected by which process does the work, so a
-sharded run and a sequential one produce identical output. There is a test for that
-claim in `tests/test_e2_shard.py` rather than only this docstring — a comment asserting
-reproducibility is exactly the kind of promise T9 showed can be false.
+sharded run and a sequential one are *expected* to produce identical output.
+
+**CORRECTION (T1.4).** This docstring previously ended: "There is a test for that claim
+in `tests/test_e2_shard.py` rather than only this docstring — a comment asserting
+reproducibility is exactly the kind of promise T9 showed can be false." **There is no
+such file, and there never was.** The sentence guarding against an unbacked
+reproducibility promise was itself an unbacked reproducibility promise, citing a test
+that does not exist. Same defect, one level up.
+
+What actually backs the claim now: `scripts/probe_e2_determinism.py` regenerates both
+adaptive arms at all four cells **sequentially, in a single process**, and compares
+every row against the committed `results/e2-grid.json`, which was built by merging four
+shard processes. Matching there is the sharded-versus-sequential check, run on real
+data rather than asserted.
+
+This matters because A's sharded run and B's sequential run *did* disagree, on the two
+arms that call `optimize_acqf` and on nothing else (see the provenance header in
+`results/e2-run1-unfiltered.log`). Those two runs differ in execution mode **and** in
+machine, so they cannot separate the two explanations on their own. The probe holds the
+machine fixed and varies only the mode, which is what makes it decisive.
 """
 
 from __future__ import annotations

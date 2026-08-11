@@ -3,6 +3,12 @@
 #
 #   uv venv --python 3.11
 #   uv pip install -r requirements.txt
+#   uv pip install -e .            # <-- REQUIRED, and it was missing until T1.4
+#
+# Without the editable install, `boec` is importable only under pytest (pyproject sets
+# pythonpath=["src"] for pytest alone). 22 of 26 scripts died on ModuleNotFoundError
+# from a clean checkout, including every `python scripts/run_*.py` command named beside
+# a number in docs/RESULTS-PERSON-A.md.
 #
 # Python 3.11.15. No GPU, no Docker, no Hydra, no Ax.
 

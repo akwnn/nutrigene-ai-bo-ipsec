@@ -21,6 +21,22 @@ results/*
 !results/figures/
 results/figures/*
 
+# EXCEPTION — the E2 grid and its four shards ARE committed. 523 KB total.
+#
+# Not because they are precious, but because five scripts and three fidelity
+# gates anchor to `results/e2-grid.json` BY PATH. While it was ignored, A's clone
+# and B's clone held two different E2 runs under that one filename, and every
+# gate passed in both — a gate that compares a regeneration against an untracked
+# file can only report that a clone agrees with itself. That is how a -0.0708
+# from B's machine ended up in the record as an independent recomputation of A's
+# -0.0595. The shards are committed too, so `run_e2.py --merge` is auditable
+# rather than a claim in a log line. See tests/test_e2_provenance.py.
+!results/e2-grid.json
+!results/e2-grid-d6-s0.25.json
+!results/e2-grid-d6-s0.1.json
+!results/e2-grid-d8-s0.25.json
+!results/e2-grid-d8-s0.1.json
+
 # Oracle instances: DECIDED — the version-stamped ensembles under
 # data/oracles/<oracle_version>/ ARE committed, parquet included. 456 KB total.
 #

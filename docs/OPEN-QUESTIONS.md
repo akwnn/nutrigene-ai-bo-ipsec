@@ -1281,12 +1281,20 @@ Primary cell first — **d=6, σ=0.25, 25 instances × 2 seeds, qLogEI vs DoE**,
 
 ### ✅ RESULT — the prediction holds, and the verdict is scoring-convention dependent
 
-`scripts/q29_symmetric.py`, log at `results/q29-symmetric.log`. **Fidelity gate passed first: rule A regenerates the stored `e2-grid.json` qLogEI rows at max |Δ| exactly 0.0 over 50 rows**, so this is the same computation E2 ran, not a lookalike.
+`scripts/q29_symmetric.py`, log at `results/q29-symmetric.log`. ~~**Fidelity gate passed first: rule A regenerates the stored `e2-grid.json` qLogEI rows at max |Δ| exactly 0.0 over 50 rows**, so this is the same computation E2 ran, not a lookalike.~~
+
+> **🔶 EVERY NUMBER IN THIS SECTION IS STALE. Do not quote it. Two separate defects, both found in T1.4.**
+>
+> **1 — the fidelity gate proved nothing.** It ran in B's clone against B's untracked `e2-grid.json`, so "regenerates the stored grid at max |Δ| exactly 0.0" says only that B's regeneration matched B's copy. A's committed grid gives qLogEI **0.1553**, not 0.1641, and the rule-A difference **−0.0595**, not −0.0708. See the resolved Q29 discrepancy entry below.
+>
+> **2 — the two arms did not use the same locator, so rule C is not yet a like-for-like comparison.** The DoE arm located its recommendation with `metrics.constrained_argmax` at `n_restarts=20, raw_samples=4096, seed=seed`. The BO arm used a script-local `optimize_acqf(PosteriorMean(...), num_restarts=10, raw_samples=256)` — **unseeded, and a 16× smaller Sobol screen**. Under a rule whose whole point is "score each method where its own model points", an asymmetric *locator* puts part of the measured gap into the search rather than the model, and it favours the arm with the bigger screen — here the DoE arm, i.e. **against** the direction actually reported, so +0.2915 is if anything conservative. That is an argument for re-running it, not for keeping it.
+>
+> Fixed in `scripts/q29_symmetric.py` (both arms now call `constrained_argmax` at identical settings and the same per-campaign seed) and locked by `tests/test_q29_locator.py`, which checks it over the AST. **The table below is retained only so the corrected run can be diffed against it.**
 
 | rule | qLogEI | DoE | DoE − qLogEI | 95% CI | p | verdict |
 |---|---|---|---|---|---|---|
-| **A** — best observed *(registered primary)* | 0.1641 | 0.0934 | **−0.0708** | [−0.0878, −0.0528] | <0.0001 | **DoE better** |
-| **C** — each model's own recommendation | 0.1207 | 0.4104 | **+0.2915** | [+0.2630, +0.3223] | <0.0001 | **BO better** |
+| **A** — best observed *(registered primary)* | 🔶 0.1641 | 🔶 0.0934 | 🔶 **−0.0708** | [−0.0878, −0.0528] | <0.0001 | **DoE better** |
+| **C** — each model's own recommendation | 🔶 0.1207 | 🔶 0.4104 | 🔶 **+0.2915** | [+0.2630, +0.3223] | <0.0001 | **BO better** |
 
 **The registered prediction was correct**, and by more than expected: under a symmetric rule BO does not merely win, it wins by four times the margin it loses by under rule A. The mechanism is the one registered in advance — the DoE arm's recommendation carries **0.41 regret against a response bounded at 1.0**, while its best *observed* point carries 0.09. Its model points somewhere much worse than the best place it happened to look. The GP's recommendation, by contrast, is **better than its own best observation** (0.1207 vs 0.1641): the posterior mean smooths noise, so the GP's named recipe beats the lucky-draw incumbent.
 
@@ -1323,9 +1331,38 @@ Every rule-C result p < 0.0001. **BO wins under the symmetric rule in every cell
 
 ### ⚠️ Discrepancy found while checking: `e2.log`'s headline disagrees with its own stored grid
 
-`results/e2.log` prints the primary-cell paired difference as **−0.0595** [−0.0792, −0.0373]. Recomputed directly from `results/e2-grid.json` — the data that same run persisted — it is **−0.0708**, and Q28's independent `doe-scoring.log` also gives −0.0708, as does this run.
+> **✅ RESOLVED (T1.4). `report()` was never wrong. The two clones held two different E2 runs under one gitignored filename.** The entry as originally written is kept below, struck through, because the way it was wrong is the finding.
 
-**Three computations agree; the printed headline is the outlier**, off by about 19%. The direction, significance and conclusion are unchanged, so nothing downstream reverses — but it is the project's most-quoted number and the figure in the log is not the figure in the data. **A should reconcile `run_e2.py`'s `report()` against the stored grid before anything is written up from the printed table.**
+~~`results/e2.log` prints the primary-cell paired difference as **−0.0595** [−0.0792, −0.0373]. Recomputed directly from `results/e2-grid.json` — the data that same run persisted — it is **−0.0708**, and Q28's independent `doe-scoring.log` also gives −0.0708, as does this run.~~
+
+~~**Three computations agree; the printed headline is the outlier**, off by about 19%. The direction, significance and conclusion are unchanged, so nothing downstream reverses — but it is the project's most-quoted number and the figure in the log is not the figure in the data. **A should reconcile `run_e2.py`'s `report()` against the stored grid before anything is written up from the printed table.**~~
+
+#### What was actually going on
+
+`results/e2-grid.json` was **gitignored** while five scripts and three fidelity gates anchored to it *by path*. So "recomputed directly from `results/e2-grid.json`" did not name one artefact — it named one filename per clone:
+
+| | qLogEI mean regret | doe − qlogei, primary cell | execution |
+|---|---|---|---|
+| **A's clone** — the run behind `e2.log` and the committed grid | 0.1553 | **−0.0595** | sharded, 4 processes |
+| **B's clone** | 0.1641 | **−0.0708** | sequential, 1 process |
+
+Reproduced from the committed grid in `tests/test_e2_provenance.py`: the primary-cell figure is **−0.0595** under every aggregation tried — instance-mean, instance-median, run-level, and difference-of-medians (−0.0719, −0.0648, −0.0527 for the median variants, none of them −0.0708). `e2.log`, all four shard files and `docs/RESULTS-PERSON-A.md` §1 agree exactly.
+
+**The three "independent" computations were not independent.** All three were run in B's clone against B's copy:
+
+- `results/doe-scoring.log` prints qLogEI = **0.1666**, and 0.0958 − 0.1666 = −0.0708. Its DoE fidelity gate passed at 1e-9 — against B's grid.
+- `results/q29-symmetric.log` prints qLogEI = **0.1641** and `FIDELITY vs results/e2-grid.json: max |delta| 0.000e+00 over 50 rows` — B regenerating B's numbers and matching B's grid.
+- `results/e2-run1-unfiltered.log` was committed **with unresolved git conflict markers in it** (9 conflicts, `<<<<<<< HEAD` / `>>>>>>> f39d158`), so it carried both runs interleaved. The `−0.0708` a reader finds there is the `f39d158` side.
+
+**A gate that compares a regeneration against an untracked file cannot detect this.** It can only report that a clone agrees with itself, which is exactly what all three did. `probe_e2_determinism.py` gets `max |delta| 0.000e+00` in A's clone too — the same verdict, the other number.
+
+#### What is fixed
+
+`results/e2-grid.json` and its four shards are now **tracked** (`.gitignore` carries the exception and the reason). `run_e2.py --merge` exists and reproduces the committed grid **byte-for-byte** from the committed shards, so `e2.log`'s opening line "merged 1300 rows from 4 shards" is now checkable rather than assertable. `tests/test_e2_provenance.py` guards all of it, including `test_the_guard_rejects_the_other_clones_number`, which feeds −0.0708 through the same comparison to prove the guard can fail.
+
+#### What is NOT fixed, and is a real finding
+
+**A's and B's runs genuinely disagree, and only on the two arms that call `optimize_acqf`.** `random`, `sobol`, `lhs`, `coord` and `doe` are identical to the digit across the two machines; `qlogei` and `qlognei` are not. The two runs differ in execution mode *and* in machine, so they cannot separate those explanations. `probe_e2_determinism.py` holds the machine fixed and varies only the mode — see the Q21 note below for what it also settles.
 
 ---
 
@@ -1379,11 +1416,19 @@ Identical in structure to d=6, so the two dimensions stay comparable. **It requi
 
 Recorded because it bears on how the replication is described, not to relitigate.
 
-**This session did not run E2, sharded or otherwise.** `scripts/run_e2.py` has **no sharding support at all** — no `argparse`, no shard flag — so a sharded run of it is not possible. And the E2 commits (`fbb98e9`, `0aeee09`) are authored by **josephyung6686**, a different account from this session's.
+**This session did not run E2, sharded or otherwise.** ~~`scripts/run_e2.py` has **no sharding support at all** — no `argparse`, no shard flag — so a sharded run of it is not possible.~~ And the E2 commits (`fbb98e9`, `0aeee09`) are authored by **josephyung6686**, a different account from this session's.
+
+> **⚠️ CORRECTION (T1.4) to the struck clause.** The inference is invalid. Sharding never lived in `run_e2.py` — it lives in **`scripts/run_e2_shard.py`**, which imports `run_e2` and runs one `(dim, sigma)` cell per process, and which shipped **in `0aeee09` itself**, the very commit that produced the sharded grid. So "no argparse in `run_e2.py`" was true and "a sharded run is not possible" did not follow from it. (`run_e2.py` now carries `--merge`, and it reproduces the committed grid byte-for-byte from the committed shards.)
+>
+> The authorship point stands, and there is now direct physical evidence for the *other* side of it: the BoTorch warnings in `results/e2-run1-unfiltered.log` carry venv paths reading `/Users/alanakwan/Personal Projects/nutrigene-ai-bo-ipsec/...`. **A second E2 run on B's machine did happen**, sequentially, and it disagrees with A's on `qlogei` and `qlognei` — see the resolved Q29 entry above for the table.
 
 So if two E2 runs exist, they are **A's and the other session's** — not A's and this one's. **The replication may well be genuine, but its provenance has to be re-established before "reproduced across two independent runs" goes into a paper.** The same misattribution ran earlier: `run_e2.py` and its grid design were credited to this session and are A's.
 
-**What does corroborate independently:** the Q21 solver-failure determination. Counted from `results/e2-run1-unfiltered.log` here (9 failures, per-cell rates, max 0.875%) and from the other session's own run (9 / 3400 = 0.26%) — same conclusion by different routes, **too rare to matter**. Q21's repair rule is registered and has nothing to fire on, which should be stated plainly so the result is not re-opened later as an excuse.
+~~**What does corroborate independently:** the Q21 solver-failure determination. Counted from `results/e2-run1-unfiltered.log` here (9 failures, per-cell rates, max 0.875%) and from the other session's own run (9 / 3400 = 0.26%) — same conclusion by different routes, **too rare to matter**.~~ Q21's repair rule is registered and has nothing to fire on, which should be stated plainly so the result is not re-opened later as an excuse.
+
+> **⚠️ CORRECTION (T1.4) — the two routes are very likely the same route.** Both counts are **9**. The 9 in `results/e2-run1-unfiltered.log` are now known to be **B's**, from B's machine (venv paths). If "the other session's own run" is also B's, then the same 9 failures were counted twice and reported as mutual corroboration. Two counts of one artefact agreeing is not two routes agreeing.
+>
+> **A's actual second-try count has never been measured** — A's shard processes never had their stderr captured. It is being measured now: `scripts/probe_e2_determinism.py` regenerates both adaptive arms at all four cells on A's machine, and `results/e2-determinism.log` holds the warning stream. The registered 1% threshold is unchanged and predates all of this, so applying it to A's rate is applying the rule, not rewriting it.
 
 ---
 
@@ -1518,9 +1563,21 @@ This is the rule doing the job it was written for. The threshold was fixed while
 
 ### ⚠️ The evidence was nearly lost
 
-**`results/e2.log` as committed in `0aeee09` contains ZERO of these warnings** — 77 lines against the run's actual 224, with every BoTorch warning stripped. The determination above is not reproducible from the committed artefact.
+~~**`results/e2.log` as committed in `0aeee09` contains ZERO of these warnings** — 77 lines against the run's actual 224, with every BoTorch warning stripped. The determination above is not reproducible from the committed artefact.~~
 
-The full log is restored as **`results/e2-run1-unfiltered.log`**. **A pre-registered decision rule is worth nothing if the evidence it consumes is filtered out of the record before anyone can check it** — and this one exonerates the run rather than condemning it, which is precisely why it must be auditable.
+~~The full log is restored as **`results/e2-run1-unfiltered.log`**. **A pre-registered decision rule is worth nothing if the evidence it consumes is filtered out of the record before anyone can check it** — and this one exonerates the run rather than condemning it, which is precisely why it must be auditable.~~
+
+> **⚠️ CORRECTION (T1.4). The counts above are wrong, and the determination measures a different run from the one it licenses.**
+
+**Nothing was filtered.** `results/e2.log` is the output of the **merge-and-report** step, not of the campaigns — its first line is "merged 1300 rows from 4 shards". No campaign ran in that process, so it contains no BoTorch warnings by construction rather than by stripping. A's four shard processes wrote their campaign output somewhere that was never captured.
+
+**"224 lines" is not any run's log.** 224 was the line count of `results/e2-run1-unfiltered.log` *while it still contained unresolved conflict markers* — two runs interleaved, plus 27 marker lines. Separated: A's side is **78 lines and byte-identical to `results/e2.log`**; B's side is **167 lines** and holds all the warnings.
+
+**All 9 "Optimization failed on the second try" warnings are from B's run on B's machine** — the venv paths in them read `/Users/alanakwan/...`. So the Q21 determination's per-cell rates (0.222% / 0% / 0.875% / 0%) characterise **B's sequential run**, while the run they were used to license is **A's sharded run, the one in the committed grid**. The rule was applied to the wrong artefact. Its structural denominators (900/900/800/800 acquisition calls) are unaffected, and the conclusion may well carry over — but "no cell trips the threshold" has not been established for the run that produced the numbers in the paper.
+
+**A's own rate is being measured, not assumed.** `scripts/probe_e2_determinism.py` regenerates both adaptive arms at all four cells on A's machine and its stderr is captured in `results/e2-determinism.log`; the second-try count there is A's rate, evaluated against the same registered 1% threshold. The threshold is unchanged and was fixed long before this, so re-applying it is not re-deriving it.
+
+The file itself is fixed: the conflict markers are resolved and it now opens with a provenance header stating whose run it is. **The original point stands and is now better evidenced than when it was made** — a pre-registered rule is worth nothing if the evidence it consumes cannot be audited, and this evidence turned out to belong to a different run than everyone assumed.
 
 ---
 

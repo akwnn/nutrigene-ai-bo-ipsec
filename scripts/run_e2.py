@@ -20,6 +20,7 @@ same mistake here would be indefensible.
 
 from __future__ import annotations
 
+import argparse
 import json
 from pathlib import Path
 
@@ -121,7 +122,45 @@ def run_cell(inst, dim, sigma, seed) -> dict:
     return out
 
 
+SHARDS = "results/e2-grid-d*.json"
+
+
+def merge() -> list[dict]:
+    """Reassemble the four `run_e2_shard.py` outputs into the grid.
+
+    This is how `results/e2-grid.json` and `results/e2.log` were actually produced
+    — `e2.log`'s first line is "merged 1300 rows from 4 shards" — but the flag was
+    never committed, so the reproduction command named in `docs/RESULTS-PERSON-A.md`
+    silently meant "re-run the whole grid for an hour and a half" instead.
+
+    Shards are taken in sorted filename order, which is what the original merge did:
+    `s0.1` sorts before `s0.25`, so the cells come out (6, 0.1), (6, 0.25), (8, 0.1),
+    (8, 0.25) rather than in `SIGMAS` order. Preserved deliberately — changing it
+    would rewrite the committed grid for no reason and break its byte-identity with
+    every number already published from it.
+    """
+    paths = sorted(Path(".").glob(SHARDS))
+    if len(paths) != len(DIMS) * len(SIGMAS):
+        raise SystemExit(f"expected {len(DIMS) * len(SIGMAS)} shards, found "
+                         f"{len(paths)}: {[p.name for p in paths]}")
+    rows = [r for p in paths for r in json.loads(p.read_text())]
+    print(f"merged {len(rows)} rows from {len(paths)} shards")
+    return rows
+
+
 def main() -> None:
+    ap = argparse.ArgumentParser(description=__doc__)
+    ap.add_argument("--merge", action="store_true",
+                    help="reassemble the shard files instead of re-running the grid")
+    args = ap.parse_args()
+
+    Path("results").mkdir(exist_ok=True)
+    if args.merge:
+        rows = merge()
+        Path("results/e2-grid.json").write_text(json.dumps(rows, indent=1))
+        report(rows)
+        return
+
     rows = []
     for dim in DIMS:
         ens = load_ensemble(dim=dim)[:N_INSTANCES]
@@ -141,7 +180,6 @@ def main() -> None:
                         ))
             print(f"  d={dim} sigma={sigma} done ({len(rows)} rows)", flush=True)
 
-    Path("results").mkdir(exist_ok=True)
     Path("results/e2-grid.json").write_text(json.dumps(rows, indent=1))
     report(rows)
 

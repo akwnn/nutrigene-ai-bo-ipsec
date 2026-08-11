@@ -6,8 +6,14 @@ This exists because the results are in, the logs disagree with each other, and w
 writes first from whichever log they happen to open will set the paper's claim by
 accident. Three known contradictions between artefacts:
 
-- `results/e2.log` prints the primary-cell difference as **−0.0595**; the grid that
-  same run persisted gives **−0.0708** (Q29). Three computations agree against the log.
+- ~~`results/e2.log` prints the primary-cell difference as **−0.0595**; the grid that
+  same run persisted gives **−0.0708** (Q29). Three computations agree against the log.~~
+  **RESOLVED (T1.4): the log is right and the three computations were one computation.**
+  `results/e2-grid.json` was gitignored, so A's clone and B's clone held two different
+  E2 runs under one filename. All three "independent" recomputations ran in B's clone
+  against B's copy. The committed grid gives **−0.0595** under every aggregation, and
+  `run_e2.py`'s `report()` was never wrong. See the resolved Q29 entry and
+  `tests/test_e2_provenance.py`.
 - `results/E4-RESULTS-v2.md` labels the **pooled** figure "pre-registered primary";
   the pre-registration names a **single cell**, and the two disagree in sign (Q19).
 - E2's headline reverses depending on a scoring rule the pre-registration never
@@ -66,14 +72,26 @@ else.** Same runs, same seeds, same data:
 
 | cell | rule A — best observed *(registered)* | rule C — each model's recommendation |
 |---|---|---|
-| d=6 σ=0.25 | **−0.0708** DoE better | **+0.2915** BO better |
-| d=6 σ=0.10 | +0.0042 null | **+0.3598** BO better |
-| d=8 σ=0.25 | **−0.0321** DoE better | **+0.2689** BO better |
-| d=8 σ=0.10 | +0.0015 null | **+0.3253** BO better |
+| d=6 σ=0.25 | **−0.0595** DoE better | **+0.2915** BO better ⚠️ |
+| d=6 σ=0.10 | +0.0018 null | **+0.3598** BO better ⚠️ |
+| d=8 σ=0.25 | **−0.0321** DoE better ⚠️ | **+0.2689** BO better ⚠️ |
+| d=8 σ=0.10 | +0.0015 null ⚠️ | **+0.3253** BO better ⚠️ |
 
-All rule-C results p < 0.0001; rule A regenerates the stored grid at max |Δ| **exactly
-0.0 over 200 rows**. At the low-noise cells the convention changes a *tie* into a
-decisive win — it does not merely rescale the effect. **Blocked on Q28 / T16.**
+> **⚠️ PROVENANCE (T1.4). Every figure above was computed in B's clone, against B's
+> untracked copy of `results/e2-grid.json`.** The two d=6 rule-A cells are corrected
+> here from the now-committed grid: **−0.0595** (was −0.0708) and **+0.0018** (was
+> +0.0042). The d=8 rule-A cells and the whole rule-C column are **not yet recomputed
+> in A's clone** and are marked ⚠️ until they are — the grid has no d=8 `doe` rows, so
+> those need `run_e2_doe_d8.py` re-run, and rule C is separately blocked on T1.4c
+> (the two arms used different locators at a 16× different screening budget, so
+> **+0.2915 is provisional**). Nothing in this table may be quoted while ⚠️ stands.
+
+~~All rule-C results p < 0.0001; rule A regenerates the stored grid at max |Δ| **exactly
+0.0 over 200 rows**.~~ The "regenerates the stored grid at max |Δ| exactly 0.0" gate is
+the one that could not detect any of this: it compared B's regeneration against B's own
+untracked grid, so it reported that a clone agrees with itself. At the low-noise cells
+the convention changes a *tie* into a decisive win — it does not merely rescale the
+effect. **Blocked on Q28 / T16, and now also on T1.4c.**
 
 **2.2 The GP's uncertainty versus plain distance is κ-dependent and reverses sign.**
 Pooled −0.0269 [−0.0728, +0.0182], "no advantage". By κ: **+0.1068** [+0.0461, +0.1668]
