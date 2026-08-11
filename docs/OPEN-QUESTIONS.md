@@ -850,6 +850,33 @@ Not a guess. E4 measured over-prediction at each model's own constrained argmax 
 
 Primary cell first — **d=6, σ=0.25, 25 instances × 2 seeds, qLogEI vs DoE**, budget 48, identical seeds and openings to E2. Extended to the other three cells only if the primary completes cleanly. Paired Wilcoxon at instance level (n=25) governs significance, instance bootstrap gives the interval, per Q20 §2.
 
+### ✅ RESULT — the prediction holds, and the verdict is scoring-convention dependent
+
+`scripts/q29_symmetric.py`, log at `results/q29-symmetric.log`. **Fidelity gate passed first: rule A regenerates the stored `e2-grid.json` qLogEI rows at max |Δ| exactly 0.0 over 50 rows**, so this is the same computation E2 ran, not a lookalike.
+
+| rule | qLogEI | DoE | DoE − qLogEI | 95% CI | p | verdict |
+|---|---|---|---|---|---|---|
+| **A** — best observed *(registered primary)* | 0.1641 | 0.0934 | **−0.0708** | [−0.0878, −0.0528] | <0.0001 | **DoE better** |
+| **C** — each model's own recommendation | 0.1207 | 0.4104 | **+0.2915** | [+0.2630, +0.3223] | <0.0001 | **BO better** |
+
+**The registered prediction was correct**, and by more than expected: under a symmetric rule BO does not merely win, it wins by four times the margin it loses by under rule A. The mechanism is the one registered in advance — the DoE arm's recommendation carries **0.41 regret against a response bounded at 1.0**, while its best *observed* point carries 0.09. Its model points somewhere much worse than the best place it happened to look. The GP's recommendation, by contrast, is **better than its own best observation** (0.1207 vs 0.1641): the posterior mean smooths noise, so the GP's named recipe beats the lucky-draw incumbent.
+
+### What this does and does not establish
+
+**It does not mean "BO wins after all",** and per the decision rule fixed before the run, the headline is not re-designated. What it establishes is stronger and less comfortable:
+
+> **The E2 verdict is determined by the scoring convention, not by the methods.** On identical runs, identical seeds and identical data, DoE beats BO by −0.07 or loses to it by +0.29 depending on a choice the pre-registration never made.
+
+Rule A is still the registered primary and still says DoE wins. Rule C is a declared secondary and says the opposite. **Both must be reported together**; quoting either alone is a choice of answer, and the project has now caught that same pattern in Q16, Q19, Q28 and here.
+
+**The practitioner-facing reading**, which is what the paper is actually about: if you run the published DoE workflow and *make the recipe it recommends*, you do materially worse than BO. If you run it and instead **keep the best thing you happened to measure along the way**, you do better than BO. The DoE pipeline's own output is its weakest product — which is precisely the E4 over-prediction finding arriving from a second direction, in regret units.
+
+### ⚠️ Discrepancy found while checking: `e2.log`'s headline disagrees with its own stored grid
+
+`results/e2.log` prints the primary-cell paired difference as **−0.0595** [−0.0792, −0.0373]. Recomputed directly from `results/e2-grid.json` — the data that same run persisted — it is **−0.0708**, and Q28's independent `doe-scoring.log` also gives −0.0708, as does this run.
+
+**Three computations agree; the printed headline is the outlier**, off by about 19%. The direction, significance and conclusion are unchanged, so nothing downstream reverses — but it is the project's most-quoted number and the figure in the log is not the figure in the data. **A should reconcile `run_e2.py`'s `report()` against the stored grid before anything is written up from the printed table.**
+
 ---
 
 ## 🔴 Q24 [A + B] · **"BO beats current practice" is not supported anywhere it was tested — and the d=8 table reads like the opposite**

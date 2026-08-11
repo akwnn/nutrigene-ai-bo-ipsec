@@ -1,0 +1,14 @@
+
+====================================================================================
+Q29 · d=6 · sigma=0.25 · 25 instances x 2 seeds
+====================================================================================
+                                qLogEI         DoE    DoE - qLogEI                  95% CI   wilcoxon
+   rule A  (best observed)      0.1641      0.0934         -0.0708      [-0.0878, -0.0528]     0.0000  DoE better
+rule C  (each model's rec)      0.1207      0.4104         +0.2915      [+0.2630, +0.3223]     0.0000  BO better
+
+  Positive difference = DoE carries more regret = BO is better.
+  Rule A is the registered primary (Q20); rule C is Q29's declared secondary.
+
+  FIDELITY vs results/e2-grid.json (qLogEI rule A): max |delta| 0.000e+00 over 50 rows
+
+  written to results/q29-symmetric.json
