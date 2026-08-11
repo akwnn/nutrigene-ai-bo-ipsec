@@ -2334,3 +2334,109 @@ every coordinate, or the GP's landing further out than the polynomial's.
 prominently. If the GP fits these 25 conditions no better than the polynomial, the
 recommendation comparison means much less, and that has to be visible rather than
 footnoted.
+
+---
+
+## ✅ Q33 RESULT — the registered prediction HELD, and one check qualifies the whole thing
+
+`scripts/run_q33_extrapolation.py` · `results/q33-extrapolation.log` ·
+`tests/test_q33_extrapolation.py` (6 guards, including the gate and the single-locator
+assertion). 24 usable of 25 stage-2 conditions, coded space, one locator for both arms.
+
+### The measurement
+
+| | c | civ | ln411 | fn | max beyond ±1 |
+|---|---|---|---|---|---|
+| **polynomial** | −0.4491 | **−2.0000** | 0.6851 | **−2.0000** | **1.0000** (at the search wall) |
+| **GP** | −0.8437 | 0.6638 | 0.9581 | 0.3333 | **0.0000** |
+| TheO (published) | 0.0028 | **+1.4000** | 0.1250 | −1.0000 | 0.4000 |
+
+**The polynomial's distance is a lower bound set by my search box, not by the model.**
+It sits exactly on the boundary in `civ` and `fn` at every extension tested:
+
+| search box | polynomial argmax | beyond ±1 | GP argmax | beyond ±1 |
+|---|---|---|---|---|
+| ±1.0 | 0.154, **+1.000**, 0.460, **−1.000** | 0.000 | −0.844, 0.664, 0.958, 0.333 | 0 |
+| ±1.5 | 0.310, **+1.500**, 0.472, **−1.500** | 0.500 | *identical* | 0 |
+| ±2.0 | −0.449, **−2.000**, 0.685, **−2.000** | 1.000 | *identical* | 0 |
+| ±3.0 | −0.596, **−3.000**, 0.809, **−3.000** | 2.000 | *identical* | 0 |
+| ±5.0 | −0.889, **−5.000**, 1.056, **−5.000** | 4.000 | *identical* | 0 |
+
+**The polynomial runs to whatever wall it is given; the GP's argmax is bit-identical at
+every extension from ±1 to ±5.** The GP is not marginally inside — it is stable and
+indifferent to the search domain.
+
+**Why:** the polynomial's unconstrained stationary point is a **saddle** (Hessian
+eigenvalues −1.828, −0.935, +0.072, +0.997) at `fn = +5.76`, 4.76 beyond the boundary.
+A saddle has no interior maximum, so maximising it over any box lands on a wall by
+construction. Its recommendation is not even directionally stable: `civ` flips from
+**+1.5 to −2.0** as the box widens, because the two ridge directions trade places.
+
+**At ±1 — a constrained optimiser, which is what JMP's profiler is — the polynomial gives
+`civ = +1.000, fn = −1.000`.** That is TheO's signature: fibronectin pinned at its floor,
+Collagen IV at or beyond its ceiling (published +1.40). The published optimum is what this
+surface produces.
+
+### Supporting quantities
+
+| | polynomial | GP |
+|---|---|---|
+| leverage `h` at own recommendation | **9.188** | 0.487 |
+| prediction at own recommendation | **5.785** | 1.967 |
+| 95% interval half-width there | **4.815** | 0.746 |
+| distance to TheO (euclidean) | 3.616 | 1.931 |
+
+Mean leverage over the 24 design points is **0.625**; TheO's is 1.646. **The polynomial
+recommends a point at 15× the average leverage of its own design** and predicts **5.785**
+against an observed best of **4.011** — 44% above anything measured — with an interval
+[0.970, 10.601] wider than the entire range of the data. The GP's recommendation sits at
+*below-average* leverage (0.487) and predicts within the observed range.
+
+Distance between the two recommendations: **3.574**.
+
+### ⚠️ The check that qualifies all of it — item 8, reported prominently as required
+
+| model | LOO RMSE | LOO MAE |
+|---|---|---|
+| polynomial | 1.0720 | 0.8566 |
+| GP | **0.9355** | **0.6745** |
+| *sd of the 24 responses* | *1.0138* | — |
+
+**Neither model predicts these conditions well.** The polynomial's LOO RMSE is **worse
+than predicting the mean** (1.0720 against 1.0138 — 5.7% worse). The GP beats the mean by
+only **7.7%**.
+
+**This is the most important caveat in the result and it is not a footnote.** The
+recommendation comparison is between two models that barely fit. The GP's advantage in
+*geometry* is large and unambiguous; its advantage in *accuracy* is 7.7% over a constant.
+Anyone quoting the extrapolation finding must quote this beside it.
+
+### The registered prediction, scored
+
+**The primary claim HELD in full**, and per §6 that is the first reading: *the mechanism
+reproduces on real data* — the polynomial extrapolated where the GP did not.
+
+**My stated most-likely outcome was WRONG, and diagnosably so.** I predicted a *partial*
+result: both models pushing fibronectin toward or past −1, with the polynomial
+additionally extrapolating in another coordinate. The reasoning was that the top condition
+(run 13) sits at `fn = -1`, so the surface should read as "less fibronectin is better" and
+drag the GP down with it. **The GP put fibronectin at +0.333** — the opposite direction.
+The error was reading a single top condition as a monotone trend; the GP fits local
+structure across all 24 and does not see one.
+
+Getting the headline right for partly the wrong reason is worth recording as exactly that.
+
+### What this does not establish — restated after the numbers, unchanged from §4
+
+- **No outcome claim for the GP's recommendation.** It was never built. The statement is
+  *"the polynomial pointed outside its data, the published record shows what happened when
+  it did, and the GP pointed somewhere else"* — **not** "the GP would have worked".
+- **Fibronectin at −1 is a design floor.** The polynomial reaches it and keeps going; the
+  GP does not go there at all. For either arm, a recommendation at `fn = -1` reflects a
+  bound the published design imposed.
+- **One study, one lab, one assay, 24 conditions read off a figure**, against a published
+  per-condition SEM of 38–66% of the between-condition spread. The source assay is the
+  binding constraint, not the ~0.037 optical reading error.
+- **No argmax claim** — the top-5 set is only 3/5 stable between the two extractions.
+
+**This is the last question put to the published dataset.**
