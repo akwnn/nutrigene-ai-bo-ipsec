@@ -1027,6 +1027,27 @@ Rule A is still the registered primary and still says DoE wins. Rule C is a decl
 
 **The practitioner-facing reading**, which is what the paper is actually about: if you run the published DoE workflow and *make the recipe it recommends*, you do materially worse than BO. If you run it and instead **keep the best thing you happened to measure along the way**, you do better than BO. The DoE pipeline's own output is its weakest product — which is precisely the E4 over-prediction finding arriving from a second direction, in regret units.
 
+### ✅ ALL FOUR CELLS — the reversal is universal, not a primary-cell artefact
+
+`results/q29-symmetric-allcells.log`. **Fidelity: rule A regenerates the stored grid at max |Δ| exactly 0.0 over 200 rows** — all four cells, not just the primary.
+
+| cell | rule A (best observed) | rule C (each model's rec) |
+|---|---|---|
+| d=6 σ=0.25 | **−0.0708** DoE better | **+0.2915** BO better |
+| d=6 σ=0.10 | +0.0042 *null* | **+0.3598** BO better |
+| d=8 σ=0.25 | **−0.0321** DoE better | **+0.2689** BO better |
+| d=8 σ=0.10 | +0.0015 *null* | **+0.3253** BO better |
+
+Every rule-C result p < 0.0001. **BO wins under the symmetric rule in every cell, at both dimensions and both noise levels**, by margins 4–9× larger than the margins by which it loses under rule A. And where rule A reports a *tie* (both σ=0.10 cells), rule C reports a decisive BO win — so the convention does not merely change the size of the effect, it changes whether there is one.
+
+#### Two mechanism observations, both new
+
+**The DoE recommendation's regret is almost invariant: 0.37 – 0.44 across every cell.** It barely moves with dimension (6 → 8) or with noise (0.25 → 0.10, a 2.5× change in measurement error). A quantity that ignores both is not being driven by measurement error — it is **geometry**. The fitted second-order surface extrapolates to roughly the same badly-chosen place regardless of how cleanly it measured. That is the same conclusion E4 reached from over-prediction, arriving independently through regret.
+
+**The GP's recommendation beats its own best observation in all four cells** — 0.1207 vs 0.1641, 0.0694 vs 0.0839, 0.1029 vs 0.1253, 0.0838 vs 0.0959; consistently 15–20% better. The posterior mean smooths noise, so the model's named recipe is a better bet than whichever single measurement drew the luckiest reading. **The two arms therefore fail in opposite directions**: the polynomial's model is worse than its data, the GP's model is better than its data.
+
+**This does not re-designate the headline** (decision rule fixed pre-run). Rule A remains the registered primary. What it does establish is that the E2 verdict is convention-dependent **everywhere it was measured**, which is a stronger and more reportable claim than the single-cell version.
+
 ### ⚠️ Discrepancy found while checking: `e2.log`'s headline disagrees with its own stored grid
 
 `results/e2.log` prints the primary-cell paired difference as **−0.0595** [−0.0792, −0.0373]. Recomputed directly from `results/e2-grid.json` — the data that same run persisted — it is **−0.0708**, and Q28's independent `doe-scoring.log` also gives −0.0708, as does this run.
