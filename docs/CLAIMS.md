@@ -26,6 +26,48 @@ Decisions belong in `OPEN-QUESTIONS.md`; this file only states what follows from
 
 ---
 
+## Positioning — the contribution, and the prior art that bounds it (T1.3)
+
+**The reporting-rule question is not new to Bayesian optimization, and the paper cannot be written as though it is.** Presented as a discovery it is a desk-reject on novelty. Presented as an explanation of an existing disagreement it is defensible, checkable, and — as far as we can find — unmade.
+
+### Prior art that must be engaged, not cited in passing
+
+| source | what it establishes | what we must do |
+|---|---|---|
+| **Picheny, Wagner & Ginsbourger 2013**, *Struct Multidiscip Optim* 48:607 | The canonical noisy-BO benchmark. It explicitly separates the **infill** criterion (where to sample next) from the **identification** criterion (which point you report at the end). **That distinction is exactly rule A versus rule C.** | Cite as prior art for the distinction. **Do not present it as new.** Ours is a measurement of how much the choice matters on a classical comparator, not the observation that a choice exists. |
+| **Bull 2011; Wang & de Freitas 2014; Nguyen 2017; Berk 2019** | The incumbent choice — best observation, best posterior mean, best sampled posterior mean — is an active theory thread for GP-EI. | Cite the lineage, in the **introduction**, not in related work. It frames the question rather than following from it. |
+| **Nguyen et al. 2017** | Reports empirically that **best-observed beats the GP-mean counterpart** — **the opposite sign to our rule-C result.** | **Engage directly.** State their setting, state ours, name what differs. Most plausibly noise level and the number of near-optimal candidates: at σ_rel=0.25 the posterior mean's smoothing is worth more than it is at low noise, and our menus have many near-ties. Omitting a contrary published result would be the worst kind of citation. |
+| **Gisperg et al.**, *Biotechnol Bioeng* review | BO gave a more precise model near the optimum, but **the number of experiments could not be reduced compared with DoE**, and increasing noise slowed BO. | **This is our ceiling finding, already in print.** Cite as convergent prior art, not as our discovery. It also independently predicts our σ=0.25-versus-0.10 pattern. |
+| **Narayanan et al. 2025**, *Nat Commun* | Claims 3–30× fewer experiments than DoE. | Cite as the opposing camp, and note the comparison is against **estimated** design sizes from formulas rather than an executed DoE arm. That is precisely the gap this project fills. |
+| **Hoerl 1959; Draper 1963; Box & Draper; Myers & Montgomery** | Ridge analysis, canonical analysis and lack-of-fit testing already handle a stationary point outside the design region. | Already conceded in `project_record.md` §B.1.1 and now **measured** in Q35. The failure is one of practice, not of the DoE toolbox. |
+
+### The reframed contribution
+
+> **The DoE-versus-BO literature is split — one camp reports 3–30× fewer experiments, a 2025 review reports no reduction at all — and the split is substantially attributable to an unregistered scoring convention on the *classical* arm.**
+
+**Measured, at the registered primary cell (d=6, σ=0.25), all on one machine with one locator:**
+
+| arm | rule A (best observed) | rule C (its model's recommendation) | swing |
+|---|---|---|---|
+| DoE | 0.0958 | 0.4163 | **+0.3205** |
+| BO | 0.1553 | 0.1232 | −0.0321 |
+
+**≈10:1.** The verdict moves from "DoE better by 0.0595" to "BO better by 0.2931" — a swing of 0.3526 — and **91% of it comes from how the DoE arm is scored, not from anything about BO.**
+
+And Q35 closes the loop: scored the way classical practice actually prescribes (constrained to the region explored), the DoE arm's rule-C figure is **0.1169** against BO's 0.1232. **The reversal disappears.** "BO wins under rule C" was an artefact of scoring the classical arm in a way its own literature warns against.
+
+### What this contribution is NOT
+
+- **Not "BO loses".** Q36 tested that on two standard functions and it does not generalise — BO wins everything on Hartmann6. Which method wins is a property of the landscape.
+- **Not a new estimator, criterion or algorithm.** Nothing here is a method contribution.
+- **Not a claim that anyone acted in bad faith.** The convention is unregistered in both camps; that is the point. An unregistered convention with a 10:1 leverage on the verdict is a field-level measurement problem, not a fault of either paper.
+
+### Delete on sight
+
+`project_record.md` §B.1.2 states of the efficiency claim: *"nothing in the prior-art critique touches it."* **That sentence is now doubly false** — replay benchmarking of BO against published datasets is an established genre with purpose-built frameworks, and Gisperg et al. report the no-reduction result in print. It is the most exposed claim in the record and must go.
+
+---
+
 ## Tier 1 — established, robust, and the strongest thing the project has
 
 These survived every check run against them, reproduce across independent
@@ -160,9 +202,85 @@ registered sentence.
 T7 found value converges while location does not — BO reaches 0.90–0.95 of a ceiling of
 1.0 while sitting 0.35–0.74 away from the true optimum in six dimensions.
 
-**L6 Acquisition-solver failures**: 9 second-try failures, concentrated entirely in the
-two σ=0.25 cells, peaking at **0.875%** at d=8 σ=0.25 — below the pre-registered 1%
-threshold, and close enough to it to state (Q21).
+**L6 Acquisition-solver failures.** ~~9 second-try failures, concentrated entirely in the
+two σ=0.25 cells, peaking at **0.875%** at d=8 σ=0.25.~~ **Corrected (T1.4b): those are
+B's run on B's machine.** For the run that produced the committed grid — and therefore
+every number in the paper — the rate is **4 failures in 3400 acquisition calls (0.118%)**,
+worst cell **0.250%** at d=8 σ=0.25, and they do **not** concentrate at high noise (one
+falls in d=8 σ=0.10). Below the pre-registered 1% threshold either way, so Q21's verdict
+is unchanged; but the "close to the line" caveat belongs to B's run, not to the result.
+
+**L7 The adaptive arms are not reproducible across machines.** `qlogei` and `qlognei`
+regenerate **bit-exactly within a machine** (400/400 rows, max |Δ| = 0.000e+00, T1.4b)
+and disagree across two: A's primary-cell qLogEI mean is 0.1553, B's 0.1641. Every other
+arm — `random`, `sobol`, `lhs`, `coord`, `doe` — reproduces on both. The arms that
+diverge are exactly those calling `optimize_acqf`, i.e. those depending on BLAS reduction
+order in the GP fit and on the L-BFGS-B path. **A published BO regret figure is a
+machine-specific quantity at this precision**, and the effect (0.009) is a sixth of the
+headline (0.0595). Sharding is *not* the cause: a sequential single-process run
+reproduces the four-shard grid exactly.
+
+**L8 The E2 verdict is specific to this landscape family (Q36).** On Hartmann6 —
+non-additive, deceptive — **BO wins under every rule** (+1.0032 rule A). On Ackley both
+methods fail and DoE fails less. Three families, three answers. **"Current practice beats
+BO" is a result about near-separable, coordinate-wise-unimodal landscapes calibrated to
+one published dataset, and must be written that way.** What does generalise is the
+scoring-convention effect, in direction, on all three.
+
+**L9 The DoE arm fits a SECOND-order surface; the source used "significant terms up to
+the 3rd order", stepwise-reduced.** The choice is forced by estimability, not preference:
+a full third-order model is **84 terms at d=6 and 165 at d=8** against n=48, so it is
+rank-deficient before any data is seen. The source's *stepwise reduction* is precisely
+what made their form feasible, and we do not reproduce that selection step. **So the arm
+is not a replica of the published analysis**, and the gap runs in an unknown direction —
+a reduced cubic can bend where a full quadratic cannot, but stepwise selection also
+inflates its own intervals. Stated, not resolved.
+
+**L10 No steepest-ascent phase.** Classical sequential RSM is screen → **steepest
+ascent** → CCD → confirm, and the ascent phase is what moves the design region toward the
+optimum. Our pipeline omits it. **So did the source study**, which instead doubled the
+range on retained factors between stages — a cruder form of the same move. The omission
+therefore preserves fidelity to the case study while making the DoE arm weaker than
+textbook practice. Both facts belong in the same sentence.
+
+**L11 Digitized rather than author-supplied data**, and the comparison that makes it
+defensible: optical **reading error is 4–7% of the between-condition spread**, against a
+published **per-condition SEM of 38–66%** of that same spread. The source assay is the
+binding constraint by roughly an order of magnitude. **This runs opposite to the
+intuition** that digitization is the weak link, and should be stated with both numbers
+rather than as reassurance.
+
+**L12 No wet-lab validation. This belongs in the ABSTRACT, not only here.** Nothing in
+this project has been run on cells. **And the title must change**: "stem-cell
+differentiation protocols" promises cells. Something closer to *"a benchmark study on
+landscapes calibrated to a published endothelial differentiation dataset"* is accurate.
+
+**L13 No published endothelial dataset with continuous factors and deposited
+per-condition data exists.** This is why a synthetic benchmark was necessary at all. It
+is worth stating as **a finding about the field** rather than an apology for the method:
+the one usable study had to be recovered by digitizing two figure panels, and the closest
+alternative (Hou 2017) is a presence/absence design with no dose axis.
+
+**L14 Cost is reported in evaluations, and evaluations are not what a lab pays (Q38).**
+At the primary cell the DoE pipeline needs **3 sequential rounds** and qLogEI needs
+**10**; Latin hypercube reaches lower regret than qLogEI in **one**. A fixed-evaluation
+comparison silently grants BO seven extra plate cycles. A regret-versus-rounds *curve*
+cannot be drawn from the committed grid — E2 persisted summary rows, not curves — so only
+the endpoint and the exact round count are available. Nor is q=4 defended as the right
+batch width; a larger q would trade rounds against regret and that experiment has not
+been run.
+
+**L15 Multiplicity was never controlled, and correcting it costs one reported claim
+(Q39).** `e2.yaml` registers `report_all_comparisons: true` without specifying a
+correction. Under Holm over the 39 non-primary contrasts, **"Latin hypercube also beats
+BO" at the primary cell fails** (p 0.0147 → 0.1914), as do the two other LHS cells and
+qLogNEI's only significant win. The registered DoE contrast is exempt and unaffected.
+
+**L16 A benchmark-design trap worth stating generally.** **Ackley's optimum sits at the
+exact centre of the coded box**, and every screening and CCD design includes centre runs
+— so the DoE design *contains the answer* and scores exactly 0.0000 under rule A for
+reasons unrelated to search quality. Any centred test function silently rewards any
+design with centre runs. We detect and void that comparison rather than report it.
 
 ---
 

@@ -27,8 +27,15 @@ named beside each. Nothing is quoted from memory.
 | random | 0.2308 | +0.0664 [+0.0419, +0.0909] | 0.0000 |
 
 **The sequential-DoE pipeline — the procedure the published study actually ran — beats
-qLogEI decisively.** Latin hypercube beats it too. qLogEI's only significant win in this
-cell is over random search.
+qLogEI decisively.** qLogEI's only significant win in this cell is over random search.
+
+> **⚠️ CORRECTED (T2.3 / Q39). "Latin hypercube beats it too" has been removed.** That
+> comparison is one of **39 non-primary contrasts** in this project, and `e2.yaml`
+> registers `report_all_comparisons: true` without specifying a multiplicity correction.
+> Under Holm it does **not** survive: **p 0.0147 → 0.1914**. LHS is a *suggestive* effect
+> of −0.0282 at this cell, not a finding. The same correction removes the two other LHS
+> cells and qLogNEI's only significant win. **The DoE contrast is the registered primary
+> (`e2.yaml` `primary_domain`), is exempt from correction, and is unaffected at p=0.0000.**
 
 **It survived both scoring corrections, which is why it is reportable.** Run 1 showed DoE
 ahead by 0.0158 and A attributed it to a scoring bug. With the bug fixed *and* the arms
@@ -38,10 +45,10 @@ genuinely paired, the gap is nearly **four times larger**. The artefact hypothes
 
 | cell | outcome |
 |---|---|
-| d=6, σ=0.25 **(primary)** | BO **loses** to doe (p=0.0000) and lhs (p=0.0147) |
+| d=6, σ=0.25 **(primary)** | BO **loses** to doe (p=0.0000, registered primary). lhs suggestive only (p=0.0147 → **0.1914** Holm) |
 | d=6, σ=0.10 | BO beats random (p=0.0000) and sobol (p=0.0003); ties lhs, coord, doe |
-| d=8, σ=0.25 | **BO beats everything** — random, sobol, lhs, coord all significantly worse |
-| d=8, σ=0.10 | BO beats random (p=0.0004) and lhs (p=0.0067); ties sobol |
+| d=8, σ=0.25 | BO beats random, sobol and coord; **lhs does not survive Holm** (0.0187 → 0.2249). And the DoE arm was not in the race here (d=6 only) |
+| d=8, σ=0.10 | BO beats random (p=0.0004); lhs does not survive Holm (0.0067 → 0.0942); ties sobol |
 
 **Read it carefully.** The only difference between d=6 and d=8 is **two synthetic factors
 that do not matter** — `n_active = 4` is held fixed at both dimensions precisely so this
@@ -84,8 +91,9 @@ two laminins dropped to zero at screening — so there is not much interior left
 
 ### Two pre-registered side decisions paid off
 
-**Q5 (qLogEI vs qLogNEI).** qLogNEI is directionally better in **3 of 4 cells** and
-significantly better at d=8/σ=0.10 (−0.0123, p=0.0275). Registering both was right:
+**Q5 (qLogEI vs qLogNEI).** qLogNEI is directionally better in **3 of 4 cells**;
+its one nominally significant cell, d=8/σ=0.10 (−0.0123, p=0.0275), **does not survive
+Holm correction** (p → 0.3023, Q39), so it is directional only. Registering both was right:
 switching silently would have been indistinguishable from tuning, and keeping only qLogEI
 would have hidden it.
 
@@ -361,6 +369,28 @@ Two things A believed and had to withdraw, both recorded rather than quietly dro
 - The spec predicted **minima** at low κ from 1-D convexity. Measured: **saddle in
   800/800**, plus 100/100 in E4 and 20/20 in the DoE arm. Four independent confirmations
   that the prediction was 1-D reasoning applied to a 6-D surface.
+
+---
+### Where this register goes in the paper (T3)
+
+**Main text: one methods paragraph, describing the PRACTICE.** Register the claim and the
+decision rule before the run; run the adversarial audit *before* interpreting the numbers,
+not after; report every registered prediction including the ones that came out wrong.
+Three sentences, in Methods, stated as how the work was done.
+
+**Supplementary: this register in full.** Twelve defects, each with the pattern it
+belongs to.
+
+**Why split it.** The record is genuinely distinctive and reviewers will value it — it is
+the strongest evidence the numbers can be trusted. But a list of twelve errors as a
+reader's first impression invites *"why should I trust anything else here"*, which is
+exactly the wrong inference to draw from a project that found its own mistakes. The
+practice belongs where it is load-bearing; the inventory belongs where it is checkable.
+
+**Do not soften the supplementary version.** Its value is that it names who made each
+error and what the reasoning was, including the two that were made by the person who had
+just written the guard against them (defects 8 and 11) and the one that survived a
+passing fidelity gate in two clones at once (defect 12).
 
 ---
 
