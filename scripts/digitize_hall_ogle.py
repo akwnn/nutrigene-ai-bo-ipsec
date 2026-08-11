@@ -36,6 +36,12 @@ from pathlib import Path
 import numpy as np
 from PIL import Image
 
+from boec.published import (
+    load_extraction_a,
+    validate_against_table,
+    validate_extraction,
+)
+
 STAGE1_PROTEINS = ("C", "CIV", "LN111", "LN411", "LN511", "FN")
 STAGE2_PROTEINS = ("C", "CIV", "LN411", "FN")
 
@@ -96,8 +102,22 @@ def _box_columns(sub: np.ndarray, lo: int, hi: int, gap: int) -> list[float]:
     return out
 
 
-def _boxes(sub: np.ndarray, centres, base: int, ppu: float, wlo: int, whi: int):
-    """Extract (q1, median, q3) per box using the PAIRED vertical edges."""
+def _boxes(sub: np.ndarray, centres, base: int, ppu: float, wlo: int, whi: int,
+           tol: int = 4):
+    """Extract (q1, median, q3) per box using the PAIRED vertical edges.
+
+    ``tol`` is how far the two edges' pixel extents may differ and still be accepted as
+    a pair. It exists because a data dot drawn over a box edge merges with it, clipping
+    or extending that edge's run.
+
+    **Why 4 and not 3.** The original 3 lost stage-2 box 2 entirely: its left edge spans
+    rows 653-700 and its right edge 657-700, a 4 px disagreement at the top caused by a
+    dot sitting on the corner. One pixel is 0.0124 response units here, so 3 vs 4 px is
+    a 0.012-unit distinction with no rendering justification behind either. The value is
+    not tuned to recover that box: the SAME edge pair, and therefore identical q1/q3, is
+    found at every tolerance from 4 to 10, and no other box in either figure changes at
+    any of them. Robustness across the range is the argument; 4 is simply its floor.
+    """
     rows = []
     for xc in centres:
         best = None
@@ -111,7 +131,7 @@ def _boxes(sub: np.ndarray, centres, base: int, ppu: float, wlo: int, whi: int):
                 r2 = _longest_run(sub[:, c2])
                 if not r2 or r2[2] < 8:
                     continue
-                if abs(r1[0] - r2[0]) <= 3 and abs(r1[1] - r2[1]) <= 3:
+                if abs(r1[0] - r2[0]) <= tol and abs(r1[1] - r2[1]) <= tol:
                     h = min(r1[1], r2[1]) - max(r1[0], r2[0])
                     if best is None or h > best[0]:
                         best = (h, max(r1[0], r2[0]), min(r1[1], r2[1]), c1, c2)
@@ -151,12 +171,12 @@ def _design(gray: np.ndarray, ax: int, base: int, centres, n_rows: int):
     return np.column_stack(out)
 
 
-def extract(path: str, proteins, col_t, row_t, ymax, wlo, whi, gap, rlo, rhi):
+def extract(path: str, proteins, col_t, row_t, ymax, wlo, whi, gap, rlo, rhi, tol=4):
     gray = _ink(path)
     ax, base, ppu, nticks = _calibrate(gray, col_t, row_t, ymax)
     sub = (gray < 128)[: base + 2, ax + 2 :]
     centres = _box_columns(sub, rlo, rhi, gap)
-    boxes = _boxes(sub, centres, base, ppu, wlo, whi)
+    boxes = _boxes(sub, centres, base, ppu, wlo, whi, tol)
     design = _design(gray, ax, base, centres, len(proteins))
     return dict(
         axis_x=ax, baseline_y=base, px_per_unit=round(ppu, 3), y_max=nticks,
@@ -187,11 +207,21 @@ def main() -> None:
             "axial_rows": int(((d == 0.5).sum(1) == d.shape[1] - 1).sum()),
             "centre_rows": int((d == 0.5).all(1).sum()),
         }
+        # HARD GATE. Counting row types -- which is all `design_check` above does --
+        # passed the two defects that shipped: a duplicated corner and an unresolved
+        # box. Nothing is written unless the responses are complete AND the design of
+        # record is structurally sound AND the figure agrees with the published table
+        # everywhere bar the declared, evidenced discrepancies.
+        a_rows = load_extraction_a(tag)
+        canonical = [[(v + 1) / 2 for v in r["design"]] for r in a_rows]
+        validate_extraction(tag, rec, design=canonical)
+        validate_against_table(tag, rec, a_rows)
         (out / f"{tag}.json").write_text(json.dumps(rec, indent=1))
         ok = rec["n_conditions"] == expect
         print(f"{tag}: {rec['n_conditions']} conditions (expect {expect}) {'OK' if ok else 'MISMATCH'}"
               f" | {rec['px_per_unit']} px/unit | design {rec['design_check']}"
-              f" | medians recovered {int(np.isfinite(rec['median']).sum())}")
+              f" | medians recovered {int(np.isfinite(rec['median']).sum())}"
+              f" | validated")
     print(f"written to {out}/")
 
 

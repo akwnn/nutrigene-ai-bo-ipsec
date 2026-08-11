@@ -9,11 +9,48 @@ and which rest on convenience, so the limitations section is written by us rathe
 by a reviewer.
 
 **Evidence base.** Figures 1a and 2a of Hall, Lin & Ogle 2025 (*Sci Rep* 15:24479) were
-digitized for this audit — see `scripts/digitize_hall_ogle.py` and
-`data/external/hall_ogle_2025/`. Extraction recovers 23 stage-1 conditions
-(22 factorial + 1 centre) and 25 stage-2 conditions (16 factorial + 8 axial + 1 centre),
-matching the published design structure exactly, which is the check that the extraction
-is reading the right objects.
+digitized for this audit — see `scripts/digitize_hall_ogle.py`,
+`data/external/hall_ogle_2025/` and the analysis-ready CSVs at `data/published/`.
+Extraction recovers 23 stage-1 conditions (22 non-centre + 1 centre) and 25 stage-2
+conditions (16 factorial + 8 axial + 1 centre).
+
+**Correction — the previous version of this paragraph claimed those counts showed the
+extraction "matches the published design structure exactly, which is the check that the
+extraction is reading the right objects". That claim was false, and the check it
+described could not have supported it.** The check counted design ROW TYPES only. It
+never verified that the 16 stage-2 corners were *distinct*, and never verified that a
+response had been recovered at all. The shipped extraction failed both: corner
+`(-1,+1,+1,-1)` appeared twice while `(-1,+1,+1,+1)` was absent, and stage-2 row 2's
+quartiles were `NaN`. Row-type counts of 16/8/1 were returned in spite of this, so the
+sentence quoted a passing check as evidence of a property the check did not test.
+
+What is verified now, as hard gates in `boec.published` that halt extraction
+(`tests/test_published.py`, 31 tests): corner distinctness and completeness, no missing
+responses, quartile ordering, axial points at ±1, exactly one centre point, model-matrix
+rank, and cell-by-cell agreement with the published coded tables. The regression tests
+run against `tests/fixtures/prefix_*.json` — the pre-fix extraction, kept verbatim —
+and are required to fail on it.
+
+**A limitation of structural checking, stated because it bit us.** Stage 1's 22
+non-centre runs are a D-optimal subset of a 2⁶ space, so flipping a single level yields
+another perfectly valid saturated design. Counts, distinctness, rank and axial structure
+*all still pass*. Only comparison against the published table detects it — which is how
+the stage-1 discrepancy below was found, after the structural suite passed cleanly.
+
+**The published figures contradict the published tables, in one cell per stage.** These
+are the paper's own inconsistencies, not extraction errors; both strips were re-read at
+4× magnification and both readings are unambiguous (mean patch grey 212.0 and 0.9,
+against palette thresholds of 205 and 110).
+
+| stage | cell | figure strip | Table | resolution |
+|---|---|---|---|---|
+| 2 | col 20, FN | `-1` | `+1` | **Table.** The strip repeats `- + + -` (identical to col 15) and shows `- + + +` nowhere; a face-centred CCD requires all 16 distinct corners and Table 2 has them. The strip is provably the erroneous object. |
+| 1 | col 22, LN511 | `+1` | `-1` | **Table**, but on weaker grounds — the strip reads `+ + + + + -`, which is not a row of Table 1 at all, yet no structural argument is available. Rests on the stage-2 precedent and on the table being the design of record. |
+
+Column ordering is not in doubt: every other cell agrees (137/138 stage 1, 99/100
+stage 2), so box *i* pairs with table row *i* throughout. The canonical CSVs carry the
+**table** design; the JSON keeps the figure read, so the disagreement stays inspectable
+rather than being overwritten.
 
 **One correction to the project record.** The documents describe Figures 1a and 2a as
 "per-condition bar charts". They are **box-and-whisker plots with individual points
@@ -166,10 +203,21 @@ Mean |effect| retained 0.048 vs dropped 0.051 — an observed ratio of **0.94 : 
 the **4.5 : 1** the oracle implies. No main effect is significant.
 
 **This analysis cannot reproduce their retention decision, and that limits how far it can
-be pushed.** Their stage 1 is exactly saturated for the two-factor-interaction model
-(22 non-centre runs, 1+6+15 = 22 parameters, **zero residual df**), so significance came
-from replicate-level degrees of freedom — ≥4 wells across ≥3 experiments — not from the
-design. We have 23 condition medians and no replicate-level data, so we fitted main
+be pushed.** Their stage 1 is exactly saturated for the two-factor-interaction model:
+**22 non-centre runs against 1+6+15 = 22 parameters, so zero residual df from those runs**
+(verified — model matrix rank 22 of 22, `test_stage1_saturates_the_two_factor_model`).
+
+*Be exact about which figure is meant, because both appear in the literature and only one
+is ours to claim.* The **full 23-run design leaves exactly one residual df**, not zero,
+because the centre point is a 23rd run that the 22-parameter model does not consume. The
+"zero" above describes the non-centre block. One df does not change the argument — a
+single degree of freedom cannot support tests on 22 parameters, and a lack-of-fit test on
+it would have essentially no power — but the paper criticism must say **1, not 0**, if it
+is stated over the whole design. Both numbers are asserted in the test suite so neither
+can drift.
+
+Significance therefore came from replicate-level degrees of freedom — ≥4 wells across ≥3
+experiments — not from the design. We have 23 condition medians and no replicate-level data, so we fitted main
 effects only and forced all interaction structure into the residual. A null result is the
 expected outcome of that analysis, not a refutation. One genuine discrepancy: CIV comes
 out negative here while the paper reports a positive significant association.

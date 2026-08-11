@@ -284,9 +284,17 @@ operative null for a bounded acquisition maximiser.)
 
 ## 7. Defects found — the recurring pattern, which is the most useful output
 
-**Nine constructs that could not fail, were unfair, or were inferred wrongly, caught
-before they reached a paper.** Six were A's own. The consistency is the point: this is the default failure mode
+**Ten constructs that could not fail, were unfair, or were inferred wrongly, caught
+before they reached a paper.** Seven were A's own. The consistency is the point: this is the default failure mode
 of measurement code, not bad luck.
+
+**Six of the ten are the same specific pattern — a check whose name carries a guarantee
+its body does not verify** (1, 2, 3, 6, 8, 10). That is the single most reproducible
+finding in this project, and it is worth more than any individual defect: in every case
+the check *ran*, *passed*, and was *quoted as evidence*. Defect 10 is the cleanest
+example, because the passing output (16 factorial / 8 axial / 1 centre) was numerically
+correct and still proved nothing — the counts were right while the design underneath them
+was malformed.
 
 | # | defect | consequence had it shipped |
 |---|---|---|
@@ -298,6 +306,8 @@ of measurement code, not bad luck.
 | 6 | **B's T9:** the paired opening batch never existed, and the test that promised it asserted determinism instead | E2's fairness rule was false; the primary comparison was unpaired |
 | 7 | **B's Q23:** `coord` was a **second** unpaired arm and undeclared — A's `coordinate_descent` starts from a random interior point and never calls `initial_design` | `identical_initial_design_per_seed: true` was false for **two** arms, one declared and one silent — the same defect as #6, one arm over |
 | 8 | **A's lengthscale diagnostic anchored its decision rule on the prior MEDIAN (10.08) when the fit is MAP and its no-data attractor is the prior MODE (0.5016)** | The "prior is dominating" branch was unreachable and the "data is winning" branch was where an untrained model sits. Measured opening-design median: **0.502**. A conclusion was written, and committed, from a rule that could return only one answer |
+
+| 10 | **The digitization's design check counted row TYPES and was quoted as proof it "matches the published design structure exactly"** — it never checked corner distinctness or that a response existed. Stage 2 shipped with corner `(-1,+1,+1,-1)` duplicated, `(-1,+1,+1,+1)` missing, and row 2's quartiles `NaN`; the check returned 16/8/1 and passed | The claim in `oracle_defensibility.md` was false, and one of 48 published conditions had no response at all. **Sixth instance of the could-not-fail pattern** (with 1, 2, 3, 6, 8) |
 
 | 9 | **A's ARD inference was pseudo-replicated** — Wilcoxon over 50 runs where `e2.yaml` registers `cluster: instance` (n=25) — and run on a difference of ratios, whose skew makes a signed-rank test anti-conservative (measured 8.9% at a nominal 5%) | Every Q25 p-value was overstated. Conclusions survive recomputation; the numbers did not. **This is the error the project criticises the source paper for, committed in the project's own diagnostic** |
 
