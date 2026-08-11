@@ -1,0 +1,71 @@
+
+d=6, sigma=0.25   [REGISTERED PRIMARY]   k=7 arms, N=25 landscapes
+  Friedman chi2 = 59.777, p = 4.995e-11   -> post-hoc licensed
+  Nemenyi CD at alpha=0.05: 1.801 mean-rank units
+            doe  mean rank 1.800
+            lhs  mean rank 3.080
+          coord  mean rank 3.640
+        qlognei  mean rank 4.200
+         qlogei  mean rank 4.320
+          sobol  mean rank 4.840
+         random  mean rank 6.120
+  -> results/figures/critical-difference-d6-s0.25.png
+
+d=6, sigma=0.1   k=7 arms, N=25 landscapes
+  Friedman chi2 = 63.358, p = 9.330e-12   -> post-hoc licensed
+  Nemenyi CD at alpha=0.05: 1.801 mean-rank units
+        qlognei  mean rank 2.600
+          coord  mean rank 3.120
+         qlogei  mean rank 3.240
+            doe  mean rank 3.520
+            lhs  mean rank 3.840
+          sobol  mean rank 5.000
+         random  mean rank 6.680
+  -> results/figures/critical-difference-d6-s0.1.png
+
+d=8, sigma=0.25   k=6 arms, N=25 landscapes
+  Friedman chi2 = 49.709, p = 1.590e-09   -> post-hoc licensed
+  Nemenyi CD at alpha=0.05: 1.508 mean-rank units
+        qlognei  mean rank 1.840
+         qlogei  mean rank 2.200
+            lhs  mean rank 3.800
+         random  mean rank 4.200
+          sobol  mean rank 4.400
+          coord  mean rank 4.560
+  -> results/figures/critical-difference-d8-s0.25.png
+
+d=8, sigma=0.1   k=6 arms, N=25 landscapes
+  Friedman chi2 = 27.674, p = 4.214e-05   -> post-hoc licensed
+  Nemenyi CD at alpha=0.05: 1.508 mean-rank units
+        qlognei  mean rank 2.320
+          sobol  mean rank 3.080
+         qlogei  mean rank 3.200
+          coord  mean rank 3.320
+         random  mean rank 4.440
+            lhs  mean rank 4.640
+  -> results/figures/critical-difference-d8-s0.1.png
+
+  A bar joins arms that are NOT significantly different. Arms further apart
+  than CD differ at the family-wise alpha, so the diagram already carries a
+  multiplicity correction rather than needing one applied to a pairwise table.
+
+  WHERE THIS AND Q39 DISAGREE, AND WHY — read before quoting either.
+  These two corrections control DIFFERENT families and can therefore differ:
+
+    Nemenyi here   family = the arms WITHIN one cell (15 pairs at k=6, 21 at k=7).
+                   Answers "in this cell, which arms differ?"
+    Holm in Q39    family = ALL 39 non-primary contrasts reported by this project,
+                   across four cells and several experiments.
+                   Answers "which of the claims this paper makes survive?"
+
+  Holm's family is far larger, so it is strictly more conservative, and the two part
+  company on `lhs` vs `qlogei` at d=8 sigma=0.25: rank gap 1.600 > CD 1.508 (Nemenyi
+  says differ) while Holm gives p 0.0187 -> 0.2249 (says not). Both are correct for
+  their own question.
+
+  RULING, so the paper does not quote whichever is convenient: a claim MADE IN THE
+  PAPER is one of the 39, so Q39's Holm governs any sentence asserting an arm beats
+  another. The diagrams are the summary presentation and are read as within-cell
+  structure, never cited as significance for an individual pair. At the registered
+  primary cell the two agree anyway -- doe-qlogei 2.520 > CD, lhs-qlogei 1.240 < CD --
+  which is the only cell the headline rests on.
