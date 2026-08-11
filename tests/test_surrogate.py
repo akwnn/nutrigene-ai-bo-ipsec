@@ -454,7 +454,7 @@ def test_unknown_lengthscale_prior_is_rejected():
 
 
 # --------------------------------------------------------------------------
-# Q29 — the additive kernel
+# Q30 — the additive kernel
 #
 # Q22 measured this benchmark at 93% additive; Q25 measured the production
 # surrogate capturing 16% of the shape variance along the axes that matter.

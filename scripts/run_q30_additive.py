@@ -1,6 +1,6 @@
-"""Q29 — the additive-kernel BO arm. Post-hoc model development, labelled as such.
+"""Q30 — the additive-kernel BO arm. Post-hoc model development, labelled as such.
 
-Pre-registered in `docs/OPEN-QUESTIONS.md` Q29, committed before this ran. Check
+Pre-registered in `docs/OPEN-QUESTIONS.md` Q30, committed before this ran. Check
 this file's first output line against that entry's commit timestamp.
 
 **THIS DOES NOT CHANGE E2.** It adds arms. Every comparator is read from
@@ -23,7 +23,7 @@ skill), three rival explanations had already been tested and eliminated (Q25
 prior, Q21 solver, Q26 opening size), and the model was selected on held-out
 FIT before any regret was computed.
 
-What is NOT defensible and is stated in Q29's limitations: nobody has tried to
+What is NOT defensible and is stated in Q30's limitations: nobody has tried to
 improve the DoE arm, so this is a tuned method against untuned baselines --
 exactly the objection the pre-registration exists to prevent. It is reported,
 not managed away.
@@ -53,7 +53,7 @@ from run_e2 import (                                    # noqa: E402
 
 GRID = Path("results/e2-grid.json")
 DOE_D8 = Path("results/e2-doe-d8.json")
-OUT = Path("results/q29-additive.json")
+OUT = Path("results/q30-additive.json")
 
 DIM = 6
 #: Fixed before the run: the head of the ensemble's fixed order, both seeds.
@@ -105,7 +105,7 @@ def check_fidelity(ens, stored) -> None:
 def main() -> None:
     head = subprocess.run(["git", "rev-parse", "--short", "HEAD"],
                           capture_output=True, text=True).stdout.strip()
-    print(f"Q29 · additive-kernel BO · POST-HOC model development · HEAD={head}")
+    print(f"Q30 · additive-kernel BO · POST-HOC model development · HEAD={head}")
     print(f"d={DIM}, budget {BUDGET}, {N_INSTANCES} instances x {N_SEEDS} seeds, "
           f"arms: {', '.join(ARMS)}\n")
 
@@ -146,7 +146,7 @@ def report(rows, stored) -> None:
         insts = sorted({r["instance"] for r in rows if r["sigma"] == sigma})
         tag = " <-- where the mechanism predicts the effect" if sigma == 0.10 \
             else " <-- E2 primary cell; no improvement predicted"
-        print(f"\n{'=' * 84}\nQ29 · d={DIM} · sigma_rel={sigma} · "
+        print(f"\n{'=' * 84}\nQ30 · d={DIM} · sigma_rel={sigma} · "
               f"{len(insts)} instances x {N_SEEDS} seeds{tag}\n{'=' * 84}")
 
         per = {a: per_instance(rows, sigma, a, insts) for a in ARMS}
@@ -174,7 +174,7 @@ def report(rows, stored) -> None:
                     p = float("nan")
                 star = ""
                 if a == "qlogei-add" and c == "qlogei":
-                    star = "  <-- THE Q29 PRIMARY"
+                    star = "  <-- THE Q30 PRIMARY"
                 elif a == "qlogei-add" and c == "doe":
                     star = "  <-- vs current practice"
                 print(f"    {a:>14} vs {c:>8}: {m:>+8.4f}  [{lo:>+8.4f}, "

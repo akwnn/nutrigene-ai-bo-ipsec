@@ -4,9 +4,30 @@
 
 ---
 
-## 🟢 Q29 RESULT [B] · **The kernel WAS mismatched and fixing it doubled the model's accuracy — and bought exactly nothing in regret. My registered prediction was wrong, and the negative is worth more than the win would have been.**
+## ⚠️ NUMBERING · **Two sessions used "Q29" for different questions, within eleven minutes.**
 
-`scripts/run_q29_additive.py` · log `results/q29-additive.log` · rows `results/q29-additive.json`.
+`b91a395` (10:12) registered the symmetric-scoring comparison as Q29. `3e83fa2` (10:23)
+registered the additive-kernel arm as Q29. **The earlier commit keeps the number**; the
+additive-kernel work is renumbered **Q30** here and in `surrogate.py`, `campaign.py`,
+`scripts/run_q30_additive.py` and `results/q30-additive.*`. Nothing else moves.
+
+Recorded rather than silently fixed, because a pre-registration's whole value is that its
+identifier is stable — a reader following "Q29" from a commit message written before 11:07
+lands on the other entry, and needs to know why.
+
+---
+
+## 🟢 Q30 RESULT [B] · **The kernel WAS mismatched and fixing it doubled the model's accuracy — and bought exactly nothing in regret. My registered prediction was wrong, and the negative is worth more than the win would have been.**
+
+> **🔴 READ Q29 FIRST — it was answered concurrently and it reframes this entire entry.**
+> Under the symmetric scoring rule, **BO already beats the DoE arm in all four cells** by
+> +0.27 to +0.36. So the deficit this arm was built to close **is convention-dependent**, and
+> at least partly does not exist. This work was aimed at a gap whose sign was still open.
+> That does not invalidate the negative below — "accuracy is not the binding constraint" holds
+> regardless of who is ahead — but it does mean the framing "BO is losing, so improve the
+> model" was resting on the rule-A convention throughout.
+
+`scripts/run_q30_additive.py` · log `results/q30-additive.log` · rows `results/q30-additive.json`.
 Accuracy bench: `scripts/bench_surrogate.py` · `results/bench-surrogate.log`. Registration is
 the entry below; check its commit timestamp (`3e83fa2`).
 
@@ -64,7 +85,7 @@ measurably, substantially better. Combined with what was already eliminated:
 | lengthscale prior | refuted | Q25 |
 | acquisition solver | refuted | Q21 |
 | opening batch size | partial, low noise only | Q26 |
-| **kernel structure / model accuracy** | **refuted — accuracy doubled, regret unmoved** | **Q29** |
+| **kernel structure / model accuracy** | **refuted — accuracy doubled, regret unmoved** | **Q30** |
 
 Four of four. **Whatever is limiting BO here, it is not the surrogate.** The remaining
 candidates are the budget itself, the acquisition's exploration behaviour under noise, and —
@@ -118,7 +139,7 @@ someone picking up deliberately.
 
 ---
 
-## 🔴 Q29 [B builds, A + B decide] · PRE-REGISTRATION · **An additive-kernel BO arm. Alan asked for a significantly better BO model; this is the one the diagnostics indicate, and it is registered before any regret exists.**
+## 🔴 Q30 [B builds, A + B decide] · PRE-REGISTRATION · **An additive-kernel BO arm. Alan asked for a significantly better BO model; this is the one the diagnostics indicate, and it is registered before any regret exists.**
 
 **⚠️ READ THIS FIRST — the conflict of interest is structural and cannot be argued away.**
 `e2.yaml` registers `no_per_method_tuning: true`, which is the most-cited objection in this
@@ -364,6 +385,13 @@ arm, and no stored number moves.
 ---
 
 ## 🔴 Q27 RESULT [B] · **The d=8 DoE arm ran. Both registered predictions were correct, and current practice wins the primary cell — but read Q28 before quoting this.**
+
+> **🔴 SUPERSEDED IN INTERPRETATION BY Q29, which ran after this was written.** The headline
+> below — *"BO beats current practice" is refuted at both dimensions* — is true **of rule A
+> only**. Under the symmetric rule C, BO beats the DoE arm at d=8 σ=0.25 by **+0.2689**, the
+> same cell where it loses by −0.0321 here. **Do not quote this entry's conclusion without
+> rule C beside it.** The arm, the design, the fidelity checks and both registered
+> predictions stand exactly as written; what does not stand is the unqualified sentence.
 
 `scripts/run_e2_doe_d8.py` · log `results/e2-doe-d8.log` · rows `results/e2-doe-d8.json`.
 Registration is the entry immediately below; check its commit timestamp (`1b064e8`).

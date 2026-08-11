@@ -164,7 +164,7 @@ class CampaignConfig:
         kernel_structure: how the surrogate decomposes the space; one of
             :data:`boec.surrogate.KERNEL_STRUCTURES`. **Default ``"product"``,
             which is what E2 ran and what every stored E2 number is.** The
-            alternatives are Q29's arms and must be asked for explicitly — a
+            alternatives are Q30's arms and must be asked for explicitly — a
             campaign that silently changed its own model would make a stored row
             unattributable to a model.
 

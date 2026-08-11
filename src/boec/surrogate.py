@@ -95,7 +95,7 @@ __all__ = [
 
 MAX_KERNEL_DEPTH = 10
 
-#: How the kernel decomposes the input space. **Q29.**
+#: How the kernel decomposes the input space. **Q30.**
 #:
 #: * ``"product"`` — one ARD Matern over all d factors. The registered E2 model.
 #:   Its similarity is a *product* across dimensions, which is the standard
@@ -381,7 +381,7 @@ def build_gp(
         kernel_structure: how the kernel decomposes the space; one of
             :data:`KERNEL_STRUCTURES`. **Default ``"product"``, which is the
             model E2 ran, and it stays the default.** ``"additive"`` and
-            ``"additive+interaction"`` are Q29's arms.
+            ``"additive+interaction"`` are Q30's arms.
         additive_prior_dims: which dimensionality the per-component lengthscale
             prior is scaled for. Additive structures only.
 
@@ -395,7 +395,7 @@ def build_gp(
 
             ``None`` means ``d``, which holds the prior identical to the
             production model so that switching structure moves exactly one thing
-            — the Q25 discipline. ``1`` is the component-natural choice. Q29
+            — the Q25 discipline. ``1`` is the component-natural choice. Q30
             chooses between them on **held-out model fit, before any regret
             exists**, and reports both.
         input_warping: learn a monotone reparameterisation of each input axis
