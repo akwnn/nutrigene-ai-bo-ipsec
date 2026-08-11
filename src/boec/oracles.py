@@ -193,6 +193,128 @@ class Ackley(Oracle):
         return 0.0
 
 
+class Levy(Oracle):
+    """Multimodal, many local minima, a different structure from Ackley's.
+
+    Standard domain [-10, 10]^d, global minimum 0 at z = (1, ..., 1). Negated for
+    maximisation like the others; coded optimum sits at x = 0.55 in every coordinate,
+    which is deliberately NOT the box centre -- see `UnitScaled` and Q36's Ackley
+    confound for why that matters.
+    """
+
+    name = "levy"
+
+    def __init__(self, dim: int = 6, domain: float = 10.0) -> None:
+        self.dim = dim
+        self._domain = domain
+
+    def _z(self, X: np.ndarray) -> np.ndarray:
+        return (X * 2.0 - 1.0) * self._domain
+
+    def f(self, X: np.ndarray) -> np.ndarray:
+        z = self._z(self.check_X(X))
+        w = 1.0 + (z - 1.0) / 4.0
+        head = np.sin(np.pi * w[..., 0]) ** 2
+        mid = ((w[..., :-1] - 1.0) ** 2
+               * (1.0 + 10.0 * np.sin(np.pi * w[..., :-1] + 1.0) ** 2)).sum(-1)
+        tail = (w[..., -1] - 1.0) ** 2 * (1.0 + np.sin(2.0 * np.pi * w[..., -1]) ** 2)
+        return -(head + mid + tail)
+
+    @property
+    def optimum_x(self) -> np.ndarray:
+        return np.full(self.dim, (1.0 + self._domain) / (2.0 * self._domain))
+
+    @property
+    def optimum_value(self) -> float:
+        return 0.0
+
+
+class Rosenbrock(Oracle):
+    """The curved valley. Ill-conditioned, non-separable, easy to reach and hard to finish.
+
+    Domain [-2.048, 2.048]^d rather than the wider [-5, 10]: on the wide box the raw
+    range exceeds 1e6, and a multiplicative noise model on a quantity that large is not
+    comparable to any other family here.
+    """
+
+    name = "rosenbrock"
+
+    def __init__(self, dim: int = 6, domain: float = 2.048) -> None:
+        self.dim = dim
+        self._domain = domain
+
+    def f(self, X: np.ndarray) -> np.ndarray:
+        z = (self.check_X(X) * 2.0 - 1.0) * self._domain
+        a, b = z[..., :-1], z[..., 1:]
+        return -(100.0 * (b - a**2) ** 2 + (a - 1.0) ** 2).sum(-1)
+
+    @property
+    def optimum_x(self) -> np.ndarray:
+        return np.full(self.dim, (1.0 + self._domain) / (2.0 * self._domain))
+
+    @property
+    def optimum_value(self) -> float:
+        return 0.0
+
+
+class UnitScaled(Oracle):
+    """Affinely rescale any oracle so its optimum is exactly 1.0 and its floor ~0.
+
+    WHY THIS IS NECESSARY, not cosmetic
+    -----------------------------------
+    The observation model is ``y = f(x)(1 + eps) + eta`` -- noise PROPORTIONAL to the
+    signal, because assay CV is what scales in the readout this project is calibrated to.
+    Hartmann6 aside, every standard test function here has an optimum VALUE of exactly 0
+    once negated. So the multiplicative term vanishes precisely at the optimum, and the
+    single hardest region of the search becomes the quietest. That is an artefact of
+    pairing a relative-noise model with a zero-valued optimum, and it makes those
+    families spuriously easy in exactly the place the benchmark is measuring.
+
+    Rescaling to ``optimum = 1`` puts every family on the Hill oracle's footing, so
+    ``sigma_rel`` means the same thing across all five and the comparison is like for
+    like. The floor is the minimum over a fixed Sobol sample -- deterministic given
+    ``floor_samples`` and ``floor_seed``, and both are recorded in the results.
+
+    Regret is then in units of the family's own range, which is what makes per-family
+    regrets readable side by side. It does NOT make them poolable, and nothing here
+    pools them.
+    """
+
+    def __init__(self, inner: Oracle, *, floor_samples: int = 65536,
+                 floor_seed: int = 0) -> None:
+        self.inner = inner
+        self.dim = int(inner.dim)
+        self.name = f"{inner.name}_unit"
+        self.floor_samples = int(floor_samples)
+        self.floor_seed = int(floor_seed)
+        from scipy.stats import qmc
+        pts = qmc.Sobol(d=self.dim, scramble=True, seed=floor_seed).random(floor_samples)
+        vals = np.asarray(inner.f(pts), dtype=float)
+        top = inner.optimum_value
+        if top is None:
+            top = float(vals.max())
+        self._top = float(top)
+        self._floor = float(vals.min())
+        if not self._top > self._floor:
+            raise ValueError(f"{inner.name}: optimum {self._top} is not above the "
+                             f"sampled floor {self._floor}")
+
+    @property
+    def scale(self) -> float:
+        return self._top - self._floor
+
+    def f(self, X: np.ndarray) -> np.ndarray:
+        return 1.0 - (self._top - np.asarray(self.inner.f(X), dtype=float)) / self.scale
+
+    @property
+    def optimum_x(self) -> np.ndarray | None:
+        return self.inner.optimum_x
+
+    @property
+    def optimum_value(self) -> float:
+        return 1.0
+
+
 # --------------------------------------------------------------------------------
 # Biphasic Hill factor mathematics
 # --------------------------------------------------------------------------------
