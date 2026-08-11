@@ -1,0 +1,4002 @@
+[
+ {
+  "instance": "ce7334da318bc5e5",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 0,
+  "arm": "qlogei",
+  "regenerated": 0.24109211181944656,
+  "stored": 0.24109211181944656,
+  "delta": 0.0
+ },
+ {
+  "instance": "ce7334da318bc5e5",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 0,
+  "arm": "qlognei",
+  "regenerated": 0.2617070819112569,
+  "stored": 0.2617070819112569,
+  "delta": 0.0
+ },
+ {
+  "instance": "ce7334da318bc5e5",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 1,
+  "arm": "qlogei",
+  "regenerated": 0.07261946493773941,
+  "stored": 0.07261946493773941,
+  "delta": 0.0
+ },
+ {
+  "instance": "ce7334da318bc5e5",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 1,
+  "arm": "qlognei",
+  "regenerated": 0.16299376033890312,
+  "stored": 0.16299376033890312,
+  "delta": 0.0
+ },
+ {
+  "instance": "c75f6d6f50fe2434",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 0,
+  "arm": "qlogei",
+  "regenerated": 0.08034533196836124,
+  "stored": 0.08034533196836124,
+  "delta": 0.0
+ },
+ {
+  "instance": "c75f6d6f50fe2434",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 0,
+  "arm": "qlognei",
+  "regenerated": 0.12915721359325472,
+  "stored": 0.12915721359325472,
+  "delta": 0.0
+ },
+ {
+  "instance": "c75f6d6f50fe2434",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 1,
+  "arm": "qlogei",
+  "regenerated": 0.2584493828646307,
+  "stored": 0.2584493828646307,
+  "delta": 0.0
+ },
+ {
+  "instance": "c75f6d6f50fe2434",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 1,
+  "arm": "qlognei",
+  "regenerated": 0.18667362437036583,
+  "stored": 0.18667362437036583,
+  "delta": 0.0
+ },
+ {
+  "instance": "763e0f58925816ca",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 0,
+  "arm": "qlogei",
+  "regenerated": 0.23800926800794697,
+  "stored": 0.23800926800794697,
+  "delta": 0.0
+ },
+ {
+  "instance": "763e0f58925816ca",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 0,
+  "arm": "qlognei",
+  "regenerated": 0.11632883338652178,
+  "stored": 0.11632883338652178,
+  "delta": 0.0
+ },
+ {
+  "instance": "763e0f58925816ca",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 1,
+  "arm": "qlogei",
+  "regenerated": 0.17043943366784453,
+  "stored": 0.17043943366784453,
+  "delta": 0.0
+ },
+ {
+  "instance": "763e0f58925816ca",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 1,
+  "arm": "qlognei",
+  "regenerated": 0.24816674305243314,
+  "stored": 0.24816674305243314,
+  "delta": 0.0
+ },
+ {
+  "instance": "9414bc879284eef0",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 0,
+  "arm": "qlogei",
+  "regenerated": 0.13974407461066707,
+  "stored": 0.13974407461066707,
+  "delta": 0.0
+ },
+ {
+  "instance": "9414bc879284eef0",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 0,
+  "arm": "qlognei",
+  "regenerated": 0.13368844941814984,
+  "stored": 0.13368844941814984,
+  "delta": 0.0
+ },
+ {
+  "instance": "9414bc879284eef0",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 1,
+  "arm": "qlogei",
+  "regenerated": 0.23560658963370562,
+  "stored": 0.23560658963370562,
+  "delta": 0.0
+ },
+ {
+  "instance": "9414bc879284eef0",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 1,
+  "arm": "qlognei",
+  "regenerated": 0.09801200113267128,
+  "stored": 0.09801200113267128,
+  "delta": 0.0
+ },
+ {
+  "instance": "7b6071e568a98779",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 0,
+  "arm": "qlogei",
+  "regenerated": 0.14459466897712092,
+  "stored": 0.14459466897712092,
+  "delta": 0.0
+ },
+ {
+  "instance": "7b6071e568a98779",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 0,
+  "arm": "qlognei",
+  "regenerated": 0.09638560661414708,
+  "stored": 0.09638560661414708,
+  "delta": 0.0
+ },
+ {
+  "instance": "7b6071e568a98779",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 1,
+  "arm": "qlogei",
+  "regenerated": 0.060402111226706134,
+  "stored": 0.060402111226706134,
+  "delta": 0.0
+ },
+ {
+  "instance": "7b6071e568a98779",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 1,
+  "arm": "qlognei",
+  "regenerated": 0.11364425677531731,
+  "stored": 0.11364425677531731,
+  "delta": 0.0
+ },
+ {
+  "instance": "da5ec2fbb20c9f9b",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 0,
+  "arm": "qlogei",
+  "regenerated": 0.18074382737656958,
+  "stored": 0.18074382737656958,
+  "delta": 0.0
+ },
+ {
+  "instance": "da5ec2fbb20c9f9b",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 0,
+  "arm": "qlognei",
+  "regenerated": 0.03486038763459476,
+  "stored": 0.03486038763459476,
+  "delta": 0.0
+ },
+ {
+  "instance": "da5ec2fbb20c9f9b",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 1,
+  "arm": "qlogei",
+  "regenerated": 0.17240423270406346,
+  "stored": 0.17240423270406346,
+  "delta": 0.0
+ },
+ {
+  "instance": "da5ec2fbb20c9f9b",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 1,
+  "arm": "qlognei",
+  "regenerated": 0.19624211724154283,
+  "stored": 0.19624211724154283,
+  "delta": 0.0
+ },
+ {
+  "instance": "4d4f7158b65b52ba",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 0,
+  "arm": "qlogei",
+  "regenerated": 0.2610109786382513,
+  "stored": 0.2610109786382513,
+  "delta": 0.0
+ },
+ {
+  "instance": "4d4f7158b65b52ba",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 0,
+  "arm": "qlognei",
+  "regenerated": 0.2756332294938678,
+  "stored": 0.2756332294938678,
+  "delta": 0.0
+ },
+ {
+  "instance": "4d4f7158b65b52ba",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 1,
+  "arm": "qlogei",
+  "regenerated": 0.21142364756433096,
+  "stored": 0.21142364756433096,
+  "delta": 0.0
+ },
+ {
+  "instance": "4d4f7158b65b52ba",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 1,
+  "arm": "qlognei",
+  "regenerated": 0.2652900888189951,
+  "stored": 0.2652900888189951,
+  "delta": 0.0
+ },
+ {
+  "instance": "5b3926ef2c5fe4b6",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 0,
+  "arm": "qlogei",
+  "regenerated": 0.15071631895330306,
+  "stored": 0.15071631895330306,
+  "delta": 0.0
+ },
+ {
+  "instance": "5b3926ef2c5fe4b6",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 0,
+  "arm": "qlognei",
+  "regenerated": 0.13660142857468138,
+  "stored": 0.13660142857468138,
+  "delta": 0.0
+ },
+ {
+  "instance": "5b3926ef2c5fe4b6",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 1,
+  "arm": "qlogei",
+  "regenerated": 0.1675998850263336,
+  "stored": 0.1675998850263336,
+  "delta": 0.0
+ },
+ {
+  "instance": "5b3926ef2c5fe4b6",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 1,
+  "arm": "qlognei",
+  "regenerated": 0.08018382028906701,
+  "stored": 0.08018382028906701,
+  "delta": 0.0
+ },
+ {
+  "instance": "9f3cdb4d835c6909",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 0,
+  "arm": "qlogei",
+  "regenerated": 0.19915454079960127,
+  "stored": 0.19915454079960127,
+  "delta": 0.0
+ },
+ {
+  "instance": "9f3cdb4d835c6909",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 0,
+  "arm": "qlognei",
+  "regenerated": 0.10364801021769066,
+  "stored": 0.10364801021769066,
+  "delta": 0.0
+ },
+ {
+  "instance": "9f3cdb4d835c6909",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 1,
+  "arm": "qlogei",
+  "regenerated": 0.06670387758712348,
+  "stored": 0.06670387758712348,
+  "delta": 0.0
+ },
+ {
+  "instance": "9f3cdb4d835c6909",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 1,
+  "arm": "qlognei",
+  "regenerated": 0.04769606810632909,
+  "stored": 0.04769606810632909,
+  "delta": 0.0
+ },
+ {
+  "instance": "ef2815cdafff288c",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 0,
+  "arm": "qlogei",
+  "regenerated": 0.11161476467062859,
+  "stored": 0.11161476467062859,
+  "delta": 0.0
+ },
+ {
+  "instance": "ef2815cdafff288c",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 0,
+  "arm": "qlognei",
+  "regenerated": 0.21266707989091804,
+  "stored": 0.21266707989091804,
+  "delta": 0.0
+ },
+ {
+  "instance": "ef2815cdafff288c",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 1,
+  "arm": "qlogei",
+  "regenerated": 0.11487393159245751,
+  "stored": 0.11487393159245751,
+  "delta": 0.0
+ },
+ {
+  "instance": "ef2815cdafff288c",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 1,
+  "arm": "qlognei",
+  "regenerated": 0.11487393159245751,
+  "stored": 0.11487393159245751,
+  "delta": 0.0
+ },
+ {
+  "instance": "0ed87c75239d73f8",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 0,
+  "arm": "qlogei",
+  "regenerated": 0.16680670360745775,
+  "stored": 0.16680670360745775,
+  "delta": 0.0
+ },
+ {
+  "instance": "0ed87c75239d73f8",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 0,
+  "arm": "qlognei",
+  "regenerated": 0.1465364129418696,
+  "stored": 0.1465364129418696,
+  "delta": 0.0
+ },
+ {
+  "instance": "0ed87c75239d73f8",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 1,
+  "arm": "qlogei",
+  "regenerated": 0.04037326166819821,
+  "stored": 0.04037326166819821,
+  "delta": 0.0
+ },
+ {
+  "instance": "0ed87c75239d73f8",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 1,
+  "arm": "qlognei",
+  "regenerated": 0.03943635045454652,
+  "stored": 0.03943635045454652,
+  "delta": 0.0
+ },
+ {
+  "instance": "51cf489c521a6911",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 0,
+  "arm": "qlogei",
+  "regenerated": 0.13525698118703833,
+  "stored": 0.13525698118703833,
+  "delta": 0.0
+ },
+ {
+  "instance": "51cf489c521a6911",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 0,
+  "arm": "qlognei",
+  "regenerated": 0.07294223793859922,
+  "stored": 0.07294223793859922,
+  "delta": 0.0
+ },
+ {
+  "instance": "51cf489c521a6911",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 1,
+  "arm": "qlogei",
+  "regenerated": 0.32415421892571195,
+  "stored": 0.32415421892571195,
+  "delta": 0.0
+ },
+ {
+  "instance": "51cf489c521a6911",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 1,
+  "arm": "qlognei",
+  "regenerated": 0.22095065672831926,
+  "stored": 0.22095065672831926,
+  "delta": 0.0
+ },
+ {
+  "instance": "48b1324dd0461cd9",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 0,
+  "arm": "qlogei",
+  "regenerated": 0.18175368913925405,
+  "stored": 0.18175368913925405,
+  "delta": 0.0
+ },
+ {
+  "instance": "48b1324dd0461cd9",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 0,
+  "arm": "qlognei",
+  "regenerated": 0.01615017871304636,
+  "stored": 0.01615017871304636,
+  "delta": 0.0
+ },
+ {
+  "instance": "48b1324dd0461cd9",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 1,
+  "arm": "qlogei",
+  "regenerated": 0.24717261554710668,
+  "stored": 0.24717261554710668,
+  "delta": 0.0
+ },
+ {
+  "instance": "48b1324dd0461cd9",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 1,
+  "arm": "qlognei",
+  "regenerated": 0.13656684656205398,
+  "stored": 0.13656684656205398,
+  "delta": 0.0
+ },
+ {
+  "instance": "0a6e0788538a7c52",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 0,
+  "arm": "qlogei",
+  "regenerated": 0.13843127349294315,
+  "stored": 0.13843127349294315,
+  "delta": 0.0
+ },
+ {
+  "instance": "0a6e0788538a7c52",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 0,
+  "arm": "qlognei",
+  "regenerated": 0.11573554810459186,
+  "stored": 0.11573554810459186,
+  "delta": 0.0
+ },
+ {
+  "instance": "0a6e0788538a7c52",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 1,
+  "arm": "qlogei",
+  "regenerated": 0.12987991448653513,
+  "stored": 0.12987991448653513,
+  "delta": 0.0
+ },
+ {
+  "instance": "0a6e0788538a7c52",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 1,
+  "arm": "qlognei",
+  "regenerated": 0.11758443825384768,
+  "stored": 0.11758443825384768,
+  "delta": 0.0
+ },
+ {
+  "instance": "7f5c7431c0530e74",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 0,
+  "arm": "qlogei",
+  "regenerated": 0.043256649925240476,
+  "stored": 0.043256649925240476,
+  "delta": 0.0
+ },
+ {
+  "instance": "7f5c7431c0530e74",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 0,
+  "arm": "qlognei",
+  "regenerated": 0.2153980359752904,
+  "stored": 0.2153980359752904,
+  "delta": 0.0
+ },
+ {
+  "instance": "7f5c7431c0530e74",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 1,
+  "arm": "qlogei",
+  "regenerated": 0.16068692386810834,
+  "stored": 0.16068692386810834,
+  "delta": 0.0
+ },
+ {
+  "instance": "7f5c7431c0530e74",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 1,
+  "arm": "qlognei",
+  "regenerated": 0.16068692386810834,
+  "stored": 0.16068692386810834,
+  "delta": 0.0
+ },
+ {
+  "instance": "f79c5cf175034acd",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 0,
+  "arm": "qlogei",
+  "regenerated": 0.0649534415762214,
+  "stored": 0.0649534415762214,
+  "delta": 0.0
+ },
+ {
+  "instance": "f79c5cf175034acd",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 0,
+  "arm": "qlognei",
+  "regenerated": 0.20320994714386653,
+  "stored": 0.20320994714386653,
+  "delta": 0.0
+ },
+ {
+  "instance": "f79c5cf175034acd",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 1,
+  "arm": "qlogei",
+  "regenerated": 0.14823148793978358,
+  "stored": 0.14823148793978358,
+  "delta": 0.0
+ },
+ {
+  "instance": "f79c5cf175034acd",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 1,
+  "arm": "qlognei",
+  "regenerated": 0.25595476539287065,
+  "stored": 0.25595476539287065,
+  "delta": 0.0
+ },
+ {
+  "instance": "e946207e9dfe1876",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 0,
+  "arm": "qlogei",
+  "regenerated": 0.20305882638910777,
+  "stored": 0.20305882638910777,
+  "delta": 0.0
+ },
+ {
+  "instance": "e946207e9dfe1876",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 0,
+  "arm": "qlognei",
+  "regenerated": 0.10655618688747914,
+  "stored": 0.10655618688747914,
+  "delta": 0.0
+ },
+ {
+  "instance": "e946207e9dfe1876",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 1,
+  "arm": "qlogei",
+  "regenerated": 0.14244035573664215,
+  "stored": 0.14244035573664215,
+  "delta": 0.0
+ },
+ {
+  "instance": "e946207e9dfe1876",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 1,
+  "arm": "qlognei",
+  "regenerated": 0.2499269954497878,
+  "stored": 0.2499269954497878,
+  "delta": 0.0
+ },
+ {
+  "instance": "32bb966a18f1d863",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 0,
+  "arm": "qlogei",
+  "regenerated": 0.09428717823743682,
+  "stored": 0.09428717823743682,
+  "delta": 0.0
+ },
+ {
+  "instance": "32bb966a18f1d863",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 0,
+  "arm": "qlognei",
+  "regenerated": 0.12118256603805877,
+  "stored": 0.12118256603805877,
+  "delta": 0.0
+ },
+ {
+  "instance": "32bb966a18f1d863",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 1,
+  "arm": "qlogei",
+  "regenerated": 0.15517622929474517,
+  "stored": 0.15517622929474517,
+  "delta": 0.0
+ },
+ {
+  "instance": "32bb966a18f1d863",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 1,
+  "arm": "qlognei",
+  "regenerated": 0.13421077410026572,
+  "stored": 0.13421077410026572,
+  "delta": 0.0
+ },
+ {
+  "instance": "443c180247c17191",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 0,
+  "arm": "qlogei",
+  "regenerated": 0.14576594925567132,
+  "stored": 0.14576594925567132,
+  "delta": 0.0
+ },
+ {
+  "instance": "443c180247c17191",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 0,
+  "arm": "qlognei",
+  "regenerated": 0.27779555402137934,
+  "stored": 0.27779555402137934,
+  "delta": 0.0
+ },
+ {
+  "instance": "443c180247c17191",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 1,
+  "arm": "qlogei",
+  "regenerated": 0.14849006771504614,
+  "stored": 0.14849006771504614,
+  "delta": 0.0
+ },
+ {
+  "instance": "443c180247c17191",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 1,
+  "arm": "qlognei",
+  "regenerated": 0.14502916693750478,
+  "stored": 0.14502916693750478,
+  "delta": 0.0
+ },
+ {
+  "instance": "033466197eba3ddb",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 0,
+  "arm": "qlogei",
+  "regenerated": 0.13230569020864213,
+  "stored": 0.13230569020864213,
+  "delta": 0.0
+ },
+ {
+  "instance": "033466197eba3ddb",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 0,
+  "arm": "qlognei",
+  "regenerated": 0.07504949012437856,
+  "stored": 0.07504949012437856,
+  "delta": 0.0
+ },
+ {
+  "instance": "033466197eba3ddb",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 1,
+  "arm": "qlogei",
+  "regenerated": 0.27847471069690555,
+  "stored": 0.27847471069690555,
+  "delta": 0.0
+ },
+ {
+  "instance": "033466197eba3ddb",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 1,
+  "arm": "qlognei",
+  "regenerated": 0.2170207238498283,
+  "stored": 0.2170207238498283,
+  "delta": 0.0
+ },
+ {
+  "instance": "e402c32907f27534",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 0,
+  "arm": "qlogei",
+  "regenerated": 0.08394632039379224,
+  "stored": 0.08394632039379224,
+  "delta": 0.0
+ },
+ {
+  "instance": "e402c32907f27534",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 0,
+  "arm": "qlognei",
+  "regenerated": 0.16297409662794338,
+  "stored": 0.16297409662794338,
+  "delta": 0.0
+ },
+ {
+  "instance": "e402c32907f27534",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 1,
+  "arm": "qlogei",
+  "regenerated": 0.09449449041417457,
+  "stored": 0.09449449041417457,
+  "delta": 0.0
+ },
+ {
+  "instance": "e402c32907f27534",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 1,
+  "arm": "qlognei",
+  "regenerated": 0.2322455516363584,
+  "stored": 0.2322455516363584,
+  "delta": 0.0
+ },
+ {
+  "instance": "8abe35e93ddfcad1",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 0,
+  "arm": "qlogei",
+  "regenerated": 0.22878074643596713,
+  "stored": 0.22878074643596713,
+  "delta": 0.0
+ },
+ {
+  "instance": "8abe35e93ddfcad1",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 0,
+  "arm": "qlognei",
+  "regenerated": 0.1756884579625272,
+  "stored": 0.1756884579625272,
+  "delta": 0.0
+ },
+ {
+  "instance": "8abe35e93ddfcad1",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 1,
+  "arm": "qlogei",
+  "regenerated": 0.18955062350961938,
+  "stored": 0.18955062350961938,
+  "delta": 0.0
+ },
+ {
+  "instance": "8abe35e93ddfcad1",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 1,
+  "arm": "qlognei",
+  "regenerated": 0.2567918235668736,
+  "stored": 0.2567918235668736,
+  "delta": 0.0
+ },
+ {
+  "instance": "7ef3fc89acece49c",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 0,
+  "arm": "qlogei",
+  "regenerated": 0.053981952271793254,
+  "stored": 0.053981952271793254,
+  "delta": 0.0
+ },
+ {
+  "instance": "7ef3fc89acece49c",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 0,
+  "arm": "qlognei",
+  "regenerated": 0.08360405720407538,
+  "stored": 0.08360405720407538,
+  "delta": 0.0
+ },
+ {
+  "instance": "7ef3fc89acece49c",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 1,
+  "arm": "qlogei",
+  "regenerated": 0.13154247825327414,
+  "stored": 0.13154247825327414,
+  "delta": 0.0
+ },
+ {
+  "instance": "7ef3fc89acece49c",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 1,
+  "arm": "qlognei",
+  "regenerated": 0.14599687405174355,
+  "stored": 0.14599687405174355,
+  "delta": 0.0
+ },
+ {
+  "instance": "59e420274f4385d9",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 0,
+  "arm": "qlogei",
+  "regenerated": 0.18757374682221695,
+  "stored": 0.18757374682221695,
+  "delta": 0.0
+ },
+ {
+  "instance": "59e420274f4385d9",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 0,
+  "arm": "qlognei",
+  "regenerated": 0.11962296059152744,
+  "stored": 0.11962296059152744,
+  "delta": 0.0
+ },
+ {
+  "instance": "59e420274f4385d9",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 1,
+  "arm": "qlogei",
+  "regenerated": 0.23445298677538773,
+  "stored": 0.23445298677538773,
+  "delta": 0.0
+ },
+ {
+  "instance": "59e420274f4385d9",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 1,
+  "arm": "qlognei",
+  "regenerated": 0.25799445277311017,
+  "stored": 0.25799445277311017,
+  "delta": 0.0
+ },
+ {
+  "instance": "578e5d8768359f0f",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 0,
+  "arm": "qlogei",
+  "regenerated": 0.09602143225469584,
+  "stored": 0.09602143225469584,
+  "delta": 0.0
+ },
+ {
+  "instance": "578e5d8768359f0f",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 0,
+  "arm": "qlognei",
+  "regenerated": 0.07958830816481688,
+  "stored": 0.07958830816481688,
+  "delta": 0.0
+ },
+ {
+  "instance": "578e5d8768359f0f",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 1,
+  "arm": "qlogei",
+  "regenerated": 0.10371585587632726,
+  "stored": 0.10371585587632726,
+  "delta": 0.0
+ },
+ {
+  "instance": "578e5d8768359f0f",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 1,
+  "arm": "qlognei",
+  "regenerated": 0.10371585587632726,
+  "stored": 0.10371585587632726,
+  "delta": 0.0
+ },
+ {
+  "instance": "ce7334da318bc5e5",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 0,
+  "arm": "qlogei",
+  "regenerated": 0.05905580763260643,
+  "stored": 0.05905580763260643,
+  "delta": 0.0
+ },
+ {
+  "instance": "ce7334da318bc5e5",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 0,
+  "arm": "qlognei",
+  "regenerated": 0.04100069122682748,
+  "stored": 0.04100069122682748,
+  "delta": 0.0
+ },
+ {
+  "instance": "ce7334da318bc5e5",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 1,
+  "arm": "qlogei",
+  "regenerated": 0.060074240512801524,
+  "stored": 0.060074240512801524,
+  "delta": 0.0
+ },
+ {
+  "instance": "ce7334da318bc5e5",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 1,
+  "arm": "qlognei",
+  "regenerated": 0.06780234729460655,
+  "stored": 0.06780234729460655,
+  "delta": 0.0
+ },
+ {
+  "instance": "c75f6d6f50fe2434",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 0,
+  "arm": "qlogei",
+  "regenerated": 0.05850159249594,
+  "stored": 0.05850159249594,
+  "delta": 0.0
+ },
+ {
+  "instance": "c75f6d6f50fe2434",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 0,
+  "arm": "qlognei",
+  "regenerated": 0.07471909531681253,
+  "stored": 0.07471909531681253,
+  "delta": 0.0
+ },
+ {
+  "instance": "c75f6d6f50fe2434",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 1,
+  "arm": "qlogei",
+  "regenerated": 0.15479300959236897,
+  "stored": 0.15479300959236897,
+  "delta": 0.0
+ },
+ {
+  "instance": "c75f6d6f50fe2434",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 1,
+  "arm": "qlognei",
+  "regenerated": 0.018129574636433277,
+  "stored": 0.018129574636433277,
+  "delta": 0.0
+ },
+ {
+  "instance": "763e0f58925816ca",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 0,
+  "arm": "qlogei",
+  "regenerated": 0.04218424964679257,
+  "stored": 0.04218424964679257,
+  "delta": 0.0
+ },
+ {
+  "instance": "763e0f58925816ca",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 0,
+  "arm": "qlognei",
+  "regenerated": 0.07041975826671332,
+  "stored": 0.07041975826671332,
+  "delta": 0.0
+ },
+ {
+  "instance": "763e0f58925816ca",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 1,
+  "arm": "qlogei",
+  "regenerated": 0.13428815089085766,
+  "stored": 0.13428815089085766,
+  "delta": 0.0
+ },
+ {
+  "instance": "763e0f58925816ca",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 1,
+  "arm": "qlognei",
+  "regenerated": 0.05992242135531045,
+  "stored": 0.05992242135531045,
+  "delta": 0.0
+ },
+ {
+  "instance": "9414bc879284eef0",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 0,
+  "arm": "qlogei",
+  "regenerated": 0.12788775408334285,
+  "stored": 0.12788775408334285,
+  "delta": 0.0
+ },
+ {
+  "instance": "9414bc879284eef0",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 0,
+  "arm": "qlognei",
+  "regenerated": 0.062415611148720185,
+  "stored": 0.062415611148720185,
+  "delta": 0.0
+ },
+ {
+  "instance": "9414bc879284eef0",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 1,
+  "arm": "qlogei",
+  "regenerated": 0.05429601475836965,
+  "stored": 0.05429601475836965,
+  "delta": 0.0
+ },
+ {
+  "instance": "9414bc879284eef0",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 1,
+  "arm": "qlognei",
+  "regenerated": 0.09183847255945632,
+  "stored": 0.09183847255945632,
+  "delta": 0.0
+ },
+ {
+  "instance": "7b6071e568a98779",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 0,
+  "arm": "qlogei",
+  "regenerated": 0.04376017085035777,
+  "stored": 0.04376017085035777,
+  "delta": 0.0
+ },
+ {
+  "instance": "7b6071e568a98779",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 0,
+  "arm": "qlognei",
+  "regenerated": 0.08019679222792886,
+  "stored": 0.08019679222792886,
+  "delta": 0.0
+ },
+ {
+  "instance": "7b6071e568a98779",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 1,
+  "arm": "qlogei",
+  "regenerated": 0.1252772416163065,
+  "stored": 0.1252772416163065,
+  "delta": 0.0
+ },
+ {
+  "instance": "7b6071e568a98779",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 1,
+  "arm": "qlognei",
+  "regenerated": 0.11833490576471906,
+  "stored": 0.11833490576471906,
+  "delta": 0.0
+ },
+ {
+  "instance": "da5ec2fbb20c9f9b",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 0,
+  "arm": "qlogei",
+  "regenerated": 0.01834446187718841,
+  "stored": 0.01834446187718841,
+  "delta": 0.0
+ },
+ {
+  "instance": "da5ec2fbb20c9f9b",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 0,
+  "arm": "qlognei",
+  "regenerated": 0.10231207933168185,
+  "stored": 0.10231207933168185,
+  "delta": 0.0
+ },
+ {
+  "instance": "da5ec2fbb20c9f9b",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 1,
+  "arm": "qlogei",
+  "regenerated": 0.14442590570640546,
+  "stored": 0.14442590570640546,
+  "delta": 0.0
+ },
+ {
+  "instance": "da5ec2fbb20c9f9b",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 1,
+  "arm": "qlognei",
+  "regenerated": 0.10077953470947021,
+  "stored": 0.10077953470947021,
+  "delta": 0.0
+ },
+ {
+  "instance": "4d4f7158b65b52ba",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 0,
+  "arm": "qlogei",
+  "regenerated": 0.15988595696241714,
+  "stored": 0.15988595696241714,
+  "delta": 0.0
+ },
+ {
+  "instance": "4d4f7158b65b52ba",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 0,
+  "arm": "qlognei",
+  "regenerated": 0.11698727065147885,
+  "stored": 0.11698727065147885,
+  "delta": 0.0
+ },
+ {
+  "instance": "4d4f7158b65b52ba",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 1,
+  "arm": "qlogei",
+  "regenerated": 0.07560133971829075,
+  "stored": 0.07560133971829075,
+  "delta": 0.0
+ },
+ {
+  "instance": "4d4f7158b65b52ba",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 1,
+  "arm": "qlognei",
+  "regenerated": 0.0843174368683649,
+  "stored": 0.0843174368683649,
+  "delta": 0.0
+ },
+ {
+  "instance": "5b3926ef2c5fe4b6",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 0,
+  "arm": "qlogei",
+  "regenerated": 0.08099659661184555,
+  "stored": 0.08099659661184555,
+  "delta": 0.0
+ },
+ {
+  "instance": "5b3926ef2c5fe4b6",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 0,
+  "arm": "qlognei",
+  "regenerated": 0.03960016443779957,
+  "stored": 0.03960016443779957,
+  "delta": 0.0
+ },
+ {
+  "instance": "5b3926ef2c5fe4b6",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 1,
+  "arm": "qlogei",
+  "regenerated": 0.07650874937235075,
+  "stored": 0.07650874937235075,
+  "delta": 0.0
+ },
+ {
+  "instance": "5b3926ef2c5fe4b6",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 1,
+  "arm": "qlognei",
+  "regenerated": 0.061891259816022504,
+  "stored": 0.061891259816022504,
+  "delta": 0.0
+ },
+ {
+  "instance": "9f3cdb4d835c6909",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 0,
+  "arm": "qlogei",
+  "regenerated": 0.16504208705709744,
+  "stored": 0.16504208705709744,
+  "delta": 0.0
+ },
+ {
+  "instance": "9f3cdb4d835c6909",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 0,
+  "arm": "qlognei",
+  "regenerated": 0.08017082395257258,
+  "stored": 0.08017082395257258,
+  "delta": 0.0
+ },
+ {
+  "instance": "9f3cdb4d835c6909",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 1,
+  "arm": "qlogei",
+  "regenerated": 0.11351178460645561,
+  "stored": 0.11351178460645561,
+  "delta": 0.0
+ },
+ {
+  "instance": "9f3cdb4d835c6909",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 1,
+  "arm": "qlognei",
+  "regenerated": 0.07504800511525389,
+  "stored": 0.07504800511525389,
+  "delta": 0.0
+ },
+ {
+  "instance": "ef2815cdafff288c",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 0,
+  "arm": "qlogei",
+  "regenerated": 0.07815754898929095,
+  "stored": 0.07815754898929095,
+  "delta": 0.0
+ },
+ {
+  "instance": "ef2815cdafff288c",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 0,
+  "arm": "qlognei",
+  "regenerated": 0.0620488499082974,
+  "stored": 0.0620488499082974,
+  "delta": 0.0
+ },
+ {
+  "instance": "ef2815cdafff288c",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 1,
+  "arm": "qlogei",
+  "regenerated": 0.10439674256687481,
+  "stored": 0.10439674256687481,
+  "delta": 0.0
+ },
+ {
+  "instance": "ef2815cdafff288c",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 1,
+  "arm": "qlognei",
+  "regenerated": 0.07066544661363161,
+  "stored": 0.07066544661363161,
+  "delta": 0.0
+ },
+ {
+  "instance": "0ed87c75239d73f8",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 0,
+  "arm": "qlogei",
+  "regenerated": 0.039685996007076785,
+  "stored": 0.039685996007076785,
+  "delta": 0.0
+ },
+ {
+  "instance": "0ed87c75239d73f8",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 0,
+  "arm": "qlognei",
+  "regenerated": 0.10994295593478165,
+  "stored": 0.10994295593478165,
+  "delta": 0.0
+ },
+ {
+  "instance": "0ed87c75239d73f8",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 1,
+  "arm": "qlogei",
+  "regenerated": 0.06964705940721849,
+  "stored": 0.06964705940721849,
+  "delta": 0.0
+ },
+ {
+  "instance": "0ed87c75239d73f8",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 1,
+  "arm": "qlognei",
+  "regenerated": 0.04411123550944085,
+  "stored": 0.04411123550944085,
+  "delta": 0.0
+ },
+ {
+  "instance": "51cf489c521a6911",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 0,
+  "arm": "qlogei",
+  "regenerated": 0.08549264251536515,
+  "stored": 0.08549264251536515,
+  "delta": 0.0
+ },
+ {
+  "instance": "51cf489c521a6911",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 0,
+  "arm": "qlognei",
+  "regenerated": 0.079776016113282,
+  "stored": 0.079776016113282,
+  "delta": 0.0
+ },
+ {
+  "instance": "51cf489c521a6911",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 1,
+  "arm": "qlogei",
+  "regenerated": 0.16467716671057675,
+  "stored": 0.16467716671057675,
+  "delta": 0.0
+ },
+ {
+  "instance": "51cf489c521a6911",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 1,
+  "arm": "qlognei",
+  "regenerated": 0.1137092174211336,
+  "stored": 0.1137092174211336,
+  "delta": 0.0
+ },
+ {
+  "instance": "48b1324dd0461cd9",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 0,
+  "arm": "qlogei",
+  "regenerated": 0.13217926778416078,
+  "stored": 0.13217926778416078,
+  "delta": 0.0
+ },
+ {
+  "instance": "48b1324dd0461cd9",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 0,
+  "arm": "qlognei",
+  "regenerated": 0.029982281909090802,
+  "stored": 0.029982281909090802,
+  "delta": 0.0
+ },
+ {
+  "instance": "48b1324dd0461cd9",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 1,
+  "arm": "qlogei",
+  "regenerated": 0.1466483185984827,
+  "stored": 0.1466483185984827,
+  "delta": 0.0
+ },
+ {
+  "instance": "48b1324dd0461cd9",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 1,
+  "arm": "qlognei",
+  "regenerated": 0.13689550767160474,
+  "stored": 0.13689550767160474,
+  "delta": 0.0
+ },
+ {
+  "instance": "0a6e0788538a7c52",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 0,
+  "arm": "qlogei",
+  "regenerated": 0.07799757491385129,
+  "stored": 0.07799757491385129,
+  "delta": 0.0
+ },
+ {
+  "instance": "0a6e0788538a7c52",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 0,
+  "arm": "qlognei",
+  "regenerated": 0.1516706320533524,
+  "stored": 0.1516706320533524,
+  "delta": 0.0
+ },
+ {
+  "instance": "0a6e0788538a7c52",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 1,
+  "arm": "qlogei",
+  "regenerated": 0.039296578921548364,
+  "stored": 0.039296578921548364,
+  "delta": 0.0
+ },
+ {
+  "instance": "0a6e0788538a7c52",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 1,
+  "arm": "qlognei",
+  "regenerated": 0.1572557540611138,
+  "stored": 0.1572557540611138,
+  "delta": 0.0
+ },
+ {
+  "instance": "7f5c7431c0530e74",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 0,
+  "arm": "qlogei",
+  "regenerated": 0.06550127765657221,
+  "stored": 0.06550127765657221,
+  "delta": 0.0
+ },
+ {
+  "instance": "7f5c7431c0530e74",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 0,
+  "arm": "qlognei",
+  "regenerated": 0.007430782203899033,
+  "stored": 0.007430782203899033,
+  "delta": 0.0
+ },
+ {
+  "instance": "7f5c7431c0530e74",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 1,
+  "arm": "qlogei",
+  "regenerated": 0.0849527963559904,
+  "stored": 0.0849527963559904,
+  "delta": 0.0
+ },
+ {
+  "instance": "7f5c7431c0530e74",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 1,
+  "arm": "qlognei",
+  "regenerated": 0.06034950055478383,
+  "stored": 0.06034950055478383,
+  "delta": 0.0
+ },
+ {
+  "instance": "f79c5cf175034acd",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 0,
+  "arm": "qlogei",
+  "regenerated": 0.09832089890752638,
+  "stored": 0.09832089890752638,
+  "delta": 0.0
+ },
+ {
+  "instance": "f79c5cf175034acd",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 0,
+  "arm": "qlognei",
+  "regenerated": 0.08146416155713698,
+  "stored": 0.08146416155713698,
+  "delta": 0.0
+ },
+ {
+  "instance": "f79c5cf175034acd",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 1,
+  "arm": "qlogei",
+  "regenerated": 0.037329157952132874,
+  "stored": 0.037329157952132874,
+  "delta": 0.0
+ },
+ {
+  "instance": "f79c5cf175034acd",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 1,
+  "arm": "qlognei",
+  "regenerated": 0.0988494630400999,
+  "stored": 0.0988494630400999,
+  "delta": 0.0
+ },
+ {
+  "instance": "e946207e9dfe1876",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 0,
+  "arm": "qlogei",
+  "regenerated": 0.028894624235913158,
+  "stored": 0.028894624235913158,
+  "delta": 0.0
+ },
+ {
+  "instance": "e946207e9dfe1876",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 0,
+  "arm": "qlognei",
+  "regenerated": 0.13595881832613121,
+  "stored": 0.13595881832613121,
+  "delta": 0.0
+ },
+ {
+  "instance": "e946207e9dfe1876",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 1,
+  "arm": "qlogei",
+  "regenerated": 0.11095456724840558,
+  "stored": 0.11095456724840558,
+  "delta": 0.0
+ },
+ {
+  "instance": "e946207e9dfe1876",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 1,
+  "arm": "qlognei",
+  "regenerated": 0.09195435867026869,
+  "stored": 0.09195435867026869,
+  "delta": 0.0
+ },
+ {
+  "instance": "32bb966a18f1d863",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 0,
+  "arm": "qlogei",
+  "regenerated": 0.09448437449244995,
+  "stored": 0.09448437449244995,
+  "delta": 0.0
+ },
+ {
+  "instance": "32bb966a18f1d863",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 0,
+  "arm": "qlognei",
+  "regenerated": 0.05032173762506709,
+  "stored": 0.05032173762506709,
+  "delta": 0.0
+ },
+ {
+  "instance": "32bb966a18f1d863",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 1,
+  "arm": "qlogei",
+  "regenerated": 0.0497921327958315,
+  "stored": 0.0497921327958315,
+  "delta": 0.0
+ },
+ {
+  "instance": "32bb966a18f1d863",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 1,
+  "arm": "qlognei",
+  "regenerated": 0.03219117850104625,
+  "stored": 0.03219117850104625,
+  "delta": 0.0
+ },
+ {
+  "instance": "443c180247c17191",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 0,
+  "arm": "qlogei",
+  "regenerated": 0.124988634945699,
+  "stored": 0.124988634945699,
+  "delta": 0.0
+ },
+ {
+  "instance": "443c180247c17191",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 0,
+  "arm": "qlognei",
+  "regenerated": 0.07614693731081756,
+  "stored": 0.07614693731081756,
+  "delta": 0.0
+ },
+ {
+  "instance": "443c180247c17191",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 1,
+  "arm": "qlogei",
+  "regenerated": 0.06443663216033357,
+  "stored": 0.06443663216033357,
+  "delta": 0.0
+ },
+ {
+  "instance": "443c180247c17191",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 1,
+  "arm": "qlognei",
+  "regenerated": 0.048554867405202984,
+  "stored": 0.048554867405202984,
+  "delta": 0.0
+ },
+ {
+  "instance": "033466197eba3ddb",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 0,
+  "arm": "qlogei",
+  "regenerated": 0.014624984894765825,
+  "stored": 0.014624984894765825,
+  "delta": 0.0
+ },
+ {
+  "instance": "033466197eba3ddb",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 0,
+  "arm": "qlognei",
+  "regenerated": 0.09637498446282977,
+  "stored": 0.09637498446282977,
+  "delta": 0.0
+ },
+ {
+  "instance": "033466197eba3ddb",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 1,
+  "arm": "qlogei",
+  "regenerated": 0.17214723498300177,
+  "stored": 0.17214723498300177,
+  "delta": 0.0
+ },
+ {
+  "instance": "033466197eba3ddb",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 1,
+  "arm": "qlognei",
+  "regenerated": 0.11012471189940631,
+  "stored": 0.11012471189940631,
+  "delta": 0.0
+ },
+ {
+  "instance": "e402c32907f27534",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 0,
+  "arm": "qlogei",
+  "regenerated": 0.06713707341289932,
+  "stored": 0.06713707341289932,
+  "delta": 0.0
+ },
+ {
+  "instance": "e402c32907f27534",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 0,
+  "arm": "qlognei",
+  "regenerated": 0.10345707120006165,
+  "stored": 0.10345707120006165,
+  "delta": 0.0
+ },
+ {
+  "instance": "e402c32907f27534",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 1,
+  "arm": "qlogei",
+  "regenerated": 0.09926247108165365,
+  "stored": 0.09926247108165365,
+  "delta": 0.0
+ },
+ {
+  "instance": "e402c32907f27534",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 1,
+  "arm": "qlognei",
+  "regenerated": 0.09910618501366364,
+  "stored": 0.09910618501366364,
+  "delta": 0.0
+ },
+ {
+  "instance": "8abe35e93ddfcad1",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 0,
+  "arm": "qlogei",
+  "regenerated": 0.11671647848870037,
+  "stored": 0.11671647848870037,
+  "delta": 0.0
+ },
+ {
+  "instance": "8abe35e93ddfcad1",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 0,
+  "arm": "qlognei",
+  "regenerated": 0.07585399043232788,
+  "stored": 0.07585399043232788,
+  "delta": 0.0
+ },
+ {
+  "instance": "8abe35e93ddfcad1",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 1,
+  "arm": "qlogei",
+  "regenerated": 0.05163574231636092,
+  "stored": 0.05163574231636092,
+  "delta": 0.0
+ },
+ {
+  "instance": "8abe35e93ddfcad1",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 1,
+  "arm": "qlognei",
+  "regenerated": 0.13214214033633964,
+  "stored": 0.13214214033633964,
+  "delta": 0.0
+ },
+ {
+  "instance": "7ef3fc89acece49c",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 0,
+  "arm": "qlogei",
+  "regenerated": 0.10288139238306027,
+  "stored": 0.10288139238306027,
+  "delta": 0.0
+ },
+ {
+  "instance": "7ef3fc89acece49c",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 0,
+  "arm": "qlognei",
+  "regenerated": 0.12972008440931249,
+  "stored": 0.12972008440931249,
+  "delta": 0.0
+ },
+ {
+  "instance": "7ef3fc89acece49c",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 1,
+  "arm": "qlogei",
+  "regenerated": 0.048382870743044704,
+  "stored": 0.048382870743044704,
+  "delta": 0.0
+ },
+ {
+  "instance": "7ef3fc89acece49c",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 1,
+  "arm": "qlognei",
+  "regenerated": 0.02705187793084074,
+  "stored": 0.02705187793084074,
+  "delta": 0.0
+ },
+ {
+  "instance": "59e420274f4385d9",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 0,
+  "arm": "qlogei",
+  "regenerated": 0.03334912776405663,
+  "stored": 0.03334912776405663,
+  "delta": 0.0
+ },
+ {
+  "instance": "59e420274f4385d9",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 0,
+  "arm": "qlognei",
+  "regenerated": 0.04752169466237288,
+  "stored": 0.04752169466237288,
+  "delta": 0.0
+ },
+ {
+  "instance": "59e420274f4385d9",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 1,
+  "arm": "qlogei",
+  "regenerated": 0.0907133751999698,
+  "stored": 0.0907133751999698,
+  "delta": 0.0
+ },
+ {
+  "instance": "59e420274f4385d9",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 1,
+  "arm": "qlognei",
+  "regenerated": 0.11543789266897242,
+  "stored": 0.11543789266897242,
+  "delta": 0.0
+ },
+ {
+  "instance": "578e5d8768359f0f",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 0,
+  "arm": "qlogei",
+  "regenerated": 0.08059299673184661,
+  "stored": 0.08059299673184661,
+  "delta": 0.0
+ },
+ {
+  "instance": "578e5d8768359f0f",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 0,
+  "arm": "qlognei",
+  "regenerated": 0.04286414299074037,
+  "stored": 0.04286414299074037,
+  "delta": 0.0
+ },
+ {
+  "instance": "578e5d8768359f0f",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 1,
+  "arm": "qlogei",
+  "regenerated": 0.09954369905808225,
+  "stored": 0.09954369905808225,
+  "delta": 0.0
+ },
+ {
+  "instance": "578e5d8768359f0f",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 1,
+  "arm": "qlognei",
+  "regenerated": 0.07540960743227676,
+  "stored": 0.07540960743227676,
+  "delta": 0.0
+ },
+ {
+  "instance": "9b01d5dba8a4b27b",
+  "dim": 8,
+  "sigma": 0.25,
+  "seed": 0,
+  "arm": "qlogei",
+  "regenerated": 0.099750702395485,
+  "stored": 0.099750702395485,
+  "delta": 0.0
+ },
+ {
+  "instance": "9b01d5dba8a4b27b",
+  "dim": 8,
+  "sigma": 0.25,
+  "seed": 0,
+  "arm": "qlognei",
+  "regenerated": 0.14942805886981025,
+  "stored": 0.14942805886981025,
+  "delta": 0.0
+ },
+ {
+  "instance": "9b01d5dba8a4b27b",
+  "dim": 8,
+  "sigma": 0.25,
+  "seed": 1,
+  "arm": "qlogei",
+  "regenerated": 0.026050873161129084,
+  "stored": 0.026050873161129084,
+  "delta": 0.0
+ },
+ {
+  "instance": "9b01d5dba8a4b27b",
+  "dim": 8,
+  "sigma": 0.25,
+  "seed": 1,
+  "arm": "qlognei",
+  "regenerated": 0.027131204476856796,
+  "stored": 0.027131204476856796,
+  "delta": 0.0
+ },
+ {
+  "instance": "d1eeaa292d301456",
+  "dim": 8,
+  "sigma": 0.25,
+  "seed": 0,
+  "arm": "qlogei",
+  "regenerated": 0.1572518028384673,
+  "stored": 0.1572518028384673,
+  "delta": 0.0
+ },
+ {
+  "instance": "d1eeaa292d301456",
+  "dim": 8,
+  "sigma": 0.25,
+  "seed": 0,
+  "arm": "qlognei",
+  "regenerated": 0.11016275857098945,
+  "stored": 0.11016275857098945,
+  "delta": 0.0
+ },
+ {
+  "instance": "d1eeaa292d301456",
+  "dim": 8,
+  "sigma": 0.25,
+  "seed": 1,
+  "arm": "qlogei",
+  "regenerated": 0.050924188793290526,
+  "stored": 0.050924188793290526,
+  "delta": 0.0
+ },
+ {
+  "instance": "d1eeaa292d301456",
+  "dim": 8,
+  "sigma": 0.25,
+  "seed": 1,
+  "arm": "qlognei",
+  "regenerated": 0.050924188793290526,
+  "stored": 0.050924188793290526,
+  "delta": 0.0
+ },
+ {
+  "instance": "c118af1ed5aa2615",
+  "dim": 8,
+  "sigma": 0.25,
+  "seed": 0,
+  "arm": "qlogei",
+  "regenerated": 0.19394444701506353,
+  "stored": 0.19394444701506353,
+  "delta": 0.0
+ },
+ {
+  "instance": "c118af1ed5aa2615",
+  "dim": 8,
+  "sigma": 0.25,
+  "seed": 0,
+  "arm": "qlognei",
+  "regenerated": 0.1520473847059719,
+  "stored": 0.1520473847059719,
+  "delta": 0.0
+ },
+ {
+  "instance": "c118af1ed5aa2615",
+  "dim": 8,
+  "sigma": 0.25,
+  "seed": 1,
+  "arm": "qlogei",
+  "regenerated": 0.14407244778138206,
+  "stored": 0.14407244778138206,
+  "delta": 0.0
+ },
+ {
+  "instance": "c118af1ed5aa2615",
+  "dim": 8,
+  "sigma": 0.25,
+  "seed": 1,
+  "arm": "qlognei",
+  "regenerated": 0.14407244778138206,
+  "stored": 0.14407244778138206,
+  "delta": 0.0
+ },
+ {
+  "instance": "29394cb63a616fba",
+  "dim": 8,
+  "sigma": 0.25,
+  "seed": 0,
+  "arm": "qlogei",
+  "regenerated": 0.18881426767932963,
+  "stored": 0.18881426767932963,
+  "delta": 0.0
+ },
+ {
+  "instance": "29394cb63a616fba",
+  "dim": 8,
+  "sigma": 0.25,
+  "seed": 0,
+  "arm": "qlognei",
+  "regenerated": 0.11191999804128516,
+  "stored": 0.11191999804128516,
+  "delta": 0.0
+ },
+ {
+  "instance": "29394cb63a616fba",
+  "dim": 8,
+  "sigma": 0.25,
+  "seed": 1,
+  "arm": "qlogei",
+  "regenerated": 0.14716952935442318,
+  "stored": 0.14716952935442318,
+  "delta": 0.0
+ },
+ {
+  "instance": "29394cb63a616fba",
+  "dim": 8,
+  "sigma": 0.25,
+  "seed": 1,
+  "arm": "qlognei",
+  "regenerated": 0.0814355266506126,
+  "stored": 0.0814355266506126,
+  "delta": 0.0
+ },
+ {
+  "instance": "d855287df8ca2b0a",
+  "dim": 8,
+  "sigma": 0.25,
+  "seed": 0,
+  "arm": "qlogei",
+  "regenerated": 0.23353764050040915,
+  "stored": 0.23353764050040915,
+  "delta": 0.0
+ },
+ {
+  "instance": "d855287df8ca2b0a",
+  "dim": 8,
+  "sigma": 0.25,
+  "seed": 0,
+  "arm": "qlognei",
+  "regenerated": 0.2111146145652717,
+  "stored": 0.2111146145652717,
+  "delta": 0.0
+ },
+ {
+  "instance": "d855287df8ca2b0a",
+  "dim": 8,
+  "sigma": 0.25,
+  "seed": 1,
+  "arm": "qlogei",
+  "regenerated": 0.043975794209215824,
+  "stored": 0.043975794209215824,
+  "delta": 0.0
+ },
+ {
+  "instance": "d855287df8ca2b0a",
+  "dim": 8,
+  "sigma": 0.25,
+  "seed": 1,
+  "arm": "qlognei",
+  "regenerated": 0.12107463261346074,
+  "stored": 0.12107463261346074,
+  "delta": 0.0
+ },
+ {
+  "instance": "e66189b95d063b09",
+  "dim": 8,
+  "sigma": 0.25,
+  "seed": 0,
+  "arm": "qlogei",
+  "regenerated": 0.17172803252963464,
+  "stored": 0.17172803252963464,
+  "delta": 0.0
+ },
+ {
+  "instance": "e66189b95d063b09",
+  "dim": 8,
+  "sigma": 0.25,
+  "seed": 0,
+  "arm": "qlognei",
+  "regenerated": 0.17643391163301136,
+  "stored": 0.17643391163301136,
+  "delta": 0.0
+ },
+ {
+  "instance": "e66189b95d063b09",
+  "dim": 8,
+  "sigma": 0.25,
+  "seed": 1,
+  "arm": "qlogei",
+  "regenerated": 0.14651580235181927,
+  "stored": 0.14651580235181927,
+  "delta": 0.0
+ },
+ {
+  "instance": "e66189b95d063b09",
+  "dim": 8,
+  "sigma": 0.25,
+  "seed": 1,
+  "arm": "qlognei",
+  "regenerated": 0.06565558206238342,
+  "stored": 0.06565558206238342,
+  "delta": 0.0
+ },
+ {
+  "instance": "d4c5250631f705f7",
+  "dim": 8,
+  "sigma": 0.25,
+  "seed": 0,
+  "arm": "qlogei",
+  "regenerated": 0.12303577034434432,
+  "stored": 0.12303577034434432,
+  "delta": 0.0
+ },
+ {
+  "instance": "d4c5250631f705f7",
+  "dim": 8,
+  "sigma": 0.25,
+  "seed": 0,
+  "arm": "qlognei",
+  "regenerated": 0.11816561055175123,
+  "stored": 0.11816561055175123,
+  "delta": 0.0
+ },
+ {
+  "instance": "d4c5250631f705f7",
+  "dim": 8,
+  "sigma": 0.25,
+  "seed": 1,
+  "arm": "qlogei",
+  "regenerated": 0.09767046461780193,
+  "stored": 0.09767046461780193,
+  "delta": 0.0
+ },
+ {
+  "instance": "d4c5250631f705f7",
+  "dim": 8,
+  "sigma": 0.25,
+  "seed": 1,
+  "arm": "qlognei",
+  "regenerated": 0.06983210324270361,
+  "stored": 0.06983210324270361,
+  "delta": 0.0
+ },
+ {
+  "instance": "b7b159d2fb1b4527",
+  "dim": 8,
+  "sigma": 0.25,
+  "seed": 0,
+  "arm": "qlogei",
+  "regenerated": 0.06984478867462784,
+  "stored": 0.06984478867462784,
+  "delta": 0.0
+ },
+ {
+  "instance": "b7b159d2fb1b4527",
+  "dim": 8,
+  "sigma": 0.25,
+  "seed": 0,
+  "arm": "qlognei",
+  "regenerated": 0.03685632915493031,
+  "stored": 0.03685632915493031,
+  "delta": 0.0
+ },
+ {
+  "instance": "b7b159d2fb1b4527",
+  "dim": 8,
+  "sigma": 0.25,
+  "seed": 1,
+  "arm": "qlogei",
+  "regenerated": 0.1479079027941047,
+  "stored": 0.1479079027941047,
+  "delta": 0.0
+ },
+ {
+  "instance": "b7b159d2fb1b4527",
+  "dim": 8,
+  "sigma": 0.25,
+  "seed": 1,
+  "arm": "qlognei",
+  "regenerated": 0.1656971706961914,
+  "stored": 0.1656971706961914,
+  "delta": 0.0
+ },
+ {
+  "instance": "02c7368c30c8c231",
+  "dim": 8,
+  "sigma": 0.25,
+  "seed": 0,
+  "arm": "qlogei",
+  "regenerated": 0.1278873445796791,
+  "stored": 0.1278873445796791,
+  "delta": 0.0
+ },
+ {
+  "instance": "02c7368c30c8c231",
+  "dim": 8,
+  "sigma": 0.25,
+  "seed": 0,
+  "arm": "qlognei",
+  "regenerated": 0.1176636306225638,
+  "stored": 0.1176636306225638,
+  "delta": 0.0
+ },
+ {
+  "instance": "02c7368c30c8c231",
+  "dim": 8,
+  "sigma": 0.25,
+  "seed": 1,
+  "arm": "qlogei",
+  "regenerated": 0.10181783551813206,
+  "stored": 0.10181783551813206,
+  "delta": 0.0
+ },
+ {
+  "instance": "02c7368c30c8c231",
+  "dim": 8,
+  "sigma": 0.25,
+  "seed": 1,
+  "arm": "qlognei",
+  "regenerated": 0.08449479498785806,
+  "stored": 0.08449479498785806,
+  "delta": 0.0
+ },
+ {
+  "instance": "ef894d5db8737b54",
+  "dim": 8,
+  "sigma": 0.25,
+  "seed": 0,
+  "arm": "qlogei",
+  "regenerated": 0.18654548575955576,
+  "stored": 0.18654548575955576,
+  "delta": 0.0
+ },
+ {
+  "instance": "ef894d5db8737b54",
+  "dim": 8,
+  "sigma": 0.25,
+  "seed": 0,
+  "arm": "qlognei",
+  "regenerated": 0.16028784619673608,
+  "stored": 0.16028784619673608,
+  "delta": 0.0
+ },
+ {
+  "instance": "ef894d5db8737b54",
+  "dim": 8,
+  "sigma": 0.25,
+  "seed": 1,
+  "arm": "qlogei",
+  "regenerated": 0.041037023333201916,
+  "stored": 0.041037023333201916,
+  "delta": 0.0
+ },
+ {
+  "instance": "ef894d5db8737b54",
+  "dim": 8,
+  "sigma": 0.25,
+  "seed": 1,
+  "arm": "qlognei",
+  "regenerated": 0.08225932852919271,
+  "stored": 0.08225932852919271,
+  "delta": 0.0
+ },
+ {
+  "instance": "b8892a5c7c15b307",
+  "dim": 8,
+  "sigma": 0.25,
+  "seed": 0,
+  "arm": "qlogei",
+  "regenerated": 0.18623451998914042,
+  "stored": 0.18623451998914042,
+  "delta": 0.0
+ },
+ {
+  "instance": "b8892a5c7c15b307",
+  "dim": 8,
+  "sigma": 0.25,
+  "seed": 0,
+  "arm": "qlognei",
+  "regenerated": 0.17051583347720933,
+  "stored": 0.17051583347720933,
+  "delta": 0.0
+ },
+ {
+  "instance": "b8892a5c7c15b307",
+  "dim": 8,
+  "sigma": 0.25,
+  "seed": 1,
+  "arm": "qlogei",
+  "regenerated": 0.08861144060222026,
+  "stored": 0.08861144060222026,
+  "delta": 0.0
+ },
+ {
+  "instance": "b8892a5c7c15b307",
+  "dim": 8,
+  "sigma": 0.25,
+  "seed": 1,
+  "arm": "qlognei",
+  "regenerated": 0.126592370697018,
+  "stored": 0.126592370697018,
+  "delta": 0.0
+ },
+ {
+  "instance": "a3369b96aa7c2e1e",
+  "dim": 8,
+  "sigma": 0.25,
+  "seed": 0,
+  "arm": "qlogei",
+  "regenerated": 0.11029053398698108,
+  "stored": 0.11029053398698108,
+  "delta": 0.0
+ },
+ {
+  "instance": "a3369b96aa7c2e1e",
+  "dim": 8,
+  "sigma": 0.25,
+  "seed": 0,
+  "arm": "qlognei",
+  "regenerated": 0.15144806058244986,
+  "stored": 0.15144806058244986,
+  "delta": 0.0
+ },
+ {
+  "instance": "a3369b96aa7c2e1e",
+  "dim": 8,
+  "sigma": 0.25,
+  "seed": 1,
+  "arm": "qlogei",
+  "regenerated": 0.06553216905336023,
+  "stored": 0.06553216905336023,
+  "delta": 0.0
+ },
+ {
+  "instance": "a3369b96aa7c2e1e",
+  "dim": 8,
+  "sigma": 0.25,
+  "seed": 1,
+  "arm": "qlognei",
+  "regenerated": 0.04762278914594298,
+  "stored": 0.04762278914594298,
+  "delta": 0.0
+ },
+ {
+  "instance": "225de8592fdce407",
+  "dim": 8,
+  "sigma": 0.25,
+  "seed": 0,
+  "arm": "qlogei",
+  "regenerated": 0.15568775014701908,
+  "stored": 0.15568775014701908,
+  "delta": 0.0
+ },
+ {
+  "instance": "225de8592fdce407",
+  "dim": 8,
+  "sigma": 0.25,
+  "seed": 0,
+  "arm": "qlognei",
+  "regenerated": 0.14179175579241599,
+  "stored": 0.14179175579241599,
+  "delta": 0.0
+ },
+ {
+  "instance": "225de8592fdce407",
+  "dim": 8,
+  "sigma": 0.25,
+  "seed": 1,
+  "arm": "qlogei",
+  "regenerated": 0.09934219406347644,
+  "stored": 0.09934219406347644,
+  "delta": 0.0
+ },
+ {
+  "instance": "225de8592fdce407",
+  "dim": 8,
+  "sigma": 0.25,
+  "seed": 1,
+  "arm": "qlognei",
+  "regenerated": 0.06004621109532171,
+  "stored": 0.06004621109532171,
+  "delta": 0.0
+ },
+ {
+  "instance": "53040559627f7c2e",
+  "dim": 8,
+  "sigma": 0.25,
+  "seed": 0,
+  "arm": "qlogei",
+  "regenerated": 0.1871941230203361,
+  "stored": 0.1871941230203361,
+  "delta": 0.0
+ },
+ {
+  "instance": "53040559627f7c2e",
+  "dim": 8,
+  "sigma": 0.25,
+  "seed": 0,
+  "arm": "qlognei",
+  "regenerated": 0.16446089625867133,
+  "stored": 0.16446089625867133,
+  "delta": 0.0
+ },
+ {
+  "instance": "53040559627f7c2e",
+  "dim": 8,
+  "sigma": 0.25,
+  "seed": 1,
+  "arm": "qlogei",
+  "regenerated": 0.03543361712653925,
+  "stored": 0.03543361712653925,
+  "delta": 0.0
+ },
+ {
+  "instance": "53040559627f7c2e",
+  "dim": 8,
+  "sigma": 0.25,
+  "seed": 1,
+  "arm": "qlognei",
+  "regenerated": 0.13336641606535138,
+  "stored": 0.13336641606535138,
+  "delta": 0.0
+ },
+ {
+  "instance": "4755ee0a73236ad7",
+  "dim": 8,
+  "sigma": 0.25,
+  "seed": 0,
+  "arm": "qlogei",
+  "regenerated": 0.06361364084052357,
+  "stored": 0.06361364084052357,
+  "delta": 0.0
+ },
+ {
+  "instance": "4755ee0a73236ad7",
+  "dim": 8,
+  "sigma": 0.25,
+  "seed": 0,
+  "arm": "qlognei",
+  "regenerated": 0.07434132387474268,
+  "stored": 0.07434132387474268,
+  "delta": 0.0
+ },
+ {
+  "instance": "4755ee0a73236ad7",
+  "dim": 8,
+  "sigma": 0.25,
+  "seed": 1,
+  "arm": "qlogei",
+  "regenerated": 0.10903198692336458,
+  "stored": 0.10903198692336458,
+  "delta": 0.0
+ },
+ {
+  "instance": "4755ee0a73236ad7",
+  "dim": 8,
+  "sigma": 0.25,
+  "seed": 1,
+  "arm": "qlognei",
+  "regenerated": 0.1412620997605103,
+  "stored": 0.1412620997605103,
+  "delta": 0.0
+ },
+ {
+  "instance": "b235a12be89aba2e",
+  "dim": 8,
+  "sigma": 0.25,
+  "seed": 0,
+  "arm": "qlogei",
+  "regenerated": 0.154268551880275,
+  "stored": 0.154268551880275,
+  "delta": 0.0
+ },
+ {
+  "instance": "b235a12be89aba2e",
+  "dim": 8,
+  "sigma": 0.25,
+  "seed": 0,
+  "arm": "qlognei",
+  "regenerated": 0.1222083029561335,
+  "stored": 0.1222083029561335,
+  "delta": 0.0
+ },
+ {
+  "instance": "b235a12be89aba2e",
+  "dim": 8,
+  "sigma": 0.25,
+  "seed": 1,
+  "arm": "qlogei",
+  "regenerated": 0.05681690110890891,
+  "stored": 0.05681690110890891,
+  "delta": 0.0
+ },
+ {
+  "instance": "b235a12be89aba2e",
+  "dim": 8,
+  "sigma": 0.25,
+  "seed": 1,
+  "arm": "qlognei",
+  "regenerated": 0.01722195867623799,
+  "stored": 0.01722195867623799,
+  "delta": 0.0
+ },
+ {
+  "instance": "6a6de511cd189c4a",
+  "dim": 8,
+  "sigma": 0.25,
+  "seed": 0,
+  "arm": "qlogei",
+  "regenerated": 0.10860006481293827,
+  "stored": 0.10860006481293827,
+  "delta": 0.0
+ },
+ {
+  "instance": "6a6de511cd189c4a",
+  "dim": 8,
+  "sigma": 0.25,
+  "seed": 0,
+  "arm": "qlognei",
+  "regenerated": 0.14321439824919358,
+  "stored": 0.14321439824919358,
+  "delta": 0.0
+ },
+ {
+  "instance": "6a6de511cd189c4a",
+  "dim": 8,
+  "sigma": 0.25,
+  "seed": 1,
+  "arm": "qlogei",
+  "regenerated": 0.07659486818052286,
+  "stored": 0.07659486818052286,
+  "delta": 0.0
+ },
+ {
+  "instance": "6a6de511cd189c4a",
+  "dim": 8,
+  "sigma": 0.25,
+  "seed": 1,
+  "arm": "qlognei",
+  "regenerated": 0.08016612329974848,
+  "stored": 0.08016612329974848,
+  "delta": 0.0
+ },
+ {
+  "instance": "1dd60a03ebae80e9",
+  "dim": 8,
+  "sigma": 0.25,
+  "seed": 0,
+  "arm": "qlogei",
+  "regenerated": 0.19835814081260417,
+  "stored": 0.19835814081260417,
+  "delta": 0.0
+ },
+ {
+  "instance": "1dd60a03ebae80e9",
+  "dim": 8,
+  "sigma": 0.25,
+  "seed": 0,
+  "arm": "qlognei",
+  "regenerated": 0.19692755656764982,
+  "stored": 0.19692755656764982,
+  "delta": 0.0
+ },
+ {
+  "instance": "1dd60a03ebae80e9",
+  "dim": 8,
+  "sigma": 0.25,
+  "seed": 1,
+  "arm": "qlogei",
+  "regenerated": 0.13153292556166307,
+  "stored": 0.13153292556166307,
+  "delta": 0.0
+ },
+ {
+  "instance": "1dd60a03ebae80e9",
+  "dim": 8,
+  "sigma": 0.25,
+  "seed": 1,
+  "arm": "qlognei",
+  "regenerated": 0.08356153510044251,
+  "stored": 0.08356153510044251,
+  "delta": 0.0
+ },
+ {
+  "instance": "20bbc17a31bd4698",
+  "dim": 8,
+  "sigma": 0.25,
+  "seed": 0,
+  "arm": "qlogei",
+  "regenerated": 0.15062205887051294,
+  "stored": 0.15062205887051294,
+  "delta": 0.0
+ },
+ {
+  "instance": "20bbc17a31bd4698",
+  "dim": 8,
+  "sigma": 0.25,
+  "seed": 0,
+  "arm": "qlognei",
+  "regenerated": 0.10670116995070633,
+  "stored": 0.10670116995070633,
+  "delta": 0.0
+ },
+ {
+  "instance": "20bbc17a31bd4698",
+  "dim": 8,
+  "sigma": 0.25,
+  "seed": 1,
+  "arm": "qlogei",
+  "regenerated": 0.03320370880388024,
+  "stored": 0.03320370880388024,
+  "delta": 0.0
+ },
+ {
+  "instance": "20bbc17a31bd4698",
+  "dim": 8,
+  "sigma": 0.25,
+  "seed": 1,
+  "arm": "qlognei",
+  "regenerated": 0.030102437581213226,
+  "stored": 0.030102437581213226,
+  "delta": 0.0
+ },
+ {
+  "instance": "28c9006f272c481d",
+  "dim": 8,
+  "sigma": 0.25,
+  "seed": 0,
+  "arm": "qlogei",
+  "regenerated": 0.13453122479537427,
+  "stored": 0.13453122479537427,
+  "delta": 0.0
+ },
+ {
+  "instance": "28c9006f272c481d",
+  "dim": 8,
+  "sigma": 0.25,
+  "seed": 0,
+  "arm": "qlognei",
+  "regenerated": 0.16086613648512582,
+  "stored": 0.16086613648512582,
+  "delta": 0.0
+ },
+ {
+  "instance": "28c9006f272c481d",
+  "dim": 8,
+  "sigma": 0.25,
+  "seed": 1,
+  "arm": "qlogei",
+  "regenerated": 0.08136294156774626,
+  "stored": 0.08136294156774626,
+  "delta": 0.0
+ },
+ {
+  "instance": "28c9006f272c481d",
+  "dim": 8,
+  "sigma": 0.25,
+  "seed": 1,
+  "arm": "qlognei",
+  "regenerated": 0.07309624809843762,
+  "stored": 0.07309624809843762,
+  "delta": 0.0
+ },
+ {
+  "instance": "4683170b8f0ae677",
+  "dim": 8,
+  "sigma": 0.25,
+  "seed": 0,
+  "arm": "qlogei",
+  "regenerated": 0.18846100374754593,
+  "stored": 0.18846100374754593,
+  "delta": 0.0
+ },
+ {
+  "instance": "4683170b8f0ae677",
+  "dim": 8,
+  "sigma": 0.25,
+  "seed": 0,
+  "arm": "qlognei",
+  "regenerated": 0.1724987587781981,
+  "stored": 0.1724987587781981,
+  "delta": 0.0
+ },
+ {
+  "instance": "4683170b8f0ae677",
+  "dim": 8,
+  "sigma": 0.25,
+  "seed": 1,
+  "arm": "qlogei",
+  "regenerated": 0.052580588407055595,
+  "stored": 0.052580588407055595,
+  "delta": 0.0
+ },
+ {
+  "instance": "4683170b8f0ae677",
+  "dim": 8,
+  "sigma": 0.25,
+  "seed": 1,
+  "arm": "qlognei",
+  "regenerated": 0.052580588407055595,
+  "stored": 0.052580588407055595,
+  "delta": 0.0
+ },
+ {
+  "instance": "b655eaf8a7a4b88e",
+  "dim": 8,
+  "sigma": 0.25,
+  "seed": 0,
+  "arm": "qlogei",
+  "regenerated": 0.30507699137982425,
+  "stored": 0.30507699137982425,
+  "delta": 0.0
+ },
+ {
+  "instance": "b655eaf8a7a4b88e",
+  "dim": 8,
+  "sigma": 0.25,
+  "seed": 0,
+  "arm": "qlognei",
+  "regenerated": 0.09179257039994171,
+  "stored": 0.09179257039994171,
+  "delta": 0.0
+ },
+ {
+  "instance": "b655eaf8a7a4b88e",
+  "dim": 8,
+  "sigma": 0.25,
+  "seed": 1,
+  "arm": "qlogei",
+  "regenerated": 0.165892720964406,
+  "stored": 0.165892720964406,
+  "delta": 0.0
+ },
+ {
+  "instance": "b655eaf8a7a4b88e",
+  "dim": 8,
+  "sigma": 0.25,
+  "seed": 1,
+  "arm": "qlognei",
+  "regenerated": 0.09954709074080736,
+  "stored": 0.09954709074080736,
+  "delta": 0.0
+ },
+ {
+  "instance": "7197fc614477a6f7",
+  "dim": 8,
+  "sigma": 0.25,
+  "seed": 0,
+  "arm": "qlogei",
+  "regenerated": 0.25757294723618507,
+  "stored": 0.25757294723618507,
+  "delta": 0.0
+ },
+ {
+  "instance": "7197fc614477a6f7",
+  "dim": 8,
+  "sigma": 0.25,
+  "seed": 0,
+  "arm": "qlognei",
+  "regenerated": 0.1643270407083257,
+  "stored": 0.1643270407083257,
+  "delta": 0.0
+ },
+ {
+  "instance": "7197fc614477a6f7",
+  "dim": 8,
+  "sigma": 0.25,
+  "seed": 1,
+  "arm": "qlogei",
+  "regenerated": 0.19369072931497533,
+  "stored": 0.19369072931497533,
+  "delta": 0.0
+ },
+ {
+  "instance": "7197fc614477a6f7",
+  "dim": 8,
+  "sigma": 0.25,
+  "seed": 1,
+  "arm": "qlognei",
+  "regenerated": 0.09996973964781641,
+  "stored": 0.09996973964781641,
+  "delta": 0.0
+ },
+ {
+  "instance": "42f2be9762f08185",
+  "dim": 8,
+  "sigma": 0.25,
+  "seed": 0,
+  "arm": "qlogei",
+  "regenerated": 0.11379021221754126,
+  "stored": 0.11379021221754126,
+  "delta": 0.0
+ },
+ {
+  "instance": "42f2be9762f08185",
+  "dim": 8,
+  "sigma": 0.25,
+  "seed": 0,
+  "arm": "qlognei",
+  "regenerated": 0.14587599422533426,
+  "stored": 0.14587599422533426,
+  "delta": 0.0
+ },
+ {
+  "instance": "42f2be9762f08185",
+  "dim": 8,
+  "sigma": 0.25,
+  "seed": 1,
+  "arm": "qlogei",
+  "regenerated": 0.058201507609285774,
+  "stored": 0.058201507609285774,
+  "delta": 0.0
+ },
+ {
+  "instance": "42f2be9762f08185",
+  "dim": 8,
+  "sigma": 0.25,
+  "seed": 1,
+  "arm": "qlognei",
+  "regenerated": 0.058201507609285774,
+  "stored": 0.058201507609285774,
+  "delta": 0.0
+ },
+ {
+  "instance": "2063e6d735c9c52a",
+  "dim": 8,
+  "sigma": 0.25,
+  "seed": 0,
+  "arm": "qlogei",
+  "regenerated": 0.13128475235038595,
+  "stored": 0.13128475235038595,
+  "delta": 0.0
+ },
+ {
+  "instance": "2063e6d735c9c52a",
+  "dim": 8,
+  "sigma": 0.25,
+  "seed": 0,
+  "arm": "qlognei",
+  "regenerated": 0.12299750568246692,
+  "stored": 0.12299750568246692,
+  "delta": 0.0
+ },
+ {
+  "instance": "2063e6d735c9c52a",
+  "dim": 8,
+  "sigma": 0.25,
+  "seed": 1,
+  "arm": "qlogei",
+  "regenerated": 0.0431094353233199,
+  "stored": 0.0431094353233199,
+  "delta": 0.0
+ },
+ {
+  "instance": "2063e6d735c9c52a",
+  "dim": 8,
+  "sigma": 0.25,
+  "seed": 1,
+  "arm": "qlognei",
+  "regenerated": 0.05375562801701461,
+  "stored": 0.05375562801701461,
+  "delta": 0.0
+ },
+ {
+  "instance": "9b01d5dba8a4b27b",
+  "dim": 8,
+  "sigma": 0.1,
+  "seed": 0,
+  "arm": "qlogei",
+  "regenerated": 0.10892034460103617,
+  "stored": 0.10892034460103617,
+  "delta": 0.0
+ },
+ {
+  "instance": "9b01d5dba8a4b27b",
+  "dim": 8,
+  "sigma": 0.1,
+  "seed": 0,
+  "arm": "qlognei",
+  "regenerated": 0.09846162301533079,
+  "stored": 0.09846162301533079,
+  "delta": 0.0
+ },
+ {
+  "instance": "9b01d5dba8a4b27b",
+  "dim": 8,
+  "sigma": 0.1,
+  "seed": 1,
+  "arm": "qlogei",
+  "regenerated": 0.026050873161129084,
+  "stored": 0.026050873161129084,
+  "delta": 0.0
+ },
+ {
+  "instance": "9b01d5dba8a4b27b",
+  "dim": 8,
+  "sigma": 0.1,
+  "seed": 1,
+  "arm": "qlognei",
+  "regenerated": 0.023372767256958582,
+  "stored": 0.023372767256958582,
+  "delta": 0.0
+ },
+ {
+  "instance": "d1eeaa292d301456",
+  "dim": 8,
+  "sigma": 0.1,
+  "seed": 0,
+  "arm": "qlogei",
+  "regenerated": 0.10459722036460306,
+  "stored": 0.10459722036460306,
+  "delta": 0.0
+ },
+ {
+  "instance": "d1eeaa292d301456",
+  "dim": 8,
+  "sigma": 0.1,
+  "seed": 0,
+  "arm": "qlognei",
+  "regenerated": 0.10659002759156389,
+  "stored": 0.10659002759156389,
+  "delta": 0.0
+ },
+ {
+  "instance": "d1eeaa292d301456",
+  "dim": 8,
+  "sigma": 0.1,
+  "seed": 1,
+  "arm": "qlogei",
+  "regenerated": 0.050924188793290526,
+  "stored": 0.050924188793290526,
+  "delta": 0.0
+ },
+ {
+  "instance": "d1eeaa292d301456",
+  "dim": 8,
+  "sigma": 0.1,
+  "seed": 1,
+  "arm": "qlognei",
+  "regenerated": 0.050924188793290526,
+  "stored": 0.050924188793290526,
+  "delta": 0.0
+ },
+ {
+  "instance": "c118af1ed5aa2615",
+  "dim": 8,
+  "sigma": 0.1,
+  "seed": 0,
+  "arm": "qlogei",
+  "regenerated": 0.148330434974712,
+  "stored": 0.148330434974712,
+  "delta": 0.0
+ },
+ {
+  "instance": "c118af1ed5aa2615",
+  "dim": 8,
+  "sigma": 0.1,
+  "seed": 0,
+  "arm": "qlognei",
+  "regenerated": 0.13776730389571068,
+  "stored": 0.13776730389571068,
+  "delta": 0.0
+ },
+ {
+  "instance": "c118af1ed5aa2615",
+  "dim": 8,
+  "sigma": 0.1,
+  "seed": 1,
+  "arm": "qlogei",
+  "regenerated": 0.1456424175989658,
+  "stored": 0.1456424175989658,
+  "delta": 0.0
+ },
+ {
+  "instance": "c118af1ed5aa2615",
+  "dim": 8,
+  "sigma": 0.1,
+  "seed": 1,
+  "arm": "qlognei",
+  "regenerated": 0.16624418685917175,
+  "stored": 0.16624418685917175,
+  "delta": 0.0
+ },
+ {
+  "instance": "29394cb63a616fba",
+  "dim": 8,
+  "sigma": 0.1,
+  "seed": 0,
+  "arm": "qlogei",
+  "regenerated": 0.13086662849245956,
+  "stored": 0.13086662849245956,
+  "delta": 0.0
+ },
+ {
+  "instance": "29394cb63a616fba",
+  "dim": 8,
+  "sigma": 0.1,
+  "seed": 0,
+  "arm": "qlognei",
+  "regenerated": 0.20035665123142332,
+  "stored": 0.20035665123142332,
+  "delta": 0.0
+ },
+ {
+  "instance": "29394cb63a616fba",
+  "dim": 8,
+  "sigma": 0.1,
+  "seed": 1,
+  "arm": "qlogei",
+  "regenerated": 0.11073839182297618,
+  "stored": 0.11073839182297618,
+  "delta": 0.0
+ },
+ {
+  "instance": "29394cb63a616fba",
+  "dim": 8,
+  "sigma": 0.1,
+  "seed": 1,
+  "arm": "qlognei",
+  "regenerated": 0.045279868485880836,
+  "stored": 0.045279868485880836,
+  "delta": 0.0
+ },
+ {
+  "instance": "d855287df8ca2b0a",
+  "dim": 8,
+  "sigma": 0.1,
+  "seed": 0,
+  "arm": "qlogei",
+  "regenerated": 0.11504764993381789,
+  "stored": 0.11504764993381789,
+  "delta": 0.0
+ },
+ {
+  "instance": "d855287df8ca2b0a",
+  "dim": 8,
+  "sigma": 0.1,
+  "seed": 0,
+  "arm": "qlognei",
+  "regenerated": 0.08565100898146338,
+  "stored": 0.08565100898146338,
+  "delta": 0.0
+ },
+ {
+  "instance": "d855287df8ca2b0a",
+  "dim": 8,
+  "sigma": 0.1,
+  "seed": 1,
+  "arm": "qlogei",
+  "regenerated": 0.07550562643057579,
+  "stored": 0.07550562643057579,
+  "delta": 0.0
+ },
+ {
+  "instance": "d855287df8ca2b0a",
+  "dim": 8,
+  "sigma": 0.1,
+  "seed": 1,
+  "arm": "qlognei",
+  "regenerated": 0.0466620693631965,
+  "stored": 0.0466620693631965,
+  "delta": 0.0
+ },
+ {
+  "instance": "e66189b95d063b09",
+  "dim": 8,
+  "sigma": 0.1,
+  "seed": 0,
+  "arm": "qlogei",
+  "regenerated": 0.0878489497288506,
+  "stored": 0.0878489497288506,
+  "delta": 0.0
+ },
+ {
+  "instance": "e66189b95d063b09",
+  "dim": 8,
+  "sigma": 0.1,
+  "seed": 0,
+  "arm": "qlognei",
+  "regenerated": 0.13726167810888512,
+  "stored": 0.13726167810888512,
+  "delta": 0.0
+ },
+ {
+  "instance": "e66189b95d063b09",
+  "dim": 8,
+  "sigma": 0.1,
+  "seed": 1,
+  "arm": "qlogei",
+  "regenerated": 0.15918349778732077,
+  "stored": 0.15918349778732077,
+  "delta": 0.0
+ },
+ {
+  "instance": "e66189b95d063b09",
+  "dim": 8,
+  "sigma": 0.1,
+  "seed": 1,
+  "arm": "qlognei",
+  "regenerated": 0.15918349778732077,
+  "stored": 0.15918349778732077,
+  "delta": 0.0
+ },
+ {
+  "instance": "d4c5250631f705f7",
+  "dim": 8,
+  "sigma": 0.1,
+  "seed": 0,
+  "arm": "qlogei",
+  "regenerated": 0.14081504554417557,
+  "stored": 0.14081504554417557,
+  "delta": 0.0
+ },
+ {
+  "instance": "d4c5250631f705f7",
+  "dim": 8,
+  "sigma": 0.1,
+  "seed": 0,
+  "arm": "qlognei",
+  "regenerated": 0.05538807306588622,
+  "stored": 0.05538807306588622,
+  "delta": 0.0
+ },
+ {
+  "instance": "d4c5250631f705f7",
+  "dim": 8,
+  "sigma": 0.1,
+  "seed": 1,
+  "arm": "qlogei",
+  "regenerated": 0.06239719404751809,
+  "stored": 0.06239719404751809,
+  "delta": 0.0
+ },
+ {
+  "instance": "d4c5250631f705f7",
+  "dim": 8,
+  "sigma": 0.1,
+  "seed": 1,
+  "arm": "qlognei",
+  "regenerated": 0.0414604856527766,
+  "stored": 0.0414604856527766,
+  "delta": 0.0
+ },
+ {
+  "instance": "b7b159d2fb1b4527",
+  "dim": 8,
+  "sigma": 0.1,
+  "seed": 0,
+  "arm": "qlogei",
+  "regenerated": 0.09600678000974117,
+  "stored": 0.09600678000974117,
+  "delta": 0.0
+ },
+ {
+  "instance": "b7b159d2fb1b4527",
+  "dim": 8,
+  "sigma": 0.1,
+  "seed": 0,
+  "arm": "qlognei",
+  "regenerated": 0.04206093628319241,
+  "stored": 0.04206093628319241,
+  "delta": 0.0
+ },
+ {
+  "instance": "b7b159d2fb1b4527",
+  "dim": 8,
+  "sigma": 0.1,
+  "seed": 1,
+  "arm": "qlogei",
+  "regenerated": 0.08507625896162152,
+  "stored": 0.08507625896162152,
+  "delta": 0.0
+ },
+ {
+  "instance": "b7b159d2fb1b4527",
+  "dim": 8,
+  "sigma": 0.1,
+  "seed": 1,
+  "arm": "qlognei",
+  "regenerated": 0.03531627666417925,
+  "stored": 0.03531627666417925,
+  "delta": 0.0
+ },
+ {
+  "instance": "02c7368c30c8c231",
+  "dim": 8,
+  "sigma": 0.1,
+  "seed": 0,
+  "arm": "qlogei",
+  "regenerated": 0.11820851037581215,
+  "stored": 0.11820851037581215,
+  "delta": 0.0
+ },
+ {
+  "instance": "02c7368c30c8c231",
+  "dim": 8,
+  "sigma": 0.1,
+  "seed": 0,
+  "arm": "qlognei",
+  "regenerated": 0.14604976602139208,
+  "stored": 0.14604976602139208,
+  "delta": 0.0
+ },
+ {
+  "instance": "02c7368c30c8c231",
+  "dim": 8,
+  "sigma": 0.1,
+  "seed": 1,
+  "arm": "qlogei",
+  "regenerated": 0.07629351296293563,
+  "stored": 0.07629351296293563,
+  "delta": 0.0
+ },
+ {
+  "instance": "02c7368c30c8c231",
+  "dim": 8,
+  "sigma": 0.1,
+  "seed": 1,
+  "arm": "qlognei",
+  "regenerated": 0.04439501718978711,
+  "stored": 0.04439501718978711,
+  "delta": 0.0
+ },
+ {
+  "instance": "ef894d5db8737b54",
+  "dim": 8,
+  "sigma": 0.1,
+  "seed": 0,
+  "arm": "qlogei",
+  "regenerated": 0.1153130732467188,
+  "stored": 0.1153130732467188,
+  "delta": 0.0
+ },
+ {
+  "instance": "ef894d5db8737b54",
+  "dim": 8,
+  "sigma": 0.1,
+  "seed": 0,
+  "arm": "qlognei",
+  "regenerated": 0.14958532265253055,
+  "stored": 0.14958532265253055,
+  "delta": 0.0
+ },
+ {
+  "instance": "ef894d5db8737b54",
+  "dim": 8,
+  "sigma": 0.1,
+  "seed": 1,
+  "arm": "qlogei",
+  "regenerated": 0.08225932852919271,
+  "stored": 0.08225932852919271,
+  "delta": 0.0
+ },
+ {
+  "instance": "ef894d5db8737b54",
+  "dim": 8,
+  "sigma": 0.1,
+  "seed": 1,
+  "arm": "qlognei",
+  "regenerated": 0.08225932852919271,
+  "stored": 0.08225932852919271,
+  "delta": 0.0
+ },
+ {
+  "instance": "b8892a5c7c15b307",
+  "dim": 8,
+  "sigma": 0.1,
+  "seed": 0,
+  "arm": "qlogei",
+  "regenerated": 0.158253065081691,
+  "stored": 0.158253065081691,
+  "delta": 0.0
+ },
+ {
+  "instance": "b8892a5c7c15b307",
+  "dim": 8,
+  "sigma": 0.1,
+  "seed": 0,
+  "arm": "qlognei",
+  "regenerated": 0.09895178626821366,
+  "stored": 0.09895178626821366,
+  "delta": 0.0
+ },
+ {
+  "instance": "b8892a5c7c15b307",
+  "dim": 8,
+  "sigma": 0.1,
+  "seed": 1,
+  "arm": "qlogei",
+  "regenerated": 0.05858775170146224,
+  "stored": 0.05858775170146224,
+  "delta": 0.0
+ },
+ {
+  "instance": "b8892a5c7c15b307",
+  "dim": 8,
+  "sigma": 0.1,
+  "seed": 1,
+  "arm": "qlognei",
+  "regenerated": 0.08911038049716868,
+  "stored": 0.08911038049716868,
+  "delta": 0.0
+ },
+ {
+  "instance": "a3369b96aa7c2e1e",
+  "dim": 8,
+  "sigma": 0.1,
+  "seed": 0,
+  "arm": "qlogei",
+  "regenerated": 0.13352843976823348,
+  "stored": 0.13352843976823348,
+  "delta": 0.0
+ },
+ {
+  "instance": "a3369b96aa7c2e1e",
+  "dim": 8,
+  "sigma": 0.1,
+  "seed": 0,
+  "arm": "qlognei",
+  "regenerated": 0.1450995906577769,
+  "stored": 0.1450995906577769,
+  "delta": 0.0
+ },
+ {
+  "instance": "a3369b96aa7c2e1e",
+  "dim": 8,
+  "sigma": 0.1,
+  "seed": 1,
+  "arm": "qlogei",
+  "regenerated": 0.0891294510274393,
+  "stored": 0.0891294510274393,
+  "delta": 0.0
+ },
+ {
+  "instance": "a3369b96aa7c2e1e",
+  "dim": 8,
+  "sigma": 0.1,
+  "seed": 1,
+  "arm": "qlognei",
+  "regenerated": 0.07236360312139489,
+  "stored": 0.07236360312139489,
+  "delta": 0.0
+ },
+ {
+  "instance": "225de8592fdce407",
+  "dim": 8,
+  "sigma": 0.1,
+  "seed": 0,
+  "arm": "qlogei",
+  "regenerated": 0.1093973904178247,
+  "stored": 0.1093973904178247,
+  "delta": 0.0
+ },
+ {
+  "instance": "225de8592fdce407",
+  "dim": 8,
+  "sigma": 0.1,
+  "seed": 0,
+  "arm": "qlognei",
+  "regenerated": 0.10172471431728536,
+  "stored": 0.10172471431728536,
+  "delta": 0.0
+ },
+ {
+  "instance": "225de8592fdce407",
+  "dim": 8,
+  "sigma": 0.1,
+  "seed": 1,
+  "arm": "qlogei",
+  "regenerated": 0.09646193870282671,
+  "stored": 0.09646193870282671,
+  "delta": 0.0
+ },
+ {
+  "instance": "225de8592fdce407",
+  "dim": 8,
+  "sigma": 0.1,
+  "seed": 1,
+  "arm": "qlognei",
+  "regenerated": 0.04681271327639425,
+  "stored": 0.04681271327639425,
+  "delta": 0.0
+ },
+ {
+  "instance": "53040559627f7c2e",
+  "dim": 8,
+  "sigma": 0.1,
+  "seed": 0,
+  "arm": "qlogei",
+  "regenerated": 0.09926307994339145,
+  "stored": 0.09926307994339145,
+  "delta": 0.0
+ },
+ {
+  "instance": "53040559627f7c2e",
+  "dim": 8,
+  "sigma": 0.1,
+  "seed": 0,
+  "arm": "qlognei",
+  "regenerated": 0.10213680638407041,
+  "stored": 0.10213680638407041,
+  "delta": 0.0
+ },
+ {
+  "instance": "53040559627f7c2e",
+  "dim": 8,
+  "sigma": 0.1,
+  "seed": 1,
+  "arm": "qlogei",
+  "regenerated": 0.04191180542146278,
+  "stored": 0.04191180542146278,
+  "delta": 0.0
+ },
+ {
+  "instance": "53040559627f7c2e",
+  "dim": 8,
+  "sigma": 0.1,
+  "seed": 1,
+  "arm": "qlognei",
+  "regenerated": 0.04191180542146278,
+  "stored": 0.04191180542146278,
+  "delta": 0.0
+ },
+ {
+  "instance": "4755ee0a73236ad7",
+  "dim": 8,
+  "sigma": 0.1,
+  "seed": 0,
+  "arm": "qlogei",
+  "regenerated": 0.07217642651587353,
+  "stored": 0.07217642651587353,
+  "delta": 0.0
+ },
+ {
+  "instance": "4755ee0a73236ad7",
+  "dim": 8,
+  "sigma": 0.1,
+  "seed": 0,
+  "arm": "qlognei",
+  "regenerated": 0.12823885827575,
+  "stored": 0.12823885827575,
+  "delta": 0.0
+ },
+ {
+  "instance": "4755ee0a73236ad7",
+  "dim": 8,
+  "sigma": 0.1,
+  "seed": 1,
+  "arm": "qlogei",
+  "regenerated": 0.07549525796939427,
+  "stored": 0.07549525796939427,
+  "delta": 0.0
+ },
+ {
+  "instance": "4755ee0a73236ad7",
+  "dim": 8,
+  "sigma": 0.1,
+  "seed": 1,
+  "arm": "qlognei",
+  "regenerated": 0.038981011768863594,
+  "stored": 0.038981011768863594,
+  "delta": 0.0
+ },
+ {
+  "instance": "b235a12be89aba2e",
+  "dim": 8,
+  "sigma": 0.1,
+  "seed": 0,
+  "arm": "qlogei",
+  "regenerated": 0.15342120989847652,
+  "stored": 0.15342120989847652,
+  "delta": 0.0
+ },
+ {
+  "instance": "b235a12be89aba2e",
+  "dim": 8,
+  "sigma": 0.1,
+  "seed": 0,
+  "arm": "qlognei",
+  "regenerated": 0.11281867107133259,
+  "stored": 0.11281867107133259,
+  "delta": 0.0
+ },
+ {
+  "instance": "b235a12be89aba2e",
+  "dim": 8,
+  "sigma": 0.1,
+  "seed": 1,
+  "arm": "qlogei",
+  "regenerated": 0.01722195867623799,
+  "stored": 0.01722195867623799,
+  "delta": 0.0
+ },
+ {
+  "instance": "b235a12be89aba2e",
+  "dim": 8,
+  "sigma": 0.1,
+  "seed": 1,
+  "arm": "qlognei",
+  "regenerated": 0.01722195867623799,
+  "stored": 0.01722195867623799,
+  "delta": 0.0
+ },
+ {
+  "instance": "6a6de511cd189c4a",
+  "dim": 8,
+  "sigma": 0.1,
+  "seed": 0,
+  "arm": "qlogei",
+  "regenerated": 0.13831308148091181,
+  "stored": 0.13831308148091181,
+  "delta": 0.0
+ },
+ {
+  "instance": "6a6de511cd189c4a",
+  "dim": 8,
+  "sigma": 0.1,
+  "seed": 0,
+  "arm": "qlognei",
+  "regenerated": 0.12386759586183904,
+  "stored": 0.12386759586183904,
+  "delta": 0.0
+ },
+ {
+  "instance": "6a6de511cd189c4a",
+  "dim": 8,
+  "sigma": 0.1,
+  "seed": 1,
+  "arm": "qlogei",
+  "regenerated": 0.0662592467772517,
+  "stored": 0.0662592467772517,
+  "delta": 0.0
+ },
+ {
+  "instance": "6a6de511cd189c4a",
+  "dim": 8,
+  "sigma": 0.1,
+  "seed": 1,
+  "arm": "qlognei",
+  "regenerated": 0.09631589801451357,
+  "stored": 0.09631589801451357,
+  "delta": 0.0
+ },
+ {
+  "instance": "1dd60a03ebae80e9",
+  "dim": 8,
+  "sigma": 0.1,
+  "seed": 0,
+  "arm": "qlogei",
+  "regenerated": 0.11110157447995772,
+  "stored": 0.11110157447995772,
+  "delta": 0.0
+ },
+ {
+  "instance": "1dd60a03ebae80e9",
+  "dim": 8,
+  "sigma": 0.1,
+  "seed": 0,
+  "arm": "qlognei",
+  "regenerated": 0.04071988391392145,
+  "stored": 0.04071988391392145,
+  "delta": 0.0
+ },
+ {
+  "instance": "1dd60a03ebae80e9",
+  "dim": 8,
+  "sigma": 0.1,
+  "seed": 1,
+  "arm": "qlogei",
+  "regenerated": 0.08130266972505473,
+  "stored": 0.08130266972505473,
+  "delta": 0.0
+ },
+ {
+  "instance": "1dd60a03ebae80e9",
+  "dim": 8,
+  "sigma": 0.1,
+  "seed": 1,
+  "arm": "qlognei",
+  "regenerated": 0.1041081687056924,
+  "stored": 0.1041081687056924,
+  "delta": 0.0
+ },
+ {
+  "instance": "20bbc17a31bd4698",
+  "dim": 8,
+  "sigma": 0.1,
+  "seed": 0,
+  "arm": "qlogei",
+  "regenerated": 0.12071973981716999,
+  "stored": 0.12071973981716999,
+  "delta": 0.0
+ },
+ {
+  "instance": "20bbc17a31bd4698",
+  "dim": 8,
+  "sigma": 0.1,
+  "seed": 0,
+  "arm": "qlognei",
+  "regenerated": 0.08445535171573881,
+  "stored": 0.08445535171573881,
+  "delta": 0.0
+ },
+ {
+  "instance": "20bbc17a31bd4698",
+  "dim": 8,
+  "sigma": 0.1,
+  "seed": 1,
+  "arm": "qlogei",
+  "regenerated": 0.030102437581213226,
+  "stored": 0.030102437581213226,
+  "delta": 0.0
+ },
+ {
+  "instance": "20bbc17a31bd4698",
+  "dim": 8,
+  "sigma": 0.1,
+  "seed": 1,
+  "arm": "qlognei",
+  "regenerated": 0.022637176965605077,
+  "stored": 0.022637176965605077,
+  "delta": 0.0
+ },
+ {
+  "instance": "28c9006f272c481d",
+  "dim": 8,
+  "sigma": 0.1,
+  "seed": 0,
+  "arm": "qlogei",
+  "regenerated": 0.13083832675725549,
+  "stored": 0.13083832675725549,
+  "delta": 0.0
+ },
+ {
+  "instance": "28c9006f272c481d",
+  "dim": 8,
+  "sigma": 0.1,
+  "seed": 0,
+  "arm": "qlognei",
+  "regenerated": 0.10574148410319673,
+  "stored": 0.10574148410319673,
+  "delta": 0.0
+ },
+ {
+  "instance": "28c9006f272c481d",
+  "dim": 8,
+  "sigma": 0.1,
+  "seed": 1,
+  "arm": "qlogei",
+  "regenerated": 0.10190092100058945,
+  "stored": 0.10190092100058945,
+  "delta": 0.0
+ },
+ {
+  "instance": "28c9006f272c481d",
+  "dim": 8,
+  "sigma": 0.1,
+  "seed": 1,
+  "arm": "qlognei",
+  "regenerated": 0.08136294156774626,
+  "stored": 0.08136294156774626,
+  "delta": 0.0
+ },
+ {
+  "instance": "4683170b8f0ae677",
+  "dim": 8,
+  "sigma": 0.1,
+  "seed": 0,
+  "arm": "qlogei",
+  "regenerated": 0.1731291925892614,
+  "stored": 0.1731291925892614,
+  "delta": 0.0
+ },
+ {
+  "instance": "4683170b8f0ae677",
+  "dim": 8,
+  "sigma": 0.1,
+  "seed": 0,
+  "arm": "qlognei",
+  "regenerated": 0.05608516457059742,
+  "stored": 0.05608516457059742,
+  "delta": 0.0
+ },
+ {
+  "instance": "4683170b8f0ae677",
+  "dim": 8,
+  "sigma": 0.1,
+  "seed": 1,
+  "arm": "qlogei",
+  "regenerated": 0.052580588407055595,
+  "stored": 0.052580588407055595,
+  "delta": 0.0
+ },
+ {
+  "instance": "4683170b8f0ae677",
+  "dim": 8,
+  "sigma": 0.1,
+  "seed": 1,
+  "arm": "qlognei",
+  "regenerated": 0.05636810013656002,
+  "stored": 0.05636810013656002,
+  "delta": 0.0
+ },
+ {
+  "instance": "b655eaf8a7a4b88e",
+  "dim": 8,
+  "sigma": 0.1,
+  "seed": 0,
+  "arm": "qlogei",
+  "regenerated": 0.14354778636236998,
+  "stored": 0.14354778636236998,
+  "delta": 0.0
+ },
+ {
+  "instance": "b655eaf8a7a4b88e",
+  "dim": 8,
+  "sigma": 0.1,
+  "seed": 0,
+  "arm": "qlognei",
+  "regenerated": 0.1129342205009396,
+  "stored": 0.1129342205009396,
+  "delta": 0.0
+ },
+ {
+  "instance": "b655eaf8a7a4b88e",
+  "dim": 8,
+  "sigma": 0.1,
+  "seed": 1,
+  "arm": "qlogei",
+  "regenerated": 0.04279830460124501,
+  "stored": 0.04279830460124501,
+  "delta": 0.0
+ },
+ {
+  "instance": "b655eaf8a7a4b88e",
+  "dim": 8,
+  "sigma": 0.1,
+  "seed": 1,
+  "arm": "qlognei",
+  "regenerated": 0.07337218612486907,
+  "stored": 0.07337218612486907,
+  "delta": 0.0
+ },
+ {
+  "instance": "7197fc614477a6f7",
+  "dim": 8,
+  "sigma": 0.1,
+  "seed": 0,
+  "arm": "qlogei",
+  "regenerated": 0.17846884332533608,
+  "stored": 0.17846884332533608,
+  "delta": 0.0
+ },
+ {
+  "instance": "7197fc614477a6f7",
+  "dim": 8,
+  "sigma": 0.1,
+  "seed": 0,
+  "arm": "qlognei",
+  "regenerated": 0.1125732495815347,
+  "stored": 0.1125732495815347,
+  "delta": 0.0
+ },
+ {
+  "instance": "7197fc614477a6f7",
+  "dim": 8,
+  "sigma": 0.1,
+  "seed": 1,
+  "arm": "qlogei",
+  "regenerated": 0.07767119387196542,
+  "stored": 0.07767119387196542,
+  "delta": 0.0
+ },
+ {
+  "instance": "7197fc614477a6f7",
+  "dim": 8,
+  "sigma": 0.1,
+  "seed": 1,
+  "arm": "qlognei",
+  "regenerated": 0.05351141523852565,
+  "stored": 0.05351141523852565,
+  "delta": 0.0
+ },
+ {
+  "instance": "42f2be9762f08185",
+  "dim": 8,
+  "sigma": 0.1,
+  "seed": 0,
+  "arm": "qlogei",
+  "regenerated": 0.08140065305265143,
+  "stored": 0.08140065305265143,
+  "delta": 0.0
+ },
+ {
+  "instance": "42f2be9762f08185",
+  "dim": 8,
+  "sigma": 0.1,
+  "seed": 0,
+  "arm": "qlognei",
+  "regenerated": 0.09032473522523687,
+  "stored": 0.09032473522523687,
+  "delta": 0.0
+ },
+ {
+  "instance": "42f2be9762f08185",
+  "dim": 8,
+  "sigma": 0.1,
+  "seed": 1,
+  "arm": "qlogei",
+  "regenerated": 0.04742502273489313,
+  "stored": 0.04742502273489313,
+  "delta": 0.0
+ },
+ {
+  "instance": "42f2be9762f08185",
+  "dim": 8,
+  "sigma": 0.1,
+  "seed": 1,
+  "arm": "qlognei",
+  "regenerated": 0.058201507609285774,
+  "stored": 0.058201507609285774,
+  "delta": 0.0
+ },
+ {
+  "instance": "2063e6d735c9c52a",
+  "dim": 8,
+  "sigma": 0.1,
+  "seed": 0,
+  "arm": "qlogei",
+  "regenerated": 0.08340084012442905,
+  "stored": 0.08340084012442905,
+  "delta": 0.0
+ },
+ {
+  "instance": "2063e6d735c9c52a",
+  "dim": 8,
+  "sigma": 0.1,
+  "seed": 0,
+  "arm": "qlognei",
+  "regenerated": 0.08974186739869883,
+  "stored": 0.08974186739869883,
+  "delta": 0.0
+ },
+ {
+  "instance": "2063e6d735c9c52a",
+  "dim": 8,
+  "sigma": 0.1,
+  "seed": 1,
+  "arm": "qlogei",
+  "regenerated": 0.05375562801701461,
+  "stored": 0.05375562801701461,
+  "delta": 0.0
+ },
+ {
+  "instance": "2063e6d735c9c52a",
+  "dim": 8,
+  "sigma": 0.1,
+  "seed": 1,
+  "arm": "qlognei",
+  "regenerated": 0.031228333980143574,
+  "stored": 0.031228333980143574,
+  "delta": 0.0
+ }
+]

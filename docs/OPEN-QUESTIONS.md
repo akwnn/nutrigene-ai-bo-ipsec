@@ -2698,3 +2698,43 @@ The correct construction injects the effect **discretely** (`+1` on a Bernoulli(
 E2 persisted summary rows, not per-evaluation curves, so **a regret-versus-rounds curve cannot be drawn from the committed grid** — only the endpoint regret and the exact round count. The curve needs curves persisted on a re-run and is not claimed here. The round counts themselves are exact, from `batch_plan` and the 20+27+1 split.
 
 Also not claimed: that q=4 is the right batch width for BO. A larger q would cut BO's rounds at some cost in regret, and that trade-off is a real experiment nobody here has run. **What is claimed is narrower and harder to argue with: at the batch structure E2 actually ran, and which `e2.yaml` registered, BO pays 10 rounds where current practice pays 3.**
+
+---
+
+## ✅ T1.4b RESULT — the committed grid regenerates exactly, and Q21 finally measures the run it licenses
+
+`python scripts/probe_e2_determinism.py` · `results/e2-determinism.log` · 400 rows, both adaptive arms, all four cells.
+
+### 1. The grid is reproducible, and sharded == sequential is now demonstrated rather than promised
+
+| cell | arm | n | max abs delta | regenerated mean | stored mean |
+|---|---|---|---|---|---|
+| d=6 σ=0.25 | qlogei | 50 | **0.000e+00** | 0.1553 | 0.1553 |
+| d=6 σ=0.25 | qlognei | 50 | **0.000e+00** | 0.1532 | 0.1532 |
+| d=6 σ=0.10 | qlogei / qlognei | 50 / 50 | **0.000e+00** | 0.0874 / 0.0808 | identical |
+| d=8 σ=0.25 | qlogei / qlognei | 50 / 50 | **0.000e+00** | 0.1247 / 0.1105 | identical |
+| d=8 σ=0.10 | qlogei / qlognei | 50 / 50 | **0.000e+00** | 0.0972 / 0.0849 | identical |
+
+**This probe ran sequentially, in a single process. The grid it reproduces was built by merging four shard processes.** So the claim `run_e2_shard.py` made — that a sharded run and a sequential one produce identical output — is now demonstrated on the real data, having previously been backed by a citation to `tests/test_e2_shard.py`, **a file that has never existed**.
+
+**Therefore the A/B divergence is not execution mode.** Sharded and sequential agree to the last bit on this machine, so the difference between A's qLogEI mean of 0.1553 and B's 0.1641 is the *machine*, not the schedule. The two runs differed in both, and this separates them.
+
+That is a reproducibility finding in its own right and it belongs in the limitations: **the adaptive arms are bit-reproducible within a machine and are not reproducible across machines**, while `random`, `sobol`, `lhs`, `coord` and `doe` reproduce across both. The arms that diverge are exactly the arms that call `optimize_acqf`, i.e. that depend on LAPACK/BLAS reduction order in the GP fit and the L-BFGS-B path.
+
+### 2. Q21 AMENDMENT — A's own solver-failure rate, measured for the first time
+
+Q21's determination was computed from `results/e2-run1-unfiltered.log`, which T1.4a established is **B's run on B's machine**. A's shard processes never had stderr captured, so the rate for the run that produced the committed grid — and therefore every number in the paper — had never been measured. It has now.
+
+| cell | A: 2nd-try failures | BO acqf calls | A rate | vs 1% | B's count | B rate |
+|---|---|---|---|---|---|---|
+| d=6 σ=0.25 | 1 | 900 | **0.111%** | below | 2 | 0.222% |
+| d=6 σ=0.10 | 0 | 900 | **0.000%** | below | 0 | 0.000% |
+| d=8 σ=0.25 | 2 | 800 | **0.250%** | below | 7 | **0.875%** |
+| d=8 σ=0.10 | 1 | 800 | **0.125%** | below | 0 | 0.000% |
+| **total** | **4** | 3400 | 0.118% | — | **9** | 0.265% |
+
+**No cell trips the registered 1% threshold. Under Q21 as registered, the run STANDS, the solver is NOT touched, and the unfavourable result is reported as-is** — the same verdict as before, now reached from the run it actually licenses. Denominators are unchanged from Q21 (100 campaigns per cell × 9 rounds at d=6, × 8 at d=8).
+
+**One recorded limitation changes owner.** Q21 reports "d=8 σ=0.25 reached 0.875%, close enough to the line to be worth stating" and "all 9 failures fall in the two σ=0.25 cells". Both describe **B's** run. A's worst cell is 0.250%, comfortably below, and A's failures do **not** concentrate at the higher noise level — one falls in d=8 σ=0.10. The "close to the line" caveat should be attributed to B's run rather than presented as a property of the result.
+
+The threshold and the repair rule are untouched and predate all of this, so applying them to A's rate is applying the rule, not rewriting it.

@@ -85,13 +85,30 @@ def main() -> None:
     stored = {(g["instance"], g["seed"], g["dim"], g["sigma"], g["arm"]): g["regret"]
               for g in grid}
 
-    rows, t0 = [], time.time()
+    # Checkpoint per cell. The first attempt at this probe was killed 22 minutes in,
+    # mid-cell-2, by memory pressure (62 MB free, swap 4.6G/5.1G) and lost everything.
+    # A 90-minute run on a machine that thrashes needs to cost one cell, not all four.
+    out = ROOT / "results" / "e2-determinism.json"
+    (ROOT / "results").mkdir(exist_ok=True)
+    rows = json.loads(out.read_text()) if out.exists() else []
+    per_cell = len(ARMS) * N_INSTANCES * N_SEEDS
+    complete = {(d, s) for d in DIMS for s in SIGMAS
+                if sum(1 for r in rows if r["dim"] == d and r["sigma"] == s) == per_cell}
+    if complete:
+        print(f"resuming: {sorted(complete)} already complete "
+              f"({len(rows)} rows on disk)\n", flush=True)
+
+    t0 = time.time()
     print(f"probing {len(DIMS) * len(SIGMAS)} cells x {len(ARMS)} arms x "
           f"{N_INSTANCES} instances x {N_SEEDS} seeds against {GRID.name}\n", flush=True)
 
     for dim in DIMS:
         ens = load_ensemble(dim=dim)[:N_INSTANCES]
         for sigma in SIGMAS:
+            if (dim, sigma) in complete:
+                continue
+            # a partial cell from a kill is discarded and redone, not topped up
+            rows = [r for r in rows if not (r["dim"] == dim and r["sigma"] == sigma)]
             for inst in ens:
                 for seed in range(N_SEEDS):
                     got = regenerate(inst, dim, sigma, seed)
@@ -103,11 +120,11 @@ def main() -> None:
                             arm=arm, regenerated=regret, stored=ref,
                             delta=None if ref is None else abs(regret - ref)))
             done = [r for r in rows if r["dim"] == dim and r["sigma"] == sigma]
+            out.write_text(json.dumps(rows, indent=1))
             print(f"  d={dim} sigma={sigma}: {len(done)} rows, "
-                  f"{time.time() - t0:.0f}s elapsed", flush=True)
+                  f"{time.time() - t0:.0f}s elapsed [checkpointed]", flush=True)
 
-    Path(ROOT / "results").mkdir(exist_ok=True)
-    (ROOT / "results" / "e2-determinism.json").write_text(json.dumps(rows, indent=1))
+    out.write_text(json.dumps(rows, indent=1))
 
     print(f"\n{'=' * 78}\nREGENERATED vs COMMITTED GRID\n{'=' * 78}")
     print(f"{'cell':>16} {'arm':>9} {'n':>4} {'max |delta|':>13} "
