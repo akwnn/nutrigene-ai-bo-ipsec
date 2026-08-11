@@ -1,0 +1,58 @@
+[
+ {
+  "arm": "doe",
+  "evals": 48,
+  "rounds": 3,
+  "widest_plate": 27,
+  "mean_regret": 0.09580089411672021,
+  "structure": "stage1 20 + stage2 27 + confirmation 1, each one plate"
+ },
+ {
+  "arm": "lhs",
+  "evals": 48,
+  "rounds": 1,
+  "widest_plate": 48,
+  "mean_regret": 0.12701957315434098,
+  "structure": "all 48 points known before the first plate"
+ },
+ {
+  "arm": "coord",
+  "evals": 48,
+  "rounds": 48,
+  "widest_plate": 1,
+  "mean_regret": 0.14195321545392087,
+  "structure": "one measurement at a time by definition"
+ },
+ {
+  "arm": "qlognei",
+  "evals": 48,
+  "rounds": 10,
+  "widest_plate": 14,
+  "mean_regret": 0.15321199940788324,
+  "structure": "opening 14, then 9 batches of q=4"
+ },
+ {
+  "arm": "qlogei",
+  "evals": 48,
+  "rounds": 10,
+  "widest_plate": 14,
+  "mean_regret": 0.15525130489063751,
+  "structure": "opening 14, then 9 batches of q=4"
+ },
+ {
+  "arm": "sobol",
+  "evals": 48,
+  "rounds": 1,
+  "widest_plate": 48,
+  "mean_regret": 0.17235601039484305,
+  "structure": "all 48 points known before the first plate"
+ },
+ {
+  "arm": "random",
+  "evals": 48,
+  "rounds": 1,
+  "widest_plate": 48,
+  "mean_regret": 0.22164136190927614,
+  "structure": "all 48 points known before the first plate"
+ }
+]

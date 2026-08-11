@@ -2666,3 +2666,35 @@ Both made the design look **powerful**, which is the opposite of the finding, so
 The correct construction injects the effect **discretely** (`+1` on a Bernoulli(*q*) subset, mean effect *q*) and imposes the null by **sign-flipping**, which is what the signed-rank null actually is and which preserves the ties. Both stages then return 0.68, and the observed effects and *p*-values fall into place around it.
 
 **The tell in both cases was internal inconsistency, not intuition:** an MDE of 0.03 cannot coexist with a 95% CI of width 0.9 on the same data.
+
+---
+
+## ✅ Q38 RESULT [A] · T2.4 · Evaluations are not the cost a wet lab pays — rounds are
+
+`python scripts/run_q38_cost_model.py` · `results/q38-cost-model.log`. Batch structure read out of `campaign.batch_plan` and the DoE arm's own stage split, not asserted; regrets from the committed grid.
+
+**48 sequential evaluations is not 48 parallel wells.** A plate runs many conditions at once; what a lab waits for is the next plate, and hiPSC→endothelial differentiation is days per round. The binding cost is sequential rounds.
+
+### d=6, σ=0.25 — the registered primary cell
+
+| arm | evals | **rounds** | widest plate | mean regret | batch structure |
+|---|---|---|---|---|---|
+| **doe** | 48 | **3** | 27 | **0.0958** | stage1 20 + stage2 27 + confirmation 1 |
+| **lhs** | 48 | **1** | 48 | **0.1270** | all 48 known before the first plate |
+| coord | 48 | **48** | 1 | 0.1420 | one measurement at a time |
+| qlognei | 48 | 10 | 14 | 0.1532 | opening 14, then 9 batches of q=4 |
+| **qlogei** | 48 | **10** | 14 | 0.1553 | opening 14, then 9 batches of q=4 |
+| sobol | 48 | 1 | 48 | 0.1724 | all 48 known before the first plate |
+| random | 48 | 1 | 48 | 0.2216 | all 48 known before the first plate |
+
+**On this axis the ranking is not close, and it is worse for BO than the evaluation axis shows.** The DoE pipeline reaches lower regret in **3** rounds than qLogEI reaches in **10**. Latin hypercube reaches lower regret than qLogEI in **one** — a single plate, designed before any measurement exists, with no model, no fitting and no sequential wait at all.
+
+**At equal lab time the comparison is not 48-vs-48.** By the time the DoE arm has finished its 3 rounds, qLogEI has spent 22 of its 48 measurements (14 opening + 2 batches of 4). A fixed-evaluation comparison silently grants BO seven extra plate cycles.
+
+**Coordinate descent is unusable in a wet lab at any regret** — 48 sequential rounds by definition. Its competitive regret at d=6 (Q3) should never be quoted without this beside it.
+
+### What this does NOT show, stated so it is not over-read
+
+E2 persisted summary rows, not per-evaluation curves, so **a regret-versus-rounds curve cannot be drawn from the committed grid** — only the endpoint regret and the exact round count. The curve needs curves persisted on a re-run and is not claimed here. The round counts themselves are exact, from `batch_plan` and the 20+27+1 split.
+
+Also not claimed: that q=4 is the right batch width for BO. A larger q would cut BO's rounds at some cost in regret, and that trade-off is a real experiment nobody here has run. **What is claimed is narrower and harder to argue with: at the batch structure E2 actually ran, and which `e2.yaml` registered, BO pays 10 rounds where current practice pays 3.**

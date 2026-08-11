@@ -1,0 +1,35 @@
+============================================================================================
+Q38 · the cost model a wet lab actually pays
+============================================================================================
+
+  d=6: opening 14 + batches [4, 4, 4, 4, 4, 4, 4, 4, 2] => 10 sequential rounds for the adaptive arms
+
+  d=8: opening 18 + batches [4, 4, 4, 4, 4, 4, 4, 2] => 9 sequential rounds for the adaptive arms
+
+============================================================================================
+d=6, sigma=0.25 (the registered primary cell)
+============================================================================================
+      arm  evals  ROUNDS  widest plate  mean regret   batch structure
+      doe     48       3            27       0.0958   stage1 20 + stage2 27 + confirmation 1, each one plate
+      lhs     48       1            48       0.1270   all 48 points known before the first plate
+    coord     48      48             1       0.1420   one measurement at a time by definition
+  qlognei     48      10            14       0.1532   opening 14, then 9 batches of q=4
+   qlogei     48      10            14       0.1553   opening 14, then 9 batches of q=4
+    sobol     48       1            48       0.1724   all 48 points known before the first plate
+   random     48       1            48       0.2216   all 48 points known before the first plate
+
+  THE COMPARISON THE EVALUATION AXIS HIDES
+  The DoE pipeline finishes in 3 sequential rounds. qLogEI needs 10.
+  At 3 rounds qLogEI has spent only 22 of its 48 measurements (14 opening + 2 batches of 4),
+  so at equal LAB TIME the comparison is not 48-vs-48 at all.
+  Coordinate descent spends 48 rounds and is, on this axis, unusable in a wet lab
+  regardless of its regret.
+
+  WHAT THIS DOES NOT SHOW, stated so it is not over-read:
+  E2 stored summary rows, not per-evaluation curves, so a regret-versus-ROUNDS
+  CURVE cannot be drawn from the committed grid -- only the endpoint and the
+  round COUNT above. Drawing the curve needs the curves persisted on a re-run.
+  The round counts themselves are exact: they come from campaign.batch_plan
+  and the DoE arm's own 20+27+1 split, not from a reconstruction.
+
+  written to results/q38-cost-model.json
