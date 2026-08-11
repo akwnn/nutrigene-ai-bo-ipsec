@@ -70,6 +70,31 @@ FIGURE_TABLE_DISCREPANCIES = {
 }
 
 
+# Boxes whose MEDIAN the extractor reads off a horizontal rule that is not the median.
+#
+# `_boxes` looks for the widest horizontal run in `range(top + 3, bot - 2)`. The box's
+# own Q3 rule is full width too, so wherever that rule is thicker than the 3 px skip it
+# wins and the median is reported AS Q3. Person B caught this on box 17 by cross-check
+# against the third-party extraction (`pdf_crosscheck.md:119`); generalising their find
+# showed it hits three boxes, not one.
+#
+# These are declared here, with the pixel evidence, rather than fixed in `_boxes`. Two
+# attempts at a general fix both made things worse -- skipping consecutive full-width
+# rows breaks on antialiasing holes (stage-1 box 15 is full width at +0 and +2 but not
+# +1, so the skip stops early and returns the rest of the Q3 rule), and band-grouping
+# turned 7 confidently-wrong medians into NaN. The algorithm needs proper work; until
+# then the three affected boxes are corrected explicitly or refused explicitly.
+MEDIAN_CORRECTIONS = {
+    # (stage, row): (value or None, evidence)
+    ("stage2", 17): (3.4911, "row 397 is inside a 4 px Q3 rule; the median rule is row "
+                             "456, width 30/30. B reads 3.48 independently"),
+    ("stage2", 10): (2.3645, "rows 508-511 are the Q3 rule; the median rule is rows "
+                             "547-548, width 31/31"),
+    ("stage2", 4): (None, "NOT SEPARABLE: a 10 px full-width band at the top (its Q1 "
+                          "rule is 2 px) and no full-width rule below it -- the median "
+                          "is drawn flush against Q3. Bounded to [2.686, 2.798]"),
+}
+
 # +/-3 px at each figure's calibration (1 px = 0.00821 units in Fig 1a, 0.01238 in
 # Fig 2a). This is OPTICAL error only. It is not the uncertainty on the condition --
 # that is the biological spread, which is an order of magnitude larger and is carried
@@ -79,7 +104,8 @@ READING_ERROR = {"stage1": 0.025, "stage2": 0.037}
 # CSV column order. This IS the LookupEvaluator contract; changing it breaks the replay.
 COLUMNS = ("run_id", "collagen_i", "collagen_iv", "laminin_111", "laminin_411",
            "laminin_511", "fibronectin", "response", "response_q1", "response_q3",
-           "reading_error", "extraction_1", "extraction_2", "reconciled", "flagged")
+           "reading_error", "extraction_1", "extraction_2", "reconciled", "flagged",
+           "flag_reason")
 _COLUMN_OF = {"C": "collagen_i", "CIV": "collagen_iv", "LN111": "laminin_111",
               "LN411": "laminin_411", "LN511": "laminin_511", "FN": "fibronectin"}
 
@@ -259,8 +285,11 @@ def validate_extraction(tag: str, rec: dict, design=None) -> None:
     fail: list[str] = []
 
     # --- completeness of responses -------------------------------------------------
+    unresolvable = {i for (t, i), (v, _) in MEDIAN_CORRECTIONS.items()
+                    if t == tag and v is None}
     for key in ("q1", "median", "q3"):
-        miss = _missing(rec[key])
+        miss = [i for i in _missing(rec[key])
+                if not (key == "median" and i in unresolvable)]
         if miss:
             fail.append(f"MISSING-RESPONSE: {key} unresolved at rows {miss}")
 
@@ -329,10 +358,11 @@ def validate_extraction(tag: str, rec: dict, design=None) -> None:
 
     # --- response sanity ------------------------------------------------------------------
     q1, med, q3 = (np.asarray(rec[k], float) for k in ("q1", "median", "q3"))
-    bad = [i for i in range(len(med)) if not (q1[i] <= med[i] <= q3[i])]
+    bad = [i for i in range(len(med))
+           if i not in unresolvable and not (q1[i] <= med[i] <= q3[i])]
     if bad:
         fail.append(f"QUARTILE-ORDER: q1<=median<=q3 violated at rows {bad}")
-    neg = [i for i in range(len(med)) if med[i] < 0]
+    neg = [i for i in range(len(med)) if i not in unresolvable and med[i] < 0]
     if neg:
         fail.append(f"NEGATIVE-RESPONSE: median < 0 at rows {neg}")
 
@@ -373,26 +403,50 @@ def build_canonical_rows(tag: str, root: str | Path = ".") -> list[dict]:
     q3 = np.asarray(rec["q3"], float)
     a_mean = np.asarray([r["mean"] for r in A], float)
 
+    # Apply the declared median corrections BEFORE anything downstream, so the argmax is
+    # computed from corrected values. Leaving them until after would have `stage2_18`
+    # win on a number that is its Q3.
+    reasons: dict[int, str] = {}
+    for (t, i), (value, evidence) in MEDIAN_CORRECTIONS.items():
+        if t != tag:
+            continue
+        med[i] = float("nan") if value is None else value
+        reasons[i] = evidence
+
     # rows disputed as the maximum between the two independent extractions
-    disputed = {int(a_mean.argmax()), int(med.argmax())}
+    disputed = {int(a_mean.argmax()), int(np.nanargmax(med))}
     if len(disputed) == 1:
         disputed = set()
 
     rows = []
     for i, ar in enumerate(A):
-        outside = not (q1[i] <= a_mean[i] <= q3[i])
+        m = float(med[i])
+        resolved = not math.isnan(m)
+        outside = resolved and not (q1[i] <= a_mean[i] <= q3[i])
+        why = []
+        if i in reasons:
+            why.append(("median corrected: " if resolved else "") + reasons[i])
+        if i in disputed:
+            why.append("argmax disputed between the two extractions")
+        if outside:
+            why.append("extraction A's mean falls outside our [q1, q3]")
+
         row = {c: "" for c in COLUMNS}
         row["run_id"] = ar["condition_id"]
         for name, level in zip(rec["proteins"], ar["design"]):
             row[_COLUMN_OF[name]] = level
-        row["response"] = round(float(med[i]), 4)
+        # An unresolved median leaves response/reconciled EMPTY. Never zero, and never a
+        # substituted quartile -- substituting Q3 is precisely the defect being fixed.
+        if resolved:
+            row["response"] = round(m, 4)
+            row["extraction_2"] = round(m, 4)
+            row["reconciled"] = round(m, 4)
         row["response_q1"] = round(float(q1[i]), 4)
         row["response_q3"] = round(float(q3[i]), 4)
         row["reading_error"] = READING_ERROR[tag]
         row["extraction_1"] = round(float(a_mean[i]), 4)
-        row["extraction_2"] = round(float(med[i]), 4)
-        row["reconciled"] = round(float(med[i]), 4)
-        row["flagged"] = "true" if (i in disputed or outside) else "false"
+        row["flagged"] = "true" if why else "false"
+        row["flag_reason"] = "; ".join(why)
         rows.append(row)
     return rows
 

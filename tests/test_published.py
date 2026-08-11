@@ -25,6 +25,7 @@ import pytest
 from boec.published import (
     COLUMNS,
     FIGURE_TABLE_DISCREPANCIES,
+    MEDIAN_CORRECTIONS,
     READING_ERROR,
     STAGE_SPEC,
     ExtractionError,
@@ -131,9 +132,18 @@ def test_coded_levels_only(tag):
 
 @pytest.mark.parametrize("tag", STAGES)
 def test_no_missing_responses(tag):
-    for r in _csv(tag):
-        for c in ("response", "response_q1", "response_q3", "reconciled"):
-            assert r[c] != "" and not math.isnan(float(r[c])), f"{r['run_id']}.{c}"
+    """Every row has a response, except those DECLARED unresolvable with evidence."""
+    unresolvable = {i for (t, i), (v, _) in MEDIAN_CORRECTIONS.items()
+                    if t == tag and v is None}
+    for i, r in enumerate(_csv(tag)):
+        for c in ("response_q1", "response_q3"):
+            assert r[c] != "", f"{r['run_id']}.{c}"      # quartiles always recovered
+        for c in ("response", "reconciled"):
+            if i in unresolvable:
+                assert r[c] == "", f"{r['run_id']}.{c} must be EMPTY, not a substitute"
+                assert r["flagged"] == "true" and r["flag_reason"]
+            else:
+                assert r[c] != "" and not math.isnan(float(r[c]))
 
 
 def test_stage2_is_a_complete_face_centred_ccd():
@@ -177,6 +187,8 @@ def test_fibronectin_control_sits_near_one(tag, run_id):
 @pytest.mark.parametrize("tag", STAGES)
 def test_responses_non_negative_and_ordered(tag):
     for r in _csv(tag):
+        if r["response"] == "":
+            continue
         assert float(r["response"]) >= 0
         assert float(r["response_q1"]) <= float(r["response"]) <= float(r["response_q3"])
 
@@ -191,24 +203,43 @@ def test_reconciliation_integrity(tag):
     """
     rows = _csv(tag)
     for r in rows:
+        assert float(r["reading_error"]) == READING_ERROR[tag]
+        assert r["flagged"] in ("true", "false")
+        assert (r["flag_reason"] != "") == (r["flagged"] == "true"), (
+            f"{r['run_id']}: flagged and flag_reason must agree")
+        if r["reconciled"] == "":
+            continue
         assert float(r["reconciled"]) == float(r["extraction_2"])
         assert float(r["reconciled"]) == float(r["response"])
-        assert float(r["reading_error"]) == READING_ERROR[tag]
         lo, hi = float(r["response_q1"]), float(r["response_q3"])
         assert lo <= float(r["extraction_1"]) <= hi, (
             f"{r['run_id']}: extraction A's mean {r['extraction_1']} falls outside "
             f"B's [{lo}, {hi}] -- the two extractions genuinely disagree here")
-        assert r["flagged"] in ("true", "false")
-    a1 = max(rows, key=lambda r: float(r["extraction_1"]))["run_id"]
-    a2 = max(rows, key=lambda r: float(r["extraction_2"]))["run_id"]
-    disputed = {r["run_id"] for r in rows if r["flagged"] == "true"}
-    assert disputed == ({a1, a2} if a1 != a2 else set())
 
 
-def test_stage2_argmax_disagreement_is_visible_in_the_data():
-    """The one disagreement that could change a conclusion must be in the file."""
-    flagged = {r["run_id"] for r in _csv("stage2") if r["flagged"] == "true"}
-    assert flagged == {"stage2_13", "stage2_18"}
+def test_stage2_argmax_agrees_once_the_median_defect_is_corrected():
+    """The argmax dispute was OUR bug, not an ambiguity in the source.
+
+    Before correction our stage2_18 median was 4.2215 -- actually that column's Q3 --
+    which beat stage2_13 and manufactured a disagreement with the third-party
+    extraction. With the declared corrections applied both extractions pick the same
+    condition, and no rank claim needs to be withheld on that account.
+    """
+    rows = _csv("stage2")
+    ours = max((r for r in rows if r["reconciled"]), key=lambda r: float(r["reconciled"]))
+    theirs = max(rows, key=lambda r: float(r["extraction_1"]))
+    assert ours["run_id"] == theirs["run_id"] == "stage2_13"
+
+
+def test_every_median_correction_is_reflected_in_the_csv():
+    """Guards against a declared correction silently not being applied."""
+    for (tag, i), (value, _) in MEDIAN_CORRECTIONS.items():
+        row = _csv(tag)[i]
+        if value is None:
+            assert row["response"] == "", f"{row['run_id']} should be unresolved"
+        else:
+            assert float(row["response"]) == value, row["run_id"]
+        assert row["flagged"] == "true" and row["flag_reason"]
 
 
 @pytest.mark.parametrize("tag", STAGES)
@@ -240,7 +271,7 @@ def test_csv_round_trips_from_the_raw_json(tag):
     assert len(rebuilt) == len(on_disk)
     for a, b in zip(rebuilt, on_disk):
         assert a["run_id"] == b["run_id"]
-        assert float(a["reconciled"]) == float(b["reconciled"])
+        assert str(a["reconciled"]) == b["reconciled"]
         for c in FACTORS:
             if c in b:
                 assert int(a[c]) == int(b[c])
