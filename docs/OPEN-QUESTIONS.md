@@ -2225,3 +2225,112 @@ fully determine — which is a further reason no argmax claim is available.
 registered that in advance and specifically anticipated this: the durable reasons — the
 top IQRs share a common band, and the paper never names a best stage-2 condition — are
 untouched by anything in the merge. The scope stays rank recovery.
+
+---
+
+## 🔴 Q33 [A] · PRE-REGISTRATION · Extrapolation geometry on the published data
+
+**Committed before the measurement runs.** One measurement: fit a second-order polynomial
+and a GP to the same 25 published stage-2 conditions, locate each model's argmax, read off
+the coordinates. The design region is coded `[-1, +1]`, so a coordinate outside that range
+means the model extrapolated. **Geometry, not outcome — no ground-truth surface is needed
+and none exists.**
+
+Why it matters: Phase 2's replay came back null for structural reasons (25 candidates at a
+budget of 8 cannot separate two methods), so without this the project's central mechanism
+rests entirely on synthetic landscapes. This is the one real-data measurement available for
+it, and the last thing this dataset will be asked.
+
+### 0. GATE — PASSED, and reported before the claim it licenses
+
+**Question: is the GP's argmax forced inside the design region by construction?** A GP's
+posterior mean reverts toward its prior away from data, so if its argmax structurally
+cannot land outside ±1, the primary claim is a tautology — the defect this project has
+caught three times.
+
+Run on the real stage-2 design geometry with synthetic monotone responses, production GP,
+search over `[-2, +2]^4`:
+
+| synthetic response | GP argmax | max coordinate beyond ±1 |
+|---|---|---|
+| `y = x0` | `[1.0126, -0.0001, 0.0, -0.0001]` | 0.0126 — outside |
+| `y = x0+x1+x2+x3` | `[2.0, 2.0, 2.0, 2.0]` | **1.0000 — runs to the search-box edge** |
+
+**The GP extrapolates freely when the data supports a trend**, in the second case all the
+way to the boundary of the search box. The endpoint can return either answer. **Not a
+tautology; proceeding.**
+
+### 1. The registered claim
+
+> **Primary:** the second-order polynomial's argmax lies outside the coded design region
+> `[-1, +1]` in at least one coordinate; the GP's argmax does not, or lies closer to the
+> region.
+>
+> **Measured by:** per-coordinate distance beyond ±1, and leverage
+> `h = x0' (X'X)^-1 x0` at each recommendation.
+
+### 2. Prediction, written before running, with its reasoning
+
+> **I predict the primary claim HOLDS, with one specific caveat that may complicate it.**
+
+**Polynomial — predicted outside, probably at the search-box edge in ≥1 coordinate.** A
+full quadratic in 4 factors is 15 parameters against 24 usable conditions. Fitted to noisy
+figure-read values, its stationary point is as likely to be a saddle as a maximum; when it
+is, maximising over a bounded box drives the answer to the box wall. The published record
+supports this — TheO's Collagen IV sat at coded **+1.40**, 40% beyond the highest level
+tested, which is what a surface pointing outside its data looks like.
+
+**GP — predicted closer, but I am NOT confident it stays inside.** The gate shows the GP
+runs to the wall under a monotone trend, and stage 2's responses may well look monotone in
+fibronectin: the top condition (run 13) sits at `FN = -1`, and several other top conditions
+are low in FN. If the fitted surface reads as "less fibronectin is better", the GP will
+push below −1 exactly as the polynomial does.
+
+**So the most likely single outcome, stated concretely:** both models push FN toward or past
+−1, and the polynomial *additionally* extrapolates in CIV or another coordinate where the
+GP does not. That would be a **partial** result under §6 — closer, not inside.
+
+**What would surprise me:** the GP extrapolating *further* than the polynomial. That is
+outcome three, and per §6 it would mean the Phase 1 mechanism is a property of the
+synthetic landscape rather than of the model classes. **It gets reported at least as
+prominently if it happens.**
+
+**What would falsify the primary claim:** the polynomial's argmax landing inside ±1 in
+every coordinate, or the GP's landing further out than the polynomial's.
+
+### 3. Method, fixed now
+
+- **Data:** stage 2 only, the merged canonical CSV at the committed hash. Coded space
+  throughout. 24 of 25 conditions usable (`stage2_05`'s median is not separable).
+- **One locator for both arms:** `metrics.constrained_argmax`, same restarts, same
+  raw_samples, same seed. **Asserted by test**, not verified by reading — two optimizers at
+  different screening budgets is the fifth-instance defect already logged here.
+- **Not** `over_prediction_at_constrained_argmax`, which is a scorer, not a locator.
+- **Search box `[-2, +2]^4`.** Justification: double the design half-width, comfortably
+  containing TheO's coded +1.40 so the published case is representable, while bounding the
+  numerical search. **The polynomial's unconstrained stationary point is reported
+  separately**, so the extension bounds only the search, not the finding.
+- **Production configuration for both arms.** No variant settings.
+
+### 4. Stated before the numbers — what this cannot establish
+
+- **No outcome claim for the GP's recommendation.** It was never built. The strongest
+  available statement is *"the polynomial pointed outside its data, the published record
+  shows what happened when it did, and the GP pointed somewhere else."* **Not "the GP would
+  have worked."**
+- **No general claim.** One study, one lab, one assay, 25 conditions read off figures.
+- **No argmax claim.** The top-5 target set is only 3/5 stable between the two extractions.
+- **Fibronectin's floor is a design constraint, not an optimum.** The published design could
+  not evaluate FN below 22 µg/mL (coded −1). A recommendation at FN = −1 sits on a boundary
+  the design imposed, and is reported as such **for either arm**. This is the documented
+  second cause of TheO's failure and is not a modelling artifact.
+- **Digitization limits.** ~0.037 optical reading error against a published per-condition
+  SEM of 38–66% of the between-condition spread. **The source assay is the constraint, not
+  the extraction**; both figures belong in the write-up.
+
+### 5. The check on the whole exercise
+
+**LOO error for both models via `batch_cross_validation` with per-fold refitting**, reported
+prominently. If the GP fits these 25 conditions no better than the polynomial, the
+recommendation comparison means much less, and that has to be visible rather than
+footnoted.
