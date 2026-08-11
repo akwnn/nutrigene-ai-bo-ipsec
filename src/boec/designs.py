@@ -85,6 +85,21 @@ _GENERATORS: dict[tuple[int, int], list[tuple[int, tuple[int, ...]]]] = {
     (7, 1): [(6, (0, 1, 2, 3, 4, 5))],              # 2^(7-1), resolution VII
     (7, 2): [(5, (0, 1, 2, 3)), (6, (0, 1, 4))],    # 2^(7-2), resolution IV
     (8, 2): [(6, (0, 1, 2, 3)), (7, (0, 1, 4, 5))],  # 2^(8-2), resolution V
+    # 16 runs. E=BCD, F=ACD, G=ABC, H=ABD -- the textbook 2^(8-4)_IV.
+    #
+    # Added for OPEN-QUESTIONS Q24: the d=8 sequential-DoE arm is the only run
+    # that would test BO against current practice at the dimension where BO is
+    # strong, and it was blocked here rather than fudged. The quarter fraction
+    # (8, 2) is 64 runs, so 64 + 27 + 1 badly overruns the shared 48 budget;
+    # this sixteenth fraction gives 16 + 4 = 20 and the budget closes exactly.
+    #
+    # NOT taken on authority. `test_2_8_4_is_minimum_aberration` enumerates all
+    # 330 admissible generator sets, computes each one's word-length pattern,
+    # and asserts this one is the unique minimiser: A4=14 with nothing shorter,
+    # against a runner-up that is resolution III. That is the same bar the
+    # refusal below exists to protect -- the table is checked, not trusted.
+    (8, 4): [(4, (1, 2, 3)), (5, (0, 2, 3)),
+             (6, (0, 1, 2)), (7, (0, 1, 3))],       # 2^(8-4), resolution IV
 }
 
 _RESOLUTION: dict[tuple[int, int], int] = {
@@ -94,6 +109,7 @@ _RESOLUTION: dict[tuple[int, int], int] = {
     (7, 1): 7,
     (7, 2): 4,
     (8, 2): 5,
+    (8, 4): 4,
 }
 
 
@@ -270,9 +286,19 @@ def screening_design(d: int, *, n_centre: int = 3, n_derived: int | None = None)
     Args:
         d: number of factors.
         n_centre: repeats at the centre.
-        n_derived: how aggressive a fraction to take. Defaults to the largest
-            fraction that keeps resolution at IV or better, so that main
-            effects stay clean of two-factor interactions.
+        n_derived: how aggressive a fraction to take. The default searches
+            ``(2, 1)`` in that order and takes the first that exists at this
+            ``d`` with resolution IV or better, so main effects stay clean of
+            two-factor interactions.
+
+            **The search deliberately stops at a quarter fraction.** The
+            sixteenth fraction ``(8, 4)`` added for Q24 is also resolution IV
+            and would win a "largest fraction" rule, but adding it to this
+            list would silently halve every existing ``screening_design(8)``
+            without any caller asking for it. A cheaper screen is a real
+            change to what a caller measures, so it is opt-in: pass
+            ``n_derived=4`` and mean it. :func:`boec.doe.run_doe_arm` does
+            exactly that, from a registered per-dimension table.
 
     Returns:
         A :class:`Design` with no axial points.

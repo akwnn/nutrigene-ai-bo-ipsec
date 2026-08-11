@@ -277,3 +277,107 @@ def test_it_returns_the_documented_shape(result):
     _, res = result
     assert isinstance(res, DoEResult)
     assert res.stationary_kind in {"maximum", "minimum", "saddle", "ridge"}
+
+
+# --------------------------------------------------------------------------
+# d=8 — the arm Q24 says is missing
+#
+# The E2 tables read as a clean BO win at eight factors. They are not one: the
+# DoE arm, the only arm that represents what a practitioner actually does, was
+# scoped to d=6 on budget arithmetic. These tests cover the arithmetic that
+# unblocks it, and the structural equality that makes the two dimensions
+# comparable at all.
+# --------------------------------------------------------------------------
+
+D8 = 8
+
+
+@pytest.fixture(scope="module")
+def result_d8():
+    o = CountingOracle8()
+    res = run_doe_arm(
+        o,
+        torch.stack([torch.zeros(D8, dtype=torch.double),
+                     torch.ones(D8, dtype=torch.double)]),
+        truth=o.truth, budget=BUDGET, seed=0,
+    )
+    return o, res
+
+
+class CountingOracle8(CountingOracle):
+    """The same counter, on the eight-factor ensemble."""
+
+    def __init__(self, seed: int = 0):
+        self._o = BiphasicOracle(load_ensemble(dim=D8)[0], sigma_rel=0.10, seed=seed)
+        self.n_evaluated = 0
+        self.batches: list[int] = []
+
+
+def test_d8_spends_exactly_the_same_shared_budget(result_d8):
+    o, _ = result_d8
+    assert o.n_evaluated == BUDGET
+
+
+def test_d8_splits_into_the_identical_three_stages_as_d6(result_d8, result):
+    """Structural equality is the point of the split, not a coincidence.
+
+    Two extra factors are absorbed entirely by a more aggressive stage-1
+    fraction — 2^(8-4)_IV instead of 2^(6-2)_IV, both sixteen runs. Every other
+    stage is untouched. So a d=6 vs d=8 difference in this arm is a difference
+    in the landscape rather than in the procedure, which is the only way the
+    comparison Q24 asks for means anything.
+    """
+    _, r8 = result_d8
+    _, r6 = result
+    assert r8.n_stage1 == r6.n_stage1 == 20
+    assert r8.n_stage2 == r6.n_stage2 == 27
+    assert r8.n_confirmation == r6.n_confirmation == 1
+    assert len(r8.kept_factors) == len(r6.kept_factors) == 4
+
+
+def test_d8_records_which_fraction_it_used(result_d8, result):
+    """A stored row that does not carry its fraction cannot be checked later."""
+    _, r8 = result_d8
+    _, r6 = result
+    assert r8.n_derived_stage1 == 4
+    assert r6.n_derived_stage1 == 2
+
+
+def test_d8_screen_keeps_main_effects_clean_of_two_factor_interactions():
+    """Resolution IV is the floor, and stage 1 reads nothing but main effects."""
+    from boec.designs import screening_design
+
+    assert screening_design(D8, n_centre=4, n_derived=4).resolution == 4
+
+
+def test_an_unregistered_dimension_raises_rather_than_guessing():
+    """A wrong fraction still runs, still fits, and still returns a recipe. The
+    only symptom is a budget silently unequal to every other arm's."""
+    o = BiphasicOracle(load_ensemble(dim=6)[0], sigma_rel=0.10, seed=0)
+    bounds7 = torch.stack([torch.zeros(7, dtype=torch.double),
+                           torch.ones(7, dtype=torch.double)])
+    with pytest.raises(ValueError, match="no registered stage-1 fraction"):
+        run_doe_arm(o, bounds7, truth=o.truth, budget=BUDGET, seed=0)
+
+
+def test_d6_is_bit_identical_to_before_the_d8_change(bounds):
+    """The registered table must reproduce the hardcoded fraction it replaced.
+
+    `n_derived_stage1` defaulted to a literal 2 before Q24. If the table
+    changed what d=6 does, every stored d=6 DoE number in `results/e2-grid.json`
+    would silently stop matching the code that claims to produce it.
+    """
+    o1, o2 = CountingOracle(), CountingOracle()
+    auto = run_doe_arm(o1, bounds, truth=o1.truth, budget=BUDGET, seed=3)
+    forced = run_doe_arm(o2, bounds, truth=o2.truth, budget=BUDGET, seed=3,
+                         n_derived_stage1=2)
+    np.testing.assert_allclose(auto.curve_true, forced.curve_true, atol=0, rtol=0)
+    assert auto.kept_factors == forced.kept_factors
+    torch.testing.assert_close(auto.confirmation_x, forced.confirmation_x,
+                               rtol=0, atol=0)
+
+
+def test_d8_curve_cannot_beat_the_optimum(result_d8):
+    o, res = result_d8
+    assert res.curve_true.shape == (BUDGET,)
+    assert float(res.curve_true[-1]) <= float(o._o.instance.optimum_value) + 1e-9

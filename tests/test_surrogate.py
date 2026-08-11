@@ -451,3 +451,152 @@ def test_gamma_prior_penalises_long_lengthscales_far_harder():
 def test_unknown_lengthscale_prior_is_rejected():
     with pytest.raises(ValueError, match="lengthscale_prior"):
         _gp("matern")
+
+
+# --------------------------------------------------------------------------
+# Q30 — the additive kernel
+#
+# Q22 measured this benchmark at 93% additive; Q25 measured the production
+# surrogate capturing 16% of the shape variance along the axes that matter.
+# Those two facts together are a model-class mismatch, not a tuning problem,
+# and these tests cover the alternative model class.
+# --------------------------------------------------------------------------
+
+def _tiny(d=4, n=24, seed=0):
+    import numpy as np
+    rng = np.random.default_rng(seed)
+    bounds = torch.stack([torch.zeros(d, dtype=torch.double),
+                          torch.ones(d, dtype=torch.double)])
+    X = torch.from_numpy(rng.uniform(size=(n, d)))
+    # Genuinely additive in the first two factors, flat in the rest.
+    Y = (torch.sin(3 * X[:, :1]) + 0.5 * X[:, 1:2] ** 2).double()
+    Yvar = torch.full_like(Y, 1e-4)
+    return X, Y, Yvar, bounds
+
+
+def test_product_is_still_the_default_and_is_unchanged():
+    """Every stored E2 number is a product-kernel number. It stays the default."""
+    from boec.surrogate import is_additive
+
+    X, Y, Yvar, bounds = _tiny()
+    assert not is_additive(build_gp(X, Y, Yvar, bounds, fit=False))
+    assert kernel_is_matern(build_gp(X, Y, Yvar, bounds, fit=False))
+
+
+def test_additive_kernel_has_one_component_per_factor():
+    from boec.surrogate import component_variances, is_additive
+
+    X, Y, Yvar, bounds = _tiny()
+    m = build_gp(X, Y, Yvar, bounds, fit=False, kernel_structure="additive")
+    assert is_additive(m)
+    assert component_variances(m).shape == (4,)
+
+
+def test_additive_components_are_each_one_dimensional_and_cover_every_factor():
+    """A missing or doubled active_dims would silently drop or double a factor."""
+    X, Y, Yvar, bounds = _tiny()
+    m = build_gp(X, Y, Yvar, bounds, fit=False, kernel_structure="additive")
+    dims = []
+    for sub in m.covar_module.kernels:
+        inner = sub.base_kernel
+        assert inner.active_dims is not None and len(inner.active_dims) == 1
+        dims.append(int(inner.active_dims[0]))
+    assert sorted(dims) == [0, 1, 2, 3]
+
+
+def test_interaction_variant_nests_the_production_kernel():
+    """It is a strict superset: d one-dimensional terms PLUS one full ARD term.
+
+    This is what stops the comparison being won by removing capacity — the
+    additive+interaction model can represent anything the production model can.
+    """
+    X, Y, Yvar, bounds = _tiny()
+    m = build_gp(X, Y, Yvar, bounds, fit=False,
+                 kernel_structure="additive+interaction")
+    subs = list(m.covar_module.kernels)
+    assert len(subs) == 5                       # 4 factors + 1 interaction
+    full = [s for s in subs if s.base_kernel.active_dims is None]
+    assert len(full) == 1
+    assert full[0].base_kernel.ard_num_dims == 4
+
+
+def test_the_prior_is_held_at_the_production_value_by_default():
+    """Switching structure must move the structure and nothing else (Q25)."""
+    from math import log, sqrt
+
+    X, Y, Yvar, bounds = _tiny()
+    prod = build_gp(X, Y, Yvar, bounds, fit=False)
+    add = build_gp(X, Y, Yvar, bounds, fit=False, kernel_structure="additive")
+    want = sqrt(2.0) + log(4) * 0.5
+    assert base_kernel(prod).lengthscale_prior.loc.item() == pytest.approx(want)
+    for sub in add.covar_module.kernels:
+        assert sub.base_kernel.lengthscale_prior.loc.item() == pytest.approx(want)
+
+
+def test_additive_prior_dims_actually_changes_the_prior():
+    """The documented 0.502-vs-0.205 difference must be real, or the option is a no-op."""
+    from math import sqrt
+
+    X, Y, Yvar, bounds = _tiny()
+    m = build_gp(X, Y, Yvar, bounds, fit=False, kernel_structure="additive",
+                 additive_prior_dims=1)
+    for sub in m.covar_module.kernels:
+        assert sub.base_kernel.lengthscale_prior.loc.item() == pytest.approx(sqrt(2.0))
+
+
+def test_reading_lengthscales_off_an_additive_model_raises_rather_than_lying():
+    """An additive kernel has no single per-factor lengthscale. Returning one
+    component's would be a believable wrong number — the exact failure
+    `base_kernel` exists to prevent."""
+    X, Y, Yvar, bounds = _tiny()
+    m = build_gp(X, Y, Yvar, bounds, fit=False, kernel_structure="additive")
+    with pytest.raises(ValueError, match="ADDITIVE"):
+        lengthscales(m)
+
+
+def test_component_variances_refuses_a_product_model():
+    X, Y, Yvar, bounds = _tiny()
+    with pytest.raises(ValueError, match="product kernel"):
+        from boec.surrogate import component_variances
+        component_variances(build_gp(X, Y, Yvar, bounds, fit=False))
+
+
+def test_an_unknown_structure_raises_rather_than_falling_through():
+    """A misspelling that defaulted would run the production model under
+    another arm's label, and nothing downstream would notice."""
+    X, Y, Yvar, bounds = _tiny()
+    with pytest.raises(ValueError, match="kernel_structure"):
+        build_gp(X, Y, Yvar, bounds, fit=False, kernel_structure="addative")
+
+
+def test_additive_structure_refuses_to_move_two_things_at_once():
+    """Structure and prior together would make a difference unattributable (Q25)."""
+    X, Y, Yvar, bounds = _tiny()
+    with pytest.raises(ValueError, match="two things at once"):
+        build_gp(X, Y, Yvar, bounds, fit=False, kernel_structure="additive",
+                 lengthscale_prior="gamma")
+
+
+def test_the_additive_model_finds_the_factor_that_matters():
+    """End to end, on data that IS additive: the inert factors' components must
+    shrink well below the active ones. This is the mechanism the whole arm rests
+    on — relevance as a variance, which is identified, rather than as a
+    lengthscale, which is not."""
+    from boec.surrogate import component_variances
+
+    X, Y, Yvar, bounds = _tiny(d=4, n=40, seed=3)
+    m = build_gp(X, Y, Yvar, bounds, kernel_structure="additive")
+    v = component_variances(m).detach()
+    assert float(v[0]) > float(v[2]), "the driving factor must outweigh an inert one"
+    assert float(v[0]) > float(v[3])
+
+
+def test_the_additive_model_still_predicts_and_gives_intervals():
+    """Whatever the kernel, `predictive` must keep working — it is the only
+    place allowed to touch prediction noise (C1/C2)."""
+    X, Y, Yvar, bounds = _tiny()
+    m = build_gp(X, Y, Yvar, bounds, kernel_structure="additive+interaction")
+    p = predictive(m, X[:5], noise=None)
+    assert p.mean.shape == (5, 1)
+    lo, hi = p.interval()
+    assert bool(torch.all(hi > lo))

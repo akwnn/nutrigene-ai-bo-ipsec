@@ -4,6 +4,800 @@
 
 ---
 
+## ⚠️ NUMBERING · **Two sessions used "Q29" for different questions, within eleven minutes.**
+
+`b91a395` (10:12) registered the symmetric-scoring comparison as Q29. `3e83fa2` (10:23)
+registered the additive-kernel arm as Q29. **The earlier commit keeps the number**; the
+additive-kernel work is renumbered **Q30** here and in `surrogate.py`, `campaign.py`,
+`scripts/run_q30_additive.py` and `results/q30-additive.*`. Nothing else moves.
+
+Recorded rather than silently fixed, because a pre-registration's whole value is that its
+identifier is stable — a reader following "Q29" from a commit message written before 11:07
+lands on the other entry, and needs to know why.
+
+### 🔴 The collision is the symptom. The near-miss is the problem.
+
+**The two sessions independently built the same experiment, and it was caught by luck.** This
+session wrote out "run the symmetric estimand" as its recommended next action and had begun
+the runner — while the other session had already finished it and committed the result forty
+minutes earlier. It was noticed only because a `git log` was read *after* an unrelated
+commit. Nothing in the workflow would have stopped a full duplicate run.
+
+**Why it happened, and it is structural rather than careless.** Both sessions correctly
+identified the same highest-value next step from the same evidence — which is the system
+working — and neither had any way to see the other's work-in-progress, because the only
+shared channel is a commit that appears once the work is already done. Registering *before*
+running is supposed to be that channel, and it does not function when both parties register
+inside the same eleven minutes.
+
+**What this costs if unaddressed:** wasted compute is the cheap failure. The expensive one is
+two sessions writing contradictory entries about the same result under different numbers, and
+a reader downstream not knowing which is authoritative — which is precisely what almost
+happened to Q28/Q29, one of which raises the scoring problem and the other of which resolves
+it, written independently and unaware of each other.
+
+**Not fixed here** — it needs a convention both sessions follow (claim a number before the
+work, not with it), and that is an agreement, not a commit. **Flagged for Alan**, since only
+he is in both loops.
+
+---
+
+## 🟢 Q30 RESULT [B] · **The kernel WAS mismatched and fixing it doubled the model's accuracy — and bought exactly nothing in regret. My registered prediction was wrong, and the negative is worth more than the win would have been.**
+
+> **🔴 READ Q29 FIRST — it was answered concurrently and it reframes this entire entry.**
+> Under the symmetric scoring rule, **BO already beats the DoE arm in all four cells** by
+> +0.27 to +0.36. So the deficit this arm was built to close **is convention-dependent**, and
+> at least partly does not exist. This work was aimed at a gap whose sign was still open.
+> That does not invalidate the negative below — "accuracy is not the binding constraint" holds
+> regardless of who is ahead — but it does mean the framing "BO is losing, so improve the
+> model" was resting on the rule-A convention throughout.
+
+`scripts/run_q30_additive.py` · log `results/q30-additive.log` · rows `results/q30-additive.json`.
+Accuracy bench: `scripts/bench_surrogate.py` · `results/bench-surrogate.log`. Registration is
+the entry below; check its commit timestamp (`3e83fa2`).
+
+**FIDELITY:** the stored qLogEI comparator regenerates over 20 campaigns at max |Δ| **exactly
+0.0**. **No E2 number moved.** `kernel_structure` still defaults to `"product"`.
+
+### The model got much better. Held-out R² against noiseless truth, n=46, d=6:
+
+| σ | product (E2) | additive | add+int | relevance, product → add+int |
+|---|---|---|---|---|
+| 0.25 | 0.050 | −0.014 | **0.106** | 0.746 → 0.735 |
+| 0.10 | 0.375 | **0.744** | 0.699 | **0.853 → 0.965** |
+
+At d=8 σ=0.10 the same: 0.448 → 0.764, relevance 0.771 → **0.975** (chance 0.500). The
+mechanism argued in the registration is real and it is large.
+
+### THE REGRET DID NOT MOVE. Primary endpoint, d=6, paired on instance, n=25:
+
+| comparison | σ=0.25 | σ=0.10 |
+|---|---|---|
+| **`qlogei-add` − `qlogei` (THE PRIMARY)** | **−0.0106, p=0.381** | **−0.0015, p=0.711** |
+| `qlogei-addonly` − `qlogei` | −0.0123, p=0.264 | −0.0126, p=0.127 |
+| `qlogei-add` − `doe` | **+0.0602, p=0.0001** | −0.0057, p=0.396 |
+| `qlogei-addonly` − `doe` | +0.0586, p<0.0001 | **−0.0168, p=0.032** |
+
+**The registered primary returned nothing at either noise level.** A surrogate whose held-out
+R² nearly doubled and whose factor identification went from 0.853 to 0.965 produced a regret
+change of −0.0015 with p=0.71.
+
+### MY PREDICTION WAS WRONG, and this is the informative half
+
+Registered: *"σ=0.10: `qlogei-add` beats stored `qlogei`, and by enough to matter… I expect it
+to close the gap to `doe` and to beat it."* **It did not beat qLogEI (p=0.711) and did not
+beat DoE (p=0.396).** The σ=0.25 half was correct — no improvement, still loses to DoE — but
+that was the half predicted from a ceiling, not from a mechanism.
+
+The error is specific and diagnosable. I reasoned: the surrogate is nearly blind → make it see
+→ the search improves. **The first two steps happened and the third did not.** So on this
+benchmark, **surrogate accuracy is not the binding constraint on BO's regret.**
+
+This is the accuracy-versus-regret decoupling Q26 already documented from the other side —
+one cell where the surrogate learned nothing extra and regret improved, another where
+discrimination improved sharply and regret did not move. **I flagged that risk in writing
+before running this, and then predicted as though it would not apply.** The registration's own
+limitations section named the failure mode it went on to hit.
+
+### What this kills, which is the point
+
+**A whole family of proposals is now closed off, not just one.** "BO is losing because the
+model is bad, so improve the model" is refuted by a direct test with a model that is
+measurably, substantially better. Combined with what was already eliminated:
+
+| candidate explanation for BO's performance | verdict | where |
+|---|---|---|
+| lengthscale prior | refuted | Q25 |
+| acquisition solver | refuted | Q21 |
+| opening batch size | partial, low noise only | Q26 |
+| **kernel structure / model accuracy** | **refuted — accuracy doubled, regret unmoved** | **Q30** |
+
+Four of four. **Whatever is limiting BO here, it is not the surrogate.** The remaining
+candidates are the budget itself, the acquisition's exploration behaviour under noise, and —
+the one now looking most likely — **that the comparison is being scored in a way that does not
+measure what either method produces (Q28).**
+
+### The one positive, and why it is NOT a headline
+
+`qlogei-addonly` beats `doe` at σ=0.10: **−0.0168 [−0.0297, −0.0028], p=0.032.** It is the
+first time any BO arm has beaten current practice in this project with an interval clear of
+zero.
+
+**It should not be reported as "BO beats current practice", for three independent reasons,
+any one of which is sufficient:**
+
+1. **It is the SECONDARY arm.** The registered primary was `qlogei-add`, which does not beat
+   DoE (p=0.396). Promoting the secondary after seeing the results is arm selection.
+2. **It is one cell of four**, at the non-primary noise level.
+3. **Multiplicity.** 28 paired comparisons are printed across the two cells. p=0.032 is raw;
+   nothing survives a correction over that family.
+
+Recorded because it is real and someone will find it. Not promoted, because it was not
+predicted and was not primary.
+
+### Limits, restated
+
+- **Post-hoc, permanently**, and the label travels with every number above.
+- **The baselines were not given the same opportunity.** Nobody has tried to improve the DoE
+  arm's stage-2 model. This is a tuned method against untuned baselines and it stays stated.
+- **Input warping was tried and is a NET NEGATIVE**, contrary to a single-instance result that
+  looked promising: it helps R² only at σ=0.10 and destroys calibration everywhere (coverage
+  0.49–0.77 against nominal 0.95). Since the acquisition consumes the variance, a model that
+  predicts better while misstating its confidence is not an improvement. Not adopted.
+- **Fit restarts are not a lever**: +0.008 to +0.019 at σ=0.25, −0.008 to −0.036 at σ=0.10.
+- **The benchmark is near-separable by construction (Q22)**, which is the structure an additive
+  kernel exists to exploit. That it still bought no regret makes the negative stronger, not
+  weaker — this was the friendliest possible test for the idea.
+
+### 🔴 SEPARATE FINDING, from the bench, and it lands on E3 rather than E2
+
+**Every model tested is overconfident, including the shipped one.** The E2 production
+surrogate's own 95% intervals cover **0.824–0.909** of held-out truth across all four cells.
+Nothing in the bench reaches nominal.
+
+This corroborates T1's coverage work by a different route: T1 measured **0.625** at the
+model's own constrained argmax, this measures 0.82–0.91 domain-wide, and the gap between
+those two numbers is exactly the "two point sets, and the primary never says which" defect T1
+raised. **E3 is the experiment about whether the confidence claims are trustworthy**, so this
+is evidence for its headline arriving from a bench that was not built to test it. Worth
+someone picking up deliberately.
+
+---
+
+## 🔴 Q31 [B] · PRE-REGISTRATION · STAGE 0 of the Hall/Ogle replay · **the claim, fixed before the dataset that will test it exists**
+
+**Committed before Stage 1 begins.** No canonical CSV exists yet; `data/published/` holds only two markdown files and `VALIDATION_REPORT.md` opens `Status: BLOCKED`. Registering now is the whole point: otherwise the scope of the claim and the capability of the data get decided together and no reader can tell which came first.
+
+### 1. Argmax recovery is not supportable — **and the usual reason for saying so is the wrong one**
+
+The stated blocker (B1) is that two independent extractions disagree on the stage-2 best condition: `stage2_13` at 3.67 versus `stage2_18` at 4.22.
+
+**That reason does not survive contact with the PDF cross-check, and registering it would be a trap.** `docs/pdf_crosscheck.md:119` found that our `stage2_18 = 4.22` corresponds to that column's **Q3 (4.24)**, not its **median (3.48)** — a box-statistic error in *our own* extraction. Corrected, our median is 3.48, their `stage2_13` is 3.67, and **the two extractions would agree**. Stage 1 will apply that correction.
+
+So if the registered reason were "the extractions disagree", Stage 1 would appear to dissolve the objection and the argmax claim would walk back in. **It must not.** The durable reasons, neither of which Stage 1 can touch:
+
+- **The top conditions are not separable.** The top five IQRs share a common band (`pdf_crosscheck.md:116`). An argmax is a claim about a difference the data cannot resolve.
+- **The paper never names a best-performing stage-2 condition** (`pdf_crosscheck.md:117`). There is no published target to recover. No text can be contradicted and none can adjudicate.
+- **Per-condition SEM is 38–66% of the between-condition spread**, against a source assay CV of ~68% and a paper reporting no variance at all.
+
+> **Registered: no claim of the form "BO recovers the published best condition" will be made, at either stage, regardless of what Stage 1 does to the extraction disagreement.**
+
+### 2. ⚠️ The obvious rank claim is VACUOUS, and this is why Stage 0 exists
+
+The natural phrasing — *"BO reaches the top-k of the published ranking in fewer than 48 evaluations"* — **cannot fail.**
+
+**Stage 2 has 25 conditions. Stage 1 has 23.** The replay proposes only conditions that exist in the dataset (discrete candidate mode). With a budget of 48 against a candidate set of 25, **any method reaches the top-5 by exhaustion**, including one that picks at random and one that picks alphabetically. It would be a test that cannot fail — the fourth in this project, after the ρ-trend, the E4 non-separability check, and the DoE arm's first escape statistic.
+
+### 3. The registered claim
+
+> **Bayesian optimization reaches the pre-specified top-5 condition set in significantly fewer evaluations than random selection over the identical candidate set.**
+>
+> - **k = 5**, fixed now. Chosen because top-5 overlap (3/5 at both stages) is the granularity at which the two extractions *measurably* agree — the claim is pinned to the resolution the data demonstrably has, not to a rounder number.
+> - **Budget = 8** at stage 2 (25 candidates) and **8** at stage 1 (23 candidates) — roughly one third of the set, so exhaustion is impossible and the comparison is about search rather than enumeration.
+> - **Ranking source: the reconciled extraction from Stage 2 of the plan** — not either individual extraction, and not the paper.
+> - **Comparator: uniform random selection over the same candidate set**, same budget, averaged over orderings, exactly as `run_static_baseline` does.
+> - **Test:** paired over conditions where pairing exists; instance-level bootstrap for the interval; Wilcoxon governs significance, per Q20 §2.
+>
+> **What would falsify it:** BO reaching the top-5 set no faster than random selection. Given 25 candidates and a budget of 8, that is a genuinely available outcome.
+
+**Flagged conditions are excluded from any rank position that depends on the disagreement**, per the plan's Stage 2.2. If `stage2_13` and `stage2_18` remain unreconciled, neither can occupy a rank that decides membership of the top-5.
+
+### 4. The limitation that inverts the obvious objection — **written before the numbers exist**
+
+A reader's instinct is that reading values off a figure is the weak link. **It is not, by roughly an order of magnitude.** Both numbers belong side by side:
+
+| | fraction of between-condition spread |
+|---|---|
+| digitization reading error | **4–7%** |
+| published per-condition SEM | **38–66%** |
+| source assay CV | ~68% |
+| variance reported in the paper | **none** |
+
+**The constraint is the published experiment, not our extraction.** Recorded now so it reads as a finding rather than as a defence written after someone raised it.
+
+### ✅ RESULT — the registered claim is NOT SUPPORTED, and it is reported as it came out
+
+`scripts/run_replay_hall_ogle.py`, 40 seeds, budget 8, opening 4 shared between arms.
+
+| stage | usable conditions | BO median evals to first top-5 | random | random − BO | Wilcoxon |
+|---|---|---|---|---|---|
+| stage 2 | 24 of 25 | 3.50 | 3.50 | −0.075 [−0.475, +0.300] | p=0.7243 |
+| stage 1 | 23 of 23 | 2.50 | 2.50 | **+0.450 [+0.025, +0.850]** | **p=0.0565** |
+
+**Stage 2: flatly null.** BO is not faster than random selection over the same candidates.
+
+**Stage 1: the two tests disagree, and Q20 §2 says what to do about it.** The bootstrap interval clears zero (+0.025 lower bound); the Wilcoxon does not (p=0.0565). **Q20 §2 registered that Wilcoxon governs significance and the bootstrap reports magnitude, and that a disagreement is reported rather than resolved.** Under that rule, applied as written: **not significant, claim not supported.** The disagreement is itself the finding — with n=40 and a discrete 1–9 outcome there are many ties, which is precisely where a signed-rank test and a bootstrap of the mean come apart.
+
+**One signal that is real and should not be buried.** At stage 1, BO failed to find *any* top-5 condition within budget in **2 of 40** runs against random's **7 of 40**. Time-to-first-hit is not significantly different, but the failure rate is less than a third. **The registered endpoint was speed, not reliability, so this is a secondary observation and not a rescue** — reporting it as the headline would be exactly the estimand-swapping this project has caught five times.
+
+#### Amendment, forced not chosen: the ranking source
+
+Q31 §3 registered the ranking as coming from "the reconciled extraction". **There is no reconciled extraction.** The digitizer's five CSVs were never committed — `git log --diff-filter=A` returns nothing — and commit `e28c84c` ("Rescue A's digitization work before deleting the old working folder") saved only the JSONs, the rasters and two markdown files. **The second extraction died with that folder.**
+
+The ranking therefore comes from the single surviving extraction as corrected. What remains of the second is its summary statistics quoted in `VALIDATION_REPORT.md` — Spearman 0.860/0.880, top-5 overlap 3/5, 47/47 inside IQR — carried as a limitation. `extraction_2` is written **empty** in the canonical CSVs rather than reconstructed.
+
+#### Two forced decisions, recorded because they were not in the registration
+
+**Opening size 4.** `batch_plan` gives `2d + 2` — 10 at d=4, 14 at d=6 — both larger than the registered budget of 8, so the default opening cannot be used at all. Set to 4, leaving 4 adaptive evaluations. Both arms share it, so the comparison stays paired.
+
+**Thin adaptive phase.** Four adaptive evaluations is very little for BO to demonstrate anything. That is a consequence of the registered budget, which was itself forced by the candidate set being only 23–25 conditions — and a larger budget would have made the claim vacuous by exhaustion (Q31 §2). **This is a real limit on what the replay can show, and it is a property of the published study's size, not of the method.**
+
+### 5. Already resolved, so Stage 1 should not re-litigate it
+
+**B2 is adjudicated** by the PDF cross-check, and the two disputed cells **split** (`pdf_crosscheck.md:125–130`): `stage1_23` LN511 is printed `+` (our patch reading was right, the digitizer wrong); `stage2_21` FN is printed `+` (the digitizer was right, our reading wrong). Both corrections are applied with that citation, and neither is a matter of judgement.
+
+**Better than assumed:** per-condition dispersion does not need re-extraction. `stage1.json` and `stage2.json` already carry `q1`, `median` and `q3` per condition, so `Yvar` can be derived without returning to the rasters. `n_conditions` is **23** and **25**, matching the plan's Stage 4 row-count assertions.
+
+---
+
+## 🔴 Q30 [B builds, A + B decide] · PRE-REGISTRATION · **An additive-kernel BO arm. Alan asked for a significantly better BO model; this is the one the diagnostics indicate, and it is registered before any regret exists.**
+
+**⚠️ READ THIS FIRST — the conflict of interest is structural and cannot be argued away.**
+`e2.yaml` registers `no_per_method_tuning: true`, which is the most-cited objection in this
+literature, and **BO is currently losing to current practice at both dimensions (Q27).**
+Anything improved now is improved by someone who knows BO is behind. So:
+
+1. **This is a NEW ARM, not a fix.** No E2 number moves. `kernel_structure` defaults to
+   `"product"` — what every stored E2 number is — and a misspelling raises rather than
+   falling through, so no stored row can be silently re-attributed.
+2. **It is reported as post-hoc model development whatever it returns**, never as E2's
+   result. E2's registered primary stays the product-kernel qLogEI arm.
+3. **The baselines are not re-run at a disadvantage.** DoE, LHS, Sobol, random and coord
+   keep their stored numbers, which were produced under identical conditions.
+4. **The failure branch is written below and is reported.** If the improved model still
+   loses, that is the result and it is a stronger one than the loss we already have.
+
+### Why THIS change, and not a tuning knob
+
+Three candidate explanations for BO's performance have already been tested and eliminated,
+which is what makes this a diagnosis rather than a guess:
+
+| candidate | verdict | where |
+|---|---|---|
+| the lengthscale prior | **refuted** — `Gamma(3,6)` is significantly *worse* in every cell, and SAASBO's premise with it | Q25 |
+| the acquisition solver | **refuted** — max failure rate 0.875%, below the pre-registered 1% repair threshold | Q21 |
+| the opening batch size | **partly, at low noise only** — 14→18 helps at σ=0.10, not detectably at σ=0.25, and closes none of the gap to DoE | Q26 |
+
+What has never been varied is the kernel's **structure**, and the landscape's structure is
+known:
+
+- **Q22: the benchmark is 93% additive** (0.930 at d=6, 0.927 at d=8). Almost all of the
+  response is a sum of per-factor terms.
+- **Q25: the production surrogate captures 16% of the shape variance** along the axes that
+  matter, at n=46, in the primary cell.
+
+A product ARD kernel treats the response as fundamentally d-dimensional, so learning it
+means filling a d-dimensional cube — at 48 points in six factors, about **1.9 points per
+axis**. A sum of one-dimensional terms turns the same 48 points into **48 points per axis**.
+The sample requirement stops being exponential in d and becomes linear. That is the
+mismatch, and it is a model-class mismatch, not a tuning problem.
+
+**Second mechanism, and it may matter more.** Under a product ARD kernel "this factor does
+nothing" is said by pushing its lengthscale to infinity — a direction in which the
+likelihood is nearly flat, so it is weakly identified. Q25 measured exactly that: ARD
+separation at the d=6 opening design was **1.000 against a null of 1.000**, no information
+at all, taking ~30 of 34 adaptive evaluations to recover. Under an additive kernel the same
+statement is "this component's variance is zero" — a scale parameter with data on both
+sides, identified from the first fit.
+
+### The arms
+
+| arm | kernel | note |
+|---|---|---|
+| `qlogei` (stored) | product ARD Matérn 5/2 | E2's registered primary. Not re-run. |
+| **`qlogei-add`** | **sum of d 1-D Matérns + one full ARD term** | **the new primary.** Strictly nests the production kernel. |
+| `qlogei-addonly` | sum of d 1-D Matérns, no interaction | secondary; tests whether the ~7% interaction is worth its parameters |
+
+Everything else is held identical: same acquisition, same `n_init = 2d+2`, same budget 48,
+same q=4, same instances, same seeds, same scoring (Q17), same clustering.
+
+### Model selection was done on FIT, before any regret existed — and one of my predictions was already wrong
+
+Held-out R² on 800 uniform draws, fit on a Sobol design of size n, 10 instances × 2 seeds,
+d=6. **No BO loop, no regret.** This is how the arm was chosen, and the numbers are recorded
+here so the choice is checkable rather than asserted.
+
+| surrogate | R²@14 | R²@30 | R²@46 | | R²@14 | R²@30 | R²@46 |
+|---|---|---|---|---|---|---|---|
+| | **σ=0.25** | | | | **σ=0.10** | | |
+| product (E2) | 0.007 | −0.006 | 0.050 | | 0.077 | 0.295 | **0.375** |
+| additive, prior=d | −0.091 | −0.158 | −0.014 | | −0.087 | 0.433 | **0.744** |
+| additive, prior=1 | −0.086 | −0.099 | 0.043 | | −0.036 | 0.425 | 0.707 |
+| **add+int, prior=d** | −0.026 | −0.006 | **0.106** | | 0.091 | **0.436** | 0.699 |
+| add+int, prior=1 | −0.008 | −0.047 | 0.097 | | 0.066 | 0.435 | 0.711 |
+
+Relevance — share of the model's weight landing on the 4 genuinely active factors, chance
+0.667 — at n=46: product **0.746 / 0.853**, add+int prior=d **0.735 / 0.965**.
+
+**`additive+interaction` with `prior_dims=d` is the primary**: best R² at σ=0.25, within
+noise of the best at σ=0.10, best relevance at σ=0.10, and it nests the production model so
+the comparison cannot be won by removing capacity.
+
+**A prediction I recorded in code and then refuted before running anything.** I argued in
+`build_gp`'s docstring that a 1-D component needs a 1-D-scaled prior, because at `prior_dims=d`
+the prior mode is 0.502 on a normalised axis against 0.205 at 1, and a biphasic Hill curve has
+structure at 0.2–0.4 — so mode 0.502 "can barely bend". **The measurement says the opposite:
+`prior_dims=d` fits better in 3 of 4 comparisons.** The reasoning was wrong. It is recorded
+because the methodologically convenient choice — hold the prior at production, move one thing
+— turned out to also be the better-fitting one, and that coincidence is exactly the kind of
+thing that should be visible rather than quietly enjoyed.
+
+### 🔴 THE FINDING THAT IS ALREADY IN THE TABLE, INDEPENDENT OF ANY BO RESULT
+
+**At σ=0.25 — the E2 primary cell — no surrogate of any structure learns this landscape from
+46 points.** The best held-out R² anywhere in the table is **0.106**. At σ=0.10 the same
+models reach **0.744**.
+
+That is a signal-to-noise limit, not a modelling failure, and it reframes E2's headline. BO
+does not lose the primary cell because its model is badly chosen; it loses because **at 25%
+relative noise there is almost nothing for any model to learn**, so adaptive proposals are
+guided by noise while structured coverage — DoE, LHS — collects information regardless. It
+also predicts, before the fact, that a better surrogate cannot rescue the primary cell.
+
+**This holds whatever the BO comparison returns, and it should be in the write-up either
+way.**
+
+### Primary endpoint
+
+**Simple regret at budget 48, scored per Q17, d=6 — `qlogei-add` versus stored `qlogei`,
+paired on instance and seed, Wilcoxon on instance-level means (n=25).** Reported at both
+noise levels, both pre-named; **σ=0.10 is where the mechanism predicts the effect** and
+σ=0.25 is the E2 primary cell.
+
+Secondary: `qlogei-add` versus the stored `doe` arm — the Q24 question, asked of the improved
+model; `qlogei-addonly`; d=8 if the d=6 arms return anything.
+
+### Decision rule — fixed now
+
+| outcome | conclusion |
+|---|---|
+| `qlogei-add` beats `qlogei` at σ=0.10, p<0.05 | **the model class was the problem at low noise**, and E2's BO arm was handicapped by a kernel mismatched to a 93%-additive landscape. Reported as post-hoc model development. |
+| it also beats `doe` at σ=0.10 | **BO beats current practice once the surrogate matches the landscape** — the first such result in this project, and it is stated with the post-hoc label attached, not as E2's finding |
+| no improvement at σ=0.25 | **expected, and predicted above.** Reported as confirming the signal-to-noise ceiling, not as a failure of the arm |
+| no improvement anywhere | **the model class is not the problem either**, and three of four candidate explanations are now eliminated. That is a real result and it gets written up as one. |
+
+**No branch licenses a further arm.** If this does not work, the next model is not tried
+until the failure is written down.
+
+### MY PREDICTION, RECORDED BEFORE RUNNING
+
+**σ=0.10: `qlogei-add` beats stored `qlogei`, and by enough to matter — the surrogate's
+held-out R² doubles (0.375 → 0.699) and relevance goes 0.853 → 0.965, so the adaptive phase
+is being steered by a model that can actually see the shape. I expect it to close the gap to
+`doe` (currently +0.0042, a tie) and to beat it.**
+
+**σ=0.25: no improvement, p>0.05, and it still loses to `doe`.** R² 0.050 → 0.106 is a
+doubling of nearly nothing. If it *does* improve here, my signal-to-noise reading is wrong
+and the interesting question becomes how a model with R²=0.1 steers a search usefully at all.
+
+### What this CANNOT settle
+
+- **It is post-hoc, permanently.** No decision rule can convert a model chosen after seeing
+  the first one lose into a pre-registered comparison. The label travels with the number.
+- **The baselines were not given the same opportunity.** Nobody has tried to improve the DoE
+  arm's stage-2 model, and a fair "best versus best" comparison would. **If `qlogei-add`
+  wins, that asymmetry must be stated in the same paragraph**, and it is the obvious
+  reviewer objection.
+- **It is one landscape family, and one chosen for near-separability** — which is precisely
+  the structure an additive kernel is built to exploit. **On a genuinely interacting
+  landscape this arm would have no such advantage, and Q22 already flags that the benchmark
+  under-represents the interaction the source study is about.** An additive kernel winning
+  here is close to a tautology and must not be reported as a general claim about BO.
+
+---
+
+## 🔴 Q28 [B raises, A + B decide] · **The DoE arm's scoring rule was never registered, and the two defensible rules give OPPOSITE answers at every cell. This governs the paper's headline, not a footnote.**
+
+Raised immediately on finding it, in the same session that produced the Q27 result it
+undercuts. **Found because Q27's own over-prediction number contradicted its own regret
+number** — the arm with the lowest regret in the d=8 table is also over-promising by a
+median of +1.55 on a response bounded at 1.0, in 100% of cells. Both cannot describe the
+same "winner" without an explanation, and the explanation is the scoring rule.
+
+### The two rules
+
+Q20 §3 already flagged this and left it open: *"`regret_on: noiseless_value_at_selected_point`
+does not define the DoE arm's selected point… it is the more generous of two defensible
+rules, and it is unregistered. Say which one it is."* It was never said. Here is what it
+costs.
+
+| | what it scores | defence |
+|---|---|---|
+| **Rule A — best-so-far over all 48** (what `run_e2.py:120` does) | the best point the arm *measured* | a practitioner walks away with the best recipe they actually saw |
+| **Rule B — the stage-4 recipe** | the point the arm *produced* | `doe.py`: *"The published study evaluated its predicted optimum. So does this."* Stage 4 exists for exactly this reason |
+
+### Measured. Every cell reverses.
+
+DoE minus qLogEI, instance-clustered, n=25. Negative means DoE has less regret.
+
+| d | σ | Rule A (registered) | Rule B (the arm's output) | over-prediction, median |
+|---|---|---|---|---|
+| 6 | 0.25 | **−0.0708** (p<1e-5) | **+0.2497** (p<1e-5) | +1.6516 |
+| 6 | 0.10 | +0.0042 (p=0.69) | **+0.3450** (p<1e-5) | +0.7432 |
+| 8 | 0.25 | **−0.0321** (p=0.0003) | **+0.2482** (p<1e-5) | +1.5468 |
+| 8 | 0.10 | +0.0015 (p=0.92) | **+0.3170** (p<1e-5) | +0.7407 |
+
+Regenerated d=6 DoE rows match `results/e2-grid.json` at max |Δ| **exactly 0.0**, so this is
+the stored arm being re-scored and not a different one.
+
+**This is the Q16 defect, one experiment over.** There too, two legitimate point sets gave
+opposite verdicts on one registered sentence, and the registration never said which. Q16's
+answer — *name the point set, and report both* — is the answer here as well. Third
+occurrence of the pattern if you count Q19.
+
+### 🔴 But Rule B as computed above is NOT a like-for-like comparison, and must not be quoted as one
+
+It scores **DoE by its model's recommendation and qLogEI by its best measurement.** Those
+are different standards, and the asymmetry runs entirely against DoE.
+
+- For a BO arm, "the best point it measured" genuinely *is* its answer — that is what BO
+  returns.
+- For the DoE arm the two differ, and `results/doe-arm.log` says the confirmation point is
+  not the observed argmax in **100%** of runs.
+- The symmetric version of Rule B would score **BO at its posterior-mean argmax** — the
+  recipe a practitioner would read off the fitted surrogate, which is what the DoE arm's
+  stage 4 is. **That number does not exist anywhere in this project.** E2 never records it.
+
+So the honest statement of what is currently known:
+
+1. **Under Rule A, both arms scored the same way, current practice beats BO at σ=0.25 at
+   both dimensions.** That comparison is symmetric and it stands.
+2. **Under Rule B as computed, BO wins everywhere by a wide margin — and that comparison is
+   not evidence**, because the comparator was held to an easier standard.
+3. **The symmetric output-versus-output comparison has never been run.**
+
+**Q27's conclusion is therefore narrower than Q27 states it.** "BO beats current practice is
+refuted at both dimensions" is true *of the registered scoring rule*, and the registered
+scoring rule is the generous one for the arm that won. That qualifier belongs in the same
+sentence, not in a limitations section.
+
+### 🔴 THE ASYMMETRY NEITHER RULE CORRECTS — this was missing from this file and belongs in the decision
+
+**The DoE arm pays a measurement for its recommendation. BO does not.** Stage 4 costs 1 of
+48 and `results/doe-arm.log` says that point is *not* the observed argmax in 100% of runs —
+so under rule A the DoE arm is charged a full evaluation for a point that never helps its
+own score. Under rule C, BO's posterior-mean argmax is located for free, out of budget.
+
+**So neither rule is budget-matched, and they are unmatched in opposite directions.** Rule A
+taxes DoE; rule C subsidises BO. That is a third axis of the same problem, independent of
+which point gets scored, and it should be on the table when the estimand is chosen rather
+than discovered afterwards.
+
+**The run that would remove it, proposed and NOT run:** give every model-based arm a
+stage-4. Spend one of BO's 48 measuring its own posterior-mean argmax, exactly as the DoE
+arm spends one measuring its surface's. Then both arms have paid the same price for the
+same kind of output and rule C becomes budget-symmetric as well as point-symmetric. Cost is
+roughly one re-run of the BO arms. **Needs registering before it runs** — rule A and rule C
+are both already known to favour opposite arms, so the third variant is exactly the kind
+whoever runs it can pick the answer to.
+
+### What would settle it — proposed, NOT run
+
+Score every arm at **its own recommended recipe**: DoE at stage 4, qLogEI and qLogNEI at the
+posterior-mean argmax of their final surrogate, located with
+`metrics.over_prediction_at_constrained_argmax` so both sides use B's one shared function
+and cannot disagree by construction. Report Rule A and this symmetric Rule B side by side,
+as two named estimands, neither selected after the fact.
+
+**Registering it before running is not optional.** Rule A is already known to favour DoE and
+asymmetric Rule B is already known to favour BO, so whoever runs the symmetric version knows
+in advance which direction each error points. **This entry is the registration of the
+question; the endpoint and decision rule need writing before the run, and A should see them
+first** — the estimand this chooses is the paper's headline, and Q20 §1 already put the
+choice of estimand in A's lane.
+
+### Not a defect in the DoE arm, and not a reason to touch it
+
+Stage 4 is correctly implemented, correctly costed against the budget, and correctly scored
+by `over_prediction_at_constrained_argmax`. **The arm is fine; the sentence written about it
+is what is under-specified.** Nothing here licenses re-running, re-tuning or re-scoping any
+arm, and no stored number moves.
+
+---
+
+## 🔴 Q27 RESULT [B] · **The d=8 DoE arm ran. Both registered predictions were correct, and current practice wins the primary cell — but read Q28 before quoting this.**
+
+> **🔴 SUPERSEDED IN INTERPRETATION BY Q29, which ran after this was written.** The headline
+> below — *"BO beats current practice" is refuted at both dimensions* — is true **of rule A
+> only**. Under the symmetric rule C, BO beats the DoE arm at d=8 σ=0.25 by **+0.2689**, the
+> same cell where it loses by −0.0321 here. **Do not quote this entry's conclusion without
+> rule C beside it.** The arm, the design, the fidelity checks and both registered
+> predictions stand exactly as written; what does not stand is the unqualified sentence.
+
+`scripts/run_e2_doe_d8.py` · log `results/e2-doe-d8.log` · rows `results/e2-doe-d8.json`.
+Registration is the entry immediately below; check its commit timestamp (`1b064e8`).
+
+**FIDELITY, both tiers, blocking:** 400 stored d=8 rows for `random`/`sobol`/`lhs`/`coord`
+and 40 `qlogei`/`qlognei` campaigns over a subsample fixed in code regenerate at max |Δ|
+**exactly 0.0**. The arm itself reproduces bit-identically across two independent runs
+(100 rows, max |Δ| 0.0). No stored E2 number moved; this adds an arm.
+
+### PRIMARY — d=8, σ=0.25
+
+| arm | mean regret | median | AUC post-init |
+|---|---|---|---|
+| **doe** | **0.0963** | 0.0960 | 0.8870 |
+| qlognei | 0.1086 | 0.1117 | 0.8794 |
+| qlogei | 0.1284 | 0.1253 | 0.8649 |
+| lhs | 0.1627 | 0.1688 | 0.8257 |
+| random | 0.1712 | 0.1716 | 0.8344 |
+| sobol | 0.1804 | 0.1979 | 0.8285 |
+| coord | 0.1926 | 0.1853 | 0.7917 |
+
+**DoE − qLogEI = −0.0321 [−0.0478, −0.0179], Wilcoxon p=0.0003.** The registered primary.
+DoE is also the best arm in the table outright, beating the qLogNEI secondary as well
+(−0.0123 [−0.0229, −0.0016], p=0.0160). Minimum detectable paired difference 0.0215.
+
+**Decision rule branch 1 fires**, as written before the run: *"BO beats current practice" is
+refuted at BOTH dimensions, not merely unsupported at one* — **subject to Q28.**
+
+### BOTH PREDICTIONS WERE CORRECT, and the second one was tested rather than eyeballed
+
+Registered: *"σ=0.25: DoE beats qLogEI, p < 0.05, by a smaller margin than at d=6 (−0.071).
+σ=0.10: no detectable difference."*
+
+| σ | d=6 margin | d=8 margin | shrinkage | Mann–Whitney (d8 > d6) |
+|---|---|---|---|---|
+| 0.25 | −0.0708 | −0.0321 | **+0.0387** | **p=0.00102** |
+| 0.10 | +0.0042 (p=0.69) | +0.0015 (p=0.92) | −0.0027 | p=0.672 |
+
+The margin more than halves and **the shrinkage is significant**, so "BO is genuinely
+stronger at d=8, just not stronger enough" is measured rather than asserted. That is Q25's
+mechanism — d=8 enters the adaptive phase already discriminating — showing up in regret.
+
+### The one cell in this entire project where BO beats current practice
+
+**d=8, σ=0.10, qLogNEI: +0.0117 [+0.0032, +0.0200], p=0.0125.** DoE loses, with an interval
+clear of zero. It is a *secondary* arm at a *secondary* noise level, so it is two selections
+deep and is not a headline — but Q24 convicts the d=8 table of exactly the sin of letting a
+skim-reader take the opposite meaning, and omitting this would repeat it in the other
+direction.
+
+At σ=0.10 against the primary arm there is no difference (+0.0015, p=0.9158), matching d=6
+(+0.0042, p=0.69). Sobol also ties DoE there (−0.0019, p=0.9158).
+
+### Secondary — the published failure mode reproduces at d=8, unstaged
+
+| σ | over-prediction, median | positive | confirmation outside stage 2 | on its boundary |
+|---|---|---|---|---|
+| 0.25 | **+1.5468** | 100% | 100% | 0% |
+| 0.10 | +0.7407 | 100% | 100% | 0% |
+
+Against a response whose maximum is **1.0**. 0% on-boundary, so this is genuine
+extrapolation and not a constrained optimiser pinned to its box. The d=6 figures on the same
+arm are +1.6516 and +0.7432 — **materially unchanged by dimension, and roughly doubled by
+noise**, consistent with Q25's finding that surrogate quality here is governed by noise
+rather than by d.
+
+**This is the finding that contradicted the regret number and led to Q28.** An arm cannot be
+both "lowest regret in the table" and "over-promising by +1.55 in every cell" unless regret
+is not scoring the thing the arm produces. It is not. **Read Q28.**
+
+### The screen, and the guard that predicted this
+
+| σ | active factors recovered | all 4 exactly |
+|---|---|---|
+| 0.25 | 0.905 | 0.620 |
+| 0.10 | 0.995 | 0.980 |
+
+Identical to the pre-run guard, as it must be — the guard measured the same screen. The d=8
+screen beats the d=6 screen at both noise levels (0.860 / 0.935), which is why the arm
+transferred to eight factors intact and is the reasoning the registered prediction rested on.
+
+### Limits, stated
+
+- **Q28 governs the interpretation.** The headline holds under the registered scoring rule
+  and the registered scoring rule is the generous one for the arm that won.
+- **`doe` is a third unpaired arm**, declared in the registration alongside `lhs` and
+  `coord` (Q18, Q23). Wider intervals, not a bias.
+- **The 8 → 4 screen is ours, not the literature's.** Hall/Ogle screened 6 → 4; nothing
+  published screens 8 → 4. It is what the same practitioner would have to do at eight
+  factors on the same budget, and it is not a reproduction of anything.
+- **Multiplicity is not corrected across the twelve paired comparisons printed.** The
+  registered primary is one pre-named comparison at p=0.0003, which survives any correction
+  these tables could carry; every other number in them is descriptive and is labelled
+  secondary. Stated rather than left to be noticed.
+- **One ensemble.** "Current practice wins at six factors and at eight" is a claim about
+  this benchmark family.
+- **A has not accepted the split** (Q24, Q27). That is still open, and the numbers are
+  contingent on it.
+
+---
+
+## 🔴 Q27 [B builds, A + B decide] · PRE-REGISTRATION · **The d=8 DoE arm — Q24's missing comparison. Design fixed and committed BEFORE any number exists.**
+
+**A HAS NOT SEEN THIS.** Q24 is marked A + B and the split it proposes is A's to accept or
+reject. It is registered rather than run-then-shown, which is the pattern this project uses
+when one session has to move and the other has not answered — same as T9/Q18. **The run is
+gated on this entry being committed, not on A's reply**, because the alternative is that the
+arm never happens; but if A rejects the split, the numbers go in the bin and are not
+argued down from.
+
+**NO EXISTING E2 NUMBER MOVES.** This *adds* an arm at d=8. It does not re-run, re-score or
+re-scope anything in `results/e2-grid.json`, and `e2.yaml`'s registered primary is untouched.
+Check this entry's commit timestamp against `results/e2-doe-d8.json`.
+
+### Why this run exists
+
+Q24, in one sentence: **"BO beats current practice" is not supported at either dimension** —
+at d=6 it was tested and BO lost, and at d=8 the DoE arm was never run, so the table that
+looks like a clean BO win contains no representative of current practice at all.
+
+| stored, d=8 | mean simple regret, instance-clustered |
+|---|---|
+| qLogNEI | 0.1086 |
+| **qLogEI (registered primary arm)** | **0.1284** |
+| LHS | 0.1627 |
+| random | 0.1712 |
+| Sobol | 0.1804 |
+| coord | 0.1926 |
+| **DoE** | **absent — this is the gap** |
+
+For contrast, at d=6 σ=0.25 the DoE arm returns **0.0958** against qLogEI's **0.1666**.
+
+### Why it was blocked, and what unblocks it
+
+`screening_design(8, n_derived=2)` is 64 runs, so 64 + 27 + 1 = 92 against a budget of 48.
+Going further failed on purpose: `designs.py` refuses to invent a generator it has not
+verified. The sixteenth fraction closes it:
+
+```
+stage 1   2^(8-4)_IV screen, 16 runs + 4 centre     20
+stage 2   face-centred CCD on the 4 kept factors    27
+stage 4   confirmation                               1
+                                                total 48
+```
+
+**Structurally identical to d=6 in every stage.** Both screens are 16 runs, both keep 4
+factors, both stage 2s are the same 27-run CCD, both confirm once. The two extra factors are
+absorbed entirely by the fraction. So a d=6 vs d=8 difference in this arm is a difference in
+the **landscape**, not in the procedure.
+
+**There is no free parameter to tune here, and that is deliberate.** `n_keep = 4` is forced
+by the budget (a CCD on 5 factors is 47 runs on its own), the fraction is forced by the
+budget, `stage2_half_width` and `hold_dropped_at` are carried unchanged from the registered
+d=6 arm. The only genuine choice was the generator, and it is not a matter of taste —
+`test_2_8_4_is_minimum_aberration` enumerates all **330** admissible generator sets, computes
+each word-length pattern, and asserts the shipped one is the **unique** minimiser
+(A₃=0, A₄=14, A₈=1; the runner-up is resolution III). Resolution IV is derived from the
+generators in `test_2_8_4_resolution_iv_verified_from_the_generators_not_the_table`, not read
+off the table it is checking.
+
+### The incentive problem, stated rather than managed away
+
+The d=6 result already went against BO. **A d=8 DoE arm designed after seeing that is a
+design chosen by someone who knows what he wants it to show**, and this entry exists so that
+the design is fixed in a commit before the first number rather than defended afterwards. The
+three things that make it checkable: no free parameters (above), the endpoint and decision
+rule below, and a prediction that can be wrong.
+
+### Primary endpoint
+
+**Simple regret at budget 48, scored on the noiseless value of the point each method
+selected (Q17), at d=8, σ_rel = 0.25 — DoE versus qLogEI, paired on instance and seed,
+Wilcoxon on instance-level means (n = 25, `cluster: instance` per `e2.yaml`).**
+
+σ=0.25 is the primary because it is E2's primary noise level. σ=0.10 is reported as a
+secondary, on the same statistics, and is not used to adjudicate the Q24 sentence.
+
+Also reported, all secondary: DoE against every other stored d=8 arm; AUC over the
+post-initialisation segment; the escape statistics the arm produces anyway
+(`confirmation_inside_stage2`, `confirmation_on_stage2_boundary`, over-prediction at the
+constrained argmax).
+
+**`doe` is a third unpaired arm and it is declared here, not discovered later.** It shares no
+opening batch with qLogEI — its first 20 points are a fixed screen, not `initial_design` —
+exactly as `lhs` and `coord` do not (Q18, Q23). The Wilcoxon pairing above is on instance
+and seed, which is the pairing E2 already uses for `coord`; it is not observation-level
+pairing and is not claimed to be. Cost: a wider interval, not a bias.
+
+### Decision rule — fixed now
+
+| outcome at d=8, σ=0.25 | what goes in the write-up |
+|---|---|
+| DoE regret **lower** than qLogEI, p < 0.05 | **"BO beats current practice" is refuted at BOTH dimensions**, not merely unsupported at one. Q24's sentence strengthens. |
+| DoE regret **higher** than qLogEI, p < 0.05 | **BO beats current practice at d=8 and loses at d=6.** The dimension flip is real and is the headline; Q24's sentence is replaced by a narrower, more interesting one. |
+| p > 0.05 either way | **No detectable difference, reported as such**, with the minimum detectable effect stated. No seeds, instances or noise levels are added afterwards to push it across. |
+
+**No branch of that table is a reason to change the arm.** If DoE loses at d=8 it is not
+re-tuned; if it wins, the d=6 arm is not re-examined for defects that were acceptable while
+it was winning.
+
+### MY PREDICTION, RECORDED BEFORE RUNNING
+
+**σ=0.25: DoE beats qLogEI, p < 0.05, by a smaller margin than at d=6 (−0.071).**
+**σ=0.10: no detectable difference, p > 0.05 — as at d=6, where it is 0.0892 vs 0.0850.**
+
+Reasoning, so a wrong prediction is diagnosable rather than merely wrong. The guard below
+measures the d=8 screen recovering active factors **more** accurately than the d=6 screen,
+not less — because each inert factor at d=8 carries half the weight (0.025 against 0.050),
+and that dominates the "4 of 8 rather than 2 of 6" difficulty. The DoE arm's entire exposure
+to dimension is concentrated in the screen, since everything downstream of it operates on
+exactly 4 factors at either dimension. So the arm should transfer to d=8 essentially intact.
+Against that, BO is genuinely stronger at d=8 than at d=6 (Q25: it enters the adaptive phase
+already discriminating, ARD 1.150 against 1.000), so the gap should close somewhat.
+
+If DoE instead **loses** at σ=0.25, my model is wrong in a specific and informative way: it
+would mean the d=6 DoE win is not "structured coverage beats a blind surrogate at high
+noise" (Q24/Q26's reading) but something that depends on dimension through a channel other
+than screen accuracy — and since the procedure is identical at both dimensions, that channel
+would have to be the landscape's own geometry at d=8, which nothing so far has looked at.
+
+### Guards, run and recorded BEFORE this entry was committed
+
+**G1 — the budget closes exactly.** 20 + 27 + 1 = 48 at both dimensions, asserted in
+`test_2_8_4_gives_sixteen_runs_and_closes_the_48_budget` and enforced at runtime by
+`run_doe_arm`'s existing split check.
+
+**G2 — the generator is minimum aberration**, by enumeration of all 330 alternatives. Above.
+
+**G3 — screen recovery, measured, and it is not what I expected.** Fraction of each
+instance's 4 active factors that survive the screen; 25 instances × 2 seeds; the screen only,
+no campaign, no regret.
+
+| d | σ | active factors recovered | all 4 recovered exactly |
+|---|---|---|---|
+| 6 | 0.25 | 0.860 | 0.460 |
+| 6 | 0.10 | 0.935 | 0.740 |
+| **8** | **0.25** | **0.905** | **0.620** |
+| **8** | **0.10** | **0.995** | **0.980** |
+
+The d=6 row reproduces the 86% / 94% figures already quoted in `doe.py`'s docstring, which
+is what says the guard is measuring the same screen the arm runs. **The d=8 screen is
+better at both noise levels** — a second, completely independent instrument agreeing with
+Q25's ARD finding that d=8's individually-weaker inert factors are easier to identify. Two
+different methods, one two-level contrast and one GP lengthscale, same conclusion.
+
+**G4 — the endpoint can return either answer.** The same arm on the same code wins decisively
+at d=6 σ=0.25 (0.0958 vs 0.1666) and ties at d=6 σ=0.10 (0.0892 vs 0.0850). Nothing about
+this arm forces a win or a loss.
+
+**G5 — fidelity, so the comparison is against numbers this code still produces.** All **400**
+stored d=8 rows for `random`, `sobol`, `lhs` and `coord` regenerate against
+`results/e2-grid.json` with max |Δ| of **exactly 0.0**. The qLogEI arm is the expensive one
+and is checked on a declared subsample in the run script; **if that check fails the run is
+void**, because a DoE number compared against a stale qLogEI number is not a comparison.
+
+**G6 — d=6 is untouched by the change that enables d=8.** `run_doe_arm`'s hardcoded
+`n_derived=2` became a registered per-dimension table. `test_d6_is_bit_identical_to_before_the_d8_change`
+asserts the table reproduces the literal it replaced, to zero tolerance, or every stored d=6
+DoE number stops matching the code that claims to produce it.
+
+### What this CANNOT settle — to be restated in any write-up
+
+- **It is one ensemble.** "Current practice loses at six factors and at eight" is a claim
+  about this benchmark family, not about DoE in general.
+- **The dimension contrast still bundles three things** (Q25, Q26): dimension, opening-design
+  size and per-factor inertness move together in this ensemble, and this arm does not
+  separate them either. What it *does* do is remove the asymmetry that made the two
+  dimensions' tables non-comparable.
+- **The screen is not the published screen.** Hall/Ogle screened 6 → 4. Nothing published
+  screens 8 → 4; that split is ours, chosen for structural equality with d=6 and forced by
+  the budget. It is not "what a practitioner did", it is "what the same practitioner would
+  have to do at eight factors on the same budget".
+
+---
+
 ## 🟢 Q26 RESULT [A] · **Opening size explains the blindness at LOW noise and is RULED OUT at the E2 primary cell. Both registered predictions were correct.**
 
 `scripts/confound_ninit.py` · `results/confound-ninit.log` · rows in
@@ -438,7 +1232,116 @@ faces, so a uniform draw is not its operative null. No uniform reference is quot
 
 ---
 
+## 🔴 Q29 [B] · PRE-REGISTRATION · **the symmetric comparison: score BOTH methods at their own model's recommendation**
+
+**Written and committed BEFORE the run. Nothing below depends on a number that does not yet exist.** The point of registering it is that the two existing rules are already known to favour opposite arms, so whoever picks the third one after seeing it has picked the answer.
+
+### Why this is the deciding experiment
+
+Q28 measured that **every cell reverses sign** depending on how the DoE arm is scored:
+
+| cell | rule A (best observed) | rule B (its stage-4 recipe) |
+|---|---|---|
+| d=6 σ=0.25 | −0.0708 | **+0.2497** |
+| d=6 σ=0.10 | +0.0042 | **+0.3450** |
+| d=8 σ=0.25 | −0.0321 | **+0.2482** |
+| d=8 σ=0.10 | +0.0015 | **+0.3170** |
+
+Negative = DoE beats qLogEI. **So "BO loses to current practice" — the project's standing headline at both dimensions — rests entirely on an unregistered scoring choice**, which Q20 §3 flagged as open and which was never closed.
+
+**Neither existing rule is the comparison a practitioner cares about.** Rule A scores *both* arms at their best measurement, which throws away the DoE pipeline's actual output — the thing stage 4 exists to produce. Rule B scores DoE at its model's recommendation but qLogEI at its best measurement, which is **not like-for-like** and flatters BO for exactly the reason rule A flatters DoE.
+
+### The estimand
+
+> **Rule C — symmetric.** Each method is scored at the point **its own model recommends**, evaluated on `truth()`:
+> - **DoE** → the stage-4 confirmation recipe (the constrained argmax of its fitted second-order surface). Already computed.
+> - **BO** → the **argmax of the GP posterior mean** over the same box. **E2 never recorded this**, which is why this needs a run rather than a re-analysis: `results/e2-grid.json` stores summary rows only, no visited points.
+>
+> Selection uses only what each method may see; scoring uses `truth()`, never the noisy observation (Q17).
+
+This is the "what recipe would you actually hand the lab" comparison, and it is the only one of the three where both arms are asked the same question.
+
+### The prediction, with its mechanism — **registered, falsifiable**
+
+> **BO beats DoE under rule C**, at both dimensions, at σ=0.25.
+
+Not a guess. E4 measured over-prediction at each model's own constrained argmax on the same oracle family: the **second-order surface over-promises by a median of +0.87 to +1.29** against a response bounded at 1.0, while the **GP over-promises by +0.25 to +0.33** — three to five times less. A method whose recommendation is that badly calibrated should recommend a worse *actual* recipe. Q28's own d=8 figure agrees: the DoE arm's over-prediction is **+1.55** in the cell where it wins under rule A.
+
+**What would falsify it:** DoE matching or beating BO under rule C. That is a real possibility — over-promising at the recommendation and *landing somewhere bad* are different failures, and a badly-calibrated surface can still point uphill.
+
+### The decision rule, fixed now
+
+- **If BO wins under rule C and loses under rule A**, the honest report is that **the verdict is scoring-convention dependent**, both rules are reported with the per-cell table, and neither is promoted to the headline. It is *not* "BO wins after all."
+- **If BO loses under rule C too**, then BO loses under every convention tried and the negative result is **robust** — a materially stronger claim than the current one, and it should be stated that way.
+- **Either way rule A stays the registered primary** (Q20/`e2.yaml`). Rule C is a declared secondary. **This entry does not re-designate the headline**, because the headline cannot be chosen by the person who ran the tiebreak.
+
+### Scope, fixed before running
+
+Primary cell first — **d=6, σ=0.25, 25 instances × 2 seeds, qLogEI vs DoE**, budget 48, identical seeds and openings to E2. Extended to the other three cells only if the primary completes cleanly. Paired Wilcoxon at instance level (n=25) governs significance, instance bootstrap gives the interval, per Q20 §2.
+
+### ✅ RESULT — the prediction holds, and the verdict is scoring-convention dependent
+
+`scripts/q29_symmetric.py`, log at `results/q29-symmetric.log`. **Fidelity gate passed first: rule A regenerates the stored `e2-grid.json` qLogEI rows at max |Δ| exactly 0.0 over 50 rows**, so this is the same computation E2 ran, not a lookalike.
+
+| rule | qLogEI | DoE | DoE − qLogEI | 95% CI | p | verdict |
+|---|---|---|---|---|---|---|
+| **A** — best observed *(registered primary)* | 0.1641 | 0.0934 | **−0.0708** | [−0.0878, −0.0528] | <0.0001 | **DoE better** |
+| **C** — each model's own recommendation | 0.1207 | 0.4104 | **+0.2915** | [+0.2630, +0.3223] | <0.0001 | **BO better** |
+
+**The registered prediction was correct**, and by more than expected: under a symmetric rule BO does not merely win, it wins by four times the margin it loses by under rule A. The mechanism is the one registered in advance — the DoE arm's recommendation carries **0.41 regret against a response bounded at 1.0**, while its best *observed* point carries 0.09. Its model points somewhere much worse than the best place it happened to look. The GP's recommendation, by contrast, is **better than its own best observation** (0.1207 vs 0.1641): the posterior mean smooths noise, so the GP's named recipe beats the lucky-draw incumbent.
+
+### What this does and does not establish
+
+**It does not mean "BO wins after all",** and per the decision rule fixed before the run, the headline is not re-designated. What it establishes is stronger and less comfortable:
+
+> **The E2 verdict is determined by the scoring convention, not by the methods.** On identical runs, identical seeds and identical data, DoE beats BO by −0.07 or loses to it by +0.29 depending on a choice the pre-registration never made.
+
+Rule A is still the registered primary and still says DoE wins. Rule C is a declared secondary and says the opposite. **Both must be reported together**; quoting either alone is a choice of answer, and the project has now caught that same pattern in Q16, Q19, Q28 and here.
+
+**The practitioner-facing reading**, which is what the paper is actually about: if you run the published DoE workflow and *make the recipe it recommends*, you do materially worse than BO. If you run it and instead **keep the best thing you happened to measure along the way**, you do better than BO. The DoE pipeline's own output is its weakest product — which is precisely the E4 over-prediction finding arriving from a second direction, in regret units.
+
+### ✅ ALL FOUR CELLS — the reversal is universal, not a primary-cell artefact
+
+`results/q29-symmetric-allcells.log`. **Fidelity: rule A regenerates the stored grid at max |Δ| exactly 0.0 over 200 rows** — all four cells, not just the primary.
+
+| cell | rule A (best observed) | rule C (each model's rec) |
+|---|---|---|
+| d=6 σ=0.25 | **−0.0708** DoE better | **+0.2915** BO better |
+| d=6 σ=0.10 | +0.0042 *null* | **+0.3598** BO better |
+| d=8 σ=0.25 | **−0.0321** DoE better | **+0.2689** BO better |
+| d=8 σ=0.10 | +0.0015 *null* | **+0.3253** BO better |
+
+Every rule-C result p < 0.0001. **BO wins under the symmetric rule in every cell, at both dimensions and both noise levels**, by margins 4–9× larger than the margins by which it loses under rule A. And where rule A reports a *tie* (both σ=0.10 cells), rule C reports a decisive BO win — so the convention does not merely change the size of the effect, it changes whether there is one.
+
+#### Two mechanism observations, both new
+
+**The DoE recommendation's regret is almost invariant: 0.37 – 0.44 across every cell.** It barely moves with dimension (6 → 8) or with noise (0.25 → 0.10, a 2.5× change in measurement error). A quantity that ignores both is not being driven by measurement error — it is **geometry**. The fitted second-order surface extrapolates to roughly the same badly-chosen place regardless of how cleanly it measured. That is the same conclusion E4 reached from over-prediction, arriving independently through regret.
+
+**The GP's recommendation beats its own best observation in all four cells** — 0.1207 vs 0.1641, 0.0694 vs 0.0839, 0.1029 vs 0.1253, 0.0838 vs 0.0959; consistently 15–20% better. The posterior mean smooths noise, so the model's named recipe is a better bet than whichever single measurement drew the luckiest reading. **The two arms therefore fail in opposite directions**: the polynomial's model is worse than its data, the GP's model is better than its data.
+
+**This does not re-designate the headline** (decision rule fixed pre-run). Rule A remains the registered primary. What it does establish is that the E2 verdict is convention-dependent **everywhere it was measured**, which is a stronger and more reportable claim than the single-cell version.
+
+### ⚠️ Discrepancy found while checking: `e2.log`'s headline disagrees with its own stored grid
+
+`results/e2.log` prints the primary-cell paired difference as **−0.0595** [−0.0792, −0.0373]. Recomputed directly from `results/e2-grid.json` — the data that same run persisted — it is **−0.0708**, and Q28's independent `doe-scoring.log` also gives −0.0708, as does this run.
+
+**Three computations agree; the printed headline is the outlier**, off by about 19%. The direction, significance and conclusion are unchanged, so nothing downstream reverses — but it is the project's most-quoted number and the figure in the log is not the figure in the data. **A should reconcile `run_e2.py`'s `report()` against the stored grid before anything is written up from the printed table.**
+
+---
+
 ## 🔴 Q24 [A + B] · **"BO beats current practice" is not supported anywhere it was tested — and the d=8 table reads like the opposite**
+
+> **STATUS: the missing d=8 arm is registered (Q27), built, and RUN.** The split proposed
+> below is the one registered, unchanged. Result: **DoE beats qLogEI at d=8 σ=0.25,
+> −0.0321, p=0.0003**, and is the best arm in the table — so the sentence this entry
+> proposes, *"BO beats current practice is not supported at either dimension"*, strengthens
+> to **refuted at both**.
+>
+> **Two things qualify that, and both belong in the same breath as the headline.** First,
+> **Q28**: the DoE arm's scoring rule was never registered, and the other defensible rule
+> reverses the sign at every cell — so this verdict is a verdict *about the registered
+> rule*, which is the generous one for the arm that won. Second, **A still has not accepted
+> the split**. Everything else in this entry stands as written.
 
 ### The asymmetry, which is the most misreadable thing in the E2 tables
 
@@ -747,6 +1650,20 @@ So LHS runs **unpaired**, and is reported as the one unpaired arm with its wider
 `runner.static_design(bounds, method, budget, seed, share_opening=None)`. `None` applies the registered policy — pair unless exempt. `True` **demands** pairing and raises on an exempt arm, so a caller who believes every arm is paired finds out rather than being quietly right for three arms and wrong for one. `False` opts out explicitly. Six tests, including one asserting unpaired LHS is still a real Latin hypercube — the exemption has to actually buy something — and one asserting the ordering average still applies to the remainder, so the pairing fix does not silently trade away the thing that makes a one-shot design comparable to an adaptive one.
 
 **Deliberately not done:** wiring this into E2's driver. That is T11 and it is A's.
+
+### ⚠️ FOLLOW-UP — the BO side of this guarantee lost its coupling, and was never asserted
+
+Found while checking whether E2's numbers are still reproducible after `campaign.py` and `surrogate.py` were modified **post-E2** (Q26 / the lengthscale diagnostic).
+
+**Reproducibility: confirmed fine.** Both changes are backward-compatible by default — `surrogate.build_gp` gained `lengthscale_prior="dim_scaled"`, which is the original path, and `batch_plan`/`CampaignConfig` gained `n_init=None`, which keeps `2d + 2`. The default opening is **bit-identical** across the change, so the committed E2 numbers reproduce from current `main`.
+
+**But the coupling is gone.** `campaign.py` used to build its opening as `initial_design(bounds, seed)[:n_init]`; it now calls `sobol_design(bounds, n_init, seed)` directly. Identical today — `initial_design` *is* a Sobol design of `2d + 2` at the same seed, and the prefix is stable. **The static arms still follow `initial_design`; the BO arm no longer does.**
+
+So Q18's pairing now rests on two independent code paths *happening* to agree. `initial_design` exists for exactly one purpose — to be the shared opening — so it is precisely the function someone would change. If it were changed, the arms would silently stop sharing an opening, E2's paired comparison would quietly become unpaired, and **`test_paired_arms_open_on_the_identical_batch` would still pass**, because it only checks the static side.
+
+**Fixed:** `test_the_bo_arm_opens_on_initial_design_too` pins the invariant from the BO end. Verified discriminating rather than vacuous — it fails against a different seed and against a different design family.
+
+**The general point, since this is now the fourth instance:** a guarantee enforced by two code paths agreeing is not enforced. It needs one shared source or a test that spans both. This one had neither.
 
 ---
 
@@ -1113,7 +2030,24 @@ Neither blocks building. Both block posting the preprint.
 
 **Blocked on:** the version-2 pre-registration — Q12, Q14, Q15 and Q16 together, as one bump. Ordering and owners are in `docs/TASKS.md`; two of the four (T1, T2) are waiting specifically on B.
 
-**Latest from B:** Q17 sanity-checked — the E1 gate survives the regret-scoring fix (Hartmann6 +1.03 → +0.914 [+0.669, +1.162]), and A's non-cancellation argument is confirmed at a differential of +0.120. Details in Q17.
+**Latest from B: the d=8 DoE arm exists and has run.** Q24's missing comparison, registered
+as **Q27** before it ran (`1b064e8`). `designs.py` now carries the 2^(8-4)_IV generators —
+admitted on an enumeration of all 330 alternatives, not on a citation — and `run_doe_arm`
+reads a registered per-dimension fraction instead of a hardcoded one, so 20 + 27 + 1 = 48
+closes at eight factors exactly as it does at six, with every stage structurally identical.
+Reproduce with `python scripts/run_e2_doe_d8.py`. Result: **DoE wins the primary cell**
+(−0.0321, p=0.0003) and both registered predictions were correct. **A has not accepted the
+split.**
+
+**And the thing to read before quoting any of it — Q28.** Q27's own over-prediction figure
+contradicted its own regret figure (lowest regret in the table, +1.55 over-promise in 100%
+of cells), and the explanation is that **the DoE arm's scoring rule was never registered**.
+The two defensible rules reverse the sign at **every cell, at both dimensions** — the d=6
+headline included. Q20 §3 flagged this and it was left open. `scripts/diagnostic_doe_scoring.py`,
+log at `results/doe-scoring.log`. **No number moves; the sentence written about them is what
+is under-specified, and choosing the estimand is A's call under Q20 §1.**
+
+**Also from B:** Q17 sanity-checked — the E1 gate survives the regret-scoring fix (Hartmann6 +1.03 → +0.914 [+0.669, +1.162]), and A's non-cancellation argument is confirmed at a differential of +0.120. Details in Q17.
 
 **`runner.py` dispatch defect closed (T8).** `run_cell` sent *every* unrecognised method to the adaptive branch, so a `doe` cell — a method `GridCell` already documents as valid — ran a **Bayesian optimization campaign** and wrote a believable parquet under a `method-doe` filename. An E2 grid would have reported BO's numbers as the DoE baseline's. Now `doe` raises `NotImplementedError` pointing at `boec.doe.run_doe_arm`, unknown names raise `ValueError`, and six tests cover the dispatch. **The DoE arm still needs wiring in properly — that is A's, and it is T8's remaining half.**
 

@@ -161,6 +161,12 @@ class CampaignConfig:
         metric_name: what is being measured, e.g. ``"cd31_area_over_dapi"``.
         metric_units: e.g. ``"ratio"``.
         protocol_version: which assay version produced the numbers.
+        kernel_structure: how the surrogate decomposes the space; one of
+            :data:`boec.surrogate.KERNEL_STRUCTURES`. **Default ``"product"``,
+            which is what E2 ran and what every stored E2 number is.** The
+            alternatives are Q30's arms and must be asked for explicitly — a
+            campaign that silently changed its own model would make a stored row
+            unattributable to a model.
 
     The last three exist because two different ways of measuring the same
     biology give different numbers that must never be mixed. Recording them on
@@ -178,6 +184,7 @@ class CampaignConfig:
     metric_name: str = "synthetic"
     metric_units: str = "coded"
     protocol_version: str = "phase1"
+    kernel_structure: str = "product"
 
 
 @dataclass
@@ -277,7 +284,10 @@ class Campaign:
         """
         if self.n_observed == 0:
             raise RuntimeError("nothing measured yet — call initialize() first")
-        return build_gp(self.train_X, self.train_Y, self.train_Yvar, self.bounds)
+        return build_gp(
+            self.train_X, self.train_Y, self.train_Yvar, self.bounds,
+            kernel_structure=self.config.kernel_structure,
+        )
 
     # -- the loop ----------------------------------------------------------
 
