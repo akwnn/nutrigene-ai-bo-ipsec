@@ -4,6 +4,162 @@
 
 ---
 
+## 🔴 Q29 [B builds, A + B decide] · PRE-REGISTRATION · **An additive-kernel BO arm. Alan asked for a significantly better BO model; this is the one the diagnostics indicate, and it is registered before any regret exists.**
+
+**⚠️ READ THIS FIRST — the conflict of interest is structural and cannot be argued away.**
+`e2.yaml` registers `no_per_method_tuning: true`, which is the most-cited objection in this
+literature, and **BO is currently losing to current practice at both dimensions (Q27).**
+Anything improved now is improved by someone who knows BO is behind. So:
+
+1. **This is a NEW ARM, not a fix.** No E2 number moves. `kernel_structure` defaults to
+   `"product"` — what every stored E2 number is — and a misspelling raises rather than
+   falling through, so no stored row can be silently re-attributed.
+2. **It is reported as post-hoc model development whatever it returns**, never as E2's
+   result. E2's registered primary stays the product-kernel qLogEI arm.
+3. **The baselines are not re-run at a disadvantage.** DoE, LHS, Sobol, random and coord
+   keep their stored numbers, which were produced under identical conditions.
+4. **The failure branch is written below and is reported.** If the improved model still
+   loses, that is the result and it is a stronger one than the loss we already have.
+
+### Why THIS change, and not a tuning knob
+
+Three candidate explanations for BO's performance have already been tested and eliminated,
+which is what makes this a diagnosis rather than a guess:
+
+| candidate | verdict | where |
+|---|---|---|
+| the lengthscale prior | **refuted** — `Gamma(3,6)` is significantly *worse* in every cell, and SAASBO's premise with it | Q25 |
+| the acquisition solver | **refuted** — max failure rate 0.875%, below the pre-registered 1% repair threshold | Q21 |
+| the opening batch size | **partly, at low noise only** — 14→18 helps at σ=0.10, not detectably at σ=0.25, and closes none of the gap to DoE | Q26 |
+
+What has never been varied is the kernel's **structure**, and the landscape's structure is
+known:
+
+- **Q22: the benchmark is 93% additive** (0.930 at d=6, 0.927 at d=8). Almost all of the
+  response is a sum of per-factor terms.
+- **Q25: the production surrogate captures 16% of the shape variance** along the axes that
+  matter, at n=46, in the primary cell.
+
+A product ARD kernel treats the response as fundamentally d-dimensional, so learning it
+means filling a d-dimensional cube — at 48 points in six factors, about **1.9 points per
+axis**. A sum of one-dimensional terms turns the same 48 points into **48 points per axis**.
+The sample requirement stops being exponential in d and becomes linear. That is the
+mismatch, and it is a model-class mismatch, not a tuning problem.
+
+**Second mechanism, and it may matter more.** Under a product ARD kernel "this factor does
+nothing" is said by pushing its lengthscale to infinity — a direction in which the
+likelihood is nearly flat, so it is weakly identified. Q25 measured exactly that: ARD
+separation at the d=6 opening design was **1.000 against a null of 1.000**, no information
+at all, taking ~30 of 34 adaptive evaluations to recover. Under an additive kernel the same
+statement is "this component's variance is zero" — a scale parameter with data on both
+sides, identified from the first fit.
+
+### The arms
+
+| arm | kernel | note |
+|---|---|---|
+| `qlogei` (stored) | product ARD Matérn 5/2 | E2's registered primary. Not re-run. |
+| **`qlogei-add`** | **sum of d 1-D Matérns + one full ARD term** | **the new primary.** Strictly nests the production kernel. |
+| `qlogei-addonly` | sum of d 1-D Matérns, no interaction | secondary; tests whether the ~7% interaction is worth its parameters |
+
+Everything else is held identical: same acquisition, same `n_init = 2d+2`, same budget 48,
+same q=4, same instances, same seeds, same scoring (Q17), same clustering.
+
+### Model selection was done on FIT, before any regret existed — and one of my predictions was already wrong
+
+Held-out R² on 800 uniform draws, fit on a Sobol design of size n, 10 instances × 2 seeds,
+d=6. **No BO loop, no regret.** This is how the arm was chosen, and the numbers are recorded
+here so the choice is checkable rather than asserted.
+
+| surrogate | R²@14 | R²@30 | R²@46 | | R²@14 | R²@30 | R²@46 |
+|---|---|---|---|---|---|---|---|
+| | **σ=0.25** | | | | **σ=0.10** | | |
+| product (E2) | 0.007 | −0.006 | 0.050 | | 0.077 | 0.295 | **0.375** |
+| additive, prior=d | −0.091 | −0.158 | −0.014 | | −0.087 | 0.433 | **0.744** |
+| additive, prior=1 | −0.086 | −0.099 | 0.043 | | −0.036 | 0.425 | 0.707 |
+| **add+int, prior=d** | −0.026 | −0.006 | **0.106** | | 0.091 | **0.436** | 0.699 |
+| add+int, prior=1 | −0.008 | −0.047 | 0.097 | | 0.066 | 0.435 | 0.711 |
+
+Relevance — share of the model's weight landing on the 4 genuinely active factors, chance
+0.667 — at n=46: product **0.746 / 0.853**, add+int prior=d **0.735 / 0.965**.
+
+**`additive+interaction` with `prior_dims=d` is the primary**: best R² at σ=0.25, within
+noise of the best at σ=0.10, best relevance at σ=0.10, and it nests the production model so
+the comparison cannot be won by removing capacity.
+
+**A prediction I recorded in code and then refuted before running anything.** I argued in
+`build_gp`'s docstring that a 1-D component needs a 1-D-scaled prior, because at `prior_dims=d`
+the prior mode is 0.502 on a normalised axis against 0.205 at 1, and a biphasic Hill curve has
+structure at 0.2–0.4 — so mode 0.502 "can barely bend". **The measurement says the opposite:
+`prior_dims=d` fits better in 3 of 4 comparisons.** The reasoning was wrong. It is recorded
+because the methodologically convenient choice — hold the prior at production, move one thing
+— turned out to also be the better-fitting one, and that coincidence is exactly the kind of
+thing that should be visible rather than quietly enjoyed.
+
+### 🔴 THE FINDING THAT IS ALREADY IN THE TABLE, INDEPENDENT OF ANY BO RESULT
+
+**At σ=0.25 — the E2 primary cell — no surrogate of any structure learns this landscape from
+46 points.** The best held-out R² anywhere in the table is **0.106**. At σ=0.10 the same
+models reach **0.744**.
+
+That is a signal-to-noise limit, not a modelling failure, and it reframes E2's headline. BO
+does not lose the primary cell because its model is badly chosen; it loses because **at 25%
+relative noise there is almost nothing for any model to learn**, so adaptive proposals are
+guided by noise while structured coverage — DoE, LHS — collects information regardless. It
+also predicts, before the fact, that a better surrogate cannot rescue the primary cell.
+
+**This holds whatever the BO comparison returns, and it should be in the write-up either
+way.**
+
+### Primary endpoint
+
+**Simple regret at budget 48, scored per Q17, d=6 — `qlogei-add` versus stored `qlogei`,
+paired on instance and seed, Wilcoxon on instance-level means (n=25).** Reported at both
+noise levels, both pre-named; **σ=0.10 is where the mechanism predicts the effect** and
+σ=0.25 is the E2 primary cell.
+
+Secondary: `qlogei-add` versus the stored `doe` arm — the Q24 question, asked of the improved
+model; `qlogei-addonly`; d=8 if the d=6 arms return anything.
+
+### Decision rule — fixed now
+
+| outcome | conclusion |
+|---|---|
+| `qlogei-add` beats `qlogei` at σ=0.10, p<0.05 | **the model class was the problem at low noise**, and E2's BO arm was handicapped by a kernel mismatched to a 93%-additive landscape. Reported as post-hoc model development. |
+| it also beats `doe` at σ=0.10 | **BO beats current practice once the surrogate matches the landscape** — the first such result in this project, and it is stated with the post-hoc label attached, not as E2's finding |
+| no improvement at σ=0.25 | **expected, and predicted above.** Reported as confirming the signal-to-noise ceiling, not as a failure of the arm |
+| no improvement anywhere | **the model class is not the problem either**, and three of four candidate explanations are now eliminated. That is a real result and it gets written up as one. |
+
+**No branch licenses a further arm.** If this does not work, the next model is not tried
+until the failure is written down.
+
+### MY PREDICTION, RECORDED BEFORE RUNNING
+
+**σ=0.10: `qlogei-add` beats stored `qlogei`, and by enough to matter — the surrogate's
+held-out R² doubles (0.375 → 0.699) and relevance goes 0.853 → 0.965, so the adaptive phase
+is being steered by a model that can actually see the shape. I expect it to close the gap to
+`doe` (currently +0.0042, a tie) and to beat it.**
+
+**σ=0.25: no improvement, p>0.05, and it still loses to `doe`.** R² 0.050 → 0.106 is a
+doubling of nearly nothing. If it *does* improve here, my signal-to-noise reading is wrong
+and the interesting question becomes how a model with R²=0.1 steers a search usefully at all.
+
+### What this CANNOT settle
+
+- **It is post-hoc, permanently.** No decision rule can convert a model chosen after seeing
+  the first one lose into a pre-registered comparison. The label travels with the number.
+- **The baselines were not given the same opportunity.** Nobody has tried to improve the DoE
+  arm's stage-2 model, and a fair "best versus best" comparison would. **If `qlogei-add`
+  wins, that asymmetry must be stated in the same paragraph**, and it is the obvious
+  reviewer objection.
+- **It is one landscape family, and one chosen for near-separability** — which is precisely
+  the structure an additive kernel is built to exploit. **On a genuinely interacting
+  landscape this arm would have no such advantage, and Q22 already flags that the benchmark
+  under-represents the interaction the source study is about.** An additive kernel winning
+  here is close to a tautology and must not be reported as a general claim about BO.
+
+---
+
 ## 🔴 Q28 [B raises, A + B decide] · **The DoE arm's scoring rule was never registered, and the two defensible rules give OPPOSITE answers at every cell. This governs the paper's headline, not a footnote.**
 
 Raised immediately on finding it, in the same session that produced the Q27 result it

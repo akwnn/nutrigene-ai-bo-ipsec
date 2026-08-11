@@ -71,17 +71,20 @@ from botorch.models.transforms.input import Normalize
 from botorch.models.transforms.outcome import Standardize
 from botorch.models.utils.gpytorch_modules import get_covar_module_with_dim_scaled_prior
 from gpytorch.constraints import GreaterThan
-from gpytorch.kernels import Kernel, MaternKernel, RBFKernel, ScaleKernel
-from gpytorch.priors import GammaPrior
+from gpytorch.kernels import AdditiveKernel, Kernel, MaternKernel, RBFKernel, ScaleKernel
+from gpytorch.priors import GammaPrior, LogNormalPrior
 from gpytorch.mlls import ExactMarginalLogLikelihood
 from torch import Tensor
 
 __all__ = [
+    "KERNEL_STRUCTURES",
     "Predictive",
     "BiphasicMean",
     "base_kernel",
     "biphasic_mean_from_fit",
     "build_gp",
+    "component_variances",
+    "is_additive",
     "kernel_is_matern",
     "lengthscale_lower_bound",
     "lengthscales",
@@ -90,6 +93,20 @@ __all__ = [
 ]
 
 MAX_KERNEL_DEPTH = 10
+
+#: How the kernel decomposes the input space. **Q29.**
+#:
+#: * ``"product"`` — one ARD Matern over all d factors. The registered E2 model.
+#:   Its similarity is a *product* across dimensions, which is the standard
+#:   assumption that the response is fundamentally d-dimensional.
+#: * ``"additive"`` — a *sum* of d one-dimensional Matern kernels, each with its
+#:   own outputscale. Matches a response that is a sum of per-factor terms.
+#: * ``"additive+interaction"`` — the sum above plus one full product ARD term.
+#:   **Nests both of the others**: drive the additive outputscales to zero and it
+#:   is ``"product"``; drive the interaction outputscale to zero and it is
+#:   ``"additive"``. So it cannot do worse than either except through estimation
+#:   error, which is the honest cost and is what the experiment measures.
+KERNEL_STRUCTURES = ("product", "additive", "additive+interaction")
 
 
 # ---------------------------------------------------------------------------
@@ -121,6 +138,15 @@ def base_kernel(kernel_or_model: Kernel | SingleTaskGP) -> Kernel:
         The innermost kernel.
     """
     k = getattr(kernel_or_model, "covar_module", kernel_or_model)
+    if isinstance(k, AdditiveKernel):
+        raise ValueError(
+            "this model has an ADDITIVE kernel, which has no single innermost "
+            "kernel and no per-factor lengthscale to read. Relevance under an "
+            "additive kernel lives in the per-component OUTPUTSCALE, not the "
+            "lengthscale — use `component_variances(model)`. Returning any one "
+            "component's lengthscale here would be a believable wrong number, "
+            "which is the exact failure this function exists to prevent."
+        )
     for _ in range(MAX_KERNEL_DEPTH):
         inner = getattr(k, "base_kernel", None)
         if inner is None:
@@ -130,6 +156,52 @@ def base_kernel(kernel_or_model: Kernel | SingleTaskGP) -> Kernel:
         f"kernel nested more than {MAX_KERNEL_DEPTH} deep — refusing to keep "
         "unwrapping. Something is wrong with the model configuration."
     )
+
+
+def is_additive(kernel_or_model: Kernel | SingleTaskGP) -> bool:
+    """Does this model decompose the space as a sum rather than a product?"""
+    k = getattr(kernel_or_model, "covar_module", kernel_or_model)
+    return isinstance(k, AdditiveKernel)
+
+
+def component_variances(kernel_or_model: Kernel | SingleTaskGP) -> Tensor:
+    """``(d,)`` how much of the response each factor's own term explains.
+
+    **This is the additive kernel's relevance measure, and it is a better one
+    than ARD's.** Under a product ARD kernel, "this factor does nothing" is said
+    by pushing its lengthscale to infinity — a direction in which the likelihood
+    is nearly flat, so the estimate is weakly identified and needs a lot of data
+    to move. Q25 measured exactly that: at the d=6 opening design the ARD
+    separation between inert and active factors was **1.000 against a null of
+    1.000**, i.e. no information at all, and it took about 30 evaluations to
+    recover.
+
+    Under an additive kernel the same statement is "this component's variance is
+    zero", which is a *scale* parameter with data on both sides of it. It shrinks
+    properly and is identified from the first fit.
+
+    Returns:
+        ``(d,)`` the outputscale of each per-factor component, in the order of
+        the input dimensions. Excludes any interaction component.
+
+    Raises:
+        ValueError: if the model is not additive — a product kernel has no
+            per-factor variance and inventing one would be a silent lie.
+    """
+    k = getattr(kernel_or_model, "covar_module", kernel_or_model)
+    if not isinstance(k, AdditiveKernel):
+        raise ValueError(
+            "component_variances() needs an additive kernel; this model has a "
+            "product kernel, whose relevance measure is the lengthscale. Use "
+            "`lengthscales(model)`."
+        )
+    out = []
+    for sub in k.kernels:
+        inner = getattr(sub, "base_kernel", None)
+        if inner is None or inner.active_dims is None or len(inner.active_dims) != 1:
+            continue                      # the interaction term, not a factor term
+        out.append((int(inner.active_dims[0]), sub.outputscale.reshape(())))
+    return torch.stack([v for _, v in sorted(out, key=lambda t: t[0])])
 
 
 def lengthscales(kernel_or_model: Kernel | SingleTaskGP) -> Tensor:
@@ -191,6 +263,65 @@ def outcome_scale(model: SingleTaskGP) -> Tensor:
 # Building the model
 # ---------------------------------------------------------------------------
 
+def _dim_scaled_matern(ard_num_dims: int, prior_dims: int, active_dims=None) -> MaternKernel:
+    """A Matern 5/2 whose lengthscale prior is scaled for ``prior_dims``.
+
+    The library factory ties the two together: it always scales the prior by the
+    number of dimensions the kernel itself spans. For the additive structure they
+    must be separable, because a one-dimensional *component* still lives inside a
+    d-dimensional *problem*, and which of those the prior should track is a real
+    choice rather than an implementation detail.
+
+    Holding ``prior_dims = d`` reproduces the production prior exactly, so an
+    additive-versus-product comparison moves **one** thing. That is the same
+    discipline Q25 applied to the Gamma counterfactual, where using the library's
+    convenience constructor would have moved three things at once and made the
+    difference unattributable.
+    """
+    from math import log, sqrt
+
+    sqrt2, sqrt3 = sqrt(2.0), sqrt(3.0)
+    prior = LogNormalPrior(loc=sqrt2 + log(prior_dims) * 0.5, scale=sqrt3)
+    return MaternKernel(
+        nu=2.5,
+        ard_num_dims=ard_num_dims,
+        active_dims=active_dims,
+        lengthscale_prior=prior,
+        lengthscale_constraint=GreaterThan(
+            2.5e-2, transform=None, initial_value=prior.mode
+        ),
+    )
+
+
+def _additive_covar(d: int, *, with_interaction: bool, prior_dims: int) -> Kernel:
+    """A sum of d one-dimensional kernels, each carrying its own outputscale.
+
+    **Why this is the indicated model here, from the project's own measurements.**
+    Q22 measured the benchmark landscape at **93% additive** (0.930 at d=6, 0.927
+    at d=8): almost all of the response is a sum of per-factor terms. A product
+    ARD kernel cannot represent that cheaply — it treats the response as
+    fundamentally d-dimensional, so learning it means filling a d-dimensional
+    cube. At the E2 budget of 48 in six factors that is about 1.9 points per axis,
+    and Q25 measured the consequence directly: the final model captured **16% of
+    the shape variance** along the axes that matter.
+
+    A sum of one-dimensional terms turns the same 48 points into 48 points *per
+    axis*. The sample requirement stops being exponential in d and becomes linear.
+
+    The interaction term, when included, is one full product ARD kernel over all d
+    factors. It carries the remaining ~7% and makes this structure a strict
+    superset of the production one, so the comparison cannot be won by removing
+    capacity.
+    """
+    comps: list[Kernel] = [
+        ScaleKernel(_dim_scaled_matern(1, prior_dims=prior_dims, active_dims=(i,)))
+        for i in range(d)
+    ]
+    if with_interaction:
+        comps.append(ScaleKernel(_dim_scaled_matern(d, prior_dims=prior_dims)))
+    return AdditiveKernel(*comps)
+
+
 def build_gp(
     train_X: Tensor,
     train_Y: Tensor,
@@ -201,6 +332,8 @@ def build_gp(
     fit: bool = True,
     mean_module=None,
     lengthscale_prior: str = "dim_scaled",
+    kernel_structure: str = "product",
+    additive_prior_dims: int | None = None,
 ) -> SingleTaskGP:
     """Build and fit the model. All five traps are handled here.
 
@@ -242,6 +375,26 @@ def build_gp(
             the default flat fallback. Pass a :class:`BiphasicMean` to have it
             fall back onto the biology's shape instead — see that class for why
             the downside is bounded.
+        kernel_structure: how the kernel decomposes the space; one of
+            :data:`KERNEL_STRUCTURES`. **Default ``"product"``, which is the
+            model E2 ran, and it stays the default.** ``"additive"`` and
+            ``"additive+interaction"`` are Q29's arms.
+        additive_prior_dims: which dimensionality the per-component lengthscale
+            prior is scaled for. Additive structures only.
+
+            **A real choice, not cosmetic.** The dim-scaled prior lengthens
+            lengthscales as ``d`` grows, to stop a high-dimensional model
+            overfitting. Applied to a *one-dimensional* component that reasoning
+            does not hold, and the cost is large: at ``d=6`` the prior mode is
+            **0.502** on a normalised axis against **0.205** at 1. The response
+            is a biphasic Hill curve with structure at roughly 0.2-0.4, so a
+            component sitting at mode 0.502 can barely bend.
+
+            ``None`` means ``d``, which holds the prior identical to the
+            production model so that switching structure moves exactly one thing
+            — the Q25 discipline. ``1`` is the component-natural choice. Q29
+            chooses between them on **held-out model fit, before any regret
+            exists**, and reports both.
 
     Returns:
         A fitted model.
@@ -270,8 +423,45 @@ def build_gp(
             "deviation and not a residual."
         )
 
+    if kernel_structure not in KERNEL_STRUCTURES:
+        raise ValueError(
+            f"kernel_structure={kernel_structure!r}; expected one of "
+            f"{list(KERNEL_STRUCTURES)}. A misspelling that fell through to the "
+            "default would run the production model under another arm's label."
+        )
+
     d = train_X.shape[-1]
     m = train_Y.shape[-1]
+
+    if kernel_structure != "product":
+        if lengthscale_prior != "dim_scaled":
+            raise ValueError(
+                f"kernel_structure={kernel_structure!r} with "
+                f"lengthscale_prior={lengthscale_prior!r} moves two things at "
+                "once, and a difference from such a run is unattributable to "
+                "either. Q25 is the precedent."
+            )
+        # The prior is held at the production d-scaled value -- see
+        # `_dim_scaled_matern`. Each per-factor component gets its own
+        # outputscale, which is the additive structure's relevance measure, so
+        # the outer ScaleKernel below would be redundant and unidentifiable
+        # (one global scale multiplying d free scales).
+        covar = _additive_covar(
+            d,
+            with_interaction=(kernel_structure == "additive+interaction"),
+            prior_dims=d if additive_prior_dims is None else int(additive_prior_dims),
+        )
+        extra = {"mean_module": mean_module} if mean_module is not None else {}
+        model = SingleTaskGP(
+            train_X.double(), train_Y.double(), train_Yvar.double(),
+            covar_module=covar,
+            input_transform=Normalize(d=d, bounds=bounds.double()),
+            outcome_transform=Standardize(m=m),
+            **extra,
+        )
+        if fit:
+            fit_gpytorch_mll(ExactMarginalLogLikelihood(model.likelihood, model))
+        return model
 
     # TRAP 1: use_rbf_kernel defaults to True. This override is what makes the
     # methods section true. Removing it is a silent change of model.
