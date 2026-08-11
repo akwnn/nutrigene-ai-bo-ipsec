@@ -2569,3 +2569,52 @@ The mechanism I am betting on is **not** "GPs are better models". It is a struct
 - **No silent drops.** Every rank-deficient or non-converged fit is recorded with its condition number and reported as a rate. An instance missing from a cell is reported as missing.
 - **All four cells run** (d ∈ {6,8} × σ ∈ {0.10, 0.25}), not only the registered primary. Running only the cell where BO lost would be selection on the outcome.
 - **No E2 number moves.** This is a re-analysis of regenerated campaigns plus two new scorings; `e2.yaml`'s registered rule A is untouched.
+
+---
+
+## ✅ Q35 RESULT [A] · T1.2 · The constrained-RSM arm — most of the published failure is a PRACTICE failure
+
+`python scripts/run_q35_constrained_rsm.py --all-cells` · `results/q35-constrained-rsm.log` · script committed before it ran (`3ecd943`), with the commitment that all three scorings would be reported whichever way it came out.
+
+**No new campaigns. No E2 number moves.** A third scoring of DoE runs E2 already made. Fidelity gate: the stage-2 surface is refitted from the stored measurements and reproduces the arm's own predicted optimum at **max |Δ| exactly 0.0** across all 200 runs, so this is the arm's model and not a lookalike.
+
+### The three scorings
+
+| cell | best observed | UNCONSTRAINED argmax *(what the paper did)* | CONSTRAINED argmax *(what practice prescribes)* |
+|---|---|---|---|
+| **d=6 σ=0.25 (primary)** | 0.0597 | **0.4163** | **0.1169** |
+| d=6 σ=0.10 | 0.0544 | 0.4300 | 0.0856 |
+| d=8 σ=0.25 | 0.0575 | 0.3766 | 0.1148 |
+| d=8 σ=0.10 | 0.0500 | 0.4104 | 0.0877 |
+
+| contrast (primary cell, paired, n=25) | difference | 95% CI | p |
+|---|---|---|---|
+| unconstrained − constrained | **+0.2995** | [+0.2790, +0.3228] | <0.0001 |
+| constrained − best observed | **+0.0572** | [+0.0492, +0.0654] | <0.0001 |
+| unconstrained − best observed | +0.3567 | [+0.3338, +0.3818] | <0.0001 |
+
+**Constraining the argmax to the region the experiment actually explored removes about three quarters of the DoE arm's recommendation error, at every cell.** Regret falls from ~0.41 to ~0.09–0.12 against a response bounded at 1.0.
+
+### The mechanism, and it is not noise
+
+**The fitted second-order surface is a SADDLE in 200 of 200 runs. Every cell, every instance, every seed. Not one maximum, minimum or ridge.**
+
+A saddle has no interior maximum, so maximising it over a box **must** land on a boundary — the escape is arithmetic, not bad luck, and the "predicted optimum fell outside the stage-2 region" rate is correspondingly **100%** everywhere. At the primary cell the stationary point itself sits *inside* the stage-2 region in 50/50 runs: the surface turns over inside the explored region, but in a saddle, so along at least one direction it keeps climbing to the wall.
+
+Box & Draper ridge analysis, closed-form (no optimizer, so no search seed to argue about): the path of maxima on spheres about the stage-2 centroid **leaves the design region at radius ≈0.27 against a region corner radius of 0.50, in 200/200 runs**. The surface starts pointing out of the box less than a third of the way to its own corner.
+
+**This is the same mechanism Q33 measured on the real published data** — there the stage-2 quadratic's stationary point was also a saddle (eigenvalues −1.828, −0.935, +0.072, +0.997) whose constrained argmax returned TheO's signature, CIV at +1.000 and FN at −1.000. The synthetic benchmark reproduces the published failure's *mechanism*, not merely its symptom, and it was not staged to.
+
+### ⚠️ What this does to the headline — the claim narrows, and this must not be buried
+
+**The entire reported rule-C gap is smaller than the effect of this one scoring choice on the classical arm alone.** Q29 reported BO ahead by **+0.2915** under rule C at the primary cell. Constrained-versus-unconstrained moves the DoE arm by **+0.2995** — more than the whole gap. Scored the way competent practice prescribes, the DoE arm's recommendation (0.1169) sits *beside* the BO arm's rule-C figure rather than 0.3 behind it.
+
+So **"BO wins under rule C" is a statement about how the classical arm was scored, not a statement about BO.** The precise comparison must wait for Q34's cell 4, because Q29's 0.1207 is stale twice over (B's clone, and the asymmetric locator T1.4c fixed) — but the direction is not in doubt and the write-up cannot go out with the old framing.
+
+**The defensible claim narrows to:** *unconstrained* polynomial surfaces extrapolate badly, and the source study used the unconstrained form. That is still a real finding about the published work — the safeguard existed in the literature since Box & Draper, and it was not applied — but it is a **practice** failure, not a **method** failure, and the paper must say so in those words.
+
+### What survives unchanged
+
+- **E2's registered primary is untouched.** Rule A is best-observed, which does not involve a surrogate at all. DoE still beats qLogEI at d=6 σ=0.25 by −0.0595.
+- **Even constrained, the model's recommendation is significantly worse than the arm's own best measurement** (+0.0572, p<0.0001, and at every other cell too). Ridge analysis rescues most of the gap but does not close it: you would still have done better taking the best recipe you actually measured than the one the constrained surface names.
+- The 100%-saddle result strengthens rather than weakens the geometric argument. It just relocates it: the problem is not that a quadratic is a bad *fit*, it is that a fitted quadratic almost never has an interior maximum, so **what you do with it** determines everything.
