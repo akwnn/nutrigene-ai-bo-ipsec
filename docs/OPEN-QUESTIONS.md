@@ -15,6 +15,31 @@ Recorded rather than silently fixed, because a pre-registration's whole value is
 identifier is stable — a reader following "Q29" from a commit message written before 11:07
 lands on the other entry, and needs to know why.
 
+### 🔴 The collision is the symptom. The near-miss is the problem.
+
+**The two sessions independently built the same experiment, and it was caught by luck.** This
+session wrote out "run the symmetric estimand" as its recommended next action and had begun
+the runner — while the other session had already finished it and committed the result forty
+minutes earlier. It was noticed only because a `git log` was read *after* an unrelated
+commit. Nothing in the workflow would have stopped a full duplicate run.
+
+**Why it happened, and it is structural rather than careless.** Both sessions correctly
+identified the same highest-value next step from the same evidence — which is the system
+working — and neither had any way to see the other's work-in-progress, because the only
+shared channel is a commit that appears once the work is already done. Registering *before*
+running is supposed to be that channel, and it does not function when both parties register
+inside the same eleven minutes.
+
+**What this costs if unaddressed:** wasted compute is the cheap failure. The expensive one is
+two sessions writing contradictory entries about the same result under different numbers, and
+a reader downstream not knowing which is authoritative — which is precisely what almost
+happened to Q28/Q29, one of which raises the scoring problem and the other of which resolves
+it, written independently and unaware of each other.
+
+**Not fixed here** — it needs a convention both sessions follow (claim a number before the
+work, not with it), and that is an agreement, not a commit. **Flagged for Alan**, since only
+he is in both loops.
+
 ---
 
 ## 🟢 Q30 RESULT [B] · **The kernel WAS mismatched and fixing it doubled the model's accuracy — and bought exactly nothing in regret. My registered prediction was wrong, and the negative is worth more than the win would have been.**
@@ -359,6 +384,26 @@ So the honest statement of what is currently known:
 refuted at both dimensions" is true *of the registered scoring rule*, and the registered
 scoring rule is the generous one for the arm that won. That qualifier belongs in the same
 sentence, not in a limitations section.
+
+### 🔴 THE ASYMMETRY NEITHER RULE CORRECTS — this was missing from this file and belongs in the decision
+
+**The DoE arm pays a measurement for its recommendation. BO does not.** Stage 4 costs 1 of
+48 and `results/doe-arm.log` says that point is *not* the observed argmax in 100% of runs —
+so under rule A the DoE arm is charged a full evaluation for a point that never helps its
+own score. Under rule C, BO's posterior-mean argmax is located for free, out of budget.
+
+**So neither rule is budget-matched, and they are unmatched in opposite directions.** Rule A
+taxes DoE; rule C subsidises BO. That is a third axis of the same problem, independent of
+which point gets scored, and it should be on the table when the estimand is chosen rather
+than discovered afterwards.
+
+**The run that would remove it, proposed and NOT run:** give every model-based arm a
+stage-4. Spend one of BO's 48 measuring its own posterior-mean argmax, exactly as the DoE
+arm spends one measuring its surface's. Then both arms have paid the same price for the
+same kind of output and rule C becomes budget-symmetric as well as point-symmetric. Cost is
+roughly one re-run of the BO arms. **Needs registering before it runs** — rule A and rule C
+are both already known to favour opposite arms, so the third variant is exactly the kind
+whoever runs it can pick the answer to.
 
 ### What would settle it — proposed, NOT run
 
