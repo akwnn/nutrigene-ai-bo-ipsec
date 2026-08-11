@@ -1,0 +1,5 @@
+  rosenbrock d=6 s=0.25 done (265s)
+  rosenbrock d=6 s=0.1 done (586s)
+  rosenbrock d=8 s=0.25 done (853s)
+  rosenbrock d=8 s=0.1 done (1161s)
+  -> results/q42-families-rosenbrock.json  (100 rows)

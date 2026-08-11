@@ -1,0 +1,5 @@
+  ackley d=6 s=0.25 done (248s)
+  ackley d=6 s=0.1 done (591s)
+  ackley d=8 s=0.25 done (888s)
+  ackley d=8 s=0.1 done (1256s)
+  -> results/q42-families-ackley.json  (100 rows)

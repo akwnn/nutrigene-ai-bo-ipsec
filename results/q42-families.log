@@ -1,0 +1,296 @@
+
+========================================================================================================
+Q42 · ackley · d=6 · sigma=0.25 · 25 reps
+========================================================================================================
+arm / rule                                  mean regret    median
+BO   rule A (best observed)                      0.7003    0.7100
+DoE  rule A (best observed)                      0.0000    0.0000
+BO   rule C (GP posterior-mean argmax)           0.6960    0.7342
+DoE  rule C UNCONSTRAINED                        0.1252    0.1215
+DoE  rule C CONSTRAINED                          0.1252    0.1215
+
+  contrast                                            DoE - BO  (>0 = BO better)
+  rule A                              -0.7003 [ -0.7618, -0.6326] p=0.0000   DoE better
+  rule C unconstrained                -0.5708 [ -0.6374, -0.4986] p=0.0000   DoE better
+  rule C constrained                  -0.5708 [ -0.6374, -0.4986] p=0.0000   DoE better
+
+  fitted-surface stationary point: {'maximum': 25}
+  *** rule A VOID: this function's optimum is the exact box centre, and
+      every screen and CCD includes centre runs, so the DoE design contains
+      the answer for free. Rule C still means something.
+
+  REVERSAL REPRODUCES: NO
+
+========================================================================================================
+Q42 · ackley · d=6 · sigma=0.1 · 25 reps
+========================================================================================================
+arm / rule                                  mean regret    median
+BO   rule A (best observed)                      0.5626    0.5552
+DoE  rule A (best observed)                      0.0000    0.0000
+BO   rule C (GP posterior-mean argmax)           0.5471    0.5420
+DoE  rule C UNCONSTRAINED                        0.0656    0.0668
+DoE  rule C CONSTRAINED                          0.0656    0.0668
+
+  contrast                                            DoE - BO  (>0 = BO better)
+  rule A                              -0.5626 [ -0.6216, -0.5032] p=0.0000   DoE better
+  rule C unconstrained                -0.4815 [ -0.5397, -0.4237] p=0.0000   DoE better
+  rule C constrained                  -0.4815 [ -0.5397, -0.4237] p=0.0000   DoE better
+
+  fitted-surface stationary point: {'maximum': 25}
+  *** rule A VOID: this function's optimum is the exact box centre, and
+      every screen and CCD includes centre runs, so the DoE design contains
+      the answer for free. Rule C still means something.
+
+  REVERSAL REPRODUCES: NO
+
+========================================================================================================
+Q42 · ackley · d=8 · sigma=0.25 · 25 reps
+========================================================================================================
+arm / rule                                  mean regret    median
+BO   rule A (best observed)                      0.7561    0.7721
+DoE  rule A (best observed)                      0.0000    0.0000
+BO   rule C (GP posterior-mean argmax)           0.7420    0.7792
+DoE  rule C UNCONSTRAINED                        0.1255    0.1209
+DoE  rule C CONSTRAINED                          0.1255    0.1209
+
+  contrast                                            DoE - BO  (>0 = BO better)
+  rule A                              -0.7561 [ -0.7933, -0.7166] p=0.0000   DoE better
+  rule C unconstrained                -0.6165 [ -0.6585, -0.5727] p=0.0000   DoE better
+  rule C constrained                  -0.6165 [ -0.6585, -0.5727] p=0.0000   DoE better
+
+  fitted-surface stationary point: {'maximum': 25}
+  *** rule A VOID: this function's optimum is the exact box centre, and
+      every screen and CCD includes centre runs, so the DoE design contains
+      the answer for free. Rule C still means something.
+
+  REVERSAL REPRODUCES: NO
+
+========================================================================================================
+Q42 · ackley · d=8 · sigma=0.1 · 25 reps
+========================================================================================================
+arm / rule                                  mean regret    median
+BO   rule A (best observed)                      0.7284    0.7363
+DoE  rule A (best observed)                      0.0000    0.0000
+BO   rule C (GP posterior-mean argmax)           0.7022    0.7196
+DoE  rule C UNCONSTRAINED                        0.0648    0.0622
+DoE  rule C CONSTRAINED                          0.0648    0.0622
+
+  contrast                                            DoE - BO  (>0 = BO better)
+  rule A                              -0.7284 [ -0.7640, -0.6886] p=0.0000   DoE better
+  rule C unconstrained                -0.6374 [ -0.6758, -0.5965] p=0.0000   DoE better
+  rule C constrained                  -0.6374 [ -0.6758, -0.5965] p=0.0000   DoE better
+
+  fitted-surface stationary point: {'maximum': 25}
+  *** rule A VOID: this function's optimum is the exact box centre, and
+      every screen and CCD includes centre runs, so the DoE design contains
+      the answer for free. Rule C still means something.
+
+  REVERSAL REPRODUCES: NO
+
+========================================================================================================
+Q42 · hartmann6 · d=6 · sigma=0.25 · 25 reps
+========================================================================================================
+arm / rule                                  mean regret    median
+BO   rule A (best observed)                      0.2984    0.2857
+DoE  rule A (best observed)                      0.5444    0.5663
+BO   rule C (GP posterior-mean argmax)           0.2695    0.2313
+DoE  rule C UNCONSTRAINED                        0.9008    0.9360
+DoE  rule C CONSTRAINED                          0.5449    0.5602
+
+  contrast                                            DoE - BO  (>0 = BO better)
+  rule A                              +0.2460 [ +0.1827, +0.3068] p=0.0000   BO better
+  rule C unconstrained                +0.6313 [ +0.5802, +0.6822] p=0.0000   BO better
+  rule C constrained                  +0.2753 [ +0.2071, +0.3441] p=0.0000   BO better
+
+  fitted-surface stationary point: {'saddle': 25}
+
+  REVERSAL REPRODUCES: NO
+
+========================================================================================================
+Q42 · hartmann6 · d=6 · sigma=0.1 · 25 reps
+========================================================================================================
+arm / rule                                  mean regret    median
+BO   rule A (best observed)                      0.1938    0.2000
+DoE  rule A (best observed)                      0.5398    0.5663
+BO   rule C (GP posterior-mean argmax)           0.1740    0.1546
+DoE  rule C UNCONSTRAINED                        0.8985    0.9339
+DoE  rule C CONSTRAINED                          0.5223    0.5386
+
+  contrast                                            DoE - BO  (>0 = BO better)
+  rule A                              +0.3460 [ +0.2992, +0.3956] p=0.0000   BO better
+  rule C unconstrained                +0.7245 [ +0.6751, +0.7712] p=0.0000   BO better
+  rule C constrained                  +0.3483 [ +0.3038, +0.3971] p=0.0000   BO better
+
+  fitted-surface stationary point: {'saddle': 25}
+
+  REVERSAL REPRODUCES: NO
+
+========================================================================================================
+Q42 · levy · d=6 · sigma=0.25 · 25 reps
+========================================================================================================
+arm / rule                                  mean regret    median
+BO   rule A (best observed)                      0.1156    0.1097
+DoE  rule A (best observed)                      0.0040    0.0040
+BO   rule C (GP posterior-mean argmax)           0.0794    0.0793
+DoE  rule C UNCONSTRAINED                        0.5598    0.5784
+DoE  rule C CONSTRAINED                          0.0791    0.0835
+
+  contrast                                            DoE - BO  (>0 = BO better)
+  rule A                              -0.1116 [ -0.1299, -0.0931] p=0.0000   DoE better
+  rule C unconstrained                +0.4804 [ +0.3996, +0.5645] p=0.0000   BO better
+  rule C constrained                  -0.0002 [ -0.0197, +0.0191] p=0.8119   null
+
+  fitted-surface stationary point: {'saddle': 25}
+
+  REVERSAL REPRODUCES: YES
+
+========================================================================================================
+Q42 · levy · d=6 · sigma=0.1 · 25 reps
+========================================================================================================
+arm / rule                                  mean regret    median
+BO   rule A (best observed)                      0.0754    0.0645
+DoE  rule A (best observed)                      0.0040    0.0040
+BO   rule C (GP posterior-mean argmax)           0.0562    0.0409
+DoE  rule C UNCONSTRAINED                        0.4559    0.5000
+DoE  rule C CONSTRAINED                          0.0696    0.0667
+
+  contrast                                            DoE - BO  (>0 = BO better)
+  rule A                              -0.0714 [ -0.0868, -0.0565] p=0.0000   DoE better
+  rule C unconstrained                +0.3996 [ +0.3292, +0.4633] p=0.0000   BO better
+  rule C constrained                  +0.0133 [ -0.0015, +0.0265] p=0.0802   null
+
+  fitted-surface stationary point: {'saddle': 22, 'maximum': 3}
+
+  REVERSAL REPRODUCES: YES
+
+========================================================================================================
+Q42 · levy · d=8 · sigma=0.25 · 25 reps
+========================================================================================================
+arm / rule                                  mean regret    median
+BO   rule A (best observed)                      0.1290    0.1137
+DoE  rule A (best observed)                      0.0039    0.0039
+BO   rule C (GP posterior-mean argmax)           0.0647    0.0543
+DoE  rule C UNCONSTRAINED                        0.4704    0.4252
+DoE  rule C CONSTRAINED                          0.0663    0.0694
+
+  contrast                                            DoE - BO  (>0 = BO better)
+  rule A                              -0.1251 [ -0.1550, -0.1004] p=0.0000   DoE better
+  rule C unconstrained                +0.4057 [ +0.3305, +0.4841] p=0.0000   BO better
+  rule C constrained                  +0.0016 [ -0.0152, +0.0176] p=0.4742   null
+
+  fitted-surface stationary point: {'saddle': 25}
+
+  REVERSAL REPRODUCES: YES
+
+========================================================================================================
+Q42 · levy · d=8 · sigma=0.1 · 25 reps
+========================================================================================================
+arm / rule                                  mean regret    median
+BO   rule A (best observed)                      0.0787    0.0811
+DoE  rule A (best observed)                      0.0039    0.0039
+BO   rule C (GP posterior-mean argmax)           0.0664    0.0582
+DoE  rule C UNCONSTRAINED                        0.4151    0.4207
+DoE  rule C CONSTRAINED                          0.0607    0.0659
+
+  contrast                                            DoE - BO  (>0 = BO better)
+  rule A                              -0.0748 [ -0.0886, -0.0615] p=0.0000   DoE better
+  rule C unconstrained                +0.3487 [ +0.2884, +0.4073] p=0.0000   BO better
+  rule C constrained                  -0.0058 [ -0.0243, +0.0115] p=0.6721   null
+
+  fitted-surface stationary point: {'saddle': 25}
+
+  REVERSAL REPRODUCES: YES
+
+========================================================================================================
+Q42 · rosenbrock · d=6 · sigma=0.25 · 25 reps
+========================================================================================================
+arm / rule                                  mean regret    median
+BO   rule A (best observed)                      0.0700    0.0643
+DoE  rule A (best observed)                      0.0003    0.0003
+BO   rule C (GP posterior-mean argmax)           0.0388    0.0270
+DoE  rule C UNCONSTRAINED                        0.3026    0.2467
+DoE  rule C CONSTRAINED                          0.0369    0.0228
+
+  contrast                                            DoE - BO  (>0 = BO better)
+  rule A                              -0.0696 [ -0.0863, -0.0540] p=0.0000   DoE better
+  rule C unconstrained                +0.2638 [ +0.1885, +0.3379] p=0.0000   BO better
+  rule C constrained                  -0.0019 [ -0.0221, +0.0190] p=0.9368   null
+
+  fitted-surface stationary point: {'saddle': 25}
+
+  REVERSAL REPRODUCES: YES
+
+========================================================================================================
+Q42 · rosenbrock · d=6 · sigma=0.1 · 25 reps
+========================================================================================================
+arm / rule                                  mean regret    median
+BO   rule A (best observed)                      0.0430    0.0417
+DoE  rule A (best observed)                      0.0003    0.0003
+BO   rule C (GP posterior-mean argmax)           0.0157    0.0125
+DoE  rule C UNCONSTRAINED                        0.2444    0.1900
+DoE  rule C CONSTRAINED                          0.0254    0.0208
+
+  contrast                                            DoE - BO  (>0 = BO better)
+  rule A                              -0.0426 [ -0.0518, -0.0332] p=0.0000   DoE better
+  rule C unconstrained                +0.2288 [ +0.1737, +0.2877] p=0.0000   BO better
+  rule C constrained                  +0.0097 [ +0.0015, +0.0177] p=0.0516   BO better
+
+  fitted-surface stationary point: {'saddle': 25}
+
+  REVERSAL REPRODUCES: YES
+
+========================================================================================================
+Q42 · rosenbrock · d=8 · sigma=0.25 · 25 reps
+========================================================================================================
+arm / rule                                  mean regret    median
+BO   rule A (best observed)                      0.0823    0.0771
+DoE  rule A (best observed)                      0.0004    0.0004
+BO   rule C (GP posterior-mean argmax)           0.0419    0.0223
+DoE  rule C UNCONSTRAINED                        0.3018    0.3072
+DoE  rule C CONSTRAINED                          0.0357    0.0281
+
+  contrast                                            DoE - BO  (>0 = BO better)
+  rule A                              -0.0818 [ -0.1010, -0.0618] p=0.0000   DoE better
+  rule C unconstrained                +0.2599 [ +0.1960, +0.3252] p=0.0000   BO better
+  rule C constrained                  -0.0063 [ -0.0250, +0.0137] p=0.7112   null
+
+  fitted-surface stationary point: {'saddle': 25}
+
+  REVERSAL REPRODUCES: YES
+
+========================================================================================================
+Q42 · rosenbrock · d=8 · sigma=0.1 · 25 reps
+========================================================================================================
+arm / rule                                  mean regret    median
+BO   rule A (best observed)                      0.0580    0.0482
+DoE  rule A (best observed)                      0.0004    0.0004
+BO   rule C (GP posterior-mean argmax)           0.0195    0.0163
+DoE  rule C UNCONSTRAINED                        0.2549    0.2897
+DoE  rule C CONSTRAINED                          0.0262    0.0274
+
+  contrast                                            DoE - BO  (>0 = BO better)
+  rule A                              -0.0575 [ -0.0748, -0.0425] p=0.0000   DoE better
+  rule C unconstrained                +0.2354 [ +0.1764, +0.2902] p=0.0000   BO better
+  rule C constrained                  +0.0067 [ -0.0013, +0.0143] p=0.0903   null
+
+  fitted-surface stationary point: {'saddle': 25}
+
+  REVERSAL REPRODUCES: YES
+
+========================================================================================================
+REVERSAL REPRODUCES IN 8 OF 14 family-cells
+========================================================================================================
+  ackley       d=6 s=0.25  -> VOID(centred)
+  ackley       d=6 s=0.1   -> VOID(centred)
+  ackley       d=8 s=0.25  -> VOID(centred)
+  ackley       d=8 s=0.1   -> VOID(centred)
+  hartmann6    d=6 s=0.25  -> no
+  hartmann6    d=6 s=0.1   -> no
+  levy         d=6 s=0.25  -> YES
+  levy         d=6 s=0.1   -> YES
+  levy         d=8 s=0.25  -> YES
+  levy         d=8 s=0.1   -> YES
+  rosenbrock   d=6 s=0.25  -> YES
+  rosenbrock   d=6 s=0.1   -> YES
+  rosenbrock   d=8 s=0.25  -> YES
+  rosenbrock   d=8 s=0.1   -> YES

@@ -3018,3 +3018,61 @@ Ridge analysis is textbook (Hoerl 1959; Draper 1963; Box & Draper; Myers & Montg
 Decided by A. **The reasoning above was written before re-examining which arm each scoring favours** and contains no reference to the outcome. Reason 3 was **weakened, not strengthened, by verification** — the headline percentage the brief offered could not be confirmed and was replaced with a smaller, verified one. Reasons 1 and 2 are each independently sufficient and neither depends on the survey.
 
 **Supersedes:** nothing. Q35 measured all three scorings and remains current; this designates which is primary.
+
+---
+
+## ✅ Q42 RESULT [A] · C.1 · Five families, four cells — **the reversal reproduces on three of four usable families**
+
+`python scripts/run_q42_families.py --family <f>` then `--merge` · `results/q42-families.log`. Registered with its prediction and decision rule **before the run**. Supersedes Q36, which asked the same question at one cell on two families and without the noise-model fix.
+
+### Every family-cell
+
+| family | cell | rule A (DoE−BO) | rule C **unconstrained** | rule C **constrained** | reversal |
+|---|---|---|---|---|---|
+| **levy** | d=6 σ=.25 | **−0.1116** DoE | **+0.4804** BO | −0.0002 **null** | **YES** |
+| **levy** | d=6 σ=.10 | −0.0714 DoE | +0.3996 BO | +0.0133 null | **YES** |
+| **levy** | d=8 σ=.25 | −0.1251 DoE | +0.4057 BO | +0.0016 null | **YES** |
+| **levy** | d=8 σ=.10 | −0.0748 DoE | +0.3487 BO | −0.0058 null | **YES** |
+| **rosenbrock** | d=6 σ=.25 | −0.0696 DoE | +0.2638 BO | −0.0019 null | **YES** |
+| **rosenbrock** | d=6 σ=.10 | −0.0426 DoE | +0.2288 BO | +0.0097 BO | **YES** |
+| **rosenbrock** | d=8 σ=.25 | −0.0818 DoE | +0.2599 BO | −0.0063 null | **YES** |
+| **rosenbrock** | d=8 σ=.10 | −0.0575 DoE | +0.2354 BO | +0.0067 null | **YES** |
+| hartmann6 | d=6 σ=.25 | +0.2460 **BO** | +0.6313 BO | +0.2753 BO | no |
+| hartmann6 | d=6 σ=.10 | +0.3460 **BO** | +0.7245 BO | +0.3483 BO | no |
+| ackley ⚠️ | all four | −0.56 to −0.76 DoE | identical to constrained | identical | **VOID** |
+
+**8 of 14 reproduce; 8 of 8 among the families where the question is well posed and the answer is not already known from Hill.**
+
+### 📌 Prediction scored — headline WRONG, and wrong in the favourable direction
+
+I registered: *"it will NOT reproduce on Hartmann6 and will not reproduce cleanly anywhere else either."*
+
+**Half right.** Hartmann6 does not reproduce it — BO wins every rule there, as at Q36. **But Levy and Rosenbrock reproduce it cleanly at every one of their eight cells**, which I explicitly predicted would not happen. The E2 finding is substantially more general than I expected.
+
+**The secondary prediction held exactly:** *"what I expect to survive on all five is the scoring-convention effect."*
+
+### The scoring-convention effect is the universal part
+
+DoE unconstrained − constrained, i.e. how much the classical arm's score moves on the scoring choice alone:
+
+| family | d=6 σ=.25 | d=6 σ=.10 | d=8 σ=.25 | d=8 σ=.10 |
+|---|---|---|---|---|
+| Hill (Q35) | +0.2995 | +0.3444 | +0.2618 | +0.3227 |
+| levy | **+0.4807** | +0.3863 | +0.4041 | +0.3544 |
+| rosenbrock | +0.2657 | +0.2190 | +0.2661 | +0.2288 |
+| hartmann6 | +0.3560 | +0.3762 | — | — |
+| ackley | **+0.0000** | +0.0000 | +0.0000 | +0.0000 |
+
+**Positive on every family and every cell where the surface is a saddle**, and in every case **larger than the rule-C gap it modifies**. Constrained, rule C is **null at 6 of 8** Levy/Rosenbrock cells — the same collapse Q34 found on Hill.
+
+**Ackley's exact 0.0000 is the exception that explains the rule.** Ackley is a broad bowl with fine oscillations, so its fitted quadratic has a genuine interior maximum and the unconstrained argmax is *already inside* the design region — nothing to constrain. Across all 350 runs the stationary point is a **saddle in 247 and a maximum in 103**, and the maxima are concentrated in Ackley. **So "the fitted surface is always a saddle" is false, and the correct statement is conditional: where the Hessian is indefinite the unconstrained argmax must reach a boundary, and the scoring choice then dominates. Where it is negative-definite, the choice is worth nothing.**
+
+### ⚠️ Ackley is VOID under every rule, not just rule A
+
+Q36 voided only Ackley's rule A. **That was insufficient.** Its constrained and unconstrained rule-C figures are *identical to four decimals* because the argmax never leaves the region, so rule C carries no information about the scoring question either. Ackley's optimum is the exact box centre, every screen and CCD includes centre runs, and the DoE design therefore contains the answer. **Report Ackley only as the degenerate case that identifies the mechanism's precondition.**
+
+### What this does to the claim
+
+**The E2 verdict is no longer "one landscape family".** DoE beats BO on best-observed at d=6 σ=0.25 on **Hill, Levy and Rosenbrock**; BO wins on Hartmann6. The determining property is not additivity per se — Levy and Rosenbrock are both non-additive and multimodal — so the earlier "~93% additive, therefore our oracle" objection is answered by data rather than argument.
+
+**And the scoring-convention finding, which is the paper, now rests on four families rather than one.**

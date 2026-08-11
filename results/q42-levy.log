@@ -1,0 +1,5 @@
+  levy d=6 s=0.25 done (268s)
+  levy d=6 s=0.1 done (644s)
+  levy d=8 s=0.25 done (947s)
+  levy d=8 s=0.1 done (1291s)
+  -> results/q42-families-levy.json  (100 rows)
