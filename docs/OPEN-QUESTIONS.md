@@ -2052,3 +2052,81 @@ is under-specified, and choosing the estimand is A's call under Q20 §1.**
 **`runner.py` dispatch defect closed (T8).** `run_cell` sent *every* unrecognised method to the adaptive branch, so a `doe` cell — a method `GridCell` already documents as valid — ran a **Bayesian optimization campaign** and wrote a believable parquet under a `method-doe` filename. An E2 grid would have reported BO's numbers as the DoE baseline's. Now `doe` raises `NotImplementedError` pointing at `boec.doe.run_doe_arm`, unknown names raise `ValueError`, and six tests cover the dispatch. **The DoE arm still needs wiring in properly — that is A's, and it is T8's remaining half.**
 
 **Not yet built:** an untested `nonlinear_inequality_constraints` path that matters only for Phase 3.
+
+---
+
+## Q32 — Merge of the two parallel Hall/Ogle digitization builds
+
+Both sessions built a canonical dataset at `data/published/hall_ogle_2025_stage{1,2}.csv`
+independently. Merged; below is what changed on each side and why. **Agreement was the
+norm** — same 48 conditions, same design bar one cell each, identical responses on 44 of
+48.
+
+### Adopted from B
+
+- **Schema.** Short factor names (`c`, `civ`, `ln411`, `fn`), integer `run_id`,
+  `response_sd`, `flag_reason`. `run_replay_hall_ogle.py:72-76` already consumes these; a
+  naming preference from a spec document does not justify breaking working code.
+  Extended with `response_q1`/`response_q3` and a populated `extraction_2`.
+- **The `stage2_18` median defect.** B's cross-check found our 4.22 was that column's Q3.
+  Correct, and their diagnostic was the better one — *"a median sitting 0.04 below Q3
+  while 2.59 above Q1 is a mis-detected median line, not a skewed distribution"* — because
+  it is checkable from the stored triple with no image work.
+- **`stage1_23` LN511 stays as it is.** B's note *"Recorded so nobody 'fixes' a correct
+  cell"* was aimed at exactly the mistake this session was about to make.
+- **Not reinstating an argmax claim** after the correction. Scope stays rank recovery.
+
+### Corrections to B's build
+
+1. **The second extraction is not lost.** `git log --diff-filter=A` was right that it was
+   never committed, but it was on disk at `/Users/jy/BO/`, outside the repo, and
+   duplicated in `~/Downloads/`. Now at `data/external/extraction_a/` with checksums.
+   This premise drove four decisions in `build_published_dataset.py`, and one is
+   substantive: **without a second reading of the design there was no way to detect a
+   single mis-transcribed cell**, which is how the stage-1 LN511 dispute went unexamined.
+2. **The Q3-as-median defect hits three boxes, not one.** `stage2_11` (4 px rule, →
+   2.3645) and `stage2_05` (10 px rule, refused) carry it too. Hand-correcting the one
+   instance a cross-check surfaced, without scanning for the rest, left two in place.
+3. **`stage2_03` is extractable** (0.7056). Its box edges disagree by 4 px where a dot
+   merges with the corner, against a ±3 px pair tolerance; widening to 4 recovers it and
+   moves no other box at any tolerance from 4 to 10.
+4. **The fibronectin control is the ALL-LOW row, not the FN-high row.** Every other
+   protein's low level is 0 µg/mL while fibronectin's is 22, so `- - - -` and `- - - +`
+   are both fibronectin-only and differ only in dose. The normaliser is the all-low row:
+   0.9692 (stage 1) and 1.0275 (stage 2) against a target of 1, the same physical
+   condition in both stages. `test_the_fibronectin_control_is_present_but_not_extractable`
+   selected the FN-high row (0.7056) and concluded the normaliser was missing; it is
+   present, correct, and stage 2's absolute scale is not compromised as that docstring
+   claimed.
+5. **`reading_error` is optical**, 0.025 / 0.037. The `0.07 × (max − min)` derivation gave
+   0.0655 and 0.2496 — the latter a quarter of a response unit, larger than most
+   between-condition differences it is meant to bound. **The fault is shared:** the doc it
+   came from quoted percentages without defining "spread", and they only reconcile against
+   the standard deviation. `EXTRACTION_METHOD.md` now defines it and says to quote the
+   absolute figures.
+6. **`response_sd = IQR/1.349` assumes normality** these 3–10-dot skewed samples do not
+   satisfy (`stage2_08` → sd 4.38 on a response of 2.27). Retained because the replay
+   reads it; `response_q1`/`response_q3` added alongside and preferred for new code.
+
+### Corrections to A's build
+
+1. **A nearly overwrote a correct cell.** Reasoning "the table is the design of record",
+   A prepared to flip `stage1_23` LN511 to `-1`. The paper prints `+ + + + + -`
+   (`pdf_crosscheck.md:129`). Recorded as defect 11 in `RESULTS-PERSON-A.md` — a new
+   failure mode for the register: not a check that could not fail, but **a plausible
+   authority rule applied without checking the authority.**
+2. **A's three medians and one design cell** were all found only because B's cross-check
+   existed to generalise from.
+
+### Process
+
+**`tests/test_published_dataset.py` mutates the repo.** Its round-trip test shells out to
+the builder, which writes to `data/published/`. The logic is right — it captures content
+first and compares — but a failing run leaves the tree modified, and a commit was made
+from that state before it was noticed. Should write to `tmp_path`. Mitigated for now by
+both builders producing byte-identical output: `build_published_dataset.py` is a thin
+wrapper over `boec.published.write_canonical_csv`, so there is one producer rather than
+two claiming the same path.
+
+**Every deviation is written up for the paper** in `data/published/EXTRACTION_METHOD.md`
+under "LIMITATIONS OF THE DIGITIZED DATASET" — L1 to L11, with evidence.

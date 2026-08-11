@@ -37,6 +37,7 @@ import numpy as np
 from PIL import Image
 
 from boec.published import (
+    canonical_design,
     load_extraction_a,
     validate_against_table,
     validate_extraction,
@@ -213,8 +214,10 @@ def main() -> None:
         # record is structurally sound AND the figure agrees with the published table
         # everywhere bar the declared, evidenced discrepancies.
         a_rows = load_extraction_a(tag)
-        canonical = [[(v + 1) / 2 for v in r["design"]] for r in a_rows]
-        validate_extraction(tag, rec, design=canonical)
+        # Structural checks run on the DESIGN OF RECORD -- the strip with its one known
+        # cell error corrected -- not on the raw strip and not on the transcription.
+        validate_extraction(tag, rec,
+                            design=(canonical_design(tag, rec) + 1) / 2)
         validate_against_table(tag, rec, a_rows)
         (out / f"{tag}.json").write_text(json.dumps(rec, indent=1))
         ok = rec["n_conditions"] == expect

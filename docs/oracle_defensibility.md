@@ -37,20 +37,27 @@ another perfectly valid saturated design. Counts, distinctness, rank and axial s
 *all still pass*. Only comparison against the published table detects it — which is how
 the stage-1 discrepancy below was found, after the structural suite passed cleanly.
 
-**The published figures contradict the published tables, in one cell per stage.** These
-are the paper's own inconsistencies, not extraction errors; both strips were re-read at
-4× magnification and both readings are unambiguous (mean patch grey 212.0 and 0.9,
-against palette thresholds of 205 and 110).
+**Two design cells differ between our figure-strip reading and the third-party
+transcription, and they split — one error each.** Both are settled by
+`docs/pdf_crosscheck.md:126-127`, a four-reader read of the source PDF.
 
-| stage | cell | figure strip | Table | resolution |
-|---|---|---|---|---|
-| 2 | col 20, FN | `-1` | `+1` | **Table.** The strip repeats `- + + -` (identical to col 15) and shows `- + + +` nowhere; a face-centred CCD requires all 16 distinct corners and Table 2 has them. The strip is provably the erroneous object. |
-| 1 | col 22, LN511 | `+1` | `-1` | **Table**, but on weaker grounds — the strip reads `+ + + + + -`, which is not a row of Table 1 at all, yet no structural argument is available. Rests on the stage-2 precedent and on the table being the design of record. |
+| stage | cell | our strip | transcription | the paper prints | who is wrong |
+|---|---|---|---|---|---|
+| 2 | col 20, FN | `-1` | `+1` | `- + + +` (Table 2 row 21) | **our strip** — corrected to `+1` |
+| 1 | col 22, LN511 | `+1` | `-1` | `+ + + + + -` (Table 1 row 23) | **the transcription** — our value stands |
+
+**A correction that was nearly made and would have been wrong.** An earlier pass here
+reasoned that the table is the design of record, inferred that Table 1 row 23 could not
+contain `+ + + + + -`, and prepared to overwrite the stage-1 cell to `-1`. The paper
+prints exactly that row. Only the PDF settles it — no structural check can, because a
+22-run D-optimal subset of a 2⁶ space stays valid under a single flip (rank 22 either
+way). *"Prefer the table"* and *"prefer the figure"* are both wrong as rules; each source
+has one isolated bad cell.
 
 Column ordering is not in doubt: every other cell agrees (137/138 stage 1, 99/100
 stage 2), so box *i* pairs with table row *i* throughout. The canonical CSVs carry the
-**table** design; the JSON keeps the figure read, so the disagreement stays inspectable
-rather than being overwritten.
+strip reading with its one corrected cell; the JSON keeps the raw strip, so the
+disagreement stays inspectable rather than being overwritten.
 
 **One correction to the project record.** The documents describe Figures 1a and 2a as
 "per-condition bar charts". They are **box-and-whisker plots with individual points

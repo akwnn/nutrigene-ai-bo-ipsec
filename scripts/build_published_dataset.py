@@ -59,110 +59,59 @@ physical-unit column is emitted at any point** (B3). Everything in the project r
 coded space precisely so that nothing depends on the Collagen IV concentration the source
 paper contradicts itself about — the PDF cross-check settles it at 28 ug/mL, and the
 pipeline still does not use it.
+
+------------------------------------------------------------------------------
+MERGED, AND WHAT CHANGED
+------------------------------------------------------------------------------
+
+The row-building logic now lives in `boec.published` so that ONE function writes these
+files. Two builders claiming the same path is how a schema drifts.
+
+Corrections to the notes above, from merging the two parallel builds:
+
+* **The second extraction was not lost.** It is at `data/external/extraction_a/`,
+  recovered from `/Users/jy/BO/` -- outside the repo, which is why
+  `git log --diff-filter=A` found nothing. `extraction_2` is now populated 47/48 and the
+  agreement statistics are recomputed rather than quoted.
+* **stage1_23 LN511 stays as it is, and the note above is right.** An attempt to "fix"
+  it to `-1` from the third-party transcription was wrong: the paper prints
+  `+ + + + + -` (pdf_crosscheck.md:129). The transcription has the error, not us.
+* **Two more medians read the Q3 rule, not just stage2_18.** The same defect hits
+  stage2_11 (corrected to 2.3645) and stage2_05 (refused -- its median has merged with
+  Q3 and is only bounded, to [2.686, 2.798]).
+* **stage2_03 is extractable** (0.7056), so `test_the_fibronectin_control...` needs its
+  premise revisited: the FN-only control is the ALL-LOW row, `stage2_25` (1.0275), not
+  the FN-high row. Every other protein's low level is 0 ug/mL while fibronectin's is 22,
+  so both rows are "fibronectin only" and only the all-low one reads ~1.0 -- in both
+  stages (stage1_01 = 0.9692).
+* **`reading_error` is optical**, 0.025 / 0.037. The 7%-of-spread figure was propagated
+  from a doc that never defined "spread"; its percentages only reconcile against the
+  standard deviation of the medians, not their range.
 """
 
 from __future__ import annotations
 
-import csv
-import json
+import sys
 from pathlib import Path
 
-import numpy as np
-
 ROOT = Path(__file__).resolve().parents[1]
-RAW = ROOT / "data" / "external" / "hall_ogle_2025"
-OUT = ROOT / "data" / "published"
-
-#: IQR -> sd for a normal distribution. Q3 - Q1 = 1.349 sd.
-IQR_TO_SD = 1.349
-
-#: Reading error, in response units, from EXTRACTION_METHOD/VALIDATION_REPORT: 4-7% of
-#: the between-condition spread. The upper end is used — the conservative choice.
-READING_ERROR_FRAC = 0.07
-
-#: (stage, 1-indexed condition, field, new value, evidence). See module docstring.
-CORRECTIONS = [
-    ("stage2", 21, "design.FN", 1.0, "Table 2 row 21 prints '- + + +'; pdf_crosscheck.md:130"),
-    ("stage2", 18, "median", 3.48, "our 4.22 is the column's Q3 not its median; pdf_crosscheck.md:119"),
-]
-
-
-def _coded(v: float) -> int:
-    """0.0 / 0.5 / 1.0 -> -1 / 0 / +1. Raises on anything else."""
-    lookup = {0.0: -1, 0.5: 0, 1.0: 1}
-    if v not in lookup:
-        raise ValueError(f"design level {v!r} is not one of {sorted(lookup)}")
-    return lookup[v]
-
-
-def build(stage: str) -> list[dict]:
-    d = json.loads((RAW / f"{stage}.json").read_text())
-    proteins: list[str] = d["proteins"]
-    design = [list(map(float, row)) for row in d["design"]]
-    q1 = np.array(d["q1"], dtype=float)
-    med = np.array(d["median"], dtype=float)
-    q3 = np.array(d["q3"], dtype=float)
-
-    applied: dict[int, list[str]] = {}
-    for st, cond, field, value, why in CORRECTIONS:
-        if st != stage:
-            continue
-        i = cond - 1
-        if field == "median":
-            med[i] = value
-        elif field.startswith("design."):
-            design[i][proteins.index(field.split(".", 1)[1])] = value
-        else:
-            raise ValueError(f"unknown correction field {field!r}")
-        applied.setdefault(i, []).append(why)
-
-    spread = float(np.nanmax(med) - np.nanmin(med))
-    reading_error = round(READING_ERROR_FRAC * spread, 4)
-
-    rows = []
-    for i in range(d["n_conditions"]):
-        value = med[i]
-        sd = (q3[i] - q1[i]) / IQR_TO_SD
-        row = {"run_id": i + 1}
-        for j, p in enumerate(proteins):
-            row[p.lower()] = _coded(design[i][j])
-        row["response"] = "" if np.isnan(value) else round(float(value), 4)
-        row["response_sd"] = "" if np.isnan(sd) else round(float(sd), 4)
-        row["reading_error"] = reading_error
-        # Only one extraction survives; extraction_2 is written empty, never invented.
-        row["extraction_1"] = "" if np.isnan(med[i]) else round(float(med[i]), 4)
-        row["extraction_2"] = ""
-        row["reconciled"] = row["response"]
-        row["flagged"] = bool(i in applied or np.isnan(value))
-        row["flag_reason"] = "; ".join(applied.get(i, [])) or ("median not extractable" if np.isnan(value) else "")
-        rows.append(row)
-    return rows
-
-
-def write(stage: str, rows: list[dict]) -> Path:
-    path = OUT / f"hall_ogle_2025_{stage}.csv"
-    with path.open("w", newline="") as fh:
-        w = csv.DictWriter(fh, fieldnames=list(rows[0]))
-        w.writeheader()
-        w.writerows(rows)
-    return path
+sys.path.insert(0, str(ROOT / "src"))      # runnable without PYTHONPATH, as the
+                                           # round-trip test invokes it bare
+from boec.published import write_canonical_csv  # noqa: E402
 
 
 def main() -> None:
     for stage in ("stage1", "stage2"):
-        rows = build(stage)
-        path = write(stage, rows)
-        flagged = [r["run_id"] for r in rows if r["flagged"]]
+        path = ROOT / "data" / "published" / f"hall_ogle_2025_{stage}.csv"
+        rows = write_canonical_csv(stage, path, ROOT)
+        flagged = [r["run_id"] for r in rows if r["flagged"] == "True"]
         missing = [r["run_id"] for r in rows if r["response"] == ""]
-        print(f"{path.relative_to(ROOT)}: {len(rows)} rows, "
-              f"{len(rows[0]) } columns, flagged {flagged or 'none'}, "
-              f"no response {missing or 'none'}")
-
-        med = np.array([r["response"] for r in rows if r["response"] != ""], dtype=float)
-        ids = [r["run_id"] for r in rows if r["response"] != ""]
-        order = np.argsort(med)[::-1][:5]
-        print(f"    top-5 by response: {[ids[i] for i in order]} "
-              f"{[round(float(med[i]), 3) for i in order]}")
+        print(f"{path.relative_to(ROOT)}: {len(rows)} rows, {len(rows[0])} columns, "
+              f"flagged {flagged or 'none'}, no response {missing or 'none'}")
+        scored = [(r["run_id"], float(r["response"])) for r in rows if r["response"] != ""]
+        top = sorted(scored, key=lambda t: -t[1])[:5]
+        print(f"    top-5 by response: {[t[0] for t in top]} "
+              f"{[round(t[1], 3) for t in top]}")
 
 
 if __name__ == "__main__":

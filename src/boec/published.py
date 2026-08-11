@@ -33,40 +33,60 @@ __all__ = [
     "to_pm1",
     "validate_extraction",
     "validate_against_table",
+    "canonical_design",
     "load_extraction_a",
     "model_matrix_rank",
 ]
 
-# Extraction A keys its design to the PUBLISHED coded tables (Table 1 / Table 2), not to
-# the greyscale strip. Where the two disagree the table wins -- it is the paper's own
-# statement of its design, whereas the strip is a pixel inference from a figure the
-# authors themselves flagged as low resolution.
+# Extraction A keys its design to the PUBLISHED coded tables (Table 1 / Table 2) rather
+# than to the greyscale strip, which makes it an independent second reading of the
+# design. It is NOT an authority that overrides the strip: its own transcription of
+# Table 1 row 23 is wrong (see EXTRACTION_A_ERRORS). Each source has one bad cell and
+# only the PDF cross-check settles which.
 EXTRACTION_A = {
     "stage1": "data/external/extraction_a/stage1_fig1a_table1_extracted.csv",
     "stage2": "data/external/extraction_a/stage2_fig2a_table2_extracted.csv",
 }
 _LEVEL = {"-": -1, "0": 0, "+": 1}
 
-# Cells where the published FIGURE's greyscale strip contradicts the published TABLE.
-# These are not extraction errors -- the strip was re-read at 4x magnification and both
-# readings are unambiguous (mean patch grey 212.0 and 0.9 against thresholds of 205 and
-# 110). The paper disagrees with itself, and the table wins:
+# The two design cells where the figure strip and the third-party transcription
+# disagree. BOTH are settled by `docs/pdf_crosscheck.md:126-127`, a four-reader read of
+# the source PDF itself, and **they split -- one each**. Neither digitization is
+# systematically wrong; each has exactly one isolated cell error.
 #
-#   stage 2, col 20 -- the strip repeats `- + + -` (identical to col 15) and shows
-#     `- + + +` nowhere. A face-centred CCD requires all 16 distinct corners; Table 2
-#     has them, the strip does not. The strip is provably the erroneous object.
-#   stage 1, col 22 -- the strip reads `+ + + + + -`, which is not a row of Table 1 at
-#     all. No structural argument is available here (a 22-run D-optimal subset stays
-#     valid under a single flip), so this rests on the stage-2 precedent plus the fact
-#     that the table is the design of record. Weaker, and flagged as such.
+# Do not resolve these by preferring one source wholesale. An earlier pass here assumed
+# "the table always wins", inferred that Table 1 row 23 could not contain the strip's
+# reading, and was about to overwrite a CORRECT cell. The paper prints
+# `+ + + + + -` there. Only the PDF settles it; structural argument does not.
 #
-# Column ordering is NOT in doubt: every other column in both figures matches its table
-# row exactly (137/138 and 99/100 cells), so box i pairs with table row i throughout.
+#: Cells where the FIGURE STRIP is wrong and must be corrected in the canonical design.
+FIGURE_STRIP_ERRORS = {
+    "stage1": {},
+    # Strip reads FN low (patch grey 212.0), repeating col 15 and leaving corner
+    # (-1,+1,+1,+1) absent from a face-centred CCD that requires all 16. Table 2 row 21
+    # prints `- + + +` (pdf_crosscheck.md:130). Structure and the PDF agree.
+    "stage2": {(20, "FN"): (-1, 1, "strip reads FN low (grey 212.0), duplicating col 15 "
+                            "and omitting corner (-1,+1,+1,+1); Table 2 row 21 prints "
+                            "'- + + +' (pdf_crosscheck.md:130)")},
+}
+
+#: Cells where the THIRD-PARTY transcription is wrong. The figure needs no correction
+#: here; this exists so `validate_against_table` does not report a false mismatch, and
+#: so nobody "fixes" the cell later.
+EXTRACTION_A_ERRORS = {
+    # A transcribes Table 1 row 23 as `+ + + + - -`. The paper prints `+ + + + + -`
+    # (pdf_crosscheck.md:129), and our strip reads solid black (patch grey 0.9) = high.
+    # Figure and paper agree; A is the outlier.
+    "stage1": {(22, "LN511"): (-1, 1, "A transcribes `+ + + + - -`; the paper prints "
+                               "`+ + + + + -` (pdf_crosscheck.md:129) and the strip "
+                               "reads grey 0.9 (solid). A is the outlier")},
+    "stage2": {},
+}
+
+#: Union, for the reconciliation check only.
 FIGURE_TABLE_DISCREPANCIES = {
-    "stage1": {(22, "LN511"): ("figure=+1", "table=-1", "patch grey 0.9 (solid); "
-                               "`+ + + + + -` is absent from Table 1")},
-    "stage2": {(20, "FN"): ("figure=-1", "table=+1", "patch grey 212.0 (light); strip "
-                            "duplicates col 15 and omits corner (-1,+1,+1,+1)")},
+    tag: {**FIGURE_STRIP_ERRORS[tag], **EXTRACTION_A_ERRORS[tag]}
+    for tag in ("stage1", "stage2")
 }
 
 
@@ -101,13 +121,27 @@ MEDIAN_CORRECTIONS = {
 # by `response_q1`/`response_q3`.
 READING_ERROR = {"stage1": 0.025, "stage2": 0.037}
 
-# CSV column order. This IS the LookupEvaluator contract; changing it breaks the replay.
-COLUMNS = ("run_id", "collagen_i", "collagen_iv", "laminin_111", "laminin_411",
-           "laminin_511", "fibronectin", "response", "response_q1", "response_q3",
+# CSV column order. This IS the replay's contract: `run_replay_hall_ogle.py` reads
+# `int(r["run_id"])`, the short factor names, `response` and `response_sd`.
+#
+# The short names and integer run_ids are B's, kept deliberately over the longer names
+# in the original spec. The spec is a document; the replay is working code that already
+# consumes these, and breaking it to satisfy a naming preference would be the wrong
+# trade. `response_q1`/`response_q3` and a populated `extraction_2` are added on top.
+COLUMNS = ("run_id", "c", "civ", "ln111", "ln411", "ln511", "fn",
+           "response", "response_sd", "response_q1", "response_q3",
            "reading_error", "extraction_1", "extraction_2", "reconciled", "flagged",
            "flag_reason")
-_COLUMN_OF = {"C": "collagen_i", "CIV": "collagen_iv", "LN111": "laminin_111",
-              "LN411": "laminin_411", "LN511": "laminin_511", "FN": "fibronectin"}
+_COLUMN_OF = {"C": "c", "CIV": "civ", "LN111": "ln111",
+              "LN411": "ln411", "LN511": "ln511", "FN": "fn"}
+
+#: IQR -> sd assuming normality (Q3 - Q1 = 1.349 sd), B's derivation, kept because the
+#: replay consumes `response_sd`. Treat it as indicative only: these are 3-10 dot samples
+#: visibly skewed enough that mean and median diverge by 0.34, so the normal conversion
+#: overstates several of them (stage2_08 comes out at sd 4.38 on a response of 2.27).
+#: `response_q1`/`response_q3` carry the same information without the distributional
+#: assumption, and are what new code should prefer.
+IQR_TO_SD = 1.349
 
 
 class ExtractionError(AssertionError):
@@ -371,6 +405,24 @@ def validate_extraction(tag: str, rec: dict, design=None) -> None:
                               + "\n  ".join(fail))
 
 
+def canonical_design(tag: str, rec: dict) -> np.ndarray:
+    """The design of record: the FIGURE strip, with its known cell errors corrected.
+
+    Not the third-party transcription -- that has its own error (stage-1 LN511). Each
+    source has exactly one bad cell and `docs/pdf_crosscheck.md` settles both from the
+    PDF; taking either source wholesale imports the other's mistake.
+    """
+    D = to_pm1(rec["design"]).copy()
+    for (i, factor), (was, now, _ev) in FIGURE_STRIP_ERRORS[tag].items():
+        j = rec["proteins"].index(factor)
+        if int(D[i, j]) != was:
+            raise ExtractionError(
+                f"[{tag}] declared strip error at row {i} {factor} expected {was:+d} "
+                f"but the extraction reads {int(D[i, j]):+d}; the declaration is stale")
+        D[i, j] = now
+    return D
+
+
 def build_canonical_rows(tag: str, root: str | Path = ".") -> list[dict]:
     """Assemble the analysis-ready rows for one stage.
 
@@ -402,6 +454,7 @@ def build_canonical_rows(tag: str, root: str | Path = ".") -> list[dict]:
     q1 = np.asarray(rec["q1"], float)
     q3 = np.asarray(rec["q3"], float)
     a_mean = np.asarray([r["mean"] for r in A], float)
+    design = canonical_design(tag, rec)
 
     # Apply the declared median corrections BEFORE anything downstream, so the argmax is
     # computed from corrected values. Leaving them until after would have `stage2_18`
@@ -424,6 +477,9 @@ def build_canonical_rows(tag: str, root: str | Path = ".") -> list[dict]:
         resolved = not math.isnan(m)
         outside = resolved and not (q1[i] <= a_mean[i] <= q3[i])
         why = []
+        for (drow, dfactor), (was, now, ev) in FIGURE_STRIP_ERRORS[tag].items():
+            if drow == i:
+                why.append(f"design corrected, {dfactor} {was:+d} -> {now:+d}: {ev}")
         if i in reasons:
             why.append(("median corrected: " if resolved else "") + reasons[i])
         if i in disputed:
@@ -432,20 +488,21 @@ def build_canonical_rows(tag: str, root: str | Path = ".") -> list[dict]:
             why.append("extraction A's mean falls outside our [q1, q3]")
 
         row = {c: "" for c in COLUMNS}
-        row["run_id"] = ar["condition_id"]
-        for name, level in zip(rec["proteins"], ar["design"]):
-            row[_COLUMN_OF[name]] = level
+        row["run_id"] = i + 1
+        for name, level in zip(rec["proteins"], design[i]):
+            row[_COLUMN_OF[name]] = int(level)
         # An unresolved median leaves response/reconciled EMPTY. Never zero, and never a
         # substituted quartile -- substituting Q3 is precisely the defect being fixed.
         if resolved:
             row["response"] = round(m, 4)
             row["extraction_2"] = round(m, 4)
             row["reconciled"] = round(m, 4)
+            row["response_sd"] = round(float(q3[i] - q1[i]) / IQR_TO_SD, 4)
         row["response_q1"] = round(float(q1[i]), 4)
         row["response_q3"] = round(float(q3[i]), 4)
         row["reading_error"] = READING_ERROR[tag]
         row["extraction_1"] = round(float(a_mean[i]), 4)
-        row["flagged"] = "true" if why else "false"
+        row["flagged"] = "True" if why else "False"
         row["flag_reason"] = "; ".join(why)
         rows.append(row)
     return rows

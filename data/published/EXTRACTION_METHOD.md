@@ -84,9 +84,18 @@ Fully reproducible: `scripts/digitize_hall_ogle.py`, raw inputs preserved at
   "Corrections" below.
 
 **Reading error:** one pixel = 0.0082 response units (Fig 1) and 0.0124 (Fig 2). A ±3 px
-error is ±0.025 and ±0.037 units, i.e. 6.9% and 3.8% of the between-condition spread.
-Optical precision is not the limiting factor; per-condition biological SEM (0.24 and 0.37
-units) is.
+error is **±0.025 (Fig 1a) and ±0.037 (Fig 2a)**, and those two numbers are the whole of
+it. Optical precision is not the limiting factor; per-condition biological spread is,
+and that is carried by `response_q1`/`response_q3`.
+
+> **"Spread" means the standard deviation of the condition medians, not their range.**
+> An earlier version of this paragraph said "6.9% and 3.8% of the between-condition
+> spread" without defining the word, and a downstream build read it as the range,
+> computing `reading_error = 0.07 × (max − min)`. That gives 0.0655 and **0.2496** —
+> 2.7× and 6.7× too large, and at stage 2 a quarter of a response unit, larger than most
+> of the between-condition differences the column is meant to bound. Against the sd the
+> quoted percentages are 9.2% and 3.5%; against the range they are 2.6% and 1.0%.
+> **Quote the absolute figures, not the percentages.**
 
 ---
 
@@ -102,11 +111,12 @@ a failure, which is its own small instance of a check flattering itself.
 | their mean inside our [Q1, Q3] | 23/23 | **25/25** (was 24/24) |
 | Spearman rank correlation | 0.880 | **0.871** (was 0.860) |
 | Pearson | 0.850 | **0.847** (was 0.835) |
-| argmax agreement | yes (`stage1_20`) | **no** — theirs `stage2_13`, ours `stage2_18` |
+| argmax agreement | yes (`stage1_20`) | **yes** (`stage2_13`) once C4 is applied; `no` before it |
 | FN-only control (must be ≈1.0) | 0.966 vs 0.969 | 0.846 vs 1.028 |
 
-The single disagreeing design cell in each column is C2/C3 below — the paper's figure
-contradicting the paper's table — not a disagreement between the digitizers.
+The single disagreeing design cell in each column is C2/C3 below. They are **not** the
+same kind of error: in stage 2 our strip is wrong, in stage 1 the transcription is. One
+each, both settled from the PDF.
 
 The two extractions measure different statistics — mean over detected dots versus box
 median — so exact numerical agreement was never expected. Rank agreement and the
@@ -114,9 +124,14 @@ fibronectin control are the meaningful checks, and both pass. The FN-only contro
 all-low row in each stage (every other protein at 0 µg/mL, fibronectin at its low level
 of 22), and the stage-2 pair straddles 1.0 more loosely than stage 1's — 0.846 and 1.028
 against a normalisation target of exactly 1 — which is a fair measure of how much
-agreement to expect from this source at all. The stage-2 argmax disagreement is
-unresolved; see `VALIDATION_REPORT.md` blocker B1, and both rows carry `flagged = true`
-in the canonical CSV.
+agreement to expect from this source at all.
+
+**The stage-2 argmax disagreement is resolved and `VALIDATION_REPORT.md` blocker B1
+closes.** It was our defect, not an ambiguity in the source: our `stage2_18` median was
+that column's Q3 (C4 below), which beat `stage2_13` and manufactured the disagreement.
+Corrected, both extractions pick `stage2_13`. **This does not reinstate an argmax
+claim** — the top IQRs share a common band and the paper never names a best stage-2
+condition, so the scope stays rank recovery.
 
 ---
 
@@ -154,42 +169,76 @@ its effect.
 0.161 / 0.712 / 0.737 / 0.991, mean 0.650. Our box median (0.7056) falls between A's two
 middle dots, and A's mean lies inside our [Q1, Q3].
 
-### C2 and C3 — the published figures contradict the published tables
+### C2 and C3 — one bad design cell in each digitization, and they split
 
-**These are not extraction errors.** Both greyscale patches were re-read at 4×
-magnification and both are unambiguous — mean patch grey 212.0 and 0.9 against palette
-thresholds of 205 (low) and 110 (high), with essentially no within-patch variation. The
-extractor read the figure correctly. The figure disagrees with the paper's own table.
+**Neither is a "figure contradicts table" story, and the resolution is not a rule about
+which source to prefer.** `docs/pdf_crosscheck.md:126-127` reads the source PDF with four
+readers and settles both cells; they fall opposite ways.
 
-| | cell | patch centre (x, y) | mean grey | figure says | Table says |
-|---|---|---|---|---|---|
-| **C2** | stage 2, col 20, FN | (1417, 915) | 212.0 (min 211, max 212) | `-1` | `+1` |
-| **C3** | stage 1, col 22, LN511 | (1509, 735) | 0.9 (min 0, max 154) | `+1` | `-1` |
+| | cell | patch centre (x, y) | our mean grey | our strip | transcription | the paper prints | outcome |
+|---|---|---|---|---|---|---|---|
+| **C2** | stage 2, col 20, FN | (1417, 915) | 212.0 (min 211, max 212) | `-1` | `+1` | `- + + +` (Table 2 row 21) | **our strip is wrong**, corrected to `+1` |
+| **C3** | stage 1, col 22, LN511 | (1509, 735) | 0.9 (min 0, max 154) | `+1` | `-1` | `+ + + + + -` (Table 1 row 23) | **the transcription is wrong**, our value stands |
 
-**C2 is decided by structure.** With the strip's reading, column 20 is `- + + -` —
-character-for-character identical to column 15 — and `- + + +` appears nowhere in the
-figure. A face-centred central composite design requires all 16 distinct corners. Table 2
-has all 16; the strip has 15 and one duplicate. **The strip is provably the erroneous
-object.**
+**C2** is corroborated structurally as well as from the PDF: with the strip's reading,
+column 20 is `- + + -`, character-for-character identical to column 15, and `- + + +`
+appears nowhere. A face-centred central composite design requires all 16 distinct
+corners. The strip has 15 and one duplicate.
 
-**C3 is decided on weaker grounds, and this is flagged rather than smoothed over.** The
-strip reads `+ + + + + -`, which is not a row of Table 1 at all — so the two objects
-certainly disagree — but no structural argument settles it, because stage 1's 22
-non-centre runs are a D-optimal subset of a 2⁶ space and flipping one level yields
-another perfectly valid saturated design (verified: rank 22 of 22 either way). The
-resolution rests on the C2 precedent and on the table being the design of record.
+**C3 was very nearly "corrected" in the wrong direction, and that is worth recording.**
+The reasoning went: the table is the design of record, the strip reads a row absent from
+Table 1, therefore the strip is wrong. The premise was false — the paper prints
+`+ + + + + -`. No structural check could have caught the mistake either, because stage
+1's 22 non-centre runs are a D-optimal subset of a 2⁶ space and flipping one level yields
+another perfectly valid saturated design (rank 22 of 22 either way). A cell that is
+already correct is the easiest thing in a dataset to damage, because nothing downstream
+complains.
 
 **Column ordering is not in doubt.** Every other cell in both figures agrees with its
 table row — 137/138 in stage 1, 99/100 in stage 2 — so box *i* pairs with table row *i*
-throughout, and the response attached to each corrected design row is the box that sits
-directly above it.
+throughout.
 
-**What each artefact carries.** The canonical CSVs take the **table** design. The raw
-JSON keeps the **figure** read unchanged, so the disagreement remains inspectable instead
-of being overwritten. The two cells are declared in
-`boec.published.FIGURE_TABLE_DISCREPANCIES` with their evidence, and the validator fails
-on any *undeclared* disagreement — and equally on a declared one that has stopped
-disagreeing, so the accept-list cannot rot into an excuse for a future mismatch.
+**What each artefact carries.** The canonical CSVs take the strip reading with C2
+applied. The raw JSON keeps the uncorrected strip, so the disagreement stays inspectable.
+Both cells are declared in `boec.published.FIGURE_STRIP_ERRORS` and
+`EXTRACTION_A_ERRORS` with their evidence, and the validator fails on any *undeclared*
+disagreement — and equally on a declared one that has stopped disagreeing, so the
+accept-list cannot rot into an excuse for a future mismatch.
+
+### C4 and C5 — two more medians reading the Q3 rule
+
+The defect behind C1's neighbour: `_boxes` searches for the widest horizontal run in
+`range(top + 3, bot - 2)`, but a box's Q3 rule is full width too, so wherever that rule
+is thicker than the 3 px skip it wins and is reported *as* the median.
+
+Caught on `stage2_18` by cross-check against the third-party extraction
+(`pdf_crosscheck.md:119`) — our 4.2215 is that column's Q3. The stored triple gives it
+away without any image work: a median 0.04 below Q3 while 2.59 above Q1 is a mis-detected
+line, not a skewed distribution. Generalising the find shows it hits **three** boxes.
+
+| box | Q3 rule | was | now | evidence |
+|---|---|---|---|---|
+| `stage2_18` | 4 px | 4.2215 | **3.4911** | median rule at row 456, 30/30 wide; read independently as 3.48 |
+| `stage2_11` | 4 px | 2.8102 | **2.3645** | median rule at rows 547–548, 31/31 wide |
+| `stage2_05` | 10 px | 2.7607 | **refused** | no full-width rule below the band; median merged with Q3 |
+
+`stage2_05` is left empty and flagged, bounded to **[2.686, 2.798]**. Its top band is
+10 px of continuous full width against a 2 px Q1 rule, and there is no rule below it. A
+point value there would be a guess wearing a number.
+
+**Corrected explicitly rather than in `_boxes`, and that is a deliberate stopping point.**
+Two attempts at a general fix each made things worse: skipping *consecutive* full-width
+rows breaks on antialiasing holes (stage-1 box 15 is full width at +0 and +2 but not +1,
+so the skip stops early and returns the rest of the Q3 rule — damaging a box that was
+already correct), and grouping full-width rows into bands turned seven confidently-wrong
+medians into `NaN`. The algorithm needs proper work. Three declared corrections with
+pixel evidence is honest; a third guess is not.
+
+**This dissolves the stage-2 argmax dispute.** Our uncorrected `stage2_18` (4.2215,
+actually Q3) beat `stage2_13` and manufactured the disagreement with the third-party
+extraction. Corrected, both pick `stage2_13`. **It does not reinstate an argmax claim** —
+the top IQRs share a common band and the paper never names a best stage-2 condition, so
+the scope stays rank recovery.
 
 ---
 
@@ -262,3 +311,105 @@ wrong.** The note is in the live article and in the PMC mirror. A high-resolutio
 exists and can be requested from the corresponding author. Recorded here because a
 digitizer's stated confidence was contradicted by the source, which is exactly the kind of
 thing a provenance document exists to preserve.
+
+---
+
+## LIMITATIONS OF THE DIGITIZED DATASET — text for the paper
+
+Every deviation between the published figures and this dataset, stated so a reader can
+judge the replay without re-deriving any of it. Nothing below is hedging: each item is
+a specific, bounded departure with the evidence attached.
+
+### L1. The responses are pixel measurements of a figure, not the authors' data
+
+The per-condition values appear nowhere in Hall, Lin & Ogle 2025 as numbers. Tables 1
+and 2 are purely coded (−/0/+); the supplement contains only figure legends; no erratum
+exists. Every response here was measured off the Figure 1a and 2a box plots. The
+authoritative source remains the corresponding author, and the paper states data is
+available on request.
+
+### L2. The source figures are low resolution, by the authors' own admission
+
+The published Figure 1 caption carries an unremoved note to the editor: *"The resolution
+of all figures is low, but figure #1 is especially low. We have attached th[e high
+resolution figure 1 here]."* Figure 1 panel b additionally shows an unreplaced "Y axis
+label" placeholder. A high-resolution Figure 1 exists and has not been obtained. One
+digitizer judged this note spurious; it is verbatim in the live article and the PMC
+mirror.
+
+### L3. Optical reading error is ±0.025 (Fig 1a) and ±0.037 (Fig 2a)
+
+±3 px at each figure's calibration — 121.75 and 80.78 px per response unit. **This is not
+the uncertainty on a condition.** Biological spread is roughly an order of magnitude
+larger and is carried separately in `response_q1`/`response_q3`. Do not quote reading
+error as a fraction of anything; the absolute figures are the reportable quantities.
+
+### L4. One of 48 conditions has no median (`stage2_05`)
+
+Its median rule is drawn flush against Q3 and the two have merged into a single 10 px
+full-width band, against a 2 px Q1 rule, with no rule below it. The median is bounded to
+**[2.686, 2.798]** and the cell is left empty rather than filled with a point estimate.
+Any analysis over stage 2 runs on 24 of 25 conditions unless it can use the bound.
+
+### L5. Three medians required manual correction, and the extractor is known-imperfect
+
+`_boxes` locates the median as the widest horizontal run below a fixed 3 px skip from the
+box top. A Q3 rule thicker than 3 px is therefore reported as the median. This affected
+`stage2_18` (4 px rule), `stage2_11` (4 px) and `stage2_05` (10 px) — 3 of 48 conditions,
+all in stage 2, all corrected or refused explicitly with pixel evidence. **The underlying
+algorithm has not been fixed.** Two general fixes were attempted and both regressed other
+boxes. A future re-extraction should be expected to move these values, and the corrected
+cells are marked in `flag_reason` so they can be re-checked rather than trusted.
+
+### L6. One design cell in each digitization was wrong, in opposite directions
+
+Our figure-strip reading had `stage2_21` fibronectin low where Table 2 prints `- + + +`;
+the third-party transcription had `stage1_23` laminin-511 low where Table 1 prints
+`+ + + + + -`. Both were settled against the source PDF by four readers
+(`docs/pdf_crosscheck.md:126-127`). **Neither source is reliable wholesale**, and a
+preference rule in either direction would have corrupted a correct cell — one nearly did.
+Agreement elsewhere is 137/138 and 99/100 coded cells.
+
+### L7. The two extractions measure different statistics and are not averaged
+
+The third-party extraction reports the mean of detected dots; this one reports the box
+median. They differ by 0.10 (stage 1) and 0.34 (stage 2) in the median row — far more
+than optical error — because a mean is not a median on a skewed sample of 3–10 points.
+`reconciled` is the box median; the two are never combined. By the estimand-appropriate
+test — does the third-party mean fall inside our [Q1, Q3]? — they agree on **48 of 48**.
+
+### L8. Replicate counts are a floor, and dispersion is approximate
+
+The paper states ≥4 wells across ≥3 experimental replicates per condition, but the
+third-party extraction recovers as few as 2–3 dots for some conditions: dots overlapping
+a box edge or whisker are removed with the line. `response_sd` is derived as IQR/1.349,
+which assumes normality that these visibly skewed samples do not satisfy — it overstates
+several conditions (`stage2_08` yields sd 4.38 on a response of 2.27). **Prefer
+`response_q1`/`response_q3`**, which carry the same information without the assumption.
+
+### L9. The dataset is coded-only, and deliberately so
+
+No physical concentration appears in any column. The source contradicts itself on
+Collagen IV — Results says 28 µg/mL, Methods says 56 — and the entire pipeline runs in
+coded space so that nothing depends on which is right.
+
+### L10. What the dataset cannot support
+
+- **No absolute-scale claim beyond the normalisation.** Responses are ratios to the
+  fibronectin-only control, which reads 0.9692 (stage 1) and 1.0275 (stage 2) against a
+  target of exactly 1 — that ~3% gap is a fair measure of the achievable accuracy.
+- **No single-argmax claim.** The two extractions now agree that `stage2_13` is the
+  highest median, but the top conditions' IQRs share a common band and the paper never
+  names a best stage-2 condition. **The replay is scoped to rank recovery, not argmax
+  identification**, and that scope does not change because the extractions came to agree.
+- **No claim about the true optimum.** The paper's own best formulation (EO) sets
+  fibronectin to zero, below the design floor of 22 µg/mL. It is not in the design space,
+  so no replay of this data can reach it.
+
+### L11. One extraction is not reproducible
+
+The third-party digitization's code was never supplied. Its CSVs and notes are preserved
+at `data/external/extraction_a/` and can be *used* and *checked against*, but not
+*re-run*: the erosion kernel, clustering tolerance and calibration rows are unrecorded.
+The stage-2 design correction (L6) is independently secured by CCD structure; **the
+stage-1 one rests on the PDF cross-check alone.**

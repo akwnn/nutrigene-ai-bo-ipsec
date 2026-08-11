@@ -54,8 +54,13 @@ def test_every_coded_level_is_minus_one_zero_or_plus_one(stage):
 
 @pytest.mark.parametrize("stage", ["stage1", "stage2"])
 def test_schema_is_exactly_the_lookup_evaluator_contract(stage):
-    expected = (["run_id"] + FACTORS[stage] + ["response", "response_sd", "reading_error",
-                "extraction_1", "extraction_2", "reconciled", "flagged", "flag_reason"])
+    # response_q1/response_q3 were added when the second extraction was recovered: they
+    # carry the dispersion without response_sd's normality assumption, which overstates
+    # several rows (stage2_08 -> sd 4.38 on a response of 2.27). response_sd is retained
+    # because `run_replay_hall_ogle.py` reads it.
+    expected = (["run_id"] + FACTORS[stage] + ["response", "response_sd", "response_q1",
+                "response_q3", "reading_error", "extraction_1", "extraction_2",
+                "reconciled", "flagged", "flag_reason"])
     assert list(load(stage)[0]) == expected
 
 
@@ -116,30 +121,55 @@ def test_stage2_is_a_face_centred_central_composite_design():
         assert set(np.abs(X[i][X[i] != 0]).tolist()) == {1.0}, "axial must be face-centred"
 
 
-def test_the_fibronectin_control_is_present_but_not_extractable_and_that_is_recorded():
-    """The readout is normalised TO the FN control, and in stage 2 that control is run 3
-    — the one condition whose median could not be read. So the normaliser's own value is
-    missing from the dataset that depends on it.
+def test_the_fibronectin_control_reads_near_one_in_both_stages():
+    """UPDATED, and the previous premise was wrong twice over.
 
-    Asserted rather than fixed, because inventing it would be worse. It is the reason no
-    absolute-scale claim can be made from stage 2."""
-    rows = load("stage2")
-    fn_only = [r for r in rows
-               if int(r["fn"]) == 1 and all(int(r[f]) == -1 for f in FACTORS["stage2"] if f != "fn")]
-    assert len(fn_only) == 1
-    assert fn_only[0]["run_id"] == "3"
-    assert fn_only[0]["response"] == ""
-    assert fn_only[0]["flagged"] == "True"
+    It identified the FN control as the row with `fn == +1` and the others low, i.e.
+    run 3 -- fibronectin at its HIGH level (75 ug/mL). But "fibronectin only" is about
+    the other proteins being ABSENT, and every other protein's low level is 0 ug/mL
+    while fibronectin's low is 22. So `- - - -` and `- - - +` are BOTH fibronectin-only,
+    differing in dose, and the normaliser is the all-low row:
+
+        stage1 run 1   FN 22 alone   0.9692   <- reads ~1
+        stage2 run 25  FN 22 alone   1.0275   <- reads ~1
+        stage2 run 3   FN 75 alone   0.7056
+
+    The same physical condition reads ~1.0 in both stages, which is what a normaliser
+    must do. It also assumed run 3's median was unreadable; it is 0.7056, recovered by
+    widening the box-edge pair tolerance from 3 px to 4 (the edges disagree by 4 px where
+    a dot merges with the corner).
+
+    So the normaliser is present and correct, and stage 2's absolute scale is not
+    compromised the way the old docstring claimed."""
+    for stage, run_id, value in (("stage1", "1", 0.9692), ("stage2", "25", 1.0275)):
+        rows = {r["run_id"]: r for r in load(stage)}
+        row = rows[run_id]
+        assert all(int(row[f]) == -1 for f in FACTORS[stage])
+        assert float(row["response"]) == pytest.approx(value, abs=1e-4)
+        assert 0.8 <= float(row["response"]) <= 1.2
+        assert row["flagged"] == "False", "the control needs no correction"
 
 
 @pytest.mark.parametrize("stage", ["stage1", "stage2"])
 def test_reconciled_equals_response_and_only_one_extraction_survives(stage):
-    """The second extraction was never committed and died with the working folder deleted
-    in e28c84c. `extraction_2` is written EMPTY rather than reconstructed, and
-    `reconciled` therefore equals the single surviving extraction as corrected."""
+    """UPDATED: the second extraction was NOT lost.
+
+    It was never committed -- `git log --diff-filter=A` was right about that -- but it
+    was on disk at `/Users/jy/BO/`, outside the repo, and is now preserved at
+    `data/external/extraction_a/`. So `extraction_2` is populated from the real thing
+    rather than left empty, and it is still never invented: rows whose median could not
+    be resolved leave it blank.
+
+    `extraction_1` is the third-party dot mean, `extraction_2` our box median, and
+    `reconciled` is `extraction_2`. The two are NOT averaged -- they are different
+    statistics, and their difference (0.10 / 0.34) is dominated by that rather than by
+    reading error (0.025 / 0.037)."""
     for r in load(stage):
-        assert r["extraction_2"] == "", "there is no second extraction; it must not be invented"
-        assert r["reconciled"] == r["response"]
+        assert r["extraction_1"] != "", "the second extraction is at data/external/extraction_a/"
+        if r["response"] == "":
+            assert r["extraction_2"] == "" and r["reconciled"] == ""
+            continue
+        assert r["reconciled"] == r["response"] == r["extraction_2"]
 
 
 def test_every_flagged_row_states_why():
@@ -149,13 +179,26 @@ def test_every_flagged_row_states_why():
                 assert r["flag_reason"].strip(), f"{stage} run {r['run_id']} flagged with no reason"
 
 
-def test_the_two_corrections_are_applied_and_auditable():
-    """A corrected cell that looks identical to an uncorrected one is unauditable."""
+def test_the_corrections_are_applied_and_auditable():
+    """A corrected cell that looks identical to an uncorrected one is unauditable.
+
+    UPDATED: there are four corrections in stage 2, not two. The median-reads-Q3 defect
+    caught on run 18 was not isolated -- `_boxes` skips 3 px while a Q3 rule can be
+    thicker, so it also hit run 11 (4 px rule) and run 5 (10 px rule). Run 5's median has
+    merged with its Q3 entirely and is refused rather than guessed.
+    """
     rows = {r["run_id"]: r for r in load("stage2")}
     assert int(rows["21"]["fn"]) == 1, "Table 2 row 21 prints '- + + +'"
-    assert "Table 2 row 21" in rows["21"]["flag_reason"]
-    assert float(rows["18"]["response"]) == pytest.approx(3.48)
-    assert "Q3" in rows["18"]["flag_reason"]
+    assert "pdf_crosscheck.md:130" in rows["21"]["flag_reason"]
+    # run 18 -- the one the cross-check caught; 3.4911 is the same rule B read as 3.48
+    assert float(rows["18"]["response"]) == pytest.approx(3.4911, abs=1e-4)
+    assert "Q3 rule" in rows["18"]["flag_reason"]
+    # run 11 -- same defect, missed by the hand correction
+    assert float(rows["11"]["response"]) == pytest.approx(2.3645, abs=1e-4)
+    assert "Q3 rule" in rows["11"]["flag_reason"]
+    # run 5 -- not separable, left empty with its bound recorded
+    assert rows["5"]["response"] == ""
+    assert "NOT SEPARABLE" in rows["5"]["flag_reason"]
 
 
 def test_the_corrected_stage2_argmax_agrees_with_the_lost_extraction():
