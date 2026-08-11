@@ -2891,3 +2891,130 @@ That said, cell 6's *recommendations* are the worst in the table (0.40–0.70). 
 ### Caveat carried from the registration
 
 The 3−6 contrast confounds design with model dimensionality — cell 3's polynomial is reduced to the kept factors after screening, cell 6's is full *d*-dimensional, because the BO arm has no screening stage to reduce it. It is the weakest of the four contrasts and the registered primary does not depend on it.
+
+---
+
+## 📖 NUMBERING CONCORDANCE — this clone vs the close-out brief
+
+**The close-out brief uses a different Q-numbering from this repository.** Recorded so neither person renumbers the other's work. This is defect 12's pattern one level up: two people, one namespace, no shared index.
+
+| brief calls it | content | **this clone** |
+|---|---|---|
+| Q32 | the three DoE scorings | **Q35** |
+| Q34 | design vs surrogate factorial | **Q34** *(same)* |
+| Q35 | the estimand decision | **Q41** *(below — Q35 was taken)* |
+| Q36 | permutation test + design conditioning | **Q42** / **Q43** *(never run here before now)* |
+| — | generality on Hartmann6/Ackley | **Q36** *(this clone only)* |
+| — | replay power bound | **Q37** |
+| — | cost model | **Q38** |
+| — | multiplicity | **Q39** |
+| — | critical-difference diagrams | **Q40** |
+
+---
+
+## 📖 TASK A RESULT — literature verification. **One characterisation in the brief is refuted; one "missing" citation exists.**
+
+Every item below was checked against a primary source or an indexed abstract. **Where I could not reach the full text I say so rather than accepting the characterisation** — that was the instruction and it changes two verdicts.
+
+### A.1 — the repositioning citations
+
+| source | verdict |
+|---|---|
+| **Picheny, Wagner & Ginsbourger 2013**, *Struct Multidiscip Optim* 48:607–626 | **PARTIALLY VERIFIED.** Confirmed: benchmarks **ten kriging-based** infill criteria on analytical problems under homoscedastic Gaussian noise, varying noise level, budget and initial sample size; reports that initial sample size and covariance choice are not critical. **It compares no non-kriging method**, so the DoE-vs-BO gap we claim is real. ⚠️ **The infill-versus-identification separation is NOT verified** — both open-access mirrors are behind an Anubis block. **Do not cite it for that distinction until the full text is read.** |
+| **Nguyen et al. 2017** | ❌ **REFUTED AS CHARACTERISED. It is not the opposite sign to our result — it is a different quantity.** The paper is *"Regret for Expected Improvement over the Best-Observed Value and Stopping Condition"* (PMLR v77). Verified from the PDF: it compares the **incumbent ξ plugged into the EI acquisition function** — *"the incumbent ξ, i.e. E[max{0, f(x) − ξ}]. The incumbent ξ is often set to the best-observed value"* — against ξ = µ_max. **The words "recommend" and "report" do not occur.** That is an **infill** choice (where to sample next), not an **identification** choice (what to report at the end). **Citing it as a contrary finding would be a serious misreading**, which is exactly what the brief warned was most damaging. |
+| **Wang & de Freitas 2014** | Confirmed *by Nguyen's own text* as EI regret theory using the µ_max incumbent — **also infill, not identification.** |
+| **Bull 2011, Berk 2019** | ⚠️ **NOT VERIFIED.** Not checked against primary sources. Given the Nguyen result, the presumption should now be that this whole lineage is about the **acquisition incumbent**, not final recommendation, until shown otherwise. |
+| **Gisperg et al. 2025**, *Biotechnol Bioeng* | ✅ Verified as a review — *"Bayesian Optimization in Bioprocess Engineering—Where Do We Stand Today?"*. ❗ **The no-reduction finding is NOT theirs.** They report **Rummukainen et al. (2024)**. The review **does not identify any gap in how the final recommended condition is chosen or scored** — so our contribution is not pre-empted by it. |
+| **Narayanan et al. 2025**, *Nat Commun* | ⚠️ **"estimated" NOT VERIFIED.** Do not write "against *estimated* DoE" until the primary source is read. |
+
+### A.2 — the RSM practice citations
+
+**The 2019 survey** — *Int J Adv Manuf Technol* 10.1007/s00170-019-03809-9. **Scope is much narrower than "a survey of published RSM":** **49 papers from one journal (IJAMT), 2014–2017, 123 response surfaces, manufacturing only.** The bioprocess gap must be flagged explicitly.
+
+- ✅ **"more than 75.29% of the models have presented a saddle shape"** — indexed and consistent across sources. **This corroborates our 200/200 saddle finding directly, on real published surfaces**, and is the stronger number for our purpose because it names the geometry rather than a consequence of it.
+- ⚠️ **87.61% NOT VERIFIED.** It does not appear in any indexed excerpt, and the authors' definition of *"convexity incompatible with the optimization direction"* could not be read. **Do not use it.** §7.2.3 should cite the 75.29% saddle figure instead, which says what we need and is verified.
+- ⚠️ Ridge/canonical-analysis usage rates: not reported in anything reachable.
+
+**The 2003 ridge-analysis paper** — ✅ **VERIFIED, and stronger than the brief states.** Ridge analysis *"does not guarantee the global maximum or minimum point of response in the experimental region for non-spherical designs such as face-centered designs, Box-Behnken designs, and two-level factorial designs."* Hall/Ogle used a **face-centred CCD**. The same work finds the **desirability function more effective than ridge analysis** for such designs — so the textbook safeguard a reviewer will invoke is *documented as inadequate for this exact design class*.
+
+**Gramacy, *Surrogates*** — ⚠️ **NOT VERIFIED** against the text. The stance stands regardless: **we measured a rate and a geometry; we did not discover the phenomenon.**
+
+### A.3 — the search for what is missing
+
+> ❗ **The head-to-head the brief says is "not in the record" EXISTS, and it is the most important citation found.**
+
+**Rummukainen, Hörhammer, Kuusela, Kilpi, Sirviö & Mäkelä (2024), *Heliyon* 10(2):e24484** — *"Traditional or adaptive design of experiments? A pilot-scale comparison on wood delignification."*
+
+| | |
+|---|---|
+| Design | Box–Behnken **15 experiments** vs BO **5 initial + 10 adaptive = 15**. **Budget matched.** |
+| **Scoring** | **Best condition actually MEASURED — i.e. rule A.** |
+| Criterion fixed in advance? | **No.** The objective weights appear chosen post-hoc. |
+| Result | BO did not reduce experiment count; it gave a more accurate model near the optimum. |
+
+**Three consequences, and the first is the important one.**
+
+1. **Their result agrees with ours under the same rule.** Scored rule A, at a matched budget, on real pilot-scale data, classical DoE was not beaten. Our d=6 σ=0.25 result is **convergent with published experiment**, not a synthetic curiosity. That is a much stronger position than "we found something nobody else did".
+2. **Their winner was in the initialization batch** — *"the experimental conditions with the highest cellulose yield of 56.3% had already been found during the first initialization experiment."* **This is exactly our Q37 finding**, arrived at independently on real data: when the target is reachable from the shared opening, no adaptive method can distinguish itself. Q37 measured P(target in the shared opening) = 0.64 for the Hall/Ogle replay.
+3. **They did not fix the comparison criterion in advance, and the review of them did not notice.** That is precisely the gap this project's registration discipline fills, now with a named example rather than an abstract worry.
+
+**The contribution is NOT pre-empted, but it must be re-scoped.** The literature split is not purely "which quantity was scored". Rummukainen executed both arms at a matched budget and scored rule A; Narayanan's 3–30× is against **estimated** design sizes (⚠️ unverified) rather than an executed arm. **So the split is at least two things: whether the classical comparator was actually run, and which quantity was scored when it was.** Writing it as scoring alone would overstate a claim that is already strong enough.
+
+**Not found, after searching:** any DoE-versus-BO comparison with a **registered** scoring rule; any treatment of the estimand under another name in this applied literature. ⚠️ Absence of evidence from a handful of searches is weak evidence — a librarian search is still owed before "nobody has made this claim" goes in print.
+
+---
+
+## 🔒 Q41 [A decides] · THE ESTIMAND DECISION — the unconstrained argmax is the primary DoE scoring
+
+*(The close-out brief calls this Q35; that number is occupied here by the constrained-RSM arm. See the concordance above.)*
+
+> **Decision: the unconstrained argmax is the primary DoE scoring. Constrained argmax and best-observed are reported alongside it, in every table, always.**
+
+### What is being decided
+
+Same runs, same data, three numbers. d=6, σ_rel=0.25:
+
+| scoring | regret | what it is |
+|---|---|---|
+| best observed | 0.060 | the best value the arm measured |
+| **unconstrained argmax** | **0.416** | where the fitted surface's optimum lies, unrestricted |
+| constrained argmax | 0.117 | that optimum, restricted to the design region |
+
+`unconstrained − constrained = +0.2995 [+0.2790, +0.3228], p<0.0001`, at all four cells (Q35).
+
+**This choice changes the size of the reported effect, not its direction.**
+
+### The reasoning — stated without reference to which arm any choice favours
+
+**1. Fidelity, the primary reason.** The source study's own wording is **"prediction solution"** — JMP's unconstrained Solution report. *Profiler*, *desirability*, *maximize*, *stationary point* and *canonical analysis* appear **zero times** in that paper. They took the unconstrained optimum, built it, and it failed. That failure is the case study. Scoring the arm any other way stops describing the study being replayed.
+
+**2. The constrained number reports a different quantity.** The fitted surface is a **saddle in 200/200 runs**. A saddle has no interior maximum, so the argmax *must* reach a boundary; the closed-form ridge path leaves the design region at radius ≈0.27 against a corner radius of 0.50, every run. Constraining does not correct the model — it **truncates a search whose target was never inside the region**. The constrained value reports *where the search was stopped*, not *where the model pointed*. The estimand is what the fitted model recommends.
+
+**3. Constrained scoring measures a procedure nobody ran** — not the source study (reason 1), and plausibly not the field. ⚠️ **REWRITTEN AFTER TASK A.** The brief cited *"87.61% convexity incompatible with the optimization direction"*; **that figure could not be verified and is not used.** The verified figure from the same 2019 *Int J Adv Manuf Technol* survey is stronger for this purpose anyway: across **123 response surfaces in 49 papers, more than 75.29% presented a SADDLE shape**, and the survey reports that most optimization solutions were found outside the experimental region, describing *"a preponderant neglect"* of the region constraints. **Scope caveat, stated: one journal, 2014–2017, manufacturing — not bioprocess.**
+
+### The counter-argument, and why it does not decide it
+
+Ridge analysis is textbook (Hoerl 1959; Draper 1963; Box & Draper; Myers & Montgomery; SAS `PROC RSREG`; R `rsm`). A reviewer will ask why it was not applied. **Two things weaken it as a primary.**
+
+**It is provably inadequate for this design class** — ✅ verified in Task A: ridge analysis *"does not guarantee the global maximum or minimum point of response in the experimental region for non-spherical designs such as face-centered designs, Box-Behnken designs, and two-level factorial designs."* **The source used a face-centred CCD.** The same source finds the desirability function *more effective* than ridge analysis there. So our constrained-argmax — maximising over the design region directly — is arguably the more correct constrained treatment for this design type, and classical ridge analysis would not have rescued Hall/Ogle even if applied.
+
+**And the objection is answered by reporting, not by re-designating.** The constrained result is measured, reported prominently, and its magnitude stated. Nothing is hidden by making it secondary.
+
+### What this does not change
+
+**The opposite-direction finding survives under either scoring.** Even constrained at 0.117, the DoE arm's recommendation is significantly worse than its own best measurement of 0.060 — **+0.0572, p<0.0001**. The polynomial's model still costs the practitioner something; the GP's model still gains something. Only the magnitude moves.
+
+**This sentence must appear immediately adjacent to the constrained number wherever it is reported.**
+
+### Reporting rules
+
+- **All three scorings in every table, figure and claim.** Quoting one alone is a choice of answer; this project has caught four cases where a registered quantity and a reported quantity came apart (Q16, Q19, Q28, Q29).
+- **The constrained result goes in the main text, not supplementary.** It is the largest single sensitivity in the paper — larger than the BO-versus-DoE gap it modifies.
+- **Every claim conditioned on a scoring rule names that rule in the same sentence.**
+- **The residual above accompanies the constrained number wherever it appears.**
+
+### Process note
+
+Decided by A. **The reasoning above was written before re-examining which arm each scoring favours** and contains no reference to the outcome. Reason 3 was **weakened, not strengthened, by verification** — the headline percentage the brief offered could not be confirmed and was replaced with a smaller, verified one. Reasons 1 and 2 are each independently sufficient and neither depends on the survey.
+
+**Supersedes:** nothing. Q35 measured all three scorings and remains current; this designates which is primary.
