@@ -2130,3 +2130,98 @@ two claiming the same path.
 
 **Every deviation is written up for the paper** in `data/published/EXTRACTION_METHOD.md`
 under "LIMITATIONS OF THE DIGITIZED DATASET" — L1 to L11, with evidence.
+
+---
+
+## Q31 AMENDMENT — re-run on the merged dataset, and rule C alongside
+
+`scripts/run_replay_hall_ogle.py` · `results/replay-hall-ogle.log` · 40 seeds, budget 8,
+opening 4 shared between arms.
+
+**Why re-run.** The original run used the pre-merge dataset. Stage 1's data is
+byte-identical after the merge, so those numbers were never stale. Stage 2's changed:
+`stage2_03` became extractable (0.7056), `stage2_05` became unresolvable, `stage2_11`
+moved 2.8102 → 2.3645 and `stage2_18` 3.48 → 3.4911. The **top-5 target set is unchanged**
+at both stages, but stage 2's *candidate pool* is not — the optimizer could not propose
+run 3 before and can now, and can no longer propose run 5.
+
+### Rule A — the REGISTERED endpoint. Verdict unchanged: NOT SUPPORTED
+
+| stage | | BO | random | random − BO | Wilcoxon |
+|---|---|---|---|---|---|
+| stage 2 | **re-run** | 3.50 | 3.50 | −0.025 [−0.475, +0.426] | p=0.9643 |
+| stage 2 | *pre-merge (stale)* | *3.50* | *3.50* | *−0.075 [−0.475, +0.300]* | *p=0.7243* |
+| stage 1 | **re-run** | 2.50 | 2.50 | +0.450 [+0.025, +0.850] | p=0.0565 |
+| stage 1 | *pre-merge* | *2.50* | *2.50* | *+0.450 [+0.025, +0.850]* | *p=0.0565* |
+
+**Stage 1 reproduces to the digit**, which is the check that the merge did not disturb it
+and that the runner is deterministic under its seeds. Stage 2 moves slightly and stays
+flatly null. The stage-1 bootstrap/Wilcoxon disagreement persists and is resolved the
+same way — Q20 §2 gives Wilcoxon the verdict, so **not significant, claim not supported**.
+
+The secondary reliability signal also reproduces: at stage 1, BO fails to find any top-5
+condition within budget in **2 of 40** runs against random's **7 of 40**. Still secondary,
+still not the registered endpoint, still not a rescue.
+
+### Rule C — the model's recommendation. Also null, and slightly worse for BO
+
+Both arms scored at the posterior-mean argmax over the whole candidate menu, using the
+same GP and the same recommendation rule, so only point placement differs. Random has no
+model of its own; lending it this one is what makes the contrast about design.
+
+| stage | BO | random | random − BO | Wilcoxon | never recommends a top-5 |
+|---|---|---|---|---|---|
+| stage 2 | 8.50 | 8.50 | −0.100 [−0.600, +0.375] | p=0.7957 | BO 20/40, random 20/40 |
+| stage 1 | 4.00 | 4.00 | −0.125 [−0.500, +0.225] | p=0.4982 | BO 12/40, random 10/40 |
+
+**Rule C is not the registered endpoint and does not govern the claim.** Q31 §3 registered
+"reaches the top-5 set in fewer evaluations", and reaching means evaluating — that is
+rule A. Rule C is reported because the close-out decision asks for it, and it changes
+nothing: both differences are negative (random marginally sooner) and neither is close to
+significant.
+
+**Worth noting against the rest of the project.** Elsewhere, recommending from the
+posterior beat recommending the best observation by −0.0320 regret. Here it is *worse*:
+at stage 2 half the runs never recommend a top-5 condition inside 8 evaluations, while
+rule A finds one by 3.5. With 4 adaptive evaluations over 24 discrete candidates the
+model has too little to go on, and the measurement beats the model. That is a statement
+about this budget, not a contradiction of the earlier finding.
+
+### Discrete candidate mode — verified on real data for the first time
+
+Forward-compatibility requirement 2 has been in the spec since the start and had never
+run against a real dataset. **320 proposals across both stages, every one an exact member
+of the remaining candidate menu** — matched at 1e-9 on the raw proposal, before any
+rounding, so a continuous proposal could not be rounded into a false match. Duplicate
+proposals are asserted against separately. `propose(..., candidates=)` routes to
+`optimize_acqf_discrete`, which returns rows of `choices` by construction; this checks the
+construction rather than trusting it.
+
+### The §3 ranking-source amendment is withdrawn
+
+Q31 §3 registered the ranking as coming from "the reconciled extraction". The Stage-1
+amendment substituted the single surviving one, on the premise that the second had died
+with the deleted working folder. **That premise was wrong** — it was outside the repo and
+is now at `data/external/extraction_a/`. The registered source exists and is what the
+ranking uses.
+
+"Reconciled" means our box median with the third-party dot mean as an independent check,
+**not an average of the two** — they are different statistics and averaging them would mix
+estimands (see `EXTRACTION_METHOD.md`). Measured directly rather than quoted:
+
+| | top-5 by reconciled | top-5 by the third-party extraction | overlap |
+|---|---|---|---|
+| stage 1 | 3, 6, 9, 17, 20 | 3, 6, 14, 20, 23 | **3/5** |
+| stage 2 | 9, 13, 17, 18, 19 | 8, 13, 17, 19, 22 | **3/5** |
+
+**3/5 at both stages, exactly the figure Q31 §3 cited when fixing k=5.** The registration's
+rationale holds. It also bounds the endpoint: which five conditions count as "top-5" is
+only 3/5 stable across extractions, so the target set is itself a choice the data does not
+fully determine — which is a further reason no argmax claim is available.
+
+### Unchanged
+
+**No argmax claim, at either stage, whatever the median correction did to B1.** Q31 §1
+registered that in advance and specifically anticipated this: the durable reasons — the
+top IQRs share a common band, and the paper never names a best stage-2 condition — are
+untouched by anything in the merge. The scope stays rank recovery.
