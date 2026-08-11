@@ -1,0 +1,55 @@
+
+================================================================================================
+Q36 · hartmann6 · 25 seeds · sigma_rel=0.25 · budget=48
+================================================================================================
+arm / rule                                    mean regret    median
+BO   rule A  (best observed)                       0.9325    0.9610
+DoE  rule A  (best observed)                       1.9357    1.8947
+BO   rule C  (GP posterior-mean argmax)            0.8534    0.6753
+DoE  rule C  UNCONSTRAINED                         2.9551    3.0558
+DoE  rule C  CONSTRAINED                           1.9490    1.9449
+
+  contrast                                                      DoE - BO  (>0 = BO better)
+  rule A                                        +1.0032 [ +0.7935, +1.2080] p=0.0000   BO better
+  rule C, DoE unconstrained                     +2.1017 [ +1.8635, +2.3206] p=0.0000   BO better
+  rule C, DoE constrained                       +1.0956 [ +0.9155, +1.2724] p=0.0000   BO better
+
+  fitted-surface stationary point: {'saddle': 25}
+  predicted optimum outside the stage-2 region: 25/25
+
+  REVERSAL REPRODUCES (DoE wins rule A, BO wins rule C): NO   [rule A: BO better, rule C: BO better]
+
+  [371s elapsed]
+
+================================================================================================
+Q36 · ackley · 25 seeds · sigma_rel=0.25 · budget=48
+================================================================================================
+arm / rule                                    mean regret    median
+BO   rule A  (best observed)                      21.0938   21.2143
+DoE  rule A  (best observed)                       0.0000    0.0000
+BO   rule C  (GP posterior-mean argmax)           21.0627   21.1680
+DoE  rule C  UNCONSTRAINED                        15.7836   18.1928
+DoE  rule C  CONSTRAINED                          14.3315   16.5737
+
+  contrast                                                      DoE - BO  (>0 = BO better)
+  rule A                                       -21.0938 [-21.2957,-20.8537] p=0.0000   DoE better
+  rule C, DoE unconstrained                     -5.2791 [ -7.2966, -3.3789] p=0.0000   DoE better
+  rule C, DoE constrained                       -6.7313 [ -8.3635, -5.2696] p=0.0000   DoE better
+
+  fitted-surface stationary point: {'maximum': 16, 'saddle': 9}
+  predicted optimum outside the stage-2 region: 15/25
+
+  *** CONFOUND — READ BEFORE QUOTING THE RULE-A ROW ***
+  This function's optimum sits at the exact centre of the coded box, and
+  every screening and CCD design in the DoE arm includes CENTRE RUNS. The
+  DoE design therefore CONTAINS THE ANSWER by construction, and its rule-A
+  regret is ~0 for a reason that has nothing to do with sequential DoE
+  being a good search strategy. The rule-A comparison is void here; the
+  rule-C comparison still means something, because it asks what the fitted
+  SURFACE recommends rather than what the design happened to contain.
+
+  REVERSAL REPRODUCES (DoE wins rule A, BO wins rule C): NO   [rule A: DoE better, rule C: DoE better]
+
+  [954s elapsed]
+
+  written to results/q36-generality.json

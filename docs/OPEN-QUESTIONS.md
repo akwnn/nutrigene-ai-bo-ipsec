@@ -2738,3 +2738,53 @@ Q21's determination was computed from `results/e2-run1-unfiltered.log`, which T1
 **One recorded limitation changes owner.** Q21 reports "d=8 σ=0.25 reached 0.875%, close enough to the line to be worth stating" and "all 9 failures fall in the two σ=0.25 cells". Both describe **B's** run. A's worst cell is 0.250%, comfortably below, and A's failures do **not** concentrate at the higher noise level — one falls in d=8 σ=0.10. The "close to the line" caveat should be attributed to B's run rather than presented as a property of the result.
 
 The threshold and the repair rule are untouched and predate all of this, so applying them to A's rate is applying the rule, not rewriting it.
+
+---
+
+## ✅ Q36 RESULT [A] · T2.1 · The reversal is family-specific. The mechanism is not.
+
+`python scripts/run_q36_generality.py` · `results/q36-generality.log` · 25 seeds each, σ_rel=0.25, budget 48 — matched to E2's primary cell. Decision rule committed in `f0e4ec6` before the run.
+
+### The registered question: does the E2 reversal reproduce off the Hill oracle?
+
+**No — and not on either function, in opposite directions.**
+
+| | rule A (DoE − BO) | rule C, DoE unconstrained | rule C, DoE constrained | reversal? |
+|---|---|---|---|---|
+| **Hill oracle** (E2, d=6 σ=0.25) | −0.0595 **DoE better** | *(BO better)* | *(see Q35)* | — the reference |
+| **Hartmann6** | **+1.0032** [+0.79, +1.21] **BO better** | +2.1017 BO better | +1.0956 BO better | **NO** |
+| **Ackley** | −21.09 DoE better ⚠️ **VOID** | −5.28 DoE better | −6.73 DoE better | **NO** |
+
+**Per the registered decision rule: reproduces on neither, so the finding is family-specific and the paper must say so in those words.**
+
+But the useful statement is sharper than "family-specific", because the two functions fail in **opposite** directions. It is not that BO wins everywhere else. **Which method wins is a property of the landscape, not of the methods** — three families, three different answers:
+
+- **Hill oracle** — ~93% additive, coordinate-wise unimodal. A structured space-filling design with centre points does well; DoE wins rule A.
+- **Hartmann6** — deceptive, non-additive, six local optima. Adaptive search earns its keep; BO wins everything.
+- **Ackley** — needle in a haystack. Both methods fail badly (BO regret 21.06 of a ~22 range); DoE fails less.
+
+### ⚠️ Ackley's rule-A row is VOID and is reported only to say so
+
+**Ackley's optimum sits at the exact centre of the coded box, and every screening and CCD design in the DoE arm includes centre runs.** The DoE design therefore *contains the answer*, and its rule-A regret is **exactly 0.0000** for a reason that has nothing to do with sequential DoE being a good search strategy. The script detects this (`optimum_x == 0.5` in every coordinate) and prints the warning; the number must never be quoted as a DoE win. Rule C still means something there, because it asks what the fitted **surface** recommends rather than what the design happened to contain — and the surface does *not* recommend the centre (rule C regret 15.78 against rule A's 0.00).
+
+This is a benchmark-design trap worth stating generally: **any centred test function silently rewards any design with centre runs.**
+
+### What DOES generalise
+
+**1. The scoring-convention effect, in direction, on all three families.** Constraining the DoE arm's argmax to the region actually explored improves it every time — Hill +0.2995 (Q35), Hartmann6 +1.0061 (2.9551 → 1.9490), Ackley +1.4521 (15.78 → 14.33). On Hartmann6 that single choice is ~half of the entire rule-C gap. **So the T1.2 finding is not an artefact of the Hill oracle**, and it is the part of this project's contribution that survives the generality test.
+
+**2. The saddle mechanism, but only partly — and the exception is informative.**
+
+| | stationary point of the fitted surface | predicted optimum outside stage-2 |
+|---|---|---|
+| Hill oracle | **saddle 200/200** | 200/200 |
+| Hartmann6 | **saddle 25/25** | 25/25 |
+| **Ackley** | **maximum 16/25**, saddle 9/25 | **15/25** |
+
+On Ackley the quadratic often fits a genuine interior maximum, because Ackley is a broad bowl at coarse scale with fine oscillations on top — exactly the shape a second-order model *can* represent. So "the fitted surface is always a saddle" is **false as a general claim** and must not be written that way. The defensible version: *where the quadratic's Hessian is indefinite, the unconstrained argmax necessarily lands on a boundary, and on two of three landscape families it was indefinite in every single fit.*
+
+### What this costs the headline, and what it buys
+
+**Costs:** "current practice beats BO" cannot be stated as a general result. It is a result about one landscape family, and the paper must present it as calibrated to the published endothelial dataset rather than as a claim about optimisation.
+
+**Buys:** the *scoring-convention* claim — the one T1.3 reframes the contribution around — now has support on three landscape families instead of one, including a standard non-additive benchmark. That is the more defensible contribution, and it is the one that generalises.
