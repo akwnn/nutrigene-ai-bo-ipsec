@@ -61,13 +61,14 @@ back.
 
 from __future__ import annotations
 
+import copy
 from dataclasses import dataclass
 
 import gpytorch
 import torch
 from botorch.fit import fit_gpytorch_mll
 from botorch.models import SingleTaskGP
-from botorch.models.transforms.input import Normalize
+from botorch.models.transforms.input import ChainedInputTransform, Normalize, Warp
 from botorch.models.transforms.outcome import Standardize
 from botorch.models.utils.gpytorch_modules import get_covar_module_with_dim_scaled_prior
 from gpytorch.constraints import GreaterThan
@@ -334,6 +335,8 @@ def build_gp(
     lengthscale_prior: str = "dim_scaled",
     kernel_structure: str = "product",
     additive_prior_dims: int | None = None,
+    input_warping: bool = False,
+    fit_restarts: int = 1,
 ) -> SingleTaskGP:
     """Build and fit the model. All five traps are handled here.
 
@@ -395,6 +398,30 @@ def build_gp(
             — the Q25 discipline. ``1`` is the component-natural choice. Q29
             chooses between them on **held-out model fit, before any regret
             exists**, and reports both.
+        input_warping: learn a monotone reparameterisation of each input axis
+            (a Kumaraswamy CDF) jointly with the kernel.
+
+            **Why it is a candidate here.** A stationary kernel assumes the
+            response wiggles at the same rate everywhere along an axis. A
+            dose-response curve does not: it is flat, then turns sharply near
+            EC50, then flat again. One lengthscale has to serve both regimes, so
+            it is either too long to catch the turn or too short to pool the
+            plateaus. Warping lets the model stretch the axis where the action
+            is and compress it where nothing happens, which is the same
+            information a log-dose axis encodes by hand.
+
+            Costs 2 extra parameters per axis, which at n=14 is not free.
+        fit_restarts: how many times to fit the hyperparameters, keeping the
+            best marginal likelihood. ``1`` is the library default and what E2
+            ran.
+
+            **Not a tuning knob — a correctness one.** Q25 found that a fit on
+            outcomes with no signal returns the prior mode on every dimension to
+            four decimals, which is also where gpytorch *initialises*. A fit that
+            has not moved and a fit that has converged back to its start are
+            indistinguishable from the outside, and only one of them is a fit.
+            Restarting from perturbed initialisations and keeping the best MLL
+            distinguishes them.
 
     Returns:
         A fitted model.
@@ -446,22 +473,18 @@ def build_gp(
         # outputscale, which is the additive structure's relevance measure, so
         # the outer ScaleKernel below would be redundant and unidentifiable
         # (one global scale multiplying d free scales).
-        covar = _additive_covar(
+        # The prior is held at the production d-scaled value by default -- see
+        # `_dim_scaled_matern`. Each per-factor component carries its own
+        # outputscale, which IS the additive structure's relevance measure, so
+        # the outer ScaleKernel the product branch adds would be redundant here
+        # and unidentifiable: one global scale multiplying d free scales.
+        covar: Kernel = _additive_covar(
             d,
             with_interaction=(kernel_structure == "additive+interaction"),
             prior_dims=d if additive_prior_dims is None else int(additive_prior_dims),
         )
-        extra = {"mean_module": mean_module} if mean_module is not None else {}
-        model = SingleTaskGP(
-            train_X.double(), train_Y.double(), train_Yvar.double(),
-            covar_module=covar,
-            input_transform=Normalize(d=d, bounds=bounds.double()),
-            outcome_transform=Standardize(m=m),
-            **extra,
-        )
-        if fit:
-            fit_gpytorch_mll(ExactMarginalLogLikelihood(model.likelihood, model))
-        return model
+        return _finish(train_X, train_Y, train_Yvar, bounds, covar, d, m,
+                       mean_module, fit, input_warping, fit_restarts)
 
     # TRAP 1: use_rbf_kernel defaults to True. This override is what makes the
     # methods section true. Removing it is a silent change of model.
@@ -498,21 +521,72 @@ def build_gp(
         # base_kernel() must be used to read anything back.
         covar = ScaleKernel(covar)
 
-    extra = {"mean_module": mean_module} if mean_module is not None else {}
-    model = SingleTaskGP(
-        train_X.double(),
-        train_Y.double(),
-        train_Yvar.double(),
-        covar_module=covar,
-        # TRAP 3: explicit bounds, always.
-        input_transform=Normalize(d=d, bounds=bounds.double()),
-        outcome_transform=Standardize(m=m),
-        **extra,
-    )
+    return _finish(train_X, train_Y, train_Yvar, bounds, covar, d, m,
+                   mean_module, fit, input_warping, fit_restarts)
 
-    if fit:
+
+def _finish(train_X, train_Y, train_Yvar, bounds, covar, d, m,
+            mean_module, fit, input_warping, fit_restarts) -> SingleTaskGP:
+    """Assemble and fit. One path, so every kernel structure gets the same
+    transforms, the same traps handled, and the same fitting policy."""
+    # TRAP 3: explicit bounds, always.
+    tf = Normalize(d=d, bounds=bounds.double())
+    if input_warping:
+        # Warping operates on the UNIT CUBE, so it must come after Normalize.
+        # Chained the other way round it would warp raw units and the
+        # Kumaraswamy CDF would saturate -- silently, with a believable fit.
+        tf = ChainedInputTransform(
+            normalize=tf, warp=Warp(d=d, indices=list(range(d))),
+        )
+
+    extra = {"mean_module": mean_module} if mean_module is not None else {}
+
+    def build():
+        return SingleTaskGP(
+            train_X.double(),
+            train_Y.double(),
+            train_Yvar.double(),
+            covar_module=copy.deepcopy(covar),
+            input_transform=copy.deepcopy(tf),
+            outcome_transform=Standardize(m=m),
+            **extra,
+        )
+
+    model = build()
+    if not fit:
+        return model
+    if fit_restarts <= 1:
         fit_gpytorch_mll(ExactMarginalLogLikelihood(model.likelihood, model))
-    return model
+        return model
+
+    # Keep the best marginal likelihood over restarts. See `fit_restarts` in
+    # build_gp's docstring for why this is a correctness measure and not tuning:
+    # a fit that never moved off its initialisation is indistinguishable from a
+    # converged one unless something compares them.
+    best, best_mll = None, -float("inf")
+    for r in range(int(fit_restarts)):
+        cand = model if r == 0 else build()
+        mll = ExactMarginalLogLikelihood(cand.likelihood, cand)
+        if r:
+            with torch.no_grad():
+                for p in cand.parameters():
+                    p.add_(torch.randn_like(p) * 0.5)
+        try:
+            fit_gpytorch_mll(mll)
+        except Exception:
+            continue                      # a failed restart is not a failed fit
+        with torch.no_grad():
+            cand.eval()
+            score = float(mll(cand(*cand.train_inputs), cand.train_targets).sum())
+            cand.train()
+        if score > best_mll:
+            best, best_mll = cand, score
+    if best is None:
+        raise RuntimeError(
+            f"all {fit_restarts} hyperparameter fits failed — refusing to return "
+            "an unfitted model that would look fitted."
+        )
+    return best
 
 
 # ---------------------------------------------------------------------------

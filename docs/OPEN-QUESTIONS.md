@@ -4,6 +4,120 @@
 
 ---
 
+## 🟢 Q29 RESULT [B] · **The kernel WAS mismatched and fixing it doubled the model's accuracy — and bought exactly nothing in regret. My registered prediction was wrong, and the negative is worth more than the win would have been.**
+
+`scripts/run_q29_additive.py` · log `results/q29-additive.log` · rows `results/q29-additive.json`.
+Accuracy bench: `scripts/bench_surrogate.py` · `results/bench-surrogate.log`. Registration is
+the entry below; check its commit timestamp (`3e83fa2`).
+
+**FIDELITY:** the stored qLogEI comparator regenerates over 20 campaigns at max |Δ| **exactly
+0.0**. **No E2 number moved.** `kernel_structure` still defaults to `"product"`.
+
+### The model got much better. Held-out R² against noiseless truth, n=46, d=6:
+
+| σ | product (E2) | additive | add+int | relevance, product → add+int |
+|---|---|---|---|---|
+| 0.25 | 0.050 | −0.014 | **0.106** | 0.746 → 0.735 |
+| 0.10 | 0.375 | **0.744** | 0.699 | **0.853 → 0.965** |
+
+At d=8 σ=0.10 the same: 0.448 → 0.764, relevance 0.771 → **0.975** (chance 0.500). The
+mechanism argued in the registration is real and it is large.
+
+### THE REGRET DID NOT MOVE. Primary endpoint, d=6, paired on instance, n=25:
+
+| comparison | σ=0.25 | σ=0.10 |
+|---|---|---|
+| **`qlogei-add` − `qlogei` (THE PRIMARY)** | **−0.0106, p=0.381** | **−0.0015, p=0.711** |
+| `qlogei-addonly` − `qlogei` | −0.0123, p=0.264 | −0.0126, p=0.127 |
+| `qlogei-add` − `doe` | **+0.0602, p=0.0001** | −0.0057, p=0.396 |
+| `qlogei-addonly` − `doe` | +0.0586, p<0.0001 | **−0.0168, p=0.032** |
+
+**The registered primary returned nothing at either noise level.** A surrogate whose held-out
+R² nearly doubled and whose factor identification went from 0.853 to 0.965 produced a regret
+change of −0.0015 with p=0.71.
+
+### MY PREDICTION WAS WRONG, and this is the informative half
+
+Registered: *"σ=0.10: `qlogei-add` beats stored `qlogei`, and by enough to matter… I expect it
+to close the gap to `doe` and to beat it."* **It did not beat qLogEI (p=0.711) and did not
+beat DoE (p=0.396).** The σ=0.25 half was correct — no improvement, still loses to DoE — but
+that was the half predicted from a ceiling, not from a mechanism.
+
+The error is specific and diagnosable. I reasoned: the surrogate is nearly blind → make it see
+→ the search improves. **The first two steps happened and the third did not.** So on this
+benchmark, **surrogate accuracy is not the binding constraint on BO's regret.**
+
+This is the accuracy-versus-regret decoupling Q26 already documented from the other side —
+one cell where the surrogate learned nothing extra and regret improved, another where
+discrimination improved sharply and regret did not move. **I flagged that risk in writing
+before running this, and then predicted as though it would not apply.** The registration's own
+limitations section named the failure mode it went on to hit.
+
+### What this kills, which is the point
+
+**A whole family of proposals is now closed off, not just one.** "BO is losing because the
+model is bad, so improve the model" is refuted by a direct test with a model that is
+measurably, substantially better. Combined with what was already eliminated:
+
+| candidate explanation for BO's performance | verdict | where |
+|---|---|---|
+| lengthscale prior | refuted | Q25 |
+| acquisition solver | refuted | Q21 |
+| opening batch size | partial, low noise only | Q26 |
+| **kernel structure / model accuracy** | **refuted — accuracy doubled, regret unmoved** | **Q29** |
+
+Four of four. **Whatever is limiting BO here, it is not the surrogate.** The remaining
+candidates are the budget itself, the acquisition's exploration behaviour under noise, and —
+the one now looking most likely — **that the comparison is being scored in a way that does not
+measure what either method produces (Q28).**
+
+### The one positive, and why it is NOT a headline
+
+`qlogei-addonly` beats `doe` at σ=0.10: **−0.0168 [−0.0297, −0.0028], p=0.032.** It is the
+first time any BO arm has beaten current practice in this project with an interval clear of
+zero.
+
+**It should not be reported as "BO beats current practice", for three independent reasons,
+any one of which is sufficient:**
+
+1. **It is the SECONDARY arm.** The registered primary was `qlogei-add`, which does not beat
+   DoE (p=0.396). Promoting the secondary after seeing the results is arm selection.
+2. **It is one cell of four**, at the non-primary noise level.
+3. **Multiplicity.** 28 paired comparisons are printed across the two cells. p=0.032 is raw;
+   nothing survives a correction over that family.
+
+Recorded because it is real and someone will find it. Not promoted, because it was not
+predicted and was not primary.
+
+### Limits, restated
+
+- **Post-hoc, permanently**, and the label travels with every number above.
+- **The baselines were not given the same opportunity.** Nobody has tried to improve the DoE
+  arm's stage-2 model. This is a tuned method against untuned baselines and it stays stated.
+- **Input warping was tried and is a NET NEGATIVE**, contrary to a single-instance result that
+  looked promising: it helps R² only at σ=0.10 and destroys calibration everywhere (coverage
+  0.49–0.77 against nominal 0.95). Since the acquisition consumes the variance, a model that
+  predicts better while misstating its confidence is not an improvement. Not adopted.
+- **Fit restarts are not a lever**: +0.008 to +0.019 at σ=0.25, −0.008 to −0.036 at σ=0.10.
+- **The benchmark is near-separable by construction (Q22)**, which is the structure an additive
+  kernel exists to exploit. That it still bought no regret makes the negative stronger, not
+  weaker — this was the friendliest possible test for the idea.
+
+### 🔴 SEPARATE FINDING, from the bench, and it lands on E3 rather than E2
+
+**Every model tested is overconfident, including the shipped one.** The E2 production
+surrogate's own 95% intervals cover **0.824–0.909** of held-out truth across all four cells.
+Nothing in the bench reaches nominal.
+
+This corroborates T1's coverage work by a different route: T1 measured **0.625** at the
+model's own constrained argmax, this measures 0.82–0.91 domain-wide, and the gap between
+those two numbers is exactly the "two point sets, and the primary never says which" defect T1
+raised. **E3 is the experiment about whether the confidence claims are trustworthy**, so this
+is evidence for its headline arriving from a bench that was not built to test it. Worth
+someone picking up deliberately.
+
+---
+
 ## 🔴 Q29 [B builds, A + B decide] · PRE-REGISTRATION · **An additive-kernel BO arm. Alan asked for a significantly better BO model; this is the one the diagnostics indicate, and it is registered before any regret exists.**
 
 **⚠️ READ THIS FIRST — the conflict of interest is structural and cannot be argued away.**
