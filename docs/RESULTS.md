@@ -11,7 +11,7 @@ what ran, why, what it found, and whether it is still current.
    entry. *A number with no committed file does not go in* — one fabricated figure has
    already nearly entered a decision.
 2. **Superseded entries stay, marked.** Nothing is deleted.
-3. **Wrong predictions get their own line.** Six registered predictions have been wrong.
+3. **Wrong predictions get their own line.** Seven registered predictions have been wrong.
    Each is more informative than a correct one; burying them makes the correct ones
    worthless.
 4. **Corrections get their own line**, including *how the error arose*.
