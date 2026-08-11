@@ -164,6 +164,65 @@ someone picking up deliberately.
 
 ---
 
+## 🔴 Q31 [B] · PRE-REGISTRATION · STAGE 0 of the Hall/Ogle replay · **the claim, fixed before the dataset that will test it exists**
+
+**Committed before Stage 1 begins.** No canonical CSV exists yet; `data/published/` holds only two markdown files and `VALIDATION_REPORT.md` opens `Status: BLOCKED`. Registering now is the whole point: otherwise the scope of the claim and the capability of the data get decided together and no reader can tell which came first.
+
+### 1. Argmax recovery is not supportable — **and the usual reason for saying so is the wrong one**
+
+The stated blocker (B1) is that two independent extractions disagree on the stage-2 best condition: `stage2_13` at 3.67 versus `stage2_18` at 4.22.
+
+**That reason does not survive contact with the PDF cross-check, and registering it would be a trap.** `docs/pdf_crosscheck.md:119` found that our `stage2_18 = 4.22` corresponds to that column's **Q3 (4.24)**, not its **median (3.48)** — a box-statistic error in *our own* extraction. Corrected, our median is 3.48, their `stage2_13` is 3.67, and **the two extractions would agree**. Stage 1 will apply that correction.
+
+So if the registered reason were "the extractions disagree", Stage 1 would appear to dissolve the objection and the argmax claim would walk back in. **It must not.** The durable reasons, neither of which Stage 1 can touch:
+
+- **The top conditions are not separable.** The top five IQRs share a common band (`pdf_crosscheck.md:116`). An argmax is a claim about a difference the data cannot resolve.
+- **The paper never names a best-performing stage-2 condition** (`pdf_crosscheck.md:117`). There is no published target to recover. No text can be contradicted and none can adjudicate.
+- **Per-condition SEM is 38–66% of the between-condition spread**, against a source assay CV of ~68% and a paper reporting no variance at all.
+
+> **Registered: no claim of the form "BO recovers the published best condition" will be made, at either stage, regardless of what Stage 1 does to the extraction disagreement.**
+
+### 2. ⚠️ The obvious rank claim is VACUOUS, and this is why Stage 0 exists
+
+The natural phrasing — *"BO reaches the top-k of the published ranking in fewer than 48 evaluations"* — **cannot fail.**
+
+**Stage 2 has 25 conditions. Stage 1 has 23.** The replay proposes only conditions that exist in the dataset (discrete candidate mode). With a budget of 48 against a candidate set of 25, **any method reaches the top-5 by exhaustion**, including one that picks at random and one that picks alphabetically. It would be a test that cannot fail — the fourth in this project, after the ρ-trend, the E4 non-separability check, and the DoE arm's first escape statistic.
+
+### 3. The registered claim
+
+> **Bayesian optimization reaches the pre-specified top-5 condition set in significantly fewer evaluations than random selection over the identical candidate set.**
+>
+> - **k = 5**, fixed now. Chosen because top-5 overlap (3/5 at both stages) is the granularity at which the two extractions *measurably* agree — the claim is pinned to the resolution the data demonstrably has, not to a rounder number.
+> - **Budget = 8** at stage 2 (25 candidates) and **8** at stage 1 (23 candidates) — roughly one third of the set, so exhaustion is impossible and the comparison is about search rather than enumeration.
+> - **Ranking source: the reconciled extraction from Stage 2 of the plan** — not either individual extraction, and not the paper.
+> - **Comparator: uniform random selection over the same candidate set**, same budget, averaged over orderings, exactly as `run_static_baseline` does.
+> - **Test:** paired over conditions where pairing exists; instance-level bootstrap for the interval; Wilcoxon governs significance, per Q20 §2.
+>
+> **What would falsify it:** BO reaching the top-5 set no faster than random selection. Given 25 candidates and a budget of 8, that is a genuinely available outcome.
+
+**Flagged conditions are excluded from any rank position that depends on the disagreement**, per the plan's Stage 2.2. If `stage2_13` and `stage2_18` remain unreconciled, neither can occupy a rank that decides membership of the top-5.
+
+### 4. The limitation that inverts the obvious objection — **written before the numbers exist**
+
+A reader's instinct is that reading values off a figure is the weak link. **It is not, by roughly an order of magnitude.** Both numbers belong side by side:
+
+| | fraction of between-condition spread |
+|---|---|
+| digitization reading error | **4–7%** |
+| published per-condition SEM | **38–66%** |
+| source assay CV | ~68% |
+| variance reported in the paper | **none** |
+
+**The constraint is the published experiment, not our extraction.** Recorded now so it reads as a finding rather than as a defence written after someone raised it.
+
+### 5. Already resolved, so Stage 1 should not re-litigate it
+
+**B2 is adjudicated** by the PDF cross-check, and the two disputed cells **split** (`pdf_crosscheck.md:125–130`): `stage1_23` LN511 is printed `+` (our patch reading was right, the digitizer wrong); `stage2_21` FN is printed `+` (the digitizer was right, our reading wrong). Both corrections are applied with that citation, and neither is a matter of judgement.
+
+**Better than assumed:** per-condition dispersion does not need re-extraction. `stage1.json` and `stage2.json` already carry `q1`, `median` and `q3` per condition, so `Yvar` can be derived without returning to the rasters. `n_conditions` is **23** and **25**, matching the plan's Stage 4 row-count assertions.
+
+---
+
 ## 🔴 Q30 [B builds, A + B decide] · PRE-REGISTRATION · **An additive-kernel BO arm. Alan asked for a significantly better BO model; this is the one the diagnostics indicate, and it is registered before any regret exists.**
 
 **⚠️ READ THIS FIRST — the conflict of interest is structural and cannot be argued away.**
