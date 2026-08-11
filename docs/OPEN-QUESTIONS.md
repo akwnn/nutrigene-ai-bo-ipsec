@@ -1325,7 +1325,7 @@ Rule A is still the registered primary and still says DoE wins. Rule C is a decl
 
 ### ✅ ALL FOUR CELLS — the reversal is universal, not a primary-cell artefact
 
-`results/q29-symmetric-allcells.log`. **Fidelity: rule A regenerates the stored grid at max |Δ| exactly 0.0 over 200 rows** — all four cells, not just the primary.
+`results/q29-symmetric-allcells.log`. ~~**Fidelity: rule A regenerates the stored grid at max |Δ| exactly 0.0 over 200 rows** — all four cells, not just the primary.~~ **🔶 That gate proved nothing: it regenerated B's numbers and compared them against B's own untracked grid (T1.4a). Superseded by Q34, which recomputes all four cells in A's clone with a single locator.**
 
 > **⚠️ PROVENANCE (T1.4a).** Rule-A figures below are **B's clone**. A's committed grid gives **−0.0595 / +0.0018 / −0.0284 / −0.0024** for the four cells — see the correction table in Q28 above. Rule B / rule C columns use the **unconstrained** DoE scoring that Q35 supersedes.
 

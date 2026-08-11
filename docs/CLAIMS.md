@@ -89,14 +89,30 @@ source paper (`doe-arm.log`, Q15).
 **1.3 The DoE pipeline's own recommendation is its weakest product.** Scored at the
 recipe each method recommends, the DoE arm carries **0.37–0.44 regret** against a
 ceiling of 1.0, versus **0.09** for the best recipe it happened to measure — in all four
-cells (`q29-symmetric-allcells.log`). **The figure barely moves with dimension (6→8) or
+cells (~~`q29-symmetric-allcells.log`~~ — **superseded; that log is B's clone under the
+old locator. Current source: `q35-constrained-rsm.log`, which gives 0.3766–0.4300 across
+the four cells, and `q34-factorial.json`**). **Scored the way classical practice prescribes
+the same recommendation carries only 0.086–0.117 (Q35), so this row is a statement about
+the UNCONSTRAINED scoring and must name it.** **The figure barely moves with dimension (6→8) or
 with a 2.5× change in measurement noise**, which means it is driven by geometry rather
 than by measurement error. This is 1.1 arriving independently, in regret units.
 
-**1.4 The fitted surface is a saddle essentially always.** 800/800 PF1 cells, 100/100
-E4 cells, 20/20 DoE-arm runs — zero maxima, zero minima. Four independent confirmations.
-The spec predicted a mix and specifically predicted minima at tight settings; it was
-comprehensively wrong (`pf1-grid.log`, Q16).
+**1.4 The fitted surface is a saddle ~~essentially always~~ WHENEVER THE RESPONSE IS
+BIPHASIC — and the exception identifies the mechanism.** 800/800 PF1 cells, 100/100 E4
+cells, 20/20 DoE-arm runs, 200/200 Q35 runs — zero maxima, zero minima (`pf1-grid.log`,
+Q16, Q35). The spec predicted a mix and specifically predicted minima at tight settings;
+it was comprehensively wrong.
+
+> **⚠️ CORRECTED (Q42). "Essentially always" is FALSE as a general claim about fitted
+> quadratics.** Across 350 runs on four standard test families the stationary point is a
+> saddle in **247** and a genuine **maximum in 103**, and the maxima are concentrated in
+> **Ackley** — a broad bowl with fine oscillations, which is exactly the shape a
+> second-order model *can* represent. **The correct statement is conditional:** where the
+> fitted Hessian is indefinite the unconstrained argmax must reach a boundary and the
+> scoring convention dominates everything; where it is negative-definite the scoring
+> choice is worth **exactly nothing** — Ackley's unconstrained and constrained figures are
+> identical to four decimals. That conditional is stronger than the unconditional version,
+> because it names the precondition and the precondition is testable on any real fit.
 
 **1.5 The source paper's own reported optimum was extrapolated.** Reconstruction from
 the published figure puts Collagen IV at coded **+1.40** — 20% above the highest
@@ -282,6 +298,28 @@ been run.
 correction. Under Holm over the 39 non-primary contrasts, **"Latin hypercube also beats
 BO" at the primary cell fails** (p 0.0147 → 0.1914), as do the two other LHS cells and
 qLogNEI's only significant win. The registered DoE contrast is exempt and unaffected.
+
+**L17 The DoE arm's design geometry is SOUND, and that strengthens the finding rather
+than weakening it (Q44).** At the four-factor second-order model stage 2 is actually built
+for, in the region stage 2 occupies, the CCD is **~4.4× more D-efficient** than the
+adaptive design. Coded instead to a common unit cube the adaptive design wins ~2.1×,
+because it spans more of the space — **D-efficiency is undefined without stating the
+region, and any single figure quoted without its coding is unfalsifiable.** Both codings
+are reported. Either way the polynomial is **not** failing because its design is bad: it
+fails on good geometry. Separately, **both design types are near-singular against a
+*six*-factor model** (CCD singular in 50/50 runs, adaptive in 0/50), because stage 2 varies
+only the kept factors — **this was found during the conditioning analysis, not anticipated**,
+and is stated so that the analysis is not read as post-hoc.
+
+**L18 No public dataset supports a continuous comparison** — no endothelial dataset with
+continuous factors and deposited per-condition data, and none for stem-cell differentiation
+generally. This is why a synthetic benchmark was necessary, and it is worth stating as a
+finding about the field rather than an apology for the method. ⚠️ **The Olympus claim in
+the close-out brief does not survive checking and must not be repeated as written.** It
+states "ten emulated experimental datasets, none of them biological"; Olympus in fact
+provides **33 experimentally-derived benchmarks** alongside 33 analytical functions, and
+**the biological breakdown could not be confirmed** from anything indexed. Either read the
+Olympus paper and restate it precisely, or drop the sentence — do not ship the count.
 
 **L16 A benchmark-design trap worth stating generally.** **Ackley's optimum sits at the
 exact centre of the coded box**, and every screening and CCD design includes centre runs
