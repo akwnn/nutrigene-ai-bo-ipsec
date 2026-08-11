@@ -1,0 +1,32 @@
+[
+ {
+  "stage": "stage2",
+  "n": 40,
+  "observed": -0.025,
+  "mde": 0.675,
+  "uniform": {
+   "median": 3,
+   "mean_capped": 3.9782608695652173,
+   "p_never": 0.10276679841897234,
+   "p_hit_in_opening": 0.6352343308865047
+  },
+  "n_candidates": 24,
+  "budget": 8,
+  "n_init": 4
+ },
+ {
+  "stage": "stage1",
+  "n": 40,
+  "observed": 0.45,
+  "mde": 0.675,
+  "uniform": {
+   "median": 3,
+   "mean_capped": 3.851258581235698,
+   "p_never": 0.08924485125858124,
+   "p_hit_in_opening": 0.6544325239977413
+  },
+  "n_candidates": 23,
+  "budget": 8,
+  "n_init": 4
+ }
+]

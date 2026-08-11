@@ -2618,3 +2618,51 @@ So **"BO wins under rule C" is a statement about how the classical arm was score
 - **E2's registered primary is untouched.** Rule A is best-observed, which does not involve a surrogate at all. DoE still beats qLogEI at d=6 σ=0.25 by −0.0595.
 - **Even constrained, the model's recommendation is significantly worse than the arm's own best measurement** (+0.0572, p<0.0001, and at every other cell too). Ridge analysis rescues most of the gap but does not close it: you would still have done better taking the best recipe you actually measured than the one the constrained surface names.
 - The 100%-saddle result strengthens rather than weakens the geometric argument. It just relocates it: the problem is not that a quadratic is a bad *fit*, it is that a fitted quadratic almost never has an interior maximum, so **what you do with it** determines everything.
+
+---
+
+## ✅ Q37 RESULT [A] · T2.2 · The replay's "NOT SUPPORTED" is a power bound, and it should be written as one
+
+`python scripts/run_q37_replay_power.py` · `results/q37-replay-power.log`. Reads nothing from and writes nothing to the registered replay artefacts — it re-derives the per-seed first-hit vectors by importing `run_replay_hall_ogle` and calling that module's own functions, so these are that run's numbers.
+
+### The bound
+
+| stage | N candidates | observed effect | **minimum detectable effect** | reported *p* |
+|---|---|---|---|---|
+| stage 2 | 24 | −0.025 evals | **0.68 evals** @ 80% power | 0.8746 |
+| stage 1 | 23 | +0.450 evals | **0.68 evals** @ 80% power | 0.0565 |
+
+> **Write it as:** *"the head start is bounded below 0.7 evaluations at 80% power"* — **not** *"BO is no faster than random"*.
+
+**Stage 1's observed effect (+0.45) is smaller than stage 1's own minimum detectable effect (0.68).** A real advantage of exactly the size observed was undetectable by construction, which is the whole content of that *p* = 0.0565. The design did not weigh the claim and find it wanting; it could not lift it.
+
+### The structural ceiling — why no method could separate here
+
+| | stage 2 | stage 1 |
+|---|---|---|
+| fraction of the menu in the target set | 21% | 22% |
+| **P(a top-5 is already in the shared 4-point opening)** | **0.635** | **0.654** |
+| uniform-draw median evals to first hit | 3 | 3 |
+| observed median (BO / random) | 3.5 / 3.5 | 2.5 / 2.5 |
+| adaptive evaluations, of a budget of 8 | **4** | **4** |
+
+Computed in closed form, not simulated: for a uniform draw without replacement, `P(T > m) = C(N−K, m)/C(N, m)`.
+
+**Nearly two thirds of the seeds have a top-5 condition in the opening batch that both arms share, before either method has proposed anything.** Those seeds carry no information about the methods at all — they are ties by construction, and they are why the paired differences are mostly exactly zero. Of the eight evaluations, only four are adaptive.
+
+### And the design removes the capability under test
+
+`optimize_acqf_discrete` confines BO to the 23–25 conditions the published study actually ran. **BO cannot propose a condition the published design did not contain** — so the replay tests BO's *ordering* of someone else's menu, not its ability to search a space. The published design is also a saturated D-optimal screen and a face-centred CCD, i.e. already close to space-filling on that menu, which is exactly the case where an ordering advantage is smallest.
+
+**This is a limitation of the replay as an instrument, and it was baked in by Q31's own design.** It does not reflect on BO and it should not be written as if it does.
+
+### Two wrong versions of the power calculation, recorded
+
+Both made the design look **powerful**, which is the opposite of the finding, so neither is quietly replaced:
+
+1. **A continuous shift `+delta` on every seed.** Not achievable on an integer endpoint — an advantage means arriving one evaluation sooner on some *fraction* of seeds, never 0.1 evaluations sooner on all of them. Reported MDE 0.10.
+2. **Imposing the null by `diff − diff.mean()`.** At stage 2 the mean is −0.025, so every *exact tie* became +0.025 and every difference became positive; Wilcoxon then rejects at any injected effect. Reported MDE 0.03, against a published CI of [−0.50, +0.40] that already bounds the resolvable effect near 0.6.
+
+The correct construction injects the effect **discretely** (`+1` on a Bernoulli(*q*) subset, mean effect *q*) and imposes the null by **sign-flipping**, which is what the signed-rank null actually is and which preserves the ties. Both stages then return 0.68, and the observed effects and *p*-values fall into place around it.
+
+**The tell in both cases was internal inconsistency, not intuition:** an MDE of 0.03 cannot coexist with a 95% CI of width 0.9 on the same data.
