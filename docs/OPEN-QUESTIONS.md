@@ -430,6 +430,17 @@ costs.
 
 DoE minus qLogEI, instance-clustered, n=25. Negative means DoE has less regret.
 
+> **⚠️ PROVENANCE (T1.4a/T1.4b). Every rule-A figure in the table below is from B's clone**, computed against B's untracked copy of `results/e2-grid.json`. A's committed grid — the one behind every number in the paper — gives different values. Regenerated on A's machine in `q34-factorial.json`:
+>
+> | cell | **A (committed grid)** | B (as printed below) |
+> |---|---|---|
+> | d=6 σ=0.25 | **−0.0595** [−0.0792, −0.0373] p<0.0001 | −0.0708 |
+> | d=6 σ=0.10 | **+0.0018** [−0.0083, +0.0117] p=0.69 | +0.0042 |
+> | d=8 σ=0.25 | **−0.0284** [−0.0453, −0.0140] p=0.0023 | −0.0321 |
+> | d=8 σ=0.10 | **−0.0024** [−0.0091, +0.0051] p=0.43 | +0.0015 |
+>
+> Directions and verdicts are unchanged at three cells; **at d=8 σ=0.10 the sign flips** (both null). And the "rule B / rule C" columns score the DoE arm at an **unconstrained** argmax, which **Q35** shows is the wrong scoring — constrained, the DoE arm's recommendation regret falls from ~0.41 to ~0.09–0.12 and the rule-C gap disappears (**Q34**).
+
 | d | σ | Rule A (registered) | Rule B (the arm's output) | over-prediction, median |
 |---|---|---|---|---|
 | 6 | 0.25 | **−0.0708** (p<1e-5) | **+0.2497** (p<1e-5) | +1.6516 |
@@ -555,6 +566,8 @@ refuted at BOTH dimensions, not merely unsupported at one* — **subject to Q28.
 
 Registered: *"σ=0.25: DoE beats qLogEI, p < 0.05, by a smaller margin than at d=6 (−0.071).
 σ=0.10: no detectable difference."*
+
+> **⚠️ PROVENANCE (T1.4a).** Rule-A figures below are **B's clone**. A's committed grid gives **−0.0595 / +0.0018 / −0.0284 / −0.0024** for the four cells — see the correction table in Q28 above. Rule B / rule C columns use the **unconstrained** DoE scoring that Q35 supersedes.
 
 | σ | d=6 margin | d=8 margin | shrinkage | Mann–Whitney (d8 > d6) |
 |---|---|---|---|---|
@@ -1240,6 +1253,8 @@ faces, so a uniform draw is not its operative null. No uniform reference is quot
 
 Q28 measured that **every cell reverses sign** depending on how the DoE arm is scored:
 
+> **⚠️ PROVENANCE (T1.4a).** Rule-A figures below are **B's clone**. A's committed grid gives **−0.0595 / +0.0018 / −0.0284 / −0.0024** for the four cells — see the correction table in Q28 above. Rule B / rule C columns use the **unconstrained** DoE scoring that Q35 supersedes.
+
 | cell | rule A (best observed) | rule B (its stage-4 recipe) |
 |---|---|---|
 | d=6 σ=0.25 | −0.0708 | **+0.2497** |
@@ -1312,6 +1327,8 @@ Rule A is still the registered primary and still says DoE wins. Rule C is a decl
 
 `results/q29-symmetric-allcells.log`. **Fidelity: rule A regenerates the stored grid at max |Δ| exactly 0.0 over 200 rows** — all four cells, not just the primary.
 
+> **⚠️ PROVENANCE (T1.4a).** Rule-A figures below are **B's clone**. A's committed grid gives **−0.0595 / +0.0018 / −0.0284 / −0.0024** for the four cells — see the correction table in Q28 above. Rule B / rule C columns use the **unconstrained** DoE scoring that Q35 supersedes.
+
 | cell | rule A (best observed) | rule C (each model's rec) |
 |---|---|---|
 | d=6 σ=0.25 | **−0.0708** DoE better | **+0.2915** BO better |
@@ -1325,7 +1342,9 @@ Every rule-C result p < 0.0001. **BO wins under the symmetric rule in every cell
 
 **The DoE recommendation's regret is almost invariant: 0.37 – 0.44 across every cell.** It barely moves with dimension (6 → 8) or with noise (0.25 → 0.10, a 2.5× change in measurement error). A quantity that ignores both is not being driven by measurement error — it is **geometry**. The fitted second-order surface extrapolates to roughly the same badly-chosen place regardless of how cleanly it measured. That is the same conclusion E4 reached from over-prediction, arriving independently through regret.
 
-**The GP's recommendation beats its own best observation in all four cells** — 0.1207 vs 0.1641, 0.0694 vs 0.0839, 0.1029 vs 0.1253, 0.0838 vs 0.0959; consistently 15–20% better. The posterior mean smooths noise, so the model's named recipe is a better bet than whichever single measurement drew the luckiest reading. **The two arms therefore fail in opposite directions**: the polynomial's model is worse than its data, the GP's model is better than its data.
+**The GP's recommendation beats its own best observation in all four cells** — ~~0.1207 vs 0.1641, 0.0694 vs 0.0839, 0.1029 vs 0.1253, 0.0838 vs 0.0959~~; consistently 15–20% better.
+
+> **✅ THIS ONE SURVIVES, with A's numbers and the corrected locator (Q34).** Cell 4 against cell 2: **0.1232 vs 0.1553**, **0.0703 vs 0.0874**, **0.1056 vs 0.1247**, **0.0876 vs 0.0972** — the GP's named recipe beats its own luckiest measurement in all four cells, by 15–21%. The figures moved; the finding did not. It is also the one place where the two arms genuinely differ in kind: **the polynomial's model is worse than its data (0.42 vs 0.10) while the GP's model is better than its data.** The posterior mean smooths noise, so the model's named recipe is a better bet than whichever single measurement drew the luckiest reading. **The two arms therefore fail in opposite directions**: the polynomial's model is worse than its data, the GP's model is better than its data.
 
 **This does not re-designate the headline** (decision rule fixed pre-run). Rule A remains the registered primary. What it does establish is that the E2 verdict is convention-dependent **everywhere it was measured**, which is a stronger and more reportable claim than the single-cell version.
 
