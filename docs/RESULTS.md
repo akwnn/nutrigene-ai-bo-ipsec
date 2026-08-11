@@ -274,9 +274,11 @@ experiment could not support that attribution.
 every other cell. **Held.**
 
 ### What it means
-**It is the model, not the points.** Swapping the surrogate on identical data moves regret
-by 0.16–0.29. Swapping the design with the surrogate fixed moves it by 0.00–0.20 — and the
-design effect is **null** at d=8 σ=0.25.
+~~**It is the model, not the points.**~~ **QUALIFIED BY Q45 — see below.** Swapping the
+surrogate on identical data moves regret by 0.16–0.29. Swapping the design with the
+surrogate fixed moves it by 0.00–0.20, and appeared **null** at d=8 σ=0.25. **Q45 shows
+that null was partly an artefact of a model-dimensionality confound: with the model held
+fixed the design effect is large and significant at all four cells.**
 
 **And "BO wins under rule C" collapses.** Combining cell 4 with Q35's constrained DoE
 scoring gives **three nulls and one BO win of +0.0153**, against Q29's reported +0.29 to
@@ -376,10 +378,49 @@ geometry.**
 **The six-factor singularity was found during analysis, not anticipated.** Stated plainly
 because a reviewer could otherwise read the conditioning analysis as post-hoc.
 
-## Q45 — the four-factor refit *(registered; result pending)*
+## Q45 — the four-factor refit. **The design effect is not null.**
 
-**Registered:** `scripts/run_q45_fourfactor_refit.py`, committed before the run, with a
-prediction that **disagrees with the close-out brief's**.
+**Ran:** `scripts/run_q45_fourfactor_refit.py` · `results/q45-fourfactor-refit.{log,json}` ·
+registered before the run with a prediction that disagreed with the brief's
+**Status:** current
+
+### Why
+Q34's polynomial design contrast compared a four-factor quadratic on DoE data against a
+**six**-factor quadratic on BO data — different models. Q44 sharpened it: at six factors
+the CCD is singular in 50/50 runs. Refit both on the same four kept factors.
+
+### Result
+| | d=6 σ=.25 | d=6 σ=.10 | d=8 σ=.25 | d=8 σ=.10 |
+|---|---|---|---|---|
+| cell 6, six-factor *(Q34)* | 0.5838 | 0.3956 | 0.6972 | 0.6784 |
+| **cell 6, four-factor REFIT** | **0.3035** | **0.1417** | **0.2519** | **0.1435** |
+| **3 − 6 · DESIGN, model fixed** | **+0.1129** | **+0.2883** | **+0.1247** | **+0.2669** |
+| 4 − 6 · SURROGATE, design fixed | −0.1803 | −0.0715 | −0.1462 | −0.0559 |
+
+All p ≤ 0.0008.
+
+### What it means
+**The design effect is real and was hidden behind a model-dimensionality confound.** It is
+significant at all four cells and it is *signed*: the DoE design gives a **worse**
+polynomial recommendation than the adaptive design using the identical model. At σ=0.10 it
+is **4–5× the surrogate effect**.
+
+**Not a contradiction of Q44 — the two together are the point.** The CCD is ~4.4× more
+D-efficient *in its own region*, and recommends worse *over the whole range*.
+**D-optimality in a small region is not usefulness for a recommendation made outside it.**
+Stage 2's quadratic is well determined inside its narrow sub-box and extrapolates badly
+beyond it, which is exactly where the recommendation is made. **The DoE arm's design is
+not bad; it is well-built for the wrong question.**
+
+**The surrogate effect remains the only one that never reverses.**
+
+### Predictions scored
+Mine: **2 of 3.** Right that cell 6 would improve a lot (0.25–0.53) and right that it
+would still lose to the GP (−0.056 to −0.180, so better conditioning does not repair
+geometry — my registered falsifier did not occur). **Wrong** that the design contrast
+would stay subordinate: true at σ=0.25, false at σ=0.10.
+
+**The brief's prediction — that the design null would strengthen — is refuted.**
 
 ---
 
@@ -592,6 +633,8 @@ Kept together because they are the most informative rows in this file.
 | 4 | Q42: the reversal would not reproduce cleanly on any family | **Wrong.** Levy and Rosenbrock reproduce it at every cell. |
 | 5 | Q37 (twice) | Two power calculations, both making the design look *powerful*. |
 | 6 | Q34: the decision rule would pick one of three branches | **Wrong.** The decomposition is cell-dependent — a fourth outcome I had not listed. |
+| 7 | Q45: the design contrast would stay subordinate to the surrogate effect | **Wrong at σ=0.10**, where it is 4–5× larger. Right at σ=0.25. |
+| — | *the close-out brief's* prediction that Q45 would strengthen the design null | **Refuted.** The design effect is large and significant at all four cells. |
 
 **Correct predictions, for balance:** Q33's headline; Q34's registered primary (all four
 cells); Q42's secondary prediction that the scoring effect would survive on every family;
