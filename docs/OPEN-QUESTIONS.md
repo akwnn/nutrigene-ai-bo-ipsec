@@ -2497,3 +2497,75 @@ Getting the headline right for partly the wrong reason is worth recording as exa
 - **No argmax claim** — the top-5 set is only 3/5 stable between the two extractions.
 
 **This is the last question put to the published dataset.**
+
+---
+
+## 🔴 Q34 [A] · PRE-REGISTRATION · The design/surrogate/rule factorial — untangling E2's three-way confound
+
+**Written before cells 5 and 6 exist. `results/q34-factorial.json` is not on disk; check the git timestamp against it.** Registered in response to T1.1.
+
+### The confound, stated plainly
+
+E2's headline compares `(structured design + polynomial + rule)` against `(adaptive design + GP + rule)`. **Three factors move at once**, and the write-up attributes the reversal to *model class*. The experiment as run cannot support that attribution. It is the same defect as Q26's `n_init`/dimension/inertness tangle, on the comparison that is actually the paper's thesis.
+
+### The design space collapses, because rule A is surrogate-free
+
+Under rule A the score is `max f_true(x_t)` over visited points — a property of the **design alone**. So the 2×2×2 is really six distinct quantities, not eight:
+
+| cell | design | surrogate | rule | status |
+|---|---|---|---|---|
+| 1 | DoE | — | best observed | exists (grid `doe`) |
+| 2 | BO | — | best observed | exists (grid `qlogei`) |
+| 3 | DoE | polynomial | recommended | exists (stage-4 point) — **being recomputed here under the corrected locator** |
+| 4 | BO | GP | recommended | exists (Q29 rule C) — **likewise** |
+| 5 | **DoE** | **GP** | recommended | **NEW — the decisive cell** |
+| 6 | **BO** | **polynomial** | recommended | **NEW** |
+
+```
+cell 5 − cell 3   surrogate effect, design held at DoE
+cell 4 − cell 6   surrogate effect, design held at BO
+cell 4 − cell 5   design effect, surrogate held at GP
+cell 3 − cell 6   design effect, surrogate held at polynomial
+```
+
+**All four "recommended" cells are recomputed in one execution with one locator.** Cells 3 and 4 already have numbers, but they were produced with the asymmetric locator T1.4c fixed, so reusing them would put a known artefact inside three of the four contrasts. This run therefore also supersedes Q29's rule-C table.
+
+### 📌 REGISTERED PRIMARY
+
+> **cell 5 − cell 3**, at **d=6, σ_rel=0.25**, paired at instance level, **n=25**, seeds averaged within instance.
+>
+> *A Gaussian process fitted to the DoE arm's own collected data recommends a materially better condition than the second-order polynomial fitted to the same data.*
+
+Reported as a paired difference with a bootstrap CI and a Wilcoxon *p*, the CI primary.
+
+### 📌 REGISTERED PREDICTION, with the reasoning, before the run
+
+**I predict the primary contrast is LARGE and favours the GP — cell 5 ≫ cell 3 — and that cell 5 lands modestly WORSE than cell 4. That is: mostly "the polynomial is the problem", with a smaller genuine design contribution.**
+
+The mechanism I am betting on is **not** "GPs are better models". It is a structural asymmetry in how the two model classes behave *away from data*, which is exactly where a recommendation gets made:
+
+1. **A quadratic has no interior maximum unless its Hessian is negative definite.** Q33 measured this on the published data: the fitted surface's stationary point was a **saddle** (eigenvalues −1.828, −0.935, +0.072, +0.997), so maximising it over any box lands on a **wall**, and which wall moved as the box widened. Cell 3's ~0.41 regret against a response bounded at 1.0, near-invariant across noise (0.25 → 0.10) and dimension (6 → 8), is the signature of geometry rather than measurement error.
+2. **A GP posterior mean cannot do that.** Away from data it reverts to the standardized mean; it does not diverge. So the runaway extrapolation that drives cell 3 is *unavailable* to the GP on any design. This is why I expect the surrogate effect to be large rather than marginal.
+3. **The design effect should be real but smaller.** BO's 48 points concentrate near high-value regions, giving the GP better local resolution where the argmax will be claimed; the DoE arm spends 20 of its 48 on a two-level screen with no interior points, and its stage 2 holds two dropped factors at fixed levels — so a GP fitted to DoE data has weak information about those coordinates and its posterior mean there will sit near the prior. That costs something, but it costs a *bounded* something.
+
+**Cell 6, secondary prediction: frequent hard failures, and worse conditioning than cell 3 where it does fit.** A full second-order model needs p=28 terms at d=6 (n=48, 20 residual df) and p=45 at d=8 (n=48, **3** residual df). BO clusters by design, so I expect `fit_second_order` to raise on rank deficiency in a substantial fraction of d=8 instances, and condition numbers orders of magnitude above the CCD's 6.6. **The failure rate is a result, not an inconvenience** — it is the quantitative statement of "you cannot fit a response surface to adaptively-collected data", which is a real and citable asymmetry between the two methods.
+
+**What would falsify the primary:** cell 5 ≈ cell 3. That is a live possibility and I want it on the record as such — if the DoE design's coverage is poor enough, a GP fitted to it may recommend just as badly, in which case **the design is the problem, the headline is wrong as currently framed, and it must be rewritten.** Point 3 above is the reason this is not a straw possibility: the two dropped factors are genuinely under-informed in the DoE data.
+
+### 📌 DECISION RULE, fixed now
+
+| outcome | conclusion |
+|---|---|
+| cell 5 ≈ cell 4, both ≫ cell 3 | **The polynomial is the problem, not the design.** The sharpest available version of the headline. |
+| cell 5 ≈ cell 3, both ≪ cell 4 | **The design is the problem.** The headline is wrong as framed and gets rewritten. |
+| cell 5 intermediate | **Both contribute.** Report the decomposition; do not round it to either story. |
+
+"≈" means the paired 95% CI covers zero; "≫" means it excludes zero. Fixed before the numbers exist so it cannot be chosen to fit them.
+
+### Guards
+
+- **One locator for every cell**: `metrics.constrained_argmax` at `n_restarts=20, raw_samples=4096, seed=seed`, identical for GP and polynomial. Asserted in `tests/test_q34_factorial.py`, not verified by reading.
+- **Scored on `truth()`**, never a noisy draw (Q17).
+- **No silent drops.** Every rank-deficient or non-converged fit is recorded with its condition number and reported as a rate. An instance missing from a cell is reported as missing.
+- **All four cells run** (d ∈ {6,8} × σ ∈ {0.10, 0.25}), not only the registered primary. Running only the cell where BO lost would be selection on the outcome.
+- **No E2 number moves.** This is a re-analysis of regenerated campaigns plus two new scorings; `e2.yaml`'s registered rule A is untouched.
