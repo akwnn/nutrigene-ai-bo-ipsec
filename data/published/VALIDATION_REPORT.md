@@ -1,6 +1,10 @@
 # Validation report — third-party digitization of Hall/Ogle 2025
 
-**Status: BLOCKED.** Five blockers. Canonical CSVs were **not** produced.
+**Status: RESOLVED 2026-08-11 — canonical CSVs produced.** See the closure note at the
+foot of this document. Four of five blockers are closed; B1 is closed by a correction
+found in the PDF cross-check; the second extraction is confirmed **lost**, not pending.
+
+*(Original status, retained: "BLOCKED. Five blockers. Canonical CSVs were not produced.")*
 
 **Validation method.** The strongest available check was applied: an *independent second
 digitization* of the same two figures, performed earlier in this project from the
@@ -231,3 +235,50 @@ single best point.
 Ogle (ogle@umn.edu) — the caption confirms the latter exists. Until then, treat the
 digitization as adequate for rank-based analysis and inadequate for any claim that turns
 on the identity of the single best condition.
+
+
+---
+
+## 7. CLOSURE — 2026-08-11
+
+Canonical CSVs are at `data/published/hall_ogle_2025_stage{1,2}.csv`, built by
+`scripts/build_published_dataset.py` and validated by `tests/test_published_dataset.py`
+(21 tests, run from a clean clone).
+
+**B1 — closed by correction, not by adjudication.** `pdf_crosscheck.md:119` found our
+`stage2_18 = 4.22` is that column's **Q3 (4.24)**, not its median (**3.48**). The stored
+triple corroborates it independently: q1 1.634, median 4.221, q3 4.259 — a median sitting
+0.04 below Q3 while 2.59 above Q1 is a mis-detected median line. Corrected, the stage-2
+argmax moves from condition 18 to **condition 13**, which is what the other extraction
+reported. **The extractions agree.** This does *not* reinstate an argmax claim: Q31
+registered it as unsupportable on grounds the correction cannot touch — the top five IQRs
+share a common band, and the paper never names a best condition.
+
+**B2 — closed, and the two cells split.** `stage2_21` fibronectin corrected low → high
+(Table 2 row 21 prints `- + + +`). `stage1_23` laminin 511 needed **no** correction: the
+surviving JSON already holds the printed `+`. The dispute was with the lost CSV.
+
+**B3 — closed by construction.** No physical-unit column is emitted at any point, and a
+test asserts it. The Collagen IV value the paper contradicts itself about (settled at 28,
+not 56) is recorded and unused.
+
+**B4 — downgraded to a limitation, with the arithmetic.** Stage 1 is **saturated**: 22
+parameters for the two-factor-interaction model, design rank 22, 23 runs of which one is a
+centre point — **zero residual degrees of freedom**. A main effect computed from condition
+medians returning null is the expected outcome, not a contradiction of the paper, whose
+own tests used replicate-level degrees of freedom that do not exist in digitized medians.
+Asserted in `test_stage1_is_saturated_for_the_two_factor_interaction_model`.
+
+**B5 — closed as not-delivered.** The referenced `stage3` file is absent and was never
+committed. No third design stage exists in the figures used here.
+
+### What the dataset cannot support, stated plainly
+
+- **A best-condition claim.** Not because the extractions disagree — corrected, they
+  agree — but because the top five IQRs overlap and the paper names no best condition.
+- **Reproduced main effects.** Foreclosed by the saturated stage-1 design.
+- **An absolute-scale claim from stage 2.** The readout is normalised *to* the FN
+  control, and in stage 2 that control is run 3 — the one condition whose median could
+  not be extracted. The normaliser's own value is missing from the dataset that depends
+  on it. Asserted rather than invented.
+- **Anything beyond this study.** One dataset, one lab, one assay.

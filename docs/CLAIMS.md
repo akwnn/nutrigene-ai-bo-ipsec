@@ -179,3 +179,79 @@ exactly the situation pre-registration exists to prevent. The defensible resolut
 to report both side by side with neither promoted, or for **Alan** to choose. What is not
 defensible is either of us choosing quietly and writing it up as though it had been the
 plan.
+
+---
+
+## Appendix — what would make BO work for iPSC-EC differentiation
+
+Added 2026-08-11, after the Hall/Ogle replay returned null. **This is forward-looking
+design advice, not a claim.** It is separated from everything above deliberately: none of
+it is evidence, and it must not migrate into the results.
+
+### What our own results say the problem is NOT
+
+Four candidate explanations for BO's performance are eliminated by direct test, and any
+proposal to "fix" BO by revisiting them is already answered:
+
+- **not the prior** (Q25) · **not the acquisition solver** (Q21, peak failure 0.875%)
+- **not the opening size** (Q26, partial at low noise only)
+- **not the model class** — the additive kernel doubled held-out R² (0.375 → 0.744) and
+  regret did not move (Q30). **Surrogate accuracy is not the binding constraint.**
+
+The two things that *did* change the answer were **how the recipe is scored** (Q29,
+reverses the verdict in all four cells) and **how much budget exists relative to the
+candidate set** (Q31, where 8 of 24 conditions leaves 4 adaptive evaluations).
+
+### What the literature converges on, and where it agrees with us
+
+**Budget is the binding constraint, and published successes used far more of it.** The
+robotic iPSC study searched 143 conditions over 111 days from ~200M combinations, and
+reported 88% better production than the pre-optimised culture. Hall/Ogle's stage 2 has
+**25**. A replay over 25 conditions cannot demonstrate what a 143-condition campaign
+demonstrates, and our null should be read against that gap rather than as a verdict on
+the method.
+
+**Batch structure matters more than acquisition choice.** Reported experimental BO
+campaigns typically run 2–5 batches of 3–50 measurements. That is the regime the method
+was designed for; a single 48-evaluation budget split into batches of 4 is thinner than
+anything in the applied literature.
+
+**Heteroscedastic noise modelling is called out repeatedly** for biological assays, and
+it is the one recommendation this project can act on immediately: the source assay has
+~68% CV and per-condition SEM is 38–66% of the between-condition spread, yet the
+published paper reports no variance at all. `LookupEvaluator` already carries a
+per-condition `Yvar` derived from box statistics; a fixed-noise GP over an assay this
+variable is the modelling error most likely to matter.
+
+### The four things worth doing, in order
+
+1. **Spend budget on replicates, not only on conditions.** With per-condition SEM at
+   38–66% of the between-condition spread, adjacent conditions are not separable at n=1.
+   Any method — BO, DoE, or random — is choosing between conditions it cannot tell apart.
+   **This is the single highest-value change and it is not a BO change.**
+2. **Score the method at the recipe it recommends, and say so in advance.** Q29 showed the
+   verdict reverses on this choice alone, and Q28 showed it was never registered. Whatever
+   is chosen, choose it before the run.
+3. **Model the noise as heteroscedastic** rather than fixed, given the CV above.
+4. **Run more conditions before expecting BO to beat a designed experiment.** At 23–25
+   candidates a classical design is close to exhaustive, which is the regime where DoE is
+   strongest and adaptivity has least room. The published successes operate two orders of
+   magnitude above that.
+
+### The honest summary
+
+**On a near-separable landscape with ~25 candidate conditions and single-replicate
+measurements, BO has almost nothing to exploit.** Our results and the applied literature
+agree on that, from opposite directions. It is a statement about the experimental regime,
+not about Bayesian optimisation.
+
+**Sources:** [Robotic search for optimal cell culture in regenerative
+medicine](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC9239686/) ·
+[A Guide to Bayesian Optimization in Bioprocess
+Engineering](https://analyticalsciencejournals.onlinelibrary.wiley.com/doi/10.1002/bit.70129) ·
+[Multi-Objective Bayesian Optimization for Data-Efficient Bioprocess
+Development](https://www.biorxiv.org/content/10.64898/2026.02.02.703372v1) ·
+[Biological Sequence Design using Batched Bayesian
+Optimization](https://research.google/pubs/biological-sequences-design-using-batched-bayesian-optimization/) ·
+[Multifactorial Optimizations for Directing Endothelial Fate from Stem
+Cells](https://journals.plos.org/plosone/article?id=10.1371%2Fjournal.pone.0166663)

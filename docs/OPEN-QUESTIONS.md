@@ -215,6 +215,33 @@ A reader's instinct is that reading values off a figure is the weak link. **It i
 
 **The constraint is the published experiment, not our extraction.** Recorded now so it reads as a finding rather than as a defence written after someone raised it.
 
+### ✅ RESULT — the registered claim is NOT SUPPORTED, and it is reported as it came out
+
+`scripts/run_replay_hall_ogle.py`, 40 seeds, budget 8, opening 4 shared between arms.
+
+| stage | usable conditions | BO median evals to first top-5 | random | random − BO | Wilcoxon |
+|---|---|---|---|---|---|
+| stage 2 | 24 of 25 | 3.50 | 3.50 | −0.075 [−0.475, +0.300] | p=0.7243 |
+| stage 1 | 23 of 23 | 2.50 | 2.50 | **+0.450 [+0.025, +0.850]** | **p=0.0565** |
+
+**Stage 2: flatly null.** BO is not faster than random selection over the same candidates.
+
+**Stage 1: the two tests disagree, and Q20 §2 says what to do about it.** The bootstrap interval clears zero (+0.025 lower bound); the Wilcoxon does not (p=0.0565). **Q20 §2 registered that Wilcoxon governs significance and the bootstrap reports magnitude, and that a disagreement is reported rather than resolved.** Under that rule, applied as written: **not significant, claim not supported.** The disagreement is itself the finding — with n=40 and a discrete 1–9 outcome there are many ties, which is precisely where a signed-rank test and a bootstrap of the mean come apart.
+
+**One signal that is real and should not be buried.** At stage 1, BO failed to find *any* top-5 condition within budget in **2 of 40** runs against random's **7 of 40**. Time-to-first-hit is not significantly different, but the failure rate is less than a third. **The registered endpoint was speed, not reliability, so this is a secondary observation and not a rescue** — reporting it as the headline would be exactly the estimand-swapping this project has caught five times.
+
+#### Amendment, forced not chosen: the ranking source
+
+Q31 §3 registered the ranking as coming from "the reconciled extraction". **There is no reconciled extraction.** The digitizer's five CSVs were never committed — `git log --diff-filter=A` returns nothing — and commit `e28c84c` ("Rescue A's digitization work before deleting the old working folder") saved only the JSONs, the rasters and two markdown files. **The second extraction died with that folder.**
+
+The ranking therefore comes from the single surviving extraction as corrected. What remains of the second is its summary statistics quoted in `VALIDATION_REPORT.md` — Spearman 0.860/0.880, top-5 overlap 3/5, 47/47 inside IQR — carried as a limitation. `extraction_2` is written **empty** in the canonical CSVs rather than reconstructed.
+
+#### Two forced decisions, recorded because they were not in the registration
+
+**Opening size 4.** `batch_plan` gives `2d + 2` — 10 at d=4, 14 at d=6 — both larger than the registered budget of 8, so the default opening cannot be used at all. Set to 4, leaving 4 adaptive evaluations. Both arms share it, so the comparison stays paired.
+
+**Thin adaptive phase.** Four adaptive evaluations is very little for BO to demonstrate anything. That is a consequence of the registered budget, which was itself forced by the candidate set being only 23–25 conditions — and a larger budget would have made the claim vacuous by exhaustion (Q31 §2). **This is a real limit on what the replay can show, and it is a property of the published study's size, not of the method.**
+
 ### 5. Already resolved, so Stage 1 should not re-litigate it
 
 **B2 is adjudicated** by the PDF cross-check, and the two disputed cells **split** (`pdf_crosscheck.md:125–130`): `stage1_23` LN511 is printed `+` (our patch reading was right, the digitizer wrong); `stage2_21` FN is printed `+` (the digitizer was right, our reading wrong). Both corrections are applied with that citation, and neither is a matter of judgement.
