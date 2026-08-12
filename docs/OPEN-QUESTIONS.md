@@ -3180,3 +3180,215 @@ Existing seven, plus: space-filling+GP · space-filling+GP+uniform replication �
 Allocation policy fixed now: **uncertainty-weighted**, with **uniform** as the control. No per-family tuning.
 
 **Status: registered, inactive.**
+
+
+---
+
+## 📋 Q47 — THE MULTI-FIDELITY THRESHOLD. Registered before the experiment exists.
+
+**This is a threshold calculation, not a method arm, and that distinction must survive
+into the write-up.** A multi-fidelity *arm* would measure the correlation it assumed
+between the cheap and expensive readouts. No such correlation is published for
+endothelial differentiation, so any single value would be invented and the result would
+be whatever was plugged in. This sweeps the correlation and the cost ratio instead and
+reports where a cheap tier stops paying.
+
+> **Deliverable.** A threshold surface over (ρ, cost ratio) marking where a two-tier
+> design achieves lower simple regret than a single-tier design **at equal total cost**.
+> **This is not a claim that multi-fidelity helps.** It is a statement of the conditions
+> under which it would.
+
+### ⚠️ PREMISE CHECK — the brief's §8 is stale on three of four items
+
+| the brief says "still unwritten" | this clone |
+|---|---|
+| `RESULTS.md` | ❌ **written** — `docs/RESULTS.md`, 641 lines, commit `1dc09d3` |
+| the citation check | ❌ **done** — Task A, commit `a36581a` (one characterisation refuted, one "missing" citation found) |
+| the engineering fixes | ❌ **done** — Task B, commits `7bfe0e3` / `8ed2516` |
+| the noise threshold curve | ✅ **correct, still unwritten** — see the next block |
+
+### ⚠️ The "noise ceiling" this is supposed to rhyme with is two points, not a curve
+
+The brief's §6 pairs this with a noise ceiling stated as *"above CV ≈ X, no method finds
+anything within budget."* **No such curve exists.** What exists is held-out surrogate R²
+at exactly two noise levels — **0.106 at σ_rel=0.25 and 0.744 at σ_rel=0.10**
+(`results/bench-surrogate.log`) — which is a statement about how well a model can be
+*fitted*, not about whether any method *finds* anything. The two results compose as §6
+claims only once the σ sweep is actually run. Recorded so the write-up does not assert a
+curve the project does not have.
+
+### ⚠️ The baseline arm named in the brief does not exist
+
+> *"Single-tier baseline — the existing spread+GP arm at full expensive budget."*
+
+E2's arms are `coord`, `doe`, `lhs`, `qlogei`, `qlognei`, `random`, `sobol`
+(`results/e2-grid.json`). **None of them fits a GP to a space-filling design** — the
+space-filling arms are scored from their observations and never build a surrogate. So
+the baseline has to be constructed here: **LHS(48) expensive + the project's own
+`build_gp`**, scored under both rules. It is ~15 lines and it reuses `build_gp`
+unchanged, so it is not a new model — but it is a new arm and it is *this* registration
+that creates it, not a prior result. (It is also Q46's first Paper-2 arm. Noted so the
+overlap is on the record; it is a control here, not a method.)
+
+### 🔬 MEASURED FIRST, AND IT REFRAMES THE SWEEP
+
+The expensive readout is not a gold standard. Under this project's own observation model
+`y = f(x)(1+ε) + η`, its correlation with the truth, over 4096 Sobol points on all 25
+instances:
+
+| | σ_rel = 0.25 | σ_rel = 0.10 |
+|---|---|---|
+| d=6 | **0.583** [0.546, 0.613] | **0.872** [0.850, 0.887] |
+| d=8 | **0.557** [0.506, 0.593] | **0.863** [0.830, 0.881] |
+
+Closed form check: `ρ_e = σ_f / sqrt(σ_f² + σ_rel²·E[f²])` with σ_f = 0.1228 and
+E[f²] = 0.478 gives 0.579 against the measured 0.583. The model is right.
+
+**Consequence for the brief's ρ range of 0.3–0.95.** Above ρ_e the "cheap" readout is
+*more accurate than the expensive one and also cheaper*. That is not a fidelity
+trade-off; it is a better assay, and the correct recommendation there is to stop running
+the expensive one. At σ_rel=0.25 that covers **everything above 0.583 — half the swept
+range.** The threshold question is only meaningful below ρ_e, and **ρ = ρ_e is drawn on
+every reported surface as the line above which the trade-off is not a trade-off.**
+
+Grid points are therefore re-spaced to straddle both anchors rather than sit uniformly:
+**ρ ∈ {0.30, 0.45, 0.55, 0.65, 0.80, 0.95}** brackets 0.583 (between 0.55 and 0.65) and
+0.872 (between 0.80 and 0.95). Six levels and the brief's stated range, both kept.
+
+### 📌 REGISTERED PREDICTION — computed, not asserted
+
+`scripts/q47_predict_threshold.py`, run and committed **before** the experiment script
+exists; output at `results/q47-prediction.log`. A Gaussian order-statistic proxy: no
+landscape, no GP, no design — only the selection and the reported-best scoring rule.
+Predicted gain over the single-tier baseline, in units of the response SD:
+
+| σ_rel | cost | ρ=0.30 | 0.45 | 0.55 | 0.65 | 0.80 | 0.95 |
+|---|---|---|---|---|---|---|---|
+| 0.25 | 3× | +0.019 | +0.054 | +0.059 | +0.061 | +0.054 | +0.046 |
+| 0.25 | 20× | +0.355 | +0.523 | +0.615 | +0.691 | +0.757 | +0.785 |
+| 0.10 | 3× | **−0.026** | **−0.003** | +0.006 | +0.012 | +0.006 | −0.001 |
+| 0.10 | 20× | +0.307 | +0.452 | +0.538 | +0.590 | +0.629 | +0.605 |
+
+**P1 — there is essentially no correlation threshold, and the finding is about the cost
+ratio.** For every cost ratio ≥ 5 the two-tier design pays at ρ = 0.30, the bottom of
+the swept range. The only crossing inside the grid is **cost ratio 3 at σ_rel=0.10,
+between ρ=0.45 and ρ=0.55**, and the effect there is ~0.01 — too small to matter. This
+is the brief's own "the threshold is very low" outcome, and the recommendation it implies
+is *build a cheap tier*.
+
+**P2 — the benefit is NON-MONOTONE in ρ at σ_rel=0.10, peaking near ρ≈0.65–0.80 and
+declining at 0.95.** Mechanism: near-perfect screening confirms 32 points that are nearly
+tied in truth, and a noisy confirmation cannot rank a tied set, so the reported point is
+close to a random draw from the top of the distribution. Imperfect screening leaves the
+confirmation step something to discriminate on. Registered at **low confidence** — the
+effect is 0.02 against a scale of 0.6, and the iid proxy has no spatial structure.
+
+**P3 — rule A and rule C should disagree, and the proxy cannot see why.** The
+screen-then-confirm arm fits its GP to 32 points *all clustered in the high-response
+region*. That is a good set to report from and a bad set to fit a surface to. So:
+two-tier should win under rule A roughly as tabled, and **lose, or win by much less,
+under rule C** — with the joint-model arm recovering the difference because its pseudo-
+observations span the whole space. If rule A and rule C give the same threshold, P3 is
+wrong and the clustering cost is smaller than argued.
+
+**What would falsify the design of the study itself:** any two-tier arm *losing* at
+ρ > ρ_e. Above ρ_e the cheap readout dominates the expensive one on accuracy and on
+cost simultaneously, so a loss there is a harness bug, not a finding.
+
+### The arms, and the one the brief does not have
+
+Equal **total cost**, never equal evaluation count. Budget 48 expensive-equivalents; a
+cheap assay costs 1/c of an expensive one; the cheap tier is allocated a fixed fraction
+**φ = 1/3** of the budget, so **k = 32 confirmations and n_cheap = 16c ∈ {48, 80, 160,
+320}**. Every term is an integer and the identity `k + n_cheap/c == 48` is asserted per
+arm per run, not assumed — a cost bug here would invalidate the whole surface.
+
+| id | expensive pts | how they are chosen | model | depends on ρ |
+|---|---|---|---|---|
+| `single` | 48 | LHS | GP on the 48 | no |
+| `budget_only` | 32 | LHS | GP on the 32 | **no** — the pure cost of the downgrade, using no cheap information at all |
+| `screen` | 32 | top-k by cheap value | GP on the 32 expensive | yes |
+| `joint` | 32 | 16 top + 16 random | recalibrated GP on 32 expensive **+ n_cheap pseudo-observations** | yes |
+
+**`budget_only` is not in the brief and is the arm that makes the surface readable.**
+Without it, a two-tier win confounds "the cheap tier helped" with "32 well-spread
+expensive points were enough anyway", and a two-tier loss confounds "the cheap tier was
+useless" with "losing 16 expensive points was expensive". It costs almost nothing: it
+depends on neither ρ nor the cheap draw, so it is computed once per (d, σ, φ).
+
+**Why `joint` confirms 16 top + 16 random.** Estimating the cheap→expensive relation
+needs spread in the cheap value. Confirming only the top-k gives a truncated range, which
+attenuates the slope and would handicap the joint model for a reason that has nothing to
+do with the model. The split keeps calibration spread and keeps something worth reporting.
+
+### The joint model, and the one place this deviates from the brief
+
+The brief says *"standard multi-fidelity co-kriging."* Implemented instead as
+**regression-adjusted co-kriging** (Le Gratiet & Garnier's recursive formulation, with
+the discrepancy absorbed into the noise): OLS-regress the expensive observation on the
+cheap observation at the points measured on both tiers, map every cheap point onto the
+expensive scale, and fit **the project's own `build_gp`** to the pooled data with the
+pseudo-observations carrying variance `max(σ̂_resid² − mean(Yvar_expensive), σ_add²)`.
+
+**Reason for the deviation, stated as required.** BoTorch's `MultiTaskGP` / ICM brings
+its own kernel, priors and transforms, so `joint` vs `screen` would differ in the
+fidelity structure *and* in the surrogate — the exact model-versus-design confound Q34
+and Q45 spent this project's budget untangling. The recalibration route holds kernel,
+priors, `Normalize`, `Standardize` and the fitting code identical and changes exactly one
+thing: whether the recalibrated cheap points are in the training set.
+
+**And it hands the joint model the correct functional form.** The generative cheap
+readout is affine plus Gaussian noise, which is precisely what the OLS adjustment
+assumes. So this arm is an **upper bound** on what a joint model achieves here. If even a
+correctly-specified joint model does not beat screen-then-confirm, that is a stronger
+result than the reverse — and it is the brief's own stated preference: *"If the naive
+version captures most of the benefit, that is the more useful finding."*
+
+### The cheap-readout model, and the invariance that doubles as a test
+
+`y_cheap = a·y_true + b + ε_cheap`, with **a and b sampled per instance** — a cheap
+readout with a stable known calibration is an unrealistically favourable case.
+Parameterised by ρ, not by σ_cheap: σ_cheap is derived as `a·σ_f·sqrt(1/ρ² − 1)`, where
+σ_f is the instance's own signal SD over the box, estimated once from a fixed 4096-point
+Sobol sample. **The achieved correlation is asserted against the target before anything
+is scored.**
+
+That derivation makes `y_cheap` an *exact* affine function of a calibration-free
+quantity, so **`screen` is mathematically invariant to (a, b)** — an affine map with
+a > 0 preserves the ranking it selects on. That is not a guess; it is provable from the
+construction, and it is written as a test. **If the sampled-vs-fixed sensitivity moves
+`screen` at all, the harness is broken.** Only `joint` can be hurt by unknown calibration,
+which is the whole point of sampling (a, b).
+
+### Two correlations, and only one of them is measurable in a morning
+
+ρ as swept is `corr(y_cheap, y_true)`. **A lab cannot measure that** — it has no access
+to the truth. What a lab measures in a morning is `corr(y_cheap, y_expensive)`, which is
+strictly lower, because the expensive readout is itself only 0.583/0.872 correlated with
+the truth. **The threshold is therefore reported on both axes**, with the empirical
+mapping between them tabulated per cell. Reporting only the ρ-to-truth axis would make
+the deliverable's central actionability claim false.
+
+### Limits — written before the numbers exist
+
+- **The correlation is assumed, not measured.** No published value exists for endothelial
+  differentiation. **That is why this is a threshold rather than a result.**
+- **The linear-plus-noise cheap-readout model is a choice.** A real cheap readout might
+  saturate, or track well at high response and poorly at low. The functional form is an
+  assumption, and it is the *same* assumption the `joint` arm's adjustment makes — so
+  `joint` is being graded on a model it is guaranteed to have right.
+- **Cost ratios are illustrative** and depend on a lab's actual assays.
+- **The allocation φ = 1/3 is a registered choice, not an optimum.** A threshold read off
+  a badly-split budget is a threshold for that split. Sensitivity at φ ∈ {1/4, 1/2} is
+  run at the primary cell only, and the surface is labelled with its φ.
+- **This says nothing about whether a suitable cheap readout exists for CD31.** It says
+  what one would have to be worth building.
+- **The proxy prediction above is rule A only.** It has no landscape and no surrogate.
+
+### Scope
+
+**Not a method arm in Paper 1.** Reported alongside the noise ceiling, in the same
+section, framed the same way. Gets a `docs/RESULTS.md` entry on completion, with the
+assumed-correlation limitation in its Limits field.
+
+**Status: registered. Prediction committed. Experiment not yet written.**
