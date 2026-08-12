@@ -1,0 +1,41 @@
+====================================================================================================
+Q48 — the design distribution E2's static arms never averaged over
+====================================================================================================
+  60 designs per arm per cell. E2 uses the designs at seeds (0, 1) and no others.
+
+  d=6 sigma_rel=0.25
+    arm       E2 reports   design-averaged       sd   pctile of E2     shift
+    lhs           0.1270            0.1752   0.0251             0%   +0.0481
+    sobol         0.1724            0.1777   0.0265            40%   +0.0053
+    random        0.2216            0.1778   0.0237            98%   -0.0439
+      qLogEI 0.1553  vs lhs as reported 0.1270 (lhs ahead by 0.0282)
+      qLogEI 0.1553  vs lhs design-averaged 0.1752 (BO ahead by 0.0199)
+
+  d=6 sigma_rel=0.1
+    arm       E2 reports   design-averaged       sd   pctile of E2     shift
+    lhs           0.1027            0.1278   0.0183             5%   +0.0251
+    sobol         0.1210            0.1281   0.0168            35%   +0.0071
+    random        0.1693            0.1292   0.0225            98%   -0.0401
+      qLogEI 0.0874  vs lhs as reported 0.1027 (BO ahead by 0.0153)
+      qLogEI 0.0874  vs lhs design-averaged 0.1278 (BO ahead by 0.0404)
+
+  d=8 sigma_rel=0.25
+    arm       E2 reports   design-averaged       sd   pctile of E2     shift
+    lhs           0.1627            0.1769   0.0193            25%   +0.0142
+    sobol         0.1804            0.1731   0.0189            57%   -0.0073
+    random        0.1712            0.1822   0.0190            28%   +0.0110
+      qLogEI 0.1247  vs lhs as reported 0.1627 (BO ahead by 0.0380)
+      qLogEI 0.1247  vs lhs design-averaged 0.1769 (BO ahead by 0.0522)
+
+  d=8 sigma_rel=0.1
+    arm       E2 reports   design-averaged       sd   pctile of E2     shift
+    lhs           0.1260            0.1342   0.0142            28%   +0.0082
+    sobol         0.0968            0.1280   0.0140             3%   +0.0312
+    random        0.1272            0.1344   0.0144            28%   +0.0072
+      qLogEI 0.0972  vs lhs as reported 0.1260 (BO ahead by 0.0288)
+      qLogEI 0.0972  vs lhs design-averaged 0.1342 (BO ahead by 0.0370)
+
+====================================================================================================
+  A static arm's CI in this project is a within-design interval. The
+  design component is not in it, because all 25 instances share the design.
+====================================================================================================

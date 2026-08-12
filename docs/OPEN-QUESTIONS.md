@@ -3392,3 +3392,98 @@ section, framed the same way. Gets a `docs/RESULTS.md` entry on completion, with
 assumed-correlation limitation in its Limits field.
 
 **Status: registered. Prediction committed. Experiment not yet written.**
+
+
+---
+
+## 🔴 Q48 — E2's STATIC ARMS SHARE ONE DESIGN ACROSS ALL 25 INSTANCES, AND `lhs` DREW A GOOD ONE
+
+**Found by accident.** Q47 needed a single-tier LHS+GP baseline. Built with a
+per-instance design seed it scored **0.1778** at d=6 σ=0.25; `results/e2-grid.json`
+reports **0.1270** for the `lhs` arm at the same cell. Same code path, same instances,
+same noise draws, same scoring rule. **Only the design seed differed.**
+
+### The mechanism
+
+`runner.static_design(bounds, method, budget, seed)` **takes no instance argument.** At a
+given seed every instance in the cell is scored on the identical 48 points, so a cell
+with 2 seeds contains **2 distinct designs across all 50 runs**, not 50.
+
+The second consequence is the serious one:
+
+1. The reported mean is conditioned on those two draws rather than averaged over designs.
+2. **`instance_bootstrap` resamples the 25 instances as if independent. They are not** —
+   they share a design. So the design component of variance is **absent from every
+   confidence interval this project reports for a static arm.**
+
+### Result — `results/q48-design-variance.log`, 60 designs per arm per cell
+
+| d=6 σ=0.25 | E2 reports | design-averaged | sd | percentile of E2's draw |
+|---|---|---|---|---|
+| `lhs` | 0.1270 | **0.1752** | 0.0251 | **0th of 60** |
+| `sobol` | 0.1724 | 0.1777 | 0.0265 | 40th |
+| `random` | 0.2216 | 0.1778 | 0.0237 | 98th |
+
+**Two findings, and the first was invisible before.**
+
+**(a) At 48 points in 6 dimensions, LHS, Sobol and uniform random are indistinguishable.**
+Design-averaged they are 0.1752 / 0.1777 / 0.1778 — a spread of 0.003 against a
+design SD of 0.025. E2's reported spread of 0.095 between the best and worst of them is
+**almost entirely which design each happened to draw**, not a property of the design
+method. The same holds at d=6 σ=0.10 (0.1278 / 0.1281 / 0.1292) and at both d=8 cells.
+
+**(b) The comparison the paper leans on reverses at the registered primary cell.**
+
+| d=6 σ=0.25 | verdict |
+|---|---|
+| qLogEI 0.1553 vs `lhs` **as reported** 0.1270 | LHS ahead by 0.0282 |
+| qLogEI 0.1553 vs `lhs` **design-averaged** 0.1752 | **BO ahead by 0.0199** |
+
+At the other three cells BO was already ahead and design-averaging widens its margin
+(σ=0.10: 0.0153 → 0.0404; d=8 σ=0.25: 0.0380 → 0.0522; d=8 σ=0.10: 0.0288 → 0.0370).
+
+### ⚠️ WHAT THIS DOES **NOT** ESTABLISH — read before quoting (b)
+
+**Only the LHS side has been design-averaged.** qLogEI carries the same conditioning:
+`initial_design` is `sobol_design(bounds, 2d+2, seed)`, which also takes no instance
+argument, so its **14-point opening batch is shared across all 25 instances too**. Its
+0.1553 is therefore also a two-draw number.
+
+The shared component should be smaller — 14 points instead of 48, and the remaining 34
+are chosen from each instance's own data — but *should be smaller* is an argument, not a
+measurement. **The reversal in (b) is indicated, not established.** Settling it needs
+qLogEI re-run across ~30 opening seeds, which is ~30× the primary cell's BO compute and
+has not been run. Registered here as the outstanding test.
+
+Finding (a) does not depend on that caveat: it is a comparison among static arms, all
+three measured the same way.
+
+### Why this is not the same as Q39 or Q46
+
+Three now bear on "LHS beats BO", and they are independent:
+
+| | what it says |
+|---|---|
+| **Q39** | Holm over the 39 non-primary contrasts takes p 0.0147 → 0.2356. **A tie.** |
+| **Q46** | the Paper-2 brief's premise that this is "a win" is not supported. |
+| **Q48** | the point estimate itself is the **best of 60 design draws**, and averaging it **reverses the sign**. |
+
+Q39 widens the interval. **Q48 moves the estimate.** Anything in the write-up that
+reports the static arms' *relative ordering* as a finding is affected.
+
+### Cost of having not known
+
+`results/q48-design-variance.log` is **seconds of numpy** — static arms are design,
+evaluate, reported-best, with no GP anywhere. It was never run because nobody asked
+whether the design was a random variable.
+
+### Actions
+
+- **Any claim about the relative ordering of `lhs` / `sobol` / `random` must be struck**
+  or restated as design-averaged. `docs/CLAIMS.md` and `docs/RESULTS.md` both carry
+  E2 static-arm numbers.
+- **`instance_bootstrap` intervals for static arms are within-design intervals** and must
+  be labelled as such wherever they appear.
+- The fix for a future run is one argument: seed the static design on
+  `(instance, seed)`, as `run_q47_multifidelity.py` already does.
+- **Do not restate (b) as established** until the qLogEI opening-seed sweep is run.
