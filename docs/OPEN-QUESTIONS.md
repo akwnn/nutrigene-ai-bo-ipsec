@@ -3487,3 +3487,105 @@ whether the design was a random variable.
 - The fix for a future run is one argument: seed the static design on
   `(instance, seed)`, as `run_q47_multifidelity.py` already does.
 - **Do not restate (b) as established** until the qLogEI opening-seed sweep is run.
+
+
+---
+
+## ✅ Q49 — THE NOISE THRESHOLD CURVE. The outstanding item, and it is not the curve anyone described.
+
+Every close-out list has carried *"the noise threshold curve"* as unwritten, and Q47's §6
+pairs its correlation floor with a noise ceiling stated as **"above CV ≈ X, no method
+finds anything within budget."** That sentence is now measurable, and **it is false.**
+
+What existed before was held-out surrogate R² at two noise levels — 0.106 at σ_rel=0.25,
+0.744 at 0.10 (`results/bench-surrogate.log`). That is a statement about how well a model
+can be **fitted**, not about what an experimenter walks away with.
+
+**Found while validating a control arm.** Q47's under-budget arm spends 32 expensive
+assays instead of 48 and scored *better* at d=6 σ=0.10 under rule A. Chasing that
+produced this. `results/q49-noise-threshold.log`, no GP anywhere, seconds of numpy.
+
+### The measurement splits the regret in two
+
+| | what it is |
+|---|---|
+| **oracle-best** | the best TRUE value among the points visited — what the design **found** |
+| **reported** | the true value of the point chosen by the best *observation* — what you **walk away with** (rule A, `reported_best_curve`) |
+
+**The gap between them is the noise ceiling in units anyone can act on.**
+
+### ❌ FIRST, THE CORRECTION: more assays keep helping at every CV
+
+| d=6, rule A, paired at instance level | 48 → 96 | 48 → 192 |
+|---|---|---|
+| σ_rel = 0.10 | +0.0320 [+0.0159, +0.0492] | +0.0409 [+0.0272, +0.0547] |
+| σ_rel = 0.25 | +0.0351 [+0.0086, +0.0629] | +0.0384 [+0.0078, +0.0672] |
+| σ_rel = 0.50 | +0.0211 [−0.0061, +0.0494] **null** | +0.0362 [+0.0055, +0.0699] |
+
+**Doubling and quadrupling the budget both help, significantly, at every noise level
+tested including σ_rel=0.50.** Only one contrast in the whole sweep is null
+(48→96 at σ=0.50, and 48→96 at d=8 σ=0.20). So "above CV ≈ X, no method finds anything
+within budget" must not be written. **Nothing in this project supports it.**
+
+⚠️ **A correction to a reading I made from this same table.** Looking at the unpaired
+means — d=6 σ=0.25 reported-best of 0.1699 / 0.1746 / 0.1763 / 0.1640 / 0.1778 at
+n = 16 / 24 / 32 / 40 / 48 — I said quadrupling the budget buys nothing. The paired
+contrast says otherwise, and the paired contrast is the correct instrument: the marginal
+SE at n=25 instances is ~0.03, which swamps the effect, while the instance-paired
+difference has a CI of ±0.03 around +0.038. **An unpaired comparison of two means from
+the same 25 instances throws away the pairing that makes the effect visible.**
+
+### ✅ WHAT THE CURVE ACTUALLY SHOWS — the identification gap
+
+Oracle-best does not depend on σ at all: the design finds what it finds. So the entire
+noise effect is the gap between finding and identifying, and **that gap is where the
+threshold lives.** At n=192:
+
+| σ_rel | d=6 gap | share of remaining regret | d=8 gap | share |
+|---|---|---|---|---|
+| 0.05 | +0.0232 | **30%** | +0.0273 | 32% |
+| 0.10 | +0.0431 | **44%** | +0.0514 | 47% |
+| 0.15 | +0.0671 | **55%** | +0.0544 | 49% |
+| 0.20 | +0.0796 | **60%** | +0.0667 | 54% |
+| 0.25 | +0.0855 | **61%** | — | — |
+| 0.35 | +0.0936 | 63% | — | — |
+| 0.50 | +0.1148 | 68% | — | — |
+
+**The threshold is CV ≈ 0.15.** Below it, most of what you are still missing is a recipe
+you never tried. Above it, **most of what you are missing is a recipe you already ran and
+could not tell was the best one.**
+
+That is the actionable statement, and it is a different instruction from the one the
+brief expected:
+
+> Below CV ≈ 0.15, spend on **more conditions**. Above it, spend on **identifying the
+> conditions you already ran** — replication, or a better readout. More distinct
+> conditions still help, but they are no longer where most of the loss is.
+
+### 🔗 How it composes with Q47, which is the pairing §6 wanted
+
+At d=6 σ_rel=0.25, at **equal total cost of 48 expensive-equivalents**, Q47's two-tier
+design with a cost ratio of 20× and ρ=0.80 gains **+0.0638** [+0.0360, +0.0908].
+Quadrupling the expensive budget to 192 — **four times the money** — gains **+0.0384**.
+
+> **A cheap screening tier at a 20:1 cost ratio is worth more than quadrupling the
+> expensive budget, and costs nothing extra.**
+
+Both results say the same thing from opposite directions: at this noise level the
+expensive assay's *identification* is the binding constraint, so buying more of it is the
+weaker move. It also independently supports the **replication** half of Q46's Paper-2
+derivation, which was derived from the surrogate-fit ceiling rather than from regret.
+
+### Limits
+
+- **σ_rel above 0.25 is outside the ensemble's design range.** The acceptance floor was
+  calibrated so a true depth of ~0.11 clears 3σ/√48 at σ_rel=0.25 (Phase A2). The 0.35
+  and 0.50 rows describe instances built for a quieter assay. They are reported because
+  the trend is the answer, not because those instances are calibrated for it.
+- **One design family.** LHS only, seeded per instance (Q48). An adaptive arm would place
+  points differently and its oracle-best curve would differ; the identification gap is a
+  property of the readout, not of the design, so it should carry over, but that is an
+  argument and not a measurement.
+- **No replication arm.** The recommendation "spend on identification above CV 0.15"
+  follows from the size of the gap, not from a measured replication arm beating a
+  non-replicated one. **That arm is Q46's, and it has not been run.**
