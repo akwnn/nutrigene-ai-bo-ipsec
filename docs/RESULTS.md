@@ -11,7 +11,7 @@ what ran, why, what it found, and whether it is still current.
    entry. *A number with no committed file does not go in* — one fabricated figure has
    already nearly entered a decision.
 2. **Superseded entries stay, marked.** Nothing is deleted.
-3. **Wrong predictions get their own line.** Seven registered predictions have been wrong.
+3. **Wrong predictions get their own line.** Ten registered predictions have been wrong.
    Each is more informative than a correct one; burying them makes the correct ones
    worthless.
 4. **Corrections get their own line**, including *how the error arose*.
@@ -621,7 +621,165 @@ impression invites the wrong inference from a project that found its own mistake
 
 ---
 
-# PART 9 — WRONG PREDICTIONS
+
+### D13–D16, from the threshold work
+
+| # | defect | how it was caught |
+|---|---|---|
+| **D13** | Q47's pseudo-observation variance used the *unbiased* `resid_var − mean(yvar)`. At σ=0.25 the expensive readout carries more variance than the signal, so the two terms are the same size and the difference **went negative on every draw** — pinning cheap points at the noise floor and telling the model they were exact. | A smoke test: the joint arm scored 0.244 against a 0.100 baseline. Fixed before the grid ran. |
+| **D14** | Q47's achieved-ρ guard used a flat ±0.02 tolerance. That is **1.4 SD at ρ=0.30 and 13 SD at ρ=0.95** — it fires on ordinary sampling error where it should not and cannot fire where it should. | It killed the first grid launch three minutes in. Diagnosed by verifying the construction unbiased at two sample sizes *before* touching the tolerance. |
+| **D15** | Q47's fixed-calibration arm does **not** isolate `(a, b)`: they are drawn from the generator that then draws the cheap readout's noise, so skipping them diverges every later draw. The arm varies the calibration **and** re-draws the noise. | Found while writing up the sensitivity table. Left in place and reported as such, because `screen`'s provable invariance turns it into a negative control with a known true value of zero. |
+| **D16** | **E2's static arms share one design across all 25 instances** (Q48). Every static-arm interval in this project is a within-design interval. | A control arm in a different experiment disagreed with the published number by 0.05. |
+
+**A methodological note, not a code defect.** While reading Q49 I claimed from unpaired
+means that quadrupling the budget bought nothing. The paired contrast says it buys +0.038
+with a CI clear of zero. The marginal SE at 25 instances is ~0.03 and swamps the effect.
+**Comparing two means computed from the same 25 instances throws away the pairing that
+makes the effect visible** — the same error class as D-series arithmetic slips, in the
+reading rather than in the code.
+
+
+---
+
+# PART 9 — THE THRESHOLD WORK, AND WHAT IT FOUND IN E2
+
+Three entries, and **two of the three were not asked for.** Q48 and Q49 both came out of
+validating a control arm that Q47's brief did not include.
+
+---
+
+## Q47 — the multi-fidelity threshold. `current`
+
+**Files:** `results/q47-multifidelity.log` · `results/q47-analysis.log` ·
+`results/q47-multifidelity.json` · `results/q47-prediction.log` ·
+registration in `OPEN-QUESTIONS.md` Q47, committed before the experiment existed.
+
+### Why
+
+Not "does multi-fidelity help" — that answer is whatever correlation you assume, and no
+correlation is published for endothelial differentiation. Sweep the correlation and the
+cost ratio instead, and report where a cheap screening tier stops paying.
+
+### What ran
+
+6,600 runs. 6 correlations × 4 cost ratios × 4 cells, budget 48 expensive-equivalents,
+equal total cost asserted per arm per run. Four arms: single-tier LHS+GP at full budget;
+a 32-point control buying nothing; screen-then-confirm; and a regression-adjusted
+co-kriging joint model. Zero rule-C fit failures in 4,800 fits.
+
+### Result
+
+At the primary cell and φ=1/3, a cheap tier at **10:1 or better** pays from a
+lab-measurable correlation of about **0.26–0.32**. Below 5:1 it does not pay at any
+correlation. **All three registered predictions were wrong** (Part 10, rows 8–10).
+
+**The largest effect is on neither registered axis.** The budget split φ dominates the
+correlation: at cost ratio 5×, φ=0.25 shows no advantage at any ρ while φ=0.5 shows one at
+every ρ including 0.30 — same cell, same budget, same cost ratio.
+
+### What it means
+
+The deliverable as specified is under-specified. **The surface is over (ρ, cost ratio, φ),
+and φ is the leading term.** The practical question is not *"is my cheap assay correlated
+enough"* but *"how much of the budget goes to screening"*.
+
+And the control settles what the gain is made of: cutting 48 expensive points to 32 and
+buying nothing costs **nothing measurable in 7 of 8 comparisons**. The two-tier gain is
+not "the cheap tier bought more than the points it displaced" — the displaced points were
+worth nothing measurable, and the gain comes entirely from screening a larger pool.
+
+### Limits
+
+- **The correlation is assumed, not measured.** No published value exists for endothelial
+  differentiation. **That is why this is a threshold and not a result.**
+- Every number is at **φ=1/3** except the sensitivity table, and must be quoted with it.
+- The **linear-plus-noise cheap readout is a choice**, and it is the same form the joint
+  arm's adjustment assumes, so `joint` is graded on a model it is guaranteed to have right.
+- `joint`'s pseudo-observation variance is conservative by 2×–20× (D13), which biases
+  against it. The registration's "clean upper bound" claim is **withdrawn**.
+- The fixed-calibration arm does not isolate `(a, b)` (D15).
+- Cost ratios are illustrative. Nothing here says a cheap CD31 readout exists.
+
+---
+
+## Q48 — E2's static arms share one design across all 25 instances. `current` 🔴
+
+**Files:** `results/q48-design-variance.log` · `results/q48-design-variance.json`
+
+### Why
+
+Not planned. Q47's LHS+GP baseline scored 0.1778 at d=6 σ=0.25 where `e2-grid.json`
+reports 0.1270 for `lhs`. Same code, same instances, same noise, same scoring rule — only
+the design seed differed.
+
+### Result
+
+`runner.static_design` takes no instance argument, so a cell holds **2 designs across all
+50 runs, not 50**. Over 60 draws at d=6 σ=0.25: `lhs` design-averaged **0.1752** against
+E2's 0.1270, which is the **0th percentile of 60**. `sobol` 0.1777 (40th), `random`
+0.1778 (98th).
+
+### What it means
+
+**At 48 points in 6 dimensions, LHS, Sobol and uniform random are indistinguishable** —
+design-averaged spread 0.003 against a design SD of 0.025. E2's reported 0.095 spread
+between them is which design each one drew.
+
+And `instance_bootstrap` treats the 25 instances as independent when they share a design,
+so **the design component of variance is absent from every interval this project reports
+for a static arm.**
+
+### Limits
+
+The primary-cell reversal it implies — qLogEI 0.1553 vs `lhs` design-averaged 0.1752, "BO
+ahead by 0.020" — is **indicated, not established.** qLogEI's 14-point opening is also
+instance-independent and has **not** been design-averaged. Settling it needs qLogEI across
+~30 opening seeds. **Not run.** Finding (a) does not depend on that caveat.
+
+---
+
+## Q49 — the noise threshold curve. `current`
+
+**Files:** `results/q49-noise-threshold.log` · `results/q49-noise-threshold.json`
+
+### Why
+
+The long-outstanding item. Q47's §6 states the noise ceiling as *"above CV ≈ X, no method
+finds anything within budget."* Found while chasing Q47's control arm scoring better on a
+smaller budget.
+
+### Result
+
+**That sentence is false and must not be written.** Paired at instance level, 48→192
+assays helps at every noise level tested including σ_rel=0.50 (+0.0384 at σ=0.25, CI clear
+of zero). Only one contrast in the sweep is null.
+
+What is true: oracle-best does not depend on σ at all, so the entire noise effect is the
+gap between **finding** a recipe and **identifying** it. At n=192, d=6, that gap is
+**30 / 44 / 55 / 60 / 61 / 63 / 68 %** of remaining regret at σ_rel = 0.05 / 0.10 / 0.15 /
+0.20 / 0.25 / 0.35 / 0.50.
+
+### What it means
+
+**The threshold is CV ≈ 0.15.** Below it, what you are missing is a recipe you never
+tried. Above it, most of what you are missing is a recipe **you already ran and could not
+tell was the best one.** So below 0.15 spend on more conditions; above it spend on
+identifying the ones you have.
+
+**Composed with Q47:** at equal total cost a 20:1 cheap tier gains +0.0638 where
+quadrupling the expensive budget gains +0.0384. A cheap screening tier is worth more than
+four times the money. Both say the same thing — the expensive assay's *identification*,
+not its coverage, is binding.
+
+### Limits
+
+σ_rel above 0.25 is outside the ensemble's design range. One design family (LHS). **No
+replication arm has been run** — the recommendation follows from the size of the gap, not
+from a measured replication arm beating a non-replicated one. That arm is Q46's.
+
+---
+
+# PART 10 — WRONG PREDICTIONS
 
 Kept together because they are the most informative rows in this file.
 
@@ -634,8 +792,13 @@ Kept together because they are the most informative rows in this file.
 | 5 | Q37 (twice) | Two power calculations, both making the design look *powerful*. |
 | 6 | Q34: the decision rule would pick one of three branches | **Wrong.** The decomposition is cell-dependent — a fourth outcome I had not listed. |
 | 7 | Q45: the design contrast would stay subordinate to the surrogate effect | **Wrong at σ=0.10**, where it is 4–5× larger. Right at σ=0.25. |
+| 8 | Q47 P1: no correlation threshold — two-tier pays at ρ=0.30 for every cost ratio ≥5 | **Wrong.** It pays at ρ=0.30 in 5 of 12 such cells. There is a threshold and it moves with the cost ratio. |
+| 9 | Q47 P2: the benefit is non-monotone in ρ at σ=0.10, declining at 0.95 | **Wrong.** It rises in 6 of 8 combinations. Registered at low confidence, and that was warranted. |
+| 10 | Q47 P3: two-tier does worse under rule C, because the top-k design is clustered | **Wrong as a directional claim** — 4 cells lower, 4 higher, 8 equal. At d=6 alone it looked systematic; the completed grid does not support it. |
 | — | *the close-out brief's* prediction that Q45 would strengthen the design null | **Refuted.** The design effect is large and significant at all four cells. |
+
+**Ten wrong predictions now, plus the brief's.** Q47 is the sharpest case: its prediction was a *committed computation* rather than a hunch — a Gaussian order-statistic proxy, run and committed before the experiment existed. It got the effect sizes roughly right and the **detectability** wrong, because it had no instance-to-instance variance and so could not know which effects would clear an n=25 interval. A more precise prediction failed in a more informative way.
 
 **Correct predictions, for balance:** Q33's headline; Q34's registered primary (all four
 cells); Q42's secondary prediction that the scoring effect would survive on every family;
-Q35's registered commitment to report all three scorings whichever way it came out.
+Q35's registered commitment to report all three scorings whichever way it came out; and Q47's registered statement that a two-tier arm losing above the expensive readout's own correlation would be a harness bug — it never lost there.

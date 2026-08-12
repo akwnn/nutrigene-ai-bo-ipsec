@@ -214,7 +214,8 @@ study. **Every conclusion here is a conclusion about near-separable landscapes.*
 on landscapes with different structure is untested.
 
 **L3 Two arms are unpaired** — `lhs` by registered exemption, `coord` because it starts
-from a random interior point (Q18, Q23). Wider intervals for those comparisons, not bias.
+from a random interior point (Q18, Q23). Wider intervals for those comparisons, not bias. ⚠️ **Not the whole story — see L19.** A shared design across instances is a
+separate defect from unpairing across arms, and that one does bias the estimate.
 
 **L4 Prediction-interval coverage is never nominal anywhere on the grid** — highest cell
 **0.625** against a nominal 0.95, including at ρ=1.2 (Q16). And coverage at the model's
@@ -286,7 +287,7 @@ alternative (Hou 2017) is a presence/absence design with no dose axis.
 
 **L14 Cost is reported in evaluations, and evaluations are not what a lab pays (Q38).**
 At the primary cell the DoE pipeline needs **3 sequential rounds** and qLogEI needs
-**10**; Latin hypercube reaches lower regret than qLogEI in **one**. A fixed-evaluation
+**10**; Latin hypercube reaches lower regret than qLogEI in **one**. ⚠️ **That LHS number is the best of 60 design draws — see L19**; the round-count comparison stands, the regret comparison inside it does not. A fixed-evaluation
 comparison silently grants BO seven extra plate cycles. A regret-versus-rounds *curve*
 cannot be drawn from the committed grid — E2 persisted summary rows, not curves — so only
 the endpoint and the exact round count are available. Nor is q=4 defended as the right
@@ -320,6 +321,31 @@ states "ten emulated experimental datasets, none of them biological"; Olympus in
 provides **33 experimentally-derived benchmarks** alongside 33 analytical functions, and
 **the biological breakdown could not be confirmed** from anything indexed. Either read the
 Olympus paper and restate it precisely, or drop the sentence — do not ship the count.
+
+**L19 🔴 EVERY STATIC-ARM NUMBER IN E2 IS CONDITIONED ON TWO DESIGN DRAWS, AND `lhs`
+DREW THE BEST OF SIXTY (Q48).** `runner.static_design(bounds, method, budget, seed)` takes
+no instance argument, so at a given seed **all 25 instances are scored on the identical
+48 points** and a cell contains 2 distinct designs across 50 runs, not 50. Two consequences:
+
+- **The reported ordering of the static arms is not a finding.** Design-averaged over 60
+  draws at d=6 σ=0.25, `lhs` / `sobol` / `random` are **0.1752 / 0.1777 / 0.1778** — a
+  spread of 0.003 against a design SD of 0.025. E2 reports 0.1270 / 0.1724 / 0.2216, a
+  spread of 0.095. `lhs` sits at the **0th percentile of 60** and `random` at the 98th.
+  **At 48 points in 6 dimensions these three designs are indistinguishable.**
+- **`instance_bootstrap` resamples the 25 instances as independent when they share a
+  design**, so the design component of variance is absent from every static-arm interval
+  this project reports. Those are **within-design** intervals and must be labelled so.
+
+⚠️ This bears on **L14** and **L15**, both of which quote the `lhs` number. It is
+independent of L15's multiplicity finding: Holm *widens the interval* to a tie, whereas
+this **moves the point estimate**. Design-averaged, qLogEI 0.1553 against `lhs` 0.1752
+puts **BO ahead by 0.020** at the registered primary cell, reversing the sign.
+
+**That reversal is indicated, NOT established, and must not be written as established.**
+qLogEI's 14-point opening batch is also instance-independent, so its 0.1553 is also a
+two-draw number; the shared component should be smaller but has not been measured.
+Settling it requires qLogEI re-run across ~30 opening seeds. **Not run.** The
+indistinguishability finding above does not depend on that caveat.
 
 **L16 A benchmark-design trap worth stating generally.** **Ackley's optimum sits at the
 exact centre of the coded box**, and every screening and CCD design includes centre runs
