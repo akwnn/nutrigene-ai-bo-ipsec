@@ -86,14 +86,33 @@ RHOS = (0.30, 0.45, 0.55, 0.65, 0.80, 0.95)
 COST_RATIOS = (3, 5, 10, 20)
 CELLS = ((6, 0.25), (6, 0.10), (8, 0.25), (8, 0.10))
 N_RESTARTS, RAW_SAMPLES = 20, 4096
-N_CHECK = 4096                        # Sobol sample for sigma_f and the achieved rho
-RHO_TOL = 0.02
+N_CHECK = 65536                       # Sobol sample for sigma_f and the achieved rho
+RHO_TOL_SD = 5.0                      # see rho_tolerance()
 A_RANGE, B_RANGE = (0.5, 2.0), (-0.5, 0.5)
 RULE = "=" * 104
 
 # measured; see the Q47 registration and results/q47-prediction.log
 RHO_EXPENSIVE = {(6, 0.25): 0.583, (6, 0.10): 0.872,
                  (8, 0.25): 0.557, (8, 0.10): 0.863}
+
+
+def rho_tolerance(rho: float, n: int = N_CHECK, n_sd: float = RHO_TOL_SD) -> float:
+    """How far the achieved correlation may sit from its target before we call it a bug.
+
+    A fixed tolerance is the wrong shape. The achieved correlation is a **sample**
+    correlation over the check draw, whose SD is the textbook ``(1 - rho^2)/sqrt(n)`` --
+    measured here as 0.0138 against a predicted 0.0142 at rho=0.30, n=4096. A flat
+    +/-0.02 is 1.4 SD at rho=0.30 and 13 SD at rho=0.95, and a shard makes 300 draws, so
+    the flat version fires on ordinary sampling error and never fires where it should.
+
+    **It did.** The first launch of this grid died on instance 763e0f58925816ca at
+    rho=0.30 with an achieved 0.2706 -- a 2.2 SD draw, correctly flagged as out of
+    tolerance and wrongly interpreted as an error. The construction was verified
+    unbiased at both n before this was changed rather than after.
+
+    Floored at 0.01 so the check stays a wiring check rather than a precision contest.
+    """
+    return max(0.01, n_sd * (1.0 - rho**2) / np.sqrt(n))
 
 
 def _seed_of(instance_id: str, seed: int, salt: int) -> int:
@@ -185,10 +204,12 @@ def run_shard(dim: int, sigma: float, cost_ratio: int, *, phi: float = PHI,
                 yc_check = draw_cheap(f_check, tier, z=z_check)
                 rho_true = float(np.corrcoef(yc_check, f_check)[0, 1])
                 rho_obs = float(np.corrcoef(yc_check, y_check)[0, 1])
-                if abs(rho_true - rho) > RHO_TOL:
+                tol = rho_tolerance(rho)
+                if abs(rho_true - rho) > tol:
                     raise AssertionError(
-                        f"achieved rho {rho_true:.4f} != target {rho} on "
-                        f"{inst.instance_id} (d={dim} sigma={sigma})")
+                        f"achieved rho {rho_true:.4f} is more than {tol:.4f} from "
+                        f"target {rho} on {inst.instance_id} (d={dim} sigma={sigma}) -- "
+                        f"that is a wiring error, not sampling error")
 
                 y_cheap = draw_cheap(f_cheap, tier, z=z_cheap)
                 row = dict(base, rho=rho, rho_true=rho_true, rho_obs=rho_obs,

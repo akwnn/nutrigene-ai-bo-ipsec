@@ -176,3 +176,45 @@ def test_recalibration_needs_at_least_three_paired_points() -> None:
         recalibrate(cheap_paired=np.array([1.0, 2.0]), exp_paired=np.array([1.0, 2.0]),
                     cheap_all=np.array([1.0, 2.0, 3.0]), yvar_exp=np.array([1.0, 1.0]),
                     sigma_add=0.01)
+
+
+# ---------------------------------------------------------------------------
+# the tolerance the achieved-correlation guard uses
+# ---------------------------------------------------------------------------
+
+
+def _rho_tolerance():
+    import importlib.util
+    import pathlib
+    spec = importlib.util.spec_from_file_location(
+        "q47", pathlib.Path(__file__).resolve().parents[1]
+        / "scripts" / "run_q47_multifidelity.py")
+    m = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(m)
+    return m.rho_tolerance, m.N_CHECK
+
+
+def test_the_correlation_guard_tolerates_sampling_error_and_nothing_more() -> None:
+    """The first launch of the grid died on a 2.2 SD draw at rho=0.30 because the
+    tolerance was flat. It must track the sample correlation's own SD, (1-rho^2)/sqrt(n)."""
+    tol, n = _rho_tolerance()
+    rng = np.random.default_rng(11)
+    for rho in (0.30, 0.55, 0.95):
+        sf = 0.1228
+        f = rng.normal(0.68, sf, size=n)
+        got = []
+        for s in range(60):
+            # 9000+ so the z stream cannot collide with the one that generated f --
+            # default_rng(11) produced both on the first attempt and corr(z, f) was 1.0
+            z = np.random.default_rng(9000 + s).standard_normal(n)
+            tier = CheapTier(a=1.3, b=0.2, sigma_cheap=cheap_sigma(1.3, float(f.std()),
+                                                                  rho), rho_target=rho)
+            got.append(np.corrcoef(draw_cheap(f, tier, z=z), f)[0, 1])
+        dev = np.abs(np.array(got) - rho)
+        assert dev.max() < tol(rho), f"ordinary sampling error trips the guard at {rho}"
+        # and a genuinely wrong sigma_cheap -- the failure mode it exists for -- is caught
+        wrong = CheapTier(a=1.3, b=0.2,
+                          sigma_cheap=cheap_sigma(1.3, float(f.std()), rho) * 1.5,
+                          rho_target=rho)
+        bad = np.corrcoef(draw_cheap(f, wrong, z=z), f)[0, 1]
+        assert abs(bad - rho) > tol(rho)
