@@ -3129,3 +3129,54 @@ Q34's headline — *"it is the model, not the points"* — **survives at the reg
 - The design effect favours **the adaptive design**, which is the opposite of what "structured designs are better conditioned" would predict, and it is explained by region size rather than by design quality.
 
 **Anything in the write-up that says the design does not matter is now wrong and must be changed.**
+
+---
+
+## 📋 PAPER 2 — REGISTERED DERIVATION (Q46). **NOT ACTIVE. No code until Paper 1 is submitted.**
+
+Registered now rather than later purely for provenance: the point of §2 is to record that the method was *derived*, and a registration dated before any implementation is stronger evidence of that than one written afterwards. **This does not start Paper 2.**
+
+### ⚠️ FIVE PREMISES CHECKED AGAINST THIS CLONE — THREE HOLD, TWO DO NOT
+
+| premise | brief | this clone | verdict |
+|---|---|---|---|
+| noise ceiling | R² 0.106 @ σ=.25, 0.744 @ σ=.10 | 0.106 / 0.744 (`bench-surrogate.log`) | ✅ confirmed |
+| additive-kernel null | 0.0015, p=0.71 | −0.0015, p=0.7112 (`q30-additive.log`) | ✅ confirmed |
+| coordinate descent ties BO | competitive at d=6 | 0.1420 vs qLogEI 0.1553, contrast null | ✅ confirmed |
+| surrogate effect | −0.266, **≈76 SD** | **−0.2171**, **4.6 SD**, 0/10,000, p=1e-4 | ⚠️ real, both figures wrong |
+| "LHS beats BO" | a win | Holm: p 0.0147 → **0.2356** | ❌ it is a **TIE** |
+| "design effect an order of magnitude smaller" | −0.049 | **refuted by Q45** | ❌ |
+
+### ❌ The load-bearing premise is refuted by a result that postdates the brief
+
+**Q45** refit both polynomial cells on the same four factors, removing the model-dimensionality confound. With the model held fixed the design effect is **+0.1129 / +0.2883 / +0.1247 / +0.2669** (all p ≤ 0.0008) — **at σ=0.10 it is four to five times the surrogate effect.** The brief's phrase *"it holds at both model orders"* names precisely the test that contradicts it.
+
+**And the sign runs against the proposed method.** Every measured design contrast favours the **adaptive** design: Q34's GP contrast (cell 4 − cell 5) is −0.0761 / −0.2025 / −0.0082 / −0.0292 — the adaptive design beats the structured one *with the GP held fixed*. Q45 finds the same with the polynomial fixed. **The evidence says adaptive designs produce better data**, which is the opposite of what "adaptive proposals are not earning their cost" requires.
+
+### ❌ The brief mislabels its own first new arm
+
+> *"Space-filling + GP, no replication — This is Q34's cell 5 as a live arm."*
+
+**Cell 5 is the DoE design (screen → CCD in a sub-box) plus a GP. It is not space-filling.** Nothing in this project measures space-filling + GP, so that arm is genuinely new and **the derivation currently has no premise supporting it** — the nearest evidence is LHS under best-observed scoring, which Holm reduces to a tie.
+
+### ⚠️ §1.3's novelty claim needs rewriting — hetGP already has the combination
+
+`hetGP` (Binois & Gramacy, CRAN) performs *"learning and design that reduce predictive variance by organically determining an input-dependent degree of replication required to efficiently separate signal from noise."* **That is the proposed replication component, in a standard package with a decade of literature.** qHSRI is confirmed as *"A Portfolio Approach to Massively Parallel Bayesian Optimization"* (arXiv 2110.09334), keeping unique designs *"less than 20% of the total number of observations without degrading the sample efficiency"*, on Hartmann6 under heteroskedastic noise.
+
+**So "neither literature has the other half" is not sustainable.** What remains untried is narrower: **a design fixed in advance that proposes no new points at all** — hetGP and qHSRI both keep choosing new locations. That is a real distinction and it is the falsifiable component the brief already identified. **It must be the stated contribution, and hetGP must be an arm, not a citation.**
+
+### The corrected derivation
+
+The noise ceiling, the additive-kernel null and the coordinate-descent tie are intact and support the **replication** half: at σ=0.25 there is little left to learn from more distinct points, so precision should beat exploration. **They do not support the "drop adaptive proposals" half, which the design-effect evidence now actively opposes.**
+
+> **Corrected prediction, registered:** at σ_rel=0.25 and budget 48, adding **adaptive replication** to a GP arm lowers regret at the posterior-mean argmax relative to the same arm without it. The **design** question is left open rather than asserted — the fixed space-filling arm is a *test*, not a component justified in advance. **At σ=0.10 the replication advantage shrinks or reverses.**
+
+**Additional falsifier:** if qLogEI + replication beats the fixed space-filling arm at σ=0.25, the "information not intelligence" framing is wrong even if replication itself wins. **That arm is not in the brief's list and must be.**
+
+### Registered arms (revised from §3.1)
+
+Existing seven, plus: space-filling+GP · space-filling+GP+uniform replication · space-filling+GP+adaptive replication · **qLogEI+adaptive replication** *(separates replication from design)* · **hetGP** *(the actual prior-art baseline)*.
+
+Allocation policy fixed now: **uncertainty-weighted**, with **uniform** as the control. No per-family tuning.
+
+**Status: registered, inactive.**
