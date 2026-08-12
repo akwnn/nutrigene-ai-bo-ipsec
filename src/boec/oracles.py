@@ -257,6 +257,73 @@ class Rosenbrock(Oracle):
         return 0.0
 
 
+class Embedded(Oracle):
+    """Place a low-dimensional benchmark in a larger cube, the rest of the axes inert.
+
+    WHY, and it is not a convenience
+    ---------------------------------
+    Q42 answers *"you built the landscape that gave you your answer"* with Hartmann6 --
+    non-additive, deceptive, fifty years old, not ours. But ``Hartmann6`` is defined at
+    d=6 only, so it ran at **two of the four cells** every other family ran at. The one
+    family carrying the argument was missing both d=8 cells, and that was a property of
+    the function rather than a decision anyone took.
+
+    This closes the gap the way the project already builds its d=8 comparison. The Hill
+    oracle holds ``n_active=4`` at **both** dimensions and draws which coordinates are
+    active at random, so that d=6 against d=8 isolates **the cost of nuisance
+    dimensions** rather than confounding dimension with active-count. ``Embedded`` gives
+    a standard benchmark the same structure.
+
+    The inert axes are **exactly** inert: the response does not move when they move, and
+    ``tests/test_embedded_oracle.py`` asserts that as an equality rather than a
+    tolerance. An approximately-inert axis would mean the arm measures a different
+    function, not a nuisance dimension.
+
+    The active subset is drawn from a recorded ``seed`` rather than taken as the first
+    ``inner.dim`` axes, matching the Hill oracle's own convention. The designs used here
+    are exchangeable in the coordinates, so it makes no distributional difference -- but
+    "the interesting factors happen to be listed first" is a regularity worth not having.
+
+    Args:
+        inner: the oracle to embed.
+        dim: the outer dimension. Must be at least ``inner.dim``.
+        seed: fixes which outer coordinates are active.
+        inert_at: where the inert axes sit in :attr:`optimum_x`. The response does not
+            depend on them, so every value is an argmax; the centre is reported.
+    """
+
+    def __init__(self, inner: Oracle, *, dim: int, seed: int = 0,
+                 inert_at: float = 0.5) -> None:
+        if dim < int(inner.dim):
+            raise ValueError(
+                f"cannot embed a {inner.dim}-D oracle in {dim} dimensions; "
+                f"dim must be at least {inner.dim}")
+        self.inner = inner
+        self.dim = int(dim)
+        self.seed = int(seed)
+        self.inert_at = float(inert_at)
+        self.name = f"{inner.name}_in{dim}d"
+        self.active = (np.arange(dim) if dim == int(inner.dim)
+                       else np.sort(np.random.default_rng(seed).choice(
+                           dim, int(inner.dim), replace=False)))
+
+    def f(self, X: np.ndarray) -> np.ndarray:
+        return np.asarray(self.inner.f(self.check_X(X)[:, self.active]), dtype=float)
+
+    @property
+    def optimum_x(self) -> np.ndarray | None:
+        inner_x = self.inner.optimum_x
+        if inner_x is None:
+            return None
+        x = np.full(self.dim, self.inert_at, dtype=float)
+        x[self.active] = np.asarray(inner_x, dtype=float)
+        return x
+
+    @property
+    def optimum_value(self) -> float | None:
+        return self.inner.optimum_value
+
+
 class UnitScaled(Oracle):
     """Affinely rescale any oracle so its optimum is exactly 1.0 and its floor ~0.
 

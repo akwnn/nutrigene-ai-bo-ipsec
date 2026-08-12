@@ -76,7 +76,8 @@ from boec.campaign import Campaign, CampaignConfig                   # noqa: E40
 from boec.diagnostics import instance_bootstrap, reported_best_curve  # noqa: E402
 from boec.doe import run_doe_arm                                     # noqa: E402
 from boec.metrics import constrained_argmax                          # noqa: E402
-from boec.oracles import Ackley, Hartmann6, Levy, Rosenbrock, UnitScaled  # noqa: E402
+from boec.oracles import (                                          # noqa: E402
+    Ackley, Embedded, Hartmann6, Levy, Rosenbrock, UnitScaled)
 from boec.rsm import fit_second_order                                # noqa: E402
 from boec.torch_oracle import TorchEvaluator                         # noqa: E402
 
@@ -86,7 +87,12 @@ CELLS = ((6, 0.25), (6, 0.10), (8, 0.25), (8, 0.10))
 N_RESTARTS = 20
 RAW_SAMPLES = 4096
 RULE = "=" * 104
-FAMILIES = {"hartmann6": lambda d: Hartmann6() if d == 6 else None,
+# Q51: Hartmann6 is defined at d=6 only, so it originally ran at 2 of the 4 cells --
+# a gap in the one family that answers "you built the landscape". `Embedded` gives it
+# the same structure the Hill oracle already uses at d=8: a fixed active subspace plus
+# inert nuisance axes, so the dimension contrast is not confounded with active-count.
+FAMILIES = {"hartmann6": lambda d: (Hartmann6() if d == 6
+                                    else Embedded(Hartmann6(), dim=d, seed=0)),
             "ackley": lambda d: Ackley(dim=d),
             "levy": lambda d: Levy(dim=d),
             "rosenbrock": lambda d: Rosenbrock(dim=d)}
@@ -123,6 +129,11 @@ def run_cell(family: str, dim: int, sigma: float) -> list[dict]:
         doe_cu = opt - float(ed.truth(r.confirmation_x.unsqueeze(0)))
 
         kept = list(r.kept_factors)
+        # Q51: the screen keeps a fixed 4 factors. Hartmann6 has 6 active ones, so it
+        # must discard real signal; at d=8 it can also waste slots on the inert axes.
+        act = getattr(inner, "active", None)
+        act = set(range(dim)) if act is None else set(int(i) for i in act)
+        n_kept_active = len(set(kept) & act)
         s2 = slice(r.n_stage1, r.n_stage1 + r.n_stage2)
         try:
             fit = fit_second_order(r.X_visited[s2][:, kept], r.Y_visited[s2])
@@ -142,6 +153,8 @@ def run_cell(family: str, dim: int, sigma: float) -> list[dict]:
                          doe_c_unconstrained=doe_cu, doe_c_constrained=doe_cc,
                          constrained_failure=fail,
                          stationary_kind=r.stationary_kind,
+                         n_kept_active=n_kept_active, n_active=len(act),
+                         kept_factors=kept,
                          optimum_at_design_centre=centred,
                          scale=oracle.scale,
                          confirmation_inside_stage2=bool(r.confirmation_inside_stage2)))
@@ -188,6 +201,10 @@ def report(rows, family, dim, sigma) -> dict:
     for r in rows:
         kinds[r["stationary_kind"]] = kinds.get(r["stationary_kind"], 0) + 1
     print(f"\n  fitted-surface stationary point: {kinds}")
+    if rows[0].get("n_kept_active") is not None:
+        ka = np.mean([r["n_kept_active"] for r in rows])
+        print(f"  DoE screen kept {ka:.2f} of its 4 slots on genuinely active factors "
+              f"({rows[0]['n_active']} of {rows[0]['dim']} are active)")
     if rows[0]["optimum_at_design_centre"]:
         print("  *** rule A VOID: this function's optimum is the exact box centre, and\n"
               "      every screen and CCD includes centre runs, so the DoE design contains\n"

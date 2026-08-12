@@ -3747,3 +3747,75 @@ times the money.**
 - **Cost ratios are illustrative.** They depend on a lab's actual assays.
 - Nothing here says a suitable cheap readout for CD31 exists. It says what one would have
   to be to be worth building.
+
+
+---
+
+## 📋 Q51 — HARTMANN6 AT d=8. Registered before the run. Closing a gap in Task C.1.
+
+### The gap, and it was nobody's decision
+
+Q42 answers *"you built the landscape that gave you your answer"* with Hartmann6:
+non-additive, deceptive, six local optima, fifty years old, not ours. **It ran at two of
+the four cells every other family ran at** — d=6 at both noise levels, and no d=8 at
+either. `Hartmann6` is defined at six dimensions, and `run_q42_families.py` returned
+`None` for anything else.
+
+So the one family carrying the generality argument is the one with half the coverage, and
+**that is exactly the reduction that should never be made**: reduce families if compute
+forces it, never cells, because d=6/σ=0.25 is the cell where BO lost and dropping the
+others would be selection on the outcome.
+
+### The fix uses the structure this project already built
+
+`oracles.Embedded` places Hartmann6's six coordinates in a larger cube with the rest
+inert. That is the Hill oracle's own convention: it holds `n_active=4` at **both**
+dimensions and draws the active subset at random (`rng.choice(dim, n_act, replace=False)`)
+precisely so d=6 against d=8 isolates **the cost of nuisance dimensions** rather than
+confounding dimension with active-count. Hartmann6-in-8D gets six active axes, two inert,
+active subset from a recorded seed.
+
+The inert axes are **exactly** inert — asserted as an equality over random draws, not a
+tolerance (`tests/test_embedded_oracle.py`, 8 tests). An approximately-inert axis would
+mean the arm measures a different function rather than a nuisance dimension.
+
+### The structural fact that makes this sharp
+
+**The DoE arm's screen keeps a fixed `n_keep = 4` factors** (`doe.py:196`, matching the
+published 6→4). Hartmann6 has **six** active coordinates. So the classical pipeline must
+discard genuinely active factors *at both dimensions* — this is not new at d=8. What **is**
+new at d=8 is that the screen can also **waste slots on the two inert axes**.
+
+Every row now records `n_kept_active`: how many of the screen's four slots landed on a
+genuinely active factor. That is the diagnostic that separates the two failure modes, and
+it is reported whether or not it flatters the DoE arm.
+
+### 📌 REGISTERED PREDICTION
+
+**1. The reversal will still NOT reproduce at d=8.** At d=6 BO wins every rule by wide
+margins — rule A +0.2460 [+0.1827, +0.3068], rule C constrained +0.2753, all p<0.0001,
+and the fitted surface is a **saddle in 25/25 runs**. Two inert dimensions will not
+rescue a quadratic that has no interior maximum.
+
+**2. BO's margin will WIDEN at d=8, not narrow.** The DoE arm has four slots and six real
+factors at both dimensions, but at d=8 it must first *find* which six of eight matter. Any
+slot spent on an inert axis is a slot not spent on real signal.
+
+**3. The screen will spend most of its slots correctly — `n_kept_active` ≥ 3.5 of 4.**
+Inert axes have exactly zero main effect, so a resolution-IV screen should reject them
+reliably even under σ_rel=0.25. **If it does not, that is the more interesting result**,
+and it would say the screening stage is noise-limited rather than design-limited.
+
+**What would falsify the generality argument:** the DoE arm winning rule A at d=8. That
+would mean the reversal reproduces on Hartmann6 after all and the non-additive defence is
+weaker than Q42 claims.
+
+### The d=6 cells are re-run too, deliberately
+
+The d=6 path is unchanged (`Hartmann6()`, not `Embedded(..., dim=6)`), so re-running it
+must regenerate the committed shard **bit-exactly**. That is checked against a copy of the
+committed file rather than assumed — the same discipline as `probe_e2_determinism.py`, and
+this project has already shipped one fidelity gate that compared a regeneration against an
+untracked file and so proved only that a clone agreed with itself (D12).
+
+**Status: registered. Experiment launched immediately after this commit.**
