@@ -3589,3 +3589,161 @@ derivation, which was derived from the surrogate-fit ceiling rather than from re
 - **No replication arm.** The recommendation "spend on identification above CV 0.15"
   follows from the size of the gap, not from a measured replication arm beating a
   non-replicated one. **That arm is Q46's, and it has not been run.**
+
+
+---
+
+## ✅ Q47 RESULT — THE MULTI-FIDELITY THRESHOLD. All three registered predictions wrong.
+
+6,600 runs, 22 shards, **zero rule-C fit failures in 4,800 fits**.
+`results/q47-multifidelity.log` · `results/q47-analysis.log` · `results/q47-multifidelity.json`
+
+### The threshold surface — lowest ρ at which the two-tier advantage clears zero
+
+`*` marks a crossing **above** the expensive readout's own correlation with the truth,
+where the "cheap" assay is simply the better assay and the trade-off is not a trade-off.
+
+| cell | arm | rule | 3× | 5× | 10× | 20× |
+|---|---|---|---|---|---|---|
+| d=6 σ=0.25 | screen | A | never | never | 0.45–0.55 | **≤0.30** |
+| d=6 σ=0.25 | joint | A | never | 0.65–0.80\* | 0.65–0.80\* | 0.30–0.45 |
+| d=6 σ=0.10 | screen | A | 0.45–0.55 | **≤0.30** | 0.30–0.45 | **≤0.30** |
+| d=6 σ=0.10 | joint | A | 0.45–0.55 | **≤0.30** | 0.30–0.45 | **≤0.30** |
+| d=8 σ=0.25 | screen | A | never | 0.45–0.55 | 0.30–0.45 | 0.30–0.45 |
+| d=8 σ=0.25 | joint | A | 0.80–0.95\* | 0.55–0.65\* | 0.45–0.55 | 0.30–0.45 |
+| d=8 σ=0.10 | screen | A | 0.45–0.55 | **≤0.30** | 0.30–0.45 | **≤0.30** |
+| d=8 σ=0.10 | joint | A | **≤0.30** | 0.30–0.45 | 0.30–0.45 | **≤0.30** |
+
+Rule C is in `results/q47-analysis.log`; it does not tell a different story (see P3).
+
+### 📌 THE THREE REGISTERED PREDICTIONS — ALL THREE WRONG
+
+**P1 REFUTED.** *"No correlation threshold: the two-tier design pays at ρ=0.30 for every
+cost ratio ≥ 5."* It pays at ρ=0.30 in **5 of 12** such cells. There **is** a threshold,
+it moves with the cost ratio, and at 3× and 5× in the noisy d=6 cell there is no crossing
+in range at all. The Gaussian order-statistic proxy got the *effect sizes* roughly right
+and the *detectability* wrong: it has no instance-to-instance variance, so it could not
+predict which effects would clear an n=25 interval.
+
+**P2 REFUTED.** *"The benefit is non-monotone in ρ at σ=0.10, peaking near 0.65–0.80 and
+declining at 0.95."* It **rises** from ρ=0.80 to 0.95 in **6 of 8** cost-ratio × dimension
+combinations. The proposed mechanism — near-perfect screening confirming a set too tied
+for a noisy confirmation to rank — is not visible at this budget. Registered at low
+confidence, and the low confidence was warranted.
+
+**P3 REFUTED as a directional claim.** *"Two-tier should do worse under rule C, because
+the top-k design is clustered where a surrogate needs spread."* Across 16 cells the rule-C
+threshold is lower in 4, higher in 4, and equal in 8. **No systematic difference either
+way.** ⚠️ At d=6 alone rule C *is* systematically lower, and that is how it looked before
+the d=8 shards finished — an interim reading that the completed grid does not support.
+
+### 🔴 THE ALLOCATION IS A BIGGER LEVER THAN THE CORRELATION
+
+The registration fixed φ = 1/3 as "a registered choice, not an optimum" and promised a
+sensitivity check. That check is the most consequential number in the experiment.
+
+**d=6 σ=0.25, cost ratio 5×, rule A advantage over the single-tier arm:**
+
+| φ | k | n_cheap | ρ=0.30 | 0.45 | 0.55 | 0.65 | 0.80 | 0.95 |
+|---|---|---|---|---|---|---|---|---|
+| 0.25 | 36 | 60 | −0.0160 | +0.0110 | −0.0056 | −0.0104 | −0.0017 | +0.0061 |
+| **0.333** | 32 | 80 | +0.0232 | +0.0090 | +0.0223 | +0.0255 | +0.0200 | +0.0240 |
+| 0.50 | 24 | 120 | **+0.0388** | **+0.0469** | **+0.0521** | **+0.0555** | **+0.0543** | **+0.0529** |
+
+(bold = clears zero)
+
+**At φ=0.25 there is no advantage at any correlation. At φ=0.5 there is one at every
+correlation, including ρ=0.30.** Same cost ratio, same cell, same budget. The same
+pattern holds at 20×.
+
+> **The deliverable as specified — a threshold surface over (ρ, cost ratio) — is
+> under-specified. The surface is over (ρ, cost ratio, φ), and φ is the leading term.**
+> A threshold read off a fixed split is a threshold for that split. Every number in the
+> table above is labelled φ=1/3 for that reason, and **none of them should be quoted
+> without it.**
+
+This is not a small caveat bolted on. It says the practical question is not *"is my cheap
+assay correlated enough?"* but *"how much of the budget should go to screening?"* — and
+this experiment did not sweep that axis properly, because the registration treated it as
+a nuisance parameter.
+
+### The under-budget control earns its place
+
+Cutting the expensive budget from 48 to 32 and buying **nothing** with the savings:
+
+| | rule A | rule C |
+|---|---|---|
+| d=6 σ=0.25 | +0.0016 [−0.0284, +0.0308] | +0.0044 [−0.0191, +0.0267] |
+| d=6 σ=0.10 | **+0.0234 [+0.0057, +0.0411] — 32 is BETTER** | −0.0104 [−0.0286, +0.0074] |
+| d=8 σ=0.25 | +0.0019 [−0.0225, +0.0268] | −0.0152 [−0.0342, +0.0035] |
+| d=8 σ=0.10 | +0.0091 [−0.0124, +0.0309] | −0.0107 [−0.0251, +0.0032] |
+
+**No measurable difference in 7 of 8 comparisons**, and in the eighth the *smaller* budget
+wins. So a two-tier win is not "the cheap tier bought more than the expensive points it
+displaced" — **the displaced expensive points were worth nothing measurable to begin
+with**, and the whole of the two-tier gain comes from screening a larger candidate pool.
+Without this arm that decomposition is invisible and the result reads as a much stronger
+endorsement of multi-fidelity than it is. It is not in the brief.
+
+### Fixed versus sampled calibration — using a proven invariant as the noise floor
+
+⚠️ **The arm does not isolate `(a, b)`, and that is a flaw in how it was built.**
+`run_shard` draws `a` and `b` from the generator that then draws the cheap readout's
+noise, so skipping those two draws leaves the generator in a different state and every
+later draw differs. The arm varies the calibration **and** re-draws the noise.
+
+It is still interpretable, because `screen` is *provably* invariant to `(a, b)`: every
+difference it shows is pure Monte Carlo re-draw, with a known true value of zero.
+
+| | `screen` (true value 0) | `joint` |
+|---|---|---|
+| 5×, ρ=0.30 | −0.0104 | −0.0054 |
+| 5×, ρ=0.65 | +0.0015 | −0.0110 |
+| 5×, ρ=0.95 | −0.0037 | +0.0025 |
+| 20×, ρ=0.30 | +0.0022 | +0.0130 |
+| 20×, ρ=0.65 | +0.0024 | +0.0110 |
+| 20×, ρ=0.95 | −0.0102 | +0.0094 |
+
+`screen`'s known-zero spread is ±0.010 and `joint`'s is ±0.013. **No detectable
+calibration effect on the joint model, at a noise floor of ±0.01.** The threshold is not
+soft with respect to the calibration assumption — which is the one thing in §4 of the
+brief that came out where it was expected.
+
+### The two correlations, and the one a lab can measure
+
+ρ as swept is against the *truth*, which no lab can observe. Against the expensive
+readout — what a morning's work actually measures:
+
+| ρ to truth | 0.30 | 0.45 | 0.55 | 0.65 | 0.80 | 0.95 |
+|---|---|---|---|---|---|---|
+| d=6 σ=0.25 → measurable ρ | 0.18 | 0.26 | 0.32 | 0.38 | 0.47 | **0.56** |
+| d=6 σ=0.10 → measurable ρ | 0.26 | 0.39 | 0.48 | 0.57 | 0.70 | **0.83** |
+
+**A perfect-looking cheap assay reads 0.56 against the expensive one at σ_rel=0.25.**
+Any threshold quoted on the ρ-to-truth axis will be read by a lab as the number it
+measured, and it is not. **Both axes, always.**
+
+### What the result actually supports
+
+At the primary cell and φ=1/3, a cheap tier at a **10:1 cost ratio or better** pays from
+a measurable correlation of roughly **0.26–0.32**. Below 5:1 it does not pay at any
+correlation. But see the φ finding: at φ=0.5 even 5:1 pays everywhere, so **the honest
+one-line recommendation is about the split, not the correlation.**
+
+And composed with **Q49**: at equal total cost a 20:1 cheap tier gains +0.0638 where
+quadrupling the expensive budget gains +0.0384. **The cheap tier is worth more than four
+times the money.**
+
+### Limits
+
+- Everything above is at **φ=1/3** except the sensitivity table. See the φ finding.
+- The correlation is **assumed, not measured** — no published value exists for endothelial
+  differentiation. That is why this is a threshold and not a result.
+- The **linear-plus-noise cheap readout is a choice**, and it is the same form the joint
+  arm's adjustment assumes, so `joint` is graded on a model it is guaranteed to have right.
+- `joint`'s pseudo-observation variance is **deliberately conservative** — measured 2× to
+  20× the oracle-true value, worst at high ρ. This biases against `joint`, so the
+  registration's claim that `joint` is a clean upper bound is **withdrawn**.
+- **Cost ratios are illustrative.** They depend on a lab's actual assays.
+- Nothing here says a suitable cheap readout for CD31 exists. It says what one would have
+  to be to be worth building.

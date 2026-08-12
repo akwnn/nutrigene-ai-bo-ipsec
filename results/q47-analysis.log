@@ -1,0 +1,91 @@
+====================================================================================================
+Q47 — THE THRESHOLD SURFACE. 4800 runs, phi=1/3, sampled calibration.
+====================================================================================================
+  Lowest rho at which the two-tier arm's advantage clears zero (instance bootstrap, n=25).
+  * = above the expensive readout's own correlation with the truth, where the
+      'cheap' assay is simply the better assay and the trade-off is not a trade-off.
+
+  cell            arm     rule            3x          5x         10x         20x
+  d=6 s=0.25      screen  A            never       never   0.45-0.55      <=0.30
+  d=6 s=0.25      joint   A            never  0.65-0.80*  0.65-0.80*   0.30-0.45
+  d=6 s=0.1       screen  A        0.45-0.55      <=0.30   0.30-0.45      <=0.30
+  d=6 s=0.1       joint   A        0.45-0.55      <=0.30   0.30-0.45      <=0.30
+  d=8 s=0.25      screen  A            never   0.45-0.55   0.30-0.45   0.30-0.45
+  d=8 s=0.25      joint   A       0.80-0.95*  0.55-0.65*   0.45-0.55   0.30-0.45
+  d=8 s=0.1       screen  A        0.45-0.55      <=0.30   0.30-0.45      <=0.30
+  d=8 s=0.1       joint   A           <=0.30   0.30-0.45   0.30-0.45      <=0.30
+
+  d=6 s=0.25      screen  C        0.30-0.45   0.30-0.45      <=0.30      <=0.30
+  d=6 s=0.25      joint   C       0.55-0.65*  0.55-0.65*  0.55-0.65*   0.30-0.45
+  d=6 s=0.1       screen  C        0.65-0.80   0.65-0.80   0.45-0.55      <=0.30
+  d=6 s=0.1       joint   C            never   0.55-0.65   0.45-0.55   0.30-0.45
+  d=8 s=0.25      screen  C       0.80-0.95*   0.45-0.55   0.30-0.45   0.30-0.45
+  d=8 s=0.25      joint   C       0.80-0.95*  0.80-0.95*  0.55-0.65*  0.55-0.65*
+  d=8 s=0.1       screen  C        0.45-0.55      <=0.30   0.45-0.55      <=0.30
+  d=8 s=0.1       joint   C       0.80-0.95*   0.65-0.80   0.55-0.65   0.45-0.55
+
+====================================================================================================
+  THE CONTROL THE BRIEF DOES NOT HAVE: what does cutting 48 expensive points to 32 cost?
+====================================================================================================
+    d=6 s=0.25  rule A   32 vs 48 expensive:  +0.0016 [-0.0284,+0.0308] no difference
+    d=6 s=0.25  rule C   32 vs 48 expensive:  +0.0044 [-0.0191,+0.0267] no difference
+    d=6 s=0.1  rule A   32 vs 48 expensive:  +0.0234 [+0.0057,+0.0411] 32 IS BETTER
+    d=6 s=0.1  rule C   32 vs 48 expensive:  -0.0104 [-0.0286,+0.0074] no difference
+    d=8 s=0.25  rule A   32 vs 48 expensive:  +0.0019 [-0.0225,+0.0268] no difference
+    d=8 s=0.25  rule C   32 vs 48 expensive:  -0.0152 [-0.0342,+0.0035] no difference
+    d=8 s=0.1  rule A   32 vs 48 expensive:  +0.0091 [-0.0124,+0.0309] no difference
+    d=8 s=0.1  rule C   32 vs 48 expensive:  -0.0107 [-0.0251,+0.0032] no difference
+
+====================================================================================================
+  THE THREE REGISTERED PREDICTIONS, SCORED
+====================================================================================================
+  P1 'no threshold: two-tier pays at rho=0.30 for every cost ratio >= 5'
+     rule A, screen: pays at rho=0.30 in 5 of 12 such cells -> REFUTED
+     d=6 s=0.25 5x:never  d=6 s=0.25 10x:0.45-0.55  d=6 s=0.25 20x:<=0.30  d=6 s=0.1 5x:<=0.30  d=6 s=0.1 10x:0.30-0.45  d=6 s=0.1 20x:<=0.30  d=8 s=0.25 5x:0.45-0.55  d=8 s=0.25 10x:0.30-0.45  d=8 s=0.25 20x:0.30-0.45  d=8 s=0.1 5x:<=0.30  d=8 s=0.1 10x:0.30-0.45  d=8 s=0.1 20x:<=0.30
+
+  P2 'the benefit is non-monotone in rho at sigma=0.10, peaking near 0.65-0.80'
+     d=6  3x  rho=0.80 +0.0225 -> rho=0.95 +0.0267   rises
+     d=6  5x  rho=0.80 +0.0346 -> rho=0.95 +0.0436   rises
+     d=6 10x  rho=0.80 +0.0480 -> rho=0.95 +0.0552   rises
+     d=6 20x  rho=0.80 +0.0471 -> rho=0.95 +0.0488   rises
+     d=8  3x  rho=0.80 +0.0266 -> rho=0.95 +0.0314   rises
+     d=8  5x  rho=0.80 +0.0451 -> rho=0.95 +0.0392   DECLINES (as predicted)
+     d=8 10x  rho=0.80 +0.0358 -> rho=0.95 +0.0390   rises
+     d=8 20x  rho=0.80 +0.0557 -> rho=0.95 +0.0526   DECLINES (as predicted)
+
+  P3 'rule A and rule C disagree; two-tier should do WORSE under rule C because
+      the top-k design is clustered where a surrogate needs spread'
+     rule C threshold is LOWER (two-tier better) in 4 of 16 cells, higher in 4, equal in 8
+     -> P3 predicted 'higher'. REFUTED as a directional claim — there is no systematic difference either way
+        (at d=6 alone rule C IS systematically lower, which is how this looked
+         before the d=8 cells finished. Across all 16 it is a wash.)
+
+====================================================================================================
+  SENSITIVITY: the allocation phi, and the sampled calibration
+====================================================================================================
+
+    cost ratio 5x, d=6 sigma=0.25 — rule A advantage over single tier at each phi
+      phi     k    n_cheap     rho=0.30   rho=0.45   rho=0.55   rho=0.65   rho=0.80   rho=0.95
+      0.250   36   60          -0.0160    +0.0110    -0.0056    -0.0104    -0.0017    +0.0061 
+      0.333   32   80          +0.0232    +0.0090    +0.0223    +0.0255    +0.0200    +0.0240 
+      0.500   24   120         +0.0388*   +0.0469*   +0.0521*   +0.0555*   +0.0543*   +0.0529*
+      (* = advantage clears zero)
+
+    cost ratio 20x, d=6 sigma=0.25 — rule A advantage over single tier at each phi
+      phi     k    n_cheap     rho=0.30   rho=0.45   rho=0.55   rho=0.65   rho=0.80   rho=0.95
+      0.250   36   240         +0.0071    +0.0304    +0.0302*   +0.0521*   +0.0407*   +0.0340*
+      0.333   32   320         +0.0275*   +0.0345*   +0.0533*   +0.0377*   +0.0638*   +0.0491*
+      0.500   24   480         +0.0442*   +0.0493*   +0.0685*   +0.0688*   +0.0805*   +0.0838*
+      (* = advantage clears zero)
+
+    FIXED vs SAMPLED CALIBRATION — and read the module docstring first.
+    `screen` is PROVABLY invariant to (a, b), so its difference here is pure
+    Monte Carlo re-draw and is the negative control for `joint`'s.
+       5x rho=0.30   screen +0.0232 -> +0.0129 (-0.0104)   joint +0.0101 -> +0.0047 (-0.0054)
+       5x rho=0.65   screen +0.0255 -> +0.0270 (+0.0015)   joint +0.0281 -> +0.0171 (-0.0110)
+       5x rho=0.95   screen +0.0240 -> +0.0203 (-0.0037)   joint +0.0310 -> +0.0335 (+0.0025)
+      20x rho=0.30   screen +0.0275 -> +0.0297 (+0.0022)   joint +0.0158 -> +0.0288 (+0.0130)
+      20x rho=0.65   screen +0.0377 -> +0.0401 (+0.0024)   joint +0.0391 -> +0.0501 (+0.0110)
+      20x rho=0.95   screen +0.0491 -> +0.0389 (-0.0102)   joint +0.0711 -> +0.0805 (+0.0094)
+
+====================================================================================================
