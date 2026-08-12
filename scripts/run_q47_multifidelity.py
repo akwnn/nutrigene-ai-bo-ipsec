@@ -148,16 +148,32 @@ def _expensive(oracle, X: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor,
 
 
 def run_shard(dim: int, sigma: float, cost_ratio: int, *, phi: float = PHI,
-              fixed_calibration: bool = False) -> list[dict]:
+              fixed_calibration: bool = False,
+              checkpoint: Path | None = None) -> list[dict]:
+    """One (d, sigma, cost ratio) shard, checkpointed per instance.
+
+    The checkpoint is not a nicety. This grid is ~26 minutes of CPU per shard and the
+    machine it runs on has been observed at load average 249, so a shard that writes
+    only on completion can lose hours to a single OOM kill. Rows are flushed after every
+    instance and a restart skips whatever is already there.
+    """
     bounds = torch.stack([torch.zeros(dim, dtype=torch.double),
                           torch.ones(dim, dtype=torch.double)])
     alloc = allocate(budget=BUDGET, cost_ratio=cost_ratio, phi=phi)
     assert alloc.spent == BUDGET, f"two-tier arms spend {alloc.spent}, not {BUDGET}"
     k, n_cheap = alloc.n_expensive, alloc.n_cheap
     check_X = SobolEngine(dimension=dim, scramble=True, seed=0).draw(N_CHECK).double()
+
     rows: list[dict] = []
+    if checkpoint is not None and checkpoint.exists():
+        rows = json.loads(checkpoint.read_text())
+        print(f"  resuming from {checkpoint.name}: {len(rows)} rows already done",
+              flush=True)
+    done = {r["instance"] for r in rows}
 
     for inst in load_ensemble(dim=dim)[:N_INSTANCES]:
+        if inst.instance_id in done:
+            continue
         opt = float(inst.optimum_value)
         diag = BiphasicOracle(inst, sigma_rel=sigma, seed=999)
         f_check = diag.truth(check_X).numpy().ravel()
@@ -255,6 +271,11 @@ def run_shard(dim: int, sigma: float, cost_ratio: int, *, phi: float = PHI,
                 row["joint_c"], row["joint_c_failure"] = _rule_c(
                     Xp, Yp, Vp, bounds, oj, opt, d_seed)
                 rows.append(row)
+        if checkpoint is not None:
+            checkpoint.write_text(json.dumps(rows, indent=1))
+            print(f"  ... {len(done) + 1}/{N_INSTANCES} instances, {len(rows)} rows",
+                  flush=True)
+        done.add(inst.instance_id)
     return rows
 
 
@@ -389,14 +410,14 @@ def main() -> None:
 
     dim, sigma, cost = args.shard.split("-")
     t0 = time.time()
-    rows = run_shard(int(dim), float(sigma), int(cost), phi=args.phi,
-                     fixed_calibration=args.fixed_calibration)
     tag = ""
     if abs(args.phi - PHI) > 1e-9:
         tag += f"-phi{args.phi:.2f}"
     if args.fixed_calibration:
         tag += "-fixedcal"
     out = outdir / f"q47-mf-{dim}-{sigma}-{cost}{tag}.json"
+    rows = run_shard(int(dim), float(sigma), int(cost), phi=args.phi,
+                     fixed_calibration=args.fixed_calibration, checkpoint=out)
     out.write_text(json.dumps(rows, indent=1))
     print(f"  shard {args.shard}{tag}: {len(rows)} rows in {time.time() - t0:.0f}s")
 
