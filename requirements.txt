@@ -33,3 +33,16 @@ pytest==9.1.1
 
 # --- figures (Build Step 7) ---
 matplotlib==3.11.1
+
+# --- in-house lab ingestion (data/lab) ---
+# flowio + flowutils are the engine underneath FlowKit: the reference FCS 2.0/3.0/3.1
+# reader, and the C implementations of compensation and the Moore & Parks logicle
+# transform. Installing `flowkit` itself was REJECTED -- it resolves pandas down to
+# 2.3.3, and every number in docs/RESULTS.md was produced under pandas 3.0.5. Hand-
+# rolling logicle was the other option and is the easier thing to get subtly wrong,
+# which would show up as fabricated CD31 percentages rather than as a crash.
+flowio==1.4.0
+flowutils==1.2.2
+# Phase-contrast coverage/focus metrics on the Leica JPEGs. Pillow arrives transitively
+# with matplotlib (12.3.0) and is not pinned here for that reason.
+scikit-image==0.26.0
