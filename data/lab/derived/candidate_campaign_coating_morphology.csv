@@ -1,0 +1,13 @@
+file,coating,coating_coded,dose_ug_mL,coded_dose,metric_name,metric_unit,metric_protocol_version,y_candidate,otsu_separability,trustworthy,comparability_key,y_sd,n_replicates,status
+microscopy/leica/2026-08-04/Leica_2026-08-04 fib 0-5.jpeg,fibronectin,0.0,0.5,0.0,coverage_frac_phase,fraction_of_field,leica-ph-4x-v1,0.41859,0.68387,True,PH|4X|19000|1|45,,1,awaiting_human_signoff
+microscopy/leica/2026-08-04/Leica_2026-08-04 fib 1.jpeg,fibronectin,0.0,1.0,0.0256410256,coverage_frac_phase,fraction_of_field,leica-ph-4x-v1,0.28257,0.65675,True,PH|4X|19000|1|45,,1,awaiting_human_signoff
+microscopy/leica/2026-08-04/Leica_2026-08-04 fib 2-5.jpeg,fibronectin,0.0,2.5,0.1025641026,coverage_frac_phase,fraction_of_field,leica-ph-4x-v1,0.29702,0.60768,True,PH|4X|19000|1|45,,1,awaiting_human_signoff
+microscopy/leica/2026-08-04/Leica_2026-08-04 fib5.jpeg,fibronectin,0.0,5.0,0.2307692308,coverage_frac_phase,fraction_of_field,leica-ph-4x-v1,0.31958,0.64809,True,PH|4X|19000|1|45,,1,awaiting_human_signoff
+microscopy/leica/2026-08-04/Leica_2026-08-04 fib10.jpeg,fibronectin,0.0,10.0,0.4871794872,coverage_frac_phase,fraction_of_field,leica-ph-4x-v1,0.28786,0.61473,True,PH|4X|19000|1|45,,1,awaiting_human_signoff
+microscopy/leica/2026-08-04/Leica_2026-08-04 fib20.jpeg,fibronectin,0.0,20.0,1.0,coverage_frac_phase,fraction_of_field,leica-ph-4x-v1,0.29225,0.60934,True,PH|4X|19000|1|45,,1,awaiting_human_signoff
+microscopy/leica/2026-08-04/Leica_2026-08-04 vtn 0-5.jpeg,vitronectin,1.0,0.5,0.0,coverage_frac_phase,fraction_of_field,leica-ph-4x-v1,0.34961,0.73622,True,PH|4X|19000|1|45,,1,awaiting_human_signoff
+microscopy/leica/2026-08-04/Leica_2026-08-04 vtn 1.jpeg,vitronectin,1.0,1.0,0.0256410256,coverage_frac_phase,fraction_of_field,leica-ph-4x-v1,0.43918,0.67551,True,PH|4X|19000|1|45,,1,awaiting_human_signoff
+microscopy/leica/2026-08-04/Leica_2026-08-04 vtn 2-5.jpeg,vitronectin,1.0,2.5,0.1025641026,coverage_frac_phase,fraction_of_field,leica-ph-4x-v1,0.31208,0.69821,True,PH|4X|19000|1|45,,1,awaiting_human_signoff
+microscopy/leica/2026-08-04/Leica_2026-08-04 vtn5.jpeg,vitronectin,1.0,5.0,0.2307692308,coverage_frac_phase,fraction_of_field,leica-ph-4x-v1,0.2816,0.67136,True,PH|4X|19000|1|45,,1,awaiting_human_signoff
+microscopy/leica/2026-08-04/Leica_2026-08-04 vtn 10.jpeg,vitronectin,1.0,10.0,0.4871794872,coverage_frac_phase,fraction_of_field,leica-ph-4x-v1,0.31552,0.68465,True,PH|4X|19000|1|45,,1,awaiting_human_signoff
+microscopy/leica/2026-08-04/Leica_2026-08-04 vtn 20.jpeg,vitronectin,1.0,20.0,1.0,coverage_frac_phase,fraction_of_field,leica-ph-4x-v1,0.27114,0.62915,True,PH|4X|19000|1|45,,1,awaiting_human_signoff

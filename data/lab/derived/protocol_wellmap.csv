@@ -1,0 +1,11 @@
+protocol,well,chir_schedule,chir_second_dose_day,chir_n_doses,bmp4_ng_ml,terminal_medium,passaged,sort_day,last_active_day
+IPSC分化EC-2.docx,Well 1,d1:3uM,,1,25.0,ec_induction,True,,7
+IPSC分化EC-2.docx,Well 2,d1:3uM;d2:3uM,2.0,2,25.0,ec_induction,False,,5
+IPSC分化EC-2.docx,Well 3,d1:3uM,,1,25.0,fbs10_egm2,True,14.0,17
+IPSC分化EC-2.docx,Well 4,d1:3uM;d2:3uM,2.0,2,25.0,ec_induction,False,,5
+IPSC分化EC-2.docx,T75,d1:6uM;d2:3uM;d3:3uM,2.0,3,25.0,fbs10_egm2,True,14.0,17
+IPSC分化EC-3.docx,Well 1,d1:6uM;d2:3uM,2.0,2,0.0,fbs10_egm2,True,12.0,15
+IPSC分化EC-3.docx,Well 2,d1:6uM;d3:3uM,3.0,2,0.0,ec_induction,False,12.0,12
+IPSC分化EC-3.docx,Well 3,d1:6uM;d2:3uM,2.0,2,25.0,fbs10_egm2,True,12.0,15
+IPSC分化EC-3.docx,Well 4,d1:6uM;d3:3uM,3.0,2,25.0,ec_induction,False,12.0,12
+IPSC分化EC-3.docx,Well 5,d1:6uM;d2:3uM;d3:3uM,2.0,3,25.0,fbs10_egm2,True,12.0,12

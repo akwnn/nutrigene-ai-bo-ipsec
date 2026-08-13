@@ -1,0 +1,17 @@
+{
+  "path": "2026-06-22_endpoint-abs-562.xlsx",
+  "instrument": "Multiskan SkyHigh",
+  "serial": "1550-802758",
+  "measured_at": "6/22/2026 3:24:23 PM",
+  "wavelength_nm": 562,
+  "assay_type": "Measure",
+  "plate_template": "96 well plate",
+  "wells_read": 96,
+  "layout_labelled": false,
+  "looks_like_bca": true,
+  "standard_curve_rows": [
+    "A",
+    "B"
+  ],
+  "verdict": "BCA total-protein plate (562 nm) with an unlabelled layout. Not a CD31 readout under any labelling, so it can never join the flow campaign."
+}

@@ -1,0 +1,157 @@
+{
+  "cd31_detector": "B525-A",
+  "runner_up": "B610-A",
+  "margin_pct_points": 8.3874,
+  "reference_dir": "Exp_20260728_1",
+  "panel_matches_target": true,
+  "notes": [
+    "Runner-up B610-A shares the B-laser with the winner and no compensation was applied, so its 12.4pp is consistent with spillover from the winner rather than an independent stain."
+  ],
+  "verdicts": [
+    {
+      "detector": "B525-A",
+      "threshold": 33834.328,
+      "pct_positive_reference": 21.0982,
+      "pct_positive_negative": 0.3368,
+      "pct_positive_isotype": 1.0046,
+      "pct_positive_unstained": 0.1032,
+      "excess": 20.7614
+    },
+    {
+      "detector": "B610-A",
+      "threshold": 29468.088,
+      "pct_positive_reference": 13.251,
+      "pct_positive_negative": 0.877,
+      "pct_positive_isotype": 1.0046,
+      "pct_positive_unstained": 0.7479,
+      "excess": 12.374
+    },
+    {
+      "detector": "B690-A",
+      "threshold": 33823.383,
+      "pct_positive_reference": 7.563,
+      "pct_positive_negative": 0.9087,
+      "pct_positive_isotype": 1.0046,
+      "pct_positive_unstained": 0.864,
+      "excess": 6.6543
+    },
+    {
+      "detector": "Y610-A",
+      "threshold": 5219.22,
+      "pct_positive_reference": 6.6665,
+      "pct_positive_negative": 0.9596,
+      "pct_positive_isotype": 1.0046,
+      "pct_positive_unstained": 0.8446,
+      "excess": 5.7069
+    },
+    {
+      "detector": "V525-A",
+      "threshold": 12410.152,
+      "pct_positive_reference": 6.5107,
+      "pct_positive_negative": 0.9469,
+      "pct_positive_isotype": 1.0046,
+      "pct_positive_unstained": 0.9026,
+      "excess": 5.5638
+    },
+    {
+      "detector": "V610-A",
+      "threshold": 19921.332,
+      "pct_positive_reference": 5.841,
+      "pct_positive_negative": 1.0168,
+      "pct_positive_isotype": 1.0046,
+      "pct_positive_unstained": 0.9929,
+      "excess": 4.8243
+    },
+    {
+      "detector": "Y585-A",
+      "threshold": 307.15,
+      "pct_positive_reference": 5.4802,
+      "pct_positive_negative": 0.8388,
+      "pct_positive_isotype": 0.9981,
+      "pct_positive_unstained": 0.864,
+      "excess": 4.6414
+    },
+    {
+      "detector": "V763-A",
+      "threshold": 8169.344,
+      "pct_positive_reference": 5.4037,
+      "pct_positive_negative": 0.8452,
+      "pct_positive_isotype": 1.0046,
+      "pct_positive_unstained": 0.7479,
+      "excess": 4.5585
+    },
+    {
+      "detector": "V660-A",
+      "threshold": 6243.664,
+      "pct_positive_reference": 4.8406,
+      "pct_positive_negative": 0.6291,
+      "pct_positive_isotype": 1.0046,
+      "pct_positive_unstained": 0.5287,
+      "excess": 4.2115
+    },
+    {
+      "detector": "V450-A",
+      "threshold": 31144.32,
+      "pct_positive_reference": 4.5291,
+      "pct_positive_negative": 0.9278,
+      "pct_positive_isotype": 1.0046,
+      "pct_positive_unstained": 0.9736,
+      "excess": 3.6012
+    },
+    {
+      "detector": "Y710-A",
+      "threshold": 4550.296,
+      "pct_positive_reference": 3.9277,
+      "pct_positive_negative": 0.3813,
+      "pct_positive_isotype": 1.0046,
+      "pct_positive_unstained": 0.1999,
+      "excess": 3.5464
+    },
+    {
+      "detector": "Y763-A",
+      "threshold": 8868.28,
+      "pct_positive_reference": 3.8157,
+      "pct_positive_negative": 0.4448,
+      "pct_positive_isotype": 1.0046,
+      "pct_positive_unstained": 0.4126,
+      "excess": 3.3708
+    },
+    {
+      "detector": "Y675-A",
+      "threshold": 10165.136,
+      "pct_positive_reference": 2.7716,
+      "pct_positive_negative": 0.2351,
+      "pct_positive_isotype": 1.0046,
+      "pct_positive_unstained": 0.0903,
+      "excess": 2.5364
+    },
+    {
+      "detector": "R712-A",
+      "threshold": 16900.064,
+      "pct_positive_reference": 0.8555,
+      "pct_positive_negative": 0.0953,
+      "pct_positive_isotype": 1.0046,
+      "pct_positive_unstained": 0.0451,
+      "excess": 0.7602
+    },
+    {
+      "detector": "R763-A",
+      "threshold": 17897.024,
+      "pct_positive_reference": 0.9321,
+      "pct_positive_negative": 0.197,
+      "pct_positive_isotype": 1.0046,
+      "pct_positive_unstained": 0.3095,
+      "excess": 0.7351
+    },
+    {
+      "detector": "R660-A",
+      "threshold": 372474.2,
+      "pct_positive_reference": 0.3198,
+      "pct_positive_negative": 0.0572,
+      "pct_positive_isotype": 1.0046,
+      "pct_positive_unstained": 0.0322,
+      "excess": 0.2626
+    }
+  ],
+  "cd140a_detector_by_elimination": "Y585-A"
+}

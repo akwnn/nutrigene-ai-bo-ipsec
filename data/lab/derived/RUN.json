@@ -1,0 +1,60 @@
+{
+  "generated_by": "boec.lab.dataset.build_all",
+  "lab_root": "/Users/alanakwan/Personal Projects/nutrigene-ai-bo-ipsec/data/lab",
+  "files_indexed": 305,
+  "checksums_verified": 300,
+  "checksums_mismatched": [],
+  "flow_files": 52,
+  "flow_aborted": 8,
+  "flow_gated_candidates": 34,
+  "images_analysed": 121,
+  "cd31_detector": "B525-A",
+  "cd31_margin_pp": 8.3874,
+  "cd140a_detector": "Y585-A",
+  "protocol_wells": 10,
+  "protocol_confounding": {
+    "IPSC\u5206\u5316EC-2.docx": [],
+    "IPSC\u5206\u5316EC-3.docx": [
+      [
+        "chir_second_dose_day",
+        "terminal_medium"
+      ],
+      [
+        "chir_second_dose_day",
+        "passaged"
+      ],
+      [
+        "terminal_medium",
+        "passaged"
+      ]
+    ]
+  },
+  "plate_reader": {
+    "path": "2026-06-22_endpoint-abs-562.xlsx",
+    "instrument": "Multiskan SkyHigh",
+    "serial": "1550-802758",
+    "measured_at": "6/22/2026 3:24:23 PM",
+    "wavelength_nm": 562,
+    "assay_type": "Measure",
+    "plate_template": "96 well plate",
+    "wells_read": 96,
+    "layout_labelled": false,
+    "looks_like_bca": true,
+    "standard_curve_rows": [
+      "A",
+      "B"
+    ],
+    "verdict": "BCA total-protein plate (562 nm) with an unlabelled layout. Not a CD31 readout under any labelling, so it can never join the flow campaign."
+  },
+  "flow_metric": [
+    "CD31_pct_flow",
+    "percent_of_parent",
+    "cytoflexlx-cd31-cd140a-2026-08-06"
+  ],
+  "coverage_metric": [
+    "coverage_frac_phase",
+    "fraction_of_field",
+    "leica-ph-4x-v1"
+  ],
+  "promotion_rule": "Every y_candidate here is software-derived and unsigned. Promotion into bo_primary_conditions.csv is a human act -- see data/lab/GATE.md."
+}
