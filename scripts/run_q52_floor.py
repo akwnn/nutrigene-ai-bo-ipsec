@@ -1,40 +1,51 @@
-"""Q52 §1.1 — the identification floor. Which budget-to-target targets are reachable?
+"""Q52 §1.1 — identification error for a space-filling design. Which targets are reachable?
 
     python scripts/run_q52_floor.py            # log at results/q52-floor.log
+
+⚠️ THE FILENAME PREDATES THE RESULT. This was written to compute a *floor* -- a regret
+no arm could beat -- and it does not compute one. See "what this is not" below. The
+script and its outputs keep their names so the committed numbers stay traceable.
 
 THE DECISION THIS MAKES
 -----------------------
 The budget-to-target brief registers eight targets, 0.30 down to 0.05, and instructs:
-*"If a target sits below that floor, drop it from the grid and record why."* This
-computes the floor so that pruning happens **before** the grid runs and is not a
-post-hoc choice made after seeing which targets flattered which arm.
+*"If a target sits below that floor, drop it from the grid and record why."* Pruning
+therefore has to happen **before** the grid runs, so it cannot be a post-hoc choice made
+after seeing which targets flattered which arm.
 
-THE CONSTRUCTION — an oracle-search lower bound
-------------------------------------------------
-Plant the true optimum in the visited set and score normally. A method that has already
-visited the best point in the space cannot be beaten by one that still has to find it,
-so the surviving regret is pure **identification** error and bounds every arm below.
-It is deliberately loose -- real arms must also search -- because a loose lower bound
-still prunes: a target under the floor is unreachable for certain.
+THE CONSTRUCTION
+----------------
+Plant the true optimum in the visited set -- exactly -- alongside `n - 1` Latin-hypercube
+points, and score normally. The surviving regret is pure **identification** error: the
+design already holds the best point in the space, so nothing it loses is a search
+failure.
 
-WHY THE TWO RULES GET SEPARATE FLOORS
---------------------------------------
+⚠️ WHAT THIS IS NOT: A LOWER BOUND FOR ADAPTIVE ARMS
+------------------------------------------------------
+The original framing claimed a design containing the optimum cannot be beaten by one
+that must find it. **The §1.2 run refuted that**: qLogEI reports **0.049** at n=500,
+d=6 sigma=0.25, where this design gives 0.129 at n=384.
+
+Rule A's cost on a mis-pick is the true value of whichever point won by luck, so a bound
+needs the runners-up to be *bad*. Holding the planted optimum, the noise and `n` fixed
+and varying only the spread of the competitors gives **0.1226 spread against 0.0144
+clustered, 8.5x** (`boec.identification`, and the property is under test). Concentration
+is protective under rule A, and adaptive arms concentrate.
+
+So these numbers are the identification penalty **of a space-filling design** -- a bound
+for the static arms, not for anything adaptive. No target may be pruned on them alone.
+
+WHY THE TWO RULES ARE REPORTED SEPARATELY
+-------------------------------------------
 They move in opposite directions, so a single number would be wrong for one of them.
 
 * **Rule A (best-observed, the registered rule)** picks by observation. Every extra
-  point is another chance for a mediocre one to draw lucky noise and displace the
-  planted optimum, so its floor **rises with n**. The best reachable target under rule
-  A is therefore not at the cap -- it is at some interior budget, and past that,
-  spending more makes the reportable answer worse.
-* **Rule C (posterior mean)** pools everything into one fit, so its floor **falls with
-  n**, limited by estimation rather than by the luckiest draw.
+  point is another chance for a mediocre one to draw lucky noise past the planted
+  optimum, so within this design family it **rises with n**.
+* **Rule C (posterior mean)** pools everything into one fit, so it **falls with n**,
+  limited by estimation rather than by the luckiest draw.
 
-WHAT IS NOT MEASURED HERE
---------------------------
-Rule C's floor uses the production GP on a design that is space-filling plus one
-planted point. A real arm's design is chosen adaptively and is not space-filling, so
-rule C's number is a floor for *this* design family, not for every conceivable one.
-Stated rather than buried: it is the weaker of the two bounds.
+Rule C's number carries the same design-family caveat, for the same reason.
 """
 
 from __future__ import annotations
@@ -59,7 +70,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
 from boec.diagnostics import instance_bootstrap          # noqa: E402
-from boec.floor import planted_design, rule_a_floor      # noqa: E402
+from boec.identification import planted_design, rule_a_identification_error      # noqa: E402
 from boec.metrics import constrained_argmax              # noqa: E402
 from boec.oracles import load_ensemble                   # noqa: E402
 from boec.surrogate import build_gp                      # noqa: E402
@@ -103,7 +114,7 @@ def _rule_c_once(X, orac, bounds, opt, seed) -> float:
 
 
 def cell(task: tuple[int, float, int]) -> dict:
-    """One (dim, sigma, n). Returns per-instance floors under both rules."""
+    """One (dim, sigma, n). Per-instance identification error under both rules."""
     dim, sigma, n = task
     t0 = time.time()
     bounds = torch.stack([torch.zeros(dim, dtype=torch.double),
@@ -118,7 +129,7 @@ def cell(task: tuple[int, float, int]) -> dict:
         # Rule A: the truth at the visited points is fixed, only the assay resamples.
         truth = BiphasicOracle(inst, sigma_rel=sigma,
                                seed=0).truth(X).numpy().ravel()
-        f = rule_a_floor(truth, optimum_value=opt, sigma_rel=sigma,
+        f = rule_a_identification_error(truth, optimum_value=opt, sigma_rel=sigma,
                          sigma_add=SIGMA_ADD, n_reps=N_REPS_A,
                          seed=_seed_of(inst.instance_id, 3))
         a_reg.append(f.mean_regret)
@@ -148,8 +159,13 @@ def _ci(v: list[float]) -> tuple[float, float, float]:
 
 def main() -> None:
     tasks = [(d, s, n) for d in DIMS for s in SIGMAS for n in NS]
-    print(f"{RULE}\nQ52 §1.1 — the identification floor. Plant the optimum, then see "
+    print(f"{RULE}\nQ52 §1.1 — identification error. Plant the optimum, then see "
           f"whether the assay can name it.\n{RULE}")
+    print("  NOT a lower bound for adaptive arms: rule A's cost on a mis-pick is the "
+          "value of\n  whichever point won by luck, so clustered competitors are far "
+          "cheaper to confuse\n  than spread ones (0.1226 vs 0.0144 at n=384, d=6 "
+          "sigma=0.25). These are the STATIC\n  arms' numbers, and targets are not "
+          "pruned on them alone.")
     print(f"  {len(tasks)} cells, {N_INSTANCES} instances, "
           f"{N_REPS_A} noise draws for rule A and {N_REPS_C} for rule C\n")
 
@@ -163,8 +179,8 @@ def main() -> None:
     for dim in DIMS:
         for sigma in SIGMAS:
             print(f"\n  d={dim}  sigma_rel={sigma}")
-            print(f"    {'n':>6}{'rule A floor':>28}{'hit rate':>10}"
-                  f"{'rule C floor':>28}")
+            print(f"    {'n':>6}{'rule A ident. error':>28}{'hit rate':>10}"
+                  f"{'rule C ident. error':>28}")
             for n in NS:
                 r = out[(dim, sigma, n)]
                 am, alo, ahi = _ci(r["rule_a"])
@@ -177,13 +193,14 @@ def main() -> None:
                 return float(np.mean(out[(_d, _s, n)][rule])), n
 
             (ba, na), (bc, nc) = _best("rule_a"), _best("rule_c")
-            print(f"    best reachable: rule A {ba:.4f} at n={na}"
+            print(f"    lowest for this design family: rule A {ba:.4f} at n={na}"
                   f"   |   rule C {bc:.4f} at n={nc}")
 
     # ---------------------------------------------------------------- the pruning
-    print(f"\n{RULE}\n  TARGET PRUNING — a target below the floor cannot be reached by "
-          f"any arm at any budget\n  in the cap, because the floor already assumes the "
-          f"optimum was visited.\n{RULE}")
+    print(f"\n{RULE}\n  TARGET REACHABILITY for a space-filling design that already "
+          f"contains the optimum.\n  An adaptive arm can and does go below these, so "
+          f"'CENSORED' means censored for the\n  STATIC arms, not for every arm."
+          f"\n{RULE}")
     print("  A target is KEPT if some (cell, rule) can reach it. Dropping a target that")
     print("  only sigma=0.10 can reach would delete the noise contrast of §3.4, which is")
     print("  the headline of the experiment — 'reachable if you halve your assay CV' is")
@@ -210,12 +227,13 @@ def main() -> None:
 
     print(f"  REGISTERED GRID becomes {survivors}")
     if dropped:
-        print(f"  DROPPED {dropped} — below the identification floor in every cell "
-              f"under both\n  rules, so no arm can reach them and the column would be "
-              f"100% censored by construction.")
+        print(f"  DROPPED {dropped} — below the static arms' identification error in "
+              f"every cell under\n  both rules. Adaptive arms are not bounded by this, "
+              f"so these are dropped only if the\n  grid shows them censored in fact.")
     else:
         print("  DROPPED none — every registered target is reachable in at least one "
-              "(cell, rule).")
+              "(cell, rule),\n  and adaptive arms are not bounded by these numbers at "
+              "all.")
     thin = [t for t in survivors if len(reach[t]) <= 2]
     if thin:
         print(f"  Reachable in only one or two of {2 * len(cells)} (cell, rule) "

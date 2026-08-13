@@ -512,24 +512,48 @@ noise level. On this surface the screening design is not merely noise-limited; i
 no information about which factors matter. Screening performance is therefore reported
 alongside regret wherever an active set is known, rather than assumed adequate.
 
-## 2.14 The identification floor, and why each scoring rule needs its own
+## 2.14 Identification error, and why concentration protects against noise
 
 A budget-to-target curve reports *"evaluations needed to reach regret T"*. If T lies below
-what the assay can resolve, that curve measures **censoring rather than efficiency**, and
-every arm is censored together. Targets are therefore pruned against a computed floor
-before any grid runs, so the pruning cannot be a choice made after seeing which targets
-flattered which arm.
+what the assay can resolve, that curve measures **censoring rather than efficiency**.
+Whether that is so must be settled before the grid runs, so the decision cannot be made
+after seeing which targets flattered which arm.
 
-**Construction (`boec.floor`, `scripts/run_q52_floor.py`).** Plant the true optimum in the
-visited set — `n − 1` Latin-hypercube points plus `x*`, exactly, not to a tolerance — and
-score normally. A method that has already visited the best point in the space cannot be
-beaten by one that still has to find it, so the surviving regret is **pure identification
-error** and bounds every arm below. Verified as a precondition rather than assumed: across
-all 50 instances at d ∈ {6, 8}, `|truth(x*) − optimum_value| = 0.00e+00` and no design
-point ever exceeds the planted one. The bound is deliberately loose, since real arms must
-also search; a loose lower bound still prunes, because a target under it is unreachable
-for certain. It is confirmed to be a bound at every cell — each floor sits below every
-measured arm at the same cell and budget.
+**Construction (`boec.identification`, `scripts/run_q52_floor.py`).** Plant the true
+optimum in the visited set — `n − 1` Latin-hypercube points plus `x*`, exactly, not to a
+tolerance — and score normally. The surviving regret is then **pure identification
+error**: the design already holds the best point in the space, so nothing it loses is a
+search failure. Verified as a precondition rather than assumed: across all 50 instances at
+d ∈ {6, 8}, `|truth(x*) − optimum_value| = 0.00e+00` and no design point ever exceeds the
+planted one.
+
+### ⚠️ This is not a lower bound for adaptive arms, and it was first written as one
+
+The original claim here was that a design containing the optimum cannot be beaten by one
+that must find it. **The §1.2 run refuted it within the hour:** qLogEI reports **0.049** at
+n=500, d=6, σ_rel=0.25, where this construction gives 0.129 at n=384.
+
+The error was in what rule A costs. Its penalty on a mis-pick is the true value of
+*whichever point won by luck*, so a bound needs the runners-up to be **bad** — and a good
+optimiser's runners-up are not. Holding the planted optimum, the noise and `n` fixed and
+varying only the spread of the competitors:
+
+| competitors, n=384, d=6, σ_rel=0.25 | rule A regret |
+|---|---|
+| space-filling | 0.1226 |
+| clustered near the optimum | **0.0144** |
+
+**Concentration is protective under rule A, independently of finding a better point.** An
+adaptive method gains twice from concentrating: its best point is better, *and* its
+reported answer degrades far less under assay noise, because every candidate it might
+mis-pick is nearly as good as its best. This is the mirror image of the reason
+`reported_best_curve` exists at all (§2.7): under *oracle*-best, scattering is rewarded
+because a method is credited for points it could not identify; under *reported*-best,
+clustering is rewarded because mis-identification stops being expensive.
+
+The numbers below are therefore the identification penalty **of a space-filling design** —
+a bound for the static arms (random, Sobol, LHS, and the classical arm insofar as its
+design spreads), not for anything adaptive. **No target is pruned on them.**
 
 **The two rules move in opposite directions, so one number would be wrong for one of
 them.**

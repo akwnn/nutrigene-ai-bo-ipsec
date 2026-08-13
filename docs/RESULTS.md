@@ -11,7 +11,7 @@ what ran, why, what it found, and whether it is still current.
    entry. *A number with no committed file does not go in* — one fabricated figure has
    already nearly entered a decision.
 2. **Superseded entries stay, marked.** Nothing is deleted.
-3. **Wrong predictions get their own line.** Eleven registered predictions have been wrong.
+3. **Wrong predictions get their own line.** Twelve registered predictions have been wrong.
    Each is more informative than a correct one; burying them makes the correct ones
    worthless.
 4. **Corrections get their own line**, including *how the error arose*.
@@ -830,6 +830,76 @@ from a measured replication arm beating a non-replicated one. That arm is Q46's.
 
 ---
 
+## Q52 §1 — the floor check that refuted itself. `current` 🔴
+
+**Files:** `results/q52-floor.log` · `results/q52-floor.json` ·
+`results/q52-flatten.log` · `results/q52-flatten.json` · `src/boec/identification.py`
+
+### Why
+
+The budget-to-target brief gates its own grid: compute the regret an assay can resolve
+first, because a target below that floor makes the curve a measure of censoring rather
+than efficiency. Registered before running, per the brief.
+
+### Result
+
+**The floor is not a floor, and finding that out is the result.**
+
+The construction plants the true optimum among `n − 1` space-filling points and scores
+normally — so whatever regret survives is identification error, not search failure. It was
+registered as a bound no arm could beat. **qLogEI beats it by 2.6×:** 0.049 at n=500
+against 0.129 at n=384, d=6 σ_rel=0.25.
+
+Rule A's penalty on a mis-pick is the true value of whichever point won by luck, so the
+bound needs the runners-up to be **bad**. Holding the planted optimum, the noise and `n`
+fixed and varying only the spread of the competitors: **0.1226 space-filling against
+0.0144 clustered, 8.5×**.
+
+**So concentration is protective under rule A, independently of finding a better point.**
+An adaptive arm gains twice from concentrating — a better best point, *and* a reported
+answer that degrades far less under noise, because every candidate it might mis-pick is
+nearly as good as its best.
+
+Within the space-filling family, the two rules move in opposite directions. Rule A worsens
+with budget (0.0432 → 0.0746, n=24 → 384, d=6 σ=0.10) while rule C improves. At σ=0.25,
+n=384 the assay names the true optimum in **8% of readouts, on a point it measured**.
+
+**§1.2: the curve does not flatten.** qLogEI at d=6 σ=0.25, scored at every prefix of a
+500-evaluation campaign — 0.1748 at n=48 → 0.0487 at n=500 under rule A, a 72% fall.
+Paired, 100 → 500: **+0.0921 [+0.0340, +0.1502]** rule A, **+0.0604 [+0.0165, +0.1106]**
+rule C.
+
+### What it means
+
+**This is the complement of the finding that `reported_best_curve` exists for.** Under
+*oracle*-best, scattering is rewarded because a method is credited for points it could not
+identify — that error reversed E2 once already. Under *reported*-best, clustering is
+rewarded because mis-identification stops being expensive. Both are properties of the
+scoring rule rather than of the optimiser, and the second one is now measured: 8.5×.
+
+It also sharpens Q49. That entry established that above CV ≈ 0.15 most of what an
+experimenter is missing is a recipe they already ran and could not identify. Q52 adds the
+lever: **you can buy identification back by concentrating**, not only by replicating.
+
+**No target was pruned.** The §1.1 numbers bound the static arms only, and the cap of 200
+— not the assay — is what censors the tight targets.
+
+### Limits
+
+The refutation rests on one cell (d=6, σ=0.25) and **4 instances**, stopped early; the
+100→500 contrast excludes zero, the 100→200 and 100→300 contrasts under rule A do not, and
+nothing rests on them. The 8.5× spread-versus-clustered comparison uses a synthetic
+Gaussian cluster, not a real qLogEI design, so it demonstrates the mechanism rather than
+measuring its size for any particular arm. Rule A's intervals average 400 noise draws over
+a *single* design per instance, so design variance enters only across instances.
+
+**Unexplained and recorded:** rule C's identification error has a local maximum at n=96 in
+all four cells (0.0692 / 0.1198 / 0.0690 / 0.1061), intervals non-overlapping with n=192.
+Four of four is not sampling error. No explanation established. It changes no decision
+here.
+
+---
+
 # PART 10 — WRONG PREDICTIONS
 
 Kept together because they are the most informative rows in this file.
@@ -841,6 +911,7 @@ Kept together because they are the most informative rows in this file.
 | 3 | Q34: BO's clustered points would be ill-conditioned | **Wrong, and backwards.** The DoE design is singular at six factors; the adaptive design is not. |
 | 4 | Q42: the reversal would not reproduce cleanly on any family | **Wrong.** Levy and Rosenbrock reproduce it at every cell. |
 | 11 | Hartmann6 at d=8: the screen would spend ≥3.5 of 4 slots on genuinely active factors, since inert axes have exactly zero main effect | **Wrong, and it is the most informative number in that run.** 2.96 and 2.88 of 4 — **chance is 3.00**. Worse at *low* noise, so not a noise limit. The screening stage is uninformative on this surface. |
+| 12 | Q52 §1.1: a design that has already visited the optimum cannot be beaten by one that must find it, so planting it gives a universal lower bound on rule A regret | **Wrong, and refuted the same afternoon by the very next run.** qLogEI reports 0.049 where the construction claims 0.129. Rule A's cost on a mis-pick is the value of whichever point won by luck, so the bound needs *bad runners-up* — the opposite of what a good optimiser produces. Clustering the competitors and changing nothing else drops the number 8.5×. The registered number bounds the **static** arms only. |
 | 5 | Q37 (twice) | Two power calculations, both making the design look *powerful*. |
 | 6 | Q34: the decision rule would pick one of three branches | **Wrong.** The decomposition is cell-dependent — a fourth outcome I had not listed. |
 | 7 | Q45: the design contrast would stay subordinate to the surrogate effect | **Wrong at σ=0.10**, where it is 4–5× larger. Right at σ=0.25. |
@@ -849,7 +920,7 @@ Kept together because they are the most informative rows in this file.
 | 10 | Q47 P3: two-tier does worse under rule C, because the top-k design is clustered | **Wrong as a directional claim** — 4 cells lower, 4 higher, 8 equal. At d=6 alone it looked systematic; the completed grid does not support it. |
 | — | *the close-out brief's* prediction that Q45 would strengthen the design null | **Refuted.** The design effect is large and significant at all four cells. |
 
-**Eleven wrong predictions now, plus the brief's.** Q47 is the sharpest case: its prediction was a *committed computation* rather than a hunch — a Gaussian order-statistic proxy, run and committed before the experiment existed. It got the effect sizes roughly right and the **detectability** wrong, because it had no instance-to-instance variance and so could not know which effects would clear an n=25 interval. A more precise prediction failed in a more informative way.
+**Twelve wrong predictions now, plus the brief's.** Q47 is the sharpest case: its prediction was a *committed computation* rather than a hunch — a Gaussian order-statistic proxy, run and committed before the experiment existed. It got the effect sizes roughly right and the **detectability** wrong, because it had no instance-to-instance variance and so could not know which effects would clear an n=25 interval. A more precise prediction failed in a more informative way.
 
 **Correct predictions, for balance:** Q33's headline; Q34's registered primary (all four
 cells); Q42's secondary prediction that the scoring effect would survive on every family;

@@ -22,7 +22,7 @@ import numpy as np
 import pytest
 import torch
 
-from boec.floor import draw_observations, planted_design, rule_a_floor
+from boec.identification import draw_observations, planted_design, rule_a_identification_error
 from boec.optimizers import lhs_design
 
 BOUNDS = torch.stack([torch.zeros(4, dtype=torch.double),
@@ -96,19 +96,19 @@ def test_the_noise_draw_matches_biphasic_oracle_on_the_generated_ensemble():
     assert np.allclose(emp.var(axis=0), mine.var(axis=0), rtol=0.06)
 
 
-# --------------------------------------------------------------- rule_a_floor
+# --------------------------------------------------------------- rule_a_identification_error
 
 
 def test_a_noiseless_assay_identifies_the_planted_optimum_every_time():
     t = np.array([1.0, 0.4, 0.8, 0.2])
-    f = rule_a_floor(t, optimum_value=1.0, sigma_rel=0.0, sigma_add=0.0,
+    f = rule_a_identification_error(t, optimum_value=1.0, sigma_rel=0.0, sigma_add=0.0,
                      n_reps=200, seed=0)
     assert f.mean_regret == 0.0
 
 
 def test_the_floor_is_never_negative_when_the_optimum_is_planted():
     t = np.array([1.0, 0.4, 0.8, 0.2])
-    f = rule_a_floor(t, optimum_value=1.0, sigma_rel=0.25, sigma_add=0.01,
+    f = rule_a_identification_error(t, optimum_value=1.0, sigma_rel=0.25, sigma_add=0.01,
                      n_reps=2000, seed=0)
     assert f.mean_regret >= 0.0
     assert f.regrets.min() >= 0.0
@@ -116,9 +116,9 @@ def test_the_floor_is_never_negative_when_the_optimum_is_planted():
 
 def test_a_noisier_assay_has_a_higher_floor():
     t = np.concatenate([[1.0], np.linspace(0.2, 0.9, 40)])
-    lo = rule_a_floor(t, optimum_value=1.0, sigma_rel=0.10, sigma_add=0.01,
+    lo = rule_a_identification_error(t, optimum_value=1.0, sigma_rel=0.10, sigma_add=0.01,
                       n_reps=8000, seed=0).mean_regret
-    hi = rule_a_floor(t, optimum_value=1.0, sigma_rel=0.25, sigma_add=0.01,
+    hi = rule_a_identification_error(t, optimum_value=1.0, sigma_rel=0.25, sigma_add=0.01,
                       n_reps=8000, seed=0).mean_regret
     assert hi > lo
 
@@ -130,17 +130,46 @@ def test_more_competitors_raise_rule_as_floor_at_fixed_noise():
     direction off the curve."""
     rng = np.random.default_rng(0)
     comp = rng.uniform(0.2, 0.9, 400)
-    small = rule_a_floor(np.concatenate([[1.0], comp[:40]]), optimum_value=1.0,
+    small = rule_a_identification_error(np.concatenate([[1.0], comp[:40]]), optimum_value=1.0,
                          sigma_rel=0.25, sigma_add=0.01, n_reps=8000, seed=0)
-    large = rule_a_floor(np.concatenate([[1.0], comp]), optimum_value=1.0,
+    large = rule_a_identification_error(np.concatenate([[1.0], comp]), optimum_value=1.0,
                          sigma_rel=0.25, sigma_add=0.01, n_reps=8000, seed=0)
     assert large.mean_regret > small.mean_regret
+
+
+def test_concentrating_the_competitors_lowers_rule_a_regret():
+    """**Why the planted-optimum number is NOT a universal lower bound.**
+
+    Rule A's cost on a mis-pick is the true value of whatever point won by luck. With
+    spread-out competitors that point is usually bad; with competitors clustered near
+    the optimum every candidate is nearly optimal, so mis-identifying costs almost
+    nothing. Concentration is therefore *protective* under rule A, independently of
+    finding a better point -- and an adaptive arm concentrates.
+
+    This is the property that refuted the original framing: qLogEI at n=500 reports
+    0.049 at d=6 sigma=0.25, where the space-filling planted design sits at 0.129.
+    On the real oracle at n=384, holding the planted optimum and the noise fixed and
+    varying only whether the competitors are spread or clustered, the gap is **8.5x**
+    (0.1226 against 0.0144). The bar below is the directional claim, not that ratio --
+    the size of the effect depends on how tight the cluster is.
+    """
+    optimum, spread_vals = 1.0, np.linspace(0.2, 0.95, 200)
+    near_vals = np.linspace(0.93, 0.99, 200)
+    kw = dict(optimum_value=optimum, sigma_rel=0.25, sigma_add=0.01,
+              n_reps=4000, seed=0)
+    spread = rule_a_identification_error(np.concatenate([[optimum], spread_vals]), **kw)
+    concentrated = rule_a_identification_error(np.concatenate([[optimum], near_vals]), **kw)
+
+    assert concentrated.mean_regret < spread.mean_regret / 2
+    # and it is not because the clustered design identifies better -- it identifies
+    # *worse*, because its competitors are harder to tell apart.
+    assert concentrated.hit_rate <= spread.hit_rate
 
 
 def test_the_floor_is_reproducible_from_its_seed():
     t = np.concatenate([[1.0], np.linspace(0.2, 0.9, 20)])
     kw = dict(optimum_value=1.0, sigma_rel=0.25, sigma_add=0.01, n_reps=500, seed=4)
-    assert (rule_a_floor(t, **kw).mean_regret == rule_a_floor(t, **kw).mean_regret)
+    assert (rule_a_identification_error(t, **kw).mean_regret == rule_a_identification_error(t, **kw).mean_regret)
 
 
 def test_the_scoring_agrees_with_a_brute_force_loop():
@@ -149,7 +178,7 @@ def test_the_scoring_agrees_with_a_brute_force_loop():
     is the scoring, not the RNG consumption order -- a reference that redraws its own
     noise would fail on draw order while the scoring was perfectly correct."""
     t = np.array([1.0, 0.55, 0.83, 0.21, 0.77])
-    got = rule_a_floor(t, optimum_value=1.0, sigma_rel=0.25, sigma_add=0.01,
+    got = rule_a_identification_error(t, optimum_value=1.0, sigma_rel=0.25, sigma_add=0.01,
                        n_reps=300, seed=11)
 
     Y = draw_observations(t, sigma_rel=0.25, sigma_add=0.01,
@@ -162,9 +191,9 @@ def test_the_identification_rate_is_reported_alongside_the_regret():
     """'How often does the assay actually name the best point' is the number a lab
     can act on; a mean regret hides whether it is one catastrophe or steady drift."""
     t = np.array([1.0, 0.4, 0.8, 0.2])
-    f = rule_a_floor(t, optimum_value=1.0, sigma_rel=0.0, sigma_add=0.0,
+    f = rule_a_identification_error(t, optimum_value=1.0, sigma_rel=0.0, sigma_add=0.0,
                      n_reps=100, seed=0)
     assert f.hit_rate == 1.0
-    g = rule_a_floor(t, optimum_value=1.0, sigma_rel=0.5, sigma_add=0.01,
+    g = rule_a_identification_error(t, optimum_value=1.0, sigma_rel=0.5, sigma_add=0.01,
                      n_reps=4000, seed=0)
     assert 0.0 < g.hit_rate < 1.0

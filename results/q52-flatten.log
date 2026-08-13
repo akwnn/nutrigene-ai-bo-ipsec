@@ -1,0 +1,10 @@
+================================================================================================
+Q52 §1.2 — does the best arm's curve flatten? qLogEI, d=6 sigma=0.25, to 500.
+================================================================================================
+  12 instances, one campaign each, scored at every prefix.
+
+    instance  0 done in   1400s   rule A 48->500: 0.2411 -> 0.0523
+    instance  1 done in   1452s   rule A 48->500: 0.0803 -> 0.0459
+    instance  2 done in   1457s   rule A 48->500: 0.2380 -> 0.0684
+    instance  3 done in   1463s   rule A 48->500: 0.1397 -> 0.0284
+    instance  4 done in    629s   rule A 48->500: 0.1446 -> 0.0260

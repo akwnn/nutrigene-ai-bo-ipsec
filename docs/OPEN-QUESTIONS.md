@@ -3906,3 +3906,127 @@ well under the static arms' 0.025.
 **`docs/CLAIMS.md` L19 moves from "indicated, not established" to established**, and any
 sentence reporting "Latin hypercube also beats BO" at the registered primary cell is now
 not merely a tie under Holm (Q39) but **reversed**: BO is ahead by 0.0219, p = 1.8×10⁻⁵.
+
+
+---
+
+## 📋 Q52 — BUDGET-TO-TARGET CURVES. §1 complete; §2 registered and NOT yet run.
+
+**Files:** `results/q52-floor.log` · `results/q52-floor.json` ·
+`results/q52-flatten.log` · `results/q52-flatten.json` · `src/boec/identification.py`
+
+The brief asks how many evaluations each method needs to reach a given quality of answer,
+and requires the floor check to gate it: *"If the floor is above 0.10, this experiment
+measures censoring rather than efficiency, and that is worth knowing in an afternoon
+rather than after a week of compute."*
+
+### §1.1 — identification error. **The construction did not do what it was built to do.**
+
+Plant the true optimum in the visited set, score normally, and whatever regret survives is
+identification error rather than search failure. Verified as a precondition: across all 50
+instances `|truth(x*) − optimum_value| = 0.00e+00`, and no design point ever beats the
+planted one.
+
+It was registered as an **oracle-search lower bound** — a regret no arm could beat. **It is
+not one, and §1.2 refuted it the same afternoon:** qLogEI reports **0.049** at n=500,
+d=6 σ=0.25, where the planted space-filling design gives 0.129 at n=384.
+
+**Why the reasoning was wrong.** Rule A's cost on a mis-pick is the true value of
+*whichever point won by luck*, so the bound needs the runners-up to be bad — and a good
+optimiser's runners-up are not. Holding the planted optimum, the noise and `n` fixed and
+varying only the spread of the competitors:
+
+| competitors, n=384, d=6, σ_rel=0.25 | rule A regret |
+|---|---|
+| space-filling | 0.1226 |
+| clustered near the optimum | **0.0144** — 8.5× lower |
+
+**Concentration is protective under rule A, independently of finding a better point.** So
+the §1.1 numbers are the identification penalty **of a space-filling design** — the static
+arms' bound, not a universal one.
+
+| cell | rule A (best over n) | rule C | hit rate at n=384 |
+|---|---|---|---|
+| d=6 σ=0.10 | 0.0432 | 0.0421 | 24% |
+| **d=6 σ=0.25** | **0.1219** | 0.0781 | **8%** |
+| d=8 σ=0.10 | 0.0425 | 0.0313 | 23% |
+| d=8 σ=0.25 | 0.1214 | 0.0777 | 8% |
+
+Within this design family rule A **worsens with budget** (0.0432 → 0.0746 from n=24 to
+n=384 at σ=0.10) while rule C improves. At σ=0.25, n=384 the assay names the true optimum
+in **8% of readouts, on a point it measured.**
+
+### §1.2 — the curve does **not** flatten. Cap decided against it.
+
+qLogEI, d=6 σ=0.25, one 500-evaluation campaign per instance scored at every prefix.
+
+| budget | 24 | 48 | 100 | 200 | 300 | 500 |
+|---|---|---|---|---|---|---|
+| rule A | 0.1752 | 0.1748 | 0.1408 | 0.0946 | 0.0946 | **0.0487** |
+| rule C | 0.0659 | 0.1111 | 0.1044 | 0.0526 | 0.0431 | **0.0440** |
+
+Paired at instance level, 100 → 500: rule A **+0.0921 [+0.0340, +0.1502]**, rule C
+**+0.0604 [+0.0165, +0.1106]**. Both clear of zero. **Regret is still falling at 500** —
+it drops 72% from the project's budget of 48.
+
+⚠️ **SCOPE, stated rather than silent: 4 instances, not the 12 launched.** Stopped early
+because the question §1.2 asks is directional and already answered — the 100→500 contrast
+excludes zero under both rules. The 100→200 and 100→300 contrasts under rule A do *not*
+(CI covers zero), and with n=4 they would not be expected to; that is a power statement,
+not evidence of flatness, and no claim rests on them. Machine throughput was the binding
+constraint: unrelated desktop processes held 100–200% of CPU throughout.
+
+### 📌 TARGETS — registered, none pruned
+
+```
+0.30 · 0.25 · 0.20 · 0.15 · 0.12 · 0.10 · 0.08 · 0.05
+```
+
+**All eight kept.** Two reasons, both decided before §2 runs. First, the §1.1 numbers
+bound only the static arms, and qLogEI at n=500 already reaches 0.049 — below every target
+in the list — so nothing can be pruned as universally unreachable. Second, a target
+reachable only at σ=0.10 must be kept regardless, because "reachable if you halve your
+assay CV" **is** the §3.4 noise contrast, not a nuisance.
+
+Recorded so it cannot be re-decided later: under rule A at σ_rel=0.25 **every target
+tighter than 0.15 is below the static arms' identification error**, so those arms are
+expected to be censored there. That is a prediction about censoring, not a pruning.
+
+### 📌 CAP — 200, and it is a compute limit, not a scientific one
+
+§1.2 shows the curve still descending at 500, so a cap of 200 **will** censor the tighter
+targets for reasons that have nothing to do with the arms. This is registered explicitly:
+wherever a censored result is reported, the cap is reported beside it, and no arm is
+described as "unable to reach" a target that the cap forbids it from trying for.
+
+### 📌 REGISTERED PREDICTION
+
+The brief's, verbatim:
+
+> At σ = 0.25, no arm reaches the tighter targets and savings ratios are undefined across
+> most of the curve. At σ = 0.10, BO reaches targets in fewer evaluations than DoE under
+> the posterior-mean rule, and the advantage grows as the target tightens.
+
+**§1 already puts the first clause in doubt**, and that is registered here rather than
+discovered later: qLogEI reaches 0.049 at σ=0.25 given 500 evaluations. Under a cap of 200
+it reaches 0.0946, which clears 0.15 and 0.12 but not 0.10. So the honest form of the
+prediction is *"undefined below 0.10 at σ=0.25, under a cap of 200"* — a statement about
+the cap.
+
+**Three further predictions, mine, with what would falsify each:**
+
+**P1. The savings ratio inverts as the target tightens.** At loose targets (0.30, 0.25) the
+static arms arrive first, because 24 well-spread points beat 24 adaptive ones before the
+surrogate has anything to fit. At tight targets BO arrives first or alone. *Falsified if
+the ratio is monotone in either direction across the whole curve.*
+
+**P2. The savings ratio is larger under rule C than rule A at every target.** Rule A
+credits the static arms with their luckiest draw. *Falsified if rule A shows the larger
+saving at more than one target.*
+
+**P3. Censoring under rule A will be worse at n=200 than at n=100 for the static arms** at
+σ=0.25 — because their identification error rises with budget (§1.1) while their search
+gain flattens. This is the sharpest test of §1.1's mechanism on a real arm. *Falsified if
+static-arm rule A regret at 200 is below that at 100 with a CI clear of zero.*
+
+**Status: §1 complete and reported. §2–3 registered and NOT started.**
