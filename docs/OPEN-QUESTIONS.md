@@ -4096,4 +4096,83 @@ statement about who survived, not about efficiency.
 **Censoring.** `boec.budget.ARRIVAL_CENSORED`, reported with the cap beside it. No arm is
 described as "unable to reach" a target the cap forbade it from trying for.
 
-**Status: §1 complete and reported. §2 design registered above; run pending. §3 not started.**
+### 📌 §2 DESIGN — AMENDED AND SUPERSEDING, still before any §2 number
+
+The brief was reissued with a fuller specification before the runner had produced a
+single number; the smoke test had caught one defect and nothing else had run. This
+section **supersedes** the design above wherever they differ. What is unchanged: cap 200,
+d=6, σ_rel ∈ {0.10, 0.25}, n=25, `doe_repeat` as the budget policy, complete-case pairing.
+
+**Arms — four, production configurations, no tuning.** `doe` (repeat-keep-best),
+`qlogei`, `random`, `spread_gp`. `spread_gp` is an LHS design of *n* points with a GP fit
+to it, reported at the GP's posterior-mean argmax — the arm that separates *"a model
+helps"* from *"adaptive sampling helps"*. `lhs` and `sobol` as bare static arms are
+**dropped**: Q48 established that at 48 points in six dimensions lhs/sobol/random are
+indistinguishable (0.1752/0.1777/0.1778 design-averaged), so carrying all three would
+spend compute on a distinction already measured to be absent.
+
+**`doe` tie-breaking — registered rather than left to float equality.** If a repeat's
+stage-4 confirmation **exactly equals** the incumbent's, the **earlier** pipeline is kept.
+The incumbent is already paid for, and deciding an exact tie by recency would make the
+reported answer depend on floating-point equality between independent runs.
+
+**`doe` seed derivation.** `seed(instance, repeat) = H(instance_id, 7000 + repeat_index)`
+— a hash of the instance and the repeat index, never a global counter, so a repeat is
+reproducible from its own coordinates and no arm's seeds depend on how many other jobs
+ran first.
+
+**Targets.** Posterior-mean rule (rule C): `0.30 · 0.25 · 0.20 · 0.15 · 0.12 · 0.10 ·
+0.08 · 0.05`. Best-observed rule (rule A): `0.03 · 0.02 · 0.01`, tighter because the
+loose targets are trivially reachable and would measure sampling luck.
+
+> **Registered now so it is not a later addition: the full 11-target set is computed
+> under BOTH rules and all of it is written to the artifact.** Extracting an arrival from
+> a stored curve costs nothing, and computing only the designated set would mean a
+> re-run to answer any follow-up. The designated sets above are the **headline**; the
+> remainder is reported as an appendix and is not eligible to become the headline.
+
+**Rounds-to-target, reported beside evaluations** — a lab pays in rounds (Q38).
+`doe` spends **3 rounds per pipeline** (screen, response-surface, confirmation), so *k*
+repeats cost 3*k*. `qlogei` spends `1 + ceil((n − 14)/4)` at d=6. `random` and
+`spread_gp` are one-shot designs and spend **1 round** at any *n*.
+
+**Censoring.** Fraction censored reported in every cell beside every median. **Above 50%
+censored at a target: the rate is reported and no point estimate is.** A median over only
+the instances that arrived is stated to be biased — the arm that fails most often would
+look best — and is never the headline. The savings ratio is **undefined** wherever either
+arm is censored; the cap is never substituted for an arrival.
+
+**Fidelity gate, run before the grid is trusted.** qLogEI is re-run at budget 48 under
+E2's seed convention and scored rule A against the stored per-row regret in
+`results/e2-grid.json`. The maximum absolute deviation is reported. This is the
+equivalent of Q50's diagonal check and the grid is not reported without it.
+
+### 📌 §2 REGISTERED PREDICTION — mine, with its falsifier
+
+**P4. Under rule A the tight target set is censored almost everywhere, and the rule-A
+savings curve is undefined across its whole length.** §1.1 measured the identification
+error of a space-filling design at **0.1219** (d=6 σ=0.25) and **0.0432** (σ=0.10); the
+registered rule-A targets are 0.03, 0.02 and 0.01, all far below both. qLogEI reaches
+0.0946 at n=200 and 0.049 only by n=500, so the cap forbids it too.
+*Falsified if any arm reaches 0.03 in more than half its instances at either noise level.*
+
+**P5. Under rule C the savings ratio exceeds 1 at every target, but a large part of it at
+loose targets is DoE's granularity and not BO's efficiency.** The classical arm cannot
+answer before 48 evaluations at all, while §1.2 shows qLogEI already at every rule-C
+target down to 0.10 by n=24. So a savings ratio near 2.0 at loose targets is close to the
+mechanical floor 48/24 and **must not be read as adaptive efficiency**. This is registered
+before the run precisely so the number cannot be presented that way afterwards.
+*Falsified if the loose-target ratio is materially above 48/24 = 2.0.*
+
+**P6. The noise contrast is where the real finding is: savings grow as σ falls.** At
+σ=0.10 the identification floor drops roughly 3×, so tighter targets become reachable and
+the adaptive arm's advantage has room to express itself.
+*Falsified if the σ=0.10 savings curve is at or below the σ=0.25 curve at most targets.*
+
+**Conservative direction, stated as a limitation now rather than conceded later.** The
+`doe` arm repeats a fixed pipeline and **never moves its design region**; classical
+sequential RSM would insert a steepest-ascent phase (L10) which would very likely improve
+it. **So this curve understates DoE, and every savings ratio here is biased in BO's
+favour.** L10 is updated to say so.
+
+**Status: §1 complete and reported. §2 design amended and registered above; run pending.**
