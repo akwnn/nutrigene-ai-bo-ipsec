@@ -122,8 +122,10 @@ def test_run_summary_records_the_promotion_rule_and_no_checksum_drift():
 
     run = json.loads((DERIVED / "RUN.json").read_text())
     assert run["checksums_mismatched"] == []
+    # 300 manifested data files; the rest are the overlay (README, MANIFEST, the three
+    # bo_* files, GATE.md), which post-date the drop and are excluded by design.
     assert run["checksums_verified"] == 300
-    assert run["files_indexed"] == 305
+    assert run["files_indexed"] == 306
     assert run["cd31_detector"] == "B525-A"
     assert "human act" in run["promotion_rule"]
 

@@ -2,6 +2,10 @@
 
 Raw Nutrigene wet-lab files for the iPSC → endothelial Bayesian-optimization project. This is **Phase 3 source material**, not an analysis-ready table. Filenames are the originals from the instrument / bench so they still match lab notebooks.
 
+**BO sort (which files the optimizer may use):** [`BO-PURPOSE.md`](BO-PURPOSE.md) · [`bo_file_roles.csv`](bo_file_roles.csv) · [`bo_primary_conditions.csv`](bo_primary_conditions.csv). Twelve FCS files in `flow/2026-08-06/Exp_20260806_cd31-cd140a/` are the only ones that already encode both a coating level and a CD31/CD140a acquisition. They still need gating before `y` exists.
+
+**Derived tables:** `python scripts/build_lab_dataset.py` (~31 s) reads every file here and writes [`derived/`](derived/) — file index with checksum verification, flow acquisition provenance, channel identity, candidate percentages with sensitivity sweeps, image features, the protocol well map, and the plate-reader verdict. Gating status and the open judgement calls live in [`GATE.md`](GATE.md). Nothing in `derived/` is optimizer input; see the promotion rule in `derived/RUN.json`.
+
 Ingested 2026-08-13 from `~/Desktop/NutrigeneAI Lab Data/1. Relevant files for the BO project/`. SHA-256 checksums of every committed file are in `MANIFEST.sha256`.
 
 The repo already holds synthetic oracles under `data/oracles/` and digitized Hall/Ogle tables under `data/published/`. This tree is the first in-house drop.
@@ -17,7 +21,7 @@ data/lab/
 ├── microscopy/
 │   ├── leica/YYYY-MM-DD/      Leica DMi8 JPEGs + .metadata sidecars
 │   └── evos/2026-08-06/       EVOS QS_2448–QS_2454
-└── flow/YYYY-MM-DD/           NovoCyte FCS + .xit + ExpSummaryForAPI.xml
+└── flow/YYYY-MM-DD/           CytoFLEX LX FCS + CytExpert .xit + ExpSummaryForAPI.xml
 ```
 
 | Path | What it is | Files | Size |

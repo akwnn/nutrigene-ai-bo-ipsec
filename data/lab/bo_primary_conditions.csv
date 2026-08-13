@@ -1,0 +1,13 @@
+file,coating,dose_ug_mL,coded_dose_0_to_20,metric_name,metric_unit,metric_protocol_version,events,y,y_sd,n_replicates,batch_id,date,status
+flow/2026-08-06/Exp_20260806_cd31-cd140a/f0.5.fcs,fibronectin,0.5,0.025,CD31_pct_flow,percent_of_parent,cytoflexlx-cd31-cd140a-2026-08-06,25897,,,1,2026-08-06-cd31-cd140a,2026-08-06,awaiting_gating
+flow/2026-08-06/Exp_20260806_cd31-cd140a/f1.fcs,fibronectin,1.0,0.05,CD31_pct_flow,percent_of_parent,cytoflexlx-cd31-cd140a-2026-08-06,40624,,,1,2026-08-06-cd31-cd140a,2026-08-06,awaiting_gating
+flow/2026-08-06/Exp_20260806_cd31-cd140a/f2.5.fcs,fibronectin,2.5,0.125,CD31_pct_flow,percent_of_parent,cytoflexlx-cd31-cd140a-2026-08-06,35434,,,1,2026-08-06-cd31-cd140a,2026-08-06,awaiting_gating
+flow/2026-08-06/Exp_20260806_cd31-cd140a/f5.fcs,fibronectin,5.0,0.25,CD31_pct_flow,percent_of_parent,cytoflexlx-cd31-cd140a-2026-08-06,53458,,,1,2026-08-06-cd31-cd140a,2026-08-06,awaiting_gating
+flow/2026-08-06/Exp_20260806_cd31-cd140a/f10.fcs,fibronectin,10.0,0.50,CD31_pct_flow,percent_of_parent,cytoflexlx-cd31-cd140a-2026-08-06,39548,,,1,2026-08-06-cd31-cd140a,2026-08-06,awaiting_gating
+flow/2026-08-06/Exp_20260806_cd31-cd140a/f20.fcs,fibronectin,20.0,1.00,CD31_pct_flow,percent_of_parent,cytoflexlx-cd31-cd140a-2026-08-06,50920,,,1,2026-08-06-cd31-cd140a,2026-08-06,awaiting_gating
+flow/2026-08-06/Exp_20260806_cd31-cd140a/v0.5.fcs,vitronectin,0.5,0.025,CD31_pct_flow,percent_of_parent,cytoflexlx-cd31-cd140a-2026-08-06,37657,,,1,2026-08-06-cd31-cd140a,2026-08-06,awaiting_gating
+flow/2026-08-06/Exp_20260806_cd31-cd140a/v1.fcs,vitronectin,1.0,0.05,CD31_pct_flow,percent_of_parent,cytoflexlx-cd31-cd140a-2026-08-06,39077,,,1,2026-08-06-cd31-cd140a,2026-08-06,awaiting_gating
+flow/2026-08-06/Exp_20260806_cd31-cd140a/v2.5.fcs,vitronectin,2.5,0.125,CD31_pct_flow,percent_of_parent,cytoflexlx-cd31-cd140a-2026-08-06,42140,,,1,2026-08-06-cd31-cd140a,2026-08-06,awaiting_gating
+flow/2026-08-06/Exp_20260806_cd31-cd140a/v5.fcs,vitronectin,5.0,0.25,CD31_pct_flow,percent_of_parent,cytoflexlx-cd31-cd140a-2026-08-06,33486,,,1,2026-08-06-cd31-cd140a,2026-08-06,awaiting_gating
+flow/2026-08-06/Exp_20260806_cd31-cd140a/v10.fcs,vitronectin,10.0,0.50,CD31_pct_flow,percent_of_parent,cytoflexlx-cd31-cd140a-2026-08-06,42275,,,1,2026-08-06-cd31-cd140a,2026-08-06,awaiting_gating
+flow/2026-08-06/Exp_20260806_cd31-cd140a/v20.fcs,vitronectin,20.0,1.00,CD31_pct_flow,percent_of_parent,cytoflexlx-cd31-cd140a-2026-08-06,36891,,,1,2026-08-06-cd31-cd140a,2026-08-06,awaiting_gating
