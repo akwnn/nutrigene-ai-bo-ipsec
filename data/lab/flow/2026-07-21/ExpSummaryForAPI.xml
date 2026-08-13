@@ -1,0 +1,66 @@
+<?xml version="1.0"?>
+<Experiment xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <Tubes>
+    <Tube Name="N2-3D-P0" SignalStatisticsSettingId="0" />
+    <Tube Name="US" SignalStatisticsSettingId="0" />
+    <Tube Name="EGM-3D-p0" SignalStatisticsSettingId="0" />
+    <Tube Name="T75-p1" SignalStatisticsSettingId="0" />
+    <Tube Name="10%FBS-p1" SignalStatisticsSettingId="0" />
+    <Tube Name="EC INDU-p1" SignalStatisticsSettingId="0" />
+    <Tube Name="STEM-P1" SignalStatisticsSettingId="0" />
+    <Tube Name="us-2" SignalStatisticsSettingId="0" />
+    <Tube Name="sunny-p3" SignalStatisticsSettingId="0" />
+    <Tube Name="sunny-p3-1" SignalStatisticsSettingId="0" />
+    <Tube Name="us-23" SignalStatisticsSettingId="0" />
+    <Tube Name="n2-3d-p1" SignalStatisticsSettingId="0" />
+    <Tube Name="egm-3d-p1" SignalStatisticsSettingId="0" />
+    <Tube Name="10fbs-p2" SignalStatisticsSettingId="0" />
+    <Tube Name="ec indu-p2" SignalStatisticsSettingId="0" />
+    <Tube Name="stem-p2" SignalStatisticsSettingId="0" />
+  </Tubes>
+  <Plates />
+  <Populations>
+    <Population Name="Q1-UR" />
+    <Population Name="Q1-UL" />
+    <Population Name="Q1-LL" />
+    <Population Name="Q1-LR" />
+    <Population Name="P3" />
+    <Population Name="P4" />
+    <Population Name="P5" />
+    <Population Name="P1" />
+  </Populations>
+  <StatisticsSettings>
+    <TubeHeaderItems>
+      <TubeHeaderItem>EventsCount</TubeHeaderItem>
+      <TubeHeaderItem>RecordTime</TubeHeaderItem>
+      <TubeHeaderItem>Volume</TubeHeaderItem>
+      <TubeHeaderItem>AbortRate</TubeHeaderItem>
+    </TubeHeaderItems>
+    <PopulationStatisticsItems>
+      <PopulationStatisticsItem>Count</PopulationStatisticsItem>
+      <PopulationStatisticsItem>PercentOfParent</PopulationStatisticsItem>
+      <PopulationStatisticsItem>PercentOfAll</PopulationStatisticsItem>
+      <PopulationStatisticsItem>Concentration</PopulationStatisticsItem>
+    </PopulationStatisticsItems>
+    <SignalStatisticsSettings>
+      <SignalStatisticsSetting Id="0">
+        <SignalStatisticsSettingInfos>
+          <SignalStatisticsSettingInfo SignalName="Y585-A" StatisticsType="Mean" />
+          <SignalStatisticsSettingInfo SignalName="Y585-A" StatisticsType="GeoMean" />
+          <SignalStatisticsSettingInfo SignalName="Y585-A" StatisticsType="Median" />
+          <SignalStatisticsSettingInfo SignalName="Y585-A" StatisticsType="rCV" />
+          <SignalStatisticsSettingInfo SignalName="Y585-A" StatisticsType="rSD" />
+          <SignalStatisticsSettingInfo SignalName="Y585-A" StatisticsType="CV" />
+          <SignalStatisticsSettingInfo SignalName="Y585-A" StatisticsType="SD" />
+          <SignalStatisticsSettingInfo SignalName="B525-A" StatisticsType="Mean" />
+          <SignalStatisticsSettingInfo SignalName="B525-A" StatisticsType="GeoMean" />
+          <SignalStatisticsSettingInfo SignalName="B525-A" StatisticsType="Median" />
+          <SignalStatisticsSettingInfo SignalName="B525-A" StatisticsType="rCV" />
+          <SignalStatisticsSettingInfo SignalName="B525-A" StatisticsType="rSD" />
+          <SignalStatisticsSettingInfo SignalName="B525-A" StatisticsType="CV" />
+          <SignalStatisticsSettingInfo SignalName="B525-A" StatisticsType="SD" />
+        </SignalStatisticsSettingInfos>
+      </SignalStatisticsSetting>
+    </SignalStatisticsSettings>
+  </StatisticsSettings>
+</Experiment>
