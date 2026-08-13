@@ -267,6 +267,15 @@ range on retained factors between stages — a cruder form of the same move. The
 therefore preserves fidelity to the case study while making the DoE arm weaker than
 textbook practice. Both facts belong in the same sentence.
 
+> **Extended by Q52 §2, and it bites harder there.** The budget-to-target grid gives the
+> classical arm budgets above 48 by **repeating the whole 48-run pipeline with a fresh
+> seed and keeping the best**. That arm therefore **never moves its design region at all**
+> — it re-screens from scratch each time rather than walking toward the optimum. Steepest
+> ascent would very likely improve it, and a reviewer will say so. **So every savings
+> ratio in Q52 §2 is biased in BO's favour, and the budget-to-target curve understates
+> DoE.** Registered as a limitation before the run rather than conceded after it. The
+> honest form of any efficiency claim from that grid carries this sentence with it.
+
 **L11 Digitized rather than author-supplied data**, and the comparison that makes it
 defensible: optical **reading error is 4–7% of the between-condition spread**, against a
 published **per-condition SEM of 38–66%** of that same spread. The source assay is the

@@ -37,6 +37,20 @@ results/figures/*
 !results/e2-grid-d8-s0.25.json
 !results/e2-grid-d8-s0.1.json
 
+# EXCEPTION — Q52 §2's budget-to-target grid, for the same reason and one more.
+#
+# docs/RESULTS.md anchors its entire Q52 §2 entry to this file BY PATH, and this
+# project's own Rule 1 is that a number with no committed file does not go in. It is
+# also the only artefact in results/ that carries a `provenance` block — git sha,
+# timestamp, argv, library versions, full config — so committing it is what makes the
+# grid re-runnable rather than remembered. 136 KB.
+#
+# Noted because it nearly went the other way: `results/*` ignores .json by default and
+# only `*.md` and `*.log` are negated below, so this file was silently unstageable
+# after the run finished. That is the aa0785d failure mode exactly — a blanket rule
+# meaning an artefact "never ships" while every log line claims it was written.
+!results/q52-budget-to-target.json
+
 # Oracle instances: DECIDED — the version-stamped ensembles under
 # data/oracles/<oracle_version>/ ARE committed, parquet included. 456 KB total.
 #

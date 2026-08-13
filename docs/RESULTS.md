@@ -713,6 +713,20 @@ impression invites the wrong inference from a project that found its own mistake
 | **D16** | **E2's static arms share one design across all 25 instances** (Q48). Every static-arm interval in this project is a within-design interval. | A control arm in a different experiment disagreed with the published number by 0.05. |
 | **D17** | `results/e2-doe-d8.json` **does not exist**, though `results/e2-doe-d8.log:88` ends *"rows written to results/e2-doe-d8.json"*. The d=8 DoE arm is the Q27 **primary** contrast, and its numbers survive only as formatted text in a log. They cannot be re-aggregated, re-paired, or re-scored under another rule. | Found while pulling the σ=0.10 rows for every arm: the arm was simply absent from `e2-grid.json` and the fallback file was not on disk. **A sibling of D12** — that defect was a gate pointing at an untracked file; this is a *number* with no machine-readable file behind it at all. |
 
+### D18–D19, from the budget-to-target grid
+
+| # | defect | how it was caught |
+|---|---|---|
+| **D18** | **`report()` prints a savings column the registration does not define.** Q52 §2 registers `savings` as a **median** of per-instance ratios; `boec.diagnostics.instance_bootstrap` returns `v.mean()`. The two disagree in *direction* — under the mean there is no inversion at any target, under the median there appears to be one. The printed column must not be quoted until the estimator matches the registration. | Adversarial re-derivation of the printed table from the raw JSON. The harness's own log and the registration had been read as if they computed the same quantity for a full day. |
+| **D19** | **A registration binds only the analysis that runs through it.** Q52 §2's gates — >50% censored ⇒ no point estimate, fewer than 13 pairs ⇒ undefined, designated sets only ⇒ no promoting the appendix — were all registered *and correctly implemented in the harness*. The first-pass headline broke all three anyway, because it was computed in an ad-hoc script that reproduced the arithmetic without the gates. | The gates were fine; the path around them was not. Caught before publication by recomputing the headline against the harness's own printed output and finding `undef` where the headline had a number. |
+
+**The survivorship trap D19 concealed, stated separately because it generalises.**
+Arrival is monotone in the target, so complete-case sets across a budget-to-target curve
+are **strictly nested**. Reading down such a column looks like a trend and is partly a
+change of population: here n fell 25 → 20 → 14 → 7 and the ratio "declined" 6.00 → 2.70 →
+2.46 → 1.44, while on a fixed subset it is **flat at 6.00**. Any budget-to-target curve
+with censoring must report the fixed-subset version beside the all-pairs one.
+
 **A methodological note, not a code defect.** While reading Q49 I claimed from unpaired
 means that quadrupling the budget bought nothing. The paired contrast says it buys +0.038
 with a CI clear of zero. The marginal SE at 25 instances is ~0.03 and swamps the effect.
@@ -985,6 +999,171 @@ a *single* design per instance, so design variance enters only across instances.
 all four cells (0.0692 / 0.1198 / 0.0690 / 0.1061), intervals non-overlapping with n=192.
 Four of four is not sampling error. No explanation established. It changes no decision
 here.
+
+---
+
+## Q52 §2 — the budget-to-target grid. **The savings ratio inverts between wells and rounds.** `current`
+
+**Ran:** `scripts/run_q52_budget_to_target.py` · `results/q52-budget-to-target.{log,json}`
+**Registered:** `df11ad6` (design) → `d86e2c2` (amended: four arms, tie-break, rounds,
+censoring rules, P4–P6) → `633e74d` (runner). In that order; timestamps are checkable.
+**Status:** current
+
+### What ran
+
+d=6, σ_rel ∈ {0.10, 0.25}, **25 instances**, cap **200**, four arms — `qlogei`,
+`doe` (the 48-run pipeline repeated with fresh seeds, keeping the best), `random`,
+`spread_gp` (LHS + GP, scored at the posterior-mean argmax). Checkpoints
+`8·12·16·20·24·32·48·64·100·150·200`; targets `0.30…0.05` under rule C and
+`0.03·0.02·0.01` under rule A, with the full cross product computed and stored.
+
+**Fidelity gate: `max |Δ| = 0.000e+00`** over 10 stored `e2-grid.json` qLogEI rows
+re-run at budget 48 (Q50's diagonal check, applied here). Recorded in the artifact.
+
+**This artifact stamps its own provenance** — git SHA, dirty flag, timestamp, argv,
+library versions, full config. No other results file in this repo does.
+
+### Result — **under the registered pairings there is no defined savings curve at all**
+
+That is the finding, and it is a null.
+
+| registered pairing | outcome |
+|---|---|
+| **Rule C at its targets** (0.30…0.05), σ=0.25 | `doe` censored **72 / 80 / 84 / 96 / 96 / 100 %**; n_paired **7, 5, 4, 1, 1, 0**. **Undefined at every target.** |
+| **Rule C at its targets**, σ=0.10 | n_paired **9, 5, 3, 2, 1, 1, 1, 0**. **Undefined at every target.** |
+| **Rule A at its targets** (0.03/0.02/0.01), both σ | n_paired **0, 0, 0**. **Undefined across its whole length.** |
+
+The classical arm collapses under unconstrained rule C — consistent with Q35's measured
+0.4163, which is worse than the *loosest* target in the set — and no arm reaches the
+rule-A targets. **The registered analysis therefore produces no savings ratio anywhere.**
+
+### 🔴 RETRACTED BEFORE PUBLICATION — "the savings ratio inverts, crossover at 0.15"
+
+Recorded because the way it failed is more instructive than the number. A first pass
+reported a smooth decline `6.00 → 2.70 → 2.46 → 1.44` in evaluations against
+`3.00 → 0.95 → 0.71 → 0.39` in rounds, and concluded BO saves wells but loses lab time
+below target 0.15. **Four independent things are wrong with it:**
+
+1. **It crosses the registered pairings.** Those targets are rule **C**'s designated set,
+   read under rule **A**. The registration says the designated sets are the headline and
+   *"the remainder is reported as an appendix and is not eligible to become the
+   headline."* This promoted the appendix.
+2. **It reports forbidden cells.** At target 0.10 the DoE arm is censored **56%** and
+   n_paired is **7**. Both registered gates fire (>50% censored; fewer than 13 pairs) and
+   the harness correctly prints `undef` there. The 1.44 and 0.39 came from an ad-hoc
+   recomputation that bypassed the gates — and they were the *only* anchor for "every
+   target tighter than 0.15."
+3. **The decline is survivorship, not tightening.** Arrival is monotone in target, so the
+   complete-case sets are strictly **nested**: n falls 25 → 20 → 14 → 7 and the survivors
+   are exactly the instances where BO had already arrived at its first checkpoint. Held
+   to the fixed 7 instances that pair at every target:
+
+   | target | rounds, all pairs | n | rounds, **fixed 7** | evals, all pairs | evals, **fixed 7** |
+   |---|---|---|---|---|---|
+   | 0.30 / 0.25 / 0.20 | 3.000 | 25 | 3.000 | 6.00 | 6.00 |
+   | **0.15** | **0.950** | 20 | **3.000** | **2.70** | **6.00** |
+   | **0.12** | **0.711** | 14 | **3.000** | **2.46** | **6.00** |
+   | 0.10 | 0.391 | 7 | 0.391 | 1.44 | 1.44 |
+
+   **On a fixed population the curve is flat, and the crossover does not exist.**
+4. **Nothing was significant anyway.** Sign test on rounds at 0.15: **9 instances
+   BO-better, 10 DoE-better, 1 tie.** At 0.12: 6 vs 8. Every bootstrap interval at
+   0.15/0.12/0.10 covers 1.
+
+**Also caught, and it is a defect in this harness rather than in the result.**
+`boec.diagnostics.instance_bootstrap` returns `v.mean()`, but the registration defines
+`savings` as a **median** of per-instance ratios. So `report()` prints a centre statistic
+the registration does not define, and under the mean there is no inversion at any target.
+**Recorded as D18. The printed savings column must not be quoted until the estimator
+matches the registration.**
+
+### 🔴 Two things the 6.00× at loose targets is NOT
+
+**It is not adaptivity.** `batch_plan(6, 200)` opens with **14 points**, so at the
+checkpoints where BO "arrives" at loose targets — n=8 and n=12 — **qLogEI has made zero
+adaptive decisions**; it is a partial Sobol opening. `spread_gp` arrives at 8 as well,
+which is the same fact from the other side.
+
+**It is not efficiency, it is granularity.** The classical arm cannot answer before 48
+evaluations at all, because a partial pipeline is not the method. 48 ÷ 8 = **6.00** is
+therefore the mechanical floor, and every loose-target cell sits exactly on it.
+
+**So the honest reading of the loose end of the curve is: any space-filling design
+answers immediately, while the classical pipeline must spend 48 evaluations first.**
+It is a statement about the classical pipeline's minimum answerable budget, and about
+nothing else. On the fixed subset the ratio never departs from that floor until the
+population has shrunk to 7, so **this grid contains no measurement of adaptive
+efficiency at all** — the region where adaptivity would show is exactly the region where
+censoring removes the evidence.
+
+### ✅ THE ONE RESULT THAT SURVIVES: arrival RATE, and it is noise-dependent
+
+Every problem above comes from conditioning on arrival. **Arrival itself is
+unconditioned** — all 25 instances contribute, nothing is selected — so it is the one
+quantity this grid measures cleanly. Paired per instance, exact binomial test on the
+discordant pairs (McNemar's exact form), rule A:
+
+| σ | target | BO reaches | DoE reaches | discordant (BO-only : DoE-only) | exact p |
+|---|---|---|---|---|---|
+| **0.10** | **0.10** | **24/25** | 13/25 | **11 : 0** | **0.0010** |
+| 0.10 | 0.08 | 22/25 | 13/25 | 10 : 1 | 0.0117 |
+| 0.10 | 0.05 | 18/25 | 7/25 | 15 : 4 | 0.0192 |
+| 0.10 | 0.12 | 24/25 | 20/25 | 5 : 1 | 0.2188 |
+| 0.25 | 0.10 | 14/25 | 11/25 | 7 : 4 | 0.5488 |
+| 0.25 | 0.08 | 10/25 | 6/25 | 7 : 3 | 0.3438 |
+| 0.25 | 0.15 | 21/25 | **23/25** | 1 : 3 | 0.6250 |
+
+**At the optimistic assay, BO reaches a regret of 0.10 in 24 of 25 landscapes where the
+classical pipeline reaches it in 13 — 11 discordant pairs to 0, exact p = 0.0010.**
+Under Holm over all ten arrival tests, **that cell survives** (0.0010 < 0.05/10); the
+0.08 and 0.05 cells are indicated but do not (0.0117 > 0.05/9).
+
+**At the realistic assay (σ=0.25) there is no arrival difference at any target** — every
+p > 0.34, and at 0.15 the classical arm is nominally ahead, 23 to 21.
+
+> **This is the σ contrast the brief and P6 were reaching for, measured in the quantity
+> that admits a test.** Not *"BO gets there in fewer experiments"* — that comparison is
+> undefined here — but *"at a quiet assay BO gets there at all, far more often."* And it
+> vanishes at the noise level this project registered as primary.
+
+### The DoE arm collapses under unconstrained rule C
+
+Under rule C with the classical recommendation at the unconstrained argmax — Q41's
+primary — `doe` is censored **64–100% at every target including the loosest (0.30)**, so
+**the rule-C savings ratio is undefined across the entire curve at both noise levels.**
+This is consistent with Q35's measured unconstrained regret of 0.4163, which is worse
+than the loosest target in the set. Scored constrained, `doe(con)` arrives at 48
+consistently.
+
+### Predictions scored
+
+| # | prediction | outcome |
+|---|---|---|
+| **brief** | at σ=0.25 no arm reaches the tighter targets, ratios undefined across most of the curve; at σ=0.10 BO reaches targets in fewer evaluations under the posterior-mean rule | **Clause 1 HELD.** **Clause 2 UNTESTABLE as written** — the posterior-mean comparator never arrives, so the quantity it names does not exist. |
+| **P4** | rule-A tight targets censored almost everywhere; rule-A savings undefined across its whole length | **Clause 1 HELD** — 0.03/0.02/0.01 are >50% censored for every arm at both σ. **Clause 2 REFUTED** — savings is defined at 5–6 of 11 targets. |
+| **P5** | rule-C savings > 1 at every target, largely granularity at loose targets; falsified above 48/24 = 2.0 | **REFUTED, and my stated floor was wrong twice over.** The ratio is *undefined* at every target, not > 1. And the mechanical floor is **48/8 = 6.00**, not 48/24 — I derived it from §1.2's coarse grid, which could not resolve BO's arrival below 24. The *substance* of the warning held, and it held harder than registered: the loose-target number is granularity, and BO is not even adaptive there. |
+| **P6** | savings grow as σ falls | **UNTESTABLE.** It compares two savings curves, and under the registered pairings neither exists. The σ contrast quoted in the first pass (4.00 vs 2.70 at 0.15) came from the same appendix-promotion and survivorship that sank the crossover claim. |
+
+**All four registered predictions failed, at least in part — and P6 could not be tested at
+all. That is sixteen wrong predictions in this project, plus the brief's two.**
+
+**The sharpest lesson is procedural, not statistical.** Every gate this experiment needed
+was registered in advance and implemented correctly in the harness — the >50% censoring
+rule, the 13-pair minimum, the designated-headline rule. The first-pass headline broke
+all three, not by disabling them, but by **recomputing the numbers in an ad-hoc script
+that did not carry them**. A registration only binds the analysis that runs through it.
+
+### Limits
+
+- **The `doe` arm never moves its design region.** It repeats a fixed pipeline; classical
+  sequential RSM inserts a steepest-ascent phase (L10). **This curve understates DoE, and
+  every savings ratio in it is biased in BO's favour.** Conceded in the registration, not
+  after the numbers.
+- **Each row is a different subset of instances.** n falls 25 → 3 as the target tightens,
+  so the trend down the evaluations column is partly survivorship. The arrival-rate table
+  above is the unconditioned view and should be read first.
+- One campaign seed per instance, where E2 used two.
+- d=8 not run — declared out of scope, not attempted and dropped.
 
 ---
 
