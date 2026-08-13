@@ -4029,4 +4029,71 @@ saving at more than one target.*
 gain flattens. This is the sharpest test of §1.1's mechanism on a real arm. *Falsified if
 static-arm rule A regret at 200 is below that at 100 with a CI clear of zero.*
 
-**Status: §1 complete and reported. §2–3 registered and NOT started.**
+### 📌 §2 DESIGN — registered before any §2 number existed
+
+Everything below was fixed and committed **before the runner was written**. Check this
+commit's timestamp against `results/q52-budget-to-target.json`. The targets, the cap and
+the four predictions above are unchanged; what this section adds is the design the brief
+left unspecified, and it is recorded here rather than discovered in a script.
+
+**Why it had to be added at all.** The brief names targets, a cap and predictions but
+never says how the classical arm spends a budget other than 48 — and it cannot, as built:
+`STAGE1_FRACTION` is *"a table and not a formula"*, defined only at 48, and `run_doe_arm`
+**raises** on any other budget rather than spending 47 or 49. Without a policy there is no
+DoE curve and therefore no savings ratio, which is why §2 stalled.
+
+**Cells.** d=6, σ_rel ∈ {0.10, 0.25}. 25 instances, the E2 ensemble, same instance IDs.
+One campaign seed per instance (E2 used two; one is a compute decision and is stated, not
+hidden). d=8 is **not** run — declared out of scope, not attempted and dropped.
+
+**Checkpoints.** `8, 12, 16, 20, 24, 32, 48, 64, 100, 150, 200`.
+
+> ⚠️ **Sub-24 resolution is required, and this is a measured finding, not a preference.**
+> Applying `boec.budget.first_budget_to_target` to the committed `q52-flatten.json`, qLogEI
+> under rule C reaches **every target down to 0.10 at n=24 — the first checkpoint — in 4 of
+> 4 instances**. On §1.2's grid the rule-C arrivals are therefore censored *from below* and
+> every savings ratio computed on it would be understated. §2's grid must resolve below 24.
+
+**Arms.** `qlogei`, `doe_repeat`, `lhs`, `sobol`, `random`.
+
+**`doe_repeat` — the registered budget policy.** Run the unmodified 48-evaluation pipeline
+with a fresh seed, repeatedly, carrying the best result forward; stop when the next full
+pipeline would exceed the cap. At a cap of 200 that is **four complete pipelines = 192
+evaluations, and the remaining 8 are deliberately not spent** — a partial pipeline is not
+the method, and stage 4 is not optional (`doe.py`). So the DoE arm's own checkpoints are
+**48, 96, 144, 192**, and this asymmetry is reported wherever its arrivals are.
+
+- **Rule A:** best observed over every point measured across all completed pipelines.
+- **Rule C:** the recommendation of the pipeline whose **stage-4 confirmation measured
+  best** — a lab keeps the run that confirmed best. Reported at **both** the unconstrained
+  and the constrained argmax, per Q41's *"all three scorings reported in every table,
+  always."*
+
+*Chosen over the alternatives on the record: scoring a fixed 48-run pipeline and censoring
+it at 48 makes every savings ratio above 48 trivially infinite in BO's favour, which is a
+strawman; designing new fractions and CCDs per budget requires minimum-aberration
+generators that have not been verified at those sizes. Repeating is the weaker of the
+defensible options for the classical arm — it never moves the design region — and that is
+stated as a limitation rather than left for a reviewer.*
+
+**Rules by arm.** Rule A for all five arms. Rule C for `qlogei` and `doe_repeat` only —
+E2 established that no rule C exists for the static arms on the Hill oracle and producing
+one needs a GP fit per arm per instance, which is a different experiment. P1 and P3 are
+rule-A statements and are unaffected; P2 compares BO against DoE and is fully served.
+
+**Savings ratio — defined before it is computed.**
+
+```
+savings(T, rule) = median over instances of [ arrival(doe_repeat) / arrival(qlogei) ]
+```
+
+Paired per instance, **complete cases only** — an instance contributes only if *both* arms
+arrive within the cap. `> 1` means BO arrives sooner. Reported always with `n_paired` and
+the per-arm censoring counts beside it. **Undefined, and reported as undefined, if fewer
+than 13 of 25 instances have both arms arriving** — a ratio over a censored minority is a
+statement about who survived, not about efficiency.
+
+**Censoring.** `boec.budget.ARRIVAL_CENSORED`, reported with the cap beside it. No arm is
+described as "unable to reach" a target the cap forbade it from trying for.
+
+**Status: §1 complete and reported. §2 design registered above; run pending. §3 not started.**
