@@ -3819,3 +3819,90 @@ this project has already shipped one fidelity gate that compared a regeneration 
 untracked file and so proved only that a clone agreed with itself (D12).
 
 **Status: registered. Experiment launched immediately after this commit.**
+
+
+---
+
+## ✅ Q50 RESULT — qLogEI DESIGN-AVERAGED. Q48's REVERSAL IS **ESTABLISHED**.
+
+**Files:** `results/q50-qlogei-seedsweep.log` · `results/q50-qlogei-seedsweep.json` ·
+20 shards registered, **8 run** — see the scope note below.
+
+### The fidelity check passed exactly
+
+E2 ties the campaign seed to the noise seed, so its number is the **diagonal** of this
+grid. If the diagonal does not reproduce E2, nothing else in the file counts.
+
+| | |
+|---|---|
+| `e2-grid.json` qlogei, d=6 σ=0.25 | **0.1553** (n=50) |
+| this harness, diagonal (g=0,s=0)+(g=1,s=1) | **0.1553** (n=50) |
+
+Agreement to four decimals. The harness is E2.
+
+### Result
+
+| campaign seed | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 |
+|---|---|---|---|---|---|---|---|---|
+| cell mean | 0.1617 | 0.1668 | 0.1396 | 0.1574 | 0.1458 | 0.1506 | 0.1498 | 0.1543 |
+
+**qLogEI design-averaged 0.1532, SD 0.0082**, range 0.1396–0.1668. E2's draw (0.1553) sits
+at the **62nd percentile** — unremarkable, as it should be.
+
+**qLogEI's number moves by −0.0021 when design-averaged. `lhs` moves by +0.0482.**
+Twenty-three times less. That is the asymmetry Q48 argued for and could not measure:
+qLogEI shares only its 14-point opening and chooses the other 34 points from each
+instance's own data, so it has far less shared-design variance to average away.
+
+### The comparison Q48 could not make
+
+|  | as E2 reports | design-averaged |
+|---|---|---|
+| `lhs` | 0.1270 | **0.1752** |
+| `qlogei` | 0.1553 | **0.1532** |
+| **verdict** | LHS ahead by 0.0283 | **BO ahead by 0.0220** |
+
+**Paired at instance level, both arms design-averaged (n=25):**
+
+> **`lhs − qlogei` = +0.0219 [+0.0145, +0.0292], Wilcoxon p = 1.8×10⁻⁵, qLogEI wins
+> 21 of 25 instances.**
+
+Two point estimates would not have been enough; this is the paired inference. The `lhs`
+side is a per-instance mean over 60 designs, the `qlogei` side a per-instance mean over 8
+campaign seeds. The qLogEI side therefore carries more averaging error, which **widens**
+the paired differences — the interval is conservative, not flattering.
+
+**Multiplicity.** "Latin hypercube also beats BO" was one of Q39's 39 non-primary
+contrasts, so this re-analysis **replaces** a member of that family rather than adding
+one. At p = 1.8×10⁻⁵, even Bonferroni over all 39 gives p = 7.1×10⁻⁴. It survives any
+correction this project applies.
+
+### 📌 Predictions scored
+
+| registered | outcome |
+|---|---|
+| SD **smaller** than the static arms' 0.025 | ✅ **0.0082** |
+| "roughly 0.010–0.018" | ⚠️ **under-shot — 0.0082 is below the stated range.** Direction right, magnitude wrong. |
+| E2's draw near the middle, not an extreme | ✅ 62nd percentile |
+| the reversal stands | ✅ established |
+
+### ⚠️ SCOPE REDUCTION, stated rather than silent
+
+The registration specified **20 campaign seeds; 8 ran.** The machine's throughput
+collapsed mid-run — four identical Q50 shards took **1,020s, 1,022s, 6,121s and 9,459s**,
+a 9× spread on identical work, at load averages between 98 and 249 driven mostly by other
+processes. The remaining 12 seeds were cancelled rather than left to contend with Q51.
+
+**This does not weaken the conclusion, and here is the arithmetic rather than an
+assurance.** The quantity at issue is whether qLogEI's mean moves by ~0.048 as `lhs`
+did. With SD 0.0082 over 8 seeds the standard error of its mean is **0.0029**, so a
+0.048 shift is **16 standard errors** away from what was observed. Twelve more seeds
+could not change that. The reported SD itself is the less precise number — with 7 degrees
+of freedom its own 95% interval is roughly 0.005–0.017 — but every value in that range is
+well under the static arms' 0.025.
+
+### What this changes in the write-up
+
+**`docs/CLAIMS.md` L19 moves from "indicated, not established" to established**, and any
+sentence reporting "Latin hypercube also beats BO" at the registered primary cell is now
+not merely a tie under Holm (Q39) but **reversed**: BO is ahead by 0.0219, p = 1.8×10⁻⁵.

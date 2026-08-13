@@ -249,11 +249,22 @@ def main() -> None:
         return
 
     t0 = time.time()
-    rows = []
+    out = outdir / f"q42-families-{args.family}.json"
+    # Checkpoint per CELL, not only at the end. Q51's Hartmann6 re-run spent 5.25 hours
+    # on its first cell under heavy machine contention while holding every row in
+    # memory, because this wrote once after all four. A kill at that point would have
+    # cost the lot. Cells already present are skipped, so a restart resumes.
+    rows = json.loads(out.read_text()) if out.exists() else []
+    have = {(r["dim"], round(float(r["sigma"]), 6)) for r in rows}
     for dim, sigma in CELLS:
+        if (dim, round(float(sigma), 6)) in have:
+            print(f"  {args.family} d={dim} s={sigma} already present, skipping",
+                  flush=True)
+            continue
         rows.extend(run_cell(args.family, dim, sigma))
-        print(f"  {args.family} d={dim} s={sigma} done ({time.time()-t0:.0f}s)", flush=True)
-    (outdir / f"q42-families-{args.family}.json").write_text(json.dumps(rows, indent=1))
+        out.write_text(json.dumps(rows, indent=1))
+        print(f"  {args.family} d={dim} s={sigma} done ({time.time()-t0:.0f}s), "
+              f"checkpointed {len(rows)} rows", flush=True)
     print(f"  -> results/q42-families-{args.family}.json  ({len(rows)} rows)")
 
 

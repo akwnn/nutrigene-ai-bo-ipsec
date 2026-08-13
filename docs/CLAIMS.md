@@ -341,11 +341,14 @@ independent of L15's multiplicity finding: Holm *widens the interval* to a tie, 
 this **moves the point estimate**. Design-averaged, qLogEI 0.1553 against `lhs` 0.1752
 puts **BO ahead by 0.020** at the registered primary cell, reversing the sign.
 
-**That reversal is indicated, NOT established, and must not be written as established.**
-qLogEI's 14-point opening batch is also instance-independent, so its 0.1553 is also a
-two-draw number; the shared component should be smaller but has not been measured.
-Settling it requires qLogEI re-run across ~30 opening seeds. **Not run.** The
-indistinguishability finding above does not depend on that caveat.
+**✅ That reversal is now ESTABLISHED (Q50).** qLogEI was re-run across 8 campaign
+seeds, and the harness reproduces E2's 0.1553 exactly on the diagonal where E2 sits.
+qLogEI design-averaged is **0.1532, SD 0.0082** — it moves by −0.002 where `lhs` moves by
++0.048, because only 14 of its 48 points are shared. Paired at instance level with both
+arms design-averaged: **`lhs − qlogei` = +0.0219 [+0.0145, +0.0292], Wilcoxon
+p = 1.8×10⁻⁵, BO ahead on 21 of 25 instances.** This *replaces* a member of Q39's
+39-contrast family rather than adding one, and survives Bonferroni over all 39
+(p = 7.1×10⁻⁴).
 
 **L16 A benchmark-design trap worth stating generally.** **Ackley's optimum sits at the
 exact centre of the coded box**, and every screening and CCD design includes centre runs
