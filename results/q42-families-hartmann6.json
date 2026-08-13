@@ -11,6 +11,14 @@
   "doe_c_constrained": 0.566262874567097,
   "constrained_failure": null,
   "stationary_kind": "saddle",
+  "n_kept_active": 4,
+  "n_active": 6,
+  "kept_factors": [
+   2,
+   3,
+   4,
+   5
+  ],
   "optimum_at_design_centre": false,
   "scale": 3.3223682686776446,
   "confirmation_inside_stage2": false
@@ -27,6 +35,14 @@
   "doe_c_constrained": 0.6019065536794468,
   "constrained_failure": null,
   "stationary_kind": "saddle",
+  "n_kept_active": 4,
+  "n_active": 6,
+  "kept_factors": [
+   0,
+   1,
+   2,
+   4
+  ],
   "optimum_at_design_centre": false,
   "scale": 3.3223682686776446,
   "confirmation_inside_stage2": false
@@ -43,6 +59,14 @@
   "doe_c_constrained": 0.4965851448779317,
   "constrained_failure": null,
   "stationary_kind": "saddle",
+  "n_kept_active": 4,
+  "n_active": 6,
+  "kept_factors": [
+   0,
+   2,
+   3,
+   4
+  ],
   "optimum_at_design_centre": false,
   "scale": 3.3223682686776446,
   "confirmation_inside_stage2": false
@@ -59,6 +83,14 @@
   "doe_c_constrained": 0.5602055159500228,
   "constrained_failure": null,
   "stationary_kind": "saddle",
+  "n_kept_active": 4,
+  "n_active": 6,
+  "kept_factors": [
+   2,
+   3,
+   4,
+   5
+  ],
   "optimum_at_design_centre": false,
   "scale": 3.3223682686776446,
   "confirmation_inside_stage2": false
@@ -75,6 +107,14 @@
   "doe_c_constrained": 0.6538324327762336,
   "constrained_failure": null,
   "stationary_kind": "saddle",
+  "n_kept_active": 4,
+  "n_active": 6,
+  "kept_factors": [
+   0,
+   2,
+   3,
+   5
+  ],
   "optimum_at_design_centre": false,
   "scale": 3.3223682686776446,
   "confirmation_inside_stage2": false
@@ -91,6 +131,14 @@
   "doe_c_constrained": 0.3586326132664954,
   "constrained_failure": null,
   "stationary_kind": "saddle",
+  "n_kept_active": 4,
+  "n_active": 6,
+  "kept_factors": [
+   1,
+   3,
+   4,
+   5
+  ],
   "optimum_at_design_centre": false,
   "scale": 3.3223682686776446,
   "confirmation_inside_stage2": false
@@ -107,6 +155,14 @@
   "doe_c_constrained": 0.5488038471584982,
   "constrained_failure": null,
   "stationary_kind": "saddle",
+  "n_kept_active": 4,
+  "n_active": 6,
+  "kept_factors": [
+   0,
+   1,
+   2,
+   3
+  ],
   "optimum_at_design_centre": false,
   "scale": 3.3223682686776446,
   "confirmation_inside_stage2": false
@@ -123,6 +179,14 @@
   "doe_c_constrained": 0.6464906503163121,
   "constrained_failure": null,
   "stationary_kind": "saddle",
+  "n_kept_active": 4,
+  "n_active": 6,
+  "kept_factors": [
+   0,
+   2,
+   4,
+   5
+  ],
   "optimum_at_design_centre": false,
   "scale": 3.3223682686776446,
   "confirmation_inside_stage2": false
@@ -139,6 +203,14 @@
   "doe_c_constrained": 0.3586326132664954,
   "constrained_failure": null,
   "stationary_kind": "saddle",
+  "n_kept_active": 4,
+  "n_active": 6,
+  "kept_factors": [
+   1,
+   3,
+   4,
+   5
+  ],
   "optimum_at_design_centre": false,
   "scale": 3.3223682686776446,
   "confirmation_inside_stage2": false
@@ -155,6 +227,14 @@
   "doe_c_constrained": 0.6707183820222358,
   "constrained_failure": null,
   "stationary_kind": "saddle",
+  "n_kept_active": 4,
+  "n_active": 6,
+  "kept_factors": [
+   0,
+   1,
+   2,
+   5
+  ],
   "optimum_at_design_centre": false,
   "scale": 3.3223682686776446,
   "confirmation_inside_stage2": false
@@ -171,6 +251,14 @@
   "doe_c_constrained": 0.693693246138127,
   "constrained_failure": null,
   "stationary_kind": "saddle",
+  "n_kept_active": 4,
+  "n_active": 6,
+  "kept_factors": [
+   0,
+   2,
+   3,
+   5
+  ],
   "optimum_at_design_centre": false,
   "scale": 3.3223682686776446,
   "confirmation_inside_stage2": false
@@ -187,6 +275,14 @@
   "doe_c_constrained": 0.505606025625373,
   "constrained_failure": null,
   "stationary_kind": "saddle",
+  "n_kept_active": 4,
+  "n_active": 6,
+  "kept_factors": [
+   0,
+   2,
+   3,
+   4
+  ],
   "optimum_at_design_centre": false,
   "scale": 3.3223682686776446,
   "confirmation_inside_stage2": false
@@ -203,6 +299,14 @@
   "doe_c_constrained": 0.4720734365968753,
   "constrained_failure": null,
   "stationary_kind": "saddle",
+  "n_kept_active": 4,
+  "n_active": 6,
+  "kept_factors": [
+   1,
+   2,
+   3,
+   4
+  ],
   "optimum_at_design_centre": false,
   "scale": 3.3223682686776446,
   "confirmation_inside_stage2": false
@@ -219,6 +323,14 @@
   "doe_c_constrained": 0.6914810164733354,
   "constrained_failure": null,
   "stationary_kind": "saddle",
+  "n_kept_active": 4,
+  "n_active": 6,
+  "kept_factors": [
+   0,
+   1,
+   2,
+   5
+  ],
   "optimum_at_design_centre": false,
   "scale": 3.3223682686776446,
   "confirmation_inside_stage2": false
@@ -235,6 +347,14 @@
   "doe_c_constrained": 0.45015689503190104,
   "constrained_failure": null,
   "stationary_kind": "saddle",
+  "n_kept_active": 4,
+  "n_active": 6,
+  "kept_factors": [
+   1,
+   2,
+   3,
+   4
+  ],
   "optimum_at_design_centre": false,
   "scale": 3.3223682686776446,
   "confirmation_inside_stage2": false
@@ -251,6 +371,14 @@
   "doe_c_constrained": 0.5582978512433031,
   "constrained_failure": null,
   "stationary_kind": "saddle",
+  "n_kept_active": 4,
+  "n_active": 6,
+  "kept_factors": [
+   2,
+   3,
+   4,
+   5
+  ],
   "optimum_at_design_centre": false,
   "scale": 3.3223682686776446,
   "confirmation_inside_stage2": false
@@ -267,6 +395,14 @@
   "doe_c_constrained": 0.4198068507776629,
   "constrained_failure": null,
   "stationary_kind": "saddle",
+  "n_kept_active": 4,
+  "n_active": 6,
+  "kept_factors": [
+   0,
+   3,
+   4,
+   5
+  ],
   "optimum_at_design_centre": false,
   "scale": 3.3223682686776446,
   "confirmation_inside_stage2": false
@@ -283,6 +419,14 @@
   "doe_c_constrained": 0.7413647082850066,
   "constrained_failure": null,
   "stationary_kind": "saddle",
+  "n_kept_active": 4,
+  "n_active": 6,
+  "kept_factors": [
+   0,
+   1,
+   4,
+   5
+  ],
   "optimum_at_design_centre": false,
   "scale": 3.3223682686776446,
   "confirmation_inside_stage2": false
@@ -299,6 +443,14 @@
   "doe_c_constrained": 0.6140337589117246,
   "constrained_failure": null,
   "stationary_kind": "saddle",
+  "n_kept_active": 4,
+  "n_active": 6,
+  "kept_factors": [
+   0,
+   2,
+   4,
+   5
+  ],
   "optimum_at_design_centre": false,
   "scale": 3.3223682686776446,
   "confirmation_inside_stage2": false
@@ -315,6 +467,14 @@
   "doe_c_constrained": 0.3586326132664954,
   "constrained_failure": null,
   "stationary_kind": "saddle",
+  "n_kept_active": 4,
+  "n_active": 6,
+  "kept_factors": [
+   1,
+   3,
+   4,
+   5
+  ],
   "optimum_at_design_centre": false,
   "scale": 3.3223682686776446,
   "confirmation_inside_stage2": false
@@ -331,6 +491,14 @@
   "doe_c_constrained": 0.6246863670228747,
   "constrained_failure": null,
   "stationary_kind": "saddle",
+  "n_kept_active": 4,
+  "n_active": 6,
+  "kept_factors": [
+   0,
+   2,
+   3,
+   5
+  ],
   "optimum_at_design_centre": false,
   "scale": 3.3223682686776446,
   "confirmation_inside_stage2": false
@@ -347,6 +515,14 @@
   "doe_c_constrained": 0.586700459389584,
   "constrained_failure": null,
   "stationary_kind": "saddle",
+  "n_kept_active": 4,
+  "n_active": 6,
+  "kept_factors": [
+   2,
+   3,
+   4,
+   5
+  ],
   "optimum_at_design_centre": false,
   "scale": 3.3223682686776446,
   "confirmation_inside_stage2": false
@@ -363,6 +539,14 @@
   "doe_c_constrained": 0.566262874567097,
   "constrained_failure": null,
   "stationary_kind": "saddle",
+  "n_kept_active": 4,
+  "n_active": 6,
+  "kept_factors": [
+   2,
+   3,
+   4,
+   5
+  ],
   "optimum_at_design_centre": false,
   "scale": 3.3223682686776446,
   "confirmation_inside_stage2": false
@@ -379,6 +563,14 @@
   "doe_c_constrained": 0.4198068507776629,
   "constrained_failure": null,
   "stationary_kind": "saddle",
+  "n_kept_active": 4,
+  "n_active": 6,
+  "kept_factors": [
+   0,
+   3,
+   4,
+   5
+  ],
   "optimum_at_design_centre": false,
   "scale": 3.3223682686776446,
   "confirmation_inside_stage2": false
@@ -395,6 +587,14 @@
   "doe_c_constrained": 0.45696623465295816,
   "constrained_failure": null,
   "stationary_kind": "saddle",
+  "n_kept_active": 4,
+  "n_active": 6,
+  "kept_factors": [
+   0,
+   1,
+   4,
+   5
+  ],
   "optimum_at_design_centre": false,
   "scale": 3.3223682686776446,
   "confirmation_inside_stage2": false
@@ -411,6 +611,14 @@
   "doe_c_constrained": 0.5823160175442926,
   "constrained_failure": null,
   "stationary_kind": "saddle",
+  "n_kept_active": 4,
+  "n_active": 6,
+  "kept_factors": [
+   1,
+   2,
+   4,
+   5
+  ],
   "optimum_at_design_centre": false,
   "scale": 3.3223682686776446,
   "confirmation_inside_stage2": false
@@ -427,6 +635,14 @@
   "doe_c_constrained": 0.5317365762565052,
   "constrained_failure": null,
   "stationary_kind": "saddle",
+  "n_kept_active": 4,
+  "n_active": 6,
+  "kept_factors": [
+   0,
+   1,
+   2,
+   4
+  ],
   "optimum_at_design_centre": false,
   "scale": 3.3223682686776446,
   "confirmation_inside_stage2": false
@@ -443,6 +659,14 @@
   "doe_c_constrained": 0.5613765515300639,
   "constrained_failure": null,
   "stationary_kind": "saddle",
+  "n_kept_active": 4,
+  "n_active": 6,
+  "kept_factors": [
+   2,
+   3,
+   4,
+   5
+  ],
   "optimum_at_design_centre": false,
   "scale": 3.3223682686776446,
   "confirmation_inside_stage2": false
@@ -459,6 +683,14 @@
   "doe_c_constrained": 0.5584565693652509,
   "constrained_failure": null,
   "stationary_kind": "saddle",
+  "n_kept_active": 4,
+  "n_active": 6,
+  "kept_factors": [
+   2,
+   3,
+   4,
+   5
+  ],
   "optimum_at_design_centre": false,
   "scale": 3.3223682686776446,
   "confirmation_inside_stage2": false
@@ -475,6 +707,14 @@
   "doe_c_constrained": 0.6355977611155215,
   "constrained_failure": null,
   "stationary_kind": "saddle",
+  "n_kept_active": 4,
+  "n_active": 6,
+  "kept_factors": [
+   0,
+   2,
+   3,
+   5
+  ],
   "optimum_at_design_centre": false,
   "scale": 3.3223682686776446,
   "confirmation_inside_stage2": false
@@ -491,6 +731,14 @@
   "doe_c_constrained": 0.3586326132664954,
   "constrained_failure": null,
   "stationary_kind": "saddle",
+  "n_kept_active": 4,
+  "n_active": 6,
+  "kept_factors": [
+   1,
+   3,
+   4,
+   5
+  ],
   "optimum_at_design_centre": false,
   "scale": 3.3223682686776446,
   "confirmation_inside_stage2": false
@@ -507,6 +755,14 @@
   "doe_c_constrained": 0.5385637961376982,
   "constrained_failure": null,
   "stationary_kind": "saddle",
+  "n_kept_active": 4,
+  "n_active": 6,
+  "kept_factors": [
+   0,
+   1,
+   2,
+   3
+  ],
   "optimum_at_design_centre": false,
   "scale": 3.3223682686776446,
   "confirmation_inside_stage2": false
@@ -523,6 +779,14 @@
   "doe_c_constrained": 0.45696623465295816,
   "constrained_failure": null,
   "stationary_kind": "saddle",
+  "n_kept_active": 4,
+  "n_active": 6,
+  "kept_factors": [
+   0,
+   1,
+   4,
+   5
+  ],
   "optimum_at_design_centre": false,
   "scale": 3.3223682686776446,
   "confirmation_inside_stage2": false
@@ -539,6 +803,14 @@
   "doe_c_constrained": 0.3586326132664954,
   "constrained_failure": null,
   "stationary_kind": "saddle",
+  "n_kept_active": 4,
+  "n_active": 6,
+  "kept_factors": [
+   1,
+   3,
+   4,
+   5
+  ],
   "optimum_at_design_centre": false,
   "scale": 3.3223682686776446,
   "confirmation_inside_stage2": false
@@ -555,6 +827,14 @@
   "doe_c_constrained": 0.6621926896221729,
   "constrained_failure": null,
   "stationary_kind": "saddle",
+  "n_kept_active": 4,
+  "n_active": 6,
+  "kept_factors": [
+   0,
+   1,
+   2,
+   5
+  ],
   "optimum_at_design_centre": false,
   "scale": 3.3223682686776446,
   "confirmation_inside_stage2": false
@@ -571,6 +851,14 @@
   "doe_c_constrained": 0.693693246138127,
   "constrained_failure": null,
   "stationary_kind": "saddle",
+  "n_kept_active": 4,
+  "n_active": 6,
+  "kept_factors": [
+   0,
+   2,
+   3,
+   5
+  ],
   "optimum_at_design_centre": false,
   "scale": 3.3223682686776446,
   "confirmation_inside_stage2": false
@@ -587,6 +875,14 @@
   "doe_c_constrained": 0.500721214102087,
   "constrained_failure": null,
   "stationary_kind": "saddle",
+  "n_kept_active": 4,
+  "n_active": 6,
+  "kept_factors": [
+   0,
+   2,
+   3,
+   4
+  ],
   "optimum_at_design_centre": false,
   "scale": 3.3223682686776446,
   "confirmation_inside_stage2": false
@@ -603,6 +899,14 @@
   "doe_c_constrained": 0.4508914318519488,
   "constrained_failure": null,
   "stationary_kind": "saddle",
+  "n_kept_active": 4,
+  "n_active": 6,
+  "kept_factors": [
+   1,
+   2,
+   3,
+   4
+  ],
   "optimum_at_design_centre": false,
   "scale": 3.3223682686776446,
   "confirmation_inside_stage2": false
@@ -619,6 +923,14 @@
   "doe_c_constrained": 0.6917819159070668,
   "constrained_failure": null,
   "stationary_kind": "saddle",
+  "n_kept_active": 4,
+  "n_active": 6,
+  "kept_factors": [
+   0,
+   1,
+   2,
+   5
+  ],
   "optimum_at_design_centre": false,
   "scale": 3.3223682686776446,
   "confirmation_inside_stage2": false
@@ -635,6 +947,14 @@
   "doe_c_constrained": 0.4492602850384777,
   "constrained_failure": null,
   "stationary_kind": "saddle",
+  "n_kept_active": 4,
+  "n_active": 6,
+  "kept_factors": [
+   1,
+   2,
+   3,
+   4
+  ],
   "optimum_at_design_centre": false,
   "scale": 3.3223682686776446,
   "confirmation_inside_stage2": false
@@ -651,6 +971,14 @@
   "doe_c_constrained": 0.5586497135331007,
   "constrained_failure": null,
   "stationary_kind": "saddle",
+  "n_kept_active": 4,
+  "n_active": 6,
+  "kept_factors": [
+   2,
+   3,
+   4,
+   5
+  ],
   "optimum_at_design_centre": false,
   "scale": 3.3223682686776446,
   "confirmation_inside_stage2": false
@@ -667,6 +995,14 @@
   "doe_c_constrained": 0.4198068507776629,
   "constrained_failure": null,
   "stationary_kind": "saddle",
+  "n_kept_active": 4,
+  "n_active": 6,
+  "kept_factors": [
+   0,
+   3,
+   4,
+   5
+  ],
   "optimum_at_design_centre": false,
   "scale": 3.3223682686776446,
   "confirmation_inside_stage2": false
@@ -683,6 +1019,14 @@
   "doe_c_constrained": 0.45696623465295816,
   "constrained_failure": null,
   "stationary_kind": "saddle",
+  "n_kept_active": 4,
+  "n_active": 6,
+  "kept_factors": [
+   0,
+   1,
+   4,
+   5
+  ],
   "optimum_at_design_centre": false,
   "scale": 3.3223682686776446,
   "confirmation_inside_stage2": false
@@ -699,6 +1043,14 @@
   "doe_c_constrained": 0.6141816303964681,
   "constrained_failure": null,
   "stationary_kind": "saddle",
+  "n_kept_active": 4,
+  "n_active": 6,
+  "kept_factors": [
+   0,
+   2,
+   4,
+   5
+  ],
   "optimum_at_design_centre": false,
   "scale": 3.3223682686776446,
   "confirmation_inside_stage2": false
@@ -715,6 +1067,14 @@
   "doe_c_constrained": 0.3586326132664954,
   "constrained_failure": null,
   "stationary_kind": "saddle",
+  "n_kept_active": 4,
+  "n_active": 6,
+  "kept_factors": [
+   1,
+   3,
+   4,
+   5
+  ],
   "optimum_at_design_centre": false,
   "scale": 3.3223682686776446,
   "confirmation_inside_stage2": false
@@ -731,6 +1091,14 @@
   "doe_c_constrained": 0.6226894700731549,
   "constrained_failure": null,
   "stationary_kind": "saddle",
+  "n_kept_active": 4,
+  "n_active": 6,
+  "kept_factors": [
+   0,
+   2,
+   3,
+   5
+  ],
   "optimum_at_design_centre": false,
   "scale": 3.3223682686776446,
   "confirmation_inside_stage2": false
@@ -747,6 +1115,14 @@
   "doe_c_constrained": 0.5614773076330412,
   "constrained_failure": null,
   "stationary_kind": "saddle",
+  "n_kept_active": 4,
+  "n_active": 6,
+  "kept_factors": [
+   2,
+   3,
+   4,
+   5
+  ],
   "optimum_at_design_centre": false,
   "scale": 3.3223682686776446,
   "confirmation_inside_stage2": false
@@ -763,6 +1139,14 @@
   "doe_c_constrained": 0.5574239117462287,
   "constrained_failure": null,
   "stationary_kind": "saddle",
+  "n_kept_active": 4,
+  "n_active": 6,
+  "kept_factors": [
+   2,
+   3,
+   4,
+   5
+  ],
   "optimum_at_design_centre": false,
   "scale": 3.3223682686776446,
   "confirmation_inside_stage2": false
@@ -779,6 +1163,14 @@
   "doe_c_constrained": 0.4198068507776629,
   "constrained_failure": null,
   "stationary_kind": "saddle",
+  "n_kept_active": 4,
+  "n_active": 6,
+  "kept_factors": [
+   0,
+   3,
+   4,
+   5
+  ],
   "optimum_at_design_centre": false,
   "scale": 3.3223682686776446,
   "confirmation_inside_stage2": false
@@ -795,8 +1187,1216 @@
   "doe_c_constrained": 0.45696623465295816,
   "constrained_failure": null,
   "stationary_kind": "saddle",
+  "n_kept_active": 4,
+  "n_active": 6,
+  "kept_factors": [
+   0,
+   1,
+   4,
+   5
+  ],
   "optimum_at_design_centre": false,
   "scale": 3.3223682686776446,
+  "confirmation_inside_stage2": false
+ },
+ {
+  "family": "hartmann6",
+  "dim": 8,
+  "sigma": 0.25,
+  "seed": 0,
+  "bo_a": 0.34351837288155984,
+  "bo_c": 0.34171533612217364,
+  "doe_a": 0.6228478412865565,
+  "doe_c_unconstrained": 0.9045142931962971,
+  "doe_c_constrained": 0.6228478412865565,
+  "constrained_failure": null,
+  "stationary_kind": "saddle",
+  "n_kept_active": 3,
+  "n_active": 6,
+  "kept_factors": [
+   0,
+   3,
+   6,
+   7
+  ],
+  "optimum_at_design_centre": false,
+  "scale": 3.3223696545392305,
+  "confirmation_inside_stage2": false
+ },
+ {
+  "family": "hartmann6",
+  "dim": 8,
+  "sigma": 0.25,
+  "seed": 1,
+  "bo_a": 0.1717499176602132,
+  "bo_c": 0.17734859108202006,
+  "doe_a": 0.7915562803531639,
+  "doe_c_unconstrained": 0.8012053750117457,
+  "doe_c_constrained": 0.7914079765902834,
+  "constrained_failure": null,
+  "stationary_kind": "saddle",
+  "n_kept_active": 2,
+  "n_active": 6,
+  "kept_factors": [
+   1,
+   2,
+   5,
+   7
+  ],
+  "optimum_at_design_centre": false,
+  "scale": 3.3223696545392305,
+  "confirmation_inside_stage2": false
+ },
+ {
+  "family": "hartmann6",
+  "dim": 8,
+  "sigma": 0.25,
+  "seed": 2,
+  "bo_a": 0.6530269474397197,
+  "bo_c": 0.6220593675638115,
+  "doe_a": 0.6205459789067255,
+  "doe_c_unconstrained": 0.9125272997198762,
+  "doe_c_constrained": 0.6239380652991712,
+  "constrained_failure": null,
+  "stationary_kind": "saddle",
+  "n_kept_active": 4,
+  "n_active": 6,
+  "kept_factors": [
+   0,
+   2,
+   4,
+   6
+  ],
+  "optimum_at_design_centre": false,
+  "scale": 3.3223696545392305,
+  "confirmation_inside_stage2": false
+ },
+ {
+  "family": "hartmann6",
+  "dim": 8,
+  "sigma": 0.25,
+  "seed": 3,
+  "bo_a": 0.5407640543262366,
+  "bo_c": 0.5425152527571377,
+  "doe_a": 0.4959283557424359,
+  "doe_c_unconstrained": 0.9136825440243151,
+  "doe_c_constrained": 0.4959283557424359,
+  "constrained_failure": null,
+  "stationary_kind": "saddle",
+  "n_kept_active": 3,
+  "n_active": 6,
+  "kept_factors": [
+   0,
+   3,
+   4,
+   7
+  ],
+  "optimum_at_design_centre": false,
+  "scale": 3.3223696545392305,
+  "confirmation_inside_stage2": false
+ },
+ {
+  "family": "hartmann6",
+  "dim": 8,
+  "sigma": 0.25,
+  "seed": 4,
+  "bo_a": 0.37937322915025595,
+  "bo_c": 0.35223367068068967,
+  "doe_a": 0.6771848721957819,
+  "doe_c_unconstrained": 0.6771848721957819,
+  "doe_c_constrained": 0.686482070178703,
+  "constrained_failure": null,
+  "stationary_kind": "saddle",
+  "n_kept_active": 3,
+  "n_active": 6,
+  "kept_factors": [
+   2,
+   4,
+   6,
+   7
+  ],
+  "optimum_at_design_centre": false,
+  "scale": 3.3223696545392305,
+  "confirmation_inside_stage2": false
+ },
+ {
+  "family": "hartmann6",
+  "dim": 8,
+  "sigma": 0.25,
+  "seed": 5,
+  "bo_a": 0.22279763915225081,
+  "bo_c": 0.1487285915984362,
+  "doe_a": 0.45350847706508945,
+  "doe_c_unconstrained": 0.8863743545941738,
+  "doe_c_constrained": 0.45350847706508945,
+  "constrained_failure": null,
+  "stationary_kind": "saddle",
+  "n_kept_active": 4,
+  "n_active": 6,
+  "kept_factors": [
+   0,
+   1,
+   3,
+   6
+  ],
+  "optimum_at_design_centre": false,
+  "scale": 3.3223696545392305,
+  "confirmation_inside_stage2": false
+ },
+ {
+  "family": "hartmann6",
+  "dim": 8,
+  "sigma": 0.25,
+  "seed": 6,
+  "bo_a": 0.17466003139366504,
+  "bo_c": 0.20874237955074948,
+  "doe_a": 0.5702943320764029,
+  "doe_c_unconstrained": 0.9144699520657837,
+  "doe_c_constrained": 0.5538096817252782,
+  "constrained_failure": null,
+  "stationary_kind": "saddle",
+  "n_kept_active": 4,
+  "n_active": 6,
+  "kept_factors": [
+   0,
+   1,
+   2,
+   4
+  ],
+  "optimum_at_design_centre": false,
+  "scale": 3.3223696545392305,
+  "confirmation_inside_stage2": false
+ },
+ {
+  "family": "hartmann6",
+  "dim": 8,
+  "sigma": 0.25,
+  "seed": 7,
+  "bo_a": 0.03858519711037134,
+  "bo_c": 0.062037901732648004,
+  "doe_a": 0.5610528818251289,
+  "doe_c_unconstrained": 0.9318295250039529,
+  "doe_c_constrained": 0.5610528818251289,
+  "constrained_failure": null,
+  "stationary_kind": "saddle",
+  "n_kept_active": 3,
+  "n_active": 6,
+  "kept_factors": [
+   3,
+   4,
+   5,
+   6
+  ],
+  "optimum_at_design_centre": false,
+  "scale": 3.3223696545392305,
+  "confirmation_inside_stage2": false
+ },
+ {
+  "family": "hartmann6",
+  "dim": 8,
+  "sigma": 0.25,
+  "seed": 8,
+  "bo_a": 0.4267312809698247,
+  "bo_c": 0.2857084200178015,
+  "doe_a": 0.6720995991013637,
+  "doe_c_unconstrained": 0.8276251850893538,
+  "doe_c_constrained": 0.6720995991013637,
+  "constrained_failure": null,
+  "stationary_kind": "saddle",
+  "n_kept_active": 2,
+  "n_active": 6,
+  "kept_factors": [
+   1,
+   3,
+   5,
+   7
+  ],
+  "optimum_at_design_centre": false,
+  "scale": 3.3223696545392305,
+  "confirmation_inside_stage2": false
+ },
+ {
+  "family": "hartmann6",
+  "dim": 8,
+  "sigma": 0.25,
+  "seed": 9,
+  "bo_a": 0.3326411631593966,
+  "bo_c": 0.3279804484651163,
+  "doe_a": 0.7033622781373817,
+  "doe_c_unconstrained": 0.9416137831230932,
+  "doe_c_constrained": 0.6834611879065962,
+  "constrained_failure": null,
+  "stationary_kind": "saddle",
+  "n_kept_active": 3,
+  "n_active": 6,
+  "kept_factors": [
+   0,
+   2,
+   4,
+   7
+  ],
+  "optimum_at_design_centre": false,
+  "scale": 3.3223696545392305,
+  "confirmation_inside_stage2": false
+ },
+ {
+  "family": "hartmann6",
+  "dim": 8,
+  "sigma": 0.25,
+  "seed": 10,
+  "bo_a": 0.27112347815872495,
+  "bo_c": 0.23362745949596497,
+  "doe_a": 0.8280351188308772,
+  "doe_c_unconstrained": 0.8507730049444625,
+  "doe_c_constrained": 0.853213438422128,
+  "constrained_failure": null,
+  "stationary_kind": "saddle",
+  "n_kept_active": 2,
+  "n_active": 6,
+  "kept_factors": [
+   2,
+   5,
+   6,
+   7
+  ],
+  "optimum_at_design_centre": false,
+  "scale": 3.3223696545392305,
+  "confirmation_inside_stage2": false
+ },
+ {
+  "family": "hartmann6",
+  "dim": 8,
+  "sigma": 0.25,
+  "seed": 11,
+  "bo_a": 0.23056890250817985,
+  "bo_c": 0.2297277069451532,
+  "doe_a": 0.6573664879620158,
+  "doe_c_unconstrained": 0.9241477234970739,
+  "doe_c_constrained": 0.6444173409366782,
+  "constrained_failure": null,
+  "stationary_kind": "saddle",
+  "n_kept_active": 3,
+  "n_active": 6,
+  "kept_factors": [
+   1,
+   2,
+   4,
+   5
+  ],
+  "optimum_at_design_centre": false,
+  "scale": 3.3223696545392305,
+  "confirmation_inside_stage2": false
+ },
+ {
+  "family": "hartmann6",
+  "dim": 8,
+  "sigma": 0.25,
+  "seed": 12,
+  "bo_a": 0.2479368324584894,
+  "bo_c": 0.28966201745221265,
+  "doe_a": 0.6573664879620158,
+  "doe_c_unconstrained": 0.9415653047191571,
+  "doe_c_constrained": 0.6573664879620158,
+  "constrained_failure": null,
+  "stationary_kind": "saddle",
+  "n_kept_active": 3,
+  "n_active": 6,
+  "kept_factors": [
+   1,
+   2,
+   4,
+   7
+  ],
+  "optimum_at_design_centre": false,
+  "scale": 3.3223696545392305,
+  "confirmation_inside_stage2": false
+ },
+ {
+  "family": "hartmann6",
+  "dim": 8,
+  "sigma": 0.25,
+  "seed": 13,
+  "bo_a": 0.39506277831735614,
+  "bo_c": 0.3075307937112095,
+  "doe_a": 0.7358361797467532,
+  "doe_c_unconstrained": 0.7863188884237712,
+  "doe_c_constrained": 0.6619134273530669,
+  "constrained_failure": null,
+  "stationary_kind": "saddle",
+  "n_kept_active": 3,
+  "n_active": 6,
+  "kept_factors": [
+   0,
+   2,
+   3,
+   5
+  ],
+  "optimum_at_design_centre": false,
+  "scale": 3.3223696545392305,
+  "confirmation_inside_stage2": false
+ },
+ {
+  "family": "hartmann6",
+  "dim": 8,
+  "sigma": 0.25,
+  "seed": 14,
+  "bo_a": 0.29701445934598936,
+  "bo_c": 0.3008163548227447,
+  "doe_a": 0.5330096288238094,
+  "doe_c_unconstrained": 0.8990888834804293,
+  "doe_c_constrained": 0.5330096288238094,
+  "constrained_failure": null,
+  "stationary_kind": "saddle",
+  "n_kept_active": 3,
+  "n_active": 6,
+  "kept_factors": [
+   0,
+   1,
+   4,
+   7
+  ],
+  "optimum_at_design_centre": false,
+  "scale": 3.3223696545392305,
+  "confirmation_inside_stage2": false
+ },
+ {
+  "family": "hartmann6",
+  "dim": 8,
+  "sigma": 0.25,
+  "seed": 15,
+  "bo_a": 0.2358894691705794,
+  "bo_c": 0.26208411455437974,
+  "doe_a": 0.753005612148677,
+  "doe_c_unconstrained": 0.9317616964822396,
+  "doe_c_constrained": 0.7563461183319738,
+  "constrained_failure": null,
+  "stationary_kind": "saddle",
+  "n_kept_active": 2,
+  "n_active": 6,
+  "kept_factors": [
+   2,
+   4,
+   5,
+   7
+  ],
+  "optimum_at_design_centre": false,
+  "scale": 3.3223696545392305,
+  "confirmation_inside_stage2": false
+ },
+ {
+  "family": "hartmann6",
+  "dim": 8,
+  "sigma": 0.25,
+  "seed": 16,
+  "bo_a": 0.42521873985471315,
+  "bo_c": 0.3810486302638352,
+  "doe_a": 0.7033622781373817,
+  "doe_c_unconstrained": 0.9253705981672626,
+  "doe_c_constrained": 0.6743746376329341,
+  "constrained_failure": null,
+  "stationary_kind": "saddle",
+  "n_kept_active": 3,
+  "n_active": 6,
+  "kept_factors": [
+   0,
+   2,
+   4,
+   7
+  ],
+  "optimum_at_design_centre": false,
+  "scale": 3.3223696545392305,
+  "confirmation_inside_stage2": false
+ },
+ {
+  "family": "hartmann6",
+  "dim": 8,
+  "sigma": 0.25,
+  "seed": 17,
+  "bo_a": 0.202588202649587,
+  "bo_c": 0.17471316568621997,
+  "doe_a": 0.6228478412865565,
+  "doe_c_unconstrained": 0.8759968482808173,
+  "doe_c_constrained": 0.6227819964364465,
+  "constrained_failure": null,
+  "stationary_kind": "saddle",
+  "n_kept_active": 3,
+  "n_active": 6,
+  "kept_factors": [
+   0,
+   3,
+   6,
+   7
+  ],
+  "optimum_at_design_centre": false,
+  "scale": 3.3223696545392305,
+  "confirmation_inside_stage2": false
+ },
+ {
+  "family": "hartmann6",
+  "dim": 8,
+  "sigma": 0.25,
+  "seed": 18,
+  "bo_a": 0.13633114163533044,
+  "bo_c": 0.12667833749840485,
+  "doe_a": 0.6424672436935507,
+  "doe_c_unconstrained": 0.9676572028679707,
+  "doe_c_constrained": 0.6374825091746629,
+  "constrained_failure": null,
+  "stationary_kind": "saddle",
+  "n_kept_active": 3,
+  "n_active": 6,
+  "kept_factors": [
+   2,
+   3,
+   4,
+   5
+  ],
+  "optimum_at_design_centre": false,
+  "scale": 3.3223696545392305,
+  "confirmation_inside_stage2": false
+ },
+ {
+  "family": "hartmann6",
+  "dim": 8,
+  "sigma": 0.25,
+  "seed": 19,
+  "bo_a": 0.3138832209485236,
+  "bo_c": 0.2958901928765745,
+  "doe_a": 0.5330096288238094,
+  "doe_c_unconstrained": 0.8990888834804293,
+  "doe_c_constrained": 0.5330096288238094,
+  "constrained_failure": null,
+  "stationary_kind": "saddle",
+  "n_kept_active": 3,
+  "n_active": 6,
+  "kept_factors": [
+   0,
+   1,
+   4,
+   5
+  ],
+  "optimum_at_design_centre": false,
+  "scale": 3.3223696545392305,
+  "confirmation_inside_stage2": false
+ },
+ {
+  "family": "hartmann6",
+  "dim": 8,
+  "sigma": 0.25,
+  "seed": 20,
+  "bo_a": 0.46314677710560215,
+  "bo_c": 0.4550702233777044,
+  "doe_a": 0.6176212788600877,
+  "doe_c_unconstrained": 0.6176212788600877,
+  "doe_c_constrained": 0.6826343407604917,
+  "constrained_failure": null,
+  "stationary_kind": "saddle",
+  "n_kept_active": 3,
+  "n_active": 6,
+  "kept_factors": [
+   2,
+   4,
+   6,
+   7
+  ],
+  "optimum_at_design_centre": false,
+  "scale": 3.3223696545392305,
+  "confirmation_inside_stage2": false
+ },
+ {
+  "family": "hartmann6",
+  "dim": 8,
+  "sigma": 0.25,
+  "seed": 21,
+  "bo_a": 0.29426311922110915,
+  "bo_c": 0.2981903274690447,
+  "doe_a": 0.4959283557424359,
+  "doe_c_unconstrained": 0.9136825440243151,
+  "doe_c_constrained": 0.4959283557424359,
+  "constrained_failure": null,
+  "stationary_kind": "saddle",
+  "n_kept_active": 3,
+  "n_active": 6,
+  "kept_factors": [
+   0,
+   3,
+   4,
+   5
+  ],
+  "optimum_at_design_centre": false,
+  "scale": 3.3223696545392305,
+  "confirmation_inside_stage2": false
+ },
+ {
+  "family": "hartmann6",
+  "dim": 8,
+  "sigma": 0.25,
+  "seed": 22,
+  "bo_a": 0.15100096629037896,
+  "bo_c": 0.14827577370491207,
+  "doe_a": 0.7793281588637305,
+  "doe_c_unconstrained": 0.8973031068873721,
+  "doe_c_constrained": 0.7955503564962972,
+  "constrained_failure": null,
+  "stationary_kind": "saddle",
+  "n_kept_active": 3,
+  "n_active": 6,
+  "kept_factors": [
+   0,
+   2,
+   6,
+   7
+  ],
+  "optimum_at_design_centre": false,
+  "scale": 3.3223696545392305,
+  "confirmation_inside_stage2": false
+ },
+ {
+  "family": "hartmann6",
+  "dim": 8,
+  "sigma": 0.25,
+  "seed": 23,
+  "bo_a": 0.43351666589573135,
+  "bo_c": 0.43789161956579425,
+  "doe_a": 0.625292710310855,
+  "doe_c_unconstrained": 0.9069791589347892,
+  "doe_c_constrained": 0.6233253174360314,
+  "constrained_failure": null,
+  "stationary_kind": "saddle",
+  "n_kept_active": 3,
+  "n_active": 6,
+  "kept_factors": [
+   0,
+   4,
+   5,
+   6
+  ],
+  "optimum_at_design_centre": false,
+  "scale": 3.3223696545392305,
+  "confirmation_inside_stage2": false
+ },
+ {
+  "family": "hartmann6",
+  "dim": 8,
+  "sigma": 0.25,
+  "seed": 24,
+  "bo_a": 0.4543741591028959,
+  "bo_c": 0.4706668279124442,
+  "doe_a": 0.4563559530362402,
+  "doe_c_unconstrained": 0.932803360542898,
+  "doe_c_constrained": 0.4563559530362402,
+  "constrained_failure": null,
+  "stationary_kind": "saddle",
+  "n_kept_active": 3,
+  "n_active": 6,
+  "kept_factors": [
+   1,
+   3,
+   4,
+   7
+  ],
+  "optimum_at_design_centre": false,
+  "scale": 3.3223696545392305,
+  "confirmation_inside_stage2": false
+ },
+ {
+  "family": "hartmann6",
+  "dim": 8,
+  "sigma": 0.1,
+  "seed": 0,
+  "bo_a": 0.2323843763272555,
+  "bo_c": 0.21208592066665966,
+  "doe_a": 0.7441363088625988,
+  "doe_c_unconstrained": 0.9323066465967983,
+  "doe_c_constrained": 0.7441363088625988,
+  "constrained_failure": null,
+  "stationary_kind": "saddle",
+  "n_kept_active": 2,
+  "n_active": 6,
+  "kept_factors": [
+   3,
+   5,
+   6,
+   7
+  ],
+  "optimum_at_design_centre": false,
+  "scale": 3.3223696545392305,
+  "confirmation_inside_stage2": false
+ },
+ {
+  "family": "hartmann6",
+  "dim": 8,
+  "sigma": 0.1,
+  "seed": 1,
+  "bo_a": 0.1944441964115351,
+  "bo_c": 0.202060452162789,
+  "doe_a": 0.7915562803531639,
+  "doe_c_unconstrained": 0.8005668763792732,
+  "doe_c_constrained": 0.790944696711758,
+  "constrained_failure": null,
+  "stationary_kind": "saddle",
+  "n_kept_active": 2,
+  "n_active": 6,
+  "kept_factors": [
+   1,
+   2,
+   5,
+   7
+  ],
+  "optimum_at_design_centre": false,
+  "scale": 3.3223696545392305,
+  "confirmation_inside_stage2": false
+ },
+ {
+  "family": "hartmann6",
+  "dim": 8,
+  "sigma": 0.1,
+  "seed": 2,
+  "bo_a": 0.16558254033191044,
+  "bo_c": 0.13090767663128133,
+  "doe_a": 0.6205459789067255,
+  "doe_c_unconstrained": 0.8750123714274433,
+  "doe_c_constrained": 0.6209238980021535,
+  "constrained_failure": null,
+  "stationary_kind": "saddle",
+  "n_kept_active": 4,
+  "n_active": 6,
+  "kept_factors": [
+   0,
+   2,
+   4,
+   6
+  ],
+  "optimum_at_design_centre": false,
+  "scale": 3.3223696545392305,
+  "confirmation_inside_stage2": false
+ },
+ {
+  "family": "hartmann6",
+  "dim": 8,
+  "sigma": 0.1,
+  "seed": 3,
+  "bo_a": 0.5050031140583963,
+  "bo_c": 0.5467282318991886,
+  "doe_a": 0.4959283557424359,
+  "doe_c_unconstrained": 0.9136825440243151,
+  "doe_c_constrained": 0.4959283557424359,
+  "constrained_failure": null,
+  "stationary_kind": "saddle",
+  "n_kept_active": 3,
+  "n_active": 6,
+  "kept_factors": [
+   0,
+   3,
+   4,
+   7
+  ],
+  "optimum_at_design_centre": false,
+  "scale": 3.3223696545392305,
+  "confirmation_inside_stage2": false
+ },
+ {
+  "family": "hartmann6",
+  "dim": 8,
+  "sigma": 0.1,
+  "seed": 4,
+  "bo_a": 0.3063453942531609,
+  "bo_c": 0.3159302159880364,
+  "doe_a": 0.6760665856054163,
+  "doe_c_unconstrained": 0.6760665856054163,
+  "doe_c_constrained": 0.6855551328330871,
+  "constrained_failure": null,
+  "stationary_kind": "saddle",
+  "n_kept_active": 3,
+  "n_active": 6,
+  "kept_factors": [
+   2,
+   4,
+   6,
+   7
+  ],
+  "optimum_at_design_centre": false,
+  "scale": 3.3223696545392305,
+  "confirmation_inside_stage2": false
+ },
+ {
+  "family": "hartmann6",
+  "dim": 8,
+  "sigma": 0.1,
+  "seed": 5,
+  "bo_a": 0.10403167280992942,
+  "bo_c": 0.08632850503965361,
+  "doe_a": 0.6228478412865565,
+  "doe_c_unconstrained": 0.9045142931962971,
+  "doe_c_constrained": 0.6228478412865565,
+  "constrained_failure": null,
+  "stationary_kind": "saddle",
+  "n_kept_active": 3,
+  "n_active": 6,
+  "kept_factors": [
+   0,
+   3,
+   5,
+   6
+  ],
+  "optimum_at_design_centre": false,
+  "scale": 3.3223696545392305,
+  "confirmation_inside_stage2": false
+ },
+ {
+  "family": "hartmann6",
+  "dim": 8,
+  "sigma": 0.1,
+  "seed": 6,
+  "bo_a": 0.05447615126851002,
+  "bo_c": 0.07142836522971785,
+  "doe_a": 0.5702943320764029,
+  "doe_c_unconstrained": 0.9217558936652018,
+  "doe_c_constrained": 0.5484684630775766,
+  "constrained_failure": null,
+  "stationary_kind": "saddle",
+  "n_kept_active": 4,
+  "n_active": 6,
+  "kept_factors": [
+   0,
+   1,
+   2,
+   4
+  ],
+  "optimum_at_design_centre": false,
+  "scale": 3.3223696545392305,
+  "confirmation_inside_stage2": false
+ },
+ {
+  "family": "hartmann6",
+  "dim": 8,
+  "sigma": 0.1,
+  "seed": 7,
+  "bo_a": 0.15214950672269156,
+  "bo_c": 0.16351843046569436,
+  "doe_a": 0.5610528818251289,
+  "doe_c_unconstrained": 0.9318295250039529,
+  "doe_c_constrained": 0.5610528818251289,
+  "constrained_failure": null,
+  "stationary_kind": "saddle",
+  "n_kept_active": 3,
+  "n_active": 6,
+  "kept_factors": [
+   3,
+   4,
+   5,
+   6
+  ],
+  "optimum_at_design_centre": false,
+  "scale": 3.3223696545392305,
+  "confirmation_inside_stage2": false
+ },
+ {
+  "family": "hartmann6",
+  "dim": 8,
+  "sigma": 0.1,
+  "seed": 8,
+  "bo_a": 0.3908499260522025,
+  "bo_c": 0.37252409756537674,
+  "doe_a": 0.6498622622228356,
+  "doe_c_unconstrained": 0.7775362078400017,
+  "doe_c_constrained": 0.6498622622228356,
+  "constrained_failure": null,
+  "stationary_kind": "saddle",
+  "n_kept_active": 2,
+  "n_active": 6,
+  "kept_factors": [
+   0,
+   3,
+   5,
+   7
+  ],
+  "optimum_at_design_centre": false,
+  "scale": 3.3223696545392305,
+  "confirmation_inside_stage2": false
+ },
+ {
+  "family": "hartmann6",
+  "dim": 8,
+  "sigma": 0.1,
+  "seed": 9,
+  "bo_a": 0.20881156535161893,
+  "bo_c": 0.2094435159507071,
+  "doe_a": 0.7033622781373817,
+  "doe_c_unconstrained": 0.9405806060143617,
+  "doe_c_constrained": 0.6825725549834252,
+  "constrained_failure": null,
+  "stationary_kind": "saddle",
+  "n_kept_active": 3,
+  "n_active": 6,
+  "kept_factors": [
+   0,
+   2,
+   4,
+   7
+  ],
+  "optimum_at_design_centre": false,
+  "scale": 3.3223696545392305,
+  "confirmation_inside_stage2": false
+ },
+ {
+  "family": "hartmann6",
+  "dim": 8,
+  "sigma": 0.1,
+  "seed": 10,
+  "bo_a": 0.2273175096774689,
+  "bo_c": 0.22025482112895267,
+  "doe_a": 0.7625725605606625,
+  "doe_c_unconstrained": 0.7625725605606625,
+  "doe_c_constrained": 0.8280367086982853,
+  "constrained_failure": null,
+  "stationary_kind": "saddle",
+  "n_kept_active": 2,
+  "n_active": 6,
+  "kept_factors": [
+   2,
+   5,
+   6,
+   7
+  ],
+  "optimum_at_design_centre": false,
+  "scale": 3.3223696545392305,
+  "confirmation_inside_stage2": false
+ },
+ {
+  "family": "hartmann6",
+  "dim": 8,
+  "sigma": 0.1,
+  "seed": 11,
+  "bo_a": 0.1700552402073291,
+  "bo_c": 0.15001060543782296,
+  "doe_a": 0.6573664879620158,
+  "doe_c_unconstrained": 0.9239513117169824,
+  "doe_c_constrained": 0.644323711878277,
+  "constrained_failure": null,
+  "stationary_kind": "saddle",
+  "n_kept_active": 3,
+  "n_active": 6,
+  "kept_factors": [
+   1,
+   2,
+   4,
+   5
+  ],
+  "optimum_at_design_centre": false,
+  "scale": 3.3223696545392305,
+  "confirmation_inside_stage2": false
+ },
+ {
+  "family": "hartmann6",
+  "dim": 8,
+  "sigma": 0.1,
+  "seed": 12,
+  "bo_a": 0.09398857274298722,
+  "bo_c": 0.0693063826878838,
+  "doe_a": 0.6573664879620158,
+  "doe_c_unconstrained": 0.9253490570744628,
+  "doe_c_constrained": 0.6443701427238765,
+  "constrained_failure": null,
+  "stationary_kind": "saddle",
+  "n_kept_active": 3,
+  "n_active": 6,
+  "kept_factors": [
+   1,
+   2,
+   4,
+   7
+  ],
+  "optimum_at_design_centre": false,
+  "scale": 3.3223696545392305,
+  "confirmation_inside_stage2": false
+ },
+ {
+  "family": "hartmann6",
+  "dim": 8,
+  "sigma": 0.1,
+  "seed": 13,
+  "bo_a": 0.5002336196377791,
+  "bo_c": 0.5102136185462495,
+  "doe_a": 0.7358361797467532,
+  "doe_c_unconstrained": 0.7833665502597953,
+  "doe_c_constrained": 0.6509544565607693,
+  "constrained_failure": null,
+  "stationary_kind": "saddle",
+  "n_kept_active": 3,
+  "n_active": 6,
+  "kept_factors": [
+   0,
+   2,
+   3,
+   5
+  ],
+  "optimum_at_design_centre": false,
+  "scale": 3.3223696545392305,
+  "confirmation_inside_stage2": false
+ },
+ {
+  "family": "hartmann6",
+  "dim": 8,
+  "sigma": 0.1,
+  "seed": 14,
+  "bo_a": 0.2549105799899738,
+  "bo_c": 0.21762724800203948,
+  "doe_a": 0.5330096288238094,
+  "doe_c_unconstrained": 0.8990888834804293,
+  "doe_c_constrained": 0.5330096288238094,
+  "constrained_failure": null,
+  "stationary_kind": "saddle",
+  "n_kept_active": 3,
+  "n_active": 6,
+  "kept_factors": [
+   0,
+   1,
+   4,
+   7
+  ],
+  "optimum_at_design_centre": false,
+  "scale": 3.3223696545392305,
+  "confirmation_inside_stage2": false
+ },
+ {
+  "family": "hartmann6",
+  "dim": 8,
+  "sigma": 0.1,
+  "seed": 15,
+  "bo_a": 0.31462479705355106,
+  "bo_c": 0.2198269806494706,
+  "doe_a": 0.753005612148677,
+  "doe_c_unconstrained": 0.9317582219304281,
+  "doe_c_constrained": 0.7524397578543648,
+  "constrained_failure": null,
+  "stationary_kind": "saddle",
+  "n_kept_active": 2,
+  "n_active": 6,
+  "kept_factors": [
+   2,
+   4,
+   5,
+   7
+  ],
+  "optimum_at_design_centre": false,
+  "scale": 3.3223696545392305,
+  "confirmation_inside_stage2": false
+ },
+ {
+  "family": "hartmann6",
+  "dim": 8,
+  "sigma": 0.1,
+  "seed": 16,
+  "bo_a": 0.28856335716913684,
+  "bo_c": 0.24754174242296778,
+  "doe_a": 0.7033622781373817,
+  "doe_c_unconstrained": 0.9266311836003351,
+  "doe_c_constrained": 0.6743627762446297,
+  "constrained_failure": null,
+  "stationary_kind": "saddle",
+  "n_kept_active": 3,
+  "n_active": 6,
+  "kept_factors": [
+   0,
+   2,
+   4,
+   7
+  ],
+  "optimum_at_design_centre": false,
+  "scale": 3.3223696545392305,
+  "confirmation_inside_stage2": false
+ },
+ {
+  "family": "hartmann6",
+  "dim": 8,
+  "sigma": 0.1,
+  "seed": 17,
+  "bo_a": 0.11107038039777506,
+  "bo_c": 0.10692802253911349,
+  "doe_a": 0.6228478412865565,
+  "doe_c_unconstrained": 0.9045142931962971,
+  "doe_c_constrained": 0.6228478412865565,
+  "constrained_failure": null,
+  "stationary_kind": "saddle",
+  "n_kept_active": 3,
+  "n_active": 6,
+  "kept_factors": [
+   0,
+   3,
+   6,
+   7
+  ],
+  "optimum_at_design_centre": false,
+  "scale": 3.3223696545392305,
+  "confirmation_inside_stage2": false
+ },
+ {
+  "family": "hartmann6",
+  "dim": 8,
+  "sigma": 0.1,
+  "seed": 18,
+  "bo_a": 0.14794502438279866,
+  "bo_c": 0.16831707222127046,
+  "doe_a": 0.6424672436935507,
+  "doe_c_unconstrained": 0.9646896515305352,
+  "doe_c_constrained": 0.6317705696974664,
+  "constrained_failure": null,
+  "stationary_kind": "saddle",
+  "n_kept_active": 3,
+  "n_active": 6,
+  "kept_factors": [
+   2,
+   3,
+   4,
+   5
+  ],
+  "optimum_at_design_centre": false,
+  "scale": 3.3223696545392305,
+  "confirmation_inside_stage2": false
+ },
+ {
+  "family": "hartmann6",
+  "dim": 8,
+  "sigma": 0.1,
+  "seed": 19,
+  "bo_a": 0.17988047199698876,
+  "bo_c": 0.22899396585031417,
+  "doe_a": 0.5330096288238094,
+  "doe_c_unconstrained": 0.8990888834804293,
+  "doe_c_constrained": 0.5330096288238094,
+  "constrained_failure": null,
+  "stationary_kind": "saddle",
+  "n_kept_active": 3,
+  "n_active": 6,
+  "kept_factors": [
+   0,
+   1,
+   4,
+   5
+  ],
+  "optimum_at_design_centre": false,
+  "scale": 3.3223696545392305,
+  "confirmation_inside_stage2": false
+ },
+ {
+  "family": "hartmann6",
+  "dim": 8,
+  "sigma": 0.1,
+  "seed": 20,
+  "bo_a": 0.19829727010587916,
+  "bo_c": 0.19508661700435193,
+  "doe_a": 0.6831802152403894,
+  "doe_c_unconstrained": 0.7230319190287866,
+  "doe_c_constrained": 0.6940470585019798,
+  "constrained_failure": null,
+  "stationary_kind": "saddle",
+  "n_kept_active": 3,
+  "n_active": 6,
+  "kept_factors": [
+   2,
+   4,
+   6,
+   7
+  ],
+  "optimum_at_design_centre": false,
+  "scale": 3.3223696545392305,
+  "confirmation_inside_stage2": false
+ },
+ {
+  "family": "hartmann6",
+  "dim": 8,
+  "sigma": 0.1,
+  "seed": 21,
+  "bo_a": 0.24333747219581336,
+  "bo_c": 0.20598177056403655,
+  "doe_a": 0.4959283557424359,
+  "doe_c_unconstrained": 0.9136825440243151,
+  "doe_c_constrained": 0.4959283557424359,
+  "constrained_failure": null,
+  "stationary_kind": "saddle",
+  "n_kept_active": 3,
+  "n_active": 6,
+  "kept_factors": [
+   0,
+   3,
+   4,
+   5
+  ],
+  "optimum_at_design_centre": false,
+  "scale": 3.3223696545392305,
+  "confirmation_inside_stage2": false
+ },
+ {
+  "family": "hartmann6",
+  "dim": 8,
+  "sigma": 0.1,
+  "seed": 22,
+  "bo_a": 0.11220001049367023,
+  "bo_c": 0.08367202954472075,
+  "doe_a": 0.7793281588637305,
+  "doe_c_unconstrained": 0.8809892997766321,
+  "doe_c_constrained": 0.7638124353775311,
+  "constrained_failure": null,
+  "stationary_kind": "saddle",
+  "n_kept_active": 3,
+  "n_active": 6,
+  "kept_factors": [
+   0,
+   2,
+   6,
+   7
+  ],
+  "optimum_at_design_centre": false,
+  "scale": 3.3223696545392305,
+  "confirmation_inside_stage2": false
+ },
+ {
+  "family": "hartmann6",
+  "dim": 8,
+  "sigma": 0.1,
+  "seed": 23,
+  "bo_a": 0.6280980631784526,
+  "bo_c": 0.6226003113301886,
+  "doe_a": 0.5610528818251289,
+  "doe_c_unconstrained": 0.9318295250039529,
+  "doe_c_constrained": 0.5610528818251289,
+  "constrained_failure": null,
+  "stationary_kind": "saddle",
+  "n_kept_active": 3,
+  "n_active": 6,
+  "kept_factors": [
+   3,
+   4,
+   5,
+   6
+  ],
+  "optimum_at_design_centre": false,
+  "scale": 3.3223696545392305,
+  "confirmation_inside_stage2": false
+ },
+ {
+  "family": "hartmann6",
+  "dim": 8,
+  "sigma": 0.1,
+  "seed": 24,
+  "bo_a": 0.14023572251330907,
+  "bo_c": 0.1159887369683189,
+  "doe_a": 0.7031747560215245,
+  "doe_c_unconstrained": 0.8339635414977262,
+  "doe_c_constrained": 0.6725551465867192,
+  "constrained_failure": null,
+  "stationary_kind": "saddle",
+  "n_kept_active": 3,
+  "n_active": 6,
+  "kept_factors": [
+   1,
+   2,
+   3,
+   7
+  ],
+  "optimum_at_design_centre": false,
+  "scale": 3.3223696545392305,
   "confirmation_inside_stage2": false
  }
 ]

@@ -11,7 +11,7 @@ what ran, why, what it found, and whether it is still current.
    entry. *A number with no committed file does not go in* — one fabricated figure has
    already nearly entered a decision.
 2. **Superseded entries stay, marked.** Nothing is deleted.
-3. **Wrong predictions get their own line.** Ten registered predictions have been wrong.
+3. **Wrong predictions get their own line.** Eleven registered predictions have been wrong.
    Each is more informative than a correct one; burying them makes the correct ones
    worthless.
 4. **Corrections get their own line**, including *how the error arose*.
@@ -432,13 +432,64 @@ would stay subordinate: true at σ=0.25, false at σ=0.10.
 registered before the run
 **Status:** current · **supersedes Q36**
 
-### Result — reversal reproduces in **8 of 14** family-cells
+### Result — reversal reproduces in **8 of 16** family-cells
 | family | cells | reversal |
 |---|---|---|
 | **levy** | all 4 | **YES** |
 | **rosenbrock** | all 4 | **YES** |
-| hartmann6 | both | no — BO wins every rule |
+| hartmann6 | **all 4** | no — BO wins every rule, at every cell |
 | ackley | all 4 | **VOID** — optimum is the box centre |
+
+**Hartmann6 originally ran at 2 of 4 cells and now runs at 4.** It is defined at six
+dimensions, so `run_q42_families.py` returned `None` at d=8 and the one family carrying
+the generality argument had half the coverage of every other. That was a property of the
+function, not a decision — which is why it went unnoticed. `oracles.Embedded` closes it
+using the structure the Hill oracle already uses at d=8: a fixed active subspace plus
+inert nuisance axes, so the dimension contrast is not confounded with active-count. Six
+active coordinates, two inert, active subset from a recorded seed, inert axes **exactly**
+inert (asserted as equality over random draws, `tests/test_embedded_oracle.py`).
+
+**Fidelity gate.** The d=6 path is unchanged, so re-running it must regenerate the
+committed shard bit-exactly. It does: **50 rows, 14 fields, max |Δ| = 0.0**, checked
+against a copy of the committed file rather than against the file the run overwrites —
+D12 is the reason that distinction is spelled out.
+
+#### Hartmann6, all four cells (`results/q42-families-rerun.log`)
+
+| cell | BO rule A | DoE rule A | contrast, DoE − BO | rule C constrained |
+|---|---|---|---|---|
+| d=6 σ=0.25 | **0.2984** | 0.5444 | +0.2460 [+0.1827, +0.3068] | +0.2753 |
+| d=6 σ=0.10 | **0.1938** | 0.5398 | +0.3460 [+0.2992, +0.3956] | +0.3483 |
+| d=8 σ=0.25 | **0.3134** | 0.6324 | +0.3189 [+0.2450, +0.3888] | +0.3317 |
+| d=8 σ=0.10 | **0.2370** | 0.6504 | +0.4134 [+0.3446, +0.4763] | +0.4173 |
+
+All p < 0.0001, all favouring BO. **On a non-additive, deceptive benchmark this project
+did not build, BO wins every cell under every scoring rule — including the constrained
+rule C built specifically so the classical arm is not a strawman.** The fitted quadratic
+is a **saddle in 25/25 runs at all four cells**.
+
+#### 🔴 The screening stage performs at chance on this surface
+
+Every row now records `n_kept_active`: how many of the screen's four slots landed on a
+factor that can actually move the response.
+
+| cell | active of total | slots spent on active factors |
+|---|---|---|
+| d=6 (both σ) | 6 of 6 | 4.00 / 4 |
+| d=8 σ=0.25 | 6 of 8 | **2.96 / 4** |
+| d=8 σ=0.10 | 6 of 8 | **2.88 / 4** |
+
+With 2 of 8 coordinates inert, **chance alone gives 3.00**. The screen scores 2.96 and
+2.88 — and *slightly worse at low noise*, which rules out noise as the cause. **Twenty
+runs plus four centre points cannot distinguish a provably null factor from a real one on
+this surface.**
+
+That is a mechanism, not just a score. The classical pipeline's disadvantage at d=8 is not
+only that its fitted quadratic is a saddle; it is that **the screen feeding that quadratic
+is uninformative**, so two of the six factors it passes forward are chosen effectively at
+random. `n_keep = 4` is fixed (`doe.py:196`, matching the published 6→4) while Hartmann6
+has six active coordinates, so the pipeline must discard real signal at every cell — but
+at d=8 it also spends a slot on a coordinate that provably does nothing.
 
 **The scoring-convention effect is the universal part**: DoE unconstrained − constrained
 is **+0.22 to +0.48** on every family and cell where the surface is a saddle, always
@@ -789,6 +840,7 @@ Kept together because they are the most informative rows in this file.
 | 2 | Q34: cell 6 would fail often, worst at d=8 | **Wrong.** 0 failures in 200 runs. |
 | 3 | Q34: BO's clustered points would be ill-conditioned | **Wrong, and backwards.** The DoE design is singular at six factors; the adaptive design is not. |
 | 4 | Q42: the reversal would not reproduce cleanly on any family | **Wrong.** Levy and Rosenbrock reproduce it at every cell. |
+| 11 | Hartmann6 at d=8: the screen would spend ≥3.5 of 4 slots on genuinely active factors, since inert axes have exactly zero main effect | **Wrong, and it is the most informative number in that run.** 2.96 and 2.88 of 4 — **chance is 3.00**. Worse at *low* noise, so not a noise limit. The screening stage is uninformative on this surface. |
 | 5 | Q37 (twice) | Two power calculations, both making the design look *powerful*. |
 | 6 | Q34: the decision rule would pick one of three branches | **Wrong.** The decomposition is cell-dependent — a fourth outcome I had not listed. |
 | 7 | Q45: the design contrast would stay subordinate to the surrogate effect | **Wrong at σ=0.10**, where it is 4–5× larger. Right at σ=0.25. |
@@ -797,8 +849,8 @@ Kept together because they are the most informative rows in this file.
 | 10 | Q47 P3: two-tier does worse under rule C, because the top-k design is clustered | **Wrong as a directional claim** — 4 cells lower, 4 higher, 8 equal. At d=6 alone it looked systematic; the completed grid does not support it. |
 | — | *the close-out brief's* prediction that Q45 would strengthen the design null | **Refuted.** The design effect is large and significant at all four cells. |
 
-**Ten wrong predictions now, plus the brief's.** Q47 is the sharpest case: its prediction was a *committed computation* rather than a hunch — a Gaussian order-statistic proxy, run and committed before the experiment existed. It got the effect sizes roughly right and the **detectability** wrong, because it had no instance-to-instance variance and so could not know which effects would clear an n=25 interval. A more precise prediction failed in a more informative way.
+**Eleven wrong predictions now, plus the brief's.** Q47 is the sharpest case: its prediction was a *committed computation* rather than a hunch — a Gaussian order-statistic proxy, run and committed before the experiment existed. It got the effect sizes roughly right and the **detectability** wrong, because it had no instance-to-instance variance and so could not know which effects would clear an n=25 interval. A more precise prediction failed in a more informative way.
 
 **Correct predictions, for balance:** Q33's headline; Q34's registered primary (all four
 cells); Q42's secondary prediction that the scoring effect would survive on every family;
-Q35's registered commitment to report all three scorings whichever way it came out; and Q47's registered statement that a two-tier arm losing above the expensive readout's own correlation would be a harness bug — it never lost there.
+Q35's registered commitment to report all three scorings whichever way it came out; and Q47's registered statement that a two-tier arm losing above the expensive readout's own correlation would be a harness bug — it never lost there; and Hartmann6 at d=8, where the reversal was predicted not to reproduce and BO's margin was predicted to widen — both held (+0.246 → +0.319 at σ=0.25, +0.346 → +0.413 at σ=0.10).

@@ -474,6 +474,44 @@ version string, with nothing downstream detecting it. Committing the artefact ma
 ensemble authoritative and the generator an audit trail. Regeneration is asserted in the
 test suite to reproduce committed landscapes exactly.
 
+## 2.13 Embedding a benchmark in a higher dimension
+
+Generality is tested on four standard families as well as the synthetic oracle. Three of
+them (Ackley, Levy, Rosenbrock) accept any dimension. **Hartmann6 does not** — it is
+defined at six — and it is the family that carries the reply to *"you built the landscape
+that produced your answer."* Reported without d=8 it would be the one family with half the
+coverage of the others, which is a reduction along exactly the axis that must not be
+reduced: families may be dropped if compute forces it, cells may not, because the cell
+where BO lost is one of them.
+
+`oracles.Embedded` places a `k`-dimensional oracle in a `d`-dimensional cube, `d ≥ k`,
+with the remaining `d − k` coordinates inert. The active subset is drawn from a recorded
+seed rather than taken as the leading coordinates. This mirrors the synthetic oracle,
+which holds `n_active = 4` at both d=6 and d=8 and draws the active subset at random, so
+that a dimension contrast measures **the cost of nuisance dimensions** rather than
+confounding dimension with the number of influential factors.
+
+The inert coordinates are **exactly** inert: the response is bit-identical when they vary,
+asserted as an equality over random draws rather than to a tolerance. An
+approximately-inert coordinate would mean the arm measures a different function, not a
+nuisance dimension. The optimum value is the inner oracle's; the inert coordinates are
+reported at the box centre in `optimum_x`, and it is checked that this does not place the
+optimum at the exact centre of the box, which would void rule A (see §2.6 — every
+screening and central-composite design includes centre runs, so a centred optimum is
+contained in the design for free).
+
+Embedding into the oracle's own dimension is the identity, and is tested as such.
+
+**A consequence worth recording, because it is a property of the classical pipeline rather
+than of the embedding.** The screening stage retains a fixed four factors (§2.6, matching
+the published 6→4 reduction). Hartmann6 has six active coordinates, so the pipeline
+discards genuinely influential factors at every dimension. At d=8, where two coordinates
+are provably inert, the screen retains **2.96 of 4 (σ=0.25) and 2.88 of 4 (σ=0.10)**
+active factors against a chance value of **3.00** — and does marginally worse at the lower
+noise level. On this surface the screening design is not merely noise-limited; it carries
+no information about which factors matter. Screening performance is therefore reported
+alongside regret wherever an active set is known, rather than assumed adequate.
+
 ## 2.12 Limitations
 
 The benchmark is a control experiment, not a model of hiPSC differentiation. The defensible

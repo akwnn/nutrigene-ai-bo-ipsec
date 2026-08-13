@@ -1,0 +1,5 @@
+  hartmann6 d=6 s=0.25 done (18899s)
+  hartmann6 d=6 s=0.1 done (31941s)
+  hartmann6 d=8 s=0.25 done (32249s)
+  hartmann6 d=8 s=0.1 done (32706s)
+  -> results/q42-families-hartmann6.json  (100 rows)
