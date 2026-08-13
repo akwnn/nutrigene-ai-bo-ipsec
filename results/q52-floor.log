@@ -1,0 +1,78 @@
+========================================================================================================
+Q52 §1.1 — the identification floor. Plant the optimum, then see whether the assay can name it.
+========================================================================================================
+  20 cells, 25 instances, 400 noise draws for rule A and 5 for rule C
+
+
+  d=6  sigma_rel=0.1
+         n                rule A floor  hit rate                rule C floor
+        24    0.0432 [0.0401,0.0461]       68%    0.0421 [0.0347,0.0501]
+        48    0.0540 [0.0505,0.0574]       57%    0.0462 [0.0409,0.0514]
+        96    0.0593 [0.0554,0.0630]       43%    0.0692 [0.0630,0.0757]
+       192    0.0684 [0.0654,0.0713]       32%    0.0535 [0.0494,0.0576]
+       384    0.0746 [0.0716,0.0776]       24%    0.0424 [0.0385,0.0464]
+    best reachable: rule A 0.0432 at n=24   |   rule C 0.0421 at n=24
+
+  d=6  sigma_rel=0.25
+         n                rule A floor  hit rate                rule C floor
+        24    0.1219 [0.1169,0.1268]       34%    0.0924 [0.0802,0.1053]
+        48    0.1330 [0.1279,0.1382]       25%    0.0913 [0.0812,0.1022]
+        96    0.1292 [0.1238,0.1349]       18%    0.1198 [0.1100,0.1301]
+       192    0.1291 [0.1258,0.1324]       12%    0.0781 [0.0715,0.0853]
+       384    0.1292 [0.1246,0.1340]        8%    0.0802 [0.0709,0.0897]
+    best reachable: rule A 0.1219 at n=24   |   rule C 0.0781 at n=192
+
+  d=8  sigma_rel=0.1
+         n                rule A floor  hit rate                rule C floor
+        24    0.0425 [0.0390,0.0459]       66%    0.0313 [0.0275,0.0358]
+        48    0.0562 [0.0540,0.0585]       56%    0.0516 [0.0449,0.0588]
+        96    0.0622 [0.0590,0.0655]       41%    0.0690 [0.0631,0.0754]
+       192    0.0733 [0.0703,0.0761]       32%    0.0566 [0.0520,0.0612]
+       384    0.0718 [0.0687,0.0746]       23%    0.0528 [0.0484,0.0573]
+    best reachable: rule A 0.0425 at n=24   |   rule C 0.0313 at n=24
+
+  d=8  sigma_rel=0.25
+         n                rule A floor  hit rate                rule C floor
+        24    0.1214 [0.1156,0.1271]       33%    0.0810 [0.0702,0.0916]
+        48    0.1324 [0.1264,0.1377]       24%    0.0917 [0.0803,0.1037]
+        96    0.1270 [0.1224,0.1316]       17%    0.1061 [0.0980,0.1151]
+       192    0.1334 [0.1295,0.1372]       11%    0.0861 [0.0771,0.0954]
+       384    0.1279 [0.1254,0.1306]        8%    0.0777 [0.0705,0.0854]
+    best reachable: rule A 0.1214 at n=24   |   rule C 0.0777 at n=384
+
+========================================================================================================
+  TARGET PRUNING — a target below the floor cannot be reached by any arm at any budget
+  in the cap, because the floor already assumes the optimum was visited.
+========================================================================================================
+  A target is KEPT if some (cell, rule) can reach it. Dropping a target that
+  only sigma=0.10 can reach would delete the noise contrast of §3.4, which is
+  the headline of the experiment — 'reachable if you halve your assay CV' is
+  the finding, not a nuisance. Targets unreachable everywhere measure only
+  the cap, and those are the ones that go.
+
+  under RULE A:
+      target    d=6 s=0.1   d=6 s=0.25    d=8 s=0.1   d=8 s=0.25
+        0.30    reachable    reachable    reachable    reachable
+        0.25    reachable    reachable    reachable    reachable
+        0.20    reachable    reachable    reachable    reachable
+        0.15    reachable    reachable    reachable    reachable
+        0.12    reachable     CENSORED    reachable     CENSORED
+        0.10    reachable     CENSORED    reachable     CENSORED
+        0.08    reachable     CENSORED    reachable     CENSORED
+        0.05    reachable     CENSORED    reachable     CENSORED
+
+  under RULE C:
+      target    d=6 s=0.1   d=6 s=0.25    d=8 s=0.1   d=8 s=0.25
+        0.30    reachable    reachable    reachable    reachable
+        0.25    reachable    reachable    reachable    reachable
+        0.20    reachable    reachable    reachable    reachable
+        0.15    reachable    reachable    reachable    reachable
+        0.12    reachable    reachable    reachable    reachable
+        0.10    reachable    reachable    reachable    reachable
+        0.08    reachable    reachable    reachable    reachable
+        0.05    reachable     CENSORED    reachable     CENSORED
+
+  REGISTERED GRID becomes [0.3, 0.25, 0.2, 0.15, 0.12, 0.1, 0.08, 0.05]
+  DROPPED none — every registered target is reachable in at least one (cell, rule).
+
+  -> results/q52-floor.json

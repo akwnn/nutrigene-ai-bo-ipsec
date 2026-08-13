@@ -512,6 +512,57 @@ noise level. On this surface the screening design is not merely noise-limited; i
 no information about which factors matter. Screening performance is therefore reported
 alongside regret wherever an active set is known, rather than assumed adequate.
 
+## 2.14 The identification floor, and why each scoring rule needs its own
+
+A budget-to-target curve reports *"evaluations needed to reach regret T"*. If T lies below
+what the assay can resolve, that curve measures **censoring rather than efficiency**, and
+every arm is censored together. Targets are therefore pruned against a computed floor
+before any grid runs, so the pruning cannot be a choice made after seeing which targets
+flattered which arm.
+
+**Construction (`boec.floor`, `scripts/run_q52_floor.py`).** Plant the true optimum in the
+visited set — `n − 1` Latin-hypercube points plus `x*`, exactly, not to a tolerance — and
+score normally. A method that has already visited the best point in the space cannot be
+beaten by one that still has to find it, so the surviving regret is **pure identification
+error** and bounds every arm below. Verified as a precondition rather than assumed: across
+all 50 instances at d ∈ {6, 8}, `|truth(x*) − optimum_value| = 0.00e+00` and no design
+point ever exceeds the planted one. The bound is deliberately loose, since real arms must
+also search; a loose lower bound still prunes, because a target under it is unreachable
+for certain. It is confirmed to be a bound at every cell — each floor sits below every
+measured arm at the same cell and budget.
+
+**The two rules move in opposite directions, so one number would be wrong for one of
+them.**
+
+* **Rule A (best-observed, the registered rule)** picks by observation, so every extra
+  point is another chance for a mediocre one to draw lucky noise and displace the planted
+  optimum. Its floor **rises with n** — at d=6, σ_rel=0.10 it degrades from 0.0432 at
+  n=24 to 0.0746 at n=384, and the rate at which the assay names the true optimum falls
+  from 68 % to 24 %. At σ_rel=0.25, n=384 that rate is **8 %, on a point that was
+  measured.** The best reachable target under rule A therefore sits at an *interior*
+  budget, and past it, spending more makes the reportable answer worse.
+* **Rule C (posterior mean)** pools every observation into one fit, so it is limited by
+  estimation rather than by the luckiest single draw, and its floor is far lower — 0.0781
+  against rule A's 0.1219 at d=6, σ_rel=0.25.
+
+**This does not contradict the budget sweep of Q49**, where a Latin-hypercube arm's regret
+*falls* with n. That arm must both find and identify, and more points help finding more
+than they hurt identifying. The floor isolates identification alone, which is the component
+that gets monotonically worse.
+
+**Two limits, stated.** Rule A's interval averages 400 noise draws over a *single* design
+per instance, so design variance enters only through the across-instance bootstrap, not
+within it. And rule C's floor uses a space-filling design plus one planted point; an
+adaptive arm's design is not space-filling, so that number is a floor for this design
+family rather than for every conceivable one. It is the weaker of the two bounds.
+
+**One unexplained anomaly, recorded rather than smoothed.** Rule C's floor is non-monotone
+in `n` with a consistent local maximum at **n=96 in all four cells** (0.0692 / 0.1198 /
+0.0690 / 0.1061), with intervals that do not overlap the n=192 values. Four cells out of
+four is not sampling error, and no explanation has been established. It changes no decision
+here — pruning uses the minimum over `n`, and n=96 is never the minimum — but it is not
+understood and should not be cited as a smooth estimation-limited curve.
+
 ## 2.12 Limitations
 
 The benchmark is a control experiment, not a model of hiPSC differentiation. The defensible
