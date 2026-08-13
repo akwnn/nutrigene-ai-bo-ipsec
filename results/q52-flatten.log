@@ -8,3 +8,10 @@ Q52 §1.2 — does the best arm's curve flatten? qLogEI, d=6 sigma=0.25, to 500.
     instance  2 done in   1457s   rule A 48->500: 0.2380 -> 0.0684
     instance  3 done in   1463s   rule A 48->500: 0.1397 -> 0.0284
     instance  4 done in    629s   rule A 48->500: 0.1446 -> 0.0260
+    instance  6 done in   1015s   rule A 48->500: 0.2610 -> 0.0620
+    instance  5 done in   1068s   rule A 48->500: 0.1807 -> 0.0254
+    instance  7 done in   1270s   rule A 48->500: 0.1507 -> 0.0398
+    instance  8 done in    714s   rule A 48->500: 0.1992 -> 0.0698
+    instance  9 done in   3737s   rule A 48->500: 0.1116 -> 0.0643
+    instance 10 done in   3715s   rule A 48->500: 0.1668 -> 0.0642
+    instance 11 done in   3566s   rule A 48->500: 0.1353 -> 0.0215

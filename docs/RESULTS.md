@@ -144,9 +144,39 @@ descent, sequential DoE (20+27+1). Registered in `configs/experiment/e2.yaml`.
 surviving win in that cell is over random search. The finding is dimension-dependent: BO
 wins at d=8.
 
+### The σ_rel = 0.10 cells, all seven arms — the optimistic-assay baseline
+
+Re-aggregated from `results/e2-grid.json` (d=8 `doe` from `results/e2-doe-d8.log`, see
+**D17**), paired at instance level, n=25 instances × 2 seeds. Recorded here because the
+budget-to-target work (Q52) needs the low-noise cells as its comparison baseline and they
+had never been tabulated with paired contrasts.
+
+| | d=6 regret | vs qLogEI | d=8 regret | vs qLogEI |
+|---|---|---|---|---|
+| qlognei | **0.0808** | −0.0066 [−0.0200, +0.0078] tie | **0.0849** | −0.0123 [−0.0214, −0.0041] **BO worse** |
+| qlogei | 0.0874 | — | 0.0972 | — |
+| coord | 0.0880 | +0.0006 [−0.0108, +0.0123] tie | 0.1053 | +0.0081 [−0.0047, +0.0215] tie |
+| doe | 0.0892 | +0.0018 [−0.0086, +0.0117] tie | 0.0948 ⚠️ | +0.0015 [−0.0103, +0.0140] tie |
+| lhs | 0.1027 | +0.0153 [−0.0015, +0.0317] tie | 0.1260 | +0.0288 [+0.0114, +0.0478] BO better |
+| sobol | 0.1210 | +0.0336 [+0.0189, +0.0491] BO better | 0.0968 | −0.0004 [−0.0143, +0.0135] tie |
+| random | 0.1693 | +0.0819 [+0.0627, +0.1001] BO better | 0.1272 | +0.0301 [+0.0154, +0.0448] BO better |
+
+**At the optimistic noise level the top four arms are indistinguishable at both
+dimensions.** qLogEI's only unambiguous wins are over `random` at both dimensions and
+`sobol` at d=6; the classical DoE arm ties it at both. **qLogNEI beats qLogEI at d=8** with
+an interval clear of zero — the acquisition function, not the paradigm, is what moves at
+low noise.
+
+⚠️ The d=8 `doe` figure is read from log **text**; no machine-readable file exists (D17).
+
+**No rule C exists for these arms.** `e2-grid.json` stores reported-best only. Per-arm
+posterior-mean scoring exists nowhere for the Hill oracle — only for BO vs DoE on the four
+external families (Q42) and for Q47's own four arms. A both-rules version of this table
+would need a new run fitting a GP per arm per instance.
+
 ### Limits
 Every arm spends 48 *evaluations*; DoE spends **3 rounds** and BO **10** (Q38). The DoE
-arm is d=6 only, so at d=8 BO's strongest opponent was absent.
+arm is d=6 only in `e2-grid.json`, and its d=8 counterpart ran separately.
 
 ### VOID RUNS — kept because the reasons are more instructive than most results
 - **E2 run 1 — void.** Scored *best true value among visited points*, which credits an
@@ -656,7 +686,7 @@ Marked as literature, not experiment. Full detail in `OPEN-QUESTIONS.md` Task A.
 
 # PART 8 — THE DEFECT RECORD
 
-Twelve defects, full detail in `RESULTS-PERSON-A.md` §7. **Six share one pattern: a check
+Seventeen defects; D1–D12 in full detail in `RESULTS-PERSON-A.md` §7. **Six share one pattern: a check
 whose name carries a guarantee its body does not verify.**
 
 **D12 is the newest and its failure mode is new again.** `results/e2-grid.json` was
@@ -673,7 +703,7 @@ impression invites the wrong inference from a project that found its own mistake
 ---
 
 
-### D13–D16, from the threshold work
+### D13–D17, from the threshold work
 
 | # | defect | how it was caught |
 |---|---|---|
@@ -681,6 +711,7 @@ impression invites the wrong inference from a project that found its own mistake
 | **D14** | Q47's achieved-ρ guard used a flat ±0.02 tolerance. That is **1.4 SD at ρ=0.30 and 13 SD at ρ=0.95** — it fires on ordinary sampling error where it should not and cannot fire where it should. | It killed the first grid launch three minutes in. Diagnosed by verifying the construction unbiased at two sample sizes *before* touching the tolerance. |
 | **D15** | Q47's fixed-calibration arm does **not** isolate `(a, b)`: they are drawn from the generator that then draws the cheap readout's noise, so skipping them diverges every later draw. The arm varies the calibration **and** re-draws the noise. | Found while writing up the sensitivity table. Left in place and reported as such, because `screen`'s provable invariance turns it into a negative control with a known true value of zero. |
 | **D16** | **E2's static arms share one design across all 25 instances** (Q48). Every static-arm interval in this project is a within-design interval. | A control arm in a different experiment disagreed with the published number by 0.05. |
+| **D17** | `results/e2-doe-d8.json` **does not exist**, though `results/e2-doe-d8.log:88` ends *"rows written to results/e2-doe-d8.json"*. The d=8 DoE arm is the Q27 **primary** contrast, and its numbers survive only as formatted text in a log. They cannot be re-aggregated, re-paired, or re-scored under another rule. | Found while pulling the σ=0.10 rows for every arm: the arm was simply absent from `e2-grid.json` and the fallback file was not on disk. **A sibling of D12** — that defect was a gate pointing at an untracked file; this is a *number* with no machine-readable file behind it at all. |
 
 **A methodological note, not a code defect.** While reading Q49 I claimed from unpaired
 means that quadrupling the budget bought nothing. The paired contrast says it buys +0.038
@@ -860,14 +891,71 @@ An adaptive arm gains twice from concentrating — a better best point, *and* a 
 answer that degrades far less under noise, because every candidate it might mis-pick is
 nearly as good as its best.
 
-Within the space-filling family, the two rules move in opposite directions. Rule A worsens
-with budget (0.0432 → 0.0746, n=24 → 384, d=6 σ=0.10) while rule C improves. At σ=0.25,
-n=384 the assay names the true optimum in **8% of readouts, on a point it measured**.
+#### §1.1 — identification error, all four cells
 
-**§1.2: the curve does not flatten.** qLogEI at d=6 σ=0.25, scored at every prefix of a
-500-evaluation campaign — 0.1748 at n=48 → 0.0487 at n=500 under rule A, a 72% fall.
-Paired, 100 → 500: **+0.0921 [+0.0340, +0.1502]** rule A, **+0.0604 [+0.0165, +0.1106]**
-rule C.
+25 instances; 400 noise draws per instance under rule A, 5 under rule C; instance-level
+bootstrap. ⚠️ The committed log's column headers read "floor" — that is the pre-refutation
+wording, preserved so the numbers stay traceable to the file that produced them. Read them
+as the **static arms'** identification penalty.
+
+| n | 24 | 48 | 96 | 192 | 384 |
+|---|---|---|---|---|---|
+| **d=6 σ=0.10** rule A | **0.0432** | 0.0540 | 0.0593 | 0.0684 | 0.0746 |
+| hit rate | 68% | 57% | 43% | 32% | **24%** |
+| rule C | 0.0421 | 0.0462 | *0.0692* | 0.0535 | 0.0424 |
+| **d=6 σ=0.25** rule A | **0.1219** | 0.1330 | 0.1292 | 0.1291 | 0.1292 |
+| hit rate | 34% | 25% | 18% | 12% | **8%** |
+| rule C | 0.0924 | 0.0913 | *0.1198* | 0.0781 | 0.0802 |
+| **d=8 σ=0.10** rule A | **0.0425** | 0.0562 | 0.0622 | 0.0733 | 0.0718 |
+| hit rate | 66% | 56% | 41% | 32% | **23%** |
+| rule C | 0.0313 | 0.0516 | *0.0690* | 0.0566 | 0.0528 |
+| **d=8 σ=0.25** rule A | **0.1214** | 0.1324 | 0.1270 | 0.1334 | 0.1279 |
+| hit rate | 33% | 24% | 17% | 11% | **8%** |
+| rule C | 0.0810 | 0.0917 | *0.1061* | 0.0861 | 0.0777 |
+
+*Italicised n=96 values are the unexplained anomaly recorded under Limits.*
+
+**Rule A worsens with budget** — 0.0432 → 0.0746 at d=6 σ=0.10, a 73% degradation, with
+intervals that do not overlap ([0.0401, 0.0461] against [0.0716, 0.0776]). Rule C moves the
+other way. **At σ=0.25, n=384 the assay names the true optimum in 8% of readouts, on a
+point it measured.**
+
+**The values sit below every measured arm at the same cell**, which is the check that they
+bound the static arms at all: at d=6 σ=0.25 n=48 the number is 0.1330 against qLogEI's
+0.1532 and LHS's 0.1752 (both design-averaged, Q50); at σ=0.10 it is 0.0540 against LHS's
+0.1380 (Q49). The headroom is the point — **0.02 at σ=0.25 against 0.084 at σ=0.10**, so at
+the primary cell nearly all remaining regret is identification rather than search.
+
+**No conflict with Q49**, where an LHS arm *improves* with budget (0.1778 → 0.1395 at d=6
+σ=0.25). That arm must both find and identify, and more points help finding more than they
+hurt identifying. This construction removes finding, leaving only the component that
+degrades.
+
+#### §1.2 — the curve does not flatten
+
+qLogEI, d=6 σ_rel=0.25, one 500-evaluation campaign per instance scored at **every prefix**
+— which is the faithful instrument, because budget-to-target asks about a lab that keeps
+going until it arrives and never pre-commits to a budget.
+
+| budget | 24 | 48 | 100 | 150 | 200 | 300 | 400 | 500 |
+|---|---|---|---|---|---|---|---|---|
+| rule A | 0.1752 | 0.1748 | 0.1408 | 0.0946 | 0.0946 | 0.0946 | 0.0577 | **0.0487** |
+| rule C | 0.0659 | 0.1111 | 0.1044 | 0.0764 | 0.0526 | 0.0431 | 0.0608 | **0.0440** |
+
+Paired at instance level against n=100:
+
+| | rule A | rule C |
+|---|---|---|
+| 100 → 200 | +0.0462 [−0.0243, +0.1434] | **+0.0518 [+0.0109, +0.1065]** |
+| 100 → 300 | +0.0462 [−0.0243, +0.1434] | **+0.0613 [+0.0252, +0.1150]** |
+| 100 → 500 | **+0.0921 [+0.0340, +0.1502]** | **+0.0604 [+0.0165, +0.1106]** |
+
+**Regret falls 72% from the project's budget of 48 and is still descending at 500.** Rule
+A's flat run at n=150–300 is the reported-best curve being a step function — the incumbent
+did not change — not evidence of a plateau; it resumes falling by 400.
+
+The registered cap of **200 is therefore a compute limit, not a scientific one**, and every
+censored result must be reported beside it.
 
 ### What it means
 
