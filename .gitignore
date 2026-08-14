@@ -123,3 +123,10 @@ COMMIT_MSG.txt
 !results/q53-spread-gp-families.json
 !results/q53-spread-gp-*.json
 !results/q53-fidelity-gate.json
+
+# The cost-curve page. Committed WITH its generator (scripts/make_cost_curve_page.py),
+# never alone -- an HTML report with no producing script is the E4-RESULTS-v2.md defect,
+# and that one carries claims in CLAIMS.md and cannot be re-derived. Regenerate with
+# `python scripts/make_cost_curve_page.py`; it asserts the DoE arm is still censored above
+# 50% at every rule-C target and fails loudly if the page headline has gone stale.
+!results/figures/cost-curves.html
