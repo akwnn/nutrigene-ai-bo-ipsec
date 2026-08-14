@@ -101,6 +101,7 @@ recurring.
 | **Q40** | Critical-difference diagrams | ARCHIVE | — | — |
 | **Q32** | Merge of the two parallel digitization builds | ARCHIVE | — | — |
 | **Q13 / Q14 / Q15 / Q16 / Q18 / Q23** | Build-phase registrations and policy calls | ARCHIVE | — | — |
+| **`project_plan.md` Part E** | 🔵 **ARCHIVE-label QUALIFIED.** The file is build-phase scaffolding and stays archived, but **§E.1–E.5 is the live Phase 3 specification** — structure, what to ask the lab for, budget arithmetic, data format, limitations. The in-house lab drop started Phase 3 on 2026-08-13, so that section is active work, not history. `docs/LAB-DATA-FOR-BO.md` §9 points at it. | ARCHIVE (partial) | — | — |
 | **PF3 / PF4** | BoTorch API signature checks; wall-clock timing | ARCHIVE | — | — |
 | **PF-A / PF-B** | Sampler acceptance (0.15%→100%); E4's kill condition | ARCHIVE | — | — |
 | **The qKG swap** | Knowledge Gradient, run to ~52 rows and abandoned | ARCHIVE | — | — |

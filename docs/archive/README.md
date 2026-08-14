@@ -22,7 +22,7 @@ not evidence, and no claim rests on them.
 
 | file | what it is |
 |---|---|
-| `project_plan.md` | Document 2 of 3 — project context, the scientific argument, Phase 2/3 plans, design rationale. |
+| `project_plan.md` | Document 2 of 3 — project context, the scientific argument, Phase 2/3 plans, design rationale. ⚠️ **Part E (§E.1–E.5) is NOT archived material — it is the live Phase 3 specification**, and Phase 3 began on 2026-08-13 with the in-house lab drop. Cited by `docs/LAB-DATA-FOR-BO.md` §9. Archived for the other nine tenths of the file; read Part E as current. |
 | `phase1_build.md` | Document 1 of 3 — the buildable specification for the synthetic phase. The technical authority during the build. |
 | `team_build_plan.md` | Shared gates, interfaces, ownership boundaries, rules for working in parallel. |
 | `person_a_spec.md` | Person A's work package — data lane, E2 (efficiency), E3 (calibration). |

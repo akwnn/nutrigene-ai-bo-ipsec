@@ -288,4 +288,4 @@ Until step 1, the contribution is **understanding and plumbing**, not training d
 | `data/lab/derived/protocol_wellmap.csv` | Well → CHIR/BMP4/media |
 | `configs/lab/coating_2026-08-06.yaml` | Campaign A search space |
 | `docs/superpowers/specs/2026-08-14-lab-data-pipeline-design.md` | How the pipeline was built |
-| `docs/project_plan.md` Part E | What a real Phase 3 round was specified to look like |
+| `docs/archive/build-phase/project_plan.md` Part E | What a real Phase 3 round was specified to look like (§E.1–E.5). ⚠️ **Moved 2026-08-14** by the documentation triage, which labelled the file build-phase scaffolding. Part E is **not** scaffolding — it is the live Phase 3 specification, and the archive index now says so. |
