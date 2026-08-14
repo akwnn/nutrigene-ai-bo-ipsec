@@ -26,7 +26,7 @@ FLOW = LAB / "raw" / "flow"
 PANEL = FLOW / "2026-08-06" / "Exp_20260806_cd31-cd140a"
 ABORTED = FLOW / "2026-08-06" / "Exp_20260806_2"
 
-pytestmark = pytest.mark.skipif(not FLOW.exists(), reason="data/lab/flow not present")
+pytestmark = pytest.mark.skipif(not FLOW.exists(), reason="data/lab/raw/flow not present")
 
 
 @pytest.fixture(scope="module")

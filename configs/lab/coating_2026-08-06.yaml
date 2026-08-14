@@ -27,7 +27,7 @@ parameters:
 
 # CytoFLEX LX, not NovoCyte: every one of the 52 FCS files reports $CYT = "CytoFLEX LX",
 # serial BG17015. The .xit sidecar is CytExpert's format, which is what caused the
-# original misattribution. See data/lab/GATE.md.
+# original misattribution. See data/lab/overlay/GATE.md.
 metric:
   name: CD31_pct_flow
   unit: percent_of_parent
