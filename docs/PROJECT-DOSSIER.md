@@ -27,7 +27,7 @@
 - **No wet-lab work happened.** `CLAIMS.md:277` (L12): *"No wet-lab validation… Nothing in this project has been run on cells. And the title must change: 'stem-cell differentiation protocols' promises cells."*
 - **Only 5 of ~40 executable scripts touch real numbers, and only 2 produce a scientific claim** — Q31 (the replay, null) and Q33 (extrapolation geometry, held).
 
-**Nothing was faked.** This is a declared synthetic benchmark built deliberately as a control experiment (`docs/phase1_build.md:558`, `docs/project_plan.md:35` lists Phase-1 data as *"Fake (synthetic oracle)"*). The risk is only that some downstream prose calls the landscapes *"calibrated to Hall/Ogle"* when the correct phrase is *"shaped like published dose-response behaviour."* See §4.
+**Nothing was faked.** This is a declared synthetic benchmark built deliberately as a control experiment (`docs/archive/build-phase/phase1_build.md:558`, `docs/archive/build-phase/project_plan.md:35` lists Phase-1 data as *"Fake (synthetic oracle)"*). The risk is only that some downstream prose calls the landscapes *"calibrated to Hall/Ogle"* when the correct phrase is *"shaped like published dose-response behaviour."* See §4.
 
 ### Q: "We run rule C and BO wins — right?"
 

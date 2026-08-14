@@ -71,7 +71,7 @@ UNWIRED_METHODS: dict[str, str] = {
         "the sequential-DoE arm is implemented in boec.doe.run_doe_arm but is "
         "not wired into the Runner. Call it directly (see scripts/run_doe_arm.py), "
         "or add a branch here that converts DoEResult into a best-so-far curve. "
-        "See docs/TASKS.md T8."
+        "See docs/archive/build-phase/TASKS.md T8."
     ),
 }
 

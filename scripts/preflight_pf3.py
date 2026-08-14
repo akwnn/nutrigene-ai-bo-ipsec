@@ -1,6 +1,6 @@
 """PF3 — API signature checks on the *installed* BoTorch (Person B, Gate 1).
 
-Answers the five questions in person_b_spec.md §"Gate 1 / PF3", reading every
+Answers the five questions in docs/archive/build-phase/person_b_spec.md §"Gate 1 / PF3", reading every
 answer off the installed objects rather than off the spec.
 
 Run:  python scripts/preflight_pf3.py
@@ -176,7 +176,7 @@ except Exception:
 
 # ---------------------------------------------------------------------------
 rule("Q5 — observation_noise=True under a FIXED-NOISE likelihood at an UNEVALUATED input")
-print("(person_b_spec.md: 'Number 5 is the one that matters most.')\n")
+print("(docs/archive/build-phase/person_b_spec.md: 'Number 5 is the one that matters most.')\n")
 
 torch.manual_seed(0)
 train_X = torch.rand(20, D, dtype=torch.double) * 0.5

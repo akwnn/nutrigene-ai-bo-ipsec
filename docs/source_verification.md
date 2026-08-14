@@ -2,8 +2,8 @@
 ## Which factual claims are confirmed, and which still need checking
 
 **Document 3 of 3.** Reference for anyone writing the paper or defending a claim.
-**Document 1** (`phase1_build.md`) — the buildable specification.
-**Document 2** (`project_plan.md`) — project context, scientific argument, phase plans.
+**Document 1** (`archive/build-phase/phase1_build.md`) — the buildable specification.
+**Document 2** (`archive/build-phase/project_plan.md`) — project context, scientific argument, phase plans.
 
 **Purpose.** Every substantive factual claim used in this project, sorted by evidence status. Cite freely from Part 1. Verify before citing from Part 3. Never present Part 4 as anything but our own choices.
 
@@ -59,7 +59,7 @@ DOI 10.1038/s41598-025-09256-9, *Scientific Reports* 15:24479, open access.
 
 ### 1.2b Verified on the *installed* version — PF3, this project
 
-Botorch 0.18.1 · gpytorch 1.15.2 · torch 2.13.0 · Python 3.11.15, macOS/arm64. Reproduce with `scripts/preflight_pf3.py`. Full write-up in `preflight-findings.md`.
+Botorch 0.18.1 · gpytorch 1.15.2 · torch 2.13.0 · Python 3.11.15, macOS/arm64. Reproduce with `scripts/preflight_pf3.py`. Full write-up in `archive/build-phase/preflight-findings.md`.
 
 | Claim | Status |
 |---|---|

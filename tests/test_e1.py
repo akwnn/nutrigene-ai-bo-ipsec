@@ -129,7 +129,7 @@ def test_bo_beats_random_on_hartmann6():
 # effective peaks fall back to xstar, and the response is a weighted sum of
 # peak-normalised factors that each hit exactly 1.0 at their own optimum.
 #
-# TASKS.md T7. Never run before: run_e1.py executes only the three textbook
+# docs/archive/build-phase/TASKS.md T7. Never run before: run_e1.py executes only the three textbook
 # functions.
 
 def _zero_interaction_instance(dim: int = 6):

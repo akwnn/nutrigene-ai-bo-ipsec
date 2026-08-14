@@ -2,6 +2,27 @@
 
 **STATUS: DRAFT PROPOSAL by B, for A and Alan to cut. Nothing here is settled.**
 
+> ## 🔵 TRIAGED — every claim below now traces to a labelled item in `docs/TRIAGE.md`
+>
+> **42 claims before, 34 after.**
+>
+> | | before | after | struck |
+> |---|---|---|---|
+> | Tier claims (1.x / 2.x / 3.x) | 13 | **9** | 2.2, 3.1, 3.2, 3.5 — all E4 |
+> | Limitations (L1–L19) | 19 | **18** | L18, a duplicate of L13 |
+> | Blocking decisions | 5 | **2** | Q28/T16 and Q30 (already decided), Q19 (no longer blocks) |
+> | "What we do NOT claim" | 5 | **5** | — |
+> | **total** | **42** | **34** | **8** |
+>
+> Two further claims were **demoted** rather than removed (1.1, 1.5). Nothing was deleted: every
+> struck item stays in place with its reason, per this project's own rule.
+>
+> **Read `docs/MAIN-LINE.md` first.** It is CORE and DEFENCE only, and it is the paper's skeleton.
+>
+> **Four corrections below change published numbers**, all traced: the acquisition-failure rate
+> (0.875% → 0.118%, three places), Ackley's rule A (0.0000 → 0.0123, D20), L8's generality
+> figure (Q36's +1.0032 → Q42's +0.2460), and 1.3/3.6's asymmetry, which is now σ-conditional.
+
 This exists because the results are in, the logs disagree with each other, and whoever
 writes first from whichever log they happen to open will set the paper's claim by
 accident. Three known contradictions between artefacts:
@@ -34,10 +55,11 @@ Decisions belong in `OPEN-QUESTIONS.md`; this file only states what follows from
 
 | source | what it establishes | what we must do |
 |---|---|---|
-| **Picheny, Wagner & Ginsbourger 2013**, *Struct Multidiscip Optim* 48:607 | The canonical noisy-BO benchmark. It explicitly separates the **infill** criterion (where to sample next) from the **identification** criterion (which point you report at the end). **That distinction is exactly rule A versus rule C.** | Cite as prior art for the distinction. **Do not present it as new.** Ours is a measurement of how much the choice matters on a classical comparator, not the observation that a choice exists. |
-| **Bull 2011; Wang & de Freitas 2014; Nguyen 2017; Berk 2019** | The incumbent choice — best observation, best posterior mean, best sampled posterior mean — is an active theory thread for GP-EI. | Cite the lineage, in the **introduction**, not in related work. It frames the question rather than following from it. |
-| **Nguyen et al. 2017** | Reports empirically that **best-observed beats the GP-mean counterpart** — **the opposite sign to our rule-C result.** | **Engage directly.** State their setting, state ours, name what differs. Most plausibly noise level and the number of near-optimal candidates: at σ_rel=0.25 the posterior mean's smoothing is worth more than it is at low noise, and our menus have many near-ties. Omitting a contrary published result would be the worst kind of citation. |
-| **Gisperg et al.**, *Biotechnol Bioeng* review | BO gave a more precise model near the optimum, but **the number of experiments could not be reduced compared with DoE**, and increasing noise slowed BO. | **This is our ceiling finding, already in print.** Cite as convergent prior art, not as our discovery. It also independently predicts our σ=0.25-versus-0.10 pattern. |
+| **Rummukainen et al. 2024**, *Heliyon* 10(2):e24484 | 🔴 **THE CLOSEST PRIOR WORK IN EXISTENCE, and it was missing from this table.** A matched-budget DoE-vs-BO head-to-head, 15 experiments each, **scored on the best condition MEASURED (rule A)**, with the criterion **not fixed in advance** — and BO did not reduce the experiment count. Its winner *"had already been found during the first initialization experiment"*, which is our Q37 finding on real data. | **Cite it in the abstract's framing, not in related work.** Our contribution is not that the split exists but that the split is attributable to the classical arm's unregistered scoring — and Rummukainen is the case where that is visible in print. Verified from the PDF (Task A). |
+| ~~**Picheny, Wagner & Ginsbourger 2013**, *Struct Multidiscip Optim* 48:607~~ | ~~It explicitly separates the **infill** criterion from the **identification** criterion. **That distinction is exactly rule A versus rule C.**~~ | 🔴 **STRUCK — the distinction is NOT VERIFIED.** Task A: *"both OA mirrors blocked. **Do not cite it for that distinction yet.**"* What **is** verified is narrower and still useful: Picheny compares **ten kriging-based** criteria and **no non-kriging method**, which is the gap this project fills. Cite it for that, and only that, until someone reads the paper. |
+| **Bull 2011; Wang & de Freitas 2014; Berk 2019** | The incumbent choice — best observation, best posterior mean, best sampled posterior mean — is an active theory thread for GP-EI. | Cite the lineage, in the **introduction**, not in related work. ⚠️ **All three are NOT verified** (Task A). Read them or drop them; do not ship the characterisation. |
+| ~~**Nguyen et al. 2017**~~ | ~~Reports empirically that **best-observed beats the GP-mean counterpart** — **the opposite sign to our rule-C result.**~~ | 🔴 **STRUCK — REFUTED AS CHARACTERISED (Task A, verified from the PDF).** Nguyen concerns the incumbent ξ *inside* the EI acquisition function — an **infill** choice — not the final recommendation. *"The words 'recommend' and 'report' do not occur."* **It is not a contrary result, and citing it as one would be a serious misreading.** The instruction to "engage directly" is withdrawn. |
+| **Gisperg et al.**, *Biotechnol Bioeng* review | BO gave a more precise model near the optimum, but the number of experiments could not be reduced compared with DoE. ⚠️ **Attribution corrected (Task A): the no-reduction result is Rummukainen's, not Gisperg's.** The review reports it; it did not produce it. | Cite as convergent prior art **and cite Rummukainen for the finding itself**. Task A also verified that the review identifies **no gap** in how the final condition is scored — so the contribution is not pre-empted. |
 | **Narayanan et al. 2025**, *Nat Commun* | Claims 3–30× fewer experiments than DoE. | Cite as the opposing camp, and note the comparison is against **estimated** design sizes from formulas rather than an executed DoE arm. That is precisely the gap this project fills. |
 | **Hoerl 1959; Draper 1963; Box & Draper; Myers & Montgomery** | Ridge analysis, canonical analysis and lack-of-fit testing already handle a stationary point outside the design region. | Already conceded in `project_record.md` §B.1.1 and now **measured** in Q35. The failure is one of practice, not of the DoE toolbox. |
 
@@ -54,17 +76,26 @@ Decisions belong in `OPEN-QUESTIONS.md`; this file only states what follows from
 
 **≈10:1.** The verdict moves from "DoE better by 0.0595" to "BO better by 0.2931" — a swing of 0.3526 — and **91% of it comes from how the DoE arm is scored, not from anything about BO.**
 
-And Q35 closes the loop: scored the way classical practice actually prescribes (constrained to the region explored), the DoE arm's rule-C figure is **0.1169** against BO's 0.1232. **The reversal disappears.** "BO wins under rule C" was an artefact of scoring the classical arm in a way its own literature warns against.
+And Q35 measures the sensitivity: scored the way classical practice *also* prescribes (constrained to the region explored), the DoE arm's rule-C figure is **0.1169** against BO's 0.1232 — the gap narrows to a null at three of four cells.
+
+> **🔵 CORRECTED (triage).** This read: ~~"**The reversal disappears.** 'BO wins under rule C' was an artefact of scoring the classical arm in a way its own literature warns against."~~ That reports the **sensitivity** as though it were the result. **Q41 designates the unconstrained argmax as primary**, under which BO wins rule C at every cell by **+0.2710 to +0.3597**. The honest sentence carries both: *the rule-C gap is +0.27 to +0.36 at the primary scoring and collapses to three nulls under the constrained sensitivity — and that spread, larger than the BO-versus-DoE gap it modifies, is itself the finding.*
 
 ### What this contribution is NOT
 
-- **Not "BO loses".** Q36 tested that on two standard functions and it does not generalise — BO wins everything on Hartmann6. Which method wins is a property of the landscape.
+- **Not "BO loses".** ~~Q36~~ **Q42** tested that on four standard families and it does not generalise — BO wins everything on Hartmann6, at all four cells under every rule. Which method wins is a property of the landscape. *(Q36 is superseded — it ran two families at one cell without the noise-model fix.)*
 - **Not a new estimator, criterion or algorithm.** Nothing here is a method contribution.
 - **Not a claim that anyone acted in bad faith.** The convention is unregistered in both camps; that is the point. An unregistered convention with a 10:1 leverage on the verdict is a field-level measurement problem, not a fault of either paper.
 
 ### Delete on sight
 
-`project_record.md` §B.1.2 states of the efficiency claim: *"nothing in the prior-art critique touches it."* **That sentence is now doubly false** — replay benchmarking of BO against published datasets is an established genre with purpose-built frameworks, and Gisperg et al. report the no-reduction result in print. It is the most exposed claim in the record and must go.
+`project_record.md` §B.1.2 states of the efficiency claim: *"nothing in the prior-art critique touches it."* **That sentence is now triply false** — replay benchmarking of BO against published datasets is an established genre with purpose-built frameworks; the no-reduction result is in print (Rummukainen 2024, reported by Gisperg); and **Rummukainen is a matched-budget DoE-vs-BO head-to-head scored on rule A with the criterion not fixed in advance**, which is the prior-art critique landing directly on the claim. It is the most exposed claim in the record and must go.
+
+> ⚠️ **`project_record.md` IS NOT IN THIS REPOSITORY** — and never has been, at any commit
+> (`git log --all --diff-filter=D` finds no deletion). It is cited here twice, and also by
+> `pdf_crosscheck.md`, `RESULTS-PERSON-A.md` and `OPEN-QUESTIONS.md`. **The two sentences quoted
+> from it above cannot be checked by anyone reading this repository**, and one of them is the
+> target of a "delete on sight" instruction. Either commit the file or restate both passages from
+> a source that exists. *(Triage — dangling-reference audit.)*
 
 ---
 
@@ -74,12 +105,26 @@ These survived every check run against them, reproduce across independent
 implementations, and do not depend on any contested choice.
 
 **1.1 The published-style two-stage DoE workflow over-promises systematically and
-massively.** Its fitted surface predicts a value at its recommended recipe that reality
-does not deliver — pooled over-prediction **+1.103 [+1.024, +1.182]** against a response
-whose maximum is **1.0**, in **100/100** cells (`E4-RESULTS-v2.md`). Running the
-published procedure over the *full* space, hiding nothing, the predicted optimum fell
-outside the region stage 2 explored in **100%** of runs and under-delivered against the
-arm's own best measured point in **100%**, at both noise levels (`doe-arm.log`).
+massively.** Running the published procedure over the *full* space, hiding nothing, the
+predicted optimum fell outside the region stage 2 explored in **100%** of runs and
+under-delivered against the arm's own best measured point in **100%**, at both noise levels
+(`doe-arm.log`).
+
+> **🔵 DEMOTED (triage). The E4 half of this claim is withdrawn from Tier 1.** It read:
+> ~~"pooled over-prediction **+1.103 [+1.024, +1.182]** against a response whose maximum is
+> **1.0**, in **100/100** cells (`E4-RESULTS-v2.md`)."~~ Three independent reasons:
+> **(i)** that pooled figure is the exact quantity **Q19 disputes** — `E4-RESULTS-v2.md` labels it
+> "pre-registered primary" and the pre-registration names a single cell, and the two disagree in
+> sign. A contested number cannot sit in a tier defined as *"survived every check, does not depend
+> on any contested choice."*
+> **(ii)** `E4-RESULTS-v2.md` has **no producing script** — `run_e4.py` declares only
+> `E4-FIRST-RESULTS.md`. It cannot be regenerated.
+> **(iii)** E4 is labelled ARCHIVE in `TRIAGE.md`: it asks whether GP uncertainty beats
+> nearest-neighbour distance at *flagging* extrapolation, which is not a question this paper asks.
+>
+> **What survives is the `doe-arm.log` sentence above, and it is enough** — it is the same
+> phenomenon measured on the arm the paper actually runs, at 100% in both cells, from a committed
+> log with a named script.
 
 **1.2 The failure is extrapolation, not a constrained-optimiser artefact.** The
 predicted optimum sat *on* the stage-2 boundary in **0%** of runs — so it is genuine
@@ -93,9 +138,20 @@ cells (~~`q29-symmetric-allcells.log`~~ — **superseded; that log is B's clone 
 old locator. Current source: `q35-constrained-rsm.log`, which gives 0.3766–0.4300 across
 the four cells, and `q34-factorial.json`**). **Scored the way classical practice prescribes
 the same recommendation carries only 0.086–0.117 (Q35), so this row is a statement about
-the UNCONSTRAINED scoring and must name it.** **The figure barely moves with dimension (6→8) or
+the UNCONSTRAINED scoring — which is Q41's primary — and must name it.** **The figure barely
+moves with dimension (6→8) or
 with a 2.5× change in measurement noise**, which means it is driven by geometry rather
 than by measurement error. This is 1.1 arriving independently, in regret units.
+
+> **🔵 TWO AMENDMENTS (D20 rescore).**
+> **(i) The comparison number is corrected.** "0.09 for the best recipe it happened to measure" is
+> **0.0958**, not 0.0597 — the old figure was `curve_true`, i.e. oracle-best rather than rule A.
+> The corrected value now agrees with E2's independently computed **0.0957**, resolving a
+> discrepancy the two documents had carried for the life of the project. The claim is unaffected:
+> 0.3766–0.4300 against 0.0958 is still the arm's own recommendation being its weakest product.
+> **(ii) The constrained residual is σ-conditional** — see the amendment under **3.6**. The
+> sentence pairing this row with 3.6 ("the two arms fail in opposite directions") holds at
+> σ=0.25 and is **null at both σ=0.10 cells**.
 
 **1.4 The fitted surface is a saddle ~~essentially always~~ WHENEVER THE RESPONSE IS
 BIPHASIC — and the exception identifies the mechanism.** 800/800 PF1 cells, 100/100 E4
@@ -119,6 +175,12 @@ the published figure puts Collagen IV at coded **+1.40** — 20% above the highe
 concentration ever tested (`pdf_crosscheck.md`). Flagged as **our inference**, not the
 authors' statement, and needing a statistician to re-derive before it carries weight.
 
+> **🔵 DEMOTED (triage) — out of Tier 1, into the defence.** Tier 1 is defined as *"established,
+> robust, does not depend on any contested choice."* This row is explicitly an **unverified
+> inference about a third party's analysis**, by its own last sentence. It belongs beside
+> `pdf_crosscheck.md` as source-reading evidence (DEFENCE), not among the project's established
+> results. Keep the number; move the claim.
+
 ---
 
 ## Tier 2 — established but CONTESTED, because the estimand was never fixed
@@ -134,6 +196,31 @@ else.** Same runs, same seeds, same data:
 | d=6 σ=0.10 | +0.0018 null | +0.3597 BO better | **+0.0153** BO better (p=0.0088) |
 | d=8 σ=0.25 | −0.0321 DoE better | +0.2710 BO better | **+0.0091 NULL** (p=0.20) |
 | d=8 σ=0.10 | +0.0015 null | +0.3228 BO better | **+0.0001 NULL** (p=0.79) |
+
+> ## 🔴 THE FRAMING BELOW READS THE WRONG VARIANT AS PRIMARY — corrected in triage
+>
+> Everything from "The contested estimand is no longer contested" onward treats the
+> **constrained** argmax as the scoring that settles the question, and concludes that
+> *"BO wins under rule C" was an artefact*. **Q41 decided the opposite**, and it is this
+> project's single most binding decision:
+>
+> > *"**Decision: the unconstrained argmax is the primary DoE scoring.** Constrained argmax and
+> > best-observed are reported alongside it, in every table, always."* — Q41,
+> > `OPEN-QUESTIONS.md:2971`, decided by A
+>
+> Under the primary scoring, **BO wins rule C at all four cells by +0.2710 to +0.3597.** That is
+> not an artefact; it is the registered result. The constrained variant is a **declared
+> sensitivity** — and the largest one in the paper, which is why Q41 puts it in main text — but it
+> does not demote the primary.
+>
+> **Both readings are legitimate and Q41 requires both to be printed.** What is not legitimate is
+> the paragraph below, which reports only the sensitivity and calls the primary an error. Q41 was
+> decided on grounds independent of these numbers (fidelity to the source study's "prediction
+> solution" wording; that a saddle has no interior maximum, so the constrained value reports
+> *where the search stopped* rather than *where the model pointed*).
+>
+> **Every claim conditioned on a scoring rule must name that rule in the same sentence** — Q41's
+> own reporting rule. The text below does not.
 
 > **✅ RESOLVED (T1.1 / T1.2 / T1.4c). Every figure is now from A's clone, on one machine,
 > with one locator (`constrained_argmax`, `n_restarts=20, raw_samples=4096, seed=seed`,
@@ -158,12 +245,28 @@ else.** Same runs, same seeds, same data:
 > competently, the two methods are close — DoE ahead on best-observed at d=6, and
 > statistically indistinguishable on recommendation at three of four cells.
 
-**2.2 The GP's uncertainty versus plain distance is κ-dependent and reverses sign.**
-Pooled −0.0269 [−0.0728, +0.0182], "no advantage". By κ: **+0.1068** [+0.0461, +0.1668]
+**~~2.2 The GP's uncertainty versus plain distance is κ-dependent and reverses sign.~~**
+~~Pooled −0.0269 [−0.0728, +0.0182], "no advantage". By κ: **+0.1068** [+0.0461, +0.1668]
 at κ=0.6 (GP better, and **above the pre-registered 0.08 equivalence bound**), −0.0173
 at 0.7, **−0.0960** and **−0.1011** at 0.8 and 0.9 (GP worse, intervals clear of zero).
 The pre-registration names κ=0.6 as the primary cell; the results document reports the
-pooled figure under that name. **Blocked on Q19.**
+pooled figure under that name.~~ **Blocked on Q19.**
+
+> **🔵 DROPPED (triage) — rests on an ARCHIVE item and has no objection to close.** E4 asks
+> whether a GP's uncertainty beats plain nearest-neighbour distance at *flagging* extrapolation.
+> No sentence of this paper's result depends on that, so under the triage rule the claim is either
+> promoted to DEFENCE with its objection named, or dropped. **There is no objection to name** — a
+> reviewer of a DoE-versus-BO scoring paper does not ask it.
+>
+> Three further reasons it could not have stayed as written: its headline is **unresolved**
+> (Q19 — the registered cell and the pooled figure disagree in sign, and the decision was
+> explicitly deferred: *"B is deliberately not choosing"*, and no A resolution exists anywhere in
+> the record); its source `E4-RESULTS-v2.md` has **no producing script**; and a claim marked
+> "Blocked on Q19" has been blocked for the entire life of the document.
+>
+> **The measurement is real and is not lost.** It stays here struck, and E4 is labelled ARCHIVE
+> in `TRIAGE.md` with its files intact. If Paper 2 asks the extrapolation-flagging question, this
+> is where it starts.
 
 ---
 
@@ -171,12 +274,26 @@ pooled figure under that name. **Blocked on Q19.**
 
 Reported as findings, not as failures. Several are stronger than a positive would have been.
 
-**3.1 A GP's uncertainty does not beat plain nearest-neighbour distance at flagging
-extrapolation.** Bounded, not merely unrefuted: any advantage is below 0.08. Prior art
-says this was the expected outcome under GP theory (`E4-RESULTS-v2.md`).
+**~~3.1 A GP's uncertainty does not beat plain nearest-neighbour distance at flagging
+extrapolation.~~** ~~Bounded, not merely unrefuted: any advantage is below 0.08. Prior art
+says this was the expected outcome under GP theory (`E4-RESULTS-v2.md`).~~
 
-**3.2 Giving the GP the biology's known shape made extrapolation worse**, not better
-(`NEGATIVE-shape-aware-mean.md`).
+> **🔵 DROPPED (triage)** — same reason as 2.2, of which this is the pooled summary. It also
+> **contradicts 2.2 on its own evidence**: 2.2 records +0.1068 at the registered primary cell,
+> which is *above* the 0.08 bound this row says nothing exceeds. The two cannot both be reported.
+> Archived with E4, not deleted.
+
+**~~3.2 Giving the GP the biology's known shape made extrapolation worse~~**, ~~not better
+(`NEGATIVE-shape-aware-mean.md`).~~
+
+> **🔵 DROPPED (triage) — and it is the least recoverable item in the file.**
+> `results/NEGATIVE-shape-aware-mean.md` is a **hand-authored narrative with no producing script
+> anywhere in the repo** — not in `scripts/`, not in `src/`, not in `tests/`. Its underlying log
+> `results/e4-shape-mean-negative.log` has no producer either. **This claim cannot be regenerated,
+> re-scored, or checked**, which fails rule 1 of `RESULTS.md` in substance if not in letter.
+> It is also an E4-lane result, so it fails the ARCHIVE test independently.
+>
+> If it is ever wanted, it must be **re-run from a committed script**, not quoted from the file.
 
 **3.3 Surrogate accuracy is not the binding constraint on BO's regret here.** The
 additive kernel made the model roughly twice as accurate — held-out R² **0.375 → 0.744**,
@@ -185,21 +302,62 @@ factor identification **0.853 → 0.965** — and regret did not move (−0.0015
 test with a measurably better model** (Q30).
 
 **3.4 Four candidate explanations for BO's performance are eliminated by direct test:**
-the prior (Q25), the acquisition solver (Q21, max failure rate 0.875% against a
-pre-registered 1% threshold), the opening batch size (Q26, partial at low noise only),
-and the model class (Q30). The surviving candidate is the scoring rule (2.1).
+the prior (Q25), the acquisition solver (Q21, max failure rate ~~0.875%~~ **0.250%**, overall
+**4/3400 = 0.118%**, against a pre-registered 1% threshold), the opening batch size (Q26,
+partial at low noise only), and the model class (Q30). The surviving candidate is the
+scoring rule (2.1).
 
-**3.5 Separability does not explain the κ sign flip.** Additive-fit R² inside each κ's
+> **🔵 CORRECTED (triage).** 0.875% is **B's run on B's machine** — L6 records this and
+> corrects it, but the correction never reached this row or the Appendix. The rate for the run
+> that produced the committed grid, and therefore every number in the paper, is **0.118% overall
+> and 0.250% worst-cell**, and the failures do **not** concentrate at high noise. Q21's verdict is
+> unchanged either way; the "close to the line" reading is not available at 0.250%.
+
+**~~3.5 Separability does not explain the κ sign flip.~~** ~~Additive-fit R² inside each κ's
 training sub-box is flat — 0.9645 to 0.9670, a range of 0.0025 — while the
 discrimination difference swings 0.21 and changes sign. B's own proposed mechanism,
-tested and refuted (Q22). **The 93% figure must not be cited as though it explained
+tested and refuted (Q22).~~ **The 93% figure must not be cited as though it explained
 this.**
 
-**3.6 BO's recommendation beats its own best observation in all four cells** (15–20%
-better). The posterior mean smooths noise, so the model's named recipe is a better bet
-than the luckiest single reading. Combined with 1.3: **the two arms fail in opposite
-directions — the polynomial's model is worse than its data, the GP's model is better
-than its data.**
+> **🔵 DROPPED (triage) — it explains a result that is no longer claimed.** The κ sign flip is
+> 2.2's, and 2.2 is dropped. A refutation of a mechanism for an archived finding has nothing left
+> to close.
+>
+> **One sentence must survive elsewhere, and it is the useful half:** the ~93% additivity figure
+> (L1) explains nothing about E4, and must never be cited as though it did. That prohibition is
+> now carried by **L1**, where the 93% figure actually lives. The refutation itself — flat 0.0025
+> against a 0.21 swing — is a genuinely good null and is archived with Q22's entry, not deleted.
+
+**3.6 BO's recommendation beats its own best observation in all four cells** (15–21%
+better — 0.1232 vs 0.1553, 0.0703 vs 0.0874, 0.1056 vs 0.1247, 0.0876 vs 0.0972). The
+posterior mean smooths noise, so the model's named recipe is a better bet than the
+luckiest single reading.
+
+> **🔴 AMENDED (D20 rescore) — the "opposite directions" sentence is now σ-conditional.**
+> It read: ~~"Combined with 1.3: **the two arms fail in opposite directions — the polynomial's
+> model is worse than its data, the GP's model is better than its data.**"~~
+>
+> **The GP half is unaffected** — BO's numbers were always scored on `reported_best_curve` and
+> could not move. **The polynomial half held only because its own data was scored at
+> oracle-best.** Rescored on rule A (`results/d20-rescore.json`, fidelity gate |Δ| = 0.0 over all
+> 200 rows), the constrained recommendation is worse than the arm's own best measurement at the
+> **noisy** cells and **not** at the quiet ones:
+>
+> | cell | as published | corrected |
+> |---|---|---|
+> | d=6 σ=0.25 | +0.0572 | **+0.0211** [+0.0105, +0.0315] |
+> | d=6 σ=0.10 | +0.0312 | **−0.0036** [−0.0122, +0.0049] **NULL** |
+> | d=8 σ=0.25 | +0.0573 | **+0.0185** [+0.0094, +0.0287] |
+> | d=8 σ=0.10 | +0.0377 | **−0.0071** [−0.0150, +0.0008] **NULL** |
+>
+> **The correct statement:** *at a realistic assay the two arms fail in opposite directions; at an
+> optimistic one the polynomial's model is no worse than its data either.* **The asymmetry is a
+> property of the noisy assay, not a general property of the two model classes**, and it survives
+> at the realistic cells at about a third of its published magnitude. Write it that way.
+>
+> Note this residual is **not** `CLAIMS.md`'s L6, which is about acquisition-solver failures.
+> Q41 requires it to appear adjacent to the constrained number wherever that number is reported —
+> so the σ-conditioning travels with it.
 
 ---
 
@@ -209,6 +367,17 @@ than its data.**
 **0.930** at d=6, **0.927** at d=8 (Q22). The motivating study is *about* ECM protein
 interactions, so the benchmark under-represents the phenomenon the paper exists to
 study. **Every conclusion here is a conclusion about near-separable landscapes.**
+
+> **The 93% figure must not be cited as though it explained anything else.** It was proposed as
+> the mechanism for E4's κ sign flip and **tested and refuted**: additive-fit R² inside each κ's
+> training sub-box is flat — 0.9645 to 0.9670, a range of **0.0025** — while the discrimination
+> difference swings **0.21** and changes sign (Q22). *(Prohibition inherited from the dropped 3.5,
+> so it survives where the figure lives.)*
+>
+> ⚠️ **This limitation is also partly answered, and the answer belongs beside it:** Q42 reproduced
+> the reversal on **Levy and Rosenbrock**, which are non-additive and multimodal. The
+> near-separability objection to *the scoring-convention finding* is closed by data (L8); what
+> stays open is whether the **DoE-beats-BO** verdict transfers, and it does not — see L8.
 
 **L2 One oracle family**, d ∈ {6, 8}, 25 instances × 2 seeds. Whether any of this holds
 on landscapes with different structure is untested.
@@ -244,12 +413,25 @@ machine-specific quantity at this precision**, and the effect (0.009) is a sixth
 headline (0.0595). Sharding is *not* the cause: a sequential single-process run
 reproduces the four-shard grid exactly.
 
-**L8 The E2 verdict is specific to this landscape family (Q36).** On Hartmann6 —
-non-additive, deceptive — **BO wins under every rule** (+1.0032 rule A). On Ackley both
-methods fail and DoE fails less. Three families, three answers. **"Current practice beats
+**L8 The E2 verdict is specific to this landscape family (~~Q36~~ **Q42**).** On Hartmann6 —
+non-additive, deceptive — **BO wins under every rule, at all four cells**
+(**+0.2460 / +0.3460 / +0.3189 / +0.4134**, all p<0.0001). On Ackley the comparison is **void**
+under every rule, because its optimum is the box centre (L16). On **Levy and Rosenbrock the
+reversal reproduces at all eight cells**. Four families, three answers. **"Current practice beats
 BO" is a result about near-separable, coordinate-wise-unimodal landscapes calibrated to
 one published dataset, and must be written that way.** What does generalise is the
-scoring-convention effect, in direction, on all three.
+scoring-convention effect — **+0.22 to +0.48 on every family and cell where the surface is a
+saddle, always larger than the rule-C gap it modifies.**
+
+> **🔵 CORRECTED (triage).** This row cited **Q36, which is VOID** — superseded by Q42, which ran
+> four families at four cells with the noise-model fix where Q36 ran two families at one cell
+> without it. The struck **+1.0032** is Q36's number and must not be quoted; Q42's Hartmann6
+> figure at the matched cell is **+0.2460**. Two substantive changes come with it: Ackley is
+> **void under every rule**, not merely "both methods fail and DoE fails less" (Q36 voided only
+> its rule A, which Q42 found insufficient — the constrained and unconstrained rule-C figures are
+> identical to four decimals, so rule C carries no information there either); and the generality
+> claim is **stronger**, not weaker, because Levy and Rosenbrock reproduce the reversal cleanly at
+> every one of their eight cells.
 
 **L9 The DoE arm fits a SECOND-order surface; the source used "significant terms up to
 the 3rd order", stepwise-reduced.** The choice is forced by estimability, not preference:
@@ -305,9 +487,20 @@ been run.
 
 **L15 Multiplicity was never controlled, and correcting it costs one reported claim
 (Q39).** `e2.yaml` registers `report_all_comparisons: true` without specifying a
-correction. Under Holm over the 39 non-primary contrasts, **"Latin hypercube also beats
-BO" at the primary cell fails** (p 0.0147 → 0.1914), as do the two other LHS cells and
+correction. Under Holm over the non-primary contrasts, **"Latin hypercube also beats
+BO" at the primary cell fails**, as do the two other LHS cells and
 qLogNEI's only significant win. The registered DoE contrast is exempt and unaffected.
+
+> ⚠️ **UNRESOLVED DISCREPANCY, flagged rather than picked (triage).** This row says Holm over
+> **39** contrasts takes p **0.0147 → 0.1914**. `RESULTS.md` Q39 says Holm over **54** contrasts
+> takes the same p to **0.2356**. `OPEN-QUESTIONS.md:3467` also says 39 → 0.2356. **The family
+> size and the adjusted p do not agree across the three governing documents**, and the family size
+> determines the adjustment, so this is not a typo in one of them.
+>
+> The **verdict is identical either way** — the claim fails at any of these numbers — so nothing
+> downstream moves. But a reviewer who checks the arithmetic will find two Holm families of
+> different sizes, and **whichever is right, the other must be corrected before submission.**
+> `results/q39-multiplicity.json` is committed and settles it in one read.
 
 **L17 The DoE arm's design geometry is SOUND, and that strengthens the finding rather
 than weakening it (Q44).** At the four-factor second-order model stage 2 is actually built
@@ -321,10 +514,19 @@ fails on good geometry. Separately, **both design types are near-singular agains
 only the kept factors — **this was found during the conditioning analysis, not anticipated**,
 and is stated so that the analysis is not read as post-hoc.
 
-**L18 No public dataset supports a continuous comparison** — no endothelial dataset with
+**~~L18 No public dataset supports a continuous comparison~~** — ~~no endothelial dataset with
 continuous factors and deposited per-condition data, and none for stem-cell differentiation
 generally. This is why a synthetic benchmark was necessary, and it is worth stating as a
-finding about the field rather than an apology for the method. ⚠️ **The Olympus claim in
+finding about the field rather than an apology for the method.~~
+
+> **🔵 MERGED into L13 (triage) — this is a duplicate.** L13 states the same fact in nearly the
+> same words ("No published endothelial dataset with continuous factors and deposited
+> per-condition data exists… This is why a synthetic benchmark was necessary… worth stating as a
+> finding about the field rather than an apology for the method"). Two limitation numbers for one
+> limitation inflates the count and invites a reviewer to ask which is which. **L13 is the one
+> that stands.** The Olympus warning below is *not* a duplicate and survives on its own.
+
+⚠️ **The Olympus claim in
 the close-out brief does not survive checking and must not be repeated as written.** It
 states "ten emulated experimental datasets, none of them biological"; Olympus in fact
 provides **33 experimentally-derived benchmarks** alongside 33 analytical functions, and
@@ -350,6 +552,15 @@ independent of L15's multiplicity finding: Holm *widens the interval* to a tie, 
 this **moves the point estimate**. Design-averaged, qLogEI 0.1553 against `lhs` 0.1752
 puts **BO ahead by 0.020** at the registered primary cell, reversing the sign.
 
+> ⚠️ **TRIAGE FLAG — the two governing documents disagree about whether this is settled.**
+> The paragraph below says Q50 established it. **`RESULTS.md:958` still says the settling run is
+> "Not run"**, and **Q50 has no entry in `RESULTS.md` at all** — it is cited twice (for the
+> design-averaged 0.1532 and for Q52 §2's fidelity gate) with no write-up behind either citation.
+> `results/q50-qlogei-seedsweep.json` and its 8 shards **are** committed, so the evidence exists;
+> what is missing is the record. **Write Q50 into `RESULTS.md` and correct line 958 before this
+> claim is quoted.** Also note Q50's own declared scope reduction: **8 of 20 registered campaign
+> seeds ran**, stated rather than silent.
+
 **✅ That reversal is now ESTABLISHED (Q50).** qLogEI was re-run across 8 campaign
 seeds, and the harness reproduces E2's 0.1553 exactly on the diagonal where E2 sits.
 qLogEI design-averaged is **0.1532, SD 0.0082** — it moves by −0.002 where `lhs` moves by
@@ -361,25 +572,42 @@ p = 1.8×10⁻⁵, BO ahead on 21 of 25 instances.** This *replaces* a member of
 
 **L16 A benchmark-design trap worth stating generally.** **Ackley's optimum sits at the
 exact centre of the coded box**, and every screening and CCD design includes centre runs
-— so the DoE design *contains the answer* and scores exactly 0.0000 under rule A for
+— so the DoE design *contains the answer* and scores ~~exactly 0.0000~~ **0.0123** under rule A
+(d=6 σ=0.25; 0.0011 / 0.0131 / 0.0013 at the other three cells) for
 reasons unrelated to search quality. Any centred test function silently rewards any
 design with centre runs. We detect and void that comparison rather than report it.
+
+> **🔵 CORRECTED (D20).** The **exact** zero was itself the oracle-best artefact — scoring the arm
+> at the best *true* value among visited points makes a design containing the optimum score
+> exactly 0. On rule A the centre run must still be *identified* against 47 noisy competitors, so
+> it is near-zero rather than zero. **The reason to void Ackley is unchanged and is arguably
+> sharper**: the design still contains the answer, and 0.0123 against BO's 0.7003 is still not a
+> search result. Distinct DoE values across 25 seeds went 1 → 4/2/4/2, which is what a genuine
+> near-zero looks like.
+>
+> ⚠️ Do not confuse this with Q42's *other* exact zero: the **unconstrained − constrained rule-C
+> difference** on Ackley is genuinely 0.0000 to four decimals, and D20 did not touch it. That one
+> stands, and it is the case that proves 1.4's conditional.
 
 ---
 
 ## What we explicitly do NOT claim
 
-- **"BO beats current practice."** Not supported under the registered rule at either
-  dimension: tested and lost at d=6 and d=8 (σ=0.25), tied at σ=0.10. Under rule C it
-  wins everywhere — which is why this is 2.1 and not a claim.
+- **"BO beats current practice."** Not supported **under rule A** at either
+  dimension: tested and lost at d=6 and d=8 (σ=0.25), tied at σ=0.10. Under rule C at Q41's
+  primary scoring it wins everywhere, and under the constrained sensitivity three of four cells
+  are null. **The unqualified sentence is not available under any rule** — which is why this is
+  2.1 and not a claim. *(Triage: the rule must be named in the same sentence, per Q41.)*
 - **"Our BO is more sample-efficient."** Not shown. At the primary cell qLogEI's only
   significant win is over pure random search, which is E1's sanity bar.
 - **The additive-kernel secondary arm's win over DoE** (−0.0168, p=0.032). One cell, a
   secondary arm, post-hoc model development. A's own commit gives three independent
   reasons it is not a headline; all three stand.
 - **E4's pooled figure as "the pre-registered primary".** It is not, and it disagrees in
-  sign with the cell that is (2.2).
-- **That the ~93% additivity explains anything about the κ dependence** (3.5).
+  sign with the cell that is. *(Triage: 2.2 is dropped and E4 is ARCHIVE, so this no longer
+  guards a live claim — but the prohibition stands for anyone who reopens E4.)*
+- **That the ~93% additivity explains anything about the κ dependence.** *(Triage: 3.5 is
+  dropped with E4; the prohibition now lives on **L1**, where the 93% figure itself lives.)*
 
 ---
 
@@ -387,17 +615,27 @@ design with centre runs. We detect and void that comparison rather than report i
 
 | | decision | owner | governs |
 |---|---|---|---|
-| **Q28 / T16** | rule A or rule C as E2's estimand — or both, co-primary | **A / Alan** | 2.1, the paper's headline |
-| **Q19** | E4's registered cell or the pooled figure | **A / Alan** | 2.2, E4's headline |
-| **T15** | accept the d=8 DoE split | **A** | whether 2.1's d=8 row stands |
+| ~~**Q28 / T16**~~ | ~~rule A or rule C as E2's estimand~~ | ✅ **DECIDED** | **Q41: rule A stays the registered primary; the *unconstrained* argmax is the primary DoE scoring; all three scorings reported in every table, always.** |
+| **T15** | accept the d=8 DoE split | **A** | whether 2.1's d=8 row stands — still open, reaffirmed at `OPEN-QUESTIONS.md:1399` |
 | **Q23** | confirm `coord`'s unpaired status | **A** | L3 |
-| **Q30** | how the additive arm is framed — a *different method*, not qLogEI rescued | **A** | 3.3 |
+| ~~**Q19**~~ | ~~E4's registered cell or the pooled figure~~ | — | **No longer blocking — 2.2 and 3.1 are dropped.** Still unresolved, and it moves with E4 into ARCHIVE. It blocks any future paper that uses E4, not this one. |
+| ~~**Q30**~~ | ~~how the additive arm is framed~~ | ✅ **DECIDED** | **Fixed in Q30's own registration, before it ran:** *"It is reported as post-hoc model development whatever it returns, never as E2's result."* Nothing was left for A to decide. |
 
-**On the two estimand decisions:** both A and B have now seen both numbers, which is
-exactly the situation pre-registration exists to prevent. The defensible resolutions are
-to report both side by side with neither promoted, or for **Alan** to choose. What is not
-defensible is either of us choosing quietly and writing it up as though it had been the
-plan.
+> **🔵 TRIAGED. Five blocking decisions before, two after** — three struck: **two were already
+> decided** (Q28/T16, Q30) and one **no longer blocks this paper** (Q19, which moves with E4 into
+> ARCHIVE and remains genuinely unresolved for anything that uses E4). Q41 was decided by A and is recorded at
+> `OPEN-QUESTIONS.md:2971`; Q30's framing was fixed in advance by its own registration. Listing a
+> decided question as blocking is not harmless: it invites someone to re-open it, and the two
+> estimand rows were the reason this file could not be finished.
+
+**On the estimand decision, now that it is made:** both A and B had seen both numbers before it
+was taken, which is exactly the situation pre-registration exists to prevent — and Q41 addresses
+that directly rather than ignoring it. Its stated grounds are **independent of the numbers**:
+fidelity to the source study's "prediction solution" wording, and that a saddle has no interior
+maximum, so the constrained value reports *where the search was stopped* rather than *where the
+model pointed*. The reporting rule it comes with — **all three scorings, every table, always,
+with the rule named in the same sentence as the claim** — is what makes it defensible. What is
+still not defensible is quoting one scoring alone.
 
 ---
 
@@ -412,7 +650,7 @@ it is evidence, and it must not migrate into the results.
 Four candidate explanations for BO's performance are eliminated by direct test, and any
 proposal to "fix" BO by revisiting them is already answered:
 
-- **not the prior** (Q25) · **not the acquisition solver** (Q21, peak failure 0.875%)
+- **not the prior** (Q25) · **not the acquisition solver** (Q21, peak failure ~~0.875%~~ **0.250%**; 0.118% overall — see L6)
 - **not the opening size** (Q26, partial at low noise only)
 - **not the model class** — the additive kernel doubled held-out R² (0.375 → 0.744) and
   regret did not move (Q30). **Surrogate accuracy is not the binding constraint.**

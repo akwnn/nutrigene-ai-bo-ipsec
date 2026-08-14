@@ -1,0 +1,6 @@
+resuming: 2/300 already on disk, 298 to run
+298 campaigns to run (198 qKG at ~17x qLogEI cost)
+  27/300
+  52/300
+/Users/jy/.local/share/uv/python/cpython-3.11.15-macos-aarch64-none/lib/python3.11/multiprocessing/resource_tracker.py:254: UserWarning: resource_tracker: There appear to be 6 leaked semaphore objects to clean up at shutdown
+  warnings.warn('resource_tracker: There appear to be %d '

@@ -2104,7 +2104,7 @@ Neither blocks building. Both block posting the preprint.
 
 **Figures are built** — `boec.figures`, three PNGs under `results/figures/`. Spec Build Step 7 is done, superseding the note that previously stood here.
 
-**Blocked on:** the version-2 pre-registration — Q12, Q14, Q15 and Q16 together, as one bump. Ordering and owners are in `docs/TASKS.md`; two of the four (T1, T2) are waiting specifically on B.
+**Blocked on:** the version-2 pre-registration — Q12, Q14, Q15 and Q16 together, as one bump. Ordering and owners are in `docs/archive/build-phase/TASKS.md`; two of the four (T1, T2) are waiting specifically on B.
 
 **Latest from B: the d=8 DoE arm exists and has run.** Q24's missing comparison, registered
 as **Q27** before it ran (`1b064e8`). `designs.py` now carries the 2^(8-4)_IV generators —

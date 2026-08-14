@@ -414,7 +414,7 @@ class StepwiseThirdOrderModel:
             "polynomial's interval is too narrow' is exactly what Experiment 4 "
             "is testing, reporting this one would confound the central "
             "finding. Use SecondOrderModel for any interval. "
-            "(phase1_build.md §6 E4a, 'post-selection inference'.)"
+            "(archive/build-phase/phase1_build.md §6 E4a, 'post-selection inference'.)"
         )
 
     def stationary_point(self, bounds: Tensor | None = None) -> StationaryPoint:

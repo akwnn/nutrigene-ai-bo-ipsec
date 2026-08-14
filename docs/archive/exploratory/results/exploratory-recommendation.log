@@ -1,0 +1,75 @@
+100 stored runs to regenerate and re-analyse
+/Users/jy/BO/nutrigene-ai-bo-ipsec/.venv/lib/python3.11/site-packages/botorch/optim/optimize.py:844: RuntimeWarning: Optimization failed in `gen_candidates_scipy` with the following warning(s):
+[NumericalWarning('A not p.d., added jitter of 1.0e-08 to the diagonal'), OptimizationWarning('Optimization failed within `scipy.optimize.minimize` with status 2 and message ABNORMAL: .')]
+Trying again with a new set of initial conditions.
+  return _optimize_acqf_batch(opt_inputs=opt_inputs)
+/Users/jy/BO/nutrigene-ai-bo-ipsec/.venv/lib/python3.11/site-packages/botorch/optim/optimize.py:844: RuntimeWarning: Optimization failed in `gen_candidates_scipy` with the following warning(s):
+[OptimizationWarning('Optimization failed within `scipy.optimize.minimize` with status 2 and message ABNORMAL: .')]
+Trying again with a new set of initial conditions.
+  return _optimize_acqf_batch(opt_inputs=opt_inputs)
+/Users/jy/BO/nutrigene-ai-bo-ipsec/.venv/lib/python3.11/site-packages/botorch/optim/optimize.py:844: RuntimeWarning: Optimization failed in `gen_candidates_scipy` with the following warning(s):
+[NumericalWarning('A not p.d., added jitter of 1.0e-08 to the diagonal'), OptimizationWarning('Optimization failed within `scipy.optimize.minimize` with status 2 and message ABNORMAL: .')]
+Trying again with a new set of initial conditions.
+  return _optimize_acqf_batch(opt_inputs=opt_inputs)
+/Users/jy/BO/nutrigene-ai-bo-ipsec/.venv/lib/python3.11/site-packages/botorch/optim/optimize.py:844: RuntimeWarning: Optimization failed in `gen_candidates_scipy` with the following warning(s):
+[OptimizationWarning('Optimization failed within `scipy.optimize.minimize` with status 2 and message ABNORMAL: .')]
+Trying again with a new set of initial conditions.
+  return _optimize_acqf_batch(opt_inputs=opt_inputs)
+/Users/jy/BO/nutrigene-ai-bo-ipsec/.venv/lib/python3.11/site-packages/botorch/optim/optimize.py:844: RuntimeWarning: Optimization failed on the second try, after generating a new set of initial conditions.
+  return _optimize_acqf_batch(opt_inputs=opt_inputs)
+/Users/jy/BO/nutrigene-ai-bo-ipsec/.venv/lib/python3.11/site-packages/botorch/optim/optimize.py:844: RuntimeWarning: Optimization failed in `gen_candidates_scipy` with the following warning(s):
+[OptimizationWarning('Optimization failed within `scipy.optimize.minimize` with status 2 and message ABNORMAL: .')]
+Trying again with a new set of initial conditions.
+  return _optimize_acqf_batch(opt_inputs=opt_inputs)
+  25/100
+/Users/jy/BO/nutrigene-ai-bo-ipsec/.venv/lib/python3.11/site-packages/botorch/optim/optimize.py:844: RuntimeWarning: Optimization failed in `gen_candidates_scipy` with the following warning(s):
+[OptimizationWarning('Optimization failed within `scipy.optimize.minimize` with status 2 and message ABNORMAL: .')]
+Trying again with a new set of initial conditions.
+  return _optimize_acqf_batch(opt_inputs=opt_inputs)
+/Users/jy/BO/nutrigene-ai-bo-ipsec/.venv/lib/python3.11/site-packages/botorch/optim/optimize.py:844: RuntimeWarning: Optimization failed in `gen_candidates_scipy` with the following warning(s):
+[OptimizationWarning('Optimization failed within `scipy.optimize.minimize` with status 2 and message ABNORMAL: .')]
+Trying again with a new set of initial conditions.
+  return _optimize_acqf_batch(opt_inputs=opt_inputs)
+  50/100
+/Users/jy/BO/nutrigene-ai-bo-ipsec/.venv/lib/python3.11/site-packages/botorch/optim/optimize.py:844: RuntimeWarning: Optimization failed in `gen_candidates_scipy` with the following warning(s):
+[OptimizationWarning('Optimization failed within `scipy.optimize.minimize` with status 2 and message ABNORMAL: .')]
+Trying again with a new set of initial conditions.
+  return _optimize_acqf_batch(opt_inputs=opt_inputs)
+/Users/jy/BO/nutrigene-ai-bo-ipsec/.venv/lib/python3.11/site-packages/botorch/optim/optimize.py:844: RuntimeWarning: Optimization failed in `gen_candidates_scipy` with the following warning(s):
+[OptimizationWarning('Optimization failed within `scipy.optimize.minimize` with status 2 and message ABNORMAL: .')]
+Trying again with a new set of initial conditions.
+  return _optimize_acqf_batch(opt_inputs=opt_inputs)
+  75/100
+/Users/jy/BO/nutrigene-ai-bo-ipsec/.venv/lib/python3.11/site-packages/botorch/optim/optimize.py:844: RuntimeWarning: Optimization failed in `gen_candidates_scipy` with the following warning(s):
+[OptimizationWarning('Optimization failed within `scipy.optimize.minimize` with status 2 and message ABNORMAL: .')]
+Trying again with a new set of initial conditions.
+  return _optimize_acqf_batch(opt_inputs=opt_inputs)
+  100/100
+
+FIDELITY: 100/100 regenerated runs reproduce their stored E2 `best` to 1e-9.
+
+================================================================================================
+PART A — RECOMMENDATION RULE, pure re-analysis of stored qLogEI runs at d=6
+NOT REGISTERED. NOT A RESULT. No new evaluations; no configuration changed.
+================================================================================================
+ sigma                       rule  median regret           vs observed-best        p
+  0.25    observed-best (current)         0.1569                          —        —
+  0.25           posterior argmax         0.1243  -0.0320 [-0.0505,-0.0131]   0.0025
+  0.25 best VISITED (oracle bound)         0.0702  -0.0797 [-0.0964,-0.0627]   0.0000
+       -> the posterior rule recovers  40.2% of the gap between what is reported and the best point BO actually visited
+       -> posterior argmax is a point BO never evaluated in 100% of runs; median distance to the nearest observation 0.1648
+
+   0.1    observed-best (current)         0.0842                          —        —
+   0.1           posterior argmax         0.0670  -0.0171 [-0.0277,-0.0071]   0.0105
+   0.1 best VISITED (oracle bound)         0.0491  -0.0378 [-0.0470,-0.0287]   0.0000
+       -> the posterior rule recovers  45.3% of the gap between what is reported and the best point BO actually visited
+       -> posterior argmax is a point BO never evaluated in 100% of runs; median distance to the nearest observation 0.1948
+
+  Reading it, per the pre-stated rule:
+   * posterior materially better -> the reporting rule is costing BO real
+     performance, and Part B follows.
+   * no difference -> the model's accuracy does not translate into a better
+     recommendation, i.e. it is accurate in the wrong places. Stop.
+   * posterior worse -> the argmax lands where the GP is confidently wrong;
+     that is a calibration finding and connects to E3's overconfidence.
+  The sigma=0.10 row is the control: a noise-driven effect must SHRINK there.

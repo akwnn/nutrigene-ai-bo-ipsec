@@ -5,7 +5,7 @@ reintroduced.** That is the point of this file: none of these failures produce
 an error message on their own, so the tests are the only thing standing between
 us and a plausible-looking but wrong confidence statement.
 
-Trap numbering matches surrogate.py and phase1_build.md §5.
+Trap numbering matches surrogate.py and archive/build-phase/phase1_build.md §5.
 """
 
 from __future__ import annotations

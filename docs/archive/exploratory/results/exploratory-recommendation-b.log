@@ -1,0 +1,47 @@
+
+==================================================================================================
+PART B — 47 adaptive + 1 confirmation. Symmetric with the DoE pipeline.
+NOT REGISTERED. NOT A RESULT. Not an acquisition change: only the way the
+answer is produced changed, and one evaluation now pays for it.
+==================================================================================================
+
+  sigma_rel = 0.25   (n=25 instances, paired)
+                                           arm  median regret
+           E2 qLogEI, 48 search, observed-best         0.1569
+       Part A: 48 search, posterior rec (FREE)         0.1243
+            Part B: 47 search + 1 confirmation         0.1329
+         Part B, scored at best observed of 48         0.1581
+                                  DoE arm (E2)         0.0934
+
+                                    comparison                 difference        p
+                 Part B (confirm) vs E2 qLogEI   -0.0277 [-0.0466,-0.0078]   0.0115
+                       Part B (confirm) vs DoE   +0.0317 [+0.0124,+0.0518]   0.0031
+           Part B (confirm) vs Part A free rec   +0.0043 [+0.0023,+0.0067]   0.0002
+                     Part B (obs of 48) vs DoE   +0.0589 [+0.0362,+0.0791]   0.0000
+
+    -> of the E2 gap to DoE (+0.0595), Part B closes 47%; 53% remains
+    -> the confirmation run COSTS +0.0043 against Part A's free recommendation
+    -> the confirmed recipe under-delivers against the arm's own best observation in 40% of runs
+    -> median distance from the confirmed point to its nearest observation: 0.0677
+
+  sigma_rel = 0.1   (n=25 instances, paired)
+                                           arm  median regret
+           E2 qLogEI, 48 search, observed-best         0.0842
+       Part A: 48 search, posterior rec (FREE)         0.0670
+            Part B: 47 search + 1 confirmation         0.0695
+         Part B, scored at best observed of 48         0.0756
+                                  DoE arm (E2)         0.0908
+
+                                    comparison                 difference        p
+                 Part B (confirm) vs E2 qLogEI   -0.0155 [-0.0260,-0.0049]   0.0219
+                       Part B (confirm) vs DoE   -0.0174 [-0.0260,-0.0082]   0.0009
+           Part B (confirm) vs Part A free rec   +0.0016 [+0.0004,+0.0030]   0.0318
+                     Part B (obs of 48) vs DoE   -0.0082 [-0.0167,+0.0005]   0.1199
+
+    -> E2 had these arms TIED here (-0.0018), so no percentage of the gap is meaningful. Absolute change: -0.0018 -> -0.0174
+    -> the confirmation run COSTS +0.0016 against Part A's free recommendation
+    -> the confirmed recipe under-delivers against the arm's own best observation in 36% of runs
+    -> median distance from the confirmed point to its nearest observation: 0.1762
+
+  The DoE arm's own confirmation under-delivers in 100% of runs (results/doe-arm.log).
+  Whether BO's does too is the like-for-like question, and it is above.
