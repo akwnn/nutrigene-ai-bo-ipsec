@@ -22,6 +22,11 @@ Two rules are enforced in code rather than in a README:
 
 from __future__ import annotations
 
+from .evaluator import (
+    GatingIncompleteError,
+    MetricMismatchError,
+    load_lab_evaluator,
+)
 from .manifest import (
     LabFile,
     Modality,
@@ -32,9 +37,12 @@ from .manifest import (
 )
 
 __all__ = [
+    "GatingIncompleteError",
     "LabFile",
+    "MetricMismatchError",
     "Modality",
     "build_file_index",
+    "load_lab_evaluator",
     "load_roles",
     "verify_checksums",
     "walk_lab",
