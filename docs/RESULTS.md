@@ -720,6 +720,52 @@ impression invites the wrong inference from a project that found its own mistake
 | **D18** | **`report()` prints a savings column the registration does not define.** Q52 §2 registers `savings` as a **median** of per-instance ratios; `boec.diagnostics.instance_bootstrap` returns `v.mean()`. The two disagree in *direction* — under the mean there is no inversion at any target, under the median there appears to be one. The printed column must not be quoted until the estimator matches the registration. | Adversarial re-derivation of the printed table from the raw JSON. The harness's own log and the registration had been read as if they computed the same quantity for a full day. |
 | **D19** | **A registration binds only the analysis that runs through it.** Q52 §2's gates — >50% censored ⇒ no point estimate, fewer than 13 pairs ⇒ undefined, designated sets only ⇒ no promoting the appendix — were all registered *and correctly implemented in the harness*. The first-pass headline broke all three anyway, because it was computed in an ad-hoc script that reproduced the arithmetic without the gates. | The gates were fine; the path around them was not. Caught before publication by recomputing the headline against the harness's own printed output and finding `undef` where the headline had a number. |
 
+### 🔴 D20 — the DoE arm's rule A is scored **oracle-best**, and in Q42/Q36 the two arms are on different rules
+
+**`DoEResult.curve_true` is `np.maximum.accumulate` over the NOISELESS values** — the
+running best *true* value among visited points. That is **oracle-best**, not rule A. Rule
+A is the true value at the running *observed* argmax (`diagnostics.reported_best_curve`),
+and the distinction is the one that voided E2's first run.
+
+**Three scripts read it as though it were rule A:**
+
+| site | what it feeds |
+|---|---|
+| `run_q35_constrained_rsm.py:178` | Q35's **"best observed"** column, and therefore **L6** |
+| `run_q42_families.py:128` | the DoE arm's rule A on all four external families |
+| `run_q36_generality.py:111` | the same, on Hartmann6 and Ackley |
+
+**In Q42 the asymmetry is inside one loop.** Line 115 scores BO with
+`reported_best_curve`; line 128 scores DoE with `curve_true[-1]`. **Same cell, same seed,
+two different rules — and the difference runs entirely in DoE's favour:**
+
+| family, d=6 σ=0.25, n=10 | oracle-best (as scored) | true rule A | DoE flattered by | unique values / 10 seeds |
+|---|---|---|---|---|
+| levy | 0.0040, **sd 0.0000** | 0.0454, sd 0.0434 | **+0.0414** | **1 → 7** |
+| rosenbrock | 0.0003, **sd 0.0000** | 0.0441, sd 0.0545 | **+0.0438** | **1 → 7** |
+| hartmann6 | 0.5597, sd 0.1119 | 0.5775, sd 0.1207 | +0.0177 | 8 → 9 |
+
+**This supersedes the "centre-replicate void" diagnosis.** The zero variance and the
+noise-independence on Levy and Rosenbrock are **symptoms of oracle-best scoring**, not an
+unfixable property of a centred test function: under oracle-best the arm is credited with
+the true value at its best visited point, and a deterministic centre run makes that a
+constant. **Scored correctly those cells have ordinary variance (7 distinct values in 10
+seeds), so Q42 is recoverable by re-running rather than by retraction.**
+
+**Two consequences, in opposite directions:**
+- **Against the DoE-wins reversal.** It was measured with the classical arm flattered by
+  **+0.041 to +0.044** on Levy and Rosenbrock — the same order as the contrasts
+  themselves. Some of the "reversal reproduces in 8 of 16 family-cells" may not survive.
+- **For Hartmann6.** DoE was flattered by **+0.0177** there too, so correcting it
+  **widens BO's margin** rather than narrowing it. Q51's result gets stronger.
+
+**Rule C is untouched at every site.** `unconstrained` and `constrained` are computed from
+`constrained_argmax` and `truth`, never from `curve_true`, so **Q41's registered primary
+estimand and every rule-C figure in this project stand unaffected.**
+
+**Not fixed here.** Correcting it changes published numbers in Q35, Q36 and Q42 and is the
+authors' call.
+
 **The survivorship trap D19 concealed, stated separately because it generalises.**
 Arrival is monotone in the target, so complete-case sets across a budget-to-target curve
 are **strictly nested**. Reading down such a column looks like a trend and is partly a
