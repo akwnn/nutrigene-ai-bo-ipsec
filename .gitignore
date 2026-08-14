@@ -64,6 +64,11 @@ results/figures/*
 # record that the published figures were once computed over 8 seeds rather than 20.
 !results/q50-paired.json
 
+# Go/no-go on whether the in-house coating data can carry a Phase 3 figure. Committed
+# because the answer is NO and that is a decision the project should not have to
+# rediscover -- the reasoning is in the file, not just in a chat log.
+!results/lab-phase3-feasibility.json
+
 # Oracle instances: DECIDED — the version-stamped ensembles under
 # data/oracles/<oracle_version>/ ARE committed, parquet included. 456 KB total.
 #
