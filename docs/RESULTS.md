@@ -11,7 +11,7 @@ what ran, why, what it found, and whether it is still current.
    entry. *A number with no committed file does not go in* — one fabricated figure has
    already nearly entered a decision.
 2. **Superseded entries stay, marked.** Nothing is deleted.
-3. **Wrong predictions get their own line.** Twelve registered predictions have been wrong.
+3. **Wrong predictions get their own line.** ~~Twelve~~ **Sixteen** registered predictions have been wrong, plus the brief's two.
    Each is more informative than a correct one; burying them makes the correct ones
    worthless.
 4. **Corrections get their own line**, including *how the error arose*.
@@ -141,8 +141,13 @@ descent, sequential DoE (20+27+1). Registered in `configs/experiment/e2.yaml`.
 
 ### What it means
 **The sequential-DoE pipeline beats qLogEI at the registered primary cell.** qLogEI's only
-surviving win in that cell is over random search. The finding is dimension-dependent: BO
-wins at d=8.
+surviving win in that cell is over random search. The finding is dimension-dependent ~~— BO wins at d=8~~.
+
+> 🔵 **CORRECTED.** **BO does not win at d=8.** Q27 ran the d=8 DoE arm and found
+> `doe − qlogei = −0.0284` at σ=0.25 — the classical arm ahead, as at d=6, with the margin more
+> than halved and the shrinkage itself significant. At σ=0.10 both dimensions tie. The sentence
+> predates Q27 and survived because `e2-grid.json` has no d=8 `doe` rows to contradict it (D17).
+> **The dimension-dependence is in the size of the gap, not in who wins.**
 
 ### The σ_rel = 0.10 cells, all seven arms — the optimistic-assay baseline
 
@@ -703,7 +708,7 @@ Marked as literature, not experiment. Full detail in `OPEN-QUESTIONS.md` Task A.
 
 # PART 8 — THE DEFECT RECORD
 
-Seventeen defects; D1–D12 in full detail in `RESULTS-PERSON-A.md` §7. **Six share one pattern: a check
+~~Seventeen~~ **Twenty** defects (D1–D20); D1–D12 in full detail in `RESULTS-PERSON-A.md` §7. **Six share one pattern: a check
 whose name carries a guarantee its body does not verify.**
 
 **D12 is the newest and its failure mode is new again.** `results/e2-grid.json` was
@@ -953,9 +958,21 @@ for a static arm.**
 ### Limits
 
 The primary-cell reversal it implies — qLogEI 0.1553 vs `lhs` design-averaged 0.1752, "BO
-ahead by 0.020" — is **indicated, not established.** qLogEI's 14-point opening is also
+ahead by 0.020" — is ~~**indicated, not established.**~~ qLogEI's 14-point opening is also
 instance-independent and has **not** been design-averaged. Settling it needs qLogEI across
-~30 opening seeds. **Not run.** Finding (a) does not depend on that caveat.
+~30 opening seeds. ~~**Not run.**~~ Finding (a) does not depend on that caveat.
+
+> 🔵 **CORRECTED — it was run, as Q50, and the reversal is ESTABLISHED.** 8 of 20 registered
+> campaign seeds (scope reduction stated, not silent). The harness reproduces E2's 0.1553 exactly
+> on the diagonal where E2 sits. qLogEI design-averaged is **0.1532, SD 0.0082** — it moves
+> **−0.002** where `lhs` moves **+0.048**, because only 14 of its 48 points are shared. Paired at
+> instance level with both arms design-averaged: **`lhs − qlogei` = +0.0219 [+0.0145, +0.0292]**,
+> Wilcoxon **p = 1.8×10⁻⁵**, BO ahead on **21 of 25** instances, surviving Bonferroni over all 39
+> of Q39's contrasts — which it *replaces* a member of rather than adds to.
+>
+> ⚠️ **Q50 has no entry of its own in this file**, which is exactly how this line stayed wrong
+> while `CLAIMS.md` L19 already said "ESTABLISHED". `results/q50-qlogei-seedsweep.json` and its 8
+> shards are committed; the write-up is the missing piece.
 
 ---
 
@@ -1127,7 +1144,11 @@ here.
 
 ---
 
-## Q52 §2 — the budget-to-target grid. **The savings ratio inverts between wells and rounds.** `current`
+## Q52 §2 — the budget-to-target grid. **No defined savings curve; one arrival-rate result survives.** `current`
+
+> 🔵 **HEADING CORRECTED.** It read *"The savings ratio inverts between wells and rounds"* — the
+> claim this entry's own body **retracts** 130 lines below. A retracted headline left in a section
+> heading is the single most quotable thing in the file.
 
 **Ran:** `scripts/run_q52_budget_to_target.py` · `results/q52-budget-to-target.{log,json}`
 **Registered:** `df11ad6` (design) → `d86e2c2` (amended: four arms, tie-break, rounds,
@@ -1312,7 +1333,7 @@ Kept together because they are the most informative rows in this file.
 | 10 | Q47 P3: two-tier does worse under rule C, because the top-k design is clustered | **Wrong as a directional claim** — 4 cells lower, 4 higher, 8 equal. At d=6 alone it looked systematic; the completed grid does not support it. |
 | — | *the close-out brief's* prediction that Q45 would strengthen the design null | **Refuted.** The design effect is large and significant at all four cells. |
 
-**Twelve wrong predictions now, plus the brief's.** Q47 is the sharpest case: its prediction was a *committed computation* rather than a hunch — a Gaussian order-statistic proxy, run and committed before the experiment existed. It got the effect sizes roughly right and the **detectability** wrong, because it had no instance-to-instance variance and so could not know which effects would clear an n=25 interval. A more precise prediction failed in a more informative way.
+**~~Twelve~~ Sixteen wrong predictions now, plus the brief's two.** The twelve numbered above, plus Q52 §2's four (the brief's clause 2, P4, P5, P6) recorded in that entry rather than here. Q47 is the sharpest case: its prediction was a *committed computation* rather than a hunch — a Gaussian order-statistic proxy, run and committed before the experiment existed. It got the effect sizes roughly right and the **detectability** wrong, because it had no instance-to-instance variance and so could not know which effects would clear an n=25 interval. A more precise prediction failed in a more informative way.
 
 **Correct predictions, for balance:** Q33's headline; Q34's registered primary (all four
 cells); Q42's secondary prediction that the scoring effect would survive on every family;
