@@ -64,8 +64,36 @@ BOOTSTRAP_SEED = 0
 RESULTS = ROOT / "results"
 
 
+def lhs_from_artefact() -> dict[str, float] | None:
+    """``{instance_id: design-averaged regret}`` read from `q48-design-variance.json`.
+
+    Returns ``None`` when the file predates the 2026-08-14 repair and still holds only
+    the 60 design means, in which case :func:`lhs_per_instance` re-runs the arm.
+
+    Preferring the artefact is the point of that repair: the first version of this
+    script had to recompute because the per-instance axis had been thrown away. Now it
+    is stored, so the default path reads it and the recompute becomes a cross-check
+    (``--recompute``) rather than the only option.
+    """
+    path = RESULTS / "q48-design-variance.json"
+    if not path.exists():
+        return None
+    records = json.loads(path.read_text())
+    rec = next(
+        (
+            r
+            for r in records
+            if r["dim"] == DIM and abs(r["sigma"] - SIGMA) < 1e-12 and r["arm"] == ARM
+        ),
+        None,
+    )
+    if rec is None or "per_instance_design_averaged" not in rec:
+        return None
+    return dict(zip(rec["instance_ids"], rec["per_instance_design_averaged"]))
+
+
 def lhs_per_instance() -> dict[str, float]:
-    """``{instance_id: design-averaged regret}`` for the static arm.
+    """``{instance_id: design-averaged regret}`` for the static arm, recomputed.
 
     This is `run_q48_design_variance.cell_mean` with the collapse removed: it keeps the
     per-instance axis instead of averaging it away, then averages over designs and noise
@@ -151,12 +179,19 @@ def paired_stats(lhs: np.ndarray, qlogei: np.ndarray) -> dict:
 
 
 def main() -> int:
+    force_recompute = "--recompute" in sys.argv
     print("=" * 78)
-    print(f"Q50 paired contrast, recomputed | d={DIM} sigma_rel={SIGMA} budget={BUDGET}")
+    print(f"Q50 paired contrast | d={DIM} sigma_rel={SIGMA} budget={BUDGET}")
     print("=" * 78)
 
-    print(f"  re-running the {ARM} arm, keeping the per-instance axis:")
-    lhs_map = lhs_per_instance()
+    lhs_map = None if force_recompute else lhs_from_artefact()
+    if lhs_map is not None:
+        source = "results/q48-design-variance.json (per-instance axis)"
+        print(f"  {ARM} arm read from {source}")
+    else:
+        source = f"recomputed: {N_DESIGNS} designs x {N_INSTANCES} instances"
+        print(f"  re-running the {ARM} arm, keeping the per-instance axis:")
+        lhs_map = lhs_per_instance()
     ids, lhs, qlogei = align(lhs_map, qlogei_per_instance())
     print(f"  paired on {len(ids)} matching instance_ids")
 
@@ -187,6 +222,7 @@ def main() -> int:
         "instance_ids": ids,
         "lhs": {
             "arm": ARM,
+            "source": source,
             "n_designs": N_DESIGNS,
             "noise_seeds": list(NOISE_SEEDS),
             "design_averaged": float(lhs.mean()),

@@ -3914,10 +3914,21 @@ the paired differences — the interval is conservative, not flattering.
 > moved *in BO's favour*, so the correction strengthens the claim rather than weakening
 > it. Direction and point estimate unchanged.
 >
-> **Residual defect, not fixed:** `run_q48_design_variance.py:82` still collapses. The
-> recompute script works around it rather than repairing it, so any *future* paired claim
-> against another cell or arm hits the same wall. Repairing `cell_mean` to return the full
-> cube is the durable fix.
+> **Residual defect — also now fixed, same day.** `cell_mean` was split into
+> `cell_regrets`, which returns the `(n_instances, n_seeds)` array, and a thin `cell_mean`
+> wrapper that collapses it for existing callers. `q48-design-variance.json` now carries
+> `per_instance`, `per_instance_design_averaged`, `instance_ids` and `noise_seeds` for
+> **all 12 arm-cells**, not just the one this claim needed. 477 KB, 15 s to regenerate.
+>
+> The regeneration was checked to be **additive**: every pre-existing value —
+> `e2_reported`, `design_averaged`, `design_sd`, `percentile_of_e2` and all 60 `draws` per
+> record — is bit-for-bit identical to the previously committed file, and the new detail
+> reconstructs each of them. So no published number moved.
+>
+> `q50_paired_recompute.py` now **reads** that artefact instead of re-running, with
+> `--recompute` kept as a cross-check. The two paths agree to 0.000e+00 per instance,
+> which is a genuine two-implementation verification rather than one script agreeing with
+> itself. Any future paired claim against another cell or arm is now a read, not a re-run.
 
 **Multiplicity.** "Latin hypercube also beats BO" was one of Q39's 39 non-primary
 contrasts, so this re-analysis **replaces** a member of that family rather than adding

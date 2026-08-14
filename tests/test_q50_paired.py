@@ -108,3 +108,71 @@ def test_lhs_side_records_how_it_was_regenerated(paired):
     assert paired["lhs"]["arm"] == "lhs"
     assert paired["lhs"]["n_designs"] == 60
     assert paired["lhs"]["noise_seeds"] == [0, 1]
+    assert paired["lhs"]["source"], "the lhs side must say where it came from"
+
+
+# --- the underlying repair: q48 no longer throws the per-instance axis away ---------
+
+Q48 = ROOT / "results" / "q48-design-variance.json"
+
+q48_only = pytest.mark.skipif(not Q48.exists(), reason="q48-design-variance.json absent")
+
+
+@pytest.fixture(scope="module")
+def q48():
+    return json.loads(Q48.read_text(encoding="utf-8"))
+
+
+@q48_only
+def test_q48_keeps_the_per_instance_axis(q48):
+    """`cell_mean` used to collapse this before returning. That was the whole defect."""
+    for rec in q48:
+        assert "per_instance" in rec, (rec["dim"], rec["sigma"], rec["arm"])
+        assert "per_instance_design_averaged" in rec
+        assert "instance_ids" in rec
+        cube = np.array(rec["per_instance"])
+        assert cube.shape == (rec["n_designs"], len(rec["instance_ids"]))
+
+
+@q48_only
+def test_q48_detail_rebuilds_every_summary_it_ships(q48):
+    """The added detail must be consistent with the numbers already published."""
+    for rec in q48:
+        cube = np.array(rec["per_instance"])
+        assert np.allclose(cube.mean(axis=1), rec["draws"], atol=1e-12)
+        assert cube.mean() == pytest.approx(rec["design_averaged"], abs=1e-12)
+        assert np.array(rec["per_instance_design_averaged"]).mean() == pytest.approx(
+            rec["design_averaged"], abs=1e-12
+        )
+
+
+@q48_only
+def test_q48_instance_ids_are_present_and_unique(q48):
+    """Pairing by list position is what makes two arms silently mismatch."""
+    for rec in q48:
+        ids = rec["instance_ids"]
+        assert len(ids) == 25 and len(set(ids)) == 25
+
+
+@q48_only
+def test_q48_and_the_paired_artefact_agree_instance_by_instance(paired, q48):
+    """Two independently written code paths over the same cell. Any drift is a bug."""
+    rec = next(
+        r for r in q48 if r["dim"] == 6 and abs(r["sigma"] - 0.25) < 1e-12 and r["arm"] == "lhs"
+    )
+    by_id = dict(zip(rec["instance_ids"], rec["per_instance_design_averaged"]))
+    assert set(by_id) == set(paired["instance_ids"])
+    aligned = np.array([by_id[i] for i in paired["instance_ids"]])
+    assert np.allclose(aligned, paired["lhs"]["per_instance"], atol=1e-12)
+
+
+@q48_only
+def test_every_static_arm_cell_can_now_be_paired(q48):
+    """The durable part of the fix: not just the one cell the claim happened to need.
+
+    Before the repair only d=6/sigma=0.25 could be rescued, and only by re-running it.
+    """
+    cells = {(r["dim"], r["sigma"], r["arm"]) for r in q48}
+    assert len(cells) == 12
+    for rec in q48:
+        assert len(rec["per_instance_design_averaged"]) == 25

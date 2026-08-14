@@ -33,6 +33,7 @@
   ],
   "lhs": {
     "arm": "lhs",
+    "source": "recomputed: 60 designs x 25 instances",
     "n_designs": 60,
     "noise_seeds": [
       0,
