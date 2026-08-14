@@ -436,4 +436,91 @@ The first pass claimed *"the savings ratio inverts, crossover at 0.15."* Wrong f
 
 ---
 
-*Assembled 2026-08-13 from git history and repository artifacts; §11 added 2026-08-14. Every number traced to a file or commit. Where documents disagree, both readings are given and the primary source named. Suite at time of writing: 659 passed, 2 failed (both in the untracked `test_exploratory.py`).*
+## 12. SINCE §11 — the D20 fix, the triage, the matrix, and Q53
+
+Four pieces of work, in order. All committed; suite green throughout.
+
+### 12.1 D20 fixed and rescored — `e2ccd52`
+
+All three sites now use `reported_best_curve`, guarded by an AST test asserting **no script reads
+`curve_true`**, plus a non-vacuity test and a test that the one exemption cannot outlive its
+reason. **Only the DoE arm was re-run**, and the equivalence is gated rather than asserted:
+untouched columns reproduce at **worst |Δ| = 0.000e+00** over 400 Q42 rows and 200 Q35 rows.
+
+**No verdict moved — 0 of 16 family-cells flipped.** Two things did:
+
+- **My own "Levy and Rosenbrock are void" diagnosis is WITHDRAWN.** The zero-variance signature
+  was entirely this bug. Distinct DoE values across 25 seeds went levy **1 → 9/5/12/5**,
+  rosenbrock **1 → 11/8/12/10**, ackley **1 → 4/2/4/2**. Those cells are legitimately scored.
+  Q42 needed a rescore, not a retraction.
+- **Q35's residual loses two of four cells.** σ=0.25 survives at about a third of its published
+  magnitude (**+0.0211**, **+0.0185**); **both σ=0.10 cells are NULL**. The "two arms fail in
+  opposite directions" framing is a property of the **noisy assay**, not of the model classes.
+
+Corrected `best_observed` is **0.0958**, now agreeing with E2's independent **0.0957** — resolving
+a discrepancy the two documents had carried for the life of the project.
+
+### 12.2 Triage — `8696644` · `docs/TRIAGE.md`, `docs/MAIN-LINE.md`, `docs/archive/`
+
+**65 items labelled: 13 CORE, 21 DEFENCE, 19 ARCHIVE, 12 VOID.** `docs/` went from 18 files to 10
+plus an archive. **`CLAIMS.md`: 42 claims before, 34 after**, nothing deleted — every struck item
+keeps its place and its reason.
+
+Dropped: **2.2, 3.1, 3.2, 3.5**, all E4, which asks whether GP uncertainty beats nearest-neighbour
+distance at *flagging* extrapolation — a question no sentence of the result depends on. Merged:
+**L18** into L13. Struck as already decided: **Q28/T16** (by Q41) and **Q30** (by its own
+registration); **Q19** no longer blocks. Demoted: **1.1** loses its E4 half, **1.5** is an
+unverified inference by its own last sentence.
+
+**The largest finding was a framing, not a claim.** Tier-2 2.1's resolution read the
+**constrained** argmax as primary and called the rule-C result "an artefact". **Q41 designates the
+unconstrained argmax primary**, under which BO wins rule C at all four cells by **+0.2710 to
++0.3597**. Both must be printed; only the sensitivity was.
+
+**Prior art, corrected against the project's own Task A verification:** Nguyen 2017 struck as a
+contrary result (it concerns the EI *incumbent*, not the recommendation); Picheny struck for the
+infill/identification distinction (*"do not cite it for that distinction yet"*); Gisperg's
+no-reduction finding reattributed to **Rummukainen 2024**, which was **missing from the table
+entirely** and is the closest prior work in existence.
+
+Also found: **`project_record.md` is cited four times and has never existed at any commit**, and
+**`docs/METHODS.md` anchors to zero artefacts**.
+
+### 12.3 The information matrix — `b0a2dc3` · `docs/INFORMATION-MATRIX.md`
+
+Every arm, every column, every number with a path and an n. Two things it made visible that no
+single entry did:
+
+- **The classical arm is nearly noise-insensitive.** `doe` moves **+0.0066** from σ=0.10 to 0.25
+  where `qlogei` moves **+0.0679** — a factor of ten. That one row explains why BO loses at 0.25
+  and ties at 0.10, and it was written down nowhere.
+- **`spread_gp` ties qLogEI on Hill in one round against ten.** Paired at 48 evaluations on the
+  same instances with the same scoring function, `qlogei − spread_gp` is **null on both rules at
+  both σ**. One registered disagreement: at σ=0.25 rule A, Wilcoxon gives p=0.034 while the
+  bootstrap covers zero — **Q20 §2 says report it, not resolve it** — and it survives no Holm
+  correction.
+
+It also caught the design lottery a second time: `spread_gp`'s two independent measurements of the
+same Hill cell differ by **0.0239**, about one design SD (Q48/D16). **A single-draw number from
+that arm is not quotable.**
+
+### 12.4 Q53 — registered `73d2361`, harness `9c7a081`, running
+
+**`spread_gp` had never run off the Hill family.** Q42's shards carry only `bo_*` and `doe_*`
+columns, so generality was a run, not a lookup. Registered before the runner existed:
+
+> **spread_gp loses to qLogEI on Hartmann6, both dimensions, both noise levels, under both rules.**
+> **Falsifier:** if it ties or beats, **the Hill result becomes the suspicious one**, not this one.
+
+Sixteen family-cells, **5 independent LHS draws per (family, cell, seed)** averaged within seed,
+design SD reported beside every estimate, and a registered rule that a contrast smaller than its
+cell's design SD is **not a result**. **Fidelity gate passed at exactly 0.000e+00** on 8 stored
+Q42 rows, both rules — ⚠️ all 8 landed on Ackley, spanning all four cells but one family, which is
+a limitation of the gate's sampling and is recorded rather than glossed.
+
+---
+
+*Assembled 2026-08-13 from git history and repository artifacts; §11 added 2026-08-14, §12 the
+same day. Every number traced to a file or commit. Where documents disagree, both readings are
+given and the primary source named. Suite: **659 passed**, and the two former failures left with
+the exploratory workstream into `docs/archive/`, so the committed tree is clean.*

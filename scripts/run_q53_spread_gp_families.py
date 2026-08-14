@@ -301,9 +301,18 @@ def main() -> None:
     ap.add_argument("--merge", action="store_true")
     ap.add_argument("--time-one-cell", action="store_true")
     ap.add_argument("--skip-gate", action="store_true")
+    ap.add_argument("--gate-only", action="store_true",
+                    help="run the fidelity gate alone and persist it, so the four family "
+                         "shards can then run in parallel without each paying for it again")
     args = ap.parse_args()
     outdir = ROOT / "results"
     outdir.mkdir(exist_ok=True)
+
+    if args.gate_only:
+        g = fidelity_gate(8)
+        (outdir / "q53-fidelity-gate.json").write_text(json.dumps(g, indent=1))
+        print(f"  written to results/q53-fidelity-gate.json")
+        return
 
     if args.time_one_cell:
         t0 = time.time()
