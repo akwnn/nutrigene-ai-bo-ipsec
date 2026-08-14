@@ -1315,6 +1315,112 @@ that did not carry them**. A registration only binds the analysis that runs thro
 
 ---
 
+## Q53 — spread_gp on the external families. **It ties on smooth landscapes and loses on deceptive ones.** `current`
+
+**Ran:** `scripts/run_q53_spread_gp_families.py` (4 shards + `--merge`) ·
+`results/q53-spread-gp-families.json` · **registered `73d2361` before the runner existed**
+(`9c7a081`); the timestamps are checkable.
+**Status:** current
+
+### Why
+
+`docs/INFORMATION-MATRIX.md` found `spread_gp` — one-shot LHS, one GP fit, scored at the
+posterior-mean argmax — **indistinguishable from qLogEI on the Hill family** under both rules at
+both noise levels, **in 1 round against 10**. It also found the arm had run on *nothing but Hill*.
+A method claim resting on the one landscape family this project built is the weakest possible
+evidence, so Q53 puts it on Q42's four external families at all sixteen cells.
+
+### Result — the reversal is landscape-shaped, and the shape is legible
+
+| family | rule A | rule C | verdict |
+|---|---|---|---|
+| **hartmann6** (deceptive, 6 local optima) | **+0.17 to +0.28**, all p_holm ≤ 0.0004 | **+0.16 to +0.23**, all p_holm ≤ 0.0047 | **spread_gp LOSES, every cell, both rules** |
+| **ackley** (multimodal, near-flat basin) | **+0.13 to +0.29**, all p_holm ≤ 0.0016 | +0.05 to +0.23, 2 of 4 significant | **spread_gp LOSES on rule A, every cell** |
+| **levy** | −0.006 to +0.026, **all p_holm ≥ 0.09** | −0.000 to +0.010, all p_holm = 1.0000 | **TIE — all 8 contrasts within design noise** |
+| **rosenbrock** | +0.002 to +0.024, **all p_holm ≥ 0.09** | −0.010 to +0.012, all p_holm ≥ 0.47 | **TIE — all 8 contrasts within design noise** |
+
+**With Hill, that is three families where a one-shot spread ties adaptive search and two where it
+is beaten decisively.** The dividing line is not dimension and not noise — every family was run at
+both — it is whether the landscape is **deceptive**. Hartmann6 has six local optima; Ackley is a
+needle in a near-flat basin. Levy, Rosenbrock and the Hill oracle are broadly unimodal along the
+coordinates that matter.
+
+> **The claim that survives:** *on smooth, coordinate-wise-unimodal landscapes a one-shot
+> space-filling design scored at its GP's posterior-mean argmax matches ten rounds of qLogEI at
+> equal evaluations, and does it in one round. On deceptive landscapes it does not, and the gap is
+> large.* **Adaptivity buys deception-handling, not sample efficiency per se.**
+
+### The design lottery is 6× worse on the hard families, and that is a finding
+
+`spread_gp`'s design SD, averaged over 5 draws per seed:
+
+| family | rule A design SD |
+|---|---|
+| hill (Q47 vs Q52, 1 draw each) | ~0.025 |
+| levy / rosenbrock | 0.029 – 0.055 |
+| ackley | 0.033 – 0.049 |
+| **hartmann6** | **0.140 – 0.153** |
+
+**On Hartmann6 a single LHS draw moves the answer by ±0.15** — over half the entire
+`spread_gp − qlogei` gap. Registering 5 draws per seed (Q53 §3) was not caution, it was necessary:
+a single-draw run would have produced a number with no defensible precision. This is Q48/D16 a
+third time, and it is worst exactly where the method is worst.
+
+### The registered stopping rule fired, and it cost two Hartmann6 cells
+
+Q53 §3 registered, before any number existed, that **a contrast smaller in magnitude than its
+cell's design SD is reported as *within design noise* and is not called a result.** It fires at
+**10 of 32 contrasts** — all 16 Levy/Rosenbrock cells (correctly: they are ties), and **two
+Hartmann6 rule-C cells** (d=6 σ=0.25, +0.1711 against SD 0.1913; d=8 σ=0.25, +0.1594 against
+0.1756) **despite p_holm = 0.0022 and 0.0047**.
+
+**The rule is conservative by construction** — it compares an effect size to a *dispersion*, not
+to a standard error, and the mean of 25 seeds has a far smaller SE than one draw's SD. It is
+applied as registered rather than relaxed after the fact. The prediction is scored on the eight
+contrasts as a set; the direction at those two cells is the predicted one.
+
+### Prediction scored — **HELD, 8 of 8**
+
+Registered: *"spread_gp loses to qLogEI on Hartmann6, at both dimensions and both noise levels,
+under both scoring rules."* **It does, at all eight contrasts, every CI clear of zero, every
+Holm-adjusted p ≤ 0.0047.** The falsifier — a tie or a win on Hartmann6, which would have made the
+*Hill* result the suspicious one — did not fire.
+
+**This is the first correct headline prediction in this project since Q42's secondary.** Sixteen
+have been wrong. Recorded with the same prominence the wrong ones get.
+
+The secondary registration was that **Levy, Rosenbrock and Ackley were unpredicted**. Ackley
+resolved with `spread_gp` losing on rule A at every cell; Levy and Rosenbrock tie. Registering
+them as unpredicted was right — two outcomes, and neither was guessable from Hartmann6.
+
+### Against the classical arm
+
+D20-corrected DoE rule A (`results/d20-rescore.json`; `q42-families.json` still carries the
+superseded column on disk — see Limits). `spread_gp` **beats DoE on Hartmann6** (−0.06 to −0.15
+rule A, −0.42 to −0.50 rule C) and **loses to it on Levy, Rosenbrock and Ackley under rule A**
+while **beating it under unconstrained rule C on all three** (−0.22 to −0.48). The classical
+arm's rule-A advantage on those families is the same centre-run and best-observed effect Q42
+documents; its rule-C collapse is the saddle.
+
+### Limits
+
+- **Hill's `spread_gp` numbers are single-draw and Q53's are 5-draw averages.** The Hill tie
+  therefore rests on weaker footing than the external ties do. It should be re-run at D=5 before
+  the three-family tie is stated as one finding.
+- **`results/q42-families.json` still holds the pre-D20 `doe_a` column.** The analysis reads the
+  correction from `d20-rescore.json` and **refuses to fall back**; anything else recomputing from
+  the shard directly will reproduce the bug. Ackley scoring exactly 0.0000 is the tell.
+- **n = 25 seeds on single functions, not 25 landscapes.** Q42's convention, stated in the
+  registration; calling it n=25 landscapes would be the pseudo-replication this project criticises.
+- **Ackley is reported here, not voided.** Q42 voids its rule A because every CCD carries centre
+  runs and Ackley's optimum is the box centre; neither `spread_gp` nor `qlogei` has that
+  guarantee. Declared in the registration, before the numbers.
+- Fidelity gate passed at **0.000e+00** on 8 stored Q42 rows — but all 8 sampled rows landed on
+  **Ackley**, spanning four cells and one family. A weakness of the gate's sampling, not of the
+  comparator.
+
+---
+
 # PART 10 — WRONG PREDICTIONS
 
 Kept together because they are the most informative rows in this file.
@@ -1337,6 +1443,6 @@ Kept together because they are the most informative rows in this file.
 
 **~~Twelve~~ Sixteen wrong predictions now, plus the brief's two.** The twelve numbered above, plus Q52 §2's four (the brief's clause 2, P4, P5, P6) recorded in that entry rather than here. Q47 is the sharpest case: its prediction was a *committed computation* rather than a hunch — a Gaussian order-statistic proxy, run and committed before the experiment existed. It got the effect sizes roughly right and the **detectability** wrong, because it had no instance-to-instance variance and so could not know which effects would clear an n=25 interval. A more precise prediction failed in a more informative way.
 
-**Correct predictions, for balance:** Q33's headline; Q34's registered primary (all four
+**Correct predictions, for balance:** **Q53's primary — the first correct *headline* prediction in the project: `spread_gp` loses to qLogEI on Hartmann6 at all four cells under both rules, 8 of 8 contrasts, every Holm-adjusted p ≤ 0.0047, with the falsifier not firing**; Q33's headline; Q34's registered primary (all four
 cells); Q42's secondary prediction that the scoring effect would survive on every family;
 Q35's registered commitment to report all three scorings whichever way it came out; and Q47's registered statement that a two-tier arm losing above the expensive readout's own correlation would be a harness bug — it never lost there; and Hartmann6 at d=8, where the reversal was predicted not to reproduce and BO's margin was predicted to widen — both held (+0.246 → +0.319 at σ=0.25, +0.346 → +0.413 at σ=0.10).

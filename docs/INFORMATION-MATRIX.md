@@ -23,7 +23,7 @@ the brief's separate "Best-observed" column is folded into "Rule A regret" below
 | `sobol` | ✅ 25 | ✅ 25 | ✅ 25 | ✅ 25 | ❌ | ❌ | ❌ | ❌ |
 | `lhs` | ✅ 25 | ✅ 25 | ✅ 25 | ✅ 25 | ❌ | ❌ | ❌ | ❌ |
 | `coord` | ✅ 25 | ✅ 25 | ✅ 25 | ✅ 25 | ❌ | ❌ | ❌ | ❌ |
-| **`spread_gp`** | **✅ 25×2** | **✅ 25×2** | **✅ 25×2** | **✅ 25×2** | **❌** | **❌** | **❌** | **❌** |
+| **`spread_gp`** | **✅ 25×2** | **✅ 25×2** | **✅ 25×2** | **✅ 25×2** | **✅ 25×4** | **✅ 25×4** | **✅ 25×4** | **✅ 25×4** |
 
 ✅ **`doe` at d=8 has a machine-readable source after all.** I recorded it as log-text-only on
 D17's wording; `results/e2-doe-d8.json` was in fact written, gitignored, and never force-added.
@@ -222,5 +222,21 @@ p=0.034 survives no correction over any family of this project's size.
 > posterior-mean argmax is statistically indistinguishable from qLogEI under both scoring rules,
 > at both noise levels — and it spends **1 round** where qLogEI spends **10**.
 
-**This is measured on the Hill family only. Generality is untested** — see §1: `spread_gp` has
-never run on hartmann6, levy, rosenbrock or ackley.
+> ## 🔵 GENERALITY NOW MEASURED — Q53, all four external families, 16 cells
+>
+> The Hill tie is **not** Hill-specific, and it is **not** universal either. `spread_gp` ties
+> qLogEI on **levy and rosenbrock** (all 16 contrasts within design noise, every Holm p ≥ 0.09)
+> and **loses decisively on hartmann6 and ackley** (+0.13 to +0.29 rule A, all significant).
+>
+> **The dividing line is deception, not dimension or noise** — every family ran at both d and both
+> σ. Hartmann6 has six local optima; Ackley is a needle in a near-flat basin. Levy, Rosenbrock and
+> Hill are broadly coordinate-wise unimodal.
+>
+> **The defensible claim:** *on smooth landscapes a one-shot spread scored at its GP's argmax
+> matches ten rounds of qLogEI at equal evaluations, in one round; on deceptive landscapes it does
+> not.* **Adaptivity buys deception-handling, not sample efficiency per se.**
+>
+> ⚠️ **One asymmetry to close:** Hill's `spread_gp` figures are **single-draw**; Q53's are
+> **5-draw averages**. Hartmann6's design SD is 0.14–0.15 — a single draw there moves the answer
+> by more than half the whole gap. The Hill tie should be re-run at D=5 before the three-family
+> tie is written as one finding. Full entry: `RESULTS.md` Q53.

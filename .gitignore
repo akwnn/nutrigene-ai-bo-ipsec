@@ -116,3 +116,10 @@ COMMIT_MSG.txt
 !results/*.md
 !results/*.log
 !results/figures/*.png
+
+# Q53 shards and the merged grid. Anchored by path from docs/RESULTS.md Q53, and the
+# merged file is what the generality claim rests on. 5 design draws per seed means these
+# are not regenerable in a coffee break: the grid took ~2.3 h of wall clock.
+!results/q53-spread-gp-families.json
+!results/q53-spread-gp-*.json
+!results/q53-fidelity-gate.json

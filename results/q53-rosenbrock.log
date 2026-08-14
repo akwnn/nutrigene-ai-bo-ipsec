@@ -1,0 +1,6 @@
+  rosenbrock d=6 s=0.25 done (1600s), checkpointed 25 rows
+  rosenbrock d=6 s=0.25 already present, skipping
+  rosenbrock d=6 s=0.1 done (215s), checkpointed 50 rows
+  rosenbrock d=8 s=0.25 done (526s), checkpointed 75 rows
+  rosenbrock d=8 s=0.1 done (834s), checkpointed 100 rows
+  -> results/q53-spread-gp-rosenbrock.json  (100 rows)

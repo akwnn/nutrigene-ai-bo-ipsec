@@ -1,0 +1,6 @@
+  ackley d=6 s=0.25 done (1553s), checkpointed 25 rows
+  ackley d=6 s=0.25 already present, skipping
+  ackley d=6 s=0.1 done (218s), checkpointed 50 rows
+  ackley d=8 s=0.25 done (510s), checkpointed 75 rows
+  ackley d=8 s=0.1 done (847s), checkpointed 100 rows
+  -> results/q53-spread-gp-ackley.json  (100 rows)

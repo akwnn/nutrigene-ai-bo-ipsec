@@ -1,0 +1,6 @@
+  levy d=6 s=0.25 done (1608s), checkpointed 25 rows
+  levy d=6 s=0.25 already present, skipping
+  levy d=6 s=0.1 done (231s), checkpointed 50 rows
+  levy d=8 s=0.25 done (561s), checkpointed 75 rows
+  levy d=8 s=0.1 done (931s), checkpointed 100 rows
+  -> results/q53-spread-gp-levy.json  (100 rows)

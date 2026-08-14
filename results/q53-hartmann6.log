@@ -1,0 +1,6 @@
+  hartmann6 d=6 s=0.25 done (1529s), checkpointed 25 rows
+  hartmann6 d=6 s=0.25 already present, skipping
+  hartmann6 d=6 s=0.1 done (234s), checkpointed 50 rows
+  hartmann6 d=8 s=0.25 done (1183s), checkpointed 75 rows
+  hartmann6 d=8 s=0.1 done (1588s), checkpointed 100 rows
+  -> results/q53-spread-gp-hartmann6.json  (100 rows)

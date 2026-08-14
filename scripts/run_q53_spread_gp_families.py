@@ -207,9 +207,27 @@ def _holm(pvals: list[float]) -> list[float]:
     return adj
 
 
+def _d20_corrected_doe_a() -> dict:
+    """Per-seed DoE rule A **after** the D20 fix.
+
+    `q42-families.json` still holds the pre-D20 column on disk — the rescore was written to
+    `d20-rescore.json` and never back into the shard. Reading `doe_a` straight from Q42 therefore
+    reproduces the oracle-best bug, and the tell is Ackley scoring **exactly** 0.0000. It is not a
+    rounding difference: Levy moves 0.0040 -> 0.0392, a factor of ten.
+
+    Rule C is untouched by D20 at every site, so `doe_c_unconstrained` is read from Q42 directly.
+    """
+    p = ROOT / "results" / "d20-rescore.json"
+    if not p.exists():
+        raise SystemExit("results/d20-rescore.json missing — cannot correct Q42's doe_a column")
+    return {(r["family"], r["dim"], round(float(r["sigma"]), 6), r["seed"]): r["doe_a_new"]
+            for r in json.loads(p.read_text())["rows"]}
+
+
 def analyse(rows: list[dict]) -> dict:
     q42 = {(r["family"], r["dim"], round(float(r["sigma"]), 6), r["seed"]): r
            for r in json.loads((ROOT / "results" / "q42-families.json").read_text())["rows"]}
+    doe_a_fixed = _d20_corrected_doe_a()
     cells, raw_p = [], []
     for family in sorted(FAMILIES):
         for dim, sigma in CELLS:
@@ -225,7 +243,11 @@ def analyse(rows: list[dict]) -> dict:
             sc = np.array([r["spread_c"] for r in sub])
             qa = np.array([q42[k]["bo_a"] for k in keys])
             qc = np.array([q42[k]["bo_c"] for k in keys])
-            da = np.array([q42[k]["doe_a"] for k in keys])
+            if any(k not in doe_a_fixed for k in keys):
+                raise SystemExit(f"{family} d={dim} s={sigma}: no D20 rows; refusing to fall "
+                                 "back on Q42's superseded doe_a column")
+            da = np.array([doe_a_fixed[k] for k in keys])          # D20-corrected
+            da_stale = np.array([q42[k]["doe_a"] for k in keys])   # kept only to show the delta
             dcu = np.array([q42[k]["doe_c_unconstrained"] for k in keys])
             sd_a = float(np.nanmean([r["spread_a_sd"] for r in sub]))
             sd_c = float(np.nanmean([r["spread_c_sd"] for r in sub]))
@@ -235,7 +257,8 @@ def analyse(rows: list[dict]) -> dict:
                 spread_a=float(sa.mean()), spread_a_design_sd=sd_a,
                 spread_c=float(sc.mean()), spread_c_design_sd=sd_c,
                 qlogei_a=float(qa.mean()), qlogei_c=float(qc.mean()),
-                doe_a=float(da.mean()), doe_c_unconstrained=float(dcu.mean()),
+                doe_a=float(da.mean()), doe_a_superseded=float(da_stale.mean()),
+                doe_c_unconstrained=float(dcu.mean()),
                 vs_qlogei_rule_a=va, vs_qlogei_rule_c=vc,
                 vs_doe_rule_a=_paired(sa, da), vs_doe_rule_c=_paired(sc, dcu),
                 a_within_design_noise=within_design_noise(diff=va["diff"], design_sd=sd_a),
@@ -287,11 +310,14 @@ def report(summary: dict) -> None:
         print("  *** NOT fully held. Per the registration, the FALSIFIER now applies: the HILL\n"
               "      result is the one to re-examine, not this one. Do not take either at face value.")
 
-    print(f"\n{RULE}\nspread_gp vs the CLASSICAL arm (positive = doe better)\n{RULE}")
-    print(f"{'family':<11}{'cell':<12}{'doe A':>10}{'diff A':>10}   {'doe C uncon':>12}{'diff C':>10}")
+    print(f"\n{RULE}\nspread_gp vs the CLASSICAL arm (positive = doe better)\n"
+          f"DoE rule A is D20-CORRECTED; the superseded column is shown so the size of the fix "
+          f"is visible\n{RULE}")
+    print(f"{'family':<11}{'cell':<12}{'doe A (D20)':>12}{'was':>9}{'diff A':>10}   "
+          f"{'doe C uncon':>12}{'diff C':>10}")
     for c in cells:
-        print(f"{c['family']:<11}d={c['dim']} s={c['sigma']:<6}{c['doe_a']:>10.4f}"
-              f"{c['vs_doe_rule_a']['diff']:>+10.4f}   "
+        print(f"{c['family']:<11}d={c['dim']} s={c['sigma']:<6}{c['doe_a']:>12.4f}"
+              f"{c['doe_a_superseded']:>9.4f}{c['vs_doe_rule_a']['diff']:>+10.4f}   "
               f"{c['doe_c_unconstrained']:>12.4f}{c['vs_doe_rule_c']['diff']:>+10.4f}")
 
 
