@@ -1,7 +1,7 @@
 # Lab Data Pipeline — Design
 
 **Status:** built and running. `python scripts/build_lab_dataset.py` (~31 s).
-**Supersedes in part:** `docs/superpowers/plans/2026-08-13-lab-data-bo-lookup.md` (see §8).
+**Supersedes:** `docs/superpowers/plans/2026-08-13-lab-data-bo-lookup.md` — now fully implemented, with corrections (see §8).
 
 ## 1. Goal
 
@@ -108,25 +108,38 @@ Each exists because a specific failure was possible:
   coverage and the *lowest* CD31%. Different timepoints (08-04 vs 08-06) and different
   quantities; recorded as a negative result rather than smoothed over.
 
-## 8. Relationship to the 2026-08-13 plan
+## 8. Relationship to the 2026-08-13 plan — now completed
 
-That plan built a `ContinuousLookupEvaluator` and a loader that refuses ungated tables.
-Still valid and not implemented here. What changed:
+That plan specified a `ContinuousLookupEvaluator` and a loader that refuses ungated
+tables. Both are built, against the corrected facts:
 
-- Its `novocyte-…` metric string is wrong; use `cytoflexlx-…`.
-- Its coded dose `(dose − 0.5)/19.5` is adopted (`dataset.coded_dose`).
-- Its premise that gating is a pure lab step is softened: the channel identity was
+- `configs/lab/coating_2026-08-06.yaml` — 2-D `{coating, dose}` on `[0.5, 20] µg/mL`.
+- `evaluators.ContinuousLookupEvaluator` — `np.isclose` matching. `LookupEvaluator` is
+  untouched; Phase 2 replay depends on its `np.rint` index.
+- `boec.lab.evaluator.load_lab_evaluator` — `GatingIncompleteError` on the committed
+  table, `MetricMismatchError` on a metric or protocol-version mismatch.
+
+Changes from the plan as written:
+
+- Its `novocyte-…` metric string was wrong; the config uses `cytoflexlx-…`.
+- Its coded dose `(dose − 0.5)/19.5` is adopted.
+- Its premise that gating is wholly a lab step is softened: the channel identity was
   recoverable from data. The percentages still are not signed off.
-- It planned `src/boec/lab.py`; this is `src/boec/lab/` (a package). A future
-  `evaluators.ContinuousLookupEvaluator` should read
-  `derived/candidate_campaign_coating_flow.csv` only after a human fills `y`.
+- It planned `src/boec/lab.py`; this is `src/boec/lab/` (a package).
+- Added beyond the plan: `truth()` for parity with `LookupEvaluator`, and a
+  construction-time check rejecting table rows indistinguishable within `atol`.
 
-Known gap carried over: `ContinuousLookupEvaluator` as specified lacks `truth()`, which
-`baselines.py:131` calls.
+**Correction to an earlier assessment.** This document previously recorded "lacks
+`truth()`, which `baselines.py:131` calls" as a live gap. `baselines.py` needs `truth()`
+only inside `coordinate_descent`, which is called exclusively with `TorchEvaluator`
+(`tests/test_baselines.py`, `scripts/run_e2*.py`), so a lab evaluator would never have
+reached it. `truth()` was added for interface parity, not to fix a crash.
 
 ## 9. Testing
 
-85 new tests, `tests/test_lab_*.py`. Full suite: **707 passed**. Coverage includes all
+105 new tests, `tests/test_lab_*.py`. Full suite: **727 passed**. Coverage includes all
 300 committed checksums re-verified, every FCS given a disposition (34 gated, 10
-controls, 8 aborted), and a test pinning why a median comparison would have picked the
-wrong channel.
+controls, 8 aborted), a test pinning why a median comparison would have picked the
+wrong channel, a test demonstrating the `np.rint` dose collision rather than merely
+asserting the fix, and — the headline — a test asserting that building an evaluator
+from the real committed conditions table **fails**.
