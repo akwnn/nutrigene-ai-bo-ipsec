@@ -4176,3 +4176,105 @@ it. **So this curve understates DoE, and every savings ratio here is biased in B
 favour.** L10 is updated to say so.
 
 **Status: §1 complete and reported. §2 design amended and registered above; run pending.**
+
+---
+
+# 📋 Q53 — spread_gp ON THE EXTERNAL FAMILIES. Registered before the runner exists.
+
+**Status: registered. No runner file exists at this commit — check the timestamps.**
+
+`docs/INFORMATION-MATRIX.md` established that `spread_gp` — a one-shot LHS design, one GP fit,
+scored at the posterior-mean argmax — **ties qLogEI on the Hill family** under both rules at both
+noise levels, at budget 48, while spending **1 round against qLogEI's 10**. It also established
+that the arm has run on **nothing but Hill**. Q42 answers the same generality question for `doe`
+vs `qlogei` on four external families; this closes the same gap for `spread_gp`.
+
+## §1 THE REGISTERED PREDICTION
+
+> **PRIMARY: `spread_gp` loses to qLogEI on Hartmann6, at both dimensions and both noise levels,
+> under both scoring rules.**
+
+**Reasoning.** A one-shot space-filling design has nothing to exploit on a deceptive surface.
+Adaptive search is exactly what Hartmann6 rewards, and Q42/Q51 established that BO wins every
+Hartmann6 cell under every rule, by +0.2460 to +0.4134. **The Hill tie is expected to be
+Hill-specific.**
+
+> **SECONDARY, low confidence: on Levy, Rosenbrock and Ackley the result is unpredicted.**
+
+Ackley in particular is multimodal and near-flat, so neither arm should do well and the contrast
+may be null for uninformative reasons. **Ackley's rule A is VOID for the DoE arm** (its optimum is
+the box centre, and every CCD carries centre runs) — but that void does **not** extend to
+`spread_gp` vs `qlogei`, because neither arm's design is guaranteed to contain the centre. An LHS
+draw hits the exact centre with probability zero. **Ackley is therefore reported here, not voided**,
+and that is a departure from how Q42 treats the same family. Recorded now so it is not read later
+as convenience.
+
+**FALSIFIER.** If `spread_gp` ties or beats qLogEI on Hartmann6, **the Hill result becomes the
+suspicious one, not this one.** Both then need re-examining rather than the new number being taken
+at face value. Specifically it would mean a one-shot design is competitive on a surface built to
+reward adaptivity, which is more likely to indicate that 48 points in 6–8 dimensions is too small
+a budget for adaptivity to express itself at all than that space-filling is a good search strategy.
+
+## §2 WHAT RUNS
+
+Arm exactly as implemented at `scripts/run_q52_budget_to_target.py:201-211`. **No modification,
+no tuning, production configuration:** `lhs_design(bounds, 48, seed)` → evaluate once → one
+`build_gp` → `constrained_argmax` of the posterior mean at `n_restarts=20, raw_samples=4096`.
+
+**Grid — matched to Q42 exactly:** families `hartmann6 · levy · rosenbrock · ackley`;
+`d ∈ {6,8} × σ_rel ∈ {0.10, 0.25}`; **budget 48**; `UnitScaled` wrapper; `[0,1]^d` bounds;
+Hartmann6 at d=8 via `Embedded(Hartmann6(), dim=8, seed=0)`. **All sixteen family-cells. No
+reduction.**
+
+⚠️ **DEVIATION FROM THE BRIEF, stated before the run.** The brief says *"n = 25 instances × 2
+seeds"*. That is the **Hill** convention and it does not apply: the external families are single
+functions, not ensembles, so Q42's clustering unit is **seed**, and Q42 ran **`N_REPS = 25`
+seeds**. Matching Q42 is the stronger requirement — §5 of the brief demands the same instances —
+so this runs **25 seeds**, and the comparison is paired on seed. Calling 25 seeds on one function
+"n=25 landscapes" would be the pseudo-replication this project criticises the source paper for,
+and it is not claimed.
+
+**Both rules.** Rule A = `reported_best_curve` at the observed argmax. Rule C = true value at the
+GP posterior-mean argmax. Same scoring functions as Q42's BO arm, so the contrast is like-for-like.
+
+## §3 THE DESIGN LOTTERY, HANDLED IN ADVANCE
+
+`spread_gp`'s two independent measurements of the *same* Hill cell differ by **0.0239**, about one
+design SD. That is Q48's defect (D16) caught a second time, and **a single-draw number from this
+arm is not quotable.**
+
+> **Registered: `D = 5` independent LHS draws per (family, cell, seed), averaged within seed
+> before any test. The design SD across those draws is reported beside every point estimate.**
+
+**And the registered stopping rule for interpretation:** *if a family-cell contrast is smaller in
+magnitude than that cell's design SD, it is reported as **"within design noise"** and is not
+called a result*, whichever direction it points. Fixed now so it cannot be applied selectively.
+
+## §4 ANALYSIS, FIXED BEFORE THE NUMBERS EXIST
+
+- **Primary contrast:** `spread_gp − qlogei`, paired on seed, per family-cell, both rules.
+  Positive = qLogEI better. Instance bootstrap for magnitude; Wilcoxon for the yes/no (**Q20 §2** —
+  if they disagree, the disagreement is reported, not resolved).
+- **Also reported: `spread_gp − doe`** wherever `doe` is not censored, from Q42's committed rows.
+- **Holm across the sixteen family-cells**, since none of these is a registered primary (**Q39**).
+- **Rounds stated per family:** `spread_gp` = **1**, qLogEI = **10** at budget 48 with q=4 and a
+  14-point opening. The cost argument is the point of this arm.
+- **Every cell reported, including where `spread_gp` loses badly.**
+
+## §5 GUARDS
+
+- **Fidelity first.** Re-run Q42's qLogEI arm on a sample of stored rows and reproduce them before
+  any new number is trusted. **The match is reported whatever it is.** Q42's rows are the
+  comparator, so if they do not regenerate, nothing here is comparable and the run is void.
+- **Same instances as Q42** — same oracle constructors, same seeds, not regenerated, not reseeded.
+- **Checkpoint per family-cell.** Written incrementally; a kill costs one cell, not the run.
+- **Time one cell before committing to sixteen.**
+
+## §6 AFTERWARDS
+
+`docs/RESULTS.md` entry · whether the prediction held, **stated either way** · the generality
+sentence updated to either *"holds across five families"* or *"Hill-specific; loses on deceptive
+surfaces"* · design SD wherever a `spread_gp` number appears.
+
+**No follow-up run. One run, registered, reported once.** If the result is null or unfavourable it
+is reported as-is.
