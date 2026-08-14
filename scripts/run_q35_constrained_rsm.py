@@ -71,7 +71,7 @@ sys.path.insert(0, str(ROOT / "src"))
 
 from scipy.stats import wilcoxon                                      # noqa: E402
 
-from boec.diagnostics import instance_bootstrap                       # noqa: E402
+from boec.diagnostics import instance_bootstrap, reported_best_curve  # noqa: E402
 from boec.doe import run_doe_arm                                      # noqa: E402
 from boec.metrics import constrained_argmax                           # noqa: E402
 from boec.oracles import load_ensemble                                # noqa: E402
@@ -175,7 +175,12 @@ def run_cell(dim: int, sigma: float) -> list[dict]:
                     f"at instance={inst.instance_id} seed={seed}")
 
             # --- the three scorings -------------------------------------------
-            best_observed = opt - float(r.curve_true[-1])
+            # D20: rule A is the true value at the running OBSERVED argmax. Reading
+            # `curve_true` here scored this column at oracle-best -- the running best
+            # TRUE value among visited points -- which credits the arm for a recipe it
+            # measured but could not identify, and is the error that voided E2 run 1.
+            best_observed = opt - float(
+                reported_best_curve(o.truth(r.X_visited), r.Y_visited)[-1])
             unconstrained = opt - float(o.truth(lift(x_un)))
             x_con, _, _ = constrained_argmax(fit.predict, r.stage2_bounds,
                                              n_restarts=N_RESTARTS,

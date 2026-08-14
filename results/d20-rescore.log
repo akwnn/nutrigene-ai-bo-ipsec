@@ -1,0 +1,84 @@
+====================================================================================================
+D20 rescore — the classical arm back on rule A
+====================================================================================================
+  source q42-families.json: 400 rows, 16 cells
+  gate: doe_c_unconstrained must reproduce to 1e-12
+
+         ackley d=6 s=0.25   25 rows ok
+         ackley d=6 s=0.1    25 rows ok
+         ackley d=8 s=0.25   25 rows ok
+         ackley d=8 s=0.1    25 rows ok
+      hartmann6 d=6 s=0.25   25 rows ok
+      hartmann6 d=6 s=0.1    25 rows ok
+      hartmann6 d=8 s=0.25   25 rows ok
+      hartmann6 d=8 s=0.1    25 rows ok
+           levy d=6 s=0.25   25 rows ok
+           levy d=6 s=0.1    25 rows ok
+           levy d=8 s=0.25   25 rows ok
+           levy d=8 s=0.1    25 rows ok
+     rosenbrock d=6 s=0.25   25 rows ok
+     rosenbrock d=6 s=0.1    25 rows ok
+     rosenbrock d=8 s=0.25   25 rows ok
+     rosenbrock d=8 s=0.1    25 rows ok
+
+  GATE PASSED — worst |delta| over 400 rows = 0.000e+00
+
+====================================================================================================
+  DoE rule A: as scored (oracle-best) vs corrected, and what it does to the contrast
+====================================================================================================
+                      cell   DoE old   DoE new  flattered        BO  old winner  new winner   sd old   sd new
+         ackley d=6 s=0.25    0.0000    0.0123    +0.0123    0.7003         DoE         DoE   0.0000   0.0349
+          ackley d=6 s=0.1    0.0000    0.0011    +0.0011    0.5626         DoE         DoE   0.0000   0.0052
+         ackley d=8 s=0.25    0.0000    0.0131    +0.0131    0.7561         DoE         DoE   0.0000   0.0361
+          ackley d=8 s=0.1    0.0000    0.0013    +0.0013    0.7284         DoE         DoE   0.0000   0.0062
+      hartmann6 d=6 s=0.25    0.5444    0.5623    +0.0178    0.2984          BO          BO   0.1086   0.1160
+       hartmann6 d=6 s=0.1    0.5398    0.5428    +0.0030    0.1938          BO          BO   0.1094   0.1118
+      hartmann6 d=8 s=0.25    0.6324    0.6393    +0.0069    0.3134          BO          BO   0.1010   0.1071
+       hartmann6 d=8 s=0.1    0.6504    0.6534    +0.0030    0.2370          BO          BO   0.0863   0.0894
+           levy d=6 s=0.25    0.0040    0.0392    +0.0351    0.1156         DoE         DoE   0.0000   0.0409
+            levy d=6 s=0.1    0.0040    0.0241    +0.0201    0.0754         DoE         DoE   0.0000   0.0256
+           levy d=8 s=0.25    0.0039    0.0494    +0.0455    0.1290         DoE         DoE   0.0000   0.0423
+            levy d=8 s=0.1    0.0039    0.0220    +0.0181    0.0787         DoE         DoE   0.0000   0.0217
+     rosenbrock d=6 s=0.25    0.0003    0.0328    +0.0325    0.0700         DoE         DoE   0.0000   0.0413
+      rosenbrock d=6 s=0.1    0.0003    0.0156    +0.0153    0.0430         DoE         DoE   0.0000   0.0169
+     rosenbrock d=8 s=0.25    0.0004    0.0320    +0.0315    0.0823         DoE         DoE   0.0000   0.0395
+      rosenbrock d=8 s=0.1    0.0004    0.0174    +0.0169    0.0580         DoE         DoE   0.0000   0.0177
+
+====================================================================================================
+  THE REVERSAL COUNT — 'DoE beats BO under rule A', by cell
+====================================================================================================
+    as scored (oracle-best):  12 of 16 family-cells
+    corrected (rule A):       12 of 16 family-cells
+
+====================================================================================================
+  ZERO-VARIANCE CHECK — was the Levy/Rosenbrock 'void' the bug?
+====================================================================================================
+                      cell  unique old  unique new  (of 25 seeds)
+         ackley d=6 s=0.25           1           4
+          ackley d=6 s=0.1           1           2
+         ackley d=8 s=0.25           1           4
+          ackley d=8 s=0.1           1           2
+           levy d=6 s=0.25           1           9
+            levy d=6 s=0.1           1           5
+           levy d=8 s=0.25           1          12
+            levy d=8 s=0.1           1           5
+     rosenbrock d=6 s=0.25           1          11
+      rosenbrock d=6 s=0.1           1           8
+     rosenbrock d=8 s=0.25           1          12
+      rosenbrock d=8 s=0.1           1          10
+
+====================================================================================================
+  Q35 — the 'best observed' column, and L6
+====================================================================================================
+                cell      old      new  constrained    L6 old    L6 new  shrinks by
+          d=6 s=0.25   0.0597   0.0958       0.1169   +0.0572   +0.0211       2.71x
+           d=6 s=0.1   0.0544   0.0892       0.0856   +0.0312   -0.0036      -8.63x
+          d=8 s=0.25   0.0575   0.0963       0.1148   +0.0573   +0.0185       3.10x
+           d=8 s=0.1   0.0500   0.0948       0.0877   +0.0377   -0.0071      -5.28x
+
+    L6 = constrained - best observed. Clear of zero in 2 of 4 cells after correction, and
+    at roughly a third of the claimed magnitude where it survives. Both sigma=0.10 cells
+    become NULL — the claim there was an artefact of scoring the arm's own data at
+    oracle-best while its recommendation was scored honestly.
+
+  written to results/d20-rescore.json  (12s)

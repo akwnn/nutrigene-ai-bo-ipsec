@@ -125,7 +125,11 @@ def run_cell(family: str, dim: int, sigma: float) -> list[dict]:
 
         ed = TorchEvaluator(oracle, sigma_rel=sigma, seed=seed)
         r = run_doe_arm(ed, bounds, truth=ed.truth, budget=BUDGET, seed=seed)
-        doe_a = opt - float(r.curve_true[-1])
+        # D20: was `r.curve_true[-1]`, which is oracle-best. That put THIS arm on a
+        # different rule from `bo_a` fifteen lines above, inside one loop, and the gap
+        # ran entirely in DoE's favour (+0.041 Levy, +0.044 Rosenbrock, +0.018 Hartmann6).
+        doe_a = opt - float(
+            reported_best_curve(ed.truth(r.X_visited), r.Y_visited)[-1])
         doe_cu = opt - float(ed.truth(r.confirmation_x.unsqueeze(0)))
 
         kept = list(r.kept_factors)

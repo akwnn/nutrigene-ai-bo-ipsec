@@ -51,6 +51,13 @@ results/figures/*
 # meaning an artefact "never ships" while every log line claims it was written.
 !results/q52-budget-to-target.json
 
+# EXCEPTION — the D20 rescore. It is the artefact behind a CORRECTION to published
+# numbers (Q35's "best observed" column and therefore L6, and the DoE arm's rule A on
+# every external family), so it has to be auditable by anyone who reads the corrected
+# claim. It also carries its own fidelity gate: worst |delta| = 0.0 over 400 Q42 rows
+# and 200 Q35 rows on the columns the fix does not touch.
+!results/d20-rescore.json
+
 # Oracle instances: DECIDED — the version-stamped ensembles under
 # data/oracles/<oracle_version>/ ARE committed, parquet included. 456 KB total.
 #

@@ -347,7 +347,24 @@ extrapolate badly, and the source study used the unconstrained form.
 
 **Residual that must accompany the constrained number wherever it appears:** even
 constrained, the recommendation is significantly worse than the arm's own best
-measurement — **+0.0572, p<0.0001**.
+measurement — ~~**+0.0572, p<0.0001**~~.
+
+> 🔴 **CORRECTED (D20).** This residual is `constrained − best_observed`, and
+> `best_observed` read `DoEResult.curve_true` — **oracle-best, not rule A**. It therefore
+> compared a rule-C number against an oracle-best one. Rescored on rule A
+> (`results/d20-rescore.json`, fidelity gate |Δ| = 0.0 over all 200 rows):
+>
+> | cell | as published | corrected |
+> |---|---|---|
+> | d=6 σ=0.25 | +0.0572 | **+0.0211 [+0.0105, +0.0315]** |
+> | d=6 σ=0.10 | +0.0312 | **−0.0036 [−0.0122, +0.0049] NULL** |
+> | d=8 σ=0.25 | +0.0573 | **+0.0185 [+0.0094, +0.0287]** |
+> | d=8 σ=0.10 | +0.0377 | **−0.0071 [−0.0150, +0.0008] NULL** |
+>
+> **It survives at the realistic assay at about a third of its published magnitude, and
+> is null at both optimistic-assay cells.** Corrected `best_observed` is **0.0958**,
+> which now agrees with E2's independently computed rule-A DoE figure of 0.0957 —
+> resolving a discrepancy the two documents had been carrying.
 
 ## Q41 — the estimand decision
 
@@ -763,8 +780,70 @@ seeds), so Q42 is recoverable by re-running rather than by retraction.**
 `constrained_argmax` and `truth`, never from `curve_true`, so **Q41's registered primary
 estimand and every rule-C figure in this project stand unaffected.**
 
-**Not fixed here.** Correcting it changes published numbers in Q35, Q36 and Q42 and is the
-authors' call.
+### ✅ D20 FIXED AND RESCORED — `scripts/rescore_d20.py` · `results/d20-rescore.{json,log}`
+
+All three sites now use `reported_best_curve`. A structural guard
+(`tests/test_rule_a_is_not_oracle_best.py`) asserts over the AST that **no script reads
+`curve_true`**, with a companion test proving the two scorings actually differ so the
+guard cannot go vacuous.
+
+**Only the DoE arm was re-run, and the equivalence is gated rather than asserted.** The
+BO arm was always on `reported_best_curve` and its stored numbers cannot have changed;
+the DoE arm runs on its own evaluator at the same seed. `doe_c_unconstrained` and
+`best_observed`-adjacent columns are untouched by the fix, so they must come back
+identical — **worst |Δ| = 0.000e+00 over 400 Q42 rows and 200 Q35 rows.**
+
+**What changed on the external families — the verdicts did not move.**
+
+| cell | DoE as scored | DoE corrected | flattered by | BO | winner |
+|---|---|---|---|---|---|
+| hartmann6 d=6 σ=0.25 | 0.5444 | 0.5623 | +0.0178 | **0.2984** | **BO, both ways** |
+| hartmann6 d=8 σ=0.25 | 0.6324 | 0.6393 | +0.0069 | **0.3134** | **BO, both ways** |
+| levy d=6 σ=0.25 | 0.0040 | 0.0392 | +0.0351 | 0.1156 | DoE, both ways |
+| rosenbrock d=6 σ=0.25 | 0.0003 | 0.0328 | +0.0325 | 0.0700 | DoE, both ways |
+
+**Reversal count: 12 of 16 family-cells before, 12 of 16 after. No cell flips.** The
+qualitative generality result is robust to the bug.
+
+**But the zero-variance signature was entirely the bug.** Distinct DoE values across 25
+seeds, before → after: levy **1 → 9/5/12/5**, rosenbrock **1 → 11/8/12/10**, ackley
+**1 → 4/2/4/2**. **So the earlier "Levy and Rosenbrock are void, 12 of 16 family-cells
+are void not 4" diagnosis is WITHDRAWN** — those cells are legitimately scored once the
+arm is on rule A, and Q42 needed a rescore rather than a retraction.
+
+> ⚠️ **L16 needs a smaller correction.** It states Ackley *"scores exactly 0.0000 under
+> rule A"* because its optimum sits at the design centre. Under corrected rule A it
+> scores **0.0123 (d=6 σ=0.25)**, not 0.0000 — the exact zero was the oracle-best
+> artefact. The *reason* to treat centred functions with suspicion survives; the number
+> does not.
+
+### 🔴 Q35 rescored — the constrained-vs-best-observed residual loses two of its four cells
+
+| cell | "best observed" as scored | corrected (rule A) | constrained | **residual as published** | **residual corrected** |
+|---|---|---|---|---|---|
+| d=6 σ=0.25 | 0.0597 | **0.0958** | 0.1169 | +0.0572 | **+0.0211 [+0.0105, +0.0315]** |
+| d=6 σ=0.10 | 0.0544 | **0.0892** | 0.0856 | +0.0312 | **−0.0036 [−0.0122, +0.0049] NULL** |
+| d=8 σ=0.25 | 0.0575 | **0.0963** | 0.1148 | +0.0573 | **+0.0185 [+0.0094, +0.0287]** |
+| d=8 σ=0.10 | 0.0500 | **0.0948** | 0.0877 | +0.0377 | **−0.0071 [−0.0150, +0.0008] NULL** |
+
+The Q35 residual claims *"even constrained, the recommendation is significantly worse than the arm's
+own best measurement — +0.0572 / +0.0312 / +0.0573 / +0.0377, all Holm p=0.0000."*
+**Corrected: it survives at the realistic noise level at roughly a third of the claimed
+magnitude, and is NULL at both optimistic-assay cells.** The claim there was an artefact
+of scoring the arm's own data at oracle-best while scoring its recommendation honestly.
+
+*(Note: this is Q35's residual, not `CLAIMS.md`'s L6, which is about acquisition-solver failures.)*
+
+**And that has a consequence for Tier-1 1.3 / Tier-3 3.6.** Those frame the two arms as
+failing in opposite directions — *"the polynomial's model is worse than its data, the
+GP's model is better than its data."* At σ=0.10, constrained, the polynomial's model is
+**no worse than its data either**. The asymmetry is a property of the noisy assay, not a
+general one, and must be written that way.
+
+**Corrected `best_observed` now agrees with E2.** 0.0958 against E2's independently
+computed rule-A DoE figure of 0.0957 — the two documents had been quoting 0.0597 and
+0.0957 for the same quantity, and that discrepancy is now resolved rather than merely
+noted.
 
 **The survivorship trap D19 concealed, stated separately because it generalises.**
 Arrival is monotone in the target, so complete-case sets across a budget-to-target curve

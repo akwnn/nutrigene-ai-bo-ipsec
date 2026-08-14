@@ -108,7 +108,9 @@ def run_function(oracle) -> list[dict]:
         # ---- DoE arm -------------------------------------------------------
         ed = TorchEvaluator(oracle, sigma_rel=SIGMA_REL, seed=seed)
         r = run_doe_arm(ed, bounds, truth=ed.truth, budget=BUDGET, seed=seed)
-        doe_a = opt - float(r.curve_true[-1])
+        # D20: was `r.curve_true[-1]` (oracle-best), while `bo_a` above is on rule A.
+        doe_a = opt - float(
+            reported_best_curve(ed.truth(r.X_visited), r.Y_visited)[-1])
         doe_c = opt - float(ed.truth(r.confirmation_x.unsqueeze(0)))
 
         # the constrained variant, for the reason in the module docstring
