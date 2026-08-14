@@ -27,7 +27,7 @@ from boec.space import MetricIdentity, SearchSpace
 
 ROOT = Path(__file__).resolve().parents[1]
 LAB = ROOT / "data" / "lab"
-COND = LAB / "bo_primary_conditions.csv"
+COND = LAB / "overlay" / "bo_primary_conditions.csv"
 CFG = ROOT / "configs" / "lab" / "coating_2026-08-06.yaml"
 
 pytestmark = pytest.mark.skipif(not COND.exists(), reason="conditions CSV not present")

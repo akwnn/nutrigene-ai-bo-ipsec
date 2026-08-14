@@ -3,9 +3,9 @@
 Phase 1 is a synthetic oracle and Phase 2 replays digitized published figures. This
 subpackage is the first code that touches instrument output from the Nutrigene bench.
 
-The governing rule is :doc:`data/lab/BO-PURPOSE.md`: **the optimizer only eats
-``(x, y)`` rows** -- coded factor levels plus one locked metric. Of 302 committed
-files, 12 can become optimizer input. That does not make the other 290 waste: they
+The governing rule is :doc:`data/lab/overlay/BO-PURPOSE.md`: **the optimizer only eats
+``(x, y)`` rows** -- coded factor levels plus one locked metric. Of the 300 files
+under ``raw/``, 12 can become optimizer input. That does not make the other 288 waste: they
 are provenance, gating references, comparability controls, and QC. This package
 reads every one of them, and is careful about which of them are allowed to become a
 number the optimizer sees.

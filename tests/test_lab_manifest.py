@@ -63,7 +63,7 @@ def test_every_leica_jpeg_has_a_metadata_sidecar(index):
 
 
 def test_committed_files_still_match_their_manifest_checksums(index):
-    manifest = load_manifest(LAB / "MANIFEST.sha256")
+    manifest = load_manifest(LAB / "overlay" / "MANIFEST.sha256")
     rep = verify_checksums(index, manifest)
     assert rep.mismatched == [], f"corrupted since commit: {rep.mismatched}"
     assert rep.missing_on_disk == [], f"in manifest but gone: {rep.missing_on_disk}"
@@ -76,7 +76,7 @@ def test_only_the_overlay_and_self_describing_files_are_unmanifested(index):
     Everything else without a manifest entry would be a file that entered the tree
     outside the committed drop, which is exactly what this check is for.
     """
-    manifest = load_manifest(LAB / "MANIFEST.sha256")
+    manifest = load_manifest(LAB / "overlay" / "MANIFEST.sha256")
     rep = verify_checksums(index, manifest)
     expected = set(OVERLAY_FILES) | {"MANIFEST.sha256", "README.md"}
     unexpected = [p for p in rep.unmanifested if p.rsplit("/", 1)[-1] not in expected]
@@ -91,15 +91,15 @@ def test_roles_cover_every_non_overlay_file(index):
 @pytest.mark.parametrize(
     "path,expected",
     [
-        ("flow/2026-08-06/Exp_20260806_cd31-cd140a/f5.fcs", "flow_events"),
-        ("flow/2026-08-06/Exp_20260806_1/Exp_20260806_1.xit", "flow_sidecar"),
+        ("raw/flow/2026-08-06/Exp_20260806_cd31-cd140a/f5.fcs", "flow_events"),
+        ("raw/flow/2026-08-06/Exp_20260806_1/Exp_20260806_1.xit", "flow_sidecar"),
         ("flow/2026-07-28/Exp_20260728_1/ExpSummaryForAPI.xml", "flow_sidecar"),
-        ("microscopy/leica/2026-08-04/Leica_2026-08-04 fib5.jpeg", "microscopy_image"),
-        ("microscopy/leica/2026-08-04/Leica_2026-08-04 fib5.jpeg.metadata", "microscopy_sidecar"),
-        ("plate-reader/2026-06-22_endpoint-abs-562.xlsx", "plate_reader"),
-        ("protocols/IPSC分化EC-3.docx", "protocol"),
-        ("MANIFEST.sha256", "index"),
-        ("BO-PURPOSE.md", "index"),
+        ("raw/microscopy/leica/2026-08-04/Leica_2026-08-04 fib5.jpeg", "microscopy_image"),
+        ("raw/microscopy/leica/2026-08-04/Leica_2026-08-04 fib5.jpeg.metadata", "microscopy_sidecar"),
+        ("raw/plate-reader/2026-06-22_endpoint-abs-562.xlsx", "plate_reader"),
+        ("raw/protocols/IPSC分化EC-3.docx", "protocol"),
+        ("overlay/MANIFEST.sha256", "index"),
+        ("overlay/BO-PURPOSE.md", "index"),
     ],
 )
 def test_classification_rules(path, expected):
@@ -107,9 +107,9 @@ def test_classification_rules(path, expected):
 
 
 def test_manifest_parses_paths_containing_spaces():
-    manifest = load_manifest(LAB / "MANIFEST.sha256")
-    assert "flow/2026-08-06/Exp_20260806_1/well 1.fcs" in manifest
-    digest, size = manifest["flow/2026-08-06/Exp_20260806_1/well 1.fcs"]
+    manifest = load_manifest(LAB / "overlay" / "MANIFEST.sha256")
+    assert "raw/flow/2026-08-06/Exp_20260806_1/well 1.fcs" in manifest
+    digest, size = manifest["raw/flow/2026-08-06/Exp_20260806_1/well 1.fcs"]
     assert len(digest) == 64 and size > 0
 
 
@@ -119,7 +119,7 @@ def test_roles_csv_and_index_agree_on_size():
     ``index`` files (README.md and friends) are living documents that get edited after
     the roles CSV is generated, so drift there is expected and not a data problem.
     """
-    roles = load_roles(LAB / "bo_file_roles.csv")
+    roles = load_roles(LAB / "overlay" / "bo_file_roles.csv")
     idx = {f.path: f for f in build_file_index(LAB, verify=False)}
     for path, row in roles.items():
         assert path in idx, f"roles names a file that is not on disk: {path}"

@@ -29,9 +29,24 @@ Modality = Literal[
     "unknown",
 ]
 
+#: ``data/lab`` is split three ways, and the split is load-bearing rather than cosmetic:
+#:
+#: * ``raw/``     -- instrument output. Never edited, never generated. Checksummed.
+#: * ``overlay/`` -- the human sort: which files may be used, the gating record, the
+#:                   signed conditions table, and the checksums of ``raw/``.
+#: * ``derived/`` -- everything ``scripts/build_lab_dataset.py`` writes. Disposable;
+#:                   delete it and re-run.
+#:
+#: Anything under ``raw/`` that changes is corruption. Anything under ``derived/`` that
+#: changes is just a rerun. Keeping them in one directory made those two indistinguishable.
+RAW = "raw"
+OVERLAY = "overlay"
+DERIVED = "derived"
+
 #: Files that are the sort itself rather than data being sorted. They are indexed but
 #: excluded from role-coverage assertions, because the overlay cannot catalogue itself
-#: without a chicken-and-egg problem the first time it is generated.
+#: without a chicken-and-egg problem the first time it is generated. Matched on
+#: basename, so moving them under ``overlay/`` did not change this set.
 OVERLAY_FILES = frozenset(
     {
         "BO-PURPOSE.md",
@@ -56,7 +71,7 @@ def classify(rel_path: str) -> Modality:
         return "microscopy_sidecar"
     if p.endswith((".jpeg", ".jpg", ".tif", ".tiff", ".png")):
         return "microscopy_image"
-    if p.endswith((".xlsx", ".xls", ".csv")) and p.startswith("plate-reader/"):
+    if p.endswith((".xlsx", ".xls", ".csv")) and "plate-reader/" in p:
         return "plate_reader"
     if p.endswith(".docx"):
         return "protocol"
@@ -106,7 +121,7 @@ def walk_lab(lab_root: Path) -> Iterator[Path]:
         if not p.is_file():
             continue
         rel = p.relative_to(lab_root).as_posix()
-        if rel.startswith("derived/") or p.name == ".DS_Store":
+        if rel.startswith(f"{DERIVED}/") or p.name == ".DS_Store":
             continue
         yield p
 
@@ -159,8 +174,10 @@ def build_file_index(
             when the caller only needs paths and roles; ``sha256`` is then ``""``.
     """
     lab_root = Path(lab_root)
-    roles = load_roles(lab_root / "bo_file_roles.csv") if (lab_root / "bo_file_roles.csv").exists() else {}
-    manifest = load_manifest(lab_root / "MANIFEST.sha256") if (lab_root / "MANIFEST.sha256").exists() else {}
+    roles_csv = lab_root / OVERLAY / "bo_file_roles.csv"
+    manifest_path = lab_root / OVERLAY / "MANIFEST.sha256"
+    roles = load_roles(roles_csv) if roles_csv.exists() else {}
+    manifest = load_manifest(manifest_path) if manifest_path.exists() else {}
 
     files: list[LabFile] = []
     for p in walk_lab(lab_root):

@@ -14,7 +14,7 @@ The earlier draft of this file recorded CD31 and CD140a as `_ungated_`, because 
 the filenames nor the FCS `$PnS` keywords name an antibody: they carry detector names
 (`B525-A`, `Y585-A`) and nothing else.
 
-That was solvable from data already in the drop. `flow/2026-07-28/Exp_20260728_1/`
+That was solvable from data already in the drop. `raw/flow/2026-07-28/Exp_20260728_1/`
 holds a **sorted reference panel** — `CD31+.fcs`, `CD31-.fcs`, `ISO.fcs`, `US.fcs`.
 Whichever detector separates CD31+ from CD31− *is* CD31.
 

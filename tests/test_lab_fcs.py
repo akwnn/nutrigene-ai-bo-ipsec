@@ -22,7 +22,7 @@ from boec.lab.fcs import (
 
 ROOT = Path(__file__).resolve().parents[1]
 LAB = ROOT / "data" / "lab"
-FLOW = LAB / "flow"
+FLOW = LAB / "raw" / "flow"
 PANEL = FLOW / "2026-08-06" / "Exp_20260806_cd31-cd140a"
 ABORTED = FLOW / "2026-08-06" / "Exp_20260806_2"
 
@@ -77,7 +77,7 @@ def test_no_compensation_was_applied_at_acquisition(all_summaries):
 def test_event_counts_match_the_conditions_csv():
     import csv
 
-    cond = LAB / "bo_primary_conditions.csv"
+    cond = LAB / "overlay" / "bo_primary_conditions.csv"
     if not cond.exists():
         pytest.skip("conditions CSV not present")
     with cond.open(encoding="utf-8") as fh:

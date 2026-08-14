@@ -21,7 +21,7 @@ from boec.lab.imaging import (
 )
 
 ROOT = Path(__file__).resolve().parents[1]
-MICRO = ROOT / "data" / "lab" / "microscopy"
+MICRO = ROOT / "data" / "lab" / "raw" / "microscopy"
 LEICA_0804 = MICRO / "leica" / "2026-08-04"
 
 pytestmark = pytest.mark.skipif(not MICRO.exists(), reason="microscopy not present")

@@ -6,13 +6,13 @@ refuses to turn that into an evaluator.
 
 The refusal is the point. Three judgement calls stand between a candidate percentage
 and a measurement -- no compensation, no live/singlet gate, and a positivity threshold
-that is a convention worth 9-14 percentage points of spread (see ``data/lab/GATE.md``).
+that is a convention worth 9-14 percentage points of spread (see ``data/lab/overlay/GATE.md``).
 None of them is arithmetic, so none of them can be closed here. What this module does is
 make the boundary explicit and loud: an unsigned table raises
 :class:`GatingIncompleteError` naming the offending rows, rather than quietly seeding a
 campaign with software output.
 
-The signed table is ``data/lab/bo_primary_conditions.csv`` with ``y`` filled and
+The signed table is ``data/lab/overlay/bo_primary_conditions.csv`` with ``y`` filled and
 ``status = gated``. Until a human does that, every path here ends in an exception.
 """
 
@@ -106,7 +106,7 @@ def load_lab_evaluator(
     if pending:
         raise GatingIncompleteError(
             f"{conditions_csv}: {len(pending)} of {len(rows)} rows are awaiting_gating "
-            f"and have no y. CD31% has not been signed off; see data/lab/GATE.md. "
+            f"and have no y. CD31% has not been signed off; see data/lab/overlay/GATE.md. "
             f"Do not invent percentages. First offenders: {pending[:3]}"
         )
 

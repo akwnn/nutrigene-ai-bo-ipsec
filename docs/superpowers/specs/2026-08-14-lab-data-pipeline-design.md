@@ -30,6 +30,27 @@ built to *read everything and promote nothing*. Promotion is a human act.
 `scripts/build_lab_dataset.py` is the entry point. Output goes to `data/lab/derived/`,
 which is excluded from the index so the pipeline is not a function of its own last run.
 
+### Directory layout
+
+`data/lab` is split three ways, and the split is load-bearing rather than cosmetic:
+
+| | Contents | Rule |
+|---|---|---|
+| `raw/` | instrument output, original filenames | never edited, never generated — a change is corruption |
+| `overlay/` | `BO-PURPOSE.md`, `GATE.md`, `MANIFEST.sha256`, roles + conditions CSVs | hand-maintained; where judgement lives |
+| `derived/` | everything the pipeline writes | disposable — delete and re-run |
+
+Before this split, a regenerated table and a corrupted FCS were the same kind of event:
+a modified file under `data/lab`. Now `git status` distinguishes them. The layout
+constants live in `manifest.py` (`RAW`, `OVERLAY`, `DERIVED`) rather than being spelled
+out at each call site.
+
+This overturns a decision recorded in `BO-PURPOSE.md` ("Raw paths are unchanged.
+Moving 255 MB of already-pushed binaries would only rewrite git history"). The stated
+rationale does not hold: `git mv` reuses existing blobs and records a rename, so no
+history is rewritten and the push carries no new object data for the moved files. All
+300 checksums re-verify against the new paths.
+
 ## 3. Dependency decision
 
 `flowkit` was rejected: it resolves **pandas 3.0.5 → 2.3.3**, and every number in

@@ -1,53 +1,53 @@
 path,directory,tube,cytometer,serial,acquired_date,acquired_time,events,parameters,fcs_version,spillover_is_identity,compensation_applied,aborted,is_control,operator
-flow/2026-07-21/10%FBS-p1.fcs,flow/2026-07-21,10%FBS-p1,CytoFLEX LX,BG17015,2026-07-21,14:34:55,19330,38,3.0,True,False,False,False,External user
-flow/2026-07-21/10fbs-p2.fcs,flow/2026-07-21,10fbs-p2,CytoFLEX LX,BG17015,2026-07-21,14:51:33,30736,38,3.0,True,False,False,False,External user
-flow/2026-07-21/EGM-3D-p0.fcs,flow/2026-07-21,EGM-3D-p0,CytoFLEX LX,BG17015,2026-07-21,14:31:25,20539,38,3.0,True,False,False,False,External user
-flow/2026-07-21/N2-3D-P0.fcs,flow/2026-07-21,N2-3D-P0,CytoFLEX LX,BG17015,2026-07-21,14:21:28,65066,38,3.0,True,False,False,False,External user
-flow/2026-07-21/T75-p1.fcs,flow/2026-07-21,T75-p1,CytoFLEX LX,BG17015,2026-07-21,14:33:13,16671,38,3.0,True,False,False,False,External user
-flow/2026-07-21/US.fcs,flow/2026-07-21,US,CytoFLEX LX,BG17015,2026-07-21,14:28:33,17611,38,3.0,True,False,False,True,External user
-flow/2026-07-21/ec indu-p1.fcs,flow/2026-07-21,ec indu-p1,CytoFLEX LX,BG17015,2026-07-21,14:36:23,14629,38,3.0,True,False,False,False,External user
-flow/2026-07-21/ec indu-p2.fcs,flow/2026-07-21,ec indu-p2,CytoFLEX LX,BG17015,2026-07-21,14:54:18,17079,38,3.0,True,False,False,False,External user
-flow/2026-07-21/egm-3d-p1.fcs,flow/2026-07-21,egm-3d-p1,CytoFLEX LX,BG17015,2026-07-21,14:49:23,20863,38,3.0,True,False,False,False,External user
-flow/2026-07-21/n2-3d-p1.fcs,flow/2026-07-21,n2-3d-p1,CytoFLEX LX,BG17015,2026-07-21,14:48:02,19026,38,3.0,True,False,False,False,External user
-flow/2026-07-21/stem-p1.fcs,flow/2026-07-21,stem-p1,CytoFLEX LX,BG17015,2026-07-21,14:37:57,14753,38,3.0,True,False,False,False,External user
-flow/2026-07-21/stem-p2.fcs,flow/2026-07-21,stem-p2,CytoFLEX LX,BG17015,2026-07-21,14:55:34,19874,38,3.0,True,False,False,False,External user
-flow/2026-07-21/sunny-p3-1.fcs,flow/2026-07-21,sunny-p3-1,CytoFLEX LX,BG17015,2026-07-21,14:44:07,18193,38,3.0,True,False,False,False,External user
-flow/2026-07-21/sunny-p3.fcs,flow/2026-07-21,sunny-p3,CytoFLEX LX,BG17015,2026-07-21,14:41:02,22249,38,3.0,True,False,False,False,External user
-flow/2026-07-21/us-2.fcs,flow/2026-07-21,us-2,CytoFLEX LX,BG17015,2026-07-21,14:39:05,18089,38,3.0,True,False,False,True,External user
-flow/2026-07-21/us-23.fcs,flow/2026-07-21,us-23,CytoFLEX LX,BG17015,2026-07-21,14:46:01,19180,38,3.0,True,False,False,True,External user
-flow/2026-07-28/Exp_20260728_1/BEFORE2.fcs,flow/2026-07-28/Exp_20260728_1,BEFORE2,CytoFLEX LX,BG17015,2026-07-28,11:16:05,20667,38,3.0,True,False,False,True,External user
-flow/2026-07-28/Exp_20260728_1/Before.fcs,flow/2026-07-28/Exp_20260728_1,Before,CytoFLEX LX,BG17015,2026-07-28,11:12:33,20691,38,3.0,True,False,False,True,External user
-flow/2026-07-28/Exp_20260728_1/CD31+.fcs,flow/2026-07-28/Exp_20260728_1,CD31+,CytoFLEX LX,BG17015,2026-07-28,11:19:01,36586,38,3.0,True,False,False,False,External user
-flow/2026-07-28/Exp_20260728_1/CD31+P3.fcs,flow/2026-07-28/Exp_20260728_1,CD31+P3,CytoFLEX LX,BG17015,2026-07-28,11:21:48,29284,38,3.0,True,False,False,False,External user
-flow/2026-07-28/Exp_20260728_1/CD31-.fcs,flow/2026-07-28/Exp_20260728_1,CD31-,CytoFLEX LX,BG17015,2026-07-28,11:23:25,15736,38,3.0,True,False,False,False,External user
-flow/2026-07-28/Exp_20260728_1/ISO.fcs,flow/2026-07-28/Exp_20260728_1,ISO,CytoFLEX LX,BG17015,2026-07-28,11:26:04,15529,38,3.0,True,False,False,True,External user
-flow/2026-07-28/Exp_20260728_1/US.fcs,flow/2026-07-28/Exp_20260728_1,US,CytoFLEX LX,BG17015,2026-07-28,11:24:27,15510,38,3.0,True,False,False,True,External user
-flow/2026-08-06/Exp_20260806_1/3-1.fcs,flow/2026-08-06/Exp_20260806_1,3-1,CytoFLEX LX,BG17015,2026-08-06,10:46:44,21994,38,3.0,True,False,False,False,External user
-flow/2026-08-06/Exp_20260806_1/US-new.fcs,flow/2026-08-06/Exp_20260806_1,US-new,CytoFLEX LX,BG17015,2026-08-06,10:35:44,34637,38,3.0,True,False,False,True,External user
-flow/2026-08-06/Exp_20260806_1/US-old.fcs,flow/2026-08-06/Exp_20260806_1,US-old,CytoFLEX LX,BG17015,2026-08-06,10:31:21,20314,38,3.0,True,False,False,True,External user
-flow/2026-08-06/Exp_20260806_1/well 1.fcs,flow/2026-08-06/Exp_20260806_1,well 1,CytoFLEX LX,BG17015,2026-08-06,10:37:51,30561,38,3.0,True,False,False,False,External user
-flow/2026-08-06/Exp_20260806_1/well 2.fcs,flow/2026-08-06/Exp_20260806_1,well 2,CytoFLEX LX,BG17015,2026-08-06,10:39:20,32231,38,3.0,True,False,False,False,External user
-flow/2026-08-06/Exp_20260806_1/well 3.fcs,flow/2026-08-06/Exp_20260806_1,well 3,CytoFLEX LX,BG17015,2026-08-06,10:41:18,38959,38,3.0,True,False,False,False,External user
-flow/2026-08-06/Exp_20260806_1/well 4.fcs,flow/2026-08-06/Exp_20260806_1,well 4,CytoFLEX LX,BG17015,2026-08-06,10:43:22,36247,38,3.0,True,False,False,False,External user
-flow/2026-08-06/Exp_20260806_1/well 5.fcs,flow/2026-08-06/Exp_20260806_1,well 5,CytoFLEX LX,BG17015,2026-08-06,10:45:33,25312,38,3.0,True,False,False,False,External user
-flow/2026-08-06/Exp_20260806_2/3-1.fcs,flow/2026-08-06/Exp_20260806_2,3-1,CytoFLEX LX,BG17015,2026-08-06,,0,38,3.0,True,False,True,False,External user
-flow/2026-08-06/Exp_20260806_2/US-new.fcs,flow/2026-08-06/Exp_20260806_2,US-new,CytoFLEX LX,BG17015,2026-08-06,,0,38,3.0,True,False,True,True,External user
-flow/2026-08-06/Exp_20260806_2/US-old.fcs,flow/2026-08-06/Exp_20260806_2,US-old,CytoFLEX LX,BG17015,2026-08-06,,0,38,3.0,True,False,True,True,External user
-flow/2026-08-06/Exp_20260806_2/well 1.fcs,flow/2026-08-06/Exp_20260806_2,well 1,CytoFLEX LX,BG17015,2026-08-06,,0,38,3.0,True,False,True,False,External user
-flow/2026-08-06/Exp_20260806_2/well 2.fcs,flow/2026-08-06/Exp_20260806_2,well 2,CytoFLEX LX,BG17015,2026-08-06,,0,38,3.0,True,False,True,False,External user
-flow/2026-08-06/Exp_20260806_2/well 3.fcs,flow/2026-08-06/Exp_20260806_2,well 3,CytoFLEX LX,BG17015,2026-08-06,,0,38,3.0,True,False,True,False,External user
-flow/2026-08-06/Exp_20260806_2/well 4.fcs,flow/2026-08-06/Exp_20260806_2,well 4,CytoFLEX LX,BG17015,2026-08-06,,0,38,3.0,True,False,True,False,External user
-flow/2026-08-06/Exp_20260806_2/well 5.fcs,flow/2026-08-06/Exp_20260806_2,well 5,CytoFLEX LX,BG17015,2026-08-06,,0,38,3.0,True,False,True,False,External user
-flow/2026-08-06/Exp_20260806_cd31-cd140a/f0.5.fcs,flow/2026-08-06/Exp_20260806_cd31-cd140a,f0.5,CytoFLEX LX,BG17015,2026-08-06,11:19:48,25897,38,3.0,True,False,False,False,External user
-flow/2026-08-06/Exp_20260806_cd31-cd140a/f1.fcs,flow/2026-08-06/Exp_20260806_cd31-cd140a,f1,CytoFLEX LX,BG17015,2026-08-06,11:14:32,40624,38,3.0,True,False,False,False,External user
-flow/2026-08-06/Exp_20260806_cd31-cd140a/f10.fcs,flow/2026-08-06/Exp_20260806_cd31-cd140a,f10,CytoFLEX LX,BG17015,2026-08-06,11:00:35,39548,38,3.0,True,False,False,False,External user
-flow/2026-08-06/Exp_20260806_cd31-cd140a/f2.5.fcs,flow/2026-08-06/Exp_20260806_cd31-cd140a,f2.5,CytoFLEX LX,BG17015,2026-08-06,11:10:30,35434,38,3.0,True,False,False,False,External user
-flow/2026-08-06/Exp_20260806_cd31-cd140a/f20.fcs,flow/2026-08-06/Exp_20260806_cd31-cd140a,f20,CytoFLEX LX,BG17015,2026-08-06,10:53:15,50920,38,3.0,True,False,False,False,External user
-flow/2026-08-06/Exp_20260806_cd31-cd140a/f5.fcs,flow/2026-08-06/Exp_20260806_cd31-cd140a,f5,CytoFLEX LX,BG17015,2026-08-06,11:05:12,53458,38,3.0,True,False,False,False,External user
-flow/2026-08-06/Exp_20260806_cd31-cd140a/us.fcs,flow/2026-08-06/Exp_20260806_cd31-cd140a,us,CytoFLEX LX,BG17015,2026-08-06,10:51:47,18448,38,3.0,True,False,False,True,External user
-flow/2026-08-06/Exp_20260806_cd31-cd140a/v0.5.fcs,flow/2026-08-06/Exp_20260806_cd31-cd140a,v0.5,CytoFLEX LX,BG17015,2026-08-06,11:21:40,37657,38,3.0,True,False,False,False,External user
-flow/2026-08-06/Exp_20260806_cd31-cd140a/v1.fcs,flow/2026-08-06/Exp_20260806_cd31-cd140a,v1,CytoFLEX LX,BG17015,2026-08-06,11:16:47,39077,38,3.0,True,False,False,False,External user
-flow/2026-08-06/Exp_20260806_cd31-cd140a/v10.fcs,flow/2026-08-06/Exp_20260806_cd31-cd140a,v10,CytoFLEX LX,BG17015,2026-08-06,11:02:33,42275,38,3.0,True,False,False,False,External user
-flow/2026-08-06/Exp_20260806_cd31-cd140a/v2.5.fcs,flow/2026-08-06/Exp_20260806_cd31-cd140a,v2.5,CytoFLEX LX,BG17015,2026-08-06,11:12:34,42140,38,3.0,True,False,False,False,External user
-flow/2026-08-06/Exp_20260806_cd31-cd140a/v20.fcs,flow/2026-08-06/Exp_20260806_cd31-cd140a,v20,CytoFLEX LX,BG17015,2026-08-06,10:58:28,36891,38,3.0,True,False,False,False,External user
-flow/2026-08-06/Exp_20260806_cd31-cd140a/v5.fcs,flow/2026-08-06/Exp_20260806_cd31-cd140a,v5,CytoFLEX LX,BG17015,2026-08-06,11:08:10,33486,38,3.0,True,False,False,False,External user
+raw/flow/2026-07-21/10%FBS-p1.fcs,raw/flow/2026-07-21,10%FBS-p1,CytoFLEX LX,BG17015,2026-07-21,14:34:55,19330,38,3.0,True,False,False,False,External user
+raw/flow/2026-07-21/10fbs-p2.fcs,raw/flow/2026-07-21,10fbs-p2,CytoFLEX LX,BG17015,2026-07-21,14:51:33,30736,38,3.0,True,False,False,False,External user
+raw/flow/2026-07-21/EGM-3D-p0.fcs,raw/flow/2026-07-21,EGM-3D-p0,CytoFLEX LX,BG17015,2026-07-21,14:31:25,20539,38,3.0,True,False,False,False,External user
+raw/flow/2026-07-21/N2-3D-P0.fcs,raw/flow/2026-07-21,N2-3D-P0,CytoFLEX LX,BG17015,2026-07-21,14:21:28,65066,38,3.0,True,False,False,False,External user
+raw/flow/2026-07-21/T75-p1.fcs,raw/flow/2026-07-21,T75-p1,CytoFLEX LX,BG17015,2026-07-21,14:33:13,16671,38,3.0,True,False,False,False,External user
+raw/flow/2026-07-21/US.fcs,raw/flow/2026-07-21,US,CytoFLEX LX,BG17015,2026-07-21,14:28:33,17611,38,3.0,True,False,False,True,External user
+raw/flow/2026-07-21/ec indu-p1.fcs,raw/flow/2026-07-21,ec indu-p1,CytoFLEX LX,BG17015,2026-07-21,14:36:23,14629,38,3.0,True,False,False,False,External user
+raw/flow/2026-07-21/ec indu-p2.fcs,raw/flow/2026-07-21,ec indu-p2,CytoFLEX LX,BG17015,2026-07-21,14:54:18,17079,38,3.0,True,False,False,False,External user
+raw/flow/2026-07-21/egm-3d-p1.fcs,raw/flow/2026-07-21,egm-3d-p1,CytoFLEX LX,BG17015,2026-07-21,14:49:23,20863,38,3.0,True,False,False,False,External user
+raw/flow/2026-07-21/n2-3d-p1.fcs,raw/flow/2026-07-21,n2-3d-p1,CytoFLEX LX,BG17015,2026-07-21,14:48:02,19026,38,3.0,True,False,False,False,External user
+raw/flow/2026-07-21/stem-p1.fcs,raw/flow/2026-07-21,stem-p1,CytoFLEX LX,BG17015,2026-07-21,14:37:57,14753,38,3.0,True,False,False,False,External user
+raw/flow/2026-07-21/stem-p2.fcs,raw/flow/2026-07-21,stem-p2,CytoFLEX LX,BG17015,2026-07-21,14:55:34,19874,38,3.0,True,False,False,False,External user
+raw/flow/2026-07-21/sunny-p3-1.fcs,raw/flow/2026-07-21,sunny-p3-1,CytoFLEX LX,BG17015,2026-07-21,14:44:07,18193,38,3.0,True,False,False,False,External user
+raw/flow/2026-07-21/sunny-p3.fcs,raw/flow/2026-07-21,sunny-p3,CytoFLEX LX,BG17015,2026-07-21,14:41:02,22249,38,3.0,True,False,False,False,External user
+raw/flow/2026-07-21/us-2.fcs,raw/flow/2026-07-21,us-2,CytoFLEX LX,BG17015,2026-07-21,14:39:05,18089,38,3.0,True,False,False,True,External user
+raw/flow/2026-07-21/us-23.fcs,raw/flow/2026-07-21,us-23,CytoFLEX LX,BG17015,2026-07-21,14:46:01,19180,38,3.0,True,False,False,True,External user
+raw/flow/2026-07-28/Exp_20260728_1/BEFORE2.fcs,raw/flow/2026-07-28/Exp_20260728_1,BEFORE2,CytoFLEX LX,BG17015,2026-07-28,11:16:05,20667,38,3.0,True,False,False,True,External user
+raw/flow/2026-07-28/Exp_20260728_1/Before.fcs,raw/flow/2026-07-28/Exp_20260728_1,Before,CytoFLEX LX,BG17015,2026-07-28,11:12:33,20691,38,3.0,True,False,False,True,External user
+raw/flow/2026-07-28/Exp_20260728_1/CD31+.fcs,raw/flow/2026-07-28/Exp_20260728_1,CD31+,CytoFLEX LX,BG17015,2026-07-28,11:19:01,36586,38,3.0,True,False,False,False,External user
+raw/flow/2026-07-28/Exp_20260728_1/CD31+P3.fcs,raw/flow/2026-07-28/Exp_20260728_1,CD31+P3,CytoFLEX LX,BG17015,2026-07-28,11:21:48,29284,38,3.0,True,False,False,False,External user
+raw/flow/2026-07-28/Exp_20260728_1/CD31-.fcs,raw/flow/2026-07-28/Exp_20260728_1,CD31-,CytoFLEX LX,BG17015,2026-07-28,11:23:25,15736,38,3.0,True,False,False,False,External user
+raw/flow/2026-07-28/Exp_20260728_1/ISO.fcs,raw/flow/2026-07-28/Exp_20260728_1,ISO,CytoFLEX LX,BG17015,2026-07-28,11:26:04,15529,38,3.0,True,False,False,True,External user
+raw/flow/2026-07-28/Exp_20260728_1/US.fcs,raw/flow/2026-07-28/Exp_20260728_1,US,CytoFLEX LX,BG17015,2026-07-28,11:24:27,15510,38,3.0,True,False,False,True,External user
+raw/flow/2026-08-06/Exp_20260806_1/3-1.fcs,raw/flow/2026-08-06/Exp_20260806_1,3-1,CytoFLEX LX,BG17015,2026-08-06,10:46:44,21994,38,3.0,True,False,False,False,External user
+raw/flow/2026-08-06/Exp_20260806_1/US-new.fcs,raw/flow/2026-08-06/Exp_20260806_1,US-new,CytoFLEX LX,BG17015,2026-08-06,10:35:44,34637,38,3.0,True,False,False,True,External user
+raw/flow/2026-08-06/Exp_20260806_1/US-old.fcs,raw/flow/2026-08-06/Exp_20260806_1,US-old,CytoFLEX LX,BG17015,2026-08-06,10:31:21,20314,38,3.0,True,False,False,True,External user
+raw/flow/2026-08-06/Exp_20260806_1/well 1.fcs,raw/flow/2026-08-06/Exp_20260806_1,well 1,CytoFLEX LX,BG17015,2026-08-06,10:37:51,30561,38,3.0,True,False,False,False,External user
+raw/flow/2026-08-06/Exp_20260806_1/well 2.fcs,raw/flow/2026-08-06/Exp_20260806_1,well 2,CytoFLEX LX,BG17015,2026-08-06,10:39:20,32231,38,3.0,True,False,False,False,External user
+raw/flow/2026-08-06/Exp_20260806_1/well 3.fcs,raw/flow/2026-08-06/Exp_20260806_1,well 3,CytoFLEX LX,BG17015,2026-08-06,10:41:18,38959,38,3.0,True,False,False,False,External user
+raw/flow/2026-08-06/Exp_20260806_1/well 4.fcs,raw/flow/2026-08-06/Exp_20260806_1,well 4,CytoFLEX LX,BG17015,2026-08-06,10:43:22,36247,38,3.0,True,False,False,False,External user
+raw/flow/2026-08-06/Exp_20260806_1/well 5.fcs,raw/flow/2026-08-06/Exp_20260806_1,well 5,CytoFLEX LX,BG17015,2026-08-06,10:45:33,25312,38,3.0,True,False,False,False,External user
+raw/flow/2026-08-06/Exp_20260806_2/3-1.fcs,raw/flow/2026-08-06/Exp_20260806_2,3-1,CytoFLEX LX,BG17015,2026-08-06,,0,38,3.0,True,False,True,False,External user
+raw/flow/2026-08-06/Exp_20260806_2/US-new.fcs,raw/flow/2026-08-06/Exp_20260806_2,US-new,CytoFLEX LX,BG17015,2026-08-06,,0,38,3.0,True,False,True,True,External user
+raw/flow/2026-08-06/Exp_20260806_2/US-old.fcs,raw/flow/2026-08-06/Exp_20260806_2,US-old,CytoFLEX LX,BG17015,2026-08-06,,0,38,3.0,True,False,True,True,External user
+raw/flow/2026-08-06/Exp_20260806_2/well 1.fcs,raw/flow/2026-08-06/Exp_20260806_2,well 1,CytoFLEX LX,BG17015,2026-08-06,,0,38,3.0,True,False,True,False,External user
+raw/flow/2026-08-06/Exp_20260806_2/well 2.fcs,raw/flow/2026-08-06/Exp_20260806_2,well 2,CytoFLEX LX,BG17015,2026-08-06,,0,38,3.0,True,False,True,False,External user
+raw/flow/2026-08-06/Exp_20260806_2/well 3.fcs,raw/flow/2026-08-06/Exp_20260806_2,well 3,CytoFLEX LX,BG17015,2026-08-06,,0,38,3.0,True,False,True,False,External user
+raw/flow/2026-08-06/Exp_20260806_2/well 4.fcs,raw/flow/2026-08-06/Exp_20260806_2,well 4,CytoFLEX LX,BG17015,2026-08-06,,0,38,3.0,True,False,True,False,External user
+raw/flow/2026-08-06/Exp_20260806_2/well 5.fcs,raw/flow/2026-08-06/Exp_20260806_2,well 5,CytoFLEX LX,BG17015,2026-08-06,,0,38,3.0,True,False,True,False,External user
+raw/flow/2026-08-06/Exp_20260806_cd31-cd140a/f0.5.fcs,raw/flow/2026-08-06/Exp_20260806_cd31-cd140a,f0.5,CytoFLEX LX,BG17015,2026-08-06,11:19:48,25897,38,3.0,True,False,False,False,External user
+raw/flow/2026-08-06/Exp_20260806_cd31-cd140a/f1.fcs,raw/flow/2026-08-06/Exp_20260806_cd31-cd140a,f1,CytoFLEX LX,BG17015,2026-08-06,11:14:32,40624,38,3.0,True,False,False,False,External user
+raw/flow/2026-08-06/Exp_20260806_cd31-cd140a/f10.fcs,raw/flow/2026-08-06/Exp_20260806_cd31-cd140a,f10,CytoFLEX LX,BG17015,2026-08-06,11:00:35,39548,38,3.0,True,False,False,False,External user
+raw/flow/2026-08-06/Exp_20260806_cd31-cd140a/f2.5.fcs,raw/flow/2026-08-06/Exp_20260806_cd31-cd140a,f2.5,CytoFLEX LX,BG17015,2026-08-06,11:10:30,35434,38,3.0,True,False,False,False,External user
+raw/flow/2026-08-06/Exp_20260806_cd31-cd140a/f20.fcs,raw/flow/2026-08-06/Exp_20260806_cd31-cd140a,f20,CytoFLEX LX,BG17015,2026-08-06,10:53:15,50920,38,3.0,True,False,False,False,External user
+raw/flow/2026-08-06/Exp_20260806_cd31-cd140a/f5.fcs,raw/flow/2026-08-06/Exp_20260806_cd31-cd140a,f5,CytoFLEX LX,BG17015,2026-08-06,11:05:12,53458,38,3.0,True,False,False,False,External user
+raw/flow/2026-08-06/Exp_20260806_cd31-cd140a/us.fcs,raw/flow/2026-08-06/Exp_20260806_cd31-cd140a,us,CytoFLEX LX,BG17015,2026-08-06,10:51:47,18448,38,3.0,True,False,False,True,External user
+raw/flow/2026-08-06/Exp_20260806_cd31-cd140a/v0.5.fcs,raw/flow/2026-08-06/Exp_20260806_cd31-cd140a,v0.5,CytoFLEX LX,BG17015,2026-08-06,11:21:40,37657,38,3.0,True,False,False,False,External user
+raw/flow/2026-08-06/Exp_20260806_cd31-cd140a/v1.fcs,raw/flow/2026-08-06/Exp_20260806_cd31-cd140a,v1,CytoFLEX LX,BG17015,2026-08-06,11:16:47,39077,38,3.0,True,False,False,False,External user
+raw/flow/2026-08-06/Exp_20260806_cd31-cd140a/v10.fcs,raw/flow/2026-08-06/Exp_20260806_cd31-cd140a,v10,CytoFLEX LX,BG17015,2026-08-06,11:02:33,42275,38,3.0,True,False,False,False,External user
+raw/flow/2026-08-06/Exp_20260806_cd31-cd140a/v2.5.fcs,raw/flow/2026-08-06/Exp_20260806_cd31-cd140a,v2.5,CytoFLEX LX,BG17015,2026-08-06,11:12:34,42140,38,3.0,True,False,False,False,External user
+raw/flow/2026-08-06/Exp_20260806_cd31-cd140a/v20.fcs,raw/flow/2026-08-06/Exp_20260806_cd31-cd140a,v20,CytoFLEX LX,BG17015,2026-08-06,10:58:28,36891,38,3.0,True,False,False,False,External user
+raw/flow/2026-08-06/Exp_20260806_cd31-cd140a/v5.fcs,raw/flow/2026-08-06/Exp_20260806_cd31-cd140a,v5,CytoFLEX LX,BG17015,2026-08-06,11:08:10,33486,38,3.0,True,False,False,False,External user

@@ -2,7 +2,7 @@
 
 ``BO-PURPOSE.md`` marks 83 files ``blocked_needs_keymap``: real acquisitions whose
 filenames are well IDs, with the conditions those wells received living only in
-``protocols/IPSC分化EC-{2,3}.docx``. This module reads the docx.
+``raw/protocols/IPSC分化EC-{2,3}.docx``. This module reads the docx.
 
 A .docx is a zip of XML, so no new dependency is needed -- ``zipfile`` plus
 ``xml.etree`` is the whole reader. Cell text is joined **per paragraph**, because the

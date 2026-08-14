@@ -19,7 +19,7 @@ from boec.lab.protocol import (
 )
 
 ROOT = Path(__file__).resolve().parents[1]
-PROTOCOLS = ROOT / "data" / "lab" / "protocols"
+PROTOCOLS = ROOT / "data" / "lab" / "raw" / "protocols"
 V2, V3 = PROTOCOLS / "IPSC分化EC-2.docx", PROTOCOLS / "IPSC分化EC-3.docx"
 
 pytestmark = pytest.mark.skipif(not PROTOCOLS.exists(), reason="protocols not present")

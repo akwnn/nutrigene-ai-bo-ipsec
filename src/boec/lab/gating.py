@@ -3,7 +3,7 @@
 ``GATE.md`` treated the CD31-vs-CD140a assignment as a dead stop: the filenames do not
 say which detector is which, and neither does ``$PnS`` -- it carries ``B525-A`` and
 ``Y585-A``, which are detectors, not antibodies. But the drop contains a sorted
-reference panel (``flow/2026-07-28/``: ``CD31+``, ``CD31-``, ``ISO``, ``US``), and
+reference panel (``raw/flow/2026-07-28/``: ``CD31+``, ``CD31-``, ``ISO``, ``US``), and
 *whichever detector separates CD31+ from CD31- is the CD31 detector*. That is a
 measurement, so this module makes it one.
 

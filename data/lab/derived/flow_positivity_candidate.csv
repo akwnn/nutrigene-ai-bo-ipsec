@@ -1,53 +1,53 @@
 path,directory,tube,events,status,control,cd31_detector,cd31_pct,cd31_threshold,cd31_pct_p95,cd31_pct_p99_9,cd31_spread_pp,cd140a_detector,cd140a_pct
-flow/2026-07-21/10%FBS-p1.fcs,flow/2026-07-21,10%FBS-p1,19330,gated_candidate,US.fcs,B525-A,0.5691,51325.31,10.1293,0.1449,9.9845,Y585-A,1.1588
-flow/2026-07-21/10fbs-p2.fcs,flow/2026-07-21,10fbs-p2,30736,gated_candidate,US.fcs,B525-A,0.4034,51325.31,4.2523,0.0846,4.1678,Y585-A,0.3709
-flow/2026-07-21/EGM-3D-p0.fcs,flow/2026-07-21,EGM-3D-p0,20539,gated_candidate,US.fcs,B525-A,5.5066,51325.31,18.2093,1.2269,16.9823,Y585-A,1.4314
-flow/2026-07-21/N2-3D-P0.fcs,flow/2026-07-21,N2-3D-P0,65066,gated_candidate,US.fcs,B525-A,2.0994,51325.31,8.7388,0.2198,8.519,Y585-A,0.0661
-flow/2026-07-21/T75-p1.fcs,flow/2026-07-21,T75-p1,16671,gated_candidate,US.fcs,B525-A,0.3839,51325.31,2.2674,0.2099,2.0575,Y585-A,0.2639
-flow/2026-07-21/US.fcs,flow/2026-07-21,US,17611,control,,,,,,,,,
-flow/2026-07-21/ec indu-p1.fcs,flow/2026-07-21,ec indu-p1,14629,gated_candidate,US.fcs,B525-A,0.5195,51325.31,5.1952,0.2803,4.9149,Y585-A,0.2187
-flow/2026-07-21/ec indu-p2.fcs,flow/2026-07-21,ec indu-p2,17079,gated_candidate,US.fcs,B525-A,0.2225,51325.31,1.1183,0.1171,1.0012,Y585-A,0.1991
-flow/2026-07-21/egm-3d-p1.fcs,flow/2026-07-21,egm-3d-p1,20863,gated_candidate,US.fcs,B525-A,8.6517,51325.31,18.0655,1.1839,16.8816,Y585-A,0.58
-flow/2026-07-21/n2-3d-p1.fcs,flow/2026-07-21,n2-3d-p1,19026,gated_candidate,US.fcs,B525-A,6.4491,51325.31,20.3353,0.431,19.9043,Y585-A,1.356
-flow/2026-07-21/stem-p1.fcs,flow/2026-07-21,stem-p1,14753,gated_candidate,US.fcs,B525-A,0.4067,51325.31,1.2269,0.2169,1.01,Y585-A,0.0407
-flow/2026-07-21/stem-p2.fcs,flow/2026-07-21,stem-p2,19874,gated_candidate,US.fcs,B525-A,0.3271,51325.31,1.7963,0.1006,1.6957,Y585-A,0.2164
-flow/2026-07-21/sunny-p3-1.fcs,flow/2026-07-21,sunny-p3-1,18193,gated_candidate,US.fcs,B525-A,69.9225,51325.31,73.3909,65.1349,8.2559,Y585-A,0.9289
-flow/2026-07-21/sunny-p3.fcs,flow/2026-07-21,sunny-p3,22249,gated_candidate,US.fcs,B525-A,54.9957,51325.31,59.1487,52.3035,6.8453,Y585-A,0.7461
-flow/2026-07-21/us-2.fcs,flow/2026-07-21,us-2,18089,control,,,,,,,,,
-flow/2026-07-21/us-23.fcs,flow/2026-07-21,us-23,19180,control,,,,,,,,,
-flow/2026-07-28/Exp_20260728_1/BEFORE2.fcs,flow/2026-07-28/Exp_20260728_1,BEFORE2,20667,control,,,,,,,,,
-flow/2026-07-28/Exp_20260728_1/Before.fcs,flow/2026-07-28/Exp_20260728_1,Before,20691,control,,,,,,,,,
-flow/2026-07-28/Exp_20260728_1/CD31+.fcs,flow/2026-07-28/Exp_20260728_1,CD31+,36586,gated_candidate,US.fcs,B525-A,24.411,12244.6,26.8655,20.9998,5.8656,Y585-A,5.7372
-flow/2026-07-28/Exp_20260728_1/CD31+P3.fcs,flow/2026-07-28/Exp_20260728_1,CD31+P3,29284,gated_candidate,US.fcs,B525-A,49.6653,12244.6,53.6539,46.4417,7.2121,Y585-A,7.4273
-flow/2026-07-28/Exp_20260728_1/CD31-.fcs,flow/2026-07-28/Exp_20260728_1,CD31-,15736,gated_candidate,US.fcs,B525-A,2.561,12244.6,12.7796,0.3368,12.4428,Y585-A,0.985
-flow/2026-07-28/Exp_20260728_1/ISO.fcs,flow/2026-07-28/Exp_20260728_1,ISO,15529,control,,,,,,,,,
-flow/2026-07-28/Exp_20260728_1/US.fcs,flow/2026-07-28/Exp_20260728_1,US,15510,control,,,,,,,,,
-flow/2026-08-06/Exp_20260806_1/3-1.fcs,flow/2026-08-06/Exp_20260806_1,3-1,21994,gated_candidate,US-new.fcs,B525-A,4.7558,27155.24,9.5208,2.4552,7.0656,Y585-A,0.6411
-flow/2026-08-06/Exp_20260806_1/US-new.fcs,flow/2026-08-06/Exp_20260806_1,US-new,34637,control,,,,,,,,,
-flow/2026-08-06/Exp_20260806_1/US-old.fcs,flow/2026-08-06/Exp_20260806_1,US-old,20314,control,,,,,,,,,
-flow/2026-08-06/Exp_20260806_1/well 1.fcs,flow/2026-08-06/Exp_20260806_1,well 1,30561,gated_candidate,US-new.fcs,B525-A,7.2118,27155.24,12.9217,2.0582,10.8635,Y585-A,0.2781
-flow/2026-08-06/Exp_20260806_1/well 2.fcs,flow/2026-08-06/Exp_20260806_1,well 2,32231,gated_candidate,US-new.fcs,B525-A,1.753,27155.24,5.7057,0.3971,5.3086,Y585-A,0.3537
-flow/2026-08-06/Exp_20260806_1/well 3.fcs,flow/2026-08-06/Exp_20260806_1,well 3,38959,gated_candidate,US-new.fcs,B525-A,8.5551,27155.24,15.3931,3.1366,12.2565,Y585-A,0.5878
-flow/2026-08-06/Exp_20260806_1/well 4.fcs,flow/2026-08-06/Exp_20260806_1,well 4,36247,gated_candidate,US-new.fcs,B525-A,2.1574,27155.24,6.6792,0.5407,6.1384,Y585-A,0.4442
-flow/2026-08-06/Exp_20260806_1/well 5.fcs,flow/2026-08-06/Exp_20260806_1,well 5,25312,gated_candidate,US-new.fcs,B525-A,7.8461,27155.24,13.1124,3.5319,9.5804,Y585-A,0.1857
-flow/2026-08-06/Exp_20260806_2/3-1.fcs,flow/2026-08-06/Exp_20260806_2,3-1,0,aborted_zero_events,,,,,,,,,
-flow/2026-08-06/Exp_20260806_2/US-new.fcs,flow/2026-08-06/Exp_20260806_2,US-new,0,aborted_zero_events,,,,,,,,,
-flow/2026-08-06/Exp_20260806_2/US-old.fcs,flow/2026-08-06/Exp_20260806_2,US-old,0,aborted_zero_events,,,,,,,,,
-flow/2026-08-06/Exp_20260806_2/well 1.fcs,flow/2026-08-06/Exp_20260806_2,well 1,0,aborted_zero_events,,,,,,,,,
-flow/2026-08-06/Exp_20260806_2/well 2.fcs,flow/2026-08-06/Exp_20260806_2,well 2,0,aborted_zero_events,,,,,,,,,
-flow/2026-08-06/Exp_20260806_2/well 3.fcs,flow/2026-08-06/Exp_20260806_2,well 3,0,aborted_zero_events,,,,,,,,,
-flow/2026-08-06/Exp_20260806_2/well 4.fcs,flow/2026-08-06/Exp_20260806_2,well 4,0,aborted_zero_events,,,,,,,,,
-flow/2026-08-06/Exp_20260806_2/well 5.fcs,flow/2026-08-06/Exp_20260806_2,well 5,0,aborted_zero_events,,,,,,,,,
-flow/2026-08-06/Exp_20260806_cd31-cd140a/f0.5.fcs,flow/2026-08-06/Exp_20260806_cd31-cd140a,f0.5,25897,gated_candidate,us.fcs,B525-A,31.6948,16332.86,38.3712,27.5978,10.7734,Y585-A,6.4061
-flow/2026-08-06/Exp_20260806_cd31-cd140a/f1.fcs,flow/2026-08-06/Exp_20260806_cd31-cd140a,f1,40624,gated_candidate,us.fcs,B525-A,47.3464,16332.86,55.7946,41.6921,14.1025,Y585-A,10.0113
-flow/2026-08-06/Exp_20260806_cd31-cd140a/f10.fcs,flow/2026-08-06/Exp_20260806_cd31-cd140a,f10,39548,gated_candidate,us.fcs,B525-A,46.3285,16332.86,54.5868,41.0843,13.5026,Y585-A,10.2534
-flow/2026-08-06/Exp_20260806_cd31-cd140a/f2.5.fcs,flow/2026-08-06/Exp_20260806_cd31-cd140a,f2.5,35434,gated_candidate,us.fcs,B525-A,46.8477,16332.86,54.126,41.9512,12.1747,Y585-A,8.695
-flow/2026-08-06/Exp_20260806_cd31-cd140a/f20.fcs,flow/2026-08-06/Exp_20260806_cd31-cd140a,f20,50920,gated_candidate,us.fcs,B525-A,36.4474,16332.86,44.2105,31.4886,12.7219,Y585-A,7.8221
-flow/2026-08-06/Exp_20260806_cd31-cd140a/f5.fcs,flow/2026-08-06/Exp_20260806_cd31-cd140a,f5,53458,gated_candidate,us.fcs,B525-A,38.6621,16332.86,47.0949,33.4992,13.5957,Y585-A,6.3396
-flow/2026-08-06/Exp_20260806_cd31-cd140a/us.fcs,flow/2026-08-06/Exp_20260806_cd31-cd140a,us,18448,control,,,,,,,,,
-flow/2026-08-06/Exp_20260806_cd31-cd140a/v0.5.fcs,flow/2026-08-06/Exp_20260806_cd31-cd140a,v0.5,37657,gated_candidate,us.fcs,B525-A,22.5642,16332.86,28.7437,19.6564,9.0873,Y585-A,8.9014
-flow/2026-08-06/Exp_20260806_cd31-cd140a/v1.fcs,flow/2026-08-06/Exp_20260806_cd31-cd140a,v1,39077,gated_candidate,us.fcs,B525-A,40.108,16332.86,47.8184,36.034,11.7844,Y585-A,9.8242
-flow/2026-08-06/Exp_20260806_cd31-cd140a/v10.fcs,flow/2026-08-06/Exp_20260806_cd31-cd140a,v10,42275,gated_candidate,us.fcs,B525-A,34.2543,16332.86,40.8776,30.8717,10.0059,Y585-A,6.7203
-flow/2026-08-06/Exp_20260806_cd31-cd140a/v2.5.fcs,flow/2026-08-06/Exp_20260806_cd31-cd140a,v2.5,42140,gated_candidate,us.fcs,B525-A,39.6061,16332.86,47.3422,35.0831,12.2591,Y585-A,8.5643
-flow/2026-08-06/Exp_20260806_cd31-cd140a/v20.fcs,flow/2026-08-06/Exp_20260806_cd31-cd140a,v20,36891,gated_candidate,us.fcs,B525-A,39.8471,16332.86,46.735,35.6781,11.0569,Y585-A,6.3511
-flow/2026-08-06/Exp_20260806_cd31-cd140a/v5.fcs,flow/2026-08-06/Exp_20260806_cd31-cd140a,v5,33486,gated_candidate,us.fcs,B525-A,41.265,16332.86,50.1881,36.7258,13.4623,Y585-A,6.4505
+raw/flow/2026-07-21/10%FBS-p1.fcs,raw/flow/2026-07-21,10%FBS-p1,19330,gated_candidate,US.fcs,B525-A,0.5691,51325.31,10.1293,0.1449,9.9845,Y585-A,1.1588
+raw/flow/2026-07-21/10fbs-p2.fcs,raw/flow/2026-07-21,10fbs-p2,30736,gated_candidate,US.fcs,B525-A,0.4034,51325.31,4.2523,0.0846,4.1678,Y585-A,0.3709
+raw/flow/2026-07-21/EGM-3D-p0.fcs,raw/flow/2026-07-21,EGM-3D-p0,20539,gated_candidate,US.fcs,B525-A,5.5066,51325.31,18.2093,1.2269,16.9823,Y585-A,1.4314
+raw/flow/2026-07-21/N2-3D-P0.fcs,raw/flow/2026-07-21,N2-3D-P0,65066,gated_candidate,US.fcs,B525-A,2.0994,51325.31,8.7388,0.2198,8.519,Y585-A,0.0661
+raw/flow/2026-07-21/T75-p1.fcs,raw/flow/2026-07-21,T75-p1,16671,gated_candidate,US.fcs,B525-A,0.3839,51325.31,2.2674,0.2099,2.0575,Y585-A,0.2639
+raw/flow/2026-07-21/US.fcs,raw/flow/2026-07-21,US,17611,control,,,,,,,,,
+raw/flow/2026-07-21/ec indu-p1.fcs,raw/flow/2026-07-21,ec indu-p1,14629,gated_candidate,US.fcs,B525-A,0.5195,51325.31,5.1952,0.2803,4.9149,Y585-A,0.2187
+raw/flow/2026-07-21/ec indu-p2.fcs,raw/flow/2026-07-21,ec indu-p2,17079,gated_candidate,US.fcs,B525-A,0.2225,51325.31,1.1183,0.1171,1.0012,Y585-A,0.1991
+raw/flow/2026-07-21/egm-3d-p1.fcs,raw/flow/2026-07-21,egm-3d-p1,20863,gated_candidate,US.fcs,B525-A,8.6517,51325.31,18.0655,1.1839,16.8816,Y585-A,0.58
+raw/flow/2026-07-21/n2-3d-p1.fcs,raw/flow/2026-07-21,n2-3d-p1,19026,gated_candidate,US.fcs,B525-A,6.4491,51325.31,20.3353,0.431,19.9043,Y585-A,1.356
+raw/flow/2026-07-21/stem-p1.fcs,raw/flow/2026-07-21,stem-p1,14753,gated_candidate,US.fcs,B525-A,0.4067,51325.31,1.2269,0.2169,1.01,Y585-A,0.0407
+raw/flow/2026-07-21/stem-p2.fcs,raw/flow/2026-07-21,stem-p2,19874,gated_candidate,US.fcs,B525-A,0.3271,51325.31,1.7963,0.1006,1.6957,Y585-A,0.2164
+raw/flow/2026-07-21/sunny-p3-1.fcs,raw/flow/2026-07-21,sunny-p3-1,18193,gated_candidate,US.fcs,B525-A,69.9225,51325.31,73.3909,65.1349,8.2559,Y585-A,0.9289
+raw/flow/2026-07-21/sunny-p3.fcs,raw/flow/2026-07-21,sunny-p3,22249,gated_candidate,US.fcs,B525-A,54.9957,51325.31,59.1487,52.3035,6.8453,Y585-A,0.7461
+raw/flow/2026-07-21/us-2.fcs,raw/flow/2026-07-21,us-2,18089,control,,,,,,,,,
+raw/flow/2026-07-21/us-23.fcs,raw/flow/2026-07-21,us-23,19180,control,,,,,,,,,
+raw/flow/2026-07-28/Exp_20260728_1/BEFORE2.fcs,raw/flow/2026-07-28/Exp_20260728_1,BEFORE2,20667,control,,,,,,,,,
+raw/flow/2026-07-28/Exp_20260728_1/Before.fcs,raw/flow/2026-07-28/Exp_20260728_1,Before,20691,control,,,,,,,,,
+raw/flow/2026-07-28/Exp_20260728_1/CD31+.fcs,raw/flow/2026-07-28/Exp_20260728_1,CD31+,36586,gated_candidate,US.fcs,B525-A,24.411,12244.6,26.8655,20.9998,5.8656,Y585-A,5.7372
+raw/flow/2026-07-28/Exp_20260728_1/CD31+P3.fcs,raw/flow/2026-07-28/Exp_20260728_1,CD31+P3,29284,gated_candidate,US.fcs,B525-A,49.6653,12244.6,53.6539,46.4417,7.2121,Y585-A,7.4273
+raw/flow/2026-07-28/Exp_20260728_1/CD31-.fcs,raw/flow/2026-07-28/Exp_20260728_1,CD31-,15736,gated_candidate,US.fcs,B525-A,2.561,12244.6,12.7796,0.3368,12.4428,Y585-A,0.985
+raw/flow/2026-07-28/Exp_20260728_1/ISO.fcs,raw/flow/2026-07-28/Exp_20260728_1,ISO,15529,control,,,,,,,,,
+raw/flow/2026-07-28/Exp_20260728_1/US.fcs,raw/flow/2026-07-28/Exp_20260728_1,US,15510,control,,,,,,,,,
+raw/flow/2026-08-06/Exp_20260806_1/3-1.fcs,raw/flow/2026-08-06/Exp_20260806_1,3-1,21994,gated_candidate,US-new.fcs,B525-A,4.7558,27155.24,9.5208,2.4552,7.0656,Y585-A,0.6411
+raw/flow/2026-08-06/Exp_20260806_1/US-new.fcs,raw/flow/2026-08-06/Exp_20260806_1,US-new,34637,control,,,,,,,,,
+raw/flow/2026-08-06/Exp_20260806_1/US-old.fcs,raw/flow/2026-08-06/Exp_20260806_1,US-old,20314,control,,,,,,,,,
+raw/flow/2026-08-06/Exp_20260806_1/well 1.fcs,raw/flow/2026-08-06/Exp_20260806_1,well 1,30561,gated_candidate,US-new.fcs,B525-A,7.2118,27155.24,12.9217,2.0582,10.8635,Y585-A,0.2781
+raw/flow/2026-08-06/Exp_20260806_1/well 2.fcs,raw/flow/2026-08-06/Exp_20260806_1,well 2,32231,gated_candidate,US-new.fcs,B525-A,1.753,27155.24,5.7057,0.3971,5.3086,Y585-A,0.3537
+raw/flow/2026-08-06/Exp_20260806_1/well 3.fcs,raw/flow/2026-08-06/Exp_20260806_1,well 3,38959,gated_candidate,US-new.fcs,B525-A,8.5551,27155.24,15.3931,3.1366,12.2565,Y585-A,0.5878
+raw/flow/2026-08-06/Exp_20260806_1/well 4.fcs,raw/flow/2026-08-06/Exp_20260806_1,well 4,36247,gated_candidate,US-new.fcs,B525-A,2.1574,27155.24,6.6792,0.5407,6.1384,Y585-A,0.4442
+raw/flow/2026-08-06/Exp_20260806_1/well 5.fcs,raw/flow/2026-08-06/Exp_20260806_1,well 5,25312,gated_candidate,US-new.fcs,B525-A,7.8461,27155.24,13.1124,3.5319,9.5804,Y585-A,0.1857
+raw/flow/2026-08-06/Exp_20260806_2/3-1.fcs,raw/flow/2026-08-06/Exp_20260806_2,3-1,0,aborted_zero_events,,,,,,,,,
+raw/flow/2026-08-06/Exp_20260806_2/US-new.fcs,raw/flow/2026-08-06/Exp_20260806_2,US-new,0,aborted_zero_events,,,,,,,,,
+raw/flow/2026-08-06/Exp_20260806_2/US-old.fcs,raw/flow/2026-08-06/Exp_20260806_2,US-old,0,aborted_zero_events,,,,,,,,,
+raw/flow/2026-08-06/Exp_20260806_2/well 1.fcs,raw/flow/2026-08-06/Exp_20260806_2,well 1,0,aborted_zero_events,,,,,,,,,
+raw/flow/2026-08-06/Exp_20260806_2/well 2.fcs,raw/flow/2026-08-06/Exp_20260806_2,well 2,0,aborted_zero_events,,,,,,,,,
+raw/flow/2026-08-06/Exp_20260806_2/well 3.fcs,raw/flow/2026-08-06/Exp_20260806_2,well 3,0,aborted_zero_events,,,,,,,,,
+raw/flow/2026-08-06/Exp_20260806_2/well 4.fcs,raw/flow/2026-08-06/Exp_20260806_2,well 4,0,aborted_zero_events,,,,,,,,,
+raw/flow/2026-08-06/Exp_20260806_2/well 5.fcs,raw/flow/2026-08-06/Exp_20260806_2,well 5,0,aborted_zero_events,,,,,,,,,
+raw/flow/2026-08-06/Exp_20260806_cd31-cd140a/f0.5.fcs,raw/flow/2026-08-06/Exp_20260806_cd31-cd140a,f0.5,25897,gated_candidate,us.fcs,B525-A,31.6948,16332.86,38.3712,27.5978,10.7734,Y585-A,6.4061
+raw/flow/2026-08-06/Exp_20260806_cd31-cd140a/f1.fcs,raw/flow/2026-08-06/Exp_20260806_cd31-cd140a,f1,40624,gated_candidate,us.fcs,B525-A,47.3464,16332.86,55.7946,41.6921,14.1025,Y585-A,10.0113
+raw/flow/2026-08-06/Exp_20260806_cd31-cd140a/f10.fcs,raw/flow/2026-08-06/Exp_20260806_cd31-cd140a,f10,39548,gated_candidate,us.fcs,B525-A,46.3285,16332.86,54.5868,41.0843,13.5026,Y585-A,10.2534
+raw/flow/2026-08-06/Exp_20260806_cd31-cd140a/f2.5.fcs,raw/flow/2026-08-06/Exp_20260806_cd31-cd140a,f2.5,35434,gated_candidate,us.fcs,B525-A,46.8477,16332.86,54.126,41.9512,12.1747,Y585-A,8.695
+raw/flow/2026-08-06/Exp_20260806_cd31-cd140a/f20.fcs,raw/flow/2026-08-06/Exp_20260806_cd31-cd140a,f20,50920,gated_candidate,us.fcs,B525-A,36.4474,16332.86,44.2105,31.4886,12.7219,Y585-A,7.8221
+raw/flow/2026-08-06/Exp_20260806_cd31-cd140a/f5.fcs,raw/flow/2026-08-06/Exp_20260806_cd31-cd140a,f5,53458,gated_candidate,us.fcs,B525-A,38.6621,16332.86,47.0949,33.4992,13.5957,Y585-A,6.3396
+raw/flow/2026-08-06/Exp_20260806_cd31-cd140a/us.fcs,raw/flow/2026-08-06/Exp_20260806_cd31-cd140a,us,18448,control,,,,,,,,,
+raw/flow/2026-08-06/Exp_20260806_cd31-cd140a/v0.5.fcs,raw/flow/2026-08-06/Exp_20260806_cd31-cd140a,v0.5,37657,gated_candidate,us.fcs,B525-A,22.5642,16332.86,28.7437,19.6564,9.0873,Y585-A,8.9014
+raw/flow/2026-08-06/Exp_20260806_cd31-cd140a/v1.fcs,raw/flow/2026-08-06/Exp_20260806_cd31-cd140a,v1,39077,gated_candidate,us.fcs,B525-A,40.108,16332.86,47.8184,36.034,11.7844,Y585-A,9.8242
+raw/flow/2026-08-06/Exp_20260806_cd31-cd140a/v10.fcs,raw/flow/2026-08-06/Exp_20260806_cd31-cd140a,v10,42275,gated_candidate,us.fcs,B525-A,34.2543,16332.86,40.8776,30.8717,10.0059,Y585-A,6.7203
+raw/flow/2026-08-06/Exp_20260806_cd31-cd140a/v2.5.fcs,raw/flow/2026-08-06/Exp_20260806_cd31-cd140a,v2.5,42140,gated_candidate,us.fcs,B525-A,39.6061,16332.86,47.3422,35.0831,12.2591,Y585-A,8.5643
+raw/flow/2026-08-06/Exp_20260806_cd31-cd140a/v20.fcs,raw/flow/2026-08-06/Exp_20260806_cd31-cd140a,v20,36891,gated_candidate,us.fcs,B525-A,39.8471,16332.86,46.735,35.6781,11.0569,Y585-A,6.3511
+raw/flow/2026-08-06/Exp_20260806_cd31-cd140a/v5.fcs,raw/flow/2026-08-06/Exp_20260806_cd31-cd140a,v5,33486,gated_candidate,us.fcs,B525-A,41.265,16332.86,50.1881,36.7258,13.4623,Y585-A,6.4505

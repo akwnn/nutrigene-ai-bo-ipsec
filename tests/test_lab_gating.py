@@ -21,8 +21,8 @@ from boec.lab.gating import (
 
 ROOT = Path(__file__).resolve().parents[1]
 LAB = ROOT / "data" / "lab"
-REF = LAB / "flow" / "2026-07-28" / "Exp_20260728_1"
-PANEL = LAB / "flow" / "2026-08-06" / "Exp_20260806_cd31-cd140a"
+REF = LAB / "raw" / "flow" / "2026-07-28" / "Exp_20260728_1"
+PANEL = LAB / "raw" / "flow" / "2026-08-06" / "Exp_20260806_cd31-cd140a"
 
 pytestmark = pytest.mark.skipif(not REF.exists(), reason="reference panel not present")
 

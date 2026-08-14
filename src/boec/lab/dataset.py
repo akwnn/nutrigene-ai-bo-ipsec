@@ -3,7 +3,7 @@
 The contract of this module is that **nothing it writes is optimizer input**. Files
 named ``candidate_*`` hold numbers software produced; promoting one into a campaign CSV
 is a human act, because the open judgement calls listed in :mod:`boec.lab.gating` are
-not arithmetic. What the pipeline guarantees is that every one of the 305 files has been
+not arithmetic. What the pipeline guarantees is that every one of the 306 files has been
 opened, that what was found is recorded, and that the two derived metrics never share a
 column.
 
@@ -32,11 +32,16 @@ from .imaging import (
     read_sidecar,
     sidecar_for,
 )
-from .manifest import build_file_index, load_manifest, verify_checksums
+from .manifest import (
+    DERIVED,
+    OVERLAY,
+    RAW,
+    build_file_index,
+    load_manifest,
+    verify_checksums,
+)
 from .plate import read_plate
 from .protocol import confounded_factor_pairs, factor_table, parse_protocol
-
-DERIVED = "derived"
 
 #: Corrected from the ``novocyte-`` string in the draft overlay. Every one of the 52
 #: FCS files reports ``$CYT = CytoFLEX LX``; see :mod:`boec.lab.fcs`.
@@ -97,7 +102,7 @@ def file_index_frame(lab_root: Path, *, verify: bool = True) -> pd.DataFrame:
 
 def flow_acquisition_frame(lab_root: Path) -> pd.DataFrame:
     rows = []
-    for p in sorted((lab_root / "flow").rglob("*.fcs")):
+    for p in sorted((lab_root / RAW / "flow").rglob("*.fcs")):
         s = read_summary(p)
         rows.append(
             {
@@ -124,7 +129,7 @@ def flow_acquisition_frame(lab_root: Path) -> pd.DataFrame:
 def flow_positivity_frame(lab_root: Path, cd31_detector: str, cd140a_detector: str) -> pd.DataFrame:
     """CD31% and CD140a% for every non-control tube that has a same-day unstained control."""
     rows = []
-    for directory in sorted({p.parent for p in (lab_root / "flow").rglob("*.fcs")}):
+    for directory in sorted({p.parent for p in (lab_root / RAW / "flow").rglob("*.fcs")}):
         control = find_control(directory)
         for p in sorted(directory.glob("*.fcs")):
             summary = read_summary(p)
@@ -165,7 +170,7 @@ def flow_positivity_frame(lab_root: Path, cd31_detector: str, cd140a_detector: s
 
 def image_feature_frame(lab_root: Path, *, long_edge: int = 1024) -> pd.DataFrame:
     rows = []
-    micro = lab_root / "microscopy"
+    micro = lab_root / RAW / "microscopy"
     images = sorted(
         p for p in micro.rglob("*") if p.suffix.lower() in {".jpeg", ".jpg", ".png", ".tif", ".tiff"}
     )
@@ -270,7 +275,7 @@ def coating_morphology_campaign(images: pd.DataFrame) -> pd.DataFrame:
 def protocol_frame(lab_root: Path) -> tuple[pd.DataFrame, dict]:
     rows: list[dict] = []
     confounding: dict[str, list] = {}
-    for docx in sorted((lab_root / "protocols").glob("*.docx")):
+    for docx in sorted((lab_root / RAW / "protocols").glob("*.docx")):
         proto = parse_protocol(docx)
         table = factor_table(proto)
         rows.extend(table)
@@ -293,13 +298,13 @@ def build_all(lab_root: Path, *, verify: bool = True, long_edge: int = 1024) -> 
     index.to_csv(out_dir / "file_index.csv", index=False)
 
     checks = verify_checksums(
-        build_file_index(lab_root, verify=verify), load_manifest(lab_root / "MANIFEST.sha256")
+        build_file_index(lab_root, verify=verify), load_manifest(lab_root / OVERLAY / "MANIFEST.sha256")
     )
 
     flow = flow_acquisition_frame(lab_root)
     flow.to_csv(out_dir / "flow_acquisitions.csv", index=False)
 
-    identity = resolve_cd31_channel(lab_root / "flow" / "2026-07-28" / "Exp_20260728_1")
+    identity = resolve_cd31_channel(lab_root / RAW / "flow" / "2026-07-28" / "Exp_20260728_1")
     cd140a = "Y585-A"
     (out_dir / "channel_identity.json").write_text(
         json.dumps(identity.as_dict() | {"cd140a_detector_by_elimination": cd140a}, indent=2),
@@ -321,7 +326,7 @@ def build_all(lab_root: Path, *, verify: bool = True, long_edge: int = 1024) -> 
     wells, confounding = protocol_frame(lab_root)
     wells.to_csv(out_dir / "protocol_wellmap.csv", index=False)
 
-    plate_path = next((lab_root / "plate-reader").glob("*.xlsx"), None)
+    plate_path = next((lab_root / RAW / "plate-reader").glob("*.xlsx"), None)
     plate_summary = None
     if plate_path is not None:
         plate = read_plate(plate_path)
@@ -368,7 +373,7 @@ def build_all(lab_root: Path, *, verify: bool = True, long_edge: int = 1024) -> 
         "coverage_metric": [COVERAGE_METRIC, COVERAGE_UNIT, COVERAGE_PROTOCOL],
         "promotion_rule": (
             "Every y_candidate here is software-derived and unsigned. Promotion into "
-            "bo_primary_conditions.csv is a human act -- see data/lab/GATE.md."
+            "bo_primary_conditions.csv is a human act -- see data/lab/overlay/GATE.md."
         ),
     }
     (out_dir / "RUN.json").write_text(json.dumps(summary, indent=2, default=str), encoding="utf-8")

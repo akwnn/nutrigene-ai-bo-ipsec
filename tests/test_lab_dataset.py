@@ -22,8 +22,8 @@ from boec.lab.plate import read_plate
 ROOT = Path(__file__).resolve().parents[1]
 LAB = ROOT / "data" / "lab"
 DERIVED = LAB / "derived"
-PANEL = LAB / "flow" / "2026-08-06" / "Exp_20260806_cd31-cd140a"
-EXP1 = LAB / "flow" / "2026-08-06" / "Exp_20260806_1"
+PANEL = LAB / "raw" / "flow" / "2026-08-06" / "Exp_20260806_cd31-cd140a"
+EXP1 = LAB / "raw" / "flow" / "2026-08-06" / "Exp_20260806_1"
 
 pytestmark = pytest.mark.skipif(not LAB.exists(), reason="data/lab not present")
 
@@ -67,7 +67,7 @@ def test_every_fcs_file_gets_a_disposition():
     """The 'read everything' guarantee: 52 files, zero silently skipped."""
     from boec.lab.gating import resolve_cd31_channel
 
-    ident = resolve_cd31_channel(LAB / "flow" / "2026-07-28" / "Exp_20260728_1")
+    ident = resolve_cd31_channel(LAB / "raw" / "flow" / "2026-07-28" / "Exp_20260728_1")
     frame = flow_positivity_frame(LAB, ident.cd31_detector, "Y585-A")
     assert len(frame) == 52
     assert frame["status"].isna().sum() == 0
@@ -81,7 +81,7 @@ def test_every_fcs_file_gets_a_disposition():
 def test_the_twelve_coating_rows_carry_candidate_not_final_values():
     from boec.lab.gating import resolve_cd31_channel
 
-    ident = resolve_cd31_channel(LAB / "flow" / "2026-07-28" / "Exp_20260728_1")
+    ident = resolve_cd31_channel(LAB / "raw" / "flow" / "2026-07-28" / "Exp_20260728_1")
     frame = flow_positivity_frame(LAB, ident.cd31_detector, "Y585-A")
     campaign = coating_flow_campaign(frame)
     assert len(campaign) == 12
@@ -100,7 +100,7 @@ def test_protocol_confounding_is_reported_for_v3():
 
 
 def test_plate_is_identified_as_a_bca_plate_with_an_unlabelled_layout():
-    xlsx = next((LAB / "plate-reader").glob("*.xlsx"))
+    xlsx = next((LAB / "raw" / "plate-reader").glob("*.xlsx"))
     plate = read_plate(xlsx)
     assert plate.instrument == "Multiskan SkyHigh"
     assert plate.wavelength_nm == 562
@@ -112,7 +112,7 @@ def test_plate_is_identified_as_a_bca_plate_with_an_unlabelled_layout():
 
 def test_plate_layout_headers_are_not_mistaken_for_labels():
     """Row 1 holds column numbers and column A holds row letters on every plate."""
-    xlsx = next((LAB / "plate-reader").glob("*.xlsx"))
+    xlsx = next((LAB / "raw" / "plate-reader").glob("*.xlsx"))
     assert read_plate(xlsx).layout_labelled is False
 
 

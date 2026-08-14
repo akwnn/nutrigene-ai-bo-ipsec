@@ -8,8 +8,8 @@ Every file under `data/lab/` has a role in `bo_file_roles.csv`. This note is the
 > | Blocker as written below | Status |
 > |---|---|
 > | "Which detector is CD31 is not in the filenames" | **Resolved.** B525-A, by 8.39 pp over the runner-up, from the 07-28 sorted panel. See [`GATE.md`](GATE.md). |
-> | "`blocked_needs_keymap` — not until a well→condition table exists" | **Resolved.** The map was inside `protocols/IPSC分化EC-3.docx`. See `derived/protocol_wellmap.csv`. But CHIR timing, terminal medium and passaging are *mutually confounded* across those five wells — only the BMP4 contrast is estimable. |
-> | "`plate-reader/…` — wrong metric" | **Confirmed, and identified.** 562 nm is the BCA readout; it is a total-protein plate, and its layout sheet is verifiably all `X`. It can never be a CD31 outcome. |
+> | "`blocked_needs_keymap` — not until a well→condition table exists" | **Resolved.** The map was inside `raw/protocols/IPSC分化EC-3.docx`. See `derived/protocol_wellmap.csv`. But CHIR timing, terminal medium and passaging are *mutually confounded* across those five wells — only the BMP4 contrast is estimable. |
+> | "`raw/plate-reader/…` — wrong metric" | **Confirmed, and identified.** 562 nm is the BCA readout; it is a total-protein plate, and its layout sheet is verifiably all `X`. It can never be a CD31 outcome. |
 >
 > Unchanged: **`y` still does not exist.** The pipeline produces `y_candidate` with a
 > sensitivity sweep and `status=awaiting_human_signoff`. Promotion is a human act.
@@ -36,7 +36,7 @@ Raw paths are unchanged. Moving 255 MB of already-pushed binaries would only rew
 
 These are the only in-house files that can become Phase 3 rows without inventing a condition map. They are a **one-factor-at-a-time coating titration**, acquired 2026-08-06, panel named `cd31-cd140a`, CytoFLEX LX detectors **B525-A** (CD31) and **Y585-A** (CD140a).
 
-Directory: `flow/2026-08-06/Exp_20260806_cd31-cd140a/`
+Directory: `raw/flow/2026-08-06/Exp_20260806_cd31-cd140a/`
 
 | File | Factor `x` | Physical level | Events | Proposed coded `x` on [0, 20] µg/mL |
 |---|---|---:|---:|---:|
@@ -81,15 +81,15 @@ Do not later mix that column with a FIJI CD31-area/DAPI number from the Leica JP
 
 | File | Use |
 |---|---|
-| `flow/2026-08-06/Exp_20260806_cd31-cd140a/us.fcs` | Unstained, same day and panel as the primaries |
-| `flow/2026-07-28/Exp_20260728_1/US.fcs` | Unstained |
-| `flow/2026-07-28/Exp_20260728_1/ISO.fcs` | Isotype |
-| `flow/2026-07-28/Exp_20260728_1/CD31+.fcs` | Positive reference |
-| `flow/2026-07-28/Exp_20260728_1/CD31-.fcs` | Negative reference |
-| `flow/2026-07-28/Exp_20260728_1/CD31+P3.fcs` | CD31⁺ P3 |
-| `flow/2026-07-28/Exp_20260728_1/Before.fcs`, `BEFORE2.fcs` | Pre-stain |
-| `flow/2026-08-06/Exp_20260806_1/US-old.fcs`, `US-new.fcs` | Unstained, same cytometer day as Exp_1 |
-| `flow/2026-07-21/US.fcs`, `us-2.fcs`, `us-23.fcs` | Unstained for the media screen only |
+| `raw/flow/2026-08-06/Exp_20260806_cd31-cd140a/us.fcs` | Unstained, same day and panel as the primaries |
+| `raw/flow/2026-07-28/Exp_20260728_1/US.fcs` | Unstained |
+| `raw/flow/2026-07-28/Exp_20260728_1/ISO.fcs` | Isotype |
+| `raw/flow/2026-07-28/Exp_20260728_1/CD31+.fcs` | Positive reference |
+| `raw/flow/2026-07-28/Exp_20260728_1/CD31-.fcs` | Negative reference |
+| `raw/flow/2026-07-28/Exp_20260728_1/CD31+P3.fcs` | CD31⁺ P3 |
+| `raw/flow/2026-07-28/Exp_20260728_1/Before.fcs`, `BEFORE2.fcs` | Pre-stain |
+| `raw/flow/2026-08-06/Exp_20260806_1/US-old.fcs`, `US-new.fcs` | Unstained, same cytometer day as Exp_1 |
+| `raw/flow/2026-07-21/US.fcs`, `us-2.fcs`, `us-23.fcs` | Unstained for the media screen only |
 
 **Matched morphology (not `y`).** Same µg/mL labels as the primaries, Leica 2026-08-04:
 
@@ -101,19 +101,19 @@ These can corroborate attachment vs concentration. They become BO data only if s
 ## 3. Not for this BO campaign
 
 **Protocol / induction screen (blocked until a well map is locked).**  
-`flow/2026-08-06/Exp_20260806_1/well 1.fcs` … `well 5.fcs` and `3-1.fcs` have 22k–39k events, so they are real acquisitions. Filenames are well IDs. `protocols/IPSC分化EC-3.docx` assigns those wells CHIR µM, BMP4 on/off, and terminal media (10% FBS + EGM2 vs staying on EC induction). That is a **protocol** search space, not the ECM cube. Eligible for a later Phase 3 campaign if the well map is written down; not mixable with the 12 coating tubes.
+`raw/flow/2026-08-06/Exp_20260806_1/well 1.fcs` … `well 5.fcs` and `3-1.fcs` have 22k–39k events, so they are real acquisitions. Filenames are well IDs. `raw/protocols/IPSC分化EC-3.docx` assigns those wells CHIR µM, BMP4 on/off, and terminal media (10% FBS + EGM2 vs staying on EC induction). That is a **protocol** search space, not the ECM cube. Eligible for a later Phase 3 campaign if the well map is written down; not mixable with the 12 coating tubes.
 
 **Media / passage development.**  
-`flow/2026-07-21/` (`10%FBS`, `EGM-3D`, `N2-3D`, `stem`, `ec indu`, `T75`, `sunny-p3`) and the 08-04 `stem` / `gel` / `1%fbs` / `mia` images. Useful lab history. Wrong factors for the Hall/Ogle-calibrated optimizer.
+`raw/flow/2026-07-21/` (`10%FBS`, `EGM-3D`, `N2-3D`, `stem`, `ec indu`, `T75`, `sunny-p3`) and the 08-04 `stem` / `gel` / `1%fbs` / `mia` images. Useful lab history. Wrong factors for the Hall/Ogle-calibrated optimizer.
 
 **Empty.**  
-`flow/2026-08-06/Exp_20260806_2/*.fcs` — 0 events.
+`raw/flow/2026-08-06/Exp_20260806_2/*.fcs` — 0 events.
 
 **Unlabeled or key-missing morphology.**  
 Leica 07-27 through 08-11 well/FOV images, the 07-28 `c1`/`c10`/`k1`/`k10`/`con` series (looks designed; the factor key is not in the repo), EVOS `QS_*`, `fenxuan` / IEC P6 dishes.
 
 **Wrong metric.**  
-`plate-reader/2026-06-22_endpoint-abs-562.xlsx` — absorbance at 562 nm, 22 June, no condition labels. Not CD31.
+`raw/plate-reader/2026-06-22_endpoint-abs-562.xlsx` — absorbance at 562 nm, 22 June, no condition labels. Not CD31.
 
 ## 4. Plan to turn the 12 files into optimizer input
 
