@@ -2,6 +2,8 @@
 
 Nutrigene wet-lab files for the iPSC → endothelial Bayesian-optimization project. **Phase 3 source material**, not an analysis-ready table.
 
+**How this drop feeds BO (what is in here, what can still be extracted, what it can and cannot contribute):** [`docs/LAB-DATA-FOR-BO.md`](../../docs/LAB-DATA-FOR-BO.md).
+
 The directory is split three ways, and the split is load-bearing:
 
 | | What | Rule |

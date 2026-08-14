@@ -3884,18 +3884,40 @@ side is a per-instance mean over 60 designs, the `qlogei` side a per-instance me
 campaign seeds. The qLogEI side therefore carries more averaging error, which **widens**
 the paired differences — the interval is conservative, not flattering.
 
-> **🔴 THIS BLOCK IS NOT REPRODUCIBLE FROM COMMITTED ARTEFACTS, and that is a D12-class
-> defect in the project's most load-bearing sentence.** No committed script computes it.
-> The `lhs` side needs per-instance × per-design regrets, and
-> `run_q48_design_variance.py:82` collapses exactly those to `np.mean(out)` before
-> returning — `q48-design-variance.json` stores only the 60 cell means per arm. So the
-> +0.0219, the interval, the p-value and the 21-of-25 cannot be regenerated from anything
-> in the repository, and the seed-sweep completion **cannot refresh them** for the same
-> reason. The point estimates it does govern are unchanged (`lhs` 0.1752, `qlogei` 0.1532,
-> BO ahead by 0.0220), so this is a provenance failure rather than a suspected wrong
-> number — which is precisely what D12 was about. **Fix: retain per-instance values in
-> `cell_mean`, re-run the `lhs` arm, and commit the paired computation as a script.**
-> Cheap — the static arms carry no BO cost.
+> **✅ FIXED 2026-08-14 — and fixing it found that the numbers were stale.**
+>
+> The defect was real: `run_q48_design_variance.py:82` collapses per-instance regrets to
+> `np.mean(out)` before returning, so `q48-design-variance.json` holds 60 cell means per
+> arm and nothing underneath. No script could regenerate the paired block.
+>
+> The prescribed fix is done. `scripts/q50_paired_recompute.py` re-runs the `lhs` arm
+> (static design, no BO cost — 7 seconds) keeping the per-instance axis, pairs it against
+> the committed sweep **by `instance_id` rather than by list position**, and writes
+> `results/q50-paired.json` with both per-instance vectors so the next pairing needs no
+> re-run at all. Locked by `tests/test_q50_paired.py`.
+>
+> **What it turned up.** The published figures were computed over **8 campaign seeds, not
+> 20**, and were never refreshed — precisely because no script existed to refresh them.
+> The script reproduces both, which is how the gap was identified rather than guessed at:
+>
+> | | published (8 seeds) | corrected (20 seeds) |
+> |---|---|---|
+> | mean `lhs − qlogei` | +0.0219 | **+0.0220** |
+> | 95% CI | [+0.0145, +0.0292] | **[+0.0170, +0.0272]** |
+> | Wilcoxon p | 1.8×10⁻⁵ | **6.0×10⁻⁸** |
+> | BO ahead on | 21 of 25 | **25 of 25** |
+> | Bonferroni over 39 | 7.1×10⁻⁴ | **2.3×10⁻⁶** |
+>
+> **The staleness was undetectable from the headline.** qLogEI's arm mean is 0.1532 to
+> four decimals at 8 seeds and at 20 — this entry says so two paragraphs above, and that
+> stability is exactly what hid the problem. Only the paired statistics moved, and they
+> moved *in BO's favour*, so the correction strengthens the claim rather than weakening
+> it. Direction and point estimate unchanged.
+>
+> **Residual defect, not fixed:** `run_q48_design_variance.py:82` still collapses. The
+> recompute script works around it rather than repairing it, so any *future* paired claim
+> against another cell or arm hits the same wall. Repairing `cell_mean` to return the full
+> cube is the durable fix.
 
 **Multiplicity.** "Latin hypercube also beats BO" was one of Q39's 39 non-primary
 contrasts, so this re-analysis **replaces** a member of that family rather than adding

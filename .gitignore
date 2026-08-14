@@ -57,6 +57,13 @@ results/figures/*
 # argument they have to be in the repository rather than in one clone.
 !results/estimand-evaluation.json
 
+# The paired contrast CLAIMS.md leads with. Committed for a reason the D12/D17 pattern
+# has now earned: this file holds the per-INSTANCE vectors for both arms, so the next
+# person can re-pair without re-running anything, and `tests/test_q50_paired.py` can
+# check the docs against an artefact instead of against a memory. It is also the only
+# record that the published figures were once computed over 8 seeds rather than 20.
+!results/q50-paired.json
+
 # Oracle instances: DECIDED — the version-stamped ensembles under
 # data/oracles/<oracle_version>/ ARE committed, parquet included. 456 KB total.
 #

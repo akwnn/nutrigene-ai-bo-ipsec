@@ -346,17 +346,24 @@ registered campaign seeds, and the harness reproduces E2's 0.1553 exactly on the
 where E2 sits. qLogEI design-averaged is **0.1532, SD 0.0102** — the mean is identical to
 four decimals at 8 seeds and at 20 — and it moves by −0.002 where `lhs` moves by
 +0.048, because only 14 of its 48 points are shared. Paired at instance level with both
-arms design-averaged: **`lhs − qlogei` = +0.0219 [+0.0145, +0.0292], Wilcoxon
-p = 1.8×10⁻⁵, BO ahead on 21 of 25 instances.** This *replaces* a member of Q39's
+arms design-averaged: **`lhs − qlogei` = +0.0220 [+0.0170, +0.0272], Wilcoxon
+p = 6.0×10⁻⁸, BO ahead on 25 of 25 instances.** This *replaces* a member of Q39's
 39-contrast family rather than adding one, and survives Bonferroni over all 39
-(p = 7.1×10⁻⁴).
+(p = 2.3×10⁻⁶).
 
-> ⚠️ **The paired figures in that sentence are not reproducible from committed
-> artefacts.** The `lhs` side needs per-instance × per-design regrets and
-> `run_q48_design_variance.py:82` discards them, so no script in the repository
-> regenerates +0.0219, its interval, its p-value or the 21-of-25. The point estimates are
-> unaffected (BO ahead by 0.0220). Provenance defect, D12 class — see the Q50 entry in
-> `OPEN-QUESTIONS.md` for the fix.
+> ✅ **Reproducible as of 2026-08-14.** `scripts/q50_paired_recompute.py` re-runs the
+> `lhs` arm keeping the per-instance axis that `run_q48_design_variance.py:82` collapsed,
+> pairs it against the committed seed sweep **by `instance_id`**, and writes
+> `results/q50-paired.json` with both per-instance vectors. Locked by
+> `tests/test_q50_paired.py`.
+>
+> ⚠️ **The figures this replaces were stale, not wrong.** CLAIMS.md previously quoted
+> **+0.0219 [+0.0145, +0.0292], p = 1.8×10⁻⁵, 21 of 25** — those are reproduced exactly
+> by restricting qLogEI to its **first 8 campaign seeds**. They were computed before the
+> 20-seed sweep finished and were never refreshed, because no script existed to refresh
+> them. **The staleness was invisible in the headline**: the arm mean is 0.1532 to four
+> decimals at 8 seeds and at 20, so only the paired statistics moved. The direction and
+> the point estimate are unchanged; the corrected evidence is *stronger*, not weaker.
 
 **L16 A benchmark-design trap worth stating generally.** **Ackley's optimum sits at the
 exact centre of the coded box**, and every screening and CCD design includes centre runs

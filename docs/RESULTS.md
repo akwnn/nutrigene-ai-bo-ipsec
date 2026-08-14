@@ -146,8 +146,8 @@ wins at d=8.
 
 ### The σ_rel = 0.10 cells, all seven arms — the optimistic-assay baseline
 
-Re-aggregated from `results/e2-grid.json` (d=8 `doe` from `results/e2-doe-d8.log`, see
-**D17**), paired at instance level, n=25 instances × 2 seeds. Recorded here because the
+Re-aggregated from `results/e2-grid.json` (d=8 `doe` from `results/e2-doe-d8.json`, which
+**does** exist — see the D17 correction), paired at instance level, n=25 instances × 2 seeds. Recorded here because the
 budget-to-target work (Q52) needs the low-noise cells as its comparison baseline and they
 had never been tabulated with paired contrasts.
 
@@ -167,7 +167,9 @@ dimensions.** qLogEI's only unambiguous wins are over `random` at both dimension
 an interval clear of zero — the acquisition function, not the paradigm, is what moves at
 low noise.
 
-⚠️ The d=8 `doe` figure is read from log **text**; no machine-readable file exists (D17).
+✅ The d=8 `doe` figure has a machine-readable source after all: `results/e2-doe-d8.json`,
+committed 2026-08-14. It holds both cells, 50 rows each, 18 fields, and regenerates the log
+text exactly (0.0948 at σ=0.10, 0.0963 at σ=0.25). D17 is corrected below.
 
 **No rule C exists for these arms.** `e2-grid.json` stores reported-best only. Per-arm
 posterior-mean scoring exists nowhere for the Hill oracle — only for BO vs DoE on the four
@@ -711,7 +713,7 @@ impression invites the wrong inference from a project that found its own mistake
 | **D14** | Q47's achieved-ρ guard used a flat ±0.02 tolerance. That is **1.4 SD at ρ=0.30 and 13 SD at ρ=0.95** — it fires on ordinary sampling error where it should not and cannot fire where it should. | It killed the first grid launch three minutes in. Diagnosed by verifying the construction unbiased at two sample sizes *before* touching the tolerance. |
 | **D15** | Q47's fixed-calibration arm does **not** isolate `(a, b)`: they are drawn from the generator that then draws the cheap readout's noise, so skipping them diverges every later draw. The arm varies the calibration **and** re-draws the noise. | Found while writing up the sensitivity table. Left in place and reported as such, because `screen`'s provable invariance turns it into a negative control with a known true value of zero. |
 | **D16** | **E2's static arms share one design across all 25 instances** (Q48). Every static-arm interval in this project is a within-design interval. | A control arm in a different experiment disagreed with the published number by 0.05. |
-| **D17** | `results/e2-doe-d8.json` **does not exist**, though `results/e2-doe-d8.log:88` ends *"rows written to results/e2-doe-d8.json"*. The d=8 DoE arm is the Q27 **primary** contrast, and its numbers survive only as formatted text in a log. They cannot be re-aggregated, re-paired, or re-scored under another rule. | Found while pulling the σ=0.10 rows for every arm: the arm was simply absent from `e2-grid.json` and the fallback file was not on disk. **A sibling of D12** — that defect was a gate pointing at an untracked file; this is a *number* with no machine-readable file behind it at all. |
+| **D17** ✅ **CORRECTED 2026-08-14** | ~~`results/e2-doe-d8.json` **does not exist**~~ — it did exist, on disk, all along. `run_e2_doe_d8.py:257` wrote it; the blanket `results/*` rule in `.gitignore` hid it; nobody force-added it. The original entry was true of the *repository* and false of the *disk*, and no one checked the disk. The file is now committed and un-ignored by an explicit `!results/e2-doe-d8.json` rule. It holds both d=8 cells, 50 rows each, 18 fields, and regenerates the log text exactly. **So the Q27 primary contrast IS re-aggregatable, re-pairable and re-scorable**, contrary to what this row claimed. `scripts/estimand_evaluation.py` now reads it directly. | Found while pulling the σ=0.10 rows for every arm: the arm was simply absent from `e2-grid.json` and the fallback file was not on disk. **A sibling of D12** — that defect was a gate pointing at an untracked file; this is a *number* with no machine-readable file behind it at all. |
 
 **A methodological note, not a code defect.** While reading Q49 I claimed from unpaired
 means that quadrupling the budget bought nothing. The paired contrast says it buys +0.038
