@@ -1,0 +1,352 @@
+[
+ {
+  "instance": "ce7334da318bc5e5",
+  "campaign_seed": 12,
+  "noise_seed": 0,
+  "regret": 0.12612430527436524,
+  "n_evals": 48
+ },
+ {
+  "instance": "ce7334da318bc5e5",
+  "campaign_seed": 12,
+  "noise_seed": 1,
+  "regret": 0.07284357179821654,
+  "n_evals": 48
+ },
+ {
+  "instance": "c75f6d6f50fe2434",
+  "campaign_seed": 12,
+  "noise_seed": 0,
+  "regret": 0.06887790813428585,
+  "n_evals": 48
+ },
+ {
+  "instance": "c75f6d6f50fe2434",
+  "campaign_seed": 12,
+  "noise_seed": 1,
+  "regret": 0.09078489567487891,
+  "n_evals": 48
+ },
+ {
+  "instance": "763e0f58925816ca",
+  "campaign_seed": 12,
+  "noise_seed": 0,
+  "regret": 0.11328275221829431,
+  "n_evals": 48
+ },
+ {
+  "instance": "763e0f58925816ca",
+  "campaign_seed": 12,
+  "noise_seed": 1,
+  "regret": 0.037594646329444426,
+  "n_evals": 48
+ },
+ {
+  "instance": "9414bc879284eef0",
+  "campaign_seed": 12,
+  "noise_seed": 0,
+  "regret": 0.07274061077378635,
+  "n_evals": 48
+ },
+ {
+  "instance": "9414bc879284eef0",
+  "campaign_seed": 12,
+  "noise_seed": 1,
+  "regret": 0.10161075617933879,
+  "n_evals": 48
+ },
+ {
+  "instance": "7b6071e568a98779",
+  "campaign_seed": 12,
+  "noise_seed": 0,
+  "regret": 0.12315658980669175,
+  "n_evals": 48
+ },
+ {
+  "instance": "7b6071e568a98779",
+  "campaign_seed": 12,
+  "noise_seed": 1,
+  "regret": 0.03688402781282196,
+  "n_evals": 48
+ },
+ {
+  "instance": "da5ec2fbb20c9f9b",
+  "campaign_seed": 12,
+  "noise_seed": 0,
+  "regret": 0.1762577308905855,
+  "n_evals": 48
+ },
+ {
+  "instance": "da5ec2fbb20c9f9b",
+  "campaign_seed": 12,
+  "noise_seed": 1,
+  "regret": 0.2284457110939757,
+  "n_evals": 48
+ },
+ {
+  "instance": "4d4f7158b65b52ba",
+  "campaign_seed": 12,
+  "noise_seed": 0,
+  "regret": 0.07524121127677863,
+  "n_evals": 48
+ },
+ {
+  "instance": "4d4f7158b65b52ba",
+  "campaign_seed": 12,
+  "noise_seed": 1,
+  "regret": 0.04601707183134496,
+  "n_evals": 48
+ },
+ {
+  "instance": "5b3926ef2c5fe4b6",
+  "campaign_seed": 12,
+  "noise_seed": 0,
+  "regret": 0.2046574573732517,
+  "n_evals": 48
+ },
+ {
+  "instance": "5b3926ef2c5fe4b6",
+  "campaign_seed": 12,
+  "noise_seed": 1,
+  "regret": 0.13780656791124468,
+  "n_evals": 48
+ },
+ {
+  "instance": "9f3cdb4d835c6909",
+  "campaign_seed": 12,
+  "noise_seed": 0,
+  "regret": 0.13441099654673982,
+  "n_evals": 48
+ },
+ {
+  "instance": "9f3cdb4d835c6909",
+  "campaign_seed": 12,
+  "noise_seed": 1,
+  "regret": 0.03927035084317809,
+  "n_evals": 48
+ },
+ {
+  "instance": "ef2815cdafff288c",
+  "campaign_seed": 12,
+  "noise_seed": 0,
+  "regret": 0.21245913126086258,
+  "n_evals": 48
+ },
+ {
+  "instance": "ef2815cdafff288c",
+  "campaign_seed": 12,
+  "noise_seed": 1,
+  "regret": 0.08431439274372243,
+  "n_evals": 48
+ },
+ {
+  "instance": "0ed87c75239d73f8",
+  "campaign_seed": 12,
+  "noise_seed": 0,
+  "regret": 0.06471790383565823,
+  "n_evals": 48
+ },
+ {
+  "instance": "0ed87c75239d73f8",
+  "campaign_seed": 12,
+  "noise_seed": 1,
+  "regret": 0.1816586591806455,
+  "n_evals": 48
+ },
+ {
+  "instance": "51cf489c521a6911",
+  "campaign_seed": 12,
+  "noise_seed": 0,
+  "regret": 0.2832913064185233,
+  "n_evals": 48
+ },
+ {
+  "instance": "51cf489c521a6911",
+  "campaign_seed": 12,
+  "noise_seed": 1,
+  "regret": 0.0727962349144039,
+  "n_evals": 48
+ },
+ {
+  "instance": "48b1324dd0461cd9",
+  "campaign_seed": 12,
+  "noise_seed": 0,
+  "regret": 0.14689034647935562,
+  "n_evals": 48
+ },
+ {
+  "instance": "48b1324dd0461cd9",
+  "campaign_seed": 12,
+  "noise_seed": 1,
+  "regret": 0.14910952153173207,
+  "n_evals": 48
+ },
+ {
+  "instance": "0a6e0788538a7c52",
+  "campaign_seed": 12,
+  "noise_seed": 0,
+  "regret": 0.1806469290518704,
+  "n_evals": 48
+ },
+ {
+  "instance": "0a6e0788538a7c52",
+  "campaign_seed": 12,
+  "noise_seed": 1,
+  "regret": 0.2220774554388596,
+  "n_evals": 48
+ },
+ {
+  "instance": "7f5c7431c0530e74",
+  "campaign_seed": 12,
+  "noise_seed": 0,
+  "regret": 0.08776469748489935,
+  "n_evals": 48
+ },
+ {
+  "instance": "7f5c7431c0530e74",
+  "campaign_seed": 12,
+  "noise_seed": 1,
+  "regret": 0.2675521572856293,
+  "n_evals": 48
+ },
+ {
+  "instance": "f79c5cf175034acd",
+  "campaign_seed": 12,
+  "noise_seed": 0,
+  "regret": 0.30088006436502135,
+  "n_evals": 48
+ },
+ {
+  "instance": "f79c5cf175034acd",
+  "campaign_seed": 12,
+  "noise_seed": 1,
+  "regret": 0.13613236971787135,
+  "n_evals": 48
+ },
+ {
+  "instance": "e946207e9dfe1876",
+  "campaign_seed": 12,
+  "noise_seed": 0,
+  "regret": 0.21586401398345856,
+  "n_evals": 48
+ },
+ {
+  "instance": "e946207e9dfe1876",
+  "campaign_seed": 12,
+  "noise_seed": 1,
+  "regret": 0.27880785797741336,
+  "n_evals": 48
+ },
+ {
+  "instance": "32bb966a18f1d863",
+  "campaign_seed": 12,
+  "noise_seed": 0,
+  "regret": 0.3091529967290856,
+  "n_evals": 48
+ },
+ {
+  "instance": "32bb966a18f1d863",
+  "campaign_seed": 12,
+  "noise_seed": 1,
+  "regret": 0.20013305213834331,
+  "n_evals": 48
+ },
+ {
+  "instance": "443c180247c17191",
+  "campaign_seed": 12,
+  "noise_seed": 0,
+  "regret": 0.1904267841277677,
+  "n_evals": 48
+ },
+ {
+  "instance": "443c180247c17191",
+  "campaign_seed": 12,
+  "noise_seed": 1,
+  "regret": 0.15108894821177188,
+  "n_evals": 48
+ },
+ {
+  "instance": "033466197eba3ddb",
+  "campaign_seed": 12,
+  "noise_seed": 0,
+  "regret": 0.2190998504128282,
+  "n_evals": 48
+ },
+ {
+  "instance": "033466197eba3ddb",
+  "campaign_seed": 12,
+  "noise_seed": 1,
+  "regret": 0.06985545437792329,
+  "n_evals": 48
+ },
+ {
+  "instance": "e402c32907f27534",
+  "campaign_seed": 12,
+  "noise_seed": 0,
+  "regret": 0.12315031125868048,
+  "n_evals": 48
+ },
+ {
+  "instance": "e402c32907f27534",
+  "campaign_seed": 12,
+  "noise_seed": 1,
+  "regret": 0.010566629835311203,
+  "n_evals": 48
+ },
+ {
+  "instance": "8abe35e93ddfcad1",
+  "campaign_seed": 12,
+  "noise_seed": 0,
+  "regret": 0.1735132712824332,
+  "n_evals": 48
+ },
+ {
+  "instance": "8abe35e93ddfcad1",
+  "campaign_seed": 12,
+  "noise_seed": 1,
+  "regret": 0.18212435203286415,
+  "n_evals": 48
+ },
+ {
+  "instance": "7ef3fc89acece49c",
+  "campaign_seed": 12,
+  "noise_seed": 0,
+  "regret": 0.23787571815569497,
+  "n_evals": 48
+ },
+ {
+  "instance": "7ef3fc89acece49c",
+  "campaign_seed": 12,
+  "noise_seed": 1,
+  "regret": 0.23691523538121695,
+  "n_evals": 48
+ },
+ {
+  "instance": "59e420274f4385d9",
+  "campaign_seed": 12,
+  "noise_seed": 0,
+  "regret": 0.11397603922567612,
+  "n_evals": 48
+ },
+ {
+  "instance": "59e420274f4385d9",
+  "campaign_seed": 12,
+  "noise_seed": 1,
+  "regret": 0.12048671042732884,
+  "n_evals": 48
+ },
+ {
+  "instance": "578e5d8768359f0f",
+  "campaign_seed": 12,
+  "noise_seed": 0,
+  "regret": 0.1757799018531312,
+  "n_evals": 48
+ },
+ {
+  "instance": "578e5d8768359f0f",
+  "campaign_seed": 12,
+  "noise_seed": 1,
+  "regret": 0.1521413173698558,
+  "n_evals": 48
+ }
+]

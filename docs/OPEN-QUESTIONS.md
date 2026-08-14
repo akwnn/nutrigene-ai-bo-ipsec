@@ -3826,7 +3826,9 @@ untracked file and so proved only that a clone agreed with itself (D12).
 ## ✅ Q50 RESULT — qLogEI DESIGN-AVERAGED. Q48's REVERSAL IS **ESTABLISHED**.
 
 **Files:** `results/q50-qlogei-seedsweep.log` · `results/q50-qlogei-seedsweep.json` ·
-20 shards registered, **8 run** — see the scope note below.
+`results/q50-shards-run2.log` · **20 shards registered, 20 run.** The scope reduction
+below was closed on 2026-08-13; the entry keeps it as the record of what was cancelled
+and what the completed run did to it.
 
 ### The fidelity check passed exactly
 
@@ -3842,12 +3844,22 @@ Agreement to four decimals. The harness is E2.
 
 ### Result
 
-| campaign seed | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 |
-|---|---|---|---|---|---|---|---|---|
-| cell mean | 0.1617 | 0.1668 | 0.1396 | 0.1574 | 0.1458 | 0.1506 | 0.1498 | 0.1543 |
+| campaign seed | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 |
+|---|---|---|---|---|---|---|---|---|---|---|
+| cell mean | 0.1617 | 0.1668 | 0.1396 | 0.1574 | 0.1458 | 0.1506 | 0.1498 | 0.1543 | 0.1573 | 0.1359 |
 
-**qLogEI design-averaged 0.1532, SD 0.0082**, range 0.1396–0.1668. E2's draw (0.1553) sits
-at the **62nd percentile** — unremarkable, as it should be.
+| campaign seed | 10 | 11 | 12 | 13 | 14 | 15 | 16 | 17 | 18 | 19 |
+|---|---|---|---|---|---|---|---|---|---|---|
+| cell mean | 0.1652 | 0.1679 | 0.1487 | 0.1523 | 0.1705 | 0.1535 | 0.1427 | 0.1563 | 0.1542 | 0.1327 |
+
+**qLogEI design-averaged 0.1532, SD 0.0102**, range 0.1327–0.1705, 1000 campaigns over all
+20 registered seeds. E2's draw (0.1553) sits at the **60th percentile** — unremarkable, as
+it should be.
+
+**The mean did not move at all between 8 seeds and 20: 0.1532 both times, to four
+decimals.** The SD rose from 0.0082 to 0.0102, which is the expected direction — eight
+draws under-estimate a spread — and it lands inside the registered 0.010–0.018 interval
+that the 8-seed number missed. See the re-scored predictions below.
 
 **qLogEI's number moves by −0.0021 when design-averaged. `lhs` moves by +0.0482.**
 Twenty-three times less. That is the asymmetry Q48 argued for and could not measure:
@@ -3872,6 +3884,19 @@ side is a per-instance mean over 60 designs, the `qlogei` side a per-instance me
 campaign seeds. The qLogEI side therefore carries more averaging error, which **widens**
 the paired differences — the interval is conservative, not flattering.
 
+> **🔴 THIS BLOCK IS NOT REPRODUCIBLE FROM COMMITTED ARTEFACTS, and that is a D12-class
+> defect in the project's most load-bearing sentence.** No committed script computes it.
+> The `lhs` side needs per-instance × per-design regrets, and
+> `run_q48_design_variance.py:82` collapses exactly those to `np.mean(out)` before
+> returning — `q48-design-variance.json` stores only the 60 cell means per arm. So the
+> +0.0219, the interval, the p-value and the 21-of-25 cannot be regenerated from anything
+> in the repository, and the seed-sweep completion **cannot refresh them** for the same
+> reason. The point estimates it does govern are unchanged (`lhs` 0.1752, `qlogei` 0.1532,
+> BO ahead by 0.0220), so this is a provenance failure rather than a suspected wrong
+> number — which is precisely what D12 was about. **Fix: retain per-instance values in
+> `cell_mean`, re-run the `lhs` arm, and commit the paired computation as a script.**
+> Cheap — the static arms carry no BO cost.
+
 **Multiplicity.** "Latin hypercube also beats BO" was one of Q39's 39 non-primary
 contrasts, so this re-analysis **replaces** a member of that family rather than adding
 one. At p = 1.8×10⁻⁵, even Bonferroni over all 39 gives p = 7.1×10⁻⁴. It survives any
@@ -3879,14 +3904,37 @@ correction this project applies.
 
 ### 📌 Predictions scored
 
-| registered | outcome |
-|---|---|
-| SD **smaller** than the static arms' 0.025 | ✅ **0.0082** |
-| "roughly 0.010–0.018" | ⚠️ **under-shot — 0.0082 is below the stated range.** Direction right, magnitude wrong. |
-| E2's draw near the middle, not an extreme | ✅ 62nd percentile |
-| the reversal stands | ✅ established |
+Scored at the **completed 20 seeds**. The 8-seed column is kept because the two disagree
+on one row, and which of them was the partial run matters.
 
-### ⚠️ SCOPE REDUCTION, stated rather than silent
+| registered | at 8 seeds | at 20 seeds (registered n) |
+|---|---|---|
+| SD **smaller** than the static arms' 0.025 | ✅ 0.0082 | ✅ **0.0102** |
+| "roughly 0.010–0.018" | ⚠️ under-shot | ✅ **0.0102 — inside the range.** |
+| E2's draw near the middle, not an extreme | ✅ 62nd pct | ✅ **60th pct** |
+| the reversal stands | ✅ established | ✅ **established** |
+
+**The one row that changed is the one the scope reduction created.** At 8 seeds the SD
+magnitude was scored wrong; at the registered 20 it is right. The prediction was correct
+and the *partial run* was what missed it — eight draws under-estimate a spread, which is a
+property of the truncation and not of the prediction. This is the case for finishing a
+cancelled run even when the arithmetic says the conclusion is safe: the conclusion was
+indeed safe, and a scored prediction was wrong anyway.
+
+### ✅ SCOPE REDUCTION — STATED RATHER THAN SILENT, AND NOW CLOSED
+
+> **CLOSED 2026-08-13.** All 12 cancelled seeds ran; the entry below is the record of the
+> reduction, kept because its arithmetic was tested by the completion and half of it was
+> vindicated. **Throughput was the whole story.** The 12 shards took **197–269s each**,
+> against the 1,020–9,459s that forced the cancellation — the same work on the same
+> machine, at concurrency 3 instead of contending. The 9× spread was contention, not the
+> workload.
+>
+> **What the arithmetic got right:** the mean did not move — 0.1532 at 8 seeds, 0.1532 at
+> 20. The 16-standard-error argument held exactly.
+> **What it got wrong:** it defended the *conclusion* and said nothing about the *scored
+> prediction*, and the SD row flipped from ⚠️ to ✅ on the extra seeds. A scope note can
+> be right that the finding is safe and still leave a registered prediction mis-scored.
 
 The registration specified **20 campaign seeds; 8 ran.** The machine's throughput
 collapsed mid-run — four identical Q50 shards took **1,020s, 1,022s, 6,121s and 9,459s**,

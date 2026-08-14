@@ -37,6 +37,26 @@ results/figures/*
 !results/e2-grid-d8-s0.25.json
 !results/e2-grid-d8-s0.1.json
 
+# D17, and it is the SAME defect one more time. `results/e2-doe-d8.json` was
+# recorded as "does not exist", which is true of the repository and false of the
+# disk: `run_e2_doe_d8.py:257` wrote it, `results/*` above ignored it, and nobody
+# force-added it. It holds both d=8 cells, 50 rows each, 18 fields, and it
+# regenerates the log text exactly — 0.0948 at sigma=0.10 and 0.0963 at 0.25.
+# So the Q27 primary contrast IS re-aggregatable, contrary to the D17 entry.
+# Committed here for the same reason as the grid: it is anchored by path.
+!results/e2-doe-d8.json
+
+# Q50's per-seed shards, committed on the grid's rationale — `--merge` reads them
+# by path, so an uncommitted shard makes the merge unauditable. g00-g07 were
+# force-added without a rule, which silently left g08-g19 behind when the run was
+# completed; naming the pattern is what stops that recurring.
+!results/q50-qlogei-g[0-9][0-9].json
+!results/q50-qlogei-seedsweep.json
+
+# ESTIMAND-EVALUATION.md quotes these numbers, so by that document's own §3.0
+# argument they have to be in the repository rather than in one clone.
+!results/estimand-evaluation.json
+
 # Oracle instances: DECIDED — the version-stamped ensembles under
 # data/oracles/<oracle_version>/ ARE committed, parquet included. 456 KB total.
 #

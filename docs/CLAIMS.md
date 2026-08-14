@@ -341,14 +341,22 @@ independent of L15's multiplicity finding: Holm *widens the interval* to a tie, 
 this **moves the point estimate**. Design-averaged, qLogEI 0.1553 against `lhs` 0.1752
 puts **BO ahead by 0.020** at the registered primary cell, reversing the sign.
 
-**✅ That reversal is now ESTABLISHED (Q50).** qLogEI was re-run across 8 campaign
-seeds, and the harness reproduces E2's 0.1553 exactly on the diagonal where E2 sits.
-qLogEI design-averaged is **0.1532, SD 0.0082** — it moves by −0.002 where `lhs` moves by
+**✅ That reversal is now ESTABLISHED (Q50).** qLogEI was re-run across all **20**
+registered campaign seeds, and the harness reproduces E2's 0.1553 exactly on the diagonal
+where E2 sits. qLogEI design-averaged is **0.1532, SD 0.0102** — the mean is identical to
+four decimals at 8 seeds and at 20 — and it moves by −0.002 where `lhs` moves by
 +0.048, because only 14 of its 48 points are shared. Paired at instance level with both
 arms design-averaged: **`lhs − qlogei` = +0.0219 [+0.0145, +0.0292], Wilcoxon
 p = 1.8×10⁻⁵, BO ahead on 21 of 25 instances.** This *replaces* a member of Q39's
 39-contrast family rather than adding one, and survives Bonferroni over all 39
 (p = 7.1×10⁻⁴).
+
+> ⚠️ **The paired figures in that sentence are not reproducible from committed
+> artefacts.** The `lhs` side needs per-instance × per-design regrets and
+> `run_q48_design_variance.py:82` discards them, so no script in the repository
+> regenerates +0.0219, its interval, its p-value or the 21-of-25. The point estimates are
+> unaffected (BO ahead by 0.0220). Provenance defect, D12 class — see the Q50 entry in
+> `OPEN-QUESTIONS.md` for the fix.
 
 **L16 A benchmark-design trap worth stating generally.** **Ackley's optimum sits at the
 exact centre of the coded box**, and every screening and CCD design includes centre runs
