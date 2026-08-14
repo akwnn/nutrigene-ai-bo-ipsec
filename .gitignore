@@ -51,6 +51,11 @@ results/figures/*
 # meaning an artefact "never ships" while every log line claims it was written.
 !results/q52-budget-to-target.json
 
+# Rounds-to-arrival reconstruction of that grid. Per-landscape rounds were never
+# logged; this file is the auditable conversion (evaluations → rounds via the
+# runner's own rounds_for). docs/RESULTS.md quotes it.
+!results/q52-rounds-to-arrival.json
+
 # EXCEPTION — the D20 rescore. It is the artefact behind a CORRECTION to published
 # numbers (Q35's "best observed" column and therefore L6, and the DoE arm's rule A on
 # every external family), so it has to be auditable by anyone who reads the corrected

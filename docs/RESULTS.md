@@ -1249,30 +1249,79 @@ censoring removes the evidence.
 Every problem above comes from conditioning on arrival. **Arrival itself is
 unconditioned** — all 25 instances contribute, nothing is selected — so it is the one
 quantity this grid measures cleanly. Paired per instance, exact binomial test on the
-discordant pairs (McNemar's exact form), rule A:
+discordant pairs (McNemar's exact form), rule A.
 
-| σ | target | BO reaches | DoE reaches | discordant (BO-only : DoE-only) | exact p |
-|---|---|---|---|---|---|
-| **0.10** | **0.10** | **24/25** | 13/25 | **11 : 0** | **0.0010** |
-| 0.10 | 0.08 | 22/25 | 13/25 | 10 : 1 | 0.0117 |
-| 0.10 | 0.05 | 18/25 | 7/25 | 15 : 4 | 0.0192 |
-| 0.10 | 0.12 | 24/25 | 20/25 | 5 : 1 | 0.2188 |
-| 0.25 | 0.10 | 14/25 | 11/25 | 7 : 4 | 0.5488 |
-| 0.25 | 0.08 | 10/25 | 6/25 | 7 : 3 | 0.3438 |
-| 0.25 | 0.15 | 21/25 | **23/25** | 1 : 3 | 0.6250 |
+**Rounds were reconstructed, not logged.** The committed grid stores regret at evaluation
+checkpoints only — there is no per-landscape rounds field. Conversion uses the runner's
+own `rounds_for` (`scripts/run_q52_budget_to_target.py:96-103`, the same function that
+was on disk at artifact SHA `633e74d`), applied *per landscape*, then summarised as a
+median over the landscapes that arrived. A median over 13 of 25 is not comparable to a
+median over 24 of 25 without the count; the count is in the cell. File:
+`results/q52-rounds-to-arrival.json`, produced by `scripts/report_q52_rounds_to_arrival.py`.
+No campaign was re-run.
 
-**At the optimistic assay, BO reaches a regret of 0.10 in 24 of 25 landscapes where the
-classical pipeline reaches it in 13 — 11 discordant pairs to 0, exact p = 0.0010.**
-Under Holm over all ten arrival tests, **that cell survives** (0.0010 < 0.05/10); the
-0.08 and 0.05 cells are indicated but do not (0.0117 > 0.05/9).
+**Batch structure, read from the code that produced the grid, not from memory:**
 
-**At the realistic assay (σ=0.25) there is no arrival difference at any target** — every
-p > 0.34, and at 0.15 the classical arm is nominally ahead, 23 to 21.
+| arm | opening | after that | partial batch |
+|---|---|---|---|
+| **qlogei** | 14 (`2d+2` at d=6; `CampaignConfig(..., q=4)`, `n_init` unset) | batches of 4 | mid-batch pays for the whole plate: `1 if n≤14 else 1+ceil((n−14)/4)` |
+| **doe** | 20 (screen) | 27 (CCD) + 1 confirm = 3 sequential stages, 48 evals | a partial pipeline is not the method. Stored checkpoints are 48/96/144/192 only. Rounds = 3 per completed pipeline |
+| **spread_gp** | a fresh LHS of size n | none — one-shot | 1 round at any n |
 
-> **This is the σ contrast the brief and P6 were reaching for, measured in the quantity
-> that admits a test.** Not *"BO gets there in fewer experiments"* — that comparison is
-> undefined here — but *"at a quiet assay BO gets there at all, far more often."* And it
-> vanishes at the noise level this project registered as primary.
+Batch structure did not change between runs: one grid, one harness.
+
+**How to read the next table.** Two different bills:
+
+- **Cost = wells** (evaluations). Consumables, staining, cytometer time.
+- **Time = rounds** (plate cycles). Each round is a wait: plate, incubate, read, then choose the next batch.
+
+Medians are over the landscapes that arrived, with that count in the cell. A median over 13 of 25 is not the same population as a median over 24 of 25.
+
+| σ | target | BO reaches | BO wells | BO rounds | DoE reaches | DoE wells | DoE rounds | discordant | exact p |
+|---|---|---|---|---|---|---|---|---|---|
+| **0.10** | **0.10** | **24/25** | **32 (n=24)** | **6 (n=24)** | 13/25 | **48 (n=13)** | **3 (n=13)** | **11 : 0** | **0.0010** |
+| 0.10 | 0.08 | 22/25 | 74 (n=22) | 16.5 (n=22) | 13/25 | 96 (n=13) | 6 (n=13) | 10 : 1 | 0.0117 |
+| 0.10 | 0.05 | 18/25 | 100 (n=18) | 23 (n=18) | 7/25 | 96 (n=7) | 6 (n=7) | 15 : 4 | 0.0192 |
+| 0.10 | 0.12 | 24/25 | 32 (n=24) | 6 (n=24) | 20/25 | 48 (n=20) | 3 (n=20) | 5 : 1 | 0.2188 |
+| 0.25 | 0.10 | 14/25 | 82 (n=14) | 18.5 (n=14) | 11/25 | 96 (n=11) | 6 (n=11) | 7 : 4 | 0.5488 |
+| 0.25 | 0.08 | 10/25 | 125 (n=10) | 29 (n=10) | 6/25 | 72 (n=6) | 4.5 (n=6) | 7 : 3 | 0.3438 |
+| 0.25 | 0.15 | 21/25 | 32 (n=21) | 6 (n=21) | **23/25** | 48 (n=23) | 3 (n=23) | 1 : 3 | 0.6250 |
+
+Half-integers are the average of the two middle landscapes when the arrival count is even. DoE itself only ever spends 48/96/144/192 wells and 3/6/9/12 rounds.
+
+**Headline row, σ=0.10, target=0.10.** BO reaches a regret of 0.10 on **24 of 25**
+landscapes; DoE on **13 of 25**; discordant **11 : 0**, exact p = **0.0010** (survives Holm
+over ten tests).
+
+| | reaches | **cost (wells)** | **time (rounds)** |
+|---|---|---|---|
+| BO | 24/25 | **32** | **6** |
+| DoE | 13/25 | **48** | **3** |
+| spread_gp | 24/25 | **32** | **1** |
+
+Among the 13 landscapes both BO and DoE reached: BO used fewer wells in **9**, DoE in 4; DoE used fewer rounds in **8**, BO in 5.
+
+**BO arrives more often, cheaper in wells, slower in rounds.** All three facts belong together. The rate advantage is "got there at all within the cap." The cost advantage is "fewer wells among those who arrived." The time disadvantage is "more plate cycles among those who arrived." At the realistic assay (σ=0.25) there is still no arrival-rate difference at any target (every p > 0.34); where both medians exist, BO is again cheaper-or-similar in wells and slower in rounds, except target 0.08 where the DoE median is 72 wells against BO's 125 — that cell is 10 and 6 arrivals, do not over-read it.
+
+The same reconstruction for **spread_gp**, which is 1 round by construction. Wells still depend on how large a one-shot design first hit the target:
+
+| σ | target | spread_gp reaches | wells | rounds | DoE reaches | DoE wells | DoE rounds | discordant vs DoE | exact p |
+|---|---|---|---|---|---|---|---|---|---|
+| **0.10** | **0.10** | **24/25** | **32 (n=24)** | **1** | 13/25 | 48 (n=13) | 3 (n=13) | 12 : 1 | 0.0034 |
+| 0.10 | 0.08 | 23/25 | 32 (n=23) | 1 | 13/25 | 96 (n=13) | 6 (n=13) | 11 : 1 | 0.0063 |
+| 0.10 | 0.05 | 16/25 | 48 (n=16) | 1 | 7/25 | 96 (n=7) | 6 (n=7) | 12 : 3 | 0.0352 |
+| 0.10 | 0.12 | 25/25 | 20 (n=25) | 1 | 20/25 | 48 (n=20) | 3 (n=20) | 5 : 0 | 0.0625 |
+| 0.25 | 0.10 | 21/25 | 48 (n=21) | 1 | 11/25 | 96 (n=11) | 6 (n=11) | 12 : 2 | 0.0129 |
+| 0.25 | 0.08 | 17/25 | 48 (n=17) | 1 | 6/25 | 72 (n=6) | 4.5 (n=6) | 13 : 2 | 0.0074 |
+| 0.25 | 0.15 | 25/25 | 20 (n=25) | 1 | 23/25 | 48 (n=23) | 3 (n=23) | 2 : 0 | 0.5000 |
+
+At the headline cell spread_gp matches qLogEI's 24/25 arrivals and the same 32-well median, and does it in **1 round against 6**. That is the comparison the one-shot arm exists for: same cost, much less calendar time. These spread_gp-vs-DoE p-values are not in the original Holm family of ten BO-vs-DoE tests; they are reported, not promoted.
+
+> **The sentence that survives, with cost and time attached:** at a quiet assay BO gets there far more often (24/25 vs 13/25). The typical arrival costs **32 wells against DoE's 48**, and **6 plate cycles against DoE's 3**. A one-shot spread+GP matches that arrival rate and well count in **1 cycle**. The difference in *who arrives* vanishes at the noise this project registered as primary. The *time* difference does not favour sequential BO at either noise level.
+
+The cost-curve page (`results/figures/cost-curves.html`, from
+`scripts/make_cost_curve_page.py`) is a different cut of the same grid: median *regret*
+against wells and against rounds, not wells/rounds-to-first-arrival. Do not quote one as the other.
 
 ### The DoE arm collapses under unconstrained rule C
 

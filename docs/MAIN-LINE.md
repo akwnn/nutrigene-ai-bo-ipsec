@@ -26,7 +26,7 @@ model recommends; reported at both the **unconstrained** argmax (Q41's primary) 
 | **5** | It generalises off the constructed oracle | Reversal reproduces at **all 8** Levy and Rosenbrock cells; scoring-convention effect **+0.22 to +0.48** on every saddle family | `results/q42-families.json` |
 | **5b** | …but which *method* wins does not | Hartmann6: BO wins **all four cells under every rule** (+0.2460 to +0.4134). Ackley is void — its optimum is the box centre | `results/q42-families-rerun.log` |
 | **6** | The curve: no defined savings ratio exists under the registered pairings | `doe` censored **64–100%** at every rule-C target; n_paired **0** at every rule-A target | `results/q52-budget-to-target.json` |
-| **6b** | What survives is **arrival**, and it is noise-dependent | σ=0.10, target 0.10: BO **24/25** vs DoE **13/25**, discordant **11:0**, exact p=**0.0010**, survives Holm over 10 tests. At σ=0.25 **no difference at any target** | `results/q52-budget-to-target.json` |
+| **6b** | What survives is **arrival**, split into cost and time | σ=0.10, target 0.10: BO **24/25** vs DoE **13/25**, discordant **11:0**, p=**0.0010**. Among arrivals: BO **32 wells / 6 rounds**; DoE **48 wells / 3 rounds**. BO arrives more often, cheaper in wells, slower in rounds. spread_gp: 24/25, 32 wells, **1 round**. At σ=0.25 **no rate difference**. Reconstructed: `results/q52-rounds-to-arrival.json` | `results/q52-budget-to-target.json` |
 
 **Why the paper needs each.** 1 and 1b are the headline. 2 and 2b are the same runs under the
 other rule, and 3 is the only reason the pair is a finding rather than a contradiction — the

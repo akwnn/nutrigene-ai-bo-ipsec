@@ -37,16 +37,16 @@ SERIES = (("qlogei", "rule_a"), ("qlogei", "rule_c"),
           ("random", "rule_a"),
           ("doe", "rule_a"), ("doe", "rule_c"), ("doe", "rule_c_constrained"))
 
-#: Q52 §2's arrival table, transcribed from `docs/RESULTS.md` and asserted against the
-#: grid below, so a drift in either is a failure rather than a silent disagreement.
+#: Q52 §2's arrival table. Counts transcribed from `docs/RESULTS.md` and must match
+#: `results/q52-rounds-to-arrival.json` (reconstructed rounds; not logged).
 ARRIVAL = [
-    dict(sigma=0.10, target=0.10, bo=24, doe=13, disc="11 : 0", p=0.0010, holm=True),
-    dict(sigma=0.10, target=0.08, bo=22, doe=13, disc="10 : 1", p=0.0117, holm=False),
-    dict(sigma=0.10, target=0.05, bo=18, doe=7,  disc="15 : 4", p=0.0192, holm=False),
-    dict(sigma=0.10, target=0.12, bo=24, doe=20, disc="5 : 1",  p=0.2188, holm=False),
-    dict(sigma=0.25, target=0.15, bo=21, doe=23, disc="1 : 3",  p=0.6250, holm=False),
-    dict(sigma=0.25, target=0.10, bo=14, doe=11, disc="7 : 4",  p=0.5488, holm=False),
-    dict(sigma=0.25, target=0.08, bo=10, doe=6,  disc="7 : 3",  p=0.3438, holm=False),
+    dict(sigma=0.10, target=0.10, bo=24, bo_n="32", bo_r="6",  doe=13, doe_n="48", doe_r="3",  disc="11 : 0", p=0.0010, holm=True),
+    dict(sigma=0.10, target=0.08, bo=22, bo_n="74", bo_r="16.5", doe=13, doe_n="96", doe_r="6", disc="10 : 1", p=0.0117, holm=False),
+    dict(sigma=0.10, target=0.05, bo=18, bo_n="100", bo_r="23", doe=7,  doe_n="96", doe_r="6",  disc="15 : 4", p=0.0192, holm=False),
+    dict(sigma=0.10, target=0.12, bo=24, bo_n="32", bo_r="6",  doe=20, doe_n="48", doe_r="3", disc="5 : 1",  p=0.2188, holm=False),
+    dict(sigma=0.25, target=0.15, bo=21, bo_n="32", bo_r="6",  doe=23, doe_n="48", doe_r="3", disc="1 : 3",  p=0.6250, holm=False),
+    dict(sigma=0.25, target=0.10, bo=14, bo_n="82", bo_r="18.5", doe=11, doe_n="96", doe_r="6", disc="7 : 4", p=0.5488, holm=False),
+    dict(sigma=0.25, target=0.08, bo=10, bo_n="125", bo_r="29", doe=6,  doe_n="72", doe_r="4.5", disc="7 : 3",  p=0.3438, holm=False),
 ]
 
 
@@ -262,20 +262,26 @@ contribute, nothing is selected &mdash; so it is the one quantity this grid meas
 Paired per landscape, exact binomial on the discordant pairs.</p>
 <div class="panel">
   <div class="scroll"><table>
-    <thead><tr><th>&sigma;</th><th>target</th><th>BO reaches</th><th>DoE reaches</th>
+    <thead><tr><th>&sigma;</th><th>target</th><th>BO reaches</th><th>BO wells</th><th>BO rounds</th>
+      <th>DoE reaches</th><th>DoE wells</th><th>DoE rounds</th>
       <th>discordant</th><th>exact p</th><th>survives Holm</th></tr></thead>
     <tbody id="arrival"></tbody>
   </table></div>
   <p class="cap">At the optimistic assay, BO reaches a regret of <span class="num">0.10</span> in
   <strong>24 of 25</strong> landscapes where the classical pipeline reaches it in
-  <strong>13</strong> &mdash; eleven discordant pairs to nil. It is the only cell surviving Holm
-  over all ten arrival tests. <strong>At the realistic assay the difference vanishes</strong>, and
-  at target 0.15 the classical arm is nominally ahead.</p>
+  <strong>13</strong>. Cost among those arrivals: <strong>32 wells vs 48</strong>.
+  Time: <strong>6 rounds vs 3</strong>. BO arrives more often, cheaper in wells, slower
+  in rounds. A one-shot spread+GP matches the 24/25 rate and the 32-well median in
+  <strong>1 round</strong>. Rounds were reconstructed from evaluation checkpoints, not
+  logged. Only this cell survives Holm over ten arrival tests.
+  <strong>At the realistic assay the rate difference vanishes.</strong></p>
 </div>
 <div class="note"><strong>So the honest sentence is not</strong> &ldquo;BO gets there in fewer
-experiments&rdquo; &mdash; that comparison is undefined here &mdash; but <strong>&ldquo;at a quiet
-assay, BO gets there at all, far more often.&rdquo;</strong> And it disappears at the noise level
-this project registered as primary.</div>
+experiments&rdquo; &mdash; that comparison is undefined as a savings ratio &mdash; but
+<strong>&ldquo;at a quiet assay, BO gets there more often, in fewer wells and more plate
+cycles.&rdquo;</strong> Cost = wells. Time = rounds. The rate difference disappears at the
+noise this project registered as primary. A one-shot spread+GP matches the 24/25 rate
+and 32-well median in 1 round.</div>
 
 <h2>What would make these curves wrong</h2>
 <ul class="prose">
@@ -426,7 +432,8 @@ function drawArrival(){
   D.arrival.forEach(a=>{
     const tr = document.createElement('tr');
     if(a.holm) tr.className='hit';
-    const cells = [a.sigma.toFixed(2), a.target.toFixed(2), a.bo+'/25', a.doe+'/25',
+    const cells = [a.sigma.toFixed(2), a.target.toFixed(2),
+                   a.bo+'/25', a.bo_n, a.bo_r, a.doe+'/25', a.doe_n, a.doe_r,
                    a.disc, a.p.toFixed(4)];
     cells.forEach(v=>{ const td=document.createElement('td'); td.textContent=v; tr.appendChild(td); });
     const td = document.createElement('td');
