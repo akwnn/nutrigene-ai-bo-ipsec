@@ -162,7 +162,7 @@ These are the findings of the exercise and are carried into `MAIN-LINE.md`.
 
 | # | CORE item | Rests on | Severity |
 |---|---|---|---|
-| **1** | **Q27** — sentence 1 at d=8 | `results/e2-doe-d8.json` **does not exist** (D17), though the log's last line claims it was written. The Q27 primary contrast survives only as formatted log text and cannot be re-aggregated, re-paired, or re-scored under another rule. | 🔴 |
+| **1** | ~~**Q27** — sentence 1 at d=8~~ | 🔵 **REFUTED — withdrawn.** I wrote that `results/e2-doe-d8.json` does not exist. **It does**, and always did: `run_e2_doe_d8.py:257` wrote it, `results/*` ignored it, and nobody force-added it. It holds both d=8 cells, 50 rows each, 18 fields, and regenerates the log text exactly (0.0948 at σ=0.10, 0.0963 at σ=0.25). **The Q27 primary contrast IS re-aggregatable and re-scorable.** My flag repeated D17's own wording without checking the disk — the same mistake D17 records, one level up. | ✅ |
 | **2** | **Sentence 2 as stated** | True under Q41's primary (unconstrained). Under the constrained variant it is **three nulls and one BO win of +0.0153**. Both must appear; "in every cell tested" needs the rule named in the same sentence. | 🔴 |
 | **3** | **Sentence 3's second half** | Q35's residual — *"even constrained, the recommendation is worse than the arm's own best measurement"* — is **null at both σ=0.10 cells** after the D20 rescore. The asymmetry is a property of the noisy assay, not a general one. | 🔴 |
 | **4** | **`CLAIMS.md` L19 "ESTABLISHED"** | Rests on **Q50, which has no entry in `RESULTS.md`**, while `RESULTS.md:958` still says the settling run is "Not run". The two governing documents contradict each other. | 🔴 |

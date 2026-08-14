@@ -1,0 +1,303 @@
+path,role,bytes,why
+overlay/MANIFEST.sha256,index,40038,Inventory / checksums.
+README.md,index,4068,Inventory / checksums.
+raw/flow/2026-07-21/10%FBS-p1.fcs,assay_dev,2951240,Media/passage/3D-vs-2D screen. Different search space from Hall/Ogle ECM BO.
+raw/flow/2026-07-21/10fbs-p2.fcs,assay_dev,4684968,Media/passage/3D-vs-2D screen. Different search space from Hall/Ogle ECM BO.
+raw/flow/2026-07-21/20260721.xit,instrument_sidecar,267723,CytExpert experiment file for 2026-07-21.
+raw/flow/2026-07-21/EGM-3D-p0.fcs,assay_dev,3135008,Media/passage/3D-vs-2D screen. Different search space from Hall/Ogle ECM BO.
+raw/flow/2026-07-21/ExpSummaryForAPI.xml,instrument_sidecar,3485,CytExpert experiment file for 2026-07-21.
+raw/flow/2026-07-21/N2-3D-P0.fcs,assay_dev,9903112,Media/passage/3D-vs-2D screen. Different search space from Hall/Ogle ECM BO.
+raw/flow/2026-07-21/T75-p1.fcs,assay_dev,2547088,Media/passage/3D-vs-2D screen. Different search space from Hall/Ogle ECM BO.
+raw/flow/2026-07-21/US.fcs,bo_gating,2689952,Unstained control for the 2026-07-21 media/passage screen.
+raw/flow/2026-07-21/ec indu-p1.fcs,assay_dev,2236704,Media/passage/3D-vs-2D screen. Different search space from Hall/Ogle ECM BO.
+raw/flow/2026-07-21/ec indu-p2.fcs,assay_dev,2609120,Media/passage/3D-vs-2D screen. Different search space from Hall/Ogle ECM BO.
+raw/flow/2026-07-21/egm-3d-p1.fcs,assay_dev,3184256,Media/passage/3D-vs-2D screen. Different search space from Hall/Ogle ECM BO.
+raw/flow/2026-07-21/n2-3d-p1.fcs,assay_dev,2905032,Media/passage/3D-vs-2D screen. Different search space from Hall/Ogle ECM BO.
+raw/flow/2026-07-21/stem-p1.fcs,assay_dev,2255536,Media/passage/3D-vs-2D screen. Different search space from Hall/Ogle ECM BO.
+raw/flow/2026-07-21/stem-p2.fcs,assay_dev,3033928,Media/passage/3D-vs-2D screen. Different search space from Hall/Ogle ECM BO.
+raw/flow/2026-07-21/sunny-p3-1.fcs,assay_dev,2778432,Media/passage/3D-vs-2D screen. Different search space from Hall/Ogle ECM BO.
+raw/flow/2026-07-21/sunny-p3.fcs,assay_dev,3394928,Media/passage/3D-vs-2D screen. Different search space from Hall/Ogle ECM BO.
+raw/flow/2026-07-21/us-2.fcs,bo_gating,2762608,Unstained control for the 2026-07-21 media/passage screen.
+raw/flow/2026-07-21/us-23.fcs,bo_gating,2928440,Unstained control for the 2026-07-21 media/passage screen.
+raw/flow/2026-07-28/Exp_20260728_1/BEFORE2.fcs,bo_gating,3154464,CD31+/CD31-/ISO/US/pre-stain. Sets gates; not an experimental condition.
+raw/flow/2026-07-28/Exp_20260728_1/Before.fcs,bo_gating,3158096,CD31+/CD31-/ISO/US/pre-stain. Sets gates; not an experimental condition.
+raw/flow/2026-07-28/Exp_20260728_1/CD31+.fcs,bo_gating,5574152,CD31+/CD31-/ISO/US/pre-stain. Sets gates; not an experimental condition.
+raw/flow/2026-07-28/Exp_20260728_1/CD31+P3.fcs,bo_gating,4464248,CD31+/CD31-/ISO/US/pre-stain. Sets gates; not an experimental condition.
+raw/flow/2026-07-28/Exp_20260728_1/CD31-.fcs,bo_gating,2404952,CD31+/CD31-/ISO/US/pre-stain. Sets gates; not an experimental condition.
+raw/flow/2026-07-28/Exp_20260728_1/ExpSummaryForAPI.xml,instrument_sidecar,2932,CytExpert experiment file for the 2026-07-28 gating panel.
+raw/flow/2026-07-28/Exp_20260728_1/ISO.fcs,bo_gating,2373488,CD31+/CD31-/ISO/US/pre-stain. Sets gates; not an experimental condition.
+raw/flow/2026-07-28/Exp_20260728_1/US.fcs,bo_gating,2370600,CD31+/CD31-/ISO/US/pre-stain. Sets gates; not an experimental condition.
+raw/flow/2026-07-28/Exp_20260728_1.xit,instrument_sidecar,151437,CytExpert experiment file for the 2026-07-28 gating panel.
+raw/flow/2026-08-06/Exp_20260806_1/3-1.fcs,blocked_needs_keymap,3356168,"Has events. Well ID maps to protocol-v3 (CHIR/BMP4/media) only after that map is locked; not an ECM (x,y) row."
+raw/flow/2026-08-06/Exp_20260806_1/ExpSummaryForAPI.xml,instrument_sidecar,2994,CytExpert experiment file for Exp_20260806_1.
+raw/flow/2026-08-06/Exp_20260806_1/US-new.fcs,bo_gating,5277904,Unstained control for the 2026-08-06 well-1-5 protocol screen.
+raw/flow/2026-08-06/Exp_20260806_1/US-old.fcs,bo_gating,3100808,Unstained control for the 2026-08-06 well-1-5 protocol screen.
+raw/flow/2026-08-06/Exp_20260806_1/well 1.fcs,blocked_needs_keymap,4658352,"Has events. Well ID maps to protocol-v3 (CHIR/BMP4/media) only after that map is locked; not an ECM (x,y) row."
+raw/flow/2026-08-06/Exp_20260806_1/well 2.fcs,blocked_needs_keymap,4912192,"Has events. Well ID maps to protocol-v3 (CHIR/BMP4/media) only after that map is locked; not an ECM (x,y) row."
+raw/flow/2026-08-06/Exp_20260806_1/well 3.fcs,blocked_needs_keymap,5934848,"Has events. Well ID maps to protocol-v3 (CHIR/BMP4/media) only after that map is locked; not an ECM (x,y) row."
+raw/flow/2026-08-06/Exp_20260806_1/well 4.fcs,blocked_needs_keymap,5522624,"Has events. Well ID maps to protocol-v3 (CHIR/BMP4/media) only after that map is locked; not an ECM (x,y) row."
+raw/flow/2026-08-06/Exp_20260806_1/well 5.fcs,blocked_needs_keymap,3860504,"Has events. Well ID maps to protocol-v3 (CHIR/BMP4/media) only after that map is locked; not an ECM (x,y) row."
+raw/flow/2026-08-06/Exp_20260806_1.xit,instrument_sidecar,180752,CytExpert experiment file for Exp_20260806_1.
+raw/flow/2026-08-06/Exp_20260806_2/3-1.fcs,not_for_bo,13016,"Header-only FCS, 0 events. Aborted acquisition."
+raw/flow/2026-08-06/Exp_20260806_2/ExpSummaryForAPI.xml,instrument_sidecar,2994,CytExpert file for the aborted Exp_2 run.
+raw/flow/2026-08-06/Exp_20260806_2/US-new.fcs,not_for_bo,13016,"Header-only FCS, 0 events. Aborted acquisition."
+raw/flow/2026-08-06/Exp_20260806_2/US-old.fcs,not_for_bo,13016,"Header-only FCS, 0 events. Aborted acquisition."
+raw/flow/2026-08-06/Exp_20260806_2/well 1.fcs,not_for_bo,13016,"Header-only FCS, 0 events. Aborted acquisition."
+raw/flow/2026-08-06/Exp_20260806_2/well 2.fcs,not_for_bo,13016,"Header-only FCS, 0 events. Aborted acquisition."
+raw/flow/2026-08-06/Exp_20260806_2/well 3.fcs,not_for_bo,13016,"Header-only FCS, 0 events. Aborted acquisition."
+raw/flow/2026-08-06/Exp_20260806_2/well 4.fcs,not_for_bo,13016,"Header-only FCS, 0 events. Aborted acquisition."
+raw/flow/2026-08-06/Exp_20260806_2/well 5.fcs,not_for_bo,13016,"Header-only FCS, 0 events. Aborted acquisition."
+raw/flow/2026-08-06/Exp_20260806_2.xit,instrument_sidecar,180438,CytExpert file for the aborted Exp_2 run.
+raw/flow/2026-08-06/Exp_20260806_cd31-cd140a/ExpSummaryForAPI.xml,instrument_sidecar,3277,CytExpert experiment file for the CD31/CD140a titration.
+raw/flow/2026-08-06/Exp_20260806_cd31-cd140a/f0.5.fcs,bo_primary,3949504,"OFAT coating: fibronectin 0.5 ug/mL. Candidate (x,y) once gated for CD31/CD140a."
+raw/flow/2026-08-06/Exp_20260806_cd31-cd140a/f1.fcs,bo_primary,6187832,"OFAT coating: fibronectin 1 ug/mL. Candidate (x,y) once gated for CD31/CD140a."
+raw/flow/2026-08-06/Exp_20260806_cd31-cd140a/f10.fcs,bo_primary,6024264,"OFAT coating: fibronectin 10 ug/mL. Candidate (x,y) once gated for CD31/CD140a."
+raw/flow/2026-08-06/Exp_20260806_cd31-cd140a/f2.5.fcs,bo_primary,5398952,"OFAT coating: fibronectin 2.5 ug/mL. Candidate (x,y) once gated for CD31/CD140a."
+raw/flow/2026-08-06/Exp_20260806_cd31-cd140a/f20.fcs,bo_primary,7752824,"OFAT coating: fibronectin 20 ug/mL. Candidate (x,y) once gated for CD31/CD140a."
+raw/flow/2026-08-06/Exp_20260806_cd31-cd140a/f5.fcs,bo_primary,8138584,"OFAT coating: fibronectin 5 ug/mL. Candidate (x,y) once gated for CD31/CD140a."
+raw/flow/2026-08-06/Exp_20260806_cd31-cd140a/us.fcs,bo_gating,2817080,Unstained control for the 2026-08-06 CD31/CD140a titration.
+raw/flow/2026-08-06/Exp_20260806_cd31-cd140a/v0.5.fcs,bo_primary,5736992,"OFAT coating: vitronectin 0.5 ug/mL. Candidate (x,y) once gated for CD31/CD140a."
+raw/flow/2026-08-06/Exp_20260806_cd31-cd140a/v1.fcs,bo_primary,5952784,"OFAT coating: vitronectin 1 ug/mL. Candidate (x,y) once gated for CD31/CD140a."
+raw/flow/2026-08-06/Exp_20260806_cd31-cd140a/v10.fcs,bo_primary,6438784,"OFAT coating: vitronectin 10 ug/mL. Candidate (x,y) once gated for CD31/CD140a."
+raw/flow/2026-08-06/Exp_20260806_cd31-cd140a/v2.5.fcs,bo_primary,6418360,"OFAT coating: vitronectin 2.5 ug/mL. Candidate (x,y) once gated for CD31/CD140a."
+raw/flow/2026-08-06/Exp_20260806_cd31-cd140a/v20.fcs,bo_primary,5620416,"OFAT coating: vitronectin 20 ug/mL. Candidate (x,y) once gated for CD31/CD140a."
+raw/flow/2026-08-06/Exp_20260806_cd31-cd140a/v5.fcs,bo_primary,5102840,"OFAT coating: vitronectin 5 ug/mL. Candidate (x,y) once gated for CD31/CD140a."
+raw/flow/2026-08-06/Exp_20260806_cd31-cd140a.xit,instrument_sidecar,251395,CytExpert experiment file for the CD31/CD140a titration.
+raw/microscopy/evos/2026-08-06/QS_2448.jpg,not_for_bo,508181,"Unlabeled EVOS stills (QS_2448-2454). No well, coating, or metric."
+raw/microscopy/evos/2026-08-06/QS_2449.jpg,not_for_bo,669719,"Unlabeled EVOS stills (QS_2448-2454). No well, coating, or metric."
+raw/microscopy/evos/2026-08-06/QS_2450.jpg,not_for_bo,541625,"Unlabeled EVOS stills (QS_2448-2454). No well, coating, or metric."
+raw/microscopy/evos/2026-08-06/QS_2451.jpg,not_for_bo,628698,"Unlabeled EVOS stills (QS_2448-2454). No well, coating, or metric."
+raw/microscopy/evos/2026-08-06/QS_2452.jpg,not_for_bo,273228,"Unlabeled EVOS stills (QS_2448-2454). No well, coating, or metric."
+raw/microscopy/evos/2026-08-06/QS_2453.jpg,not_for_bo,786001,"Unlabeled EVOS stills (QS_2448-2454). No well, coating, or metric."
+raw/microscopy/evos/2026-08-06/QS_2454.jpg,not_for_bo,641679,"Unlabeled EVOS stills (QS_2448-2454). No well, coating, or metric."
+raw/microscopy/leica/2026-07-27/Leica_2026-07-27 EC well2-1.jpeg,blocked_needs_keymap,825253,Protocol-v3 day-1 morphology (wells 1-4 / EC wells). No quantitative CD31.
+raw/microscopy/leica/2026-07-27/Leica_2026-07-27 EC well2-1.jpeg.metadata,instrument_sidecar,360,Leica capture metadata for the paired JPEG.
+raw/microscopy/leica/2026-07-27/Leica_2026-07-27 EC well2-2.jpeg,blocked_needs_keymap,660136,Protocol-v3 day-1 morphology (wells 1-4 / EC wells). No quantitative CD31.
+raw/microscopy/leica/2026-07-27/Leica_2026-07-27 EC well2-2.jpeg.metadata,instrument_sidecar,360,Leica capture metadata for the paired JPEG.
+raw/microscopy/leica/2026-07-27/Leica_2026-07-27 EC well3-1.jpeg,blocked_needs_keymap,940298,Protocol-v3 day-1 morphology (wells 1-4 / EC wells). No quantitative CD31.
+raw/microscopy/leica/2026-07-27/Leica_2026-07-27 EC well3-1.jpeg.metadata,instrument_sidecar,360,Leica capture metadata for the paired JPEG.
+raw/microscopy/leica/2026-07-27/Leica_2026-07-27 well1-1.jpeg,blocked_needs_keymap,769447,Protocol-v3 day-1 morphology (wells 1-4 / EC wells). No quantitative CD31.
+raw/microscopy/leica/2026-07-27/Leica_2026-07-27 well1-1.jpeg.metadata,instrument_sidecar,360,Leica capture metadata for the paired JPEG.
+raw/microscopy/leica/2026-07-27/Leica_2026-07-27 well1-2.jpeg,blocked_needs_keymap,735273,Protocol-v3 day-1 morphology (wells 1-4 / EC wells). No quantitative CD31.
+raw/microscopy/leica/2026-07-27/Leica_2026-07-27 well1-2.jpeg.metadata,instrument_sidecar,360,Leica capture metadata for the paired JPEG.
+raw/microscopy/leica/2026-07-27/Leica_2026-07-27 well2.jpeg,blocked_needs_keymap,1344017,Protocol-v3 day-1 morphology (wells 1-4 / EC wells). No quantitative CD31.
+raw/microscopy/leica/2026-07-27/Leica_2026-07-27 well2.jpeg.metadata,instrument_sidecar,360,Leica capture metadata for the paired JPEG.
+raw/microscopy/leica/2026-07-27/Leica_2026-07-27 well3-2.jpeg,blocked_needs_keymap,1018697,Protocol-v3 day-1 morphology (wells 1-4 / EC wells). No quantitative CD31.
+raw/microscopy/leica/2026-07-27/Leica_2026-07-27 well3-2.jpeg.metadata,instrument_sidecar,359,Leica capture metadata for the paired JPEG.
+raw/microscopy/leica/2026-07-27/Leica_2026-07-27 well3.jpeg,blocked_needs_keymap,982770,Protocol-v3 day-1 morphology (wells 1-4 / EC wells). No quantitative CD31.
+raw/microscopy/leica/2026-07-27/Leica_2026-07-27 well3.jpeg.metadata,instrument_sidecar,360,Leica capture metadata for the paired JPEG.
+raw/microscopy/leica/2026-07-27/Leica_2026-07-27 well4.jpeg,blocked_needs_keymap,1187287,Protocol-v3 day-1 morphology (wells 1-4 / EC wells). No quantitative CD31.
+raw/microscopy/leica/2026-07-27/Leica_2026-07-27 well4.jpeg.metadata,instrument_sidecar,360,Leica capture metadata for the paired JPEG.
+raw/microscopy/leica/2026-07-28/Leica_2026-07-28 1-Well 1-2.jpeg,blocked_needs_keymap,507930,Well/plate morphology. Needs the protocol well map; not a BO y.
+raw/microscopy/leica/2026-07-28/Leica_2026-07-28 1-Well 1-2.jpeg.metadata,instrument_sidecar,360,Leica capture metadata for the paired JPEG.
+raw/microscopy/leica/2026-07-28/Leica_2026-07-28 1-Well 2-2.jpeg,blocked_needs_keymap,648046,Well/plate morphology. Needs the protocol well map; not a BO y.
+raw/microscopy/leica/2026-07-28/Leica_2026-07-28 1-Well 2-2.jpeg.metadata,instrument_sidecar,360,Leica capture metadata for the paired JPEG.
+raw/microscopy/leica/2026-07-28/Leica_2026-07-28 1-Well 3-1.jpeg,blocked_needs_keymap,698810,Well/plate morphology. Needs the protocol well map; not a BO y.
+raw/microscopy/leica/2026-07-28/Leica_2026-07-28 1-Well 3-1.jpeg.metadata,instrument_sidecar,360,Leica capture metadata for the paired JPEG.
+raw/microscopy/leica/2026-07-28/Leica_2026-07-28 1-Well 3-2.jpeg,blocked_needs_keymap,644704,Well/plate morphology. Needs the protocol well map; not a BO y.
+raw/microscopy/leica/2026-07-28/Leica_2026-07-28 1-Well 3-2.jpeg.metadata,instrument_sidecar,360,Leica capture metadata for the paired JPEG.
+raw/microscopy/leica/2026-07-28/Leica_2026-07-28 1-well 1-1.jpeg,blocked_needs_keymap,531140,Well/plate morphology. Needs the protocol well map; not a BO y.
+raw/microscopy/leica/2026-07-28/Leica_2026-07-28 1-well 1-1.jpeg.metadata,instrument_sidecar,360,Leica capture metadata for the paired JPEG.
+raw/microscopy/leica/2026-07-28/Leica_2026-07-28 1-well 2-1.jpeg,blocked_needs_keymap,611298,Well/plate morphology. Needs the protocol well map; not a BO y.
+raw/microscopy/leica/2026-07-28/Leica_2026-07-28 1-well 2-1.jpeg.metadata,instrument_sidecar,360,Leica capture metadata for the paired JPEG.
+raw/microscopy/leica/2026-07-28/Leica_2026-07-28 152950.jpeg,blocked_needs_keymap,827693,Well/plate morphology. Needs the protocol well map; not a BO y.
+raw/microscopy/leica/2026-07-28/Leica_2026-07-28 152950.jpeg.metadata,instrument_sidecar,360,Leica capture metadata for the paired JPEG.
+raw/microscopy/leica/2026-07-28/Leica_2026-07-28 153039.jpeg,blocked_needs_keymap,825173,Well/plate morphology. Needs the protocol well map; not a BO y.
+raw/microscopy/leica/2026-07-28/Leica_2026-07-28 153039.jpeg.metadata,instrument_sidecar,360,Leica capture metadata for the paired JPEG.
+raw/microscopy/leica/2026-07-28/Leica_2026-07-28 153045.jpeg,blocked_needs_keymap,675039,Well/plate morphology. Needs the protocol well map; not a BO y.
+raw/microscopy/leica/2026-07-28/Leica_2026-07-28 153045.jpeg.metadata,instrument_sidecar,360,Leica capture metadata for the paired JPEG.
+raw/microscopy/leica/2026-07-28/Leica_2026-07-28 153053.jpeg,blocked_needs_keymap,767585,Well/plate morphology. Needs the protocol well map; not a BO y.
+raw/microscopy/leica/2026-07-28/Leica_2026-07-28 153053.jpeg.metadata,instrument_sidecar,360,Leica capture metadata for the paired JPEG.
+raw/microscopy/leica/2026-07-28/Leica_2026-07-28 p2-well1.jpeg,blocked_needs_keymap,1345409,Well/plate morphology. Needs the protocol well map; not a BO y.
+raw/microscopy/leica/2026-07-28/Leica_2026-07-28 p2-well1.jpeg.metadata,instrument_sidecar,360,Leica capture metadata for the paired JPEG.
+raw/microscopy/leica/2026-07-28/Leica_2026-07-28 p2-well2.jpeg,blocked_needs_keymap,1149884,Well/plate morphology. Needs the protocol well map; not a BO y.
+raw/microscopy/leica/2026-07-28/Leica_2026-07-28 p2-well2.jpeg.metadata,instrument_sidecar,360,Leica capture metadata for the paired JPEG.
+raw/microscopy/leica/2026-07-28/Leica_2026-07-28 p2-well3.jpeg,blocked_needs_keymap,949358,Well/plate morphology. Needs the protocol well map; not a BO y.
+raw/microscopy/leica/2026-07-28/Leica_2026-07-28 p2-well3.jpeg.metadata,instrument_sidecar,360,Leica capture metadata for the paired JPEG.
+raw/microscopy/leica/2026-07-28/Leica_2026-07-28 p2-well4.jpeg,blocked_needs_keymap,1284803,Well/plate morphology. Needs the protocol well map; not a BO y.
+raw/microscopy/leica/2026-07-28/Leica_2026-07-28 p2-well4.jpeg.metadata,instrument_sidecar,360,Leica capture metadata for the paired JPEG.
+raw/microscopy/leica/2026-07-28/c1-1.jpeg,blocked_needs_keymap,530724,Looks like a designed c/k/con series but the factor key is not in the repo.
+raw/microscopy/leica/2026-07-28/c1-1.jpeg.metadata,instrument_sidecar,360,Leica capture metadata for the paired JPEG.
+raw/microscopy/leica/2026-07-28/c1-2.jpeg,blocked_needs_keymap,479868,Looks like a designed c/k/con series but the factor key is not in the repo.
+raw/microscopy/leica/2026-07-28/c1-2.jpeg.metadata,instrument_sidecar,360,Leica capture metadata for the paired JPEG.
+raw/microscopy/leica/2026-07-28/c10-1.jpeg,blocked_needs_keymap,524033,Looks like a designed c/k/con series but the factor key is not in the repo.
+raw/microscopy/leica/2026-07-28/c10-1.jpeg.metadata,instrument_sidecar,360,Leica capture metadata for the paired JPEG.
+raw/microscopy/leica/2026-07-28/c10-2.jpeg,blocked_needs_keymap,493026,Looks like a designed c/k/con series but the factor key is not in the repo.
+raw/microscopy/leica/2026-07-28/c10-2.jpeg.metadata,instrument_sidecar,360,Leica capture metadata for the paired JPEG.
+raw/microscopy/leica/2026-07-28/con1.jpeg,blocked_needs_keymap,512032,Looks like a designed c/k/con series but the factor key is not in the repo.
+raw/microscopy/leica/2026-07-28/con1.jpeg.metadata,instrument_sidecar,360,Leica capture metadata for the paired JPEG.
+raw/microscopy/leica/2026-07-28/con2.jpeg,blocked_needs_keymap,498653,Looks like a designed c/k/con series but the factor key is not in the repo.
+raw/microscopy/leica/2026-07-28/con2.jpeg.metadata,instrument_sidecar,360,Leica capture metadata for the paired JPEG.
+raw/microscopy/leica/2026-07-28/con3.jpeg,blocked_needs_keymap,477372,Looks like a designed c/k/con series but the factor key is not in the repo.
+raw/microscopy/leica/2026-07-28/con3.jpeg.metadata,instrument_sidecar,360,Leica capture metadata for the paired JPEG.
+raw/microscopy/leica/2026-07-28/con4.jpeg,blocked_needs_keymap,522313,Looks like a designed c/k/con series but the factor key is not in the repo.
+raw/microscopy/leica/2026-07-28/con4.jpeg.metadata,instrument_sidecar,360,Leica capture metadata for the paired JPEG.
+raw/microscopy/leica/2026-07-28/k1-1.jpeg,blocked_needs_keymap,513919,Looks like a designed c/k/con series but the factor key is not in the repo.
+raw/microscopy/leica/2026-07-28/k1-1.jpeg.metadata,instrument_sidecar,360,Leica capture metadata for the paired JPEG.
+raw/microscopy/leica/2026-07-28/k1-2.jpeg,blocked_needs_keymap,533822,Looks like a designed c/k/con series but the factor key is not in the repo.
+raw/microscopy/leica/2026-07-28/k1-2.jpeg.metadata,instrument_sidecar,360,Leica capture metadata for the paired JPEG.
+raw/microscopy/leica/2026-07-28/k10-1.jpeg,blocked_needs_keymap,515736,Looks like a designed c/k/con series but the factor key is not in the repo.
+raw/microscopy/leica/2026-07-28/k10-1.jpeg.metadata,instrument_sidecar,360,Leica capture metadata for the paired JPEG.
+raw/microscopy/leica/2026-07-28/k10-2.jpeg,blocked_needs_keymap,497964,Looks like a designed c/k/con series but the factor key is not in the repo.
+raw/microscopy/leica/2026-07-28/k10-2.jpeg.metadata,instrument_sidecar,360,Leica capture metadata for the paired JPEG.
+raw/microscopy/leica/2026-07-30/Leica_2026-07-30 3-1.jpeg,blocked_needs_keymap,527805,Unlabeled or well-only morphology. Cannot enter the optimizer.
+raw/microscopy/leica/2026-07-30/Leica_2026-07-30 3-1.jpeg.metadata,instrument_sidecar,360,Leica capture metadata for the paired JPEG.
+raw/microscopy/leica/2026-07-30/Leica_2026-07-30 3-2.jpeg,blocked_needs_keymap,610311,Unlabeled or well-only morphology. Cannot enter the optimizer.
+raw/microscopy/leica/2026-07-30/Leica_2026-07-30 3-2.jpeg.metadata,instrument_sidecar,360,Leica capture metadata for the paired JPEG.
+raw/microscopy/leica/2026-07-30/Leica_2026-07-30 3-3.jpeg,blocked_needs_keymap,751928,Unlabeled or well-only morphology. Cannot enter the optimizer.
+raw/microscopy/leica/2026-07-30/Leica_2026-07-30 3-3.jpeg.metadata,instrument_sidecar,359,Leica capture metadata for the paired JPEG.
+raw/microscopy/leica/2026-07-30/Leica_2026-07-30 3-4.jpeg,blocked_needs_keymap,781512,Unlabeled or well-only morphology. Cannot enter the optimizer.
+raw/microscopy/leica/2026-07-30/Leica_2026-07-30 3-4.jpeg.metadata,instrument_sidecar,360,Leica capture metadata for the paired JPEG.
+raw/microscopy/leica/2026-07-30/Leica_2026-07-30 3-5.jpeg,blocked_needs_keymap,415855,Unlabeled or well-only morphology. Cannot enter the optimizer.
+raw/microscopy/leica/2026-07-30/Leica_2026-07-30 3-5.jpeg.metadata,instrument_sidecar,360,Leica capture metadata for the paired JPEG.
+raw/microscopy/leica/2026-07-30/Leica_2026-07-30 N2B27 T75.jpeg,assay_dev,733862,"Culture-vessel / media morphology. Protocol development, not ECM BO."
+raw/microscopy/leica/2026-07-30/Leica_2026-07-30 N2B27 T75.jpeg.metadata,instrument_sidecar,360,Leica capture metadata for the paired JPEG.
+raw/microscopy/leica/2026-07-30/Leica_2026-07-30 Well3 plate 2 cd.jpeg,blocked_needs_keymap,1244147,Unlabeled or well-only morphology. Cannot enter the optimizer.
+raw/microscopy/leica/2026-07-30/Leica_2026-07-30 Well3 plate 2 cd.jpeg.metadata,instrument_sidecar,360,Leica capture metadata for the paired JPEG.
+raw/microscopy/leica/2026-07-30/Leica_2026-07-30 Well3 plate2 cd.jpeg,blocked_needs_keymap,1160066,Unlabeled or well-only morphology. Cannot enter the optimizer.
+raw/microscopy/leica/2026-07-30/Leica_2026-07-30 Well3 plate2 cd.jpeg.metadata,instrument_sidecar,360,Leica capture metadata for the paired JPEG.
+raw/microscopy/leica/2026-07-30/Leica_2026-07-30 double1.jpeg,blocked_needs_keymap,484119,Unlabeled or well-only morphology. Cannot enter the optimizer.
+raw/microscopy/leica/2026-07-30/Leica_2026-07-30 double1.jpeg.metadata,instrument_sidecar,360,Leica capture metadata for the paired JPEG.
+raw/microscopy/leica/2026-07-30/Leica_2026-07-30 double2.jpeg,blocked_needs_keymap,703710,Unlabeled or well-only morphology. Cannot enter the optimizer.
+raw/microscopy/leica/2026-07-30/Leica_2026-07-30 double2.jpeg.metadata,instrument_sidecar,360,Leica capture metadata for the paired JPEG.
+raw/microscopy/leica/2026-07-30/Leica_2026-07-30 ecT75.jpeg,assay_dev,501426,"Culture-vessel / media morphology. Protocol development, not ECM BO."
+raw/microscopy/leica/2026-07-30/Leica_2026-07-30 ecT75.jpeg.metadata,instrument_sidecar,360,Leica capture metadata for the paired JPEG.
+raw/microscopy/leica/2026-07-30/Leica_2026-07-30 ect75-2.jpeg,assay_dev,691352,"Culture-vessel / media morphology. Protocol development, not ECM BO."
+raw/microscopy/leica/2026-07-30/Leica_2026-07-30 ect75-2.jpeg.metadata,instrument_sidecar,360,Leica capture metadata for the paired JPEG.
+raw/microscopy/leica/2026-07-30/Leica_2026-07-30 n2b27.jpeg,assay_dev,658580,"Culture-vessel / media morphology. Protocol development, not ECM BO."
+raw/microscopy/leica/2026-07-30/Leica_2026-07-30 n2b27.jpeg.metadata,instrument_sidecar,360,Leica capture metadata for the paired JPEG.
+raw/microscopy/leica/2026-07-31/Leica_2026-07-31 1-1cd.jpeg,blocked_needs_keymap,433929,Unlabeled or well-only morphology. Cannot enter the optimizer.
+raw/microscopy/leica/2026-07-31/Leica_2026-07-31 1-1cd.jpeg.metadata,instrument_sidecar,359,Leica capture metadata for the paired JPEG.
+raw/microscopy/leica/2026-07-31/Leica_2026-07-31 1-2 cd2.jpeg,blocked_needs_keymap,330692,Unlabeled or well-only morphology. Cannot enter the optimizer.
+raw/microscopy/leica/2026-07-31/Leica_2026-07-31 1-2 cd2.jpeg.metadata,instrument_sidecar,360,Leica capture metadata for the paired JPEG.
+raw/microscopy/leica/2026-07-31/Leica_2026-07-31 2-1 cd.jpeg,blocked_needs_keymap,465834,Unlabeled or well-only morphology. Cannot enter the optimizer.
+raw/microscopy/leica/2026-07-31/Leica_2026-07-31 2-1 cd.jpeg.metadata,instrument_sidecar,360,Leica capture metadata for the paired JPEG.
+raw/microscopy/leica/2026-07-31/Leica_2026-07-31 2-2cd2.jpeg,blocked_needs_keymap,610464,Unlabeled or well-only morphology. Cannot enter the optimizer.
+raw/microscopy/leica/2026-07-31/Leica_2026-07-31 2-2cd2.jpeg.metadata,instrument_sidecar,360,Leica capture metadata for the paired JPEG.
+raw/microscopy/leica/2026-07-31/Leica_2026-07-31 3-1.jpeg,blocked_needs_keymap,645254,Unlabeled or well-only morphology. Cannot enter the optimizer.
+raw/microscopy/leica/2026-07-31/Leica_2026-07-31 3-1.jpeg.metadata,instrument_sidecar,360,Leica capture metadata for the paired JPEG.
+raw/microscopy/leica/2026-07-31/Leica_2026-07-31 3-2.jpeg,blocked_needs_keymap,939755,Unlabeled or well-only morphology. Cannot enter the optimizer.
+raw/microscopy/leica/2026-07-31/Leica_2026-07-31 3-2.jpeg.metadata,instrument_sidecar,360,Leica capture metadata for the paired JPEG.
+raw/microscopy/leica/2026-07-31/Leica_2026-07-31 3-3.jpeg,blocked_needs_keymap,729786,Unlabeled or well-only morphology. Cannot enter the optimizer.
+raw/microscopy/leica/2026-07-31/Leica_2026-07-31 3-3.jpeg.metadata,instrument_sidecar,360,Leica capture metadata for the paired JPEG.
+raw/microscopy/leica/2026-07-31/Leica_2026-07-31 3-4.jpeg,blocked_needs_keymap,757935,Unlabeled or well-only morphology. Cannot enter the optimizer.
+raw/microscopy/leica/2026-07-31/Leica_2026-07-31 3-4.jpeg.metadata,instrument_sidecar,360,Leica capture metadata for the paired JPEG.
+raw/microscopy/leica/2026-07-31/Leica_2026-07-31 3-5.jpeg,blocked_needs_keymap,529556,Unlabeled or well-only morphology. Cannot enter the optimizer.
+raw/microscopy/leica/2026-07-31/Leica_2026-07-31 3-5.jpeg.metadata,instrument_sidecar,360,Leica capture metadata for the paired JPEG.
+raw/microscopy/leica/2026-08-01/Leica_2026-08-01 2-3-1.jpeg,blocked_needs_keymap,507152,Unlabeled or well-only morphology. Cannot enter the optimizer.
+raw/microscopy/leica/2026-08-01/Leica_2026-08-01 2-3-1.jpeg.metadata,instrument_sidecar,360,Leica capture metadata for the paired JPEG.
+raw/microscopy/leica/2026-08-01/Leica_2026-08-01 2-3-1double.jpeg,blocked_needs_keymap,748613,Unlabeled or well-only morphology. Cannot enter the optimizer.
+raw/microscopy/leica/2026-08-01/Leica_2026-08-01 2-3-1double.jpeg.metadata,instrument_sidecar,360,Leica capture metadata for the paired JPEG.
+raw/microscopy/leica/2026-08-01/Leica_2026-08-01 2-3-2.jpeg,blocked_needs_keymap,513236,Unlabeled or well-only morphology. Cannot enter the optimizer.
+raw/microscopy/leica/2026-08-01/Leica_2026-08-01 2-3-2.jpeg.metadata,instrument_sidecar,360,Leica capture metadata for the paired JPEG.
+raw/microscopy/leica/2026-08-01/Leica_2026-08-01 2-3-2double.jpeg,blocked_needs_keymap,797297,Unlabeled or well-only morphology. Cannot enter the optimizer.
+raw/microscopy/leica/2026-08-01/Leica_2026-08-01 2-3-2double.jpeg.metadata,instrument_sidecar,360,Leica capture metadata for the paired JPEG.
+raw/microscopy/leica/2026-08-01/Leica_2026-08-01 3-1.jpeg,blocked_needs_keymap,941049,Unlabeled or well-only morphology. Cannot enter the optimizer.
+raw/microscopy/leica/2026-08-01/Leica_2026-08-01 3-1.jpeg.metadata,instrument_sidecar,360,Leica capture metadata for the paired JPEG.
+raw/microscopy/leica/2026-08-01/Leica_2026-08-01 3-2.jpeg,blocked_needs_keymap,275512,Unlabeled or well-only morphology. Cannot enter the optimizer.
+raw/microscopy/leica/2026-08-01/Leica_2026-08-01 3-2.jpeg.metadata,instrument_sidecar,360,Leica capture metadata for the paired JPEG.
+raw/microscopy/leica/2026-08-01/Leica_2026-08-01 3-3.jpeg,blocked_needs_keymap,1033748,Unlabeled or well-only morphology. Cannot enter the optimizer.
+raw/microscopy/leica/2026-08-01/Leica_2026-08-01 3-3.jpeg.metadata,instrument_sidecar,360,Leica capture metadata for the paired JPEG.
+raw/microscopy/leica/2026-08-01/Leica_2026-08-01 3-4.jpeg,blocked_needs_keymap,821763,Unlabeled or well-only morphology. Cannot enter the optimizer.
+raw/microscopy/leica/2026-08-01/Leica_2026-08-01 3-4.jpeg.metadata,instrument_sidecar,360,Leica capture metadata for the paired JPEG.
+raw/microscopy/leica/2026-08-01/Leica_2026-08-01 3-5.jpeg,blocked_needs_keymap,772791,Unlabeled or well-only morphology. Cannot enter the optimizer.
+raw/microscopy/leica/2026-08-01/Leica_2026-08-01 3-5.jpeg.metadata,instrument_sidecar,360,Leica capture metadata for the paired JPEG.
+raw/microscopy/leica/2026-08-04/Leica_2026-08-04 1%fbs vtn 10.jpeg,assay_dev,402235,"Morphology of stem/gel/1% FBS/control dishes, not the FN/VTN ug/mL titration."
+raw/microscopy/leica/2026-08-04/Leica_2026-08-04 1%fbs vtn 10.jpeg.metadata,instrument_sidecar,360,Leica capture metadata for the paired JPEG.
+raw/microscopy/leica/2026-08-04/Leica_2026-08-04 1%fbs vtn 2-5 t75.jpeg,assay_dev,294357,"Morphology of stem/gel/1% FBS/control dishes, not the FN/VTN ug/mL titration."
+raw/microscopy/leica/2026-08-04/Leica_2026-08-04 1%fbs vtn 2-5 t75.jpeg.metadata,instrument_sidecar,360,Leica capture metadata for the paired JPEG.
+raw/microscopy/leica/2026-08-04/Leica_2026-08-04 1%fbs vtn 5.jpeg,assay_dev,377170,"Morphology of stem/gel/1% FBS/control dishes, not the FN/VTN ug/mL titration."
+raw/microscopy/leica/2026-08-04/Leica_2026-08-04 1%fbs vtn 5.jpeg.metadata,instrument_sidecar,360,Leica capture metadata for the paired JPEG.
+raw/microscopy/leica/2026-08-04/Leica_2026-08-04 Fib 10%.jpeg,bo_morphology_matched,540420,Leica morphology of the fibronectin titration. QC only — not a CD31 y unless scored.
+raw/microscopy/leica/2026-08-04/Leica_2026-08-04 Fib 10%.jpeg.metadata,instrument_sidecar,360,Leica capture metadata for the paired JPEG.
+raw/microscopy/leica/2026-08-04/Leica_2026-08-04 Fib c+.jpeg,assay_dev,362847,"Morphology of stem/gel/1% FBS/control dishes, not the FN/VTN ug/mL titration."
+raw/microscopy/leica/2026-08-04/Leica_2026-08-04 Fib c+.jpeg.metadata,instrument_sidecar,360,Leica capture metadata for the paired JPEG.
+raw/microscopy/leica/2026-08-04/Leica_2026-08-04 Fib stem.jpeg,assay_dev,328617,"Morphology of stem/gel/1% FBS/control dishes, not the FN/VTN ug/mL titration."
+raw/microscopy/leica/2026-08-04/Leica_2026-08-04 Fib stem.jpeg.metadata,instrument_sidecar,359,Leica capture metadata for the paired JPEG.
+raw/microscopy/leica/2026-08-04/Leica_2026-08-04 fib 0-5.jpeg,bo_morphology_matched,664218,Leica morphology of the fibronectin titration. QC only — not a CD31 y unless scored.
+raw/microscopy/leica/2026-08-04/Leica_2026-08-04 fib 0-5.jpeg.metadata,instrument_sidecar,360,Leica capture metadata for the paired JPEG.
+raw/microscopy/leica/2026-08-04/Leica_2026-08-04 fib 1.jpeg,bo_morphology_matched,534314,Leica morphology of the fibronectin titration. QC only — not a CD31 y unless scored.
+raw/microscopy/leica/2026-08-04/Leica_2026-08-04 fib 1.jpeg.metadata,instrument_sidecar,360,Leica capture metadata for the paired JPEG.
+raw/microscopy/leica/2026-08-04/Leica_2026-08-04 fib 2-5.jpeg,bo_morphology_matched,427380,Leica morphology of the fibronectin titration. QC only — not a CD31 y unless scored.
+raw/microscopy/leica/2026-08-04/Leica_2026-08-04 fib 2-5.jpeg.metadata,instrument_sidecar,360,Leica capture metadata for the paired JPEG.
+raw/microscopy/leica/2026-08-04/Leica_2026-08-04 fib10.jpeg,bo_morphology_matched,516865,Leica morphology of the fibronectin titration. QC only — not a CD31 y unless scored.
+raw/microscopy/leica/2026-08-04/Leica_2026-08-04 fib10.jpeg.metadata,instrument_sidecar,360,Leica capture metadata for the paired JPEG.
+raw/microscopy/leica/2026-08-04/Leica_2026-08-04 fib20.jpeg,bo_morphology_matched,438395,Leica morphology of the fibronectin titration. QC only — not a CD31 y unless scored.
+raw/microscopy/leica/2026-08-04/Leica_2026-08-04 fib20.jpeg.metadata,instrument_sidecar,360,Leica capture metadata for the paired JPEG.
+raw/microscopy/leica/2026-08-04/Leica_2026-08-04 fib5.jpeg,bo_morphology_matched,562693,Leica morphology of the fibronectin titration. QC only — not a CD31 y unless scored.
+raw/microscopy/leica/2026-08-04/Leica_2026-08-04 fib5.jpeg.metadata,instrument_sidecar,360,Leica capture metadata for the paired JPEG.
+raw/microscopy/leica/2026-08-04/Leica_2026-08-04 gel 10% t75 p1.jpeg,assay_dev,267546,"Morphology of stem/gel/1% FBS/control dishes, not the FN/VTN ug/mL titration."
+raw/microscopy/leica/2026-08-04/Leica_2026-08-04 gel 10% t75 p1.jpeg.metadata,instrument_sidecar,360,Leica capture metadata for the paired JPEG.
+raw/microscopy/leica/2026-08-04/Leica_2026-08-04 gel m+.jpeg,assay_dev,358068,"Morphology of stem/gel/1% FBS/control dishes, not the FN/VTN ug/mL titration."
+raw/microscopy/leica/2026-08-04/Leica_2026-08-04 gel m+.jpeg.metadata,instrument_sidecar,360,Leica capture metadata for the paired JPEG.
+raw/microscopy/leica/2026-08-04/Leica_2026-08-04 gel stem t75 p1.jpeg,assay_dev,254784,"Morphology of stem/gel/1% FBS/control dishes, not the FN/VTN ug/mL titration."
+raw/microscopy/leica/2026-08-04/Leica_2026-08-04 gel stem t75 p1.jpeg.metadata,instrument_sidecar,360,Leica capture metadata for the paired JPEG.
+raw/microscopy/leica/2026-08-04/Leica_2026-08-04 mia dish.jpeg,assay_dev,287003,"Morphology of stem/gel/1% FBS/control dishes, not the FN/VTN ug/mL titration."
+raw/microscopy/leica/2026-08-04/Leica_2026-08-04 mia dish.jpeg.metadata,instrument_sidecar,360,Leica capture metadata for the paired JPEG.
+raw/microscopy/leica/2026-08-04/Leica_2026-08-04 stem vtn 10.jpeg,assay_dev,322435,"Morphology of stem/gel/1% FBS/control dishes, not the FN/VTN ug/mL titration."
+raw/microscopy/leica/2026-08-04/Leica_2026-08-04 stem vtn 10.jpeg.metadata,instrument_sidecar,360,Leica capture metadata for the paired JPEG.
+raw/microscopy/leica/2026-08-04/Leica_2026-08-04 stem vtn 2-5.jpeg,assay_dev,278961,"Morphology of stem/gel/1% FBS/control dishes, not the FN/VTN ug/mL titration."
+raw/microscopy/leica/2026-08-04/Leica_2026-08-04 stem vtn 2-5.jpeg.metadata,instrument_sidecar,360,Leica capture metadata for the paired JPEG.
+raw/microscopy/leica/2026-08-04/Leica_2026-08-04 stem vtn 5.jpeg,assay_dev,301690,"Morphology of stem/gel/1% FBS/control dishes, not the FN/VTN ug/mL titration."
+raw/microscopy/leica/2026-08-04/Leica_2026-08-04 stem vtn 5.jpeg.metadata,instrument_sidecar,360,Leica capture metadata for the paired JPEG.
+raw/microscopy/leica/2026-08-04/Leica_2026-08-04 vtn 0-5.jpeg,bo_morphology_matched,551900,Leica morphology of the vitronectin titration. QC only — not a CD31 y unless scored.
+raw/microscopy/leica/2026-08-04/Leica_2026-08-04 vtn 0-5.jpeg.metadata,instrument_sidecar,360,Leica capture metadata for the paired JPEG.
+raw/microscopy/leica/2026-08-04/Leica_2026-08-04 vtn 1.jpeg,bo_morphology_matched,627266,Leica morphology of the vitronectin titration. QC only — not a CD31 y unless scored.
+raw/microscopy/leica/2026-08-04/Leica_2026-08-04 vtn 1.jpeg.metadata,instrument_sidecar,360,Leica capture metadata for the paired JPEG.
+raw/microscopy/leica/2026-08-04/Leica_2026-08-04 vtn 10.jpeg,bo_morphology_matched,487657,Leica morphology of the vitronectin titration. QC only — not a CD31 y unless scored.
+raw/microscopy/leica/2026-08-04/Leica_2026-08-04 vtn 10.jpeg.metadata,instrument_sidecar,360,Leica capture metadata for the paired JPEG.
+raw/microscopy/leica/2026-08-04/Leica_2026-08-04 vtn 2-5.jpeg,bo_morphology_matched,470751,Leica morphology of the vitronectin titration. QC only — not a CD31 y unless scored.
+raw/microscopy/leica/2026-08-04/Leica_2026-08-04 vtn 2-5.jpeg.metadata,instrument_sidecar,360,Leica capture metadata for the paired JPEG.
+raw/microscopy/leica/2026-08-04/Leica_2026-08-04 vtn 20.jpeg,bo_morphology_matched,497383,Leica morphology of the vitronectin titration. QC only — not a CD31 y unless scored.
+raw/microscopy/leica/2026-08-04/Leica_2026-08-04 vtn 20.jpeg.metadata,instrument_sidecar,360,Leica capture metadata for the paired JPEG.
+raw/microscopy/leica/2026-08-04/Leica_2026-08-04 vtn5.jpeg,bo_morphology_matched,464434,Leica morphology of the vitronectin titration. QC only — not a CD31 y unless scored.
+raw/microscopy/leica/2026-08-04/Leica_2026-08-04 vtn5.jpeg.metadata,instrument_sidecar,360,Leica capture metadata for the paired JPEG.
+raw/microscopy/leica/2026-08-06/Leica_2026-08-06 iec P6 mia.jpeg,blocked_needs_keymap,311706,Morphology of wells 1/3/5 and IEC P6. Companion to Exp_1; no coating level in the filename.
+raw/microscopy/leica/2026-08-06/Leica_2026-08-06 iec P6 mia.jpeg.metadata,instrument_sidecar,360,Leica capture metadata for the paired JPEG.
+raw/microscopy/leica/2026-08-06/Leica_2026-08-06 well 1-1.jpeg,blocked_needs_keymap,622180,Morphology of wells 1/3/5 and IEC P6. Companion to Exp_1; no coating level in the filename.
+raw/microscopy/leica/2026-08-06/Leica_2026-08-06 well 1-1.jpeg.metadata,instrument_sidecar,360,Leica capture metadata for the paired JPEG.
+raw/microscopy/leica/2026-08-06/Leica_2026-08-06 well 1-2.jpeg,blocked_needs_keymap,621987,Morphology of wells 1/3/5 and IEC P6. Companion to Exp_1; no coating level in the filename.
+raw/microscopy/leica/2026-08-06/Leica_2026-08-06 well 1-2.jpeg.metadata,instrument_sidecar,360,Leica capture metadata for the paired JPEG.
+raw/microscopy/leica/2026-08-06/Leica_2026-08-06 well 5.jpeg,blocked_needs_keymap,773158,Morphology of wells 1/3/5 and IEC P6. Companion to Exp_1; no coating level in the filename.
+raw/microscopy/leica/2026-08-06/Leica_2026-08-06 well 5.jpeg.metadata,instrument_sidecar,360,Leica capture metadata for the paired JPEG.
+raw/microscopy/leica/2026-08-06/Leica_2026-08-06 well3-1-copy.jpeg,blocked_needs_keymap,598174,Morphology of wells 1/3/5 and IEC P6. Companion to Exp_1; no coating level in the filename.
+raw/microscopy/leica/2026-08-06/Leica_2026-08-06 well3-1-copy.jpeg.metadata,instrument_sidecar,360,Leica capture metadata for the paired JPEG.
+raw/microscopy/leica/2026-08-06/Leica_2026-08-06 well3-1.jpeg,blocked_needs_keymap,899954,Morphology of wells 1/3/5 and IEC P6. Companion to Exp_1; no coating level in the filename.
+raw/microscopy/leica/2026-08-06/Leica_2026-08-06 well3-1.jpeg.metadata,instrument_sidecar,360,Leica capture metadata for the paired JPEG.
+raw/microscopy/leica/2026-08-06/Leica_2026-08-06well3-2.jpeg,blocked_needs_keymap,624509,Morphology of wells 1/3/5 and IEC P6. Companion to Exp_1; no coating level in the filename.
+raw/microscopy/leica/2026-08-06/Leica_2026-08-06well3-2.jpeg.metadata,instrument_sidecar,360,Leica capture metadata for the paired JPEG.
+raw/microscopy/leica/2026-08-10/Leica_2026-08-10 1-1.jpeg,blocked_needs_keymap,644628,Unlabeled or well-only morphology. Cannot enter the optimizer.
+raw/microscopy/leica/2026-08-10/Leica_2026-08-10 1-1.jpeg.metadata,instrument_sidecar,360,Leica capture metadata for the paired JPEG.
+raw/microscopy/leica/2026-08-10/Leica_2026-08-10 1-2.jpeg,blocked_needs_keymap,658668,Unlabeled or well-only morphology. Cannot enter the optimizer.
+raw/microscopy/leica/2026-08-10/Leica_2026-08-10 1-2.jpeg.metadata,instrument_sidecar,360,Leica capture metadata for the paired JPEG.
+raw/microscopy/leica/2026-08-10/Leica_2026-08-10 1iec p6.jpeg,not_for_bo,576659,Sort leftover / IEC line / operator dish. Not an experimental arm.
+raw/microscopy/leica/2026-08-10/Leica_2026-08-10 1iec p6.jpeg.metadata,instrument_sidecar,360,Leica capture metadata for the paired JPEG.
+raw/microscopy/leica/2026-08-10/Leica_2026-08-10 3-1.jpeg,blocked_needs_keymap,635517,Unlabeled or well-only morphology. Cannot enter the optimizer.
+raw/microscopy/leica/2026-08-10/Leica_2026-08-10 3-1.jpeg.metadata,instrument_sidecar,360,Leica capture metadata for the paired JPEG.
+raw/microscopy/leica/2026-08-10/Leica_2026-08-10 3-2.jpeg,blocked_needs_keymap,627151,Unlabeled or well-only morphology. Cannot enter the optimizer.
+raw/microscopy/leica/2026-08-10/Leica_2026-08-10 3-2.jpeg.metadata,instrument_sidecar,360,Leica capture metadata for the paired JPEG.
+raw/microscopy/leica/2026-08-10/Leica_2026-08-10 fenxuan later-copy.jpeg,not_for_bo,483289,Sort leftover / IEC line / operator dish. Not an experimental arm.
+raw/microscopy/leica/2026-08-10/Leica_2026-08-10 fenxuan later-copy.jpeg.metadata,instrument_sidecar,360,Leica capture metadata for the paired JPEG.
+raw/microscopy/leica/2026-08-10/Leica_2026-08-10 fenxuan later.jpeg,not_for_bo,459926,Sort leftover / IEC line / operator dish. Not an experimental arm.
+raw/microscopy/leica/2026-08-10/Leica_2026-08-10 fenxuan later.jpeg.metadata,instrument_sidecar,360,Leica capture metadata for the paired JPEG.
+raw/microscopy/leica/2026-08-10/Leica_2026-08-10 fenxuan.jpeg,not_for_bo,343841,Sort leftover / IEC line / operator dish. Not an experimental arm.
+raw/microscopy/leica/2026-08-10/Leica_2026-08-10 fenxuan.jpeg.metadata,instrument_sidecar,359,Leica capture metadata for the paired JPEG.
+raw/microscopy/leica/2026-08-10/Leica_2026-08-10 iec p6.jpeg,not_for_bo,612981,Sort leftover / IEC line / operator dish. Not an experimental arm.
+raw/microscopy/leica/2026-08-10/Leica_2026-08-10 iec p6.jpeg.metadata,instrument_sidecar,360,Leica capture metadata for the paired JPEG.
+raw/microscopy/leica/2026-08-11/Leica_2026-08-11 1-1.jpeg,blocked_needs_keymap,620062,Unlabeled or well-only morphology. Cannot enter the optimizer.
+raw/microscopy/leica/2026-08-11/Leica_2026-08-11 1-1.jpeg.metadata,instrument_sidecar,360,Leica capture metadata for the paired JPEG.
+raw/microscopy/leica/2026-08-11/Leica_2026-08-11 1-2.jpeg,blocked_needs_keymap,598052,Unlabeled or well-only morphology. Cannot enter the optimizer.
+raw/microscopy/leica/2026-08-11/Leica_2026-08-11 1-2.jpeg.metadata,instrument_sidecar,360,Leica capture metadata for the paired JPEG.
+raw/microscopy/leica/2026-08-11/Leica_2026-08-11 3-1.jpeg,blocked_needs_keymap,620085,Unlabeled or well-only morphology. Cannot enter the optimizer.
+raw/microscopy/leica/2026-08-11/Leica_2026-08-11 3-1.jpeg.metadata,instrument_sidecar,360,Leica capture metadata for the paired JPEG.
+raw/microscopy/leica/2026-08-11/Leica_2026-08-11 3-2.jpeg,blocked_needs_keymap,705554,Unlabeled or well-only morphology. Cannot enter the optimizer.
+raw/microscopy/leica/2026-08-11/Leica_2026-08-11 3-2.jpeg.metadata,instrument_sidecar,360,Leica capture metadata for the paired JPEG.
+raw/microscopy/leica/2026-08-11/Leica_2026-08-11 fenxuan later.jpeg,not_for_bo,462529,Sort leftover / IEC line / operator dish. Not an experimental arm.
+raw/microscopy/leica/2026-08-11/Leica_2026-08-11 fenxuan later.jpeg.metadata,instrument_sidecar,360,Leica capture metadata for the paired JPEG.
+raw/microscopy/leica/2026-08-11/Leica_2026-08-11 iec-copy.jpeg,not_for_bo,788544,Sort leftover / IEC line / operator dish. Not an experimental arm.
+raw/microscopy/leica/2026-08-11/Leica_2026-08-11 iec-copy.jpeg.metadata,instrument_sidecar,360,Leica capture metadata for the paired JPEG.
+raw/microscopy/leica/2026-08-11/Leica_2026-08-11 iec.jpeg,not_for_bo,794647,Sort leftover / IEC line / operator dish. Not an experimental arm.
+raw/microscopy/leica/2026-08-11/Leica_2026-08-11 iec.jpeg.metadata,instrument_sidecar,360,Leica capture metadata for the paired JPEG.
+raw/plate-reader/2026-06-22_endpoint-abs-562.xlsx,not_for_bo,9127,Abs@562 on 2026-06-22. Different metric and date from the CD31 campaign.
+raw/protocols/IPSC分化EC-2.docx,bo_protocol,18618,Induction calendar (CHIR/BMP4/media by well).
+raw/protocols/IPSC分化EC-3.docx,bo_protocol,19336,Induction calendar (CHIR/BMP4/media by well).

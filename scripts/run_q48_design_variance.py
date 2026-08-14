@@ -69,17 +69,39 @@ ARMS = ("lhs", "sobol", "random")
 RULE = "=" * 100
 
 
-def cell_mean(ens, bounds, sigma: float, method: str, design_seed: int) -> float:
-    """Mean regret over the cell when EVERY instance is scored on one shared design."""
+def cell_regrets(ens, bounds, sigma: float, method: str, design_seed: int) -> np.ndarray:
+    """``(n_instances, n_seeds)`` regret when EVERY instance is scored on one design.
+
+    This used to be ``cell_mean`` and returned ``float(np.mean(out))``. That single
+    collapse cost the project its most load-bearing sentence: the paired contrast in
+    ``docs/CLAIMS.md`` needs per-instance values, `q48-design-variance.json` stored only
+    the 60 design means, and so no script could regenerate the claim. It then went stale
+    for a month without anyone being able to notice. See the Q50 entry in
+    ``docs/OPEN-QUESTIONS.md``.
+
+    Returning the array costs nothing — the loop already computes every element — and
+    ``main`` still writes the same means it always did.
+    """
     X = static_design(bounds, method, BUDGET, design_seed)
-    out = []
-    for inst in ens:
-        for s in SEEDS:
+    out = np.empty((len(ens), len(SEEDS)), dtype=float)
+    for i, inst in enumerate(ens):
+        for j, s in enumerate(SEEDS):
             o = BiphasicOracle(inst, sigma_rel=sigma, seed=s)
             Y, _ = o.evaluate(X)
-            out.append(float(inst.optimum_value)
-                       - float(reported_best_curve(o.truth(X), Y)[-1]))
-    return float(np.mean(out))
+            out[i, j] = float(inst.optimum_value) - float(
+                reported_best_curve(o.truth(X), Y)[-1]
+            )
+    return out
+
+
+def cell_mean(ens, bounds, sigma: float, method: str, design_seed: int) -> float:
+    """Mean regret over the cell when EVERY instance is scored on one shared design.
+
+    Kept as a thin wrapper so existing callers and any external reference to this name
+    keep working. New code should call :func:`cell_regrets` and collapse at the point of
+    use, not before it.
+    """
+    return float(cell_regrets(ens, bounds, sigma, method, design_seed).mean())
 
 
 def main() -> None:
@@ -103,8 +125,10 @@ def main() -> None:
             if not reported:
                 continue
             e2 = float(np.mean(reported))
-            draws = np.array([cell_mean(ens, bounds, sigma, arm, g)
-                              for g in range(N_DESIGNS)])
+            # (n_designs, n_instances, n_seeds) -- kept whole, collapsed only for display.
+            cube = np.stack([cell_regrets(ens, bounds, sigma, arm, g)
+                             for g in range(N_DESIGNS)])
+            draws = cube.mean(axis=(1, 2))
             pct = 100.0 * float((draws < e2).mean())
             print(f"    {arm:<8}{e2:>12.4f}{draws.mean():>18.4f}{draws.std():>9.4f}"
                   f"{pct:>14.0f}%{draws.mean() - e2:>+10.4f}")
@@ -112,7 +136,14 @@ def main() -> None:
                             design_averaged=float(draws.mean()),
                             design_sd=float(draws.std()),
                             percentile_of_e2=pct, n_designs=N_DESIGNS,
-                            draws=draws.tolist()))
+                            draws=draws.tolist(),
+                            # The axis the old code destroyed. Ordered to match
+                            # load_ensemble(dim)[:N_INSTANCES]; instance_ids travel
+                            # alongside so nothing has to pair by position.
+                            instance_ids=[i.instance_id for i in ens],
+                            noise_seeds=list(SEEDS),
+                            per_instance=cube.mean(axis=2).tolist(),
+                            per_instance_design_averaged=cube.mean(axis=(0, 2)).tolist()))
         # what it does to the one comparison the paper leans on
         q = [r["regret"] for r in grid if r["dim"] == dim
              and abs(r["sigma"] - sigma) < 1e-12 and r["arm"] == "qlogei"]

@@ -1,0 +1,80 @@
+Q50 completion run -- seeds 8..19, concurrency 3 (xargs -P)
+started: 2026-08-13 11:22:02
+loadavg at start: 9.20 6.37 4.80
+
+  campaign seed 8: 50 campaigns in 239s
+  seed 8: exit 0 after 241s  [11:26:03]
+  campaign seed 9: 50 campaigns in 258s
+  seed 9: exit 0 after 260s  [11:26:22]
+  campaign seed 10: 50 campaigns in 264s
+  seed 10: exit 0 after 266s  [11:26:28]
+  campaign seed 11: 50 campaigns in 196s
+  seed 11: exit 0 after 197s  [11:29:21]
+  campaign seed 12: 50 campaigns in 234s
+  seed 12: exit 0 after 235s  [11:30:18]
+  campaign seed 13: 50 campaigns in 247s
+  seed 13: exit 0 after 248s  [11:30:37]
+  campaign seed 14: 50 campaigns in 243s
+  seed 14: exit 0 after 245s  [11:33:26]
+  campaign seed 15: 50 campaigns in 242s
+  seed 15: exit 0 after 244s  [11:34:22]
+  campaign seed 16: 50 campaigns in 268s
+  seed 16: exit 0 after 269s  [11:35:06]
+  campaign seed 17: 50 campaigns in 254s
+  seed 17: exit 0 after 256s  [11:37:43]
+  campaign seed 18: 50 campaigns in 247s
+  seed 18: exit 0 after 248s  [11:38:31]
+  campaign seed 19: 50 campaigns in 246s
+  seed 19: exit 0 after 247s  [11:39:14]
+
+all shards finished: 2026-08-13 11:39:14
+loadavg at end: 4.73 5.16 5.18
+
+=== merging all 20 seeds ===
+================================================================================================
+Q50 — qLogEI design-averaged, d=6 sigma_rel=0.25
+================================================================================================
+  1000 campaigns over 20 campaign seeds x 25 instances x 2 noise seeds
+
+  FIDELITY CHECK — E2 ties the campaign seed to the noise seed, so its number is
+  the diagonal of this grid. Reproduce it or nothing here counts.
+    e2-grid.json qlogei      0.1553  (n=50)
+    this harness, diagonal   0.1553  (n=50)
+    -> REPRODUCED
+
+  per campaign seed:
+    g=0   0.1617
+    g=1   0.1668
+    g=2   0.1396
+    g=3   0.1574
+    g=4   0.1458
+    g=5   0.1506
+    g=6   0.1498
+    g=7   0.1543
+    g=8   0.1573
+    g=9   0.1359
+    g=10  0.1652
+    g=11  0.1679
+    g=12  0.1487
+    g=13  0.1523
+    g=14  0.1705
+    g=15  0.1535
+    g=16  0.1427
+    g=17  0.1563
+    g=18  0.1542
+    g=19  0.1327
+
+  qLogEI design-averaged   0.1532   sd 0.0102   min 0.1327  max 0.1705
+  E2's draw (0.1553) sits at the 60th percentile of 20 seeds
+
+================================================================================================
+  THE COMPARISON Q48 COULD NOT MAKE
+================================================================================================
+                                 as E2 reports   design-averaged
+    lhs                                 0.1270            0.1752
+    qlogei                              0.1553            0.1532
+    as E2 reports             LHS ahead by 0.0283
+    design-averaged           BO ahead by 0.0220
+
+  -> THE ORDERING REVERSES. Q48 (b) is ESTABLISHED.
+merge exit: 0

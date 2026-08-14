@@ -15,7 +15,7 @@ model recommends; reported at both the **unconstrained** argmax (Q41's primary) 
 | # | Claim | Number | File |
 |---|---|---|---|
 | **1** | Under rule A the classical pipeline beats BO at a realistic budget | `doe − qlogei` = **−0.0595** [−0.0792, −0.0373], p<0.0001, d=6 σ=0.25, n=25 | `results/e2-grid.json` |
-| **1b** | …and at d=8 | **−0.0284**; at σ=0.10 both dimensions tie | `results/e2-doe-d8.log` ⚠️ **no JSON — D17** |
+| **1b** | …and at d=8 | **−0.0284**; at σ=0.10 both dimensions tie | `results/e2-doe-d8.json` ✅ *(100 rows, both cells — D17 corrected)* |
 | **2** | Under rule C (unconstrained, Q41's primary) BO wins every cell | **+0.2931 / +0.3597 / +0.2710 / +0.3228** | `results/q34-factorial.json` |
 | **2b** | Under rule C constrained, the same comparison is **three nulls and one BO win** | **−0.0063 / +0.0153 / +0.0091 / +0.0001** | `results/q35-constrained-rsm.json` |
 | **3** | The swing is the classical arm's scoring, not BO's | DoE moves **+0.3205** rule A→C; BO moves **−0.0321**. **≈10:1 at the primary cell, to 33:1** | `q34-factorial.json`, `q35-constrained-rsm.json` |
@@ -96,8 +96,9 @@ measurably better model recommends no better.
 
 These come out of the triage and are not optional. Full detail in `TRIAGE.md` §"Dependency flags".
 
-1. 🔴 **D17.** `results/e2-doe-d8.json` does not exist. **Claim 1b at d=8 lives only as log text** and
-   cannot be re-scored under another rule. Either re-run the arm or state the limitation.
+1. ✅ ~~**D17.**~~ **RESOLVED, and my flag was wrong.** `results/e2-doe-d8.json` exists — it was
+   written, gitignored, and never force-added. It is now committed: 100 rows, both d=8 cells,
+   18 fields, regenerating the log text exactly. **Claim 1b is fully re-scorable.**
 2. 🔴 **"In every cell tested" needs its rule named in the same sentence.** Sentence 2 holds under
    the unconstrained argmax and is three nulls under the constrained one. Q41 requires both.
 3. 🔴 **Sentence 3 is σ-conditional.** The polynomial-worse-than-its-data half is null at both

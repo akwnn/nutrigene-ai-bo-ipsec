@@ -1,0 +1,126 @@
+{
+  "cell": {
+    "dim": 6,
+    "sigma_rel": 0.25,
+    "budget": 48
+  },
+  "instance_ids": [
+    "033466197eba3ddb",
+    "0a6e0788538a7c52",
+    "0ed87c75239d73f8",
+    "32bb966a18f1d863",
+    "443c180247c17191",
+    "48b1324dd0461cd9",
+    "4d4f7158b65b52ba",
+    "51cf489c521a6911",
+    "578e5d8768359f0f",
+    "59e420274f4385d9",
+    "5b3926ef2c5fe4b6",
+    "763e0f58925816ca",
+    "7b6071e568a98779",
+    "7ef3fc89acece49c",
+    "7f5c7431c0530e74",
+    "8abe35e93ddfcad1",
+    "9414bc879284eef0",
+    "9f3cdb4d835c6909",
+    "c75f6d6f50fe2434",
+    "ce7334da318bc5e5",
+    "da5ec2fbb20c9f9b",
+    "e402c32907f27534",
+    "e946207e9dfe1876",
+    "ef2815cdafff288c",
+    "f79c5cf175034acd"
+  ],
+  "lhs": {
+    "arm": "lhs",
+    "source": "recomputed: 60 designs x 25 instances",
+    "n_designs": 60,
+    "noise_seeds": [
+      0,
+      1
+    ],
+    "design_averaged": 0.175160822964773,
+    "per_instance": [
+      0.18483814433586718,
+      0.17779988794354593,
+      0.16262340511943035,
+      0.16757511972891284,
+      0.16149038549634567,
+      0.16544598078311845,
+      0.17698606557429913,
+      0.19752920167091975,
+      0.17134793071841256,
+      0.17305035088814855,
+      0.18178065823464748,
+      0.17837742515519472,
+      0.16154660679238533,
+      0.17477233557574706,
+      0.19039029358191348,
+      0.1681315240836043,
+      0.16513373210754217,
+      0.17782303801444818,
+      0.17972965036743105,
+      0.16404272355491034,
+      0.17103495912807715,
+      0.1771655259053693,
+      0.18140850538517247,
+      0.19758601647662527,
+      0.17141110749725672
+    ]
+  },
+  "qlogei": {
+    "source": "results/q50-qlogei-seedsweep.json",
+    "seed_averaged": 0.15315280811436593,
+    "per_instance": [
+      0.1468319445447072,
+      0.16789738324027853,
+      0.1445231998387991,
+      0.16214499702517027,
+      0.13795967336509252,
+      0.16099345598617293,
+      0.15861638175712167,
+      0.15666925413591448,
+      0.16960097792873868,
+      0.14878675583911782,
+      0.14703812293983812,
+      0.14440981777186573,
+      0.14349462423096876,
+      0.15918905796690813,
+      0.14084221281330084,
+      0.15163531344926684,
+      0.15088807115176422,
+      0.1703937000094433,
+      0.15030632313983178,
+      0.15373530533115515,
+      0.15491229593819372,
+      0.15306534889498388,
+      0.15615246913153547,
+      0.14524948742237276,
+      0.1534840290066064
+    ]
+  },
+  "paired": {
+    "mean_difference": 0.022008014850407088,
+    "ci95_bootstrap": [
+      0.0169506733161706,
+      0.027180378519822777
+    ],
+    "wilcoxon_statistic": 0.0,
+    "wilcoxon_p": 5.960464477539063e-08,
+    "bo_ahead_on": 25,
+    "n_instances": 25
+  },
+  "paired_historical_8_seeds": {
+    "mean_difference": 0.021918290212109674,
+    "ci95_bootstrap": [
+      0.01444933182823174,
+      0.029067486210669742
+    ],
+    "wilcoxon_statistic": 19.0,
+    "wilcoxon_p": 1.8298625946044922e-05,
+    "bo_ahead_on": 21,
+    "n_instances": 25
+  },
+  "note": "Per-instance vectors are stored so the pairing can be redone without re-running anything. run_q48_design_variance.py collapses these to a mean before returning, which is why this claim had no artefact behind it.",
+  "staleness_finding": "The paired figures previously in CLAIMS.md and OPEN-QUESTIONS.md (+0.0219, p=1.8e-5, 21/25) are reproduced exactly by restricting qlogei to its first 8 campaign seeds. They were computed before the 20-seed sweep finished and were never refreshed, because no script existed to refresh them. The arm mean is 0.1532 to four decimals at 8 seeds and at 20, so the staleness was invisible in the headline number."
+}

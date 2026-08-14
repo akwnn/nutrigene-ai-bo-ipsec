@@ -16,7 +16,7 @@ the brief's separate "Best-observed" column is folded into "Rule A regret" below
 
 | arm | Hill d=6 σ.10 | Hill d=6 σ.25 | Hill d=8 σ.10 | Hill d=8 σ.25 | hartmann6 | levy | rosenbrock | ackley |
 |---|---|---|---|---|---|---|---|---|
-| `doe` | ✅ 25 | ✅ 25 | ⚠️ log only | ⚠️ log only | ✅ 25×4 | ✅ 25×4 | ✅ 25×4 | ✅ void |
+| `doe` | ✅ 25 | ✅ 25 | ✅ 25 | ✅ 25 | ✅ 25×4 | ✅ 25×4 | ✅ 25×4 | ✅ void |
 | `qlogei` | ✅ 25 | ✅ 25 | ✅ 25 | ✅ 25 | ✅ 25×4 | ✅ 25×4 | ✅ 25×4 | ✅ void |
 | `qlognei` | ✅ 25 | ✅ 25 | ✅ 25 | ✅ 25 | ❌ | ❌ | ❌ | ❌ |
 | `random` | ✅ 25 | ✅ 25 | ✅ 25 | ✅ 25 | ❌ | ❌ | ❌ | ❌ |
@@ -25,9 +25,10 @@ the brief's separate "Best-observed" column is folded into "Rule A regret" below
 | `coord` | ✅ 25 | ✅ 25 | ✅ 25 | ✅ 25 | ❌ | ❌ | ❌ | ❌ |
 | **`spread_gp`** | **✅ 25×2** | **✅ 25×2** | **✅ 25×2** | **✅ 25×2** | **❌** | **❌** | **❌** | **❌** |
 
-⚠️ **`doe` at d=8 exists only as formatted text in `results/e2-doe-d8.log`** — `e2-doe-d8.json`
-was never written despite the log's last line claiming it (**D17**). It cannot be re-aggregated
-or re-scored.
+✅ **`doe` at d=8 has a machine-readable source after all.** I recorded it as log-text-only on
+D17's wording; `results/e2-doe-d8.json` was in fact written, gitignored, and never force-added.
+Now committed — 100 rows, both cells, 18 fields, regenerating the log exactly. **Re-aggregatable
+and re-scorable.**
 
 Sources: `results/e2-grid.json` (Hill, seven arms) · `results/e2-doe-d8.log` (Hill d=8 `doe`) ·
 `results/q42-families.json` (four external families, `doe` and `qlogei` only) ·
@@ -70,7 +71,7 @@ than about ±0.02 from a single design draw. **Do not quote either alone.**
 
 | arm | d=6 σ.10 | d=6 σ.25 | Δ | d=8 σ.10 | d=8 σ.25 | Δ |
 |---|---|---|---|---|---|---|
-| `doe` | 0.0892 | 0.0958 | **+0.0066** | 0.0948 ⚠️ | 0.0963 ⚠️ | **+0.0015** ⚠️ |
+| `doe` | 0.0892 | 0.0958 | **+0.0066** | 0.0948 | 0.0963 | **+0.0015** |
 | `qlogei` | 0.0874 | 0.1553 | **+0.0679** | 0.0972 | 0.1247 | +0.0275 |
 | `qlognei` | 0.0808 | 0.1532 | **+0.0724** | 0.0849 | 0.1105 | +0.0256 |
 | `random` | 0.1693 | 0.2216 | +0.0523 | 0.1272 | 0.1712 | +0.0440 |
@@ -83,7 +84,7 @@ than about ±0.02 from a single design draw. **Do not quote either alone.**
 +0.0066 where `qlogei` moves +0.0679, a factor of ten. That is the single clearest pattern in the
 table, and it is why the σ=0.25 cell is where BO loses and the σ=0.10 cell is where it ties.
 
-⚠️ d=8 `doe` from log text only (D17). Sources as §2, plus `results/e2-doe-d8.log:32,62`.
+d=8 `doe` from `results/e2-doe-d8.json` (committed 2026-08-14; D17 corrected).
 
 ### Model helps or hurts, at every cell
 

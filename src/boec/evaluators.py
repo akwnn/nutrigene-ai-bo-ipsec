@@ -229,3 +229,125 @@ class LookupEvaluator(Evaluator):
         y, sd = self._rows(X, "evaluate")
         self._n_eval += len(X)
         return y.reshape(-1, 1), (sd**2).reshape(-1, 1)
+
+
+@dataclass
+class ContinuousLookupEvaluator(Evaluator):
+    """Phase 3 in-house replay: discrete candidates at **continuous** coded levels.
+
+    :class:`LookupEvaluator` indexes by ``tuple(np.rint(row).astype(int))`` because the
+    Hall/Ogle design is -1/0/+1 in coded space, where rounding is exact and float
+    tolerance would be the bug. The in-house coating titration is not like that: its
+    coded doses are 0, 0.0256, 0.1026, 0.2308, 0.4872, 1. ``np.rint`` collapses the
+    first four to ``0`` and the design loses two thirds of its levels to a silent key
+    collision. So this class matches with :func:`numpy.isclose` instead, and
+    ``LookupEvaluator`` is left exactly as it is -- Phase 2 replay depends on it.
+
+    A proposal that is not in the table is a :class:`KeyError`, not the nearest
+    neighbour, for the same reason as Phase 2: interpolating would let the replay claim
+    a coating nobody ran.
+
+    Args:
+        X_table: ``(n, d)`` coded design, one row per measured tube.
+        y_table: ``(n,)`` response. ``nan`` marks a condition with no usable value;
+            proposing it raises rather than returning ``nan`` into the GP.
+        sd_table: ``(n,)`` dispersion, ``nan`` where unavailable. n = 1 per level in
+            this drop, so it is ``nan`` throughout and ``sd_floor`` does the work.
+        metric: what the number is. Requirement 7, travels on every row.
+        sd_floor: variance floor. Required positive: zero would tell the GP the
+            condition is known exactly, which is the least warranted claim available.
+        atol: absolute tolerance for matching a proposal to a table row. The tightest
+            gap in the coating design is 0.0256 coded, so 1e-9 is four orders of
+            magnitude clear of ever merging two real levels.
+    """
+
+    X_table: np.ndarray
+    y_table: np.ndarray
+    sd_table: np.ndarray
+    metric: MetricIdentity
+    sd_floor: float = 0.05
+    atol: float = 1e-9
+    _n_eval: int = 0
+
+    def __post_init__(self) -> None:
+        self.X_table = np.asarray(self.X_table, dtype=float)
+        self.y_table = np.asarray(self.y_table, dtype=float).ravel()
+        self.sd_table = np.asarray(self.sd_table, dtype=float).ravel()
+        if not (len(self.X_table) == len(self.y_table) == len(self.sd_table)):
+            raise ValueError(
+                f"table lengths disagree: X {len(self.X_table)}, y {len(self.y_table)}, "
+                f"sd {len(self.sd_table)}"
+            )
+        if self.X_table.ndim != 2:
+            raise ValueError(f"X_table must be (n, d); got shape {self.X_table.shape}")
+        if self.sd_floor <= 0:
+            raise ValueError(
+                f"sd_floor must be positive, got {self.sd_floor}. Zero would assert the "
+                "response is known exactly at conditions with no dispersion estimate."
+            )
+        self._check_rows_are_distinguishable()
+
+    def _check_rows_are_distinguishable(self) -> None:
+        """Two table rows within ``atol`` would make lookup order-dependent."""
+        for i in range(len(self.X_table)):
+            for j in range(i + 1, len(self.X_table)):
+                if np.allclose(self.X_table[i], self.X_table[j], rtol=0.0, atol=self.atol):
+                    raise ValueError(
+                        f"rows {i} and {j} are identical within atol={self.atol}: "
+                        f"{self.X_table[i].tolist()}. Lookup would silently pick one."
+                    )
+
+    @property
+    def n_evaluations(self) -> int:
+        return self._n_eval
+
+    @property
+    def candidates(self) -> np.ndarray:
+        """``(k, d)`` conditions that can be proposed -- those with a response."""
+        return self.X_table[~np.isnan(self.y_table)]
+
+    def _rows(self, X: np.ndarray, who: str) -> tuple[np.ndarray, np.ndarray]:
+        X = np.asarray(X, dtype=float)
+        if X.ndim != 2:
+            raise ValueError(f"X must be (n, d); got shape {X.shape}")
+        if X.shape[1] != self.X_table.shape[1]:
+            raise ValueError(
+                f"X has {X.shape[1]} columns; table has {self.X_table.shape[1]}"
+            )
+        y = np.empty(len(X))
+        sd = np.empty(len(X))
+        for k, row in enumerate(X):
+            hits = np.where(
+                np.all(np.isclose(self.X_table, row, rtol=0.0, atol=self.atol), axis=1)
+            )[0]
+            if hits.size == 0:
+                raise KeyError(
+                    f"{who}: condition {row.tolist()} is not in the lab table. A replay "
+                    f"may only propose measured tubes; interpolating would claim a "
+                    f"coating nobody ran. Use `candidates`."
+                )
+            i = int(hits[0])
+            if np.isnan(self.y_table[i]):
+                raise ValueError(
+                    f"{who}: condition {row.tolist()} is in the design but has no "
+                    f"response yet -- it is ungated. Use `candidates`."
+                )
+            y[k] = self.y_table[i]
+            s = self.sd_table[i]
+            sd[k] = self.sd_floor if np.isnan(s) else max(float(s), self.sd_floor)
+        return y, sd
+
+    def truth(self, X: np.ndarray) -> np.ndarray:
+        """``(n, 1)`` the measured value, for SCORING only.
+
+        Same caveat as :meth:`LookupEvaluator.truth`, and one more: there is no
+        noiseless ground truth in a wet-lab replay, and with n = 1 per level there is
+        not even a replicate mean. This returns exactly what :meth:`evaluate` returns.
+        Present for interface parity with Phase 2 and no more than that.
+        """
+        return self._rows(X, "truth")[0].reshape(-1, 1)
+
+    def evaluate(self, X: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+        y, sd = self._rows(X, "evaluate")
+        self._n_eval += len(X)
+        return y.reshape(-1, 1), (sd**2).reshape(-1, 1)

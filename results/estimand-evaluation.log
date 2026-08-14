@@ -1,0 +1,97 @@
+================================================================================================
+  SECTION 1 — the budget at which rule A stops rewarding search
+================================================================================================
+  source: results/q52-floor.json | planted space-filling design, 25 instances
+  budgets: [24, 48, 96, 192, 384]
+
+  d=6 sigma=0.25  <-- registered primary
+    n               24        48        96       192       384
+    rule A      0.1219    0.1330    0.1292    0.1291    0.1292
+    rule C      0.0924    0.0913    0.1198    0.0781    0.0802
+    rule A minimises at n=24; n=384 minus n=24 = +0.0073 [+0.0019, +0.0132] WORSE with more budget, CI clear of zero
+    rule C, n=384 minus n=24   = -0.0122 [-0.0265, +0.0046]
+    registered budget 48 is AT OR ABOVE the crossover
+
+  d=6 sigma=0.1
+    n               24        48        96       192       384
+    rule A      0.0432    0.0540    0.0593    0.0684    0.0746
+    rule C      0.0421    0.0462    0.0692    0.0535    0.0424
+    rule A minimises at n=24; n=384 minus n=24 = +0.0314 [+0.0281, +0.0348] WORSE with more budget, CI clear of zero
+    rule C, n=384 minus n=24   = +0.0003 [-0.0085, +0.0087]
+    registered budget 48 is AT OR ABOVE the crossover
+
+  d=8 sigma=0.25
+    n               24        48        96       192       384
+    rule A      0.1214    0.1324    0.1270    0.1334    0.1279
+    rule C      0.0810    0.0917    0.1061    0.0861    0.0777
+    rule A minimises at n=24; n=384 minus n=24 = +0.0066 [+0.0008, +0.0130] WORSE with more budget, CI clear of zero
+    rule C, n=384 minus n=24   = -0.0032 [-0.0181, +0.0118]
+    registered budget 48 is AT OR ABOVE the crossover
+
+  d=8 sigma=0.1
+    n               24        48        96       192       384
+    rule A      0.0425    0.0562    0.0622    0.0733    0.0718
+    rule C      0.0313    0.0516    0.0690    0.0566    0.0528
+    rule A minimises at n=24; n=384 minus n=24 = +0.0293 [+0.0247, +0.0342] WORSE with more budget, CI clear of zero
+    rule C, n=384 minus n=24   = +0.0214 [+0.0156, +0.0277]
+    registered budget 48 is AT OR ABOVE the crossover
+
+================================================================================================
+  SECTION 2 — probability of correct selection, P(regret <= eps)
+================================================================================================
+  source: results/e2-grid.json + results/e2-doe-d8.json | 50 campaigns per arm-cell
+  the ONLY alternative estimand computable from stored data: it needs regret alone
+
+  d=6 sigma=0.25  <-- registered primary
+    arm         mean reg     0.3    0.25     0.2    0.15    0.12     0.1    0.08    0.05
+    coord         0.1420    1.00    0.92    0.84    0.54    0.40    0.36    0.14    0.00
+    doe           0.0958    1.00    1.00    1.00    0.96    0.78    0.58    0.32    0.08
+    lhs           0.1270    1.00    0.98    0.94    0.62    0.48    0.32    0.28    0.06
+    qlogei        0.1553    0.98    0.92    0.76    0.52    0.30    0.24    0.14    0.04
+    qlognei       0.1532    1.00    0.86    0.70    0.58    0.40    0.22    0.14    0.08
+    random        0.2216    0.92    0.66    0.38    0.10    0.04    0.02    0.00    0.00
+    sobol         0.1724    0.90    0.80    0.60    0.48    0.36    0.24    0.14    0.04
+    --- qlogei minus doe (negative = DoE better) ---
+    mean regret   +0.0595
+    PCS diff         -0.02   -0.08   -0.24   -0.44   -0.48   -0.34   -0.18   -0.04   (positive = BO selects correctly more often)
+
+  d=6 sigma=0.1
+    arm         mean reg     0.3    0.25     0.2    0.15    0.12     0.1    0.08    0.05
+    coord         0.0880    1.00    1.00    1.00    0.94    0.82    0.66    0.46    0.10
+    doe           0.0892    1.00    1.00    1.00    0.98    0.86    0.68    0.34    0.12
+    lhs           0.1027    1.00    1.00    0.98    0.82    0.66    0.50    0.38    0.12
+    qlogei        0.0874    1.00    1.00    1.00    0.90    0.76    0.66    0.48    0.22
+    qlognei       0.0808    1.00    1.00    1.00    0.96    0.88    0.70    0.52    0.22
+    random        0.1693    1.00    0.92    0.72    0.30    0.24    0.12    0.08    0.00
+    sobol         0.1210    1.00    0.98    0.94    0.74    0.54    0.34    0.18    0.04
+    --- qlogei minus doe (negative = DoE better) ---
+    mean regret   -0.0018
+    PCS diff         +0.00   +0.00   +0.00   -0.08   -0.10   -0.02   +0.14   +0.10   (positive = BO selects correctly more often)
+
+  d=8 sigma=0.25
+    arm         mean reg     0.3    0.25     0.2    0.15    0.12     0.1    0.08    0.05
+    coord         0.1926    0.94    0.82    0.58    0.20    0.14    0.14    0.08    0.00
+    doe           0.0963    1.00    1.00    1.00    0.98    0.84    0.58    0.22    0.04
+    lhs           0.1627    0.96    0.88    0.70    0.48    0.30    0.22    0.14    0.04
+    qlogei        0.1247    0.98    0.96    0.94    0.66    0.48    0.38    0.28    0.12
+    qlognei       0.1105    1.00    1.00    0.98    0.76    0.54    0.44    0.28    0.10
+    random        0.1712    0.98    0.90    0.78    0.42    0.14    0.04    0.00    0.00
+    sobol         0.1804    0.96    0.80    0.50    0.30    0.26    0.20    0.16    0.10
+    --- qlogei minus doe (negative = DoE better) ---
+    mean regret   +0.0284
+    PCS diff         -0.02   -0.04   -0.06   -0.32   -0.36   -0.20   +0.06   +0.08   (positive = BO selects correctly more often)
+
+  d=8 sigma=0.1
+    arm         mean reg     0.3    0.25     0.2    0.15    0.12     0.1    0.08    0.05
+    coord         0.1053    1.00    1.00    1.00    0.82    0.64    0.48    0.28    0.12
+    doe           0.0948    1.00    1.00    1.00    1.00    0.94    0.60    0.22    0.00
+    lhs           0.1260    1.00    1.00    0.92    0.70    0.46    0.34    0.20    0.06
+    qlogei        0.0972    1.00    1.00    1.00    0.90    0.72    0.54    0.34    0.12
+    qlognei       0.0849    1.00    1.00    0.98    0.94    0.80    0.64    0.44    0.28
+    random        0.1272    1.00    1.00    0.94    0.70    0.42    0.32    0.16    0.04
+    sobol         0.0968    1.00    1.00    0.92    0.76    0.68    0.62    0.48    0.22
+    --- qlogei minus doe (negative = DoE better) ---
+    mean regret   +0.0024
+    PCS diff         +0.00   +0.00   +0.00   -0.10   -0.22   -0.06   +0.12   +0.12   (positive = BO selects correctly more often)
+
+  written to results/estimand-evaluation.json
