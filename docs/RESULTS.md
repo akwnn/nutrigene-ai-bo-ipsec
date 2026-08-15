@@ -1495,3 +1495,215 @@ Kept together because they are the most informative rows in this file.
 **Correct predictions, for balance:** **Q53's primary — the first correct *headline* prediction in the project: `spread_gp` loses to qLogEI on Hartmann6 at all four cells under both rules, 8 of 8 contrasts, every Holm-adjusted p ≤ 0.0047, with the falsifier not firing**; Q33's headline; Q34's registered primary (all four
 cells); Q42's secondary prediction that the scoring effect would survive on every family;
 Q35's registered commitment to report all three scorings whichever way it came out; and Q47's registered statement that a two-tier arm losing above the expensive readout's own correlation would be a harness bug — it never lost there; and Hartmann6 at d=8, where the reversal was predicted not to reproduce and BO's margin was predicted to widen — both held (+0.246 → +0.319 at σ=0.25, +0.346 → +0.413 at σ=0.10).
+
+---
+
+## Q55 — oracle-best beside rule A, both arms. **Most of the classical arm's headline lead is identification, not search.** `current`
+
+**Ran:** `scripts/rescore_oracle_best.py` · `results/q55-oracle-best.json` ·
+Prompt 2 of `docs/PROMPTS-NEXT.md`, registered before the script existed.
+**Status:** current
+
+### Why
+
+Every headline in this project reports **rule A**: locate by the noisy reading, score the truth
+there. A second quantity — **oracle-best**, the truth at the best well the campaign actually
+*ran* — did not exist anywhere on disk for BO, because `e2-grid.json` stores one `regret` per row
+and nothing else. Without it, "DoE tested better conditions" and "researchers using DoE picked a
+better well" could not be told apart, and §7 of the manuscript listed *"BO R_search is not stored,
+so search versus identification is unseparated"* as a make-or-break gap.
+
+Q49's 61% identification share is LHS at n=192, not the E2 BO campaign, so it could not be
+substituted. The column had to be regenerated: 200 BO campaigns and 200 classical pipelines.
+
+### The gate came first
+
+The published rule-A column reproduced **per row at |Δ| = 0.000e+00 for all 200 BO and all 200 DoE
+rows**, and all twelve published cell means reproduced to 5e-05. Only then was the new column
+beside it read. Prompt 2 §3: *"If the gate fails, the campaign is not reproduced and the new column
+is worthless."*
+
+### Result — both arms are far better than they can tell, and BO more so
+
+| cell | BO rule A | BO oracle-best | BO gap | DoE rule A | DoE oracle-best | DoE gap | BO id% | DoE id% |
+|---|---|---|---|---|---|---|---|---|
+| d=6 σ=0.25 | 0.1553 | 0.0755 | **+0.0797** | 0.0958 | 0.0597 | +0.0361 | 8% | 12% |
+| d=6 σ=0.10 | 0.0874 | 0.0496 | +0.0378 | 0.0892 | 0.0544 | +0.0348 | 18% | 16% |
+| d=8 σ=0.25 | 0.1247 | 0.0702 | +0.0545 | 0.0963 | 0.0575 | +0.0388 | 12% | 14% |
+| d=8 σ=0.10 | 0.0972 | 0.0653 | +0.0319 | 0.0948 | 0.0500 | +0.0448 | 14% | **2%** |
+
+`id%` is how often the noisy argmax **is** the true argmax among visited points. It is between
+**2% and 18%**. Neither arm can identify its own best well, and the identification gap
+(+0.032 to +0.080 regret) is of the same order as every between-arm contrast this project reports.
+
+> **The estimand distinction is not pedantry.** At the primary cell the two locators are 0.0797
+> apart on the same 48 wells of the same campaign. Any sentence equating "best observed" with "the
+> best point evaluated" is false by that margin.
+
+### The headline: 73% of the classical arm's lead is the assay, not the search
+
+| cell | rule A (DoE−BO) | oracle-best (DoE−BO) | same sign? | share of the lead that is identification |
+|---|---|---|---|---|
+| d=6 σ=0.25 | **−0.0595** [−0.0797,−0.0375] p=0.0000 | **−0.0158** [−0.0257,−0.0062] p=0.0067 | yes | **73%** |
+| d=6 σ=0.10 | +0.0018 [−0.0086,+0.0117] p=0.6915 | +0.0048 [−0.0030,+0.0131] p=0.2872 | yes | — (null both) |
+| d=8 σ=0.25 | **−0.0284** [−0.0447,−0.0139] p=0.0023 | −0.0127 [−0.0251,−0.0008] p=0.0588 | yes | **55%** |
+| d=8 σ=0.10 | −0.0024 [−0.0095,+0.0053] p=0.4261 | **−0.0153** [−0.0254,−0.0059] p=0.0056 | yes | — (see below) |
+
+**The sign never flips.** Prompt 2 §7 asked for both to be written if they disagreed in sign; they
+do not, so the licensed sentences are:
+
+* *"Researchers using DoE selected a better well from the noisy readings"* — **true at both σ=0.25
+  cells**, and it is the existing headline.
+* *"DoE tested better conditions"* — **also true**, at d=6 σ=0.25, d=8 σ=0.10, and marginally at
+  d=8 σ=0.25 — but **at roughly a quarter to a half of the magnitude.** At the primary cell the
+  classical arm's advantage shrinks from 0.0595 to 0.0158 once both arms are scored on what they
+  actually ran.
+
+**d=8 σ=0.10 is the interesting cell and it runs the other way.** Rule A is null there (p=0.4261)
+while oracle-best is clearly negative (−0.0153, p=0.0056): the classical arm **tested materially
+better conditions and the noisy readout hid it entirely** — its identification rate at that cell is
+**2%**, the worst in the grid.
+
+### BO's identification problem is significantly worse than DoE's, except where it is better
+
+The paired difference of the two gaps, per landscape:
+
+| cell | BO gap − DoE gap | p |
+|---|---|---|
+| d=6 σ=0.25 | **+0.0436** [+0.0224,+0.0635] | 0.0004 |
+| d=6 σ=0.10 | +0.0029 [−0.0077,+0.0136] | 0.7310 |
+| d=8 σ=0.25 | **+0.0157** [+0.0022,+0.0297] | 0.0451 |
+| d=8 σ=0.10 | **−0.0129** [−0.0228,−0.0029] | 0.0422 |
+
+This is the mechanism, and it is the one a replicated design predicts. BO concentrates its wells
+where values are near-optimal and differences are within noise, so its noisy argmax is a lottery
+among near-ties; the CCD replicates its centre and spreads its remaining points, so its argmax is
+better determined. **It reverses at d=8 σ=0.10**, and that cell is not explained here.
+
+### What this does not license
+
+Nothing about which method a lab should use. It re-attributes an existing result: the classical
+arm's rule-A advantage is mostly a statement about **selecting from noisy readings**, and only
+partly about **where the campaign looked.** A lab that carries forward replicates, or a confirmation
+run, or a posterior mean — rather than a single noisy argmax — is not operating under rule A at all.
+
+---
+
+## Q56 — `doe_ascent`, the classical arm allowed to walk. **It erases BO's rule-A arrival advantage and produces this project's first defined savings ratios.** `current`
+
+**Ran:** `scripts/run_q56_doe_ascent.py` · `results/q56-doe-ascent.json` ·
+new module `src/boec/sequential_rsm.py`, 19 tests in `tests/test_sequential_rsm.py` written first.
+Prompt 1 of `docs/PROMPTS-NEXT.md`.
+**Status:** current
+
+### Why
+
+Every cost curve in this project carries a concession registered before its numbers landed:
+*"biased in favour of BO, because the classical arm has no steepest ascent."* `doe_repeat` runs the
+same 48-well pipeline four times with fresh seeds and **never moves its design region**, while
+qLogEI re-aims after every batch of four. Until an arm existed that was allowed to walk, *"BO
+reaches quality targets in fewer experiments"* was not a claim this project could make.
+
+`boec.sequential_rsm` is the textbook Box–Wilson arm: screen, CCD, classify the stationary point,
+step along the steepest-ascent path, relocate the centre to the best measured point on it, rebuild
+the CCD there, repeat. `doe_repeat` is **kept** — the contrast *ascent versus repeated CCD* is the
+point.
+
+### It genuinely walks
+
+| σ | cycles | wells spent | relocations | converged early | fitted surface |
+|---|---|---|---|---|---|
+| 0.25 | 4.0 (1–5) | 151/200 | 3.4 | 54% | 8 maximum, **191 saddle** |
+| 0.10 | 3.1 (1–5) | 120/200 | 2.3 | 84% | 40 maximum, 115 saddle |
+
+The saddle count is Q35's finding reproduced on a moving design: the fitted quadratic almost never
+has an interior maximum, which is exactly the condition that makes relocation the correct move
+rather than an optional refinement.
+
+### Result 1 — on rule A, letting the design walk closes the gap with BO
+
+**No rule-A arrival contrast survives Holm over all 26 tests.** At the loose end the two arms are
+indistinguishable: 21/25 against 21/25 at σ=0.25 τ=0.15, paired savings **0.95 [0.56, 1.38]**;
+24/25 against 25/25 at σ=0.10 τ=0.15.
+
+**Q52's single surviving arrival result does not survive this arm.** Q52 reported σ=0.10, rule A,
+τ=0.10 — BO 24/25 against `doe_repeat` 13/25, eleven discordant to nil, the only cell surviving
+Holm over ten tests, and the sentence the cost-curve figure headlines. Against `doe_ascent` the
+same cell is **16/25 against 24/25, eight discordant to nil, raw p = 0.0078, Holm 0.0938 over 26
+tests and 0.0703 within the rule-A family of ten.** The within-family figure is the like-for-like
+comparison against Q52, which corrected over ten; **the result fails at either correction.**
+
+> **The concession was load-bearing.** *"At a quiet assay, BO gets there at all, far more often"*
+> was a property of a classical arm that was not allowed to move. It does not survive one that is.
+
+### Result 2 — on rule C, BO still wins decisively, but ascent transforms the classical arm
+
+| σ=0.10, rule C | ascent | qLogEI | repeat |
+|---|---|---|---|
+| τ=0.30 | **21/25** | 25/25 | 9/25 |
+| τ=0.25 | **17/25** | 25/25 | 5/25 |
+| τ=0.20 | **15/25** | 25/25 | 3/25 |
+| τ=0.15 | **13/25** | 25/25 | 2/25 |
+
+Relocation roughly **triples to sextuples** the classical arm's chance of ever producing a
+recommendation that good. It still loses to qLogEI at every one of those targets. At σ=0.25 rule C
+the classical arm remains near-hopeless under either policy (0–8 of 25), consistent with Q52's
+unconstrained rule-C regret of 0.4163.
+
+### Result 3 — the first defined savings ratios in this project
+
+Q52 could not compute a single fold-saving on rule C: `doe_repeat` was censored above 50%
+everywhere, and the registered rule forbids a point estimate there. `doe_ascent` arrives often
+enough at σ=0.10 that four cells are finally **defined**:
+
+| σ=0.10, rule C | qLogEI wells / doe_ascent wells | n pairs |
+|---|---|---|
+| τ=0.30 | **0.10** [0.09, 0.11] | 21 |
+| τ=0.25 | **0.09** [0.08, 0.10] | 17 |
+| τ=0.20 | **0.15** [0.09, 0.25] | 15 |
+| τ=0.15 | **0.23** [0.11, 0.42] | 13 |
+
+**Read these with the granularity caveat, not past it.** `doe_ascent` cannot answer *at all* before
+53 wells — a screen plus a complete CCD plus one confirmation — whereas qLogEI has a posterior after
+its 14-point opening. At loose targets the ratio is therefore dominated by *when each arm can first
+speak*, not by adaptivity. That is a real property of the classical pipeline, and it is the honest
+reading of a 10× number that would otherwise look like a search-efficiency claim. On **rule A**,
+where the classical arm is competitive, every defined ratio is **0.73 to 1.02 — that is, no saving
+at all.**
+
+### The ascent rule is load-bearing, and it is declared rather than absorbed
+
+Prompt 1 words the stopping rule as *"step along the path until the measured response stops
+improving; move to the last improving point."* Taken literally under noise that is a coin flip on
+the first step: a measured path of `[0.999, 1.228, 1.028, 0.835, 0.641]` against a centre reference
+of `1.021` stops at step one, never relocates, and the arm silently degenerates into `doe_repeat`.
+Myers, Montgomery & Anderson-Cook instead take the **maximum along the path**, which is the
+registered primary here. Both were run:
+
+* `path_argmax` (primary): **229 arrivals** over 650 landscape-targets.
+* `first_decline` (literal): **140**.
+* **4 of 26 cells flip verdict between them**, all at σ=0.10.
+
+The choice is therefore not cosmetic and is reported in the result rather than left in a docstring.
+
+### Two defects this arm surfaced, both found by its own tests
+
+1. **The ascent path was clipped to the CCD box.** A steepest-ascent path that cannot leave the
+   region it was fitted on cannot relocate the design — it is precisely `doe_repeat`'s limitation
+   wearing the new arm's name. Caught by the relocation test.
+2. **The improvement reference was the best of 27 noisy CCD readings.** That is an inflated order
+   statistic sitting 0.22–0.60 above the centre estimate at σ=0.25, so no single noisy path point
+   could beat it and every campaign returned exactly one cycle. The reference must be the CCD's own
+   **centre replicates**, which is what centre points are in the design for. A third, smaller bug
+   fell out of the same investigation: because the CCD box is clamped at the factor bounds, the
+   replicates sit at the box **midpoint**, which is not the requested centre whenever the box
+   clamps — so the gradient origin, the path start and the reference all now read one point.
+
+### What is retired, and what is not
+
+The sentence *"cost curves are biased in favour of BO because the classical arm has no steepest
+ascent"* now applies to **`doe_repeat` only**. It is retired for `doe_ascent`, and retiring it
+**cost BO its one surviving arrival result.** What is *not* retired: BO still wins rule C
+decisively at every cell, and the N=48 matched-budget tables are untouched — at a budget that
+affords exactly one CCD there is nothing to relocate, so `run_doe_arm` remains the right comparator
+there.

@@ -93,7 +93,23 @@ N_DRAWS = 5
 #: checkpoint so that draw d at checkpoint n can never collide with draw 0 at some other
 #: checkpoint, which would silently correlate two supposedly independent draws.
 DRAW_STRIDE = 100_000
-GATE_TOL = 1e-12
+
+#: The two rules reproduce to different precisions, and pretending otherwise would mean
+#: loosening the strict one until the loose one passed.
+#:
+#: **Rule A is gated at exact equality.** It is a deterministic function of the Latin
+#: hypercube and the oracle's noise stream — no optimiser is involved — so any drift at
+#: all means a different design or a different noise draw. Measured: 44 of 44 stored
+#: values reproduced at |delta| = 0.
+#:
+#: **Rule C is gated at 1e-6**, the reproducibility floor of `constrained_argmax`: 20
+#: restarts of L-BFGS-B over 4096 raw samples on a GP posterior mean, where BLAS
+#: threading decides ties between near-equal local optima. Measured: 38 of 44 exact, the
+#: other 6 within 2.6e-07. That is locator jitter, not a different campaign — and
+#: :func:`assert_jitter_cannot_move_an_arrival` proves it cannot change a single arrival
+#: verdict, which is the only thing rule C is used for downstream.
+GATE_TOL_A = 0.0
+GATE_TOL_C = 1e-6
 
 OUT = ROOT / "results" / "q54-hill-spread-gp-draws.json"
 Q52 = ROOT / "results" / "q52-budget-to-target.json"
@@ -110,8 +126,9 @@ def _bounds() -> torch.Tensor:
                         torch.ones(DIM, dtype=torch.double)])
 
 
-def rounds_for_spread_gp(_n: int) -> int:
-    """One. The whole design is plated at once — that is the arm's entire claim."""
+def rounds_for_spread_gp(n: int) -> int:
+    """One, whatever ``n`` is. The whole design plates at once — the arm's entire claim."""
+    del n
     return 1
 
 
@@ -140,7 +157,8 @@ def _provenance(args) -> dict:
         gpytorch=gpytorch.__version__, numpy=np.__version__, scipy=scipy.__version__,
         config=dict(dim=DIM, sigmas=list(SIGMAS), n_instances=args.n_instances,
                     cap=CAP, checkpoints=list(CHECKPOINTS), n_draws=N_DRAWS,
-                    draw_stride=DRAW_STRIDE, gate_tol=GATE_TOL,
+                    draw_stride=DRAW_STRIDE,
+                    gate_tol_rule_a=GATE_TOL_A, gate_tol_rule_c=GATE_TOL_C,
                     targets_rule_c=list(TARGETS_RULE_C),
                     targets_rule_a=list(TARGETS_RULE_A),
                     censor_limit=CENSOR_LIMIT,
@@ -183,14 +201,51 @@ def one_draw(inst, sigma: float, draw: int) -> dict:
     return dict(rule_a=a_curve, rule_c=c_curve)
 
 
-def gate_draw_zero(rows: list[dict], stored: list[dict]) -> dict:
-    """Draw 0 must reproduce the committed Q52 spread_gp curves exactly.
+def assert_jitter_cannot_move_an_arrival(rows: list[dict], margin: float) -> dict:
+    """No rule-C value sits within ``margin`` of a target it is tested against.
 
-    Raises rather than warning. A drifted draw 0 means the arm being measured here is not
-    the arm Q52 measured, and then draws 1-4 are five samples from some other lottery.
+    This is what turns *"the locator jitter is small"* into *"the locator jitter cannot
+    change a single verdict in this study"*. Rule C is used downstream for exactly one
+    thing — whether a curve crosses a target — so if every stored value is further than
+    the gate tolerance from every target, a perturbation bounded by that tolerance
+    provably leaves every arrival where it is.
+
+    Raises if any value lands inside the margin: there the arrival really would be a
+    coin-flip on BLAS scheduling, and it would have to be reported as such rather than
+    quietly counted as a hit or a miss.
+    """
+    closest = float("inf")
+    where: tuple = ("", 0.0, 0, "", 0.0)
+    for r in rows:
+        for n, v in r["rule_c"].items():
+            for t in TARGETS_RULE_C:
+                gap = abs(float(v) - t)
+                if gap < closest:
+                    closest, where = gap, (r["instance_id"], r["sigma"], r["draw"], n, t)
+    if closest <= margin:
+        raise AssertionError(
+            f"a rule-C value sits {closest:.3e} from target {where[4]} at instance "
+            f"{where[0]} sigma={where[1]} draw={where[2]} n={where[3]}, within the "
+            f"locator's {margin:g} reproducibility floor. That arrival is decided by "
+            "floating-point scheduling and must be reported as indeterminate, not "
+            "counted.")
+    return dict(closest_approach=closest, margin=margin,
+                at=dict(zip(("instance_id", "sigma", "draw", "n", "target"), where)))
+
+
+def gate_draw_zero(rows: list[dict], stored: list[dict]) -> dict:
+    """Draw 0 must reproduce the committed Q52 spread_gp curves.
+
+    Rule A at exact equality, rule C at the locator's floor — see :data:`GATE_TOL_A`
+    and :data:`GATE_TOL_C` for why those are different numbers and why that is not a
+    weakening. Raises rather than warning: a drifted draw 0 means the arm measured here
+    is not the arm Q52 measured, and then draws 1-4 are five samples from another lottery.
     """
     want = {(r["instance_id"], r["sigma"]): r["arms"]["spread_gp"] for r in stored}
-    worst, n_checked = 0.0, 0
+    tol = {"rule_a": GATE_TOL_A, "rule_c": GATE_TOL_C}
+    worst = {"rule_a": 0.0, "rule_c": 0.0}
+    n_checked = {"rule_a": 0, "rule_c": 0}
+    n_exact = {"rule_a": 0, "rule_c": 0}
     for r in rows:
         if r["draw"] != 0:
             continue
@@ -201,16 +256,21 @@ def gate_draw_zero(rows: list[dict], stored: list[dict]) -> dict:
             for n, got in r[rule].items():
                 exp = want[key][rule][str(n)]
                 delta = abs(float(got) - float(exp))
-                n_checked += 1
-                if delta > worst:
-                    worst = delta
-                if delta > GATE_TOL:
+                n_checked[rule] += 1
+                n_exact[rule] += delta == 0.0
+                worst[rule] = max(worst[rule], delta)
+                if delta > tol[rule]:
                     raise AssertionError(
                         f"draw 0 does not reproduce Q52 at instance {key[0]} "
                         f"sigma={key[1]} {rule} n={n}: {got:.15f} vs {exp:.15f} "
-                        f"(|delta|={delta:.3e} > {GATE_TOL:g}). This script is not "
+                        f"(|delta|={delta:.3e} > {tol[rule]:g}). This script is not "
                         "running Q52's arm, so none of draws 1-4 describe it either.")
-    return dict(n_checked=n_checked, worst_abs_delta=worst, tol=GATE_TOL)
+    return dict(
+        rule_a=dict(n=n_checked["rule_a"], n_exact=n_exact["rule_a"],
+                    worst_abs_delta=worst["rule_a"], tol=GATE_TOL_A),
+        rule_c=dict(n=n_checked["rule_c"], n_exact=n_exact["rule_c"],
+                    worst_abs_delta=worst["rule_c"], tol=GATE_TOL_C),
+        arrival_invariance=assert_jitter_cannot_move_an_arrival(rows, GATE_TOL_C))
 
 
 # ---------------------------------------------------------------------------
@@ -334,7 +394,8 @@ def main() -> None:
     print(f"{RULE}\nQ54 — Hill spread+GP at {N_DRAWS} design draws\n{RULE}")
     print(f"  d={DIM}, sigma in {SIGMAS}, {args.n_instances} instances, cap {CAP}")
     print(f"  checkpoints {CHECKPOINTS}")
-    print(f"  draw 0 = Q52's own seed; gated against {Q52.name} at {GATE_TOL:g}")
+    print(f"  draw 0 = Q52's own seed; gated against {Q52.name} — rule A exact, "
+          f"rule C at {GATE_TOL_C:g}")
     print(f"  qLogEI is READ from {Q52.name}, never re-run — the contrast stays paired\n")
 
     ensemble = load_ensemble(dim=DIM)[:args.n_instances]
@@ -372,8 +433,15 @@ def main() -> None:
                   f"~{el/k*(len(todo)-k)/60:>5.1f} min left", flush=True)
 
     gate = gate_draw_zero(done, stored)
-    print(f"\n  DRAW-0 GATE PASSED — {gate['n_checked']} stored values reproduced, "
-          f"worst |delta| = {gate['worst_abs_delta']:.3e}")
+    print(f"\n  DRAW-0 GATE PASSED")
+    for rule in ("rule_a", "rule_c"):
+        g = gate[rule]
+        print(f"    {rule}: {g['n_exact']}/{g['n']} reproduced exactly, "
+              f"worst |delta| = {g['worst_abs_delta']:.3e}  (tol {g['tol']:g})")
+    inv = gate["arrival_invariance"]
+    print(f"    no rule-C value comes closer than {inv['closest_approach']:.3e} to any "
+          f"target, so locator jitter\n    bounded by {inv['margin']:g} cannot move a "
+          "single arrival verdict in this study.")
     if args.gate_only:
         return
 

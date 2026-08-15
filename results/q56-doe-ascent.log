@@ -1,0 +1,166 @@
+====================================================================================================
+Q56 — doe_ascent (sequential RSM with steepest ascent)
+====================================================================================================
+  d=6, sigma in (0.25, 0.1), 25 landscapes x 2 seeds, cap 200
+  screen 20 + cycles of 33 (CCD 27 + ascent <=5 + confirm 1), step 0.1
+  rounds = 3 at one cycle, 11 at five — registered, not fitted
+  comparators read from q52-budget-to-target.json, never re-run
+
+  resuming — 200 campaigns already on disk
+  0 campaigns to run on 2 workers
+
+
+====================================================================================================
+  ASCENT RULE: path_argmax (REGISTERED PRIMARY)
+====================================================================================================
+
+  THE CAMPAIGN ITSELF — what ascent actually did
+    sigma=0.25:  cycles 4.0 (min 1, max 5)   wells 151/200   relocations 3.4   converged early 54%
+              fitted surface: maximum 8, saddle 191
+    sigma=0.1:  cycles 3.1 (min 1, max 5)   wells 120/200   relocations 2.3   converged early 84%
+              fitted surface: maximum 40, saddle 115
+
+====================================================================================================
+  ARRIVAL — landscapes reaching the target inside 200 wells
+====================================================================================================
+     sigma  rule  target   ascent   qLogEI   repeat   spread  only asc  only BO       p  Holm26Holm/rule           savings
+      0.25     A    0.15    21/25    21/25    23/25    25/25         2        2  1.0000 1.0000  1.0000   0.95 [0.56,1.38]
+      0.25     A    0.12    13/25    17/25    18/25    24/25         3        7  0.3438 1.0000  1.0000              undef
+      0.25     A    0.10     8/25    14/25    11/25    21/25         3        9  0.1460 0.8760  0.8760              undef
+      0.25     A    0.08     7/25    10/25     6/25    17/25         4        7  0.5488 1.0000  1.0000              undef
+      0.25     A    0.05     1/25     6/25     4/25     9/25         0        5  0.0625 0.5000  0.4375              undef
+      0.25     C    0.30     8/25    25/25     7/25    25/25         0       17  0.0000 0.0003* 0.0002*             undef
+      0.25     C    0.25     3/25    25/25     5/25    25/25         0       22  0.0000 0.0000* 0.0000*             undef
+      0.25     C    0.20     1/25    25/25     4/25    25/25         0       24  0.0000 0.0000* 0.0000*             undef
+      0.25     C    0.15     0/25    24/25     1/25    25/25         0       24  0.0000 0.0000* 0.0000*             undef
+      0.25     C    0.12     0/25    20/25     1/25    25/25         0       20  0.0000 0.0000* 0.0000*             undef
+      0.25     C    0.10     0/25    16/25     0/25    25/25         0       16  0.0000 0.0006* 0.0003*             undef
+      0.25     C    0.08     0/25    10/25     0/25    22/25         0       10  0.0020 0.0293* 0.0098*             undef
+      0.25     C    0.05     0/25     7/25     0/25    15/25         0        7  0.0156 0.1406  0.0312*             undef
+      0.10     A    0.15    24/25    25/25    23/25    25/25         0        1  1.0000 1.0000  1.0000   0.73 [0.41,1.08]
+      0.10     A    0.12    20/25    24/25    20/25    25/25         1        5  0.2188 1.0000  1.0000   0.86 [0.50,1.27]
+      0.10     A    0.10    16/25    24/25    13/25    24/25         0        8  0.0078 0.0938  0.0703   1.02 [0.60,1.48]
+      0.10     A    0.08    13/25    22/25    13/25    23/25         1       10  0.0117 0.1172  0.0938              undef
+      0.10     A    0.05     6/25    18/25     7/25    16/25         2       14  0.0042 0.0544  0.0418*             undef
+      0.10     C    0.30    21/25    25/25     9/25    25/25         0        4  0.1250 0.8750  0.1250   0.10 [0.09,0.11]
+      0.10     C    0.25    17/25    25/25     5/25    25/25         0        8  0.0078 0.0938  0.0234*  0.09 [0.08,0.10]
+      0.10     C    0.20    15/25    25/25     3/25    25/25         0       10  0.0020 0.0293* 0.0098*  0.15 [0.09,0.25]
+      0.10     C    0.15    13/25    25/25     2/25    25/25         0       12  0.0005 0.0078* 0.0029*  0.23 [0.11,0.42]
+      0.10     C    0.12     9/25    25/25     1/25    25/25         0       16  0.0000 0.0006* 0.0003*             undef
+      0.10     C    0.10     8/25    24/25     1/25    25/25         0       16  0.0000 0.0006* 0.0003*             undef
+      0.10     C    0.08     4/25    23/25     1/25    25/25         0       19  0.0000 0.0001* 0.0000*             undef
+      0.10     C    0.05     1/25    18/25     0/25    18/25         0       17  0.0000 0.0003* 0.0002*             undef
+
+    savings = qLogEI wells / doe_ascent wells, paired per landscape, complete cases only.
+    undefined wherever either arm is censored above 50% — the cap is never substituted for an arrival.
+    Holm26 = corrected over all 26 tests. Holm/rule = within each rule's own family (rule_a: 10, rule_c: 16),
+    which is the like-for-like comparison against Q52, whose arrival Holm ran over a family of ten. * = survives at 0.05.
+
+====================================================================================================
+  WHAT THIS LICENSES
+====================================================================================================
+    sigma=0.25 rule C target 0.30: qLogEI arrives more often (0 vs 17 discordant, Holm p=0.0003)
+    sigma=0.25 rule C target 0.25: qLogEI arrives more often (0 vs 22 discordant, Holm p=0.0000)
+    sigma=0.25 rule C target 0.20: qLogEI arrives more often (0 vs 24 discordant, Holm p=0.0000)
+    sigma=0.25 rule C target 0.15: qLogEI arrives more often (0 vs 24 discordant, Holm p=0.0000)
+    sigma=0.25 rule C target 0.12: qLogEI arrives more often (0 vs 20 discordant, Holm p=0.0000)
+    sigma=0.25 rule C target 0.10: qLogEI arrives more often (0 vs 16 discordant, Holm p=0.0006)
+    sigma=0.25 rule C target 0.08: qLogEI arrives more often (0 vs 10 discordant, Holm p=0.0293)
+    sigma=0.1 rule C target 0.20: qLogEI arrives more often (0 vs 10 discordant, Holm p=0.0293)
+    sigma=0.1 rule C target 0.15: qLogEI arrives more often (0 vs 12 discordant, Holm p=0.0078)
+    sigma=0.1 rule C target 0.12: qLogEI arrives more often (0 vs 16 discordant, Holm p=0.0006)
+    sigma=0.1 rule C target 0.10: qLogEI arrives more often (0 vs 16 discordant, Holm p=0.0006)
+    sigma=0.1 rule C target 0.08: qLogEI arrives more often (0 vs 19 discordant, Holm p=0.0001)
+    sigma=0.1 rule C target 0.05: qLogEI arrives more often (0 vs 17 discordant, Holm p=0.0003)
+
+    The sentence 'cost curves are biased in favour of BO because the
+    classical arm has no steepest ascent' now applies to `doe_repeat` ONLY.
+
+====================================================================================================
+  ASCENT RULE: first_decline
+====================================================================================================
+
+  THE CAMPAIGN ITSELF — what ascent actually did
+    sigma=0.25:  cycles 2.1 (min 1, max 5)   wells 91/200   relocations 1.2   converged early 98%
+              fitted surface: maximum 1, saddle 106
+    sigma=0.1:  cycles 2.2 (min 1, max 5)   wells 91/200   relocations 1.2   converged early 100%
+              fitted surface: maximum 19, saddle 90
+
+====================================================================================================
+  ARRIVAL — landscapes reaching the target inside 200 wells
+====================================================================================================
+     sigma  rule  target   ascent   qLogEI   repeat   spread  only asc  only BO       p  Holm26Holm/rule           savings
+      0.25     A    0.15    19/25    21/25    23/25    25/25         2        4  0.6875 1.0000  1.0000   1.01 [0.59,1.46]
+      0.25     A    0.12    12/25    17/25    18/25    24/25         2        7  0.1797 0.7188  0.7188              undef
+      0.25     A    0.10     6/25    14/25    11/25    21/25         2       10  0.0386 0.2700  0.2700              undef
+      0.25     A    0.08     3/25    10/25     6/25    17/25         1        8  0.0391 0.2700  0.2700              undef
+      0.25     A    0.05     1/25     6/25     4/25     9/25         0        5  0.0625 0.3125  0.3125              undef
+      0.25     C    0.30     2/25    25/25     7/25    25/25         0       23  0.0000 0.0000* 0.0000*             undef
+      0.25     C    0.25     1/25    25/25     5/25    25/25         0       24  0.0000 0.0000* 0.0000*             undef
+      0.25     C    0.20     0/25    25/25     4/25    25/25         0       25  0.0000 0.0000* 0.0000*             undef
+      0.25     C    0.15     0/25    24/25     1/25    25/25         0       24  0.0000 0.0000* 0.0000*             undef
+      0.25     C    0.12     0/25    20/25     1/25    25/25         0       20  0.0000 0.0000* 0.0000*             undef
+      0.25     C    0.10     0/25    16/25     0/25    25/25         0       16  0.0000 0.0004* 0.0001*             undef
+      0.25     C    0.08     0/25    10/25     0/25    22/25         0       10  0.0020 0.0215* 0.0039*             undef
+      0.25     C    0.05     0/25     7/25     0/25    15/25         0        7  0.0156 0.1250  0.0156*             undef
+      0.10     A    0.15    24/25    25/25    23/25    25/25         0        1  1.0000 1.0000  1.0000   0.72 [0.40,1.08]
+      0.10     A    0.12    21/25    24/25    20/25    25/25         1        4  0.3750 1.0000  1.0000   0.82 [0.48,1.22]
+      0.10     A    0.10    15/25    24/25    13/25    24/25         0        9  0.0039 0.0391* 0.0352*  1.06 [0.62,1.55]
+      0.10     A    0.08    12/25    22/25    13/25    23/25         1       11  0.0063 0.0571  0.0508              undef
+      0.10     A    0.05     4/25    18/25     7/25    16/25         1       15  0.0005 0.0062* 0.0052*             undef
+      0.10     C    0.30     8/25    25/25     9/25    25/25         0       17  0.0000 0.0002* 0.0001*             undef
+      0.10     C    0.25     5/25    25/25     5/25    25/25         0       20  0.0000 0.0000* 0.0000*             undef
+      0.10     C    0.20     4/25    25/25     3/25    25/25         0       21  0.0000 0.0000* 0.0000*             undef
+      0.10     C    0.15     2/25    25/25     2/25    25/25         0       23  0.0000 0.0000* 0.0000*             undef
+      0.10     C    0.12     1/25    25/25     1/25    25/25         0       24  0.0000 0.0000* 0.0000*             undef
+      0.10     C    0.10     0/25    24/25     1/25    25/25         0       24  0.0000 0.0000* 0.0000*             undef
+      0.10     C    0.08     0/25    23/25     1/25    25/25         0       23  0.0000 0.0000* 0.0000*             undef
+      0.10     C    0.05     0/25    18/25     0/25    18/25         0       18  0.0000 0.0001* 0.0000*             undef
+
+    savings = qLogEI wells / doe_ascent wells, paired per landscape, complete cases only.
+    undefined wherever either arm is censored above 50% — the cap is never substituted for an arrival.
+    Holm26 = corrected over all 26 tests. Holm/rule = within each rule's own family (rule_a: 10, rule_c: 16),
+    which is the like-for-like comparison against Q52, whose arrival Holm ran over a family of ten. * = survives at 0.05.
+
+====================================================================================================
+  WHAT THIS LICENSES
+====================================================================================================
+    sigma=0.25 rule C target 0.30: qLogEI arrives more often (0 vs 23 discordant, Holm p=0.0000)
+    sigma=0.25 rule C target 0.25: qLogEI arrives more often (0 vs 24 discordant, Holm p=0.0000)
+    sigma=0.25 rule C target 0.20: qLogEI arrives more often (0 vs 25 discordant, Holm p=0.0000)
+    sigma=0.25 rule C target 0.15: qLogEI arrives more often (0 vs 24 discordant, Holm p=0.0000)
+    sigma=0.25 rule C target 0.12: qLogEI arrives more often (0 vs 20 discordant, Holm p=0.0000)
+    sigma=0.25 rule C target 0.10: qLogEI arrives more often (0 vs 16 discordant, Holm p=0.0004)
+    sigma=0.25 rule C target 0.08: qLogEI arrives more often (0 vs 10 discordant, Holm p=0.0215)
+    sigma=0.1 rule A target 0.10: qLogEI arrives more often (0 vs 9 discordant, Holm p=0.0391)
+    sigma=0.1 rule A target 0.05: qLogEI arrives more often (1 vs 15 discordant, Holm p=0.0062)
+    sigma=0.1 rule C target 0.30: qLogEI arrives more often (0 vs 17 discordant, Holm p=0.0002)
+    sigma=0.1 rule C target 0.25: qLogEI arrives more often (0 vs 20 discordant, Holm p=0.0000)
+    sigma=0.1 rule C target 0.20: qLogEI arrives more often (0 vs 21 discordant, Holm p=0.0000)
+    sigma=0.1 rule C target 0.15: qLogEI arrives more often (0 vs 23 discordant, Holm p=0.0000)
+    sigma=0.1 rule C target 0.12: qLogEI arrives more often (0 vs 24 discordant, Holm p=0.0000)
+    sigma=0.1 rule C target 0.10: qLogEI arrives more often (0 vs 24 discordant, Holm p=0.0000)
+    sigma=0.1 rule C target 0.08: qLogEI arrives more often (0 vs 23 discordant, Holm p=0.0000)
+    sigma=0.1 rule C target 0.05: qLogEI arrives more often (0 vs 18 discordant, Holm p=0.0001)
+
+    The sentence 'cost curves are biased in favour of BO because the
+    classical arm has no steepest ascent' now applies to `doe_repeat` ONLY.
+
+====================================================================================================
+  DOES THE ANSWER DEPEND ON THE ASCENT RULE?
+====================================================================================================
+    26 cells compared across 2 rules.
+    4 cells where the verdict FLIPS with the rule:
+      sigma=0.1 rule A target 0.05: first_decline=sig, path_argmax=ns
+      sigma=0.1 rule A target 0.10: first_decline=sig, path_argmax=ns
+      sigma=0.1 rule C target 0.25: first_decline=sig, path_argmax=ns
+      sigma=0.1 rule C target 0.30: first_decline=sig, path_argmax=ns
+
+    The choice of ascent rule IS load-bearing. It must be stated in the
+    result, not left to the module docstring.
+
+    how often each rule relocated, and how far it got:
+         path_argmax: 229 arrivals over 650 landscape-targets
+       first_decline: 140 arrivals over 650 landscape-targets
+
+  written to results/q56-doe-ascent.json  (0 min)

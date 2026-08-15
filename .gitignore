@@ -135,3 +135,21 @@ COMMIT_MSG.txt
 # `python scripts/make_cost_curve_page.py`; it asserts the DoE arm is still censored above
 # 50% at every rule-C target and fails loudly if the page headline has gone stale.
 !results/figures/cost-curves.html
+
+# Q54/Q55/Q56 — the three registered runs from docs/PROMPTS-NEXT.md. All three are
+# anchored BY PATH from docs/RESULTS.md and docs/RESEARCH-SUMMARY.md, and none is
+# regenerable in a coffee break: Q55 is 200 BO campaigns (~24 min on 3 workers) and Q54
+# is 250 GP fits at up to n=200 (~2 h). Committing them makes the gates auditable
+# against a stored artefact rather than against a regeneration of themselves — the
+# lesson e2-grid.json is in this file for.
+!results/q54-hill-spread-gp-draws.json
+!results/q55-oracle-best.json
+!results/q56-doe-ascent.json
+
+# The manuscript's Figures 1 and 3. These were untracked AND gitignored while
+# docs/RESEARCH-SUMMARY.md cited all three figures by path, so a clone got a paper with
+# two dangling references and no way to tell they had ever been produced. Figure 2 ships
+# with scripts/make_cost_curve_page.py; these two are still hand-authored and carry
+# twenty hardcoded numbers, which is a defect recorded in docs/TRIAGE.md, not a licence.
+!results/figures/fig1-scoring.html
+!results/figures/fig3-saddle.html

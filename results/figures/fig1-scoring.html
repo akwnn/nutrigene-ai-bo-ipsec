@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Figure 1. Winner depends on how success is scored</title>
+<style>
+:root{--ground:#F6F7F9;--ink:#161B22;--muted:#5A6472;--line:#DCE1E8;--doe:#C2410C;--bo:#2563EB;--null:#94A3B8;--sans:ui-sans-serif,system-ui,sans-serif;--serif:ui-serif,Georgia,serif;--mono:ui-monospace,Menlo,monospace}
+body{margin:0;background:var(--ground);color:var(--ink);font-family:var(--sans);line-height:1.5}
+.wrap{max-width:920px;margin:0 auto;padding:32px 20px 64px}
+h1{font-family:var(--serif);font-size:1.45rem;font-weight:600;margin:0 0 .4rem}
+.cap{color:var(--muted);font-size:.92rem;max-width:72ch;margin:0 0 1.4rem}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.panel{background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px 14px 8px}
+.panel h2{font-size:.78rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:0 0 8px;font-weight:600}
+svg{width:100%;height:auto;display:block}
+.legend{display:flex;gap:16px;font-family:var(--mono);font-size:.75rem;color:var(--muted);margin:8px 0 18px}
+.sw{width:12px;height:12px;border-radius:2px;display:inline-block;margin-right:6px;vertical-align:middle}
+table{border-collapse:collapse;width:100%;font-size:.84rem;margin-top:18px;background:#fff;border:1px solid var(--line)}
+th,td{padding:7px 9px;border-bottom:1px solid var(--line);font-family:var(--mono);text-align:right}
+th{font-size:.68rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);text-align:right}
+th:first-child,td:first-child{text-align:left}
+.note{font-size:.86rem;color:var(--muted);margin-top:14px;max-width:76ch}
+@media(max-width:720px){.grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>Figure 1. The DoE versus BO winner changes with the scoring rule and the assay noise</h1>
+<p class="cap">Mean simple regret at 48 wells, 25 landscapes. Lower is better. Bars: DoE (terracotta), BO (blue). The headline “best already-run” column is the true quality of the well a researcher would pick from the noisy readings, not the hidden true-best well among those tested.</p>
+<div class="legend"><span><i class="sw" style="background:var(--doe)"></i>DoE</span><span><i class="sw" style="background:var(--bo)"></i>BO</span></div>
+<div class="grid" id="g"></div>
+<p class="note"><strong>True-best among tested (DoE only, stored).</strong> If an oracle points at the best hidden-true well among the 48, DoE regret is 0.0597 / 0.0544 / 0.0575 / 0.0500 at the four cells. That is better than the researcher-pick column (0.0958 / 0.0892 / 0.0963 / 0.0948). BO’s true-best-among-tested column is not in the stored E2 rows and is not plotted. Source: e2-grid.json, d20-rescore / Q35 superseded column, q34-factorial.json, q35-constrained-rsm.json.</p>
+</div>
+<script>
+const cells = [
+  {t:"d = 6, σ = 0.25 (primary)", cats:["Researcher pick (noisy y)","Unconstrained rec.","Constrained rec."], doe:[0.0958,0.4163,0.1169], bo:[0.1553,0.1232,0.1232]},
+  {t:"d = 6, σ = 0.10", cats:["Researcher pick (noisy y)","Unconstrained rec.","Constrained rec."], doe:[0.0892,0.4300,0.0856], bo:[0.0874,0.0703,0.0703]},
+  {t:"d = 8, σ = 0.25", cats:["Researcher pick (noisy y)","Unconstrained rec.","Constrained rec."], doe:[0.0963,0.3766,0.1148], bo:[0.1247,0.1056,0.1056]},
+  {t:"d = 8, σ = 0.10", cats:["Researcher pick (noisy y)","Unconstrained rec.","Constrained rec."], doe:[0.0948,0.4104,0.0877], bo:[0.0972,0.0876,0.0876]},
+];
+function bars(c){
+  const W=420,H=168,l=8,r=12,t=6,b=36,iw=W-l-r,ih=H-t-b,ymax=0.48;
+  const n=3,g=iw/n,bw=g*0.32;
+  let s=`<svg viewBox="0 0 ${W} ${H}" role="img">`;
+  for(const y of [0,.1,.2,.3,.4]){
+    const yy=t+ih*(1-y/ymax);
+    s+=`<line x1="${l}" x2="${W-r}" y1="${yy}" y2="${yy}" stroke="#EDF0F4"/>`;
+    s+=`<text x="${l+2}" y="${yy-3}" font-size="9" fill="#5A6472" font-family="ui-monospace,Menlo,monospace">${y.toFixed(1)}</text>`;
+  }
+  c.cats.forEach((lab,i)=>{
+    const x0=l+i*g+g*0.18;
+    const h1=ih*(c.doe[i]/ymax), h2=ih*(c.bo[i]/ymax);
+    s+=`<rect x="${x0}" y="${t+ih-h1}" width="${bw}" height="${h1}" fill="#C2410C"/>`;
+    s+=`<rect x="${x0+bw+4}" y="${t+ih-h2}" width="${bw}" height="${h2}" fill="#2563EB"/>`;
+    s+=`<text x="${x0+bw}" y="${H-8}" font-size="9" text-anchor="middle" fill="#5A6472">${lab.replace(" rec.","")}</text>`;
+  });
+  return s+"</svg>";
+}
+document.getElementById("g").innerHTML=cells.map(c=>`<div class="panel"><h2>${c.t}</h2>${bars(c)}</div>`).join("");
+</script>
+</div>
+</body>
+</html>
