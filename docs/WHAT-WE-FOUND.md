@@ -266,44 +266,239 @@ Worth saying because the general lesson is: a tolerance you calibrate on a conve
 sample will fail on the real thing.
 
 ---
+---
 
-## Where this leaves the project
+# Part two: we then tried to break all of it
 
-**Closed:**
+The three experiments above produced findings. The next four asked whether those findings
+are **real**, by attacking each one at its weakest point.
 
-- We can now separate "searched better" from "spotted it better" — and it's mostly the
-  second one.
-- The textbook method can now walk, so the long-run comparison is finally fair.
-- The one-batch result rests on five spreads, not one.
+Three attacks, three different outcomes: **one held, one broke it, and one turned out to
+run backwards.**
 
-**Still open:**
+---
 
-- A second AI variant is a stored control, not a full competitor.
-- One of the external test problems throws away two ingredients that actually matter.
+## Attack 1: three extra wells erase the whole result
 
-**What changed in the write-up:**
+### The worry
 
-- **Removed:** "at a quiet assay, the AI method gets there far more often." It was an
-  artefact of not letting the competition move.
-- **Reinterpreted:** the textbook method's win at the noisy assay is real, but it's mostly
-  about reading a noisy plate, not about searching.
-- **Strengthened:** the one-batch method now has five spreads behind it, and on the
-  model-recommendation rule it wins rather than ties.
-- **Unchanged:** the AI method still wins the model-recommendation rule clearly against
-  both textbook versions, and the 48-well comparison is untouched — at that budget there's
-  nothing to walk to anyway.
+Our headline says: pick the well that read highest, and the textbook method wins.
+
+But we already knew that rule is bad — the highest reading is the genuinely best well you
+tried only 2–22% of the time. And it's *worse* for the AI method, because the AI piles its
+wells into the good region, where everything is nearly as good as everything else and the
+differences are smaller than the measurement noise. So its highest reading is close to a
+coin toss.
+
+That raises an uncomfortable possibility: maybe the textbook method isn't better at
+*searching* at all. Maybe it just happens to suit one particular way of picking a winner.
+
+### What we did
+
+Took the **exact same campaigns** — same wells, same order, same everything — and changed
+only the final step. Four ways to pick:
+
+1. **One reading** (what we've been doing)
+2. **Measure everything twice** and pick by the average — costs another 48 wells
+3. **Confirm the top three**: re-run just your best three and keep whichever confirms best
+   — costs 3 wells
+4. **Ask the model** which of the wells you already ran is best — costs nothing
+
+### What we found
+
+| how you pick | extra wells | textbook advantage | vs the published number |
+|---|---|---|---|
+| one reading *(published)* | 0 | **−0.0595** | — |
+| measure everything twice | +48 | −0.0262 | **44%** of it |
+| **confirm the top three** | **+3** | **−0.0009** | **1%** of it |
+| ask the model | 0 | −0.0227 | 38% of it |
+
+**Confirming three wells makes the two methods equal.** Three extra measurements on a
+48-well campaign — 6% more work — and the entire advantage is gone.
+
+### Why so little effort does so much
+
+Because it doesn't help both methods equally.
+
+- Confirmation moves the AI method from 0.1553 to **0.1446** — a bit better.
+- Confirmation moves the textbook method from 0.0958 to **0.1437** — clearly *worse*.
+
+The textbook method's single reading was already the trustworthy one, because its design
+repeats the centre point and spreads the rest out. A protocol that says *"decide using a
+fresh single reading"* throws that reliability away.
+
+So the headline was never really "the textbook method searches better." It was "the
+textbook method's readings are easier to trust" — and a lab that confirms its shortlist
+doesn't need that help.
+
+### Two things we're not hiding
+
+Our "confirm top three" rule decides using the confirmation reading **alone**, throwing
+away the first one. A lab that averaged both readings would be doing something different,
+and **we didn't run that version**. The tie is a property of the protocol as we built it.
+
+And the "ask the model" row disagrees with itself: one statistical test says there's a real
+difference, the other says there isn't. The project already had a rule for that, written
+down long before this run — the stricter test decides, so we call it **no difference** and
+report both numbers rather than the convenient one.
+
+---
+
+## Attack 2: does it depend on which AI we used?
+
+### The worry
+
+There isn't one "AI method" — there's a family, and they differ in how they choose the
+next wells to try. We used the standard one. But our measurements are noisy, and there's a
+version built specifically for noisy measurements, which is arguably the one we should have
+raced.
+
+Any reviewer can dismiss the whole result with "you used the wrong one."
+
+### What we did
+
+Re-ran everything with **both**. Worth noting: the noise-aware version is **better than the
+standard one at all four settings**, so this makes life harder for the textbook method, not
+easier.
+
+### What we found — the main result holds
+
+At the noisy assay, both settings, both ways of picking: **same winner, same story.** At
+the main setting the textbook method's advantage is −0.0574 with the noise-aware AI against
+−0.0595 with the standard one. Essentially unchanged.
+
+And on "what did each method actually test," the textbook advantage is *bigger* against the
+noise-aware AI, not smaller.
+
+**The noise-aware version does exactly what it's supposed to do.** It spots its own best
+well 22% of the time instead of 8% — nearly three times better. It just doesn't spot it
+often enough to close the gap.
+
+### But it withdraws one thing I told you earlier
+
+In Part One I said that at 8 ingredients with a quiet assay, the textbook method *"genuinely
+tested better recipes and the readout hid it completely."* I called it the interesting cell.
+
+**With the noise-aware AI, that difference disappears** (the significance test gives 0.56 —
+nothing). It was a fact about the standard AI's search, not about the textbook method.
+
+That claim is **withdrawn**. It's struck through in the detailed record rather than deleted,
+so the retraction stays visible.
+
+---
+
+## Attack 3: were we handicapping the textbook method?
+
+### The worry
+
+One of our test problems has six ingredients that **all matter**. But the textbook pipeline
+starts by screening six down to four — so it's forced to throw away two ingredients that
+genuinely do something.
+
+So when the AI wins on that problem, we can't tell whether the AI optimised better, or
+whether we just crippled the competition.
+
+### What we found first, before running anything
+
+You can't remove the screening step at eight ingredients. The arithmetic forbids it: fitting
+a curved surface in eight dimensions needs **45 numbers**, and the only design that fits
+inside 48 wells gives you **35 measurements**. Fewer measurements than things to estimate.
+
+That isn't a limitation of our experiment. **It's the reason the screening step exists.** So
+the comparison only runs at six ingredients, where an unscreened design lands on exactly 47
+wells plus one confirmation.
+
+### What we found — the opposite of the worry
+
+| noise | AI (standard) | AI (noise-aware) | textbook, screened | textbook, **unscreened** |
+|---|---|---|---|---|
+| high | 0.2984 | 0.2642 | **0.5623** | 0.7685 |
+| low | 0.1938 | 0.1658 | **0.5428** | 0.7502 |
+
+Giving the textbook method all six ingredients makes it **worse by 0.207**, and the AI's
+lead gets **1.6 to 1.8 times bigger**.
+
+The reason is simple once you see it: 47 wells spread across the whole six-dimensional
+space is very thin coverage. Twenty-seven wells concentrated in a small region around the
+best screening result is a much better use of the same budget when the peak is narrow.
+
+**The screening step wasn't a handicap. It was the textbook method's way of concentrating
+its effort, and it was earning its keep.**
+
+### And a side result that matters elsewhere
+
+We have a big finding elsewhere that when the textbook method's fitted curve suggests a
+recipe, that recipe is often terrible — and we've been explaining it as *extrapolation*: the
+curve is fitted in a small box and then asked about the whole space.
+
+The unscreened design covers the whole space, so extrapolation is **impossible** there. If
+our explanation were right, the problem should mostly vanish.
+
+It barely moves — 0.02 to 0.03 out of about 0.90.
+
+So on this particular test problem, the bad recommendation isn't about extrapolating out of
+a small box. **A curved surface simply can't describe a landscape with six separate peaks.**
+Our usual explanation is right about our main problem and wrong about this one, and the two
+shouldn't be lumped together.
+
+---
+
+## Attack 4: could anyone rebuild our figures?
+
+Not really, it turned out. Two problems of the same kind:
+
+- **Figure 1 had no code behind it at all.** It was a hand-made page with twenty numbers
+  typed into it, and it wasn't even stored in version control — while the paper referred to
+  it by filename. Anyone downloading the project got a paper pointing at a figure that
+  wasn't there and couldn't be rebuilt.
+- **Figure 2 had code, but the code had a table typed into it.** So the page could be
+  rebuilt except for the one table that mattered most.
+
+Both are now generated from the stored data. Figure 1 lists where each bar came from, right
+on the page.
+
+We also had Figure 1 **check its own claim**: its whole point is that the winner changes
+depending on how you pick. The build now verifies that's still true (it is, in 3 of 4
+settings) and **fails rather than drawing the figure** if it ever stops being true.
+
+And twelve spots in Figure 1 are deliberately left **blank**. There's one quantity we simply
+don't have for the AI method, and filling it in with a nearby number would quietly claim
+something we never measured.
+
+Figure 2 also gained the thing the cost comparison actually needed: **the share of all
+problems solved by a given budget.** Before, we reported medians among the runs that
+succeeded — but each method succeeds on a different subset, so the method that succeeds
+least often was getting the flattering average.
+
+---
+
+## Where everything stands now
+
+| claim | status | why |
+|---|---|---|
+| Textbook method wins on the reported reading, noisy assay | **holds** | survives both AI versions |
+| …and it's mostly a spotting effect, not a search effect | **holds** | confirmed under both |
+| …**and it vanishes if the lab confirms three wells** | **new** | −0.0595 → −0.0009 |
+| Textbook tested better at 8 ingredients, quiet assay | **withdrawn** | nothing there with the noise-aware AI |
+| The AI's win on the deceptive problem is a screening artefact | **refuted** | lead grows without the screen |
+| The bad recommendations are extrapolation | **only on our main problem** | doesn't transfer |
+| "At a quiet assay the AI gets there far more often" | **withdrawn** *(Part One)* | it was an artefact of not letting the competition move |
+
+**Still open:** one more hand-made figure with no code behind it; some citations that need
+checking against the actual PDFs; and the standing caveat that **none of this is real cells.**
 
 ---
 
 ## The one-sentence version
 
-Same wells, same problem, same model — and which method looks better depends on whether you
-report the best number you measured or the recipe your model recommends. Three separate
-experiments, each designed to answer something else, all ran into it.
+Same wells, same problem, same model — which method looks better depends on whether you
+report the best number you measured or the recipe your model recommends, and a lab that
+confirms its best three wells before committing sees no difference between them at all.
 
 ---
 
-*Files: `results/q54-hill-spread-gp-draws.json`, `results/q55-oracle-best.json`,
-`results/q56-doe-ascent.json`. Detail and statistics in `docs/RESULTS.md`. Written down in
-advance in `docs/PROMPTS-NEXT.md`. New code in `src/boec/sequential_rsm.py` with 19 tests.
-798 tests passing.*
+*Detail and statistics in `docs/RESULTS.md`. Data:
+`results/q54-hill-spread-gp-draws.json`, `q55-oracle-best.json`, `q56-doe-ascent.json`,
+`q57-search-vs-id.json`, `q58-selection-sensitivity.json`, `q59-hartmann-no-screen.json`.
+New code in `src/boec/sequential_rsm.py` and `src/boec/selection.py`, both with tests
+written first. All seven workstreams of the revision program complete. 808 tests passing.*
