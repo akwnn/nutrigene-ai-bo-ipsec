@@ -1622,9 +1622,14 @@ rather than an optional refinement.
 
 ### Result 1 — on rule A, letting the design walk closes the gap with BO
 
-**No rule-A arrival contrast survives Holm over all 26 tests.** At the loose end the two arms are
-indistinguishable: 21/25 against 21/25 at σ=0.25 τ=0.15, paired savings **0.95 [0.56, 1.38]**;
-24/25 against 25/25 at σ=0.10 τ=0.15.
+**No rule-A arrival contrast survives Holm over all 26 tests, and only one survives within the
+rule-A family of ten** — σ=0.10 at the tightest target τ=0.05, where qLogEI still wins 18/25 to
+6/25 (p_holm 0.0418). Everywhere else the two arms are indistinguishable: 21/25 against 21/25 at
+σ=0.25 τ=0.15, paired savings **0.95 [0.56, 1.38]**; 24/25 against 25/25 at σ=0.10 τ=0.15.
+
+**All four defined rule-A savings ratios have intervals covering 1.0** (0.95, 0.73, 0.86, 1.02),
+so on the estimand a researcher actually uses there is no detectable well-count saving in either
+direction.
 
 **Q52's single surviving arrival result does not survive this arm.** Q52 reported σ=0.10, rule A,
 τ=0.10 — BO 24/25 against `doe_repeat` 13/25, eleven discordant to nil, the only cell surviving
@@ -1707,3 +1712,97 @@ ascent"* now applies to **`doe_repeat` only**. It is retired for `doe_ascent`, a
 decisively at every cell, and the N=48 matched-budget tables are untouched — at a budget that
 affords exactly one CCD there is nothing to relocate, so `run_doe_arm` remains the right comparator
 there.
+
+---
+
+## Q54 — Hill `spread_gp` at five design draws. **Q52's match was not one lucky hypercube — and the one-shot arm turns out to beat qLogEI on rule C.** `current`
+
+**Ran:** `scripts/run_q54_hill_spread_gp_draws.py` · `results/q54-hill-spread-gp-draws.json` ·
+Prompt 3 of `docs/PROMPTS-NEXT.md`.
+**Status:** current
+
+### Why
+
+Q52 ran the one-shot arm on Hill with **one** design draw. Q53 then ran the same arm on four
+external families at **five**, and found design SDs of 0.029–0.153 — wide enough that
+`spread_gp.design_average` returns `nan` rather than `0.0` for a single draw, on purpose. The two
+could not be pooled: the Hill claim rested on n=1 from a lottery already shown to be wide, and the
+manuscript was required to *"report the current match and not generalise it."*
+
+### The gate: draw 0 is Q52's own seed
+
+| rule | reproduced | worst \|Δ\| |
+|---|---|---|
+| rule A | **550 / 550 exactly** | 0.000e+00 |
+| rule C | 482 / 550 exactly | 2.463e-06 |
+
+Rule A has no optimiser in it, so exact equality is the right bar and it is met. Rule C runs through
+20 restarts of L-BFGS-B over 4096 raw samples on a GP posterior mean, which is **not
+bit-reproducible** — BLAS threading breaks ties between near-equal local optima.
+
+> **A tolerance calibrated on a convenience sample fails on the population.** The first version of
+> this gate set rule C at 1e-06 from a 44-value pilot; the full 550-value population reached
+> 2.5e-06 and the gate fired. The fix was not a bigger constant. Rule C is now gated on the property
+> it is actually *used* for — whether a curve crosses a target — with a ceiling of 1e-4 that still
+> catches a genuinely different campaign, which would move rule C by ~1e-2.
+
+### One arrival in this study really is decided by floating-point scheduling
+
+The closest any rule-C value comes to a target it is tested against is **2.690e-06**, at instance
+`f79c5cf175034acd`, σ=0.25, draw 0, n=150, target 0.08 — *closer than the jitter itself*. That
+arrival is genuinely indeterminate.
+
+Rather than raise or ignore it, every rule-C curve was re-scored shifted by **±2.463e-06** and the
+whole analysis re-run. **No cell changes its verdict across 22 cells × 3 shifts.** The indeterminate
+value exists and cannot propagate to a conclusion.
+
+### Result 1 — the match is stable in 20 of 22 cells
+
+| σ | rule | τ | qLogEI | spread mean | design SD | range | Q52 drew | draws differing | stable |
+|---|---|---|---|---|---|---|---|---|---|
+| 0.25 | C | 0.12 | 20/25 | 25.0 | 0.00 | 25–25 | 25 | 0/5 | yes |
+| 0.25 | C | 0.10 | 16/25 | **24.4** | 0.55 | 24–25 | 25 | **5/5** | yes |
+| 0.25 | C | 0.08 | 10/25 | **22.2** | 0.45 | 22–23 | 22 | **5/5** | yes |
+| 0.25 | C | 0.05 | 7/25 | 13.8 | **1.92** | 11–16 | 15 | 2/5 | **NO** |
+| 0.25 | A | 0.03 | 3/25 | 1.0 | 0.71 | 0–2 | 2 | 0/5 | yes |
+| 0.10 | C | 0.05 | 18/25 | 18.4 | 1.14 | 17–20 | 18 | 0/5 | yes |
+| 0.10 | A | 0.03 | 10/25 | 3.2 | **2.05** | 0–5 | 5 | 1/5 | **NO** |
+
+(Full 22-cell table in the JSON and log.)
+
+**Q52's single draw was not a fluke** — but the two cells where the verdict *does* move with the
+draw are both cells where Q52 happened to draw at the favourable extreme: 15 against a 11–16 range,
+and 5 against a 0–5 range. Instability tracks design SD exactly: the two unstable cells carry SDs of
+1.92 and 2.05 while every stable cell is at or below 1.14.
+
+### Result 2 — the one-shot arm *beats* ten-round qLogEI on the model's recommendation
+
+This was not what Q52 reported and it is the larger finding. At the higher-noise condition, on
+rule C, one Latin hypercube plus one GP fit **arrives more often than ten rounds of qLogEI**, and
+does it in **1 plate round against 48**:
+
+| σ=0.25, rule C | qLogEI | spread+GP | draws agreeing |
+|---|---|---|---|
+| τ=0.12 | 20/25 | **25.0/25** | 5/5 |
+| τ=0.10 | 16/25 | **24.4/25** | 5/5 |
+| τ=0.08 | 10/25 | **22.2/25** | 5/5 |
+
+Those three cells are unanimous across all five draws — this is not the design lottery.
+
+**And it reverses on rule A**, at both noise levels: 1.0 against 3/25 at σ=0.25 τ=0.03, and 3.2
+against 10/25 at σ=0.10 τ=0.03. The one-shot design's *best measured well* is worse; its *fitted
+recommendation* is better.
+
+> **This is the paper's central thesis reproduced inside a single arm.** The same 200 evaluations,
+> the same landscape, the same GP — and which method "wins" is decided entirely by whether you
+> report the best reading you took or the point your model recommends. Q53 found the dividing line
+> between families was deception; Q54 finds that within the Hill family the dividing line is the
+> terminal decision.
+
+### What this licenses, and what it does not
+
+The manuscript may now say the Hill match is a five-draw result rather than a single draw, and may
+state the σ=0.25 rule-C advantage, which is unanimous. It may **not** generalise the two unstable
+cells (σ=0.25 rule C τ=0.05; σ=0.10 rule A τ=0.03) — those are properties of which hypercube was
+drawn. Q53's constraint still binds for the external families: on deceptive landscapes
+(Hartmann6, Ackley) the one-shot arm loses badly, and nothing here touches that.
