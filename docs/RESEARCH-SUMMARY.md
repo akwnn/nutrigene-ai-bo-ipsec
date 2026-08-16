@@ -4,13 +4,13 @@
 
 **Keywords.** Bayesian optimization; response-surface methodology; terminal decision rule; matched budget; Gaussian process; simple regret; sequential design; experimental rounds.
 
-**Data.** All numerical claims are taken from the committed artefacts listed in the Data availability statement. Internal experiment identifiers (E2, Q34, …) are given in parentheses for reproducibility. Section 2 is a plain-language guide to the tables. Open loopholes and the runs required to close them are in `docs/PROMPTS-NEXT.md`.
+**Data.** All numerical claims are taken from the committed artefacts listed in the Data availability statement. Internal experiment identifiers (E2, Q34, …) are given in parentheses for reproducibility. Section 2 is a plain-language guide to the tables. The revision workstreams in `docs/PROMPTS-NEXT.md` are complete (Q54–Q59).
 
 **What this paper is not.** It is not the first BO-versus-DoE comparison, not a claim that “BO maps differently from RSM” as a new idea, and not a wet-lab validation of an ECM formulation. Rummukainen, Lapierre and Ndahiro already ran executed comparisons; Rummukainen already stated that RSM maps a region while BO concentrates near promising conditions.
 
-**What this paper is.** A controlled demonstration that, under identical budgets and identical latent landscapes, changing only the **terminal decision rule** can reverse the apparent winner; and a factorial split of sampling design, surrogate class, recommendation rule, and well-versus-round cost. Most of the large unconstrained “BO win” is a naïve extrapolative readout of a saddle-shaped quadratic, not a fair classical-RSM recommendation.
+**What this paper is.** A controlled demonstration that, under identical budgets and identical latent landscapes, changing only the **terminal decision rule** can reverse the apparent winner; and a factorial split of sampling design, surrogate class, recommendation rule, and well-versus-round cost. Most of the large unconstrained “BO win” is a naïve extrapolative readout of a saddle-shaped quadratic, not a fair classical-RSM recommendation. The measured-value-argmax DoE lead at the primary cell is mostly identification, survives noisy expected improvement, and **vanishes under a three-well confirmation protocol**.
 
-**Novelty (adversarial).** BO-versus-DoE, “BO optimizes / RSM maps,” matched-budget media comparisons, synthetic optimizer benchmarks, and “best observation ≠ model recommendation” as a concept are **already in the literature**. What is potentially new is the same-campaign winner reversal plus the design × surrogate × locator decomposition (Q34/Q45/Q35). Open loopholes that can still get the paper rejected are listed after the abstract and in `docs/PROMPTS-NEXT.md`.
+**Novelty (adversarial).** BO-versus-DoE, “BO optimizes / RSM maps,” matched-budget media comparisons, synthetic optimizer benchmarks, and “best observation ≠ model recommendation” as a concept are **already in the literature**. What is potentially new is the same-campaign winner reversal plus the design × surrogate × locator decomposition (Q34/Q45/Q35), the identification-versus-search split, and the demonstration that a three-well confirmation protocol erases the primary measured-value-argmax ranking.
 
 | Claim | Assessment |
 |---|---|
@@ -22,8 +22,9 @@
 | Same-campaign winner reversal across terminal rules | Yes, potentially |
 | Design × surrogate × locator decomposition | Yes, and probably the strongest contribution |
 | Explicit well-cost versus plate-round-cost | Valuable for laboratory practice |
-| Current unconstrained-RSM result as the fair main comparison | Not yet |
-| Publishable somewhere after revision | Probably yes |
+| Confirmation / replicate protocol as a terminal-rule sensitivity | Yes, and the most lab-relevant add-on |
+| Current unconstrained-RSM result as the fair main comparison | Still a diagnostic; in-region is the fair 48-well readout |
+| Publishable somewhere after revision | Yes, as a specialist methods / benchmark paper |
 | Strong enough now for a top general journal | No |
 | Could become a strong specialist benchmark / methodology paper | Yes |
 
@@ -33,13 +34,13 @@
 
 **Background.** Reported advantages of Bayesian optimization (BO) over response-surface methodology (RSM) may depend as much on how the terminal formulation is selected as on where either method samples. Narayanan et al. (2025) report ~2.5–3× fewer experiments than the **predicted** count for standard DoE (and ~10–30× in a nine-factor transfer case): a resource-planning denominator, not an executed equal-budget DoE arm. Rummukainen et al. (2024) ran both methods at 15 experiments, scored the best measured condition, used noisy expected improvement then a posterior-mean final pick, and found no reduction in experiment count. Lapierre et al. (2025) and Ndahiro et al. (2025) add executed media/bioprocess comparisons in which BO improved biomass or titer; those studies compare complete workflows whose screening cuts, factor sets and terminal picks are not factorially separated. Both the “BO saves experiments” and the “no saving at matched budget” findings can be correct if their denominators and terminal decisions differ.
 
-**Methods.** A synthetic Hill benchmark, **structurally inspired by** the six-factor / 6→4 screen of Hall, Lin and Ogle (2025), not fitted to endothelial data. The optimizer observes y = f(x) + ε. Simple regret is 1 − f(x∗). On identical 48-well campaigns we vary only the terminal decision: **hidden tested-best** (DoE stored; BO not stored), **measured-value argmax** (single noisy readout; this is the stored E2 “best observed” column), **naïve unconstrained quadratic or GP recommendation**, and **in-region / ridge recommendation**. Cost is counted in wells and in plate rounds. Named BO is qLogEI; qLogNEI is stored as a control and is the natural noisy comparator (a remaining loophole). The DoE cost-curve arm repeats the 48-well CCD and does not relocate; that comparison is not sequential RSM.
+**Methods.** A synthetic Hill benchmark, **structurally inspired by** the six-factor / 6→4 screen of Hall, Lin and Ogle (2025), not fitted to endothelial data. The optimizer observes y = f(x) + ε. Simple regret is 1 − f(x∗). On identical 48-well campaigns we vary the terminal decision: **hidden tested-best**, **measured-value argmax** (single noisy readout; stored E2 “best observed”), **naïve unconstrained quadratic or GP recommendation**, **in-region / ridge recommendation**, and — on the same campaigns — **replicate, top-3 confirmation, and posterior-mean-at-visited** picks. Cost is counted in wells and in plate rounds. Named BO is qLogEI; **qLogNEI is co-primary** under observation noise. Sequential RSM with steepest-ascent relocation is the long-run classical arm (`doe_ascent`); `doe_repeat` is retained as the non-relocating control.
 
-**Results.** On the same campaigns, rankings reversed. At the higher-noise condition (σ = 0.25), measured-value argmax favoured sequential DoE by 0.0595 (d = 6) and 0.0284 (d = 8). Naïve unconstrained recommendation favoured BO by 0.27–0.36: almost all of that swing is the quadratic, a saddle in 200/200 Hill runs, optimized off its learned region. In-region recommendation was null in three of four cells. At lower noise (σ = 0.10) the measured-value-argmax contrast was null. Hidden tested-best for DoE is 0.0597 at the primary cell versus 0.0958 for measured-value argmax; BO’s search column is missing, so search versus identification is not yet separated. One-shot GP versus sequential BO is a secondary observation on one Latin-hypercube draw.
+**Results.** On the same campaigns, rankings reversed. At σ = 0.25, measured-value argmax favoured sequential DoE by 0.0595 (d = 6) and 0.0284 (d = 8); the same verdict holds against qLogNEI (−0.0574 at the primary cell). About 55–73% of that lead is identification, not search. Confirming the top three wells on the same campaigns reduces the primary contrast to −0.0009 (null). Naïve unconstrained recommendation favoured BO by 0.27–0.36: almost all of that swing is a saddle-shaped quadratic optimized off its learned region (200/200 Hill runs). In-region recommendation was null in three of four cells. Under measured-value argmax, sequential RSM matches qLogEI on arrival to N = 200; the previous “BO hits more often” result does not survive a walking classical arm. One-shot GP at five Latin-hypercube draws is stable in 20 of 22 cells and, at σ = 0.25 under model recommendation, beats 10-round qLogEI. On Hartmann6, removing the 6→4 screen makes DoE worse, not better.
 
-**Conclusions.** A matched evaluation count does not define a unique BO-versus-RSM comparison. Rankings changed when the terminal decision changed. Most of the reversal arose from extrapolative optimization of saddle-shaped quadratic fits and largely disappeared under in-region constraints. Sampling geometry and surrogate class made independently measurable contributions; well count and plate-round count are different costs. Comparisons should prespecify the terminal decision, treatment of measurement noise, permitted extrapolation, and unit of experimental cost. The study is not a wet-lab validation.
+**Conclusions.** A matched evaluation count does not define a unique BO-versus-RSM comparison. Rankings changed when the terminal decision changed, including when a laboratory-plausible confirmation protocol replaced a single noisy readout. Most of the unconstrained reversal arose from extrapolative optimization of saddle-shaped quadratic fits and largely disappeared under in-region constraints. Well count and plate-round count are different costs; under measured-value argmax there is no well-count saving versus walking RSM. Comparisons should prespecify the terminal decision, treatment of measurement noise, permitted extrapolation, confirmation protocol, and unit of experimental cost. The study is not a wet-lab validation.
 
-**Open loopholes (do not submit until these are closed or explicitly demoted).** (1) BO hidden tested-best / search-versus-identification is missing, so the noisy-assay DoE lead is unexplained. (2) Named BO is qLogEI under y = f + ε; qLogNEI is the natural noisy comparator and is only a stored control. (3) Unconstrained saddle maximization is not classical RSM; the principal classical readout is in-region / ridge, and sequential RSM with relocation does not yet exist. (4) N = 200 pits sequential BO against repeated non-relocating CCDs. (5) Hill one-shot GP used one Latin-hypercube draw. (6) Hartmann6 currently discards two active factors by construction. (7) “Measured-value argmax” is one operational rule, not every laboratory’s carry-forward. Runs that close (1)–(6) are Workstreams 1–5 in `docs/PROMPTS-NEXT.md`.
+**Revision status.** Search versus identification, qLogNEI co-primary, sequential RSM, multi-draw one-shot GP, Hartmann without forced 6→4, and selection-rule sensitivity are closed (Q54–Q59). Remaining: unconstrained long-run “model recommendation” is still not in-region ridge; cost curves were not computed at d = 8; citations should be re-read from PDFs; no wet-lab validation.
 
 ---
 
@@ -51,7 +52,7 @@ Two families of methods dominate this setting.
 
 **Classical DoE and RSM** (Box and Wilson, 1951; Myers et al.) treat the unknown response as locally quadratic. A screening design identifies a subset of active factors. A **central composite design** (CCD) is then executed in that subregion and a second-order polynomial is fitted. Canonical analysis classifies the stationary point as a maximum, minimum, saddle or ridge. Classical RSM then uses **steepest ascent**, **ridge analysis**, and often a relocated CCD — not unconstrained maximization of a saddle over the whole box.
 
-**Bayesian optimization** (Močkus, 1975; Jones, Schonlau and Welch, 1998; Frazier, 2018) places a Gaussian-process prior on the latent response and picks the next batch with an acquisition function. We report **qLogEI** as the named arm; **qLogNEI** is the natural comparator under observation noise and is stored as a control (Workstream 3 in `docs/PROMPTS-NEXT.md`). The distinction between using the best noisy observation and using a posterior-mean incumbent is already standard in noisy BO; this paper asks whether that already-known distinction is large enough to reverse a BO-versus-RSM ranking.
+**Bayesian optimization** (Močkus, 1975; Jones, Schonlau and Welch, 1998; Frazier, 2018) places a Gaussian-process prior on the latent response and picks the next batch with an acquisition function. We report **qLogEI** and **qLogNEI** as co-primary under observation noise. The distinction between using the best noisy observation and using a posterior-mean incumbent is already standard in noisy BO; this paper asks whether that already-known distinction is large enough to reverse a BO-versus-RSM ranking, and whether a short confirmation protocol is.
 
 That RSM maps a design region while BO concentrates accuracy near promising conditions is **background**, not a finding. Rummukainen et al. (2024) already state it, and note that RSM remains usable if the criterion later changes whereas BO needs an explicit scalar objective.
 
@@ -59,7 +60,7 @@ Executed comparisons already exist. Rummukainen: 15-run Box–Behnken versus 5 i
 
 **Hypothesis.** Apparently conflicting BO-versus-DoE conclusions can arise without contradictory algorithmic behaviour when studies bundle different terminal decisions, surrogate readouts, screening cuts, and budget definitions. Previous experimental papers compare complete workflows. We hold components under experimental control: same campaigns, several terminal rules; same points, both surrogates; same surrogate dimension, both designs; wells versus rounds.
 
-Figure 1 is winner reversal by terminal rule. Figure 2 is cost in two currencies. Figure 3 is the saddle / ridge mechanism. The factorial (Q34/Q45) is the strongest original analysis. Open loopholes — BO hidden tested-best, sequential RSM, qLogNEI as co-primary, multi-draw one-shot GP, Hartmann without forced 6→4 — are listed in `docs/PROMPTS-NEXT.md` and must not be papered over.
+Figure 1 is winner reversal by terminal rule (generated from stored JSON; blank cells are quantities that were never measured). Figure 2 is cost in two currencies, with hit probability P(T ≤ N) as the primary arrival display. Figure 3 is the saddle / ridge mechanism. The factorial (Q34/Q45) separates design from surrogate. Protocol sensitivities (Q54–Q59) ask whether those findings survive noisy EI, a walking RSM arm, a confirmation pick, multi-draw one-shot GP, and Hartmann without a forced 6→4 screen.
 
 The latent function is constructed. Factor count and the 6→4 screen are **structurally inspired by** Hall, Lin and Ogle (2025). No wet-lab BO campaign is reported.
 
@@ -73,11 +74,12 @@ This paper is a **computer experiment**, not a wet-lab validation. A hidden math
 
 Every table answers one of these. They are not interchangeable.
 
-1. **Hidden tested-best (search quality).** Among wells actually run, max noiseless f. A lab cannot compute this. DoE: 0.0597 at the primary cell. BO: not stored. Until it is stored, search versus identification cannot be separated.
-2. **Measured-value argmax (single-readout selection).** Pick argmax of noisy y, score noiseless f. One transparent operational rule, **not** “what every researcher would do.” Labs may replicate, confirm, or use a posterior mean (Rummukainen’s final pick). This is the stored E2 “best observed” column (`reported_best_curve`). Primary cell: DoE 0.0958, BO 0.1553.
+1. **Hidden tested-best (search quality).** Among wells actually run, max noiseless f. A lab cannot compute this. Primary cell: DoE 0.0597, qLogEI 0.0755, qLogNEI 0.0834 (Q55/Q57).
+2. **Measured-value argmax (single-readout selection).** Pick argmax of noisy y, score noiseless f. One transparent operational rule, **not** “what every researcher would do.” This is the stored E2 “best observed” column (`reported_best_curve`). Primary cell: DoE 0.0958, qLogEI 0.1553, qLogNEI 0.1532.
 3. **Naïve unconstrained model recommendation.** Argmax of the fitted quadratic or GP over the whole box. For the quadratic this is a **diagnostic failure mode** when the fit is a saddle, not classical RSM.
 4. **In-region / ridge recommendation.** The principal classical readout: argmax inside the explored region.
-5. **Cost.** Wells and plate rounds until a target. Lead with hit probability P(T ≤ N). The current DoE curve repeats the CCD and is **not** sequential RSM.
+5. **Confirmation / replicate / posterior-mean pick.** Same campaigns, different final pick (Q58). Confirming the top three wells at the primary cell makes measured-value-argmax DoE and BO indistinguishable.
+6. **Cost.** Wells and plate rounds until a target. Lead with hit probability P(T ≤ N). Sequential RSM with relocation (`doe_ascent`) is the fair long-run classical arm; `doe_repeat` does not relocate.
 
 DoE and BO can win different questions on the same 48 wells. That is the point of the paper, not a contradiction.
 
@@ -127,6 +129,11 @@ The identifiers (E2, Q34, …) are internal run names. They are not additional s
 | Q42 | Repeat the whole pipeline on Levy, Rosenbrock, Hartmann6 and Ackley. | Checks that the Hill pattern is not an artefact of one oracle family. |
 | Q52 | Continue to 200 wells; plot regret vs wells and vs plate rounds; record when a target is first hit. | A snapshot at 48 wells cannot say who is cheaper. |
 | Q53 | One big random batch plus one GP fit, versus 10-round sequential BO, same well count. | Asks whether sequential adaptation is doing work, or whether the GP alone would suffice. |
+| Q54 | Same one-shot GP on Hill at five Latin-hypercube draws. | One draw is not a conclusion. |
+| Q55 / Q57 | Hidden tested-best beside measured-value argmax, both arms; qLogNEI co-primary. | Separates search from identification; blocks “wrong acquisition.” |
+| Q56 | Sequential RSM with steepest ascent / relocation, cap 200. | `doe_repeat` is not classical sequential RSM. |
+| Q58 | Replicate, confirm top-3, or posterior-mean pick on the same 48-well campaigns. | Measured-value argmax is one laboratory protocol, not all of them. |
+| Q59 | Hartmann6 with and without the 6→4 screen (d = 6). | Tests whether BO’s Hartmann win is a screening artefact. |
 
 Controls (Latin hypercube, Sobol', uniform random, noisy-EI, coordinate descent) are not competing laboratory methods in this paper. They answer “is BO beating anything other than a straw man?” and “does swapping the acquisition function matter?”
 
@@ -150,12 +157,12 @@ R = 0 if and only if the true optimum is nominated. This is the terminal recomme
 
 The locators x∗ are:
 
-| Estimand | How x∗ is chosen | What a lab can actually do |
+| Terminal decision | How x∗ is chosen | What a lab can actually do |
 |---|---|---|
-| Hidden true-best among tested | Evaluated x of maximal true f | Not available without an oracle. DoE stored; BO not stored |
-| Researcher pick (rule A) | Evaluated x of maximal noisy y; score true f | Carry forward the well that looked best on the assay |
-| Unconstrained recommendation | arg max of f̂(x) over x ∈ [0,1]ᵈ | Run the model’s suggested next condition, including extrapolation |
-| Constrained recommendation | arg max of f̂(x) over the explored region | Same, restricted to the explored region (ridge analysis) |
+| Hidden tested-best | Evaluated x of maximal true f | Not available without an oracle. Both arms stored (Q55/Q57) |
+| Measured-value argmax | Evaluated x of maximal noisy y; score true f | Single-readout selection. Confirmation / replicate / posterior-mean variants in Q58 |
+| Naïve unconstrained recommendation | arg max of f̂(x) over x ∈ [0,1]ᵈ | Diagnostic when the quadratic is a saddle |
+| In-region / ridge recommendation | arg max of f̂(x) over the explored region | Classical remedy; principal RSM readout |
 
 Rule A is defined for every procedure. Recommendation locators require a surrogate. The headline already-run tables use rule A, not hidden true-best.
 
@@ -173,7 +180,7 @@ The DoE procedure implemented here follows a published three-stage pipeline: (i)
 
 ### 3.3 Gaussian-process surrogates and expected improvement
 
-A GP is a distribution over functions. Conditioning on data yields, at each unevaluated x, a posterior mean μ(x) and posterior variance σ²(x). **Expected improvement** (Jones et al., 1998) is the expected increase in the incumbent value if x is evaluated; it is large both where μ is high and where σ is high. The named stored arm is **qLogEI**, a numerically stable batch form, with batch size q = 4. The initial design is n₀ = 2d+2 (14 at d = 6); subsequent batches of four continue until N = 48 (**10 rounds**). That choice is awkward under observation noise: noisy expected improvement exists because the incumbent is itself uncertain, and Rummukainen used noisy EI then a posterior-mean final pick. **qLogNEI** is already stored as a control (primary-cell measured-value-argmax mean 0.1532 versus qLogEI 0.1553, null). It is the natural co-primary and is not yet treated as such (Workstream 3).
+A GP is a distribution over functions. Conditioning on data yields, at each unevaluated x, a posterior mean μ(x) and posterior variance σ²(x). **Expected improvement** (Jones et al., 1998) is the expected increase in the incumbent value if x is evaluated; it is large both where μ is high and where σ is high. The named stored arm is **qLogEI**, a numerically stable batch form, with batch size q = 4. The initial design is n₀ = 2d+2 (14 at d = 6); subsequent batches of four continue until N = 48 (**10 rounds**). **qLogNEI** is co-primary under observation noise (Q57): primary-cell measured-value-argmax 0.1532 versus qLogEI 0.1553. Rummukainen used noisy EI then a posterior-mean final pick.
 
 A GP may also be used non-sequentially: a single Latin hypercube of size n, one posterior fit, and nomination of arg max μ(x). That one-shot procedure (**spread_gp**) costs one round and isolates the contribution of sequential adaptation.
 
@@ -220,27 +227,28 @@ Replication is 25 instances × 2 seeds (50 rows). Tests use n = 25. Unless other
 
 ### 4.3 Procedures
 
-The stored named comparison is qLogEI versus sequential DoE. qLogNEI should be co-primary under noise (Workstream 3); until then it is reported beside qLogEI wherever the E2 grid already contains it. Remaining arms are controls.
+The stored named comparison is qLogEI versus sequential DoE. **qLogNEI is co-primary** under noise (Q57). Remaining arms are controls.
 
-- **qLogEI (BO).** Start with 14 recipes, then pick 4 more per plate using expected improvement, ten plates total. Awkward as the sole noisy comparator.
+- **qLogEI (BO).** Start with 14 recipes, then pick 4 more per plate using expected improvement, ten plates total.
 - **qLogNEI.** Same loop with noisy expected improvement. Natural comparator when y = f(x) + ε.
-- **DoE (current pipeline).** Screen 20 recipes, keep four ingredients, run a 27-run face-centred CCD, confirm one point. Three plate stages. **No steepest-ascent / ridge relocation.** This is not sequential classical RSM. Cost-curve comparisons that use repeated copies of this pipeline are biased toward BO.
-- **spread_gp.** One Latin hypercube, one GP fit, read the posterior peak. One plate. Isolates “having a GP” from “adapting plate by plate.” Hill results currently use **one** design draw (Workstream 4).
+- **DoE (48-well pipeline).** Screen 20 recipes, keep four ingredients, run a 27-run face-centred CCD, confirm one point. Three plate stages. No steepest ascent at this budget (nothing to relocate).
+- **doe_ascent (Q56).** The same pipeline, then steepest ascent and a relocated CCD, to a 200-well cap.
+- **spread_gp.** One Latin hypercube, one GP fit, read the posterior peak. One plate. Hill results use **five** independent design draws (Q54).
 - **LHS / Sobol' / random.** Spread or scatter 48 recipes with no model. Scored only under measured-value argmax.
 - **Coordinate descent.** Tune one factor at a time. Unpaired control.
 
 | Procedure | Description | N = 48 evaluations | Rounds at N = 48 |
 |---|---|---|---|
 | qLogEI (BO) | GP; qLogEI; n₀ = 14, then batches of 4 | 48 | 10 |
-| DoE | 20-run screen, retain 4; 27-run face-centred CCD; 1 confirmation. No steepest ascent | 48 | 3 |
-| spread_gp | One Latin hypercube of size n; one GP; nominate arg max μ | n (one shot) | 1 |
-| LHS / Sobol' / random | Space-filling or i.i.d. uniform; measured-value argmax only | 48 | 1 |
 | qLogNEI | Identical loop, noisy-EI acquisition | 48 | 10 |
+| DoE | 20-run screen, retain 4; 27-run face-centred CCD; 1 confirmation | 48 | 3 |
+| doe_ascent | Same, then steepest ascent and relocated CCD (Q56) | up to 200 | variable |
+| spread_gp | One Latin hypercube of size n; one GP; nominate arg max μ | n (one shot) | 1 |
 | Coordinate descent | Sequential; unpaired; control only | 48 | sequential |
 
 The main experiment (E2) stores **measured-value argmax** (`reported_best_curve`: pick by noisy y, score noiseless f). Surrogate recommendations are computed on the same campaigns (Q34 naïve unconstrained; Q35 in-region). Space-filling arms have no recommendation column on the Hill oracle.
 
-An earlier DoE “best observed” column read the oracle-best point among tested wells rather than the noisy argmax. All measured-value-argmax DoE figures below use the corrected locator (D20; primary-cell mean 0.0958). The superseded 0.0597 is DoE **hidden tested-best**, not rule A. Surrogate recommendations were unaffected. BO hidden tested-best is not stored.
+An earlier DoE “best observed” column read the oracle-best point among tested wells rather than the noisy argmax. All measured-value-argmax DoE figures below use the corrected locator (D20; primary-cell mean 0.0958). The superseded 0.0597 is DoE **hidden tested-best**, not measured-value argmax. Both arms’ hidden tested-best columns now exist (Q55/Q57).
 
 ### 4.4 Auxiliary experiments
 
@@ -257,6 +265,11 @@ Section 2.4 states why each run exists. The table is the same list with the expe
 | Q42 | Generality off the Hill oracle | Pipeline, four cells | Levy, Rosenbrock, Hartmann6, Ackley |
 | Q52 | Cost curves and first hitting times | d = 6, cap 200 | Budget, target, σ. d = 8 not run |
 | Q53 | Value of sequential adaptation | Equal evaluation count | spread_gp vs 10-round qLogEI on Q42 families |
+| Q54 | Hill one-shot GP, many design draws | Q52 instances and targets | Latin-hypercube draw |
+| Q55 / Q57 | Search vs identification | Same E2 campaigns | Locator; acquisition (qLogEI / qLogNEI) |
+| Q56 | Sequential RSM | d = 6, cap 200 | Relocation vs `doe_repeat` |
+| Q58 | Terminal pick on fixed campaigns | Primary cell | Single / replicate / confirm-top-3 / posterior mean |
+| Q59 | Hartmann6 screen on or off | d = 6, N = 48 | 6→4 cut |
 
 Calibration, kernel misspecification, acquisition-optimizer failure rates and related checks are reported in Section 7.
 
@@ -286,7 +299,7 @@ Lower regret is better. The argument is three figures. Control-arm tables, the 2
 
 Both methods spend exactly 48 wells. The tables below score the **same campaigns** several ways. Changing only the terminal decision reverses the ranking. That is the core result.
 
-**Measured-value argmax (single-readout selection).** Pick argmax of noisy y, score noiseless f. One transparent operational rule, not “what a researcher would carry forward.” qLogNEI is shown because it is the natural noisy comparator; it is not yet co-primary for new campaigns.
+**Measured-value argmax (single-readout selection).** Pick argmax of noisy y, score noiseless f. One transparent operational rule, not “what a researcher would carry forward.” qLogNEI is co-primary under observation noise (Q57).
 
 #### Measured-value argmax
 
@@ -297,18 +310,20 @@ Both methods spend exactly 48 wells. The tables below score the **same campaigns
 | d=8, σ=0.25 | 0.0963 | 0.1247 | 0.1105 | **−0.0284** | DoE |
 | d=8, σ=0.10 | 0.0948 | 0.0972 | 0.0849 | −0.0024 | null (qLogNEI 0.0849 vs qLogEI, p = 0.027 uncorrected) |
 
-At the higher-noise condition, the single noisy readout favours sequential DoE over both stored BO acquisitions. At lower noise the DoE–qLogEI contrast is null. This is **not** a claim that DoE tested better latent conditions: that requires R_search for both arms.
+At the higher-noise condition, the single noisy readout favours sequential DoE over both acquisitions. At lower noise the DoE–qLogEI contrast is null. Measured-value-argmax **verdicts** are the same under qLogNEI (DoE, null, DoE, null). This is **not** yet a claim about where each method looked.
 
-**Hidden tested-best / search quality (DoE only).** R_search = 1 − max_i f(x_i). A lab cannot compute this. BO’s column is missing (Workstream 1). Until it exists, search error and identification error are mixed in the BO measured-value-argmax number.
+**Hidden tested-best / search quality (Q55, Q57).** R_search = 1 − max_i f(x_i). A lab cannot compute this.
 
-| Cell | DoE R_search | DoE measured-argmax | Identification gap |
-|---|---|---|---|
-| d=6, σ=0.25 | 0.0597 | 0.0958 | +0.0361 |
-| d=6, σ=0.10 | 0.0544 | 0.0892 | +0.0348 |
-| d=8, σ=0.25 | 0.0575 | 0.0963 | +0.0388 |
-| d=8, σ=0.10 | 0.0500 | 0.0948 | +0.0448 |
+| Cell | qLogEI R_search | qLogNEI R_search | DoE R_search | qLogEI measured-argmax | DoE measured-argmax |
+|---|---|---|---|---|---|
+| d=6, σ=0.25 | 0.0755 | 0.0834 | 0.0597 | 0.1553 | 0.0958 |
+| d=6, σ=0.10 | 0.0496 | 0.0435 | 0.0544 | 0.0874 | 0.0892 |
+| d=8, σ=0.25 | 0.0702 | 0.0685 | 0.0575 | 0.1247 | 0.0963 |
+| d=8, σ=0.10 | 0.0653 | 0.0564 | 0.0500 | 0.0972 | 0.0948 |
 
-Q49 finds that at σ = 0.25, on a space-filling design at n = 192, 61% of remaining regret is identification rather than search; **that figure is not the E2 BO campaign.**
+Identification gap = measured-argmax regret − R_search. At the primary cell: qLogEI +0.0797 (identifies its own best well 8% of the time); qLogNEI +0.0698 (22%); DoE +0.0361 (12%). DoE − qLogEI on R_search is −0.0158 (p = 0.0067); on measured-value argmax it is −0.0595. **About 73% of the published lead is identification.** Against qLogNEI the measured-argmax lead is −0.0574 and the search lead is **larger** (−0.0237), because noisy EI improves spotting without improving where the campaign looked.
+
+Quiet-assay **tested-best** verdicts are acquisition-dependent and must name the acquisition. In particular, “DoE tested better conditions at d = 8, σ = 0.10, and the readout hid it” is **withdrawn**: that contrast is null against qLogNEI (p = 0.56). Q49’s 61% identification share is LHS at n = 192, not the E2 campaign.
 
 **Naïve unconstrained recommendation (diagnostic, not classical RSM).** Argmax of the fitted quadratic or GP over the whole box. For a saddle-shaped quadratic this is a known failure mode, not “the DoE recommendation.”
 
@@ -343,9 +358,9 @@ In this implementation the GP recommendation already lies inside the sampled reg
 | d=8, σ=0.25 | DoE by 0.0284 | BO vs naïve quadratic by 0.2710 | null |
 | d=8, σ=0.10 | null | BO vs naïve quadratic by 0.3228 | null |
 
-**Interpretation.** Method ranking is not a property of the acronyms. Measured-value argmax at higher noise favours DoE. Naïve unconstrained quadratic readout favours BO because the saddle extrapolates. Proper in-region RSM is essentially tied. Search versus identification for BO is not yet separated.
+**Interpretation.** Method ranking is not a property of the acronyms. Measured-value argmax at higher noise favours DoE, and most of that lead is identification among clustered BO samples. Naïve unconstrained quadratic readout favours BO because the saddle extrapolates. Proper in-region RSM is essentially tied. A three-well confirmation protocol (Section 5.8) removes the measured-value-argmax lead entirely.
 
-Sources: `results/e2-grid.json`, `results/e2-doe-d8.json`, `results/q34-factorial.json`, `results/q35-constrained-rsm.json`, `results/d20-rescore.json`.
+Sources: `results/e2-grid.json`, `results/e2-doe-d8.json`, `results/q34-factorial.json`, `results/q35-constrained-rsm.json`, `results/d20-rescore.json`, `results/q55-oracle-best.json`, `results/q57-search-vs-id.json`.
 
 ### 5.2 Control procedures under measured-value argmax
 
@@ -494,7 +509,7 @@ Column abbreviations: **A** = best observed; **C unc.** = unconstrained recommen
 
 - **Levy.** Many local bumps. A local quadratic is likely to be a saddle. Used to test a multimodal but still “regular” surface.
 - **Rosenbrock.** A long, curved valley. The optimum sits in a trough that a local quadratic does not describe well.
-- **Hartmann6.** Six local maxima; the global one is easy to miss. Used as a **deceptive** surface. The DoE pipeline keeps only four factors, so two active ingredients are discarded by construction.
+- **Hartmann6.** Six local maxima; the global one is easy to miss. Used as a **deceptive** surface. The stored pipeline keeps four factors. Q59 reruns d = 6 **without** that cut.
 - **Ackley.** The true best recipe is the **centre of the box**. A face-centred CCD evaluates the centre on purpose, so DoE is handed the answer. The comparison is void: it tests the CCD’s centre point, not DoE versus BO as optimizers.
 
 Hartmann6 at d = 8 is the six-dimensional function with two extra dummy axes. Best-observed DoE figures use the corrected locator (best evaluated well).
@@ -521,7 +536,7 @@ Unconstrained − constrained DoE: +0.35 to +0.48.
 
 Unconstrained − constrained DoE: +0.22 to +0.27. Constrained recommendation is null at six of eight Levy/Rosenbrock cells.
 
-**Hartmann6 results.** Saddle in 25/25 at all four cells. No terminal-rule reversal: BO leads on every score. This is a **screening-workflow** comparison: the DoE pipeline retains four factors while all six Hartmann coordinates are active, so two active factors are discarded by construction. It is not a clean optimizer-only comparison conditional on both arms receiving the correct active subspace (Workstream 5).
+**Hartmann6 results.** Saddle in 25/25 at all four cells. No terminal-rule reversal: BO leads on every score. The stored pipeline retains four factors.
 
 | Cell | DoE A | BO A | DoE − BO (A) | DoE C unc. | BO C | DoE C con. | Call, every terminal rule |
 |---|---|---|---|---|---|---|---|
@@ -530,15 +545,17 @@ Unconstrained − constrained DoE: +0.22 to +0.27. Constrained recommendation is
 | d=8, σ=0.25 | 0.6393 | **0.3134** | +0.3189 | 0.8792 | 0.2992 | 0.6309 | BO |
 | d=8, σ=0.10 | 0.6534 | **0.2370** | +0.4134 | 0.8751 | 0.2269 | 0.6442 | BO |
 
-All best-observed contrasts p < 0.0001, favouring BO. Hartmann6 has six active coordinates; the pipeline retains four, so active signal is discarded at every cell. At d = 8, chance places 3.00/4 retained slots on active factors; the screen scored 2.96/4 at σ=0.25 and 2.88/4 at σ=0.10. Twenty runs plus four centre points do not distinguish a provably inert coordinate on this surface. At d = 6 the screen fills 4.00/4 active slots and BO remains superior, so chance-level screening is an additional eight-factor deficit, not the whole mechanism.
+All screened best-observed contrasts p < 0.0001, favouring BO. Q59 asks whether that win is an artefact of discarding two active factors. At d = 6 an unscreened face-centred CCD plus confirmation is 48 wells. Removing the screen makes DoE **worse** by 0.206 (σ = 0.25) and 0.207 (σ = 0.10); BO’s lead widens 1.55–1.78× against both qLogEI and qLogNEI. Forty-seven wells spread over [0,1]⁶ are a thin covering; 27 wells in a subregion after screening is a better use of the same budget on a narrow peak. **The screen was helping the classical arm, not handicapping it.** At d = 8 an unscreened second-order fit is arithmetically impossible inside 48 wells (45 terms, 35-run CCD). That impossibility is why the screen exists.
+
+On Hartmann6 the unconstrained quadratic recommendation stays ~0.87–0.90 even when the CCD spans the whole box (unscreened rule C 0.8695 / 0.8810 versus screened 0.9008 / 0.8985). Extrapolation out of a sub-box is therefore **not** the mechanism: a quadratic cannot represent six local maxima. The Hill saddle-extrapolation account and the Hartmann misspecification account should not be lumped.
 
 **Ackley.** The global minimizer is the centre of the box. A face-centred CCD evaluates the centre by construction. Best-observed DoE regret is ~0–0.013; BO is 0.56–0.76. Constrained and unconstrained recommendations agree to four decimals. The comparison is void under every terminal rule. Of 350 Q42 stationary-point classifications, 103 were interior maxima, concentrated on Ackley: a negative-definite Hessian makes unconstrained and constrained recommendations coincide.
 
-Which procedure is ahead is therefore landscape-dependent. On saddle-like surfaces, DoE leads under measured-value argmax and BO under naïve unconstrained recommendation. On Hartmann6, BO leads under every terminal rule, but that comparison currently bundles screening loss with optimizer behaviour. No universal ranking is claimed.
+Which procedure is ahead is therefore landscape-dependent. On saddle-like surfaces, DoE leads under measured-value argmax and BO under naïve unconstrained recommendation. On Hartmann6, BO leads under every terminal rule, and that lead is **not** a 6→4 screening artefact at d = 6. No universal ranking is claimed.
 
 ### 5.6 Cost curves
 
-Question 3. A snapshot at 48 wells cannot say who is cheaper. Campaigns were extended to a cap of 200 wells (d = 6 only; σ = 0.10 and 0.25; qLogEI, **repeated-CCD DoE**, random, spread_gp). That DoE arm is `doe_repeat`: the 48-well pipeline again, **no steepest ascent**. It is not sequential classical RSM. Do not treat N = 200 as a main efficiency claim (Workstream 2). Eight-factor cost curves were not computed.
+Question 3. A snapshot at 48 wells cannot say who is cheaper. Campaigns were extended to a cap of 200 wells (d = 6 only; σ = 0.10 and 0.25). The original DoE curve is `doe_repeat`: the 48-well pipeline again, **no steepest ascent**. Q56 adds `doe_ascent` (screen → CCD → steepest ascent → recenter). Under measured-value argmax the two sequential methods are near-indistinguishable on arrival (Section 6). Eight-factor cost curves were not computed. Figure 2 is generated from stored JSON and reports **P(T ≤ N)** so failure to hit stays in the denominator.
 
 Lead with **hit probability P(T ≤ N)** — the Hits/25 columns below. Failure to hit stays in the denominator. Medians among hits are secondary and are not comparable across rows with different hit counts. A method with few successes can look fast among its successes.
 
@@ -581,20 +598,43 @@ No contrast survives Holm correction. Sequential BO versus repeated-CCD DoE hitt
 | 0.25 | 0.10 | 14/25 | 82 / 18.5 | **21/25** | 48 / 1 |
 | 0.25 | 0.08 | 10/25 | 125 / 29 | **17/25** | 48 / 1 |
 
-At low noise the match with 10-round BO holds at 0.12, 0.10 and 0.08; it does **not** hold at the tighter target 0.05 (16 vs 18 hits). At the noisy assay, one-shot GP hits **more** landscapes than sequential BO at every reported target, still in one round. Medians among hits are not comparable across rows with different denominators. Hill spread_gp used one design draw; do not generalise until Hill is re-run at several design draws. Absence of steepest ascent in the DoE arm still biases BO-versus-DoE cost curves. Eight-factor cost curves were not computed.
+At low noise the match with 10-round BO holds at 0.12, 0.10 and 0.08; it does **not** hold at the tighter target 0.05 (16 vs 18 hits). At the noisy assay, one-shot GP hits **more** landscapes than sequential BO at every reported target, still in one round. Medians among hits are not comparable across rows with different denominators. Q54 repeats Hill at five draws (Section 5.7). Eight-factor cost curves were not computed.
 
 ### 5.7 Sequential adaptation versus a one-shot GP
 
 Q53 asks whether BO’s extra plates are doing work, or whether a GP fit on a single space-filling batch would have been enough. **spread_gp** places all wells at once, fits one GP, and reads the peak: one round. **qLogEI** uses the same well count but ten adaptive rounds. If they tie, sequential search is not buying sample efficiency on that surface. If spread_gp is worse, adaptation is doing work (typically on deceptive surfaces such as Hartmann6).
 
-On the Hill ensemble, one-shot spread_gp was indistinguishable from 10-round qLogEI at N = 48 (one design draw). The same evaluation count on the Q42 families, with five design draws and a prediction fixed before the runner existed, held in 8 of 8 cells: spread_gp is inferior on Hartmann6.
+On the Hill ensemble, one-shot spread_gp was indistinguishable from 10-round qLogEI at N = 48 in the original Q52 draw. The same evaluation count on the Q42 families, with five design draws and a prediction fixed before the runner existed, held in 8 of 8 cells: spread_gp is inferior on Hartmann6.
 
 | Family | spread_gp versus 10-round qLogEI |
 |---|---|
 | Levy, Rosenbrock | null |
 | Hartmann6, Ackley | inferior, large gap |
 
-**Q54 has now re-run Hill at five draws, so the two are poolable.** The verdict is stable in 20 of 22 cells; the two that move (σ = 0.25 rule C at τ = 0.05, σ = 0.10 rule A at τ = 0.03) are exactly the two with the largest design SDs (1.92 and 2.05), and Q52 had drawn at the favourable extreme in both. The σ = 0.25 rule-C advantage is unanimous across all five draws. Sequential BO therefore purchases robustness on deceptive surfaces. The Hill one-shot-GP match is a **promising secondary finding**, not a protocol recommendation.
+**Q54 has now re-run Hill at five draws, so the two are poolable.** The verdict is stable in 20 of 22 cells; the two that move (σ = 0.25 unconstrained recommendation at τ = 0.05, σ = 0.10 measured-value argmax at τ = 0.03) are exactly the two with the largest design SDs, and Q52 had drawn at the favourable extreme in both. At σ = 0.25 under model recommendation, one-shot GP **beats** 10-round qLogEI at τ = 0.12, 0.10 and 0.08, unanimously across draws (e.g. 24.4/25 versus 16/25 at τ = 0.10). Sequential BO therefore purchases robustness on deceptive surfaces. On this smooth Hill surface it does not purchase a unique well-count win relative to one-shot GP.
+
+### 5.8 Protocol sensitivities (Q57–Q59)
+
+The findings above were then attacked at their weakest points. Same campaigns where stated; only the acquisition, the final pick, or the screening cut moves.
+
+**qLogNEI as co-primary (Q57).** Observations are y = f(x) + ε. Noisy expected improvement is the natural comparator; Rummukainen used it. qLogNEI is better than qLogEI at all four cells, so this is the harder test for a DoE lead. At σ = 0.25, on both locators, both acquisitions give the same winner. Primary-cell measured-value argmax: DoE − qLogNEI = −0.0574 [−0.0776, −0.0376]. Hidden tested-best: −0.0237 [−0.0379, −0.0111]. qLogNEI identifies its own best well 22% of the time versus qLogEI’s 8% and still does not close the single-readout gap. Quiet-assay **tested-best** verdicts flip with the acquisition and must name it. The d = 8, σ = 0.10 “DoE searched better and the assay hid it” sentence is withdrawn.
+
+**Selection-rule sensitivity (Q58).** The same primary-cell campaigns, four final picks.
+
+| Terminal pick | Extra wells | qLogEI | DoE | DoE − BO | vs published −0.0595 |
+|---|---|---|---|---|---|
+| Single noisy readout (published) | 0 | 0.1553 | 0.0958 | **−0.0595** [−0.0797, −0.0375] | 1.00× |
+| Replicate every well; pick by mean y | +48 | 0.1447 | 0.1185 | −0.0262 [−0.0446, −0.0079] | 0.44× |
+| **Confirm top 3; decide by the confirmation reading alone** | **+3** | 0.1446 | 0.1437 | **−0.0009** [−0.0263, +0.0253] | **0.01×** |
+| Posterior mean at visited wells | 0 | 0.1387 | 0.1160 | −0.0227 [−0.0438, −0.0022] | 0.38× |
+
+Wilcoxon governs the yes/no call (Q20). Confirm top-3: p = 0.92, null. Posterior mean: Wilcoxon p = 0.11 (null) while the bootstrap interval excludes zero; both numbers are reported. Confirmation moves BO from 0.1553 to 0.1446 and DoE from 0.0958 to **0.1437** — it makes the classical arm worse — because a protocol that **re-decides from a fresh single reading** throws away the CCD’s already-trustworthy first readout. The tie is a property of “keep whichever of the three confirms best,” not of averaging original and confirmation; that variant was not run.
+
+A laboratory that confirms its top three candidates before committing sees **no difference** between the methods at the primary cell. The published −0.0595 remains a fact about single-readout selection.
+
+**Figures.** Figure 1 is generated from stored artefacts; cells that were never measured are left blank. The build fails if winner-reversal by terminal rule disappears (it holds in 3 of 4 cells). Figure 2 no longer types the arrival table by hand and leads with P(T ≤ N).
+
+Sources: `results/q57-search-vs-id.json`, `results/q58-selection-sensitivity.json`, `results/q59-hartmann-no-screen.json`.
 
 ---
 
@@ -610,17 +650,18 @@ The giant 0.27–0.36 gap is a **diagnostic of invalid extrapolation**, not a fa
 
 ### Decision guide for a laboratory
 
-Use this only as far as the benchmark reaches: a constructed Hill-like surface, six or eight factors, 48–200 wells, higher-noise / lower-noise conditions 0.25 / 0.10, no wet-lab confirmation. qLogNEI is not yet co-primary. Sequential RSM with relocation now exists (Q56) and BO’s tested-best column now exists (Q55).
+Use this only as far as the benchmark reaches: a constructed Hill-like surface, six or eight factors, 48–200 wells, higher-noise / lower-noise conditions 0.25 / 0.10, no wet-lab confirmation. qLogNEI is co-primary for search versus identification (Q57). Sequential RSM with relocation exists (Q56).
 
 1. **Need a map of a planned region, or may change the criterion later.** Run classical DoE (screen + CCD). That is what the CCD is D-efficient for. Do not read the unconstrained polynomial peak as the answer; it was a saddle in 200/200 Hill runs (Figure 3). Use in-region / ridge.
-2. **Will select by a single noisy readout (measured-value argmax), higher-noise condition.** On this benchmark the DoE campaign’s noisy argmax had better true f than qLogEI and than stored qLogNEI. **Q55 now separates why:** the classical arm did also *test* better conditions, but at roughly a quarter of the apparent margin (−0.0158 against −0.0595 at d = 6, σ = 0.25). **73% of the lead is the assay failing to identify BO’s best well, not the search failing to find it.** If your carry-forward is replicates, a confirmation run, or a posterior mean rather than a single noisy argmax, most of this advantage does not apply to you.
-3. **Same selection rule, lower-noise condition.** DoE and qLogEI were indistinguishable at 48 wells.
-4. **Willing to try an unconstrained model peak anywhere in the box.** Do not use the unconstrained quadratic when canonical analysis diagnoses a saddle. The GP improved 10–21% on its own measured-value argmax; the naïve quadratic did not.
-5. **Willing to try a suggested well only inside the explored region.** In-region GP and in-region quadratic were tied in three of four cells.
-6. **Rounds are expensive (incubations, not wells).** Prefer DoE (3 rounds at 48 wells) or a one-shot Latin hypercube plus one GP (1 round). Sequential BO is 10 rounds at the same well count. One-shot GP is exploratory until multi-draw.
-7. **Wells are expensive, rounds are cheap, surface believed smooth.** Arrival numbers exist; lead with hit probability, not medians among hits. Q54 re-ran Hill at five draws: the one-shot protocol is stable in 20 of 22 cells and **beats** 10-round BO on the model’s recommendation at the noisy assay. Do not carry that to a deceptive surface — Q53 shows it fails badly there.
-8. **The surface may be deceptive (Hartmann6-like).** Sequential BO led under every score in the current **screening** workflow. Split screening from optimizer-only before treating this as a general BO win.
-9. **Campaign will continue past 48 wells with “DoE” as comparator.** Sequential RSM with relocation now exists (Q56). Under measured-value argmax it matches qLogEI on arrival — **do not claim BO is cheaper on that rule.** Under an unconstrained model recommendation BO still wins every cell.
+2. **Will select by a single noisy readout (measured-value argmax), higher-noise condition.** DoE’s noisy argmax had better true f than qLogEI and qLogNEI. About 73% of the 0.0595 lead is identification, not search (Q55/Q57).
+3. **Will confirm a shortlist before committing.** Confirming the top three wells on the same campaigns removes the primary-cell lead (−0.0595 → −0.0009). A laboratory that does that sees no difference at 48 wells under this protocol. Averaging original and confirmation readings was not run.
+4. **Same single-readout rule, lower-noise condition.** DoE and qLogEI were indistinguishable at 48 wells.
+5. **Willing to try an unconstrained model peak anywhere in the box.** Do not use the unconstrained quadratic when canonical analysis diagnoses a saddle. The GP improved 10–21% on its own measured-value argmax; the naïve quadratic did not. On Hartmann6 the quadratic stays bad even when it cannot extrapolate: misspecification, not a sub-box.
+6. **Willing to try a suggested well only inside the explored region.** In-region GP and in-region quadratic were tied in three of four cells.
+7. **Rounds are expensive (incubations, not wells).** Prefer DoE (3 rounds at 48 wells) or a one-shot Latin hypercube plus one GP (1 round). Sequential BO is 10 rounds at the same well count. Q54: one-shot is stable in 20 of 22 cells.
+8. **Wells are expensive, rounds are cheap, surface believed smooth.** Lead with hit probability. One-shot GP beats 10-round BO on the model recommendation at σ = 0.25. Do not carry that to a deceptive surface (Q53).
+9. **The surface may be deceptive (Hartmann6-like).** Sequential BO led under every score. Removing the 6→4 screen makes DoE worse, not better (Q59). At d = 8 an unscreened CCD does not fit in 48 wells.
+10. **Campaign will continue past 48 wells with “DoE” as comparator.** Sequential RSM with relocation exists (Q56). Under measured-value argmax it matches qLogEI on arrival — **do not claim BO is cheaper on that rule.** Under an unconstrained model recommendation BO still wins every cell.
 
 The only defined fold-reductions are at σ = 0.10 under the **unconstrained** rule, where qLogEI needs 0.09–0.23 of sequential RSM's wells (Q56). Read them as a statement about *when each arm can first answer* — the classical pipeline cannot speak before 53 wells, qLogEI has a posterior after 14 — not as search efficiency. Under measured-value argmax every defined ratio is 0.73–1.02, i.e. **no saving at all.** Rule-C ratios against the non-relocating `doe_repeat` remain undefined: it is censored above 50% everywhere.
 
@@ -632,7 +673,7 @@ The only defined fold-reductions are at σ = 0.10 under the **unconstrained** ru
 
 The latent function is constructed, not identified from endothelial measurements. Hall/Ogle (2025) is **structural inspiration** (factor count, 6→4 screen), not a fitted endothelial surface. Digitized stage-2 data resolve an interior peak on one of four proteins. Replay on digitized medians is underpowered (minimum detectable effect 0.68). GP posterior coverage is below the nominal 95% in every cell (worst latent coverage 0.764); adding observation noise recovers predictive coverage of approximately 0.90–0.92.
 
-**Make-or-break gaps (see `docs/PROMPTS-NEXT.md`).** **(1) CLOSED by Q55** — BO's tested-best column now exists for all four cells (`results/q55-oracle-best.json`), gated against the published rule-A column at |Δ| = 0 on all 400 rows. Search and identification are separated: at d = 6, σ = 0.25, 73% of the classical arm's rule-A lead is identification rather than search, and both arms identify their own best well only 2–18% of the time. **(2) CLOSED by Q57** — qLogNEI is co-primary in the search-versus-identification run (`results/q57-search-vs-id.json`). It beats qLogEI at all four cells, so this is the harder test; the higher-noise verdicts are unchanged under both acquisitions and the primary-cell tested-best advantage is *larger* against qLogNEI (−0.0237). Two quiet-assay tested-best verdicts are acquisition-dependent and must name the acquisition. **(3) and (4) CLOSED by Q56** — `boec.sequential_rsm` implements screen → CCD → canonical classification → steepest-ascent relocation, and was run to the 200-well cap against the stored arms (`results/q56-doe-ascent.json`). It relocates 3.4 times per campaign at σ = 0.25. **(5) CLOSED by Q54** — Hill spread_gp re-run at five design draws (`results/q54-hill-spread-gp-draws.json`), with draw 0 reproducing Q52's committed rule-A curves exactly, 550 of 550. The match is stable in 20 of 22 cells, and on rule C at σ = 0.25 the one-shot arm in fact *beats* ten-round qLogEI at τ = 0.12, 0.10 and 0.08, unanimously across draws. **(6) CLOSED by Q59, in the opposite direction to the objection** — given all six coordinates and a 47-run CCD, the classical arm does **worse** (+0.207 at both noise levels) and BO's lead *widens* 1.55–1.78×. The 6→4 screen was helping the classical arm, not handicapping it. At d = 8 the comparison is arithmetically impossible within 48 wells (45 terms, 35 runs), which is itself why the screen exists. **(7) CLOSED by Q58** — the measured-value-argmax advantage survives replication and a model-based pick at ~40% of its published magnitude and **vanishes entirely under a three-well confirmation protocol** (−0.0595 → −0.0009). Cost curves were not computed at d = 8. Surrogate-recommendation columns do not exist for space-filling arms on the Hill oracle. Q49’s 61% identification share is LHS at n = 192, not E2 BO. Coordinate descent is unpaired. Narayanan’s 3–30× figures should be re-read from the PDF before submission; they are cited as predicted DoE counts, not executed equal-budget DoE. Lapierre 2025 and Ndahiro 2025 PDFs must be read before claiming related-work completeness.
+Q54–Q59 closed the registered revision workstreams (Section 5.8). What remains: unconstrained long-run “model recommendation” for `doe_ascent` is still not in-region ridge; Q58’s tie is for confirmation-alone, not averaged original-plus-confirmation; cost curves were not computed at d = 8; d = 8 Hartmann cannot be unscreened inside 48 wells; Figure 3 still needs the same generate-from-JSON discipline as Figures 1–2 if it is hand-authored; Narayanan / Lapierre / Ndahiro PDFs should be re-read before submission. Q49’s 61% identification share is LHS at n = 192, not E2. Coordinate descent is unpaired. No wet-lab validation.
 
 Robustness checks (not headline): an additive kernel raised R² from 0.375 to 0.744 with regret change 0.0015 (p = 0.71); a “better” lengthscale prior worsened automatic relevance determination; acquisition-optimizer failures were 4/3400 = 0.118% against a 1% threshold set in advance; initial-design size had no effect at the primary cell; 0 of 10,000 permutations matched the surrogate-effect magnitude; design-averaged BO remained ahead of a lucky LHS on 25/25 landscapes (p = 6.0×10⁻⁸).
 
@@ -647,10 +688,11 @@ A synthetic Hill benchmark, **structurally inspired by** a published iPSC-to-end
 1. Under **measured-value argmax** at the higher-noise condition, sequential DoE attained lower simple regret than qLogEI by 0.0595 at six factors and 0.0284 at eight. Stored qLogNEI does not remove that DoE lead. At lower noise the qLogEI contrast was null. **Q55/Q57 decompose it:** scored on what each arm actually tested, the same contrasts are −0.0158 and −0.0127, so **55–73% of the lead is identification rather than search.** Both arms identify their own best well only 2–18% of the time, and BO’s identification gap is significantly the larger at both σ = 0.25 cells (+0.0436, p = 0.0004 at d = 6). The direction never reverses between the two locators; the magnitude collapses. **Q57 re-runs all of this with qLogNEI co-primary:** the higher-noise verdicts are unchanged under both acquisitions, and the tested-best advantage at the primary cell is in fact *larger* against qLogNEI (−0.0237). qLogNEI does identify its own best well far more often (22% against 8% at the primary cell), which is what noisy EI is for — and it does not close the measured-value-argmax gap. **The two quiet-assay tested-best verdicts are acquisition-dependent and must not be stated without naming the acquisition.**
 2. Under **naïve unconstrained** quadratic or GP recommendation, BO attained lower regret by 0.27–0.36 in every cell. Almost all of that swing is extrapolative optimization of a saddle (200/200 Hill runs). Under **in-region / ridge** recommendation the contrast was null in three of four cells. That is the fairer classical readout.
 3. Sampling geometry and surrogate class contribute separately (Q34/Q45). The CCD is 4.4-fold more D-efficient in its own region and still yields a worse global naïve recommendation than a four-factor quadratic on the adaptive design.
-4. Ranking is landscape-dependent. Levy and Rosenbrock reproduce the terminal-rule switch. Hartmann6 favours BO under every rule in the current **screening** workflow (two active factors dropped). Ackley is void.
-5. Well count and plate-round count are different costs. **Sequential RSM with relocation now exists (Q56), and it changes the long-run answer.** Under measured-value argmax `doe_ascent` matches qLogEI on arrival — no contrast survives Holm, and Q52’s single surviving cell (σ = 0.10, τ = 0.10) falls to 0.0703 within its own family. Under the unconstrained rule BO still wins every cell, and the first defined fold-reductions in this project appear at σ = 0.10 (0.09–0.23), driven substantially by the classical pipeline being unable to answer before 53 wells. **One-shot GP on Hill is no longer exploratory:** Q54's five draws make the match a stable result in 20 of 22 cells, and at σ = 0.25 the one-shot arm beats ten-round qLogEI on the model’s recommendation in one plate round against forty-eight.
+4. Ranking is landscape-dependent. Levy and Rosenbrock reproduce the terminal-rule switch. Hartmann6 favours BO under every rule; removing the 6→4 screen at d = 6 makes DoE worse (+0.207) and widens BO’s lead (Q59). Ackley is void.
+5. Well count and plate-round count are different costs. Sequential RSM with relocation (Q56) matches qLogEI on arrival under measured-value argmax. One-shot GP on Hill is stable across five draws (Q54) and, at σ = 0.25 under model recommendation, beats ten-round qLogEI in one plate round.
+6. The primary measured-value-argmax lead **survives qLogNEI** and **does not survive a three-well confirmation protocol** (Q58: −0.0595 → −0.0009). It is a fact about single-readout selection, not about every laboratory carry-forward.
 
-Rummukainen, Lapierre and Ndahiro already compared BO and DoE experimentally. Narayanan’s 3–30× figures use predicted DoE counts. This paper’s claim is that matched evaluation counts still do not define a unique comparison unless the terminal decision, noise handling, extrapolation policy, and cost unit are specified — and that those pieces can be quantified.
+Rummukainen, Lapierre and Ndahiro already compared BO and DoE experimentally. Narayanan’s 3–30× figures use predicted DoE counts. This paper’s claim is that matched evaluation counts still do not define a unique comparison unless the terminal decision, noise handling, extrapolation policy, confirmation protocol, and cost unit are specified — and that those pieces can be quantified.
 
 ---
 
@@ -666,12 +708,15 @@ Rummukainen, Lapierre and Ndahiro already compared BO and DoE experimentally. Na
 | External test functions | `results/q42-families.json` |
 | Cost-curve campaigns | `results/q52-budget-to-target.json` |
 | Reconstructed rounds and arrival | `results/q52-rounds-to-arrival.json` |
-| Tested-best beside measured-best, both arms | `results/q55-oracle-best.json` |
 | Sequential RSM with steepest ascent | `results/q56-doe-ascent.json` |
+| Search vs identification, qLogEI and qLogNEI | `results/q55-oracle-best.json`, `results/q57-search-vs-id.json` |
+| Selection-rule sensitivity | `results/q58-selection-sensitivity.json` |
+| Hartmann6 with and without 6→4 screen | `results/q59-hartmann-no-screen.json` |
+| Hill one-shot GP, five design draws | `results/q54-hill-spread-gp-draws.json` |
 | Cost-curve figures | `results/figures/cost-curves.html` (Figure 2) |
 | Scoring-rule figure | `results/figures/fig1-scoring.html` (Figure 1) |
 | Saddle / ridge schematic | `results/figures/fig3-saddle.html` (Figure 3) |
-| Prompts for missing runs | `docs/PROMPTS-NEXT.md` |
+| Prompts for the completed revision runs | `docs/PROMPTS-NEXT.md` |
 | Control tables and Q-ids | `docs/SUPPLEMENT.md` |
 | One-shot GP on external families | `results/q53-spread-gp-families.json` |
 | Audit trail | `docs/RESULTS.md` |
