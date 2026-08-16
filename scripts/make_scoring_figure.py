@@ -1,4 +1,107 @@
-<title>Four Terminal Decisions</title>
+"""Figure 1 — the same campaigns under four terminal decisions, both arms. Workstream 1.
+
+    python scripts/make_scoring_figure.py
+
+Reads the committed artefacts and writes `results/figures/fig1-scoring.html`.
+
+WHY THIS SCRIPT EXISTS AT ALL
+-------------------------------
+`fig1-scoring.html` was a **hand-authored page carrying twenty hardcoded numbers with no
+producing script**, and it was gitignored while the manuscript cited it by path — so a
+clone got a paper with a dangling figure reference and no way to re-derive it. That is the
+same defect `results/E4-RESULTS-v2.md` and `results/NEGATIVE-shape-aware-mean.md` carry,
+and `docs/TRIAGE.md` records it. Every number on the page is now derived here.
+
+THE FOUR TERMINAL DECISIONS
+-----------------------------
+One target, ``E[1 - f(delta(D_N))]``, and four locators ``delta`` applied to the *same*
+48-well campaigns:
+
+1. **tested-best** — the truth at the best well the campaign ran, whether or not the assay
+   could tell. What the search achieved, with identification removed.
+2. **measured-value argmax** — the truth at the well that read highest. What a single
+   noisy readout selects, and the project's published headline.
+3. **naïve unconstrained model recommendation** — the model's argmax over the whole box.
+   For the classical arm this is a quadratic and it is a **diagnostic of extrapolation**,
+   not the classical recommendation; for the adaptive arm it is the GP posterior mean.
+4. **in-region / ridge recommendation** — the model's argmax restricted to the region the
+   design actually explored. This is the principal classical readout.
+
+ONE CELL IS DELIBERATELY EMPTY
+--------------------------------
+There is **no stored in-region recommendation for the adaptive arm at N = 48**. Its design
+is not confined to a sub-box, so "in-region" has no agreed meaning for it, and no artefact
+in this repository carries the column. The bar is omitted rather than filled with the
+unconstrained number, which would silently claim the two locators agree for that arm.
+`docs/INFORMATION-MATRIX.md`: *empty cells stay empty; do not interpolate, do not
+substitute a nearby cell.*
+"""
+
+from __future__ import annotations
+
+import json
+import sys
+from pathlib import Path
+
+import numpy as np
+
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "src"))
+
+CELLS = ((6, 0.25), (6, 0.10), (8, 0.25), (8, 0.10))
+OUT = ROOT / "results" / "figures" / "fig1-scoring.html"
+
+#: Every number on the page, and the committed file it comes from. Printed in the footer
+#: so a reader can check any bar against an artefact without reading this script.
+SOURCES = {
+    "tested-best": "results/q57-search-vs-id.json",
+    "measured-value argmax": "results/q57-search-vs-id.json",
+    "naive unconstrained (classical)": "results/q35-constrained-rsm.json",
+    "naive unconstrained (adaptive)": "results/q34-factorial.json (cell 4: GP on BO points)",
+    "in-region / ridge (classical)": "results/q35-constrained-rsm.json",
+    "in-region / ridge (adaptive)": "NOT STORED — bar omitted",
+}
+
+
+def _rows(p: Path) -> list[dict]:
+    d = json.loads(p.read_text())
+    return d if isinstance(d, list) else d.get("rows", d)
+
+
+def build() -> dict:
+    q57 = _rows(ROOT / "results" / "q57-search-vs-id.json")
+    q35 = _rows(ROOT / "results" / "q35-constrained-rsm.json")
+    q34 = _rows(ROOT / "results" / "q34-factorial.json")
+
+    def mean_of(rows, key, dim, sigma):
+        v = [r[key] for r in rows
+             if r["dim"] == dim and abs(r["sigma"] - sigma) < 1e-12 and r.get(key) is not None]
+        return round(float(np.mean(v)), 4) if v else None
+
+    out = {"cells": [], "sources": SOURCES}
+    for dim, sigma in CELLS:
+        cell = {"dim": dim, "sigma": sigma, "arms": {}}
+        cell["arms"]["doe"] = {
+            "tested": mean_of(q57, "doe_oracle_best", dim, sigma),
+            "measured": mean_of(q57, "doe_rule_a", dim, sigma),
+            "unconstrained": mean_of(q35, "unconstrained", dim, sigma),
+            "inregion": mean_of(q35, "constrained", dim, sigma),
+        }
+        for tag, prefix in (("qlogei", "bo"), ("qlognei", "nei")):
+            cell["arms"][tag] = {
+                "tested": mean_of(q57, f"{prefix}_oracle_best", dim, sigma),
+                "measured": mean_of(q57, f"{prefix}_rule_a", dim, sigma),
+                # Only qLogEI has a stored model recommendation at N=48 (Q34 predates
+                # qLogNEI being co-primary). qLogNEI's is left empty rather than borrowed.
+                "unconstrained": (mean_of(q34, "cell4_bo_gp", dim, sigma)
+                                  if tag == "qlogei" else None),
+                "inregion": None,       # see the module docstring
+            }
+        out["cells"].append(cell)
+    return out
+
+
+HEAD = r"""<title>Four Terminal Decisions</title>
 <style>
 :root{
   --ground:#F5F7FA; --surface:#FFFFFF; --sunk:#E9EEF4;
@@ -62,7 +165,9 @@ footer{margin-top:4.5rem;padding-top:1.5rem;border-top:1px solid var(--line);
   font-size:.78rem;color:var(--muted);font-family:var(--mono);line-height:1.85}
 @media (max-width:640px){ header{padding-top:48px} .wrap{padding:0 16px 72px} }
 </style>
-<div class="wrap">
+"""
+
+BODY = r"""<div class="wrap">
 <header>
   <p class="eyebrow">Figure 1 &middot; matched budget of 48 &middot; n = 25 landscapes &times; 2 seeds</p>
   <h1>Four Terminal Decisions</h1>
@@ -100,117 +205,9 @@ that <em>are</em> stored are shown; the others are blank for the same reason.</d
 
 <footer id="src"></footer>
 </div>
+"""
 
-<script>
-const D = {
- "cells": [
-  {
-   "dim": 6,
-   "sigma": 0.25,
-   "arms": {
-    "doe": {
-     "tested": 0.0597,
-     "measured": 0.0958,
-     "unconstrained": 0.4163,
-     "inregion": 0.1169
-    },
-    "qlogei": {
-     "tested": 0.0755,
-     "measured": 0.1553,
-     "unconstrained": 0.1232,
-     "inregion": null
-    },
-    "qlognei": {
-     "tested": 0.0834,
-     "measured": 0.1532,
-     "unconstrained": null,
-     "inregion": null
-    }
-   }
-  },
-  {
-   "dim": 6,
-   "sigma": 0.1,
-   "arms": {
-    "doe": {
-     "tested": 0.0544,
-     "measured": 0.0892,
-     "unconstrained": 0.43,
-     "inregion": 0.0856
-    },
-    "qlogei": {
-     "tested": 0.0496,
-     "measured": 0.0874,
-     "unconstrained": 0.0703,
-     "inregion": null
-    },
-    "qlognei": {
-     "tested": 0.0435,
-     "measured": 0.0808,
-     "unconstrained": null,
-     "inregion": null
-    }
-   }
-  },
-  {
-   "dim": 8,
-   "sigma": 0.25,
-   "arms": {
-    "doe": {
-     "tested": 0.0575,
-     "measured": 0.0963,
-     "unconstrained": 0.3766,
-     "inregion": 0.1148
-    },
-    "qlogei": {
-     "tested": 0.0702,
-     "measured": 0.1247,
-     "unconstrained": 0.1056,
-     "inregion": null
-    },
-    "qlognei": {
-     "tested": 0.0685,
-     "measured": 0.1105,
-     "unconstrained": null,
-     "inregion": null
-    }
-   }
-  },
-  {
-   "dim": 8,
-   "sigma": 0.1,
-   "arms": {
-    "doe": {
-     "tested": 0.05,
-     "measured": 0.0948,
-     "unconstrained": 0.4104,
-     "inregion": 0.0877
-    },
-    "qlogei": {
-     "tested": 0.0653,
-     "measured": 0.0972,
-     "unconstrained": 0.0876,
-     "inregion": null
-    },
-    "qlognei": {
-     "tested": 0.0564,
-     "measured": 0.0849,
-     "unconstrained": null,
-     "inregion": null
-    }
-   }
-  }
- ],
- "sources": {
-  "tested-best": "results/q57-search-vs-id.json",
-  "measured-value argmax": "results/q57-search-vs-id.json",
-  "naive unconstrained (classical)": "results/q35-constrained-rsm.json",
-  "naive unconstrained (adaptive)": "results/q34-factorial.json (cell 4: GP on BO points)",
-  "in-region / ridge (classical)": "results/q35-constrained-rsm.json",
-  "in-region / ridge (adaptive)": "NOT STORED \u2014 bar omitted"
- }
-};
-const NS='http://www.w3.org/2000/svg';
+SCRIPT = r"""const NS='http://www.w3.org/2000/svg';
 const el=(n,a)=>{const e=document.createElementNS(NS,n);
   for(const k in (a||{}))e.setAttribute(k,a[k]);return e;};
 const tx=(e,s)=>{e.textContent=s;return e;};
@@ -296,5 +293,37 @@ function draw(){
 }
 draw();
 if(window.matchMedia) matchMedia('(prefers-color-scheme:dark)').addEventListener('change', draw);
+"""
 
-</script>
+
+def main() -> None:
+    data = build()
+    OUT.parent.mkdir(parents=True, exist_ok=True)
+    OUT.write_text(HEAD + BODY + "\n<script>\nconst D = "
+                   + json.dumps(data, indent=1) + ";\n" + SCRIPT + "\n</script>\n")
+
+    # The figure's whole point is that the ordering changes with the locator. If it ever
+    # stops changing, the figure is making a claim the data no longer supports.
+    flips = 0
+    for c in data["cells"]:
+        m, u = c["arms"]["doe"]["measured"], c["arms"]["doe"]["unconstrained"]
+        bm, bu = c["arms"]["qlogei"]["measured"], c["arms"]["qlogei"]["unconstrained"]
+        if None in (m, u, bm, bu):
+            continue
+        if (m < bm) != (u < bu):
+            flips += 1
+    if not flips:
+        raise AssertionError(
+            "the winner no longer reverses between measured argmax and the unconstrained "
+            "recommendation in any cell — this figure exists to show that reversal and "
+            "would now be asserting something the data does not show.")
+
+    print(f"  wrote {OUT.relative_to(ROOT)}  ({OUT.stat().st_size:,} bytes)")
+    print(f"  the winner reverses between locators in {flips} of {len(data['cells'])} cells")
+    empty = sum(1 for c in data["cells"] for a in c["arms"].values()
+                for v in a.values() if v is None)
+    print(f"  {empty} cells left empty rather than interpolated")
+
+
+if __name__ == "__main__":
+    main()

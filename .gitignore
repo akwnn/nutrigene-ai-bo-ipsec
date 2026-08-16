@@ -159,3 +159,6 @@ COMMIT_MSG.txt
 # Q58 carries the three-well result that qualifies the project's headline.
 !results/q57-search-vs-id.json
 !results/q58-selection-sensitivity.json
+
+# Q59 — Hartmann6 with and without the screen. Anchored by path from docs/RESULTS.md.
+!results/q59-hartmann-no-screen.json

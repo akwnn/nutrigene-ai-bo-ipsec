@@ -1,0 +1,56 @@
+====================================================================================================
+Q59 — Hartmann6 with and without the 6→4 screen
+====================================================================================================
+  d=6, sigma in (0.25, 0.1), 25 seeds, budget 48
+  unscreened design: face-centred CCD, n_derived=1, 3 centre points
+  d=8 is not run: no CCD lands on 48 wells and the only one that fits cannot support 45 terms
+
+  50 to run on 3 workers
+
+       5/50    1.7 min, ~ 15.5 min left
+      10/50    3.3 min, ~ 13.2 min left
+      15/50    4.8 min, ~ 11.3 min left
+      20/50    5.9 min, ~  8.8 min left
+      25/50    7.1 min, ~  7.1 min left
+      30/50    8.4 min, ~  5.6 min left
+      35/50    9.6 min, ~  4.1 min left
+      40/50   10.9 min, ~  2.7 min left
+      45/50   12.4 min, ~  1.4 min left
+      50/50   13.5 min, ~  0.0 min left
+
+  GATE PASSED — screened arm reproduces d20-rescore.json on 50 rows, worst |delta| = 0.000e+00
+
+====================================================================================================
+  HARTMANN6 AT d=6, WITH AND WITHOUT THE 6→4 SCREEN (measured-value argmax)
+====================================================================================================
+      sigma    qLogEI   qLogNEI   DoE screened   DoE unscreened   screen costs
+       0.25    0.2984    0.2642         0.5623           0.7685        +0.2062
+       0.10    0.1938    0.1658         0.5428           0.7502        +0.2074
+
+    'screen costs' = unscreened − screened. Negative means removing the screen HELPED.
+
+====================================================================================================
+  DOES REMOVING THE SCREEN CLOSE BO'S LEAD?
+====================================================================================================
+
+    sigma = 0.25   (unscreened CCD: 19 residual df)
+      vs   qlogei:  screened +0.2639 [+0.1949,+0.3304] p=0.0000   →  unscreened +0.4701 [+0.3974,+0.5329] p=0.0000   (1.78x)
+      vs  qlognei:  screened +0.2981 [+0.2261,+0.3709] p=0.0000   →  unscreened +0.5043 [+0.4150,+0.5757] p=0.0000   (1.69x)
+
+    sigma = 0.1   (unscreened CCD: 19 residual df)
+      vs   qlogei:  screened +0.3490 [+0.3000,+0.3997] p=0.0000   →  unscreened +0.5564 [+0.5057,+0.6015] p=0.0000   (1.59x)
+      vs  qlognei:  screened +0.3770 [+0.3222,+0.4320] p=0.0000   →  unscreened +0.5844 [+0.5325,+0.6291] p=0.0000   (1.55x)
+
+====================================================================================================
+  AND THE EXTRAPOLATION FAILURE MODE
+====================================================================================================
+      sigma   screened rule C   unscreened rule C   difference
+       0.25            0.9008              0.8695      -0.0313
+       0.10            0.8985              0.8810      -0.0175
+
+    The unscreened CCD spans the whole box, so its recommendation cannot
+    fall outside the region it was fitted on. If rule C improves here, the
+    giant unconstrained gap is about the screen's sub-box, not about
+    quadratics being unable to recommend.
+
+  written to results/q59-hartmann-no-screen.json  (14 min)

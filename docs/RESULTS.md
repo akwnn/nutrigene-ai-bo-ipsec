@@ -1968,3 +1968,91 @@ that decision rule, and Q57 showed it survives both acquisitions. What Q58 adds 
 A laboratory that confirms its top three candidates before committing sees **no difference
 between the two methods at the primary cell.** That belongs beside the headline, not in a
 supplement.
+
+---
+
+## Q59 — Hartmann6 with and without the 6→4 screen. **The screen was helping the classical arm, not handicapping it.** `current`
+
+**Ran:** `scripts/run_q59_hartmann_no_screen.py` · `results/q59-hartmann-no-screen.json` ·
+Workstream 5.
+**Status:** current
+
+### Why
+
+Hartmann6 has six active coordinates. The classical pipeline screens 6 down to 4 before
+building its surface, so the stored result *"BO wins on Hartmann6 under every rule"*
+bundles the optimizer's failure with the **screen's** failure — it discards two
+coordinates that genuinely matter. The objection writes itself, and until now it could not
+be answered.
+
+### The gate
+
+The screened arm reproduces the committed D20-corrected Hartmann6 column on **all 50 rows
+at |Δ| = 0.000e+00** before the unscreened arm beside it is read.
+
+### An arithmetic finding that came before any number
+
+A full second-order model needs `C(d+2,2)` terms — 28 at d=6, **45 at d=8**. The
+face-centred CCDs that exist inside a 48-well budget:
+
+| d | n_derived | runs | + confirmation | residual df |
+|---|---|---|---|---|
+| 6 | 1 | 47 | **48** | 19 |
+| 8 | 2 | 83 | 84 | 38 |
+| 8 | 4 | 35 | 36 | **cannot fit — 35 runs, 45 terms** |
+
+**An unscreened classical pipeline is not merely worse at d=8, it is arithmetically
+impossible within the shared budget.** That is not a limitation of the script; it is the
+reason the 6→4 screen exists at all, and it is why this run is d=6 only.
+
+### Result — removing the screen makes the classical arm much worse
+
+| σ | qLogEI | qLogNEI | DoE screened | DoE unscreened | cost of removing the screen |
+|---|---|---|---|---|---|
+| 0.25 | 0.2984 | 0.2642 | **0.5623** | 0.7685 | **+0.2062** |
+| 0.10 | 0.1938 | 0.1658 | **0.5428** | 0.7502 | **+0.2074** |
+
+And BO's lead **widens** rather than closing:
+
+| σ | vs | screened | unscreened | change |
+|---|---|---|---|---|
+| 0.25 | qLogEI | +0.2639 [+0.1949,+0.3304] | +0.4701 [+0.3974,+0.5329] | **1.78×** |
+| 0.25 | qLogNEI | +0.2981 [+0.2261,+0.3709] | +0.5043 [+0.4150,+0.5757] | 1.69× |
+| 0.10 | qLogEI | +0.3490 [+0.3000,+0.3997] | +0.5564 [+0.5057,+0.6015] | 1.59× |
+| 0.10 | qLogNEI | +0.3770 [+0.3222,+0.4320] | +0.5844 [+0.5325,+0.6291] | 1.55× |
+
+> **The confound runs the opposite way to the objection.** BO's Hartmann6 win is *not* an
+> artefact of the classical arm being forced to discard two active factors. Given all six,
+> and 47 wells to cover them with, the classical arm does **worse** — because a CCD spread
+> over the whole six-dimensional box is very coarse, while concentrating 27 wells in a
+> sub-box around the best screening run is a far better use of the same budget on a
+> landscape with a narrow optimum.
+>
+> **The screen is doing adaptive resource allocation, and it is earning its place.**
+
+### A second, negative result: the sub-box is not what breaks the recommendation
+
+The unscreened CCD spans the whole box, so its fitted quadratic **cannot** recommend a
+point outside the region it was fitted on — the extrapolation failure mode is impossible by
+construction. If the giant unconstrained gap were mainly about escaping a sub-box, it
+should largely vanish here.
+
+| σ | screened rule C | unscreened rule C | difference |
+|---|---|---|---|
+| 0.25 | 0.9008 | 0.8695 | −0.0313 |
+| 0.10 | 0.8985 | 0.8810 | −0.0175 |
+
+**It barely moves.** Removing every opportunity to extrapolate buys 0.02–0.03 of regret out
+of ~0.90. On Hartmann6 the quadratic recommendation is bad because **a quadratic cannot
+represent a six-optimum landscape**, not because it was fitted on too small a region. The
+sub-box explanation, which does real work on the Hill oracle, does not transfer here.
+
+### What this licenses
+
+* The Hartmann6 result may now be stated **without** the screening caveat at d=6: the win
+  is not a screening artefact and is larger when the screen is removed.
+* The caveat still stands at **d=8**, where the unscreened comparison cannot be run at all
+  within budget — and that impossibility should be stated rather than glossed.
+* *"The unconstrained gap is extrapolation out of the design region"* is a claim about the
+  Hill oracle. On Hartmann6 it is mostly **model misspecification**, and the two should not
+  be pooled.
