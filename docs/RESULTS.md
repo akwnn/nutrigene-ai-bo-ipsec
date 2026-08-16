@@ -1559,10 +1559,15 @@ do not, so the licensed sentences are:
   classical arm's advantage shrinks from 0.0595 to 0.0158 once both arms are scored on what they
   actually ran.
 
-**d=8 σ=0.10 is the interesting cell and it runs the other way.** Rule A is null there (p=0.4261)
+~~**d=8 σ=0.10 is the interesting cell and it runs the other way.** Rule A is null there (p=0.4261)
 while oracle-best is clearly negative (−0.0153, p=0.0056): the classical arm **tested materially
-better conditions and the noisy readout hid it entirely** — its identification rate at that cell is
-**2%**, the worst in the grid.
+better conditions and the noisy readout hid it entirely**.~~
+
+> 🔴 **STRUCK by Q57.** That contrast is **null against qLogNEI** (−0.0064, p = 0.5602). It was a
+> property of qLogEI's search, not of the classical design, and it must not be quoted. The
+> identification rate at that cell really is **2%**, the worst in the grid, and that part stands —
+> it is a statement about the readout, not about the contrast. Struck rather than deleted so the
+> retraction is visible.
 
 ### BO's identification problem is significantly worse than DoE's, except where it is better
 
@@ -1806,3 +1811,160 @@ state the σ=0.25 rule-C advantage, which is unanimous. It may **not** generalis
 cells (σ=0.25 rule C τ=0.05; σ=0.10 rule A τ=0.03) — those are properties of which hypercube was
 drawn. Q53's constraint still binds for the external families: on deceptive landscapes
 (Hartmann6, Ackley) the one-shot arm loses badly, and nothing here touches that.
+
+---
+
+## Q57 — qLogNEI as co-primary. **The primary-cell headline survives; two quiet-assay verdicts do not.** `current`
+
+**Ran:** `scripts/rescore_oracle_best.py` (extended) · `results/q57-search-vs-id.json` ·
+Workstreams 1 and 3 of the revision program. Extends Q55; does not supersede it — Q55's
+columns reproduce here at |Δ| = 0.
+**Status:** current
+
+### Why
+
+Q55 separated search from identification using **qLogEI alone**. The revision program is
+explicit that this is not enough: *"a reviewer can dismiss a DoE win as 'wrong
+acquisition'"*, and observations here really are noisy, which is the entire reason noisy EI
+exists. The executed comparison this project answers to used noisy EI.
+
+**qLogNEI is better than qLogEI at all four cells** (0.1532 / 0.0808 / 0.1105 / 0.0849
+against 0.1553 / 0.0874 / 0.1247 / 0.0972), so promoting it is the *harder* test for the
+classical arm's lead, not a friendlier one.
+
+### The gate
+
+Rule A reproduced **per row at |Δ| = 0.000e+00 for all 200 qLogEI, 200 qLogNEI and 200
+classical rows**, and all sixteen published cell means to 5e-05.
+
+### Result 1 — noisy EI substantially fixes BO's identification problem
+
+| cell | arm | rule A | tested-best | gap | identification rate |
+|---|---|---|---|---|---|
+| d=6 σ=0.25 | qLogEI | 0.1553 | 0.0755 | +0.0797 | **8%** |
+| d=6 σ=0.25 | **qLogNEI** | 0.1532 | 0.0834 | **+0.0698** | **22%** |
+| d=8 σ=0.25 | qLogEI | 0.1247 | 0.0702 | +0.0545 | 12% |
+| d=8 σ=0.25 | **qLogNEI** | 0.1105 | 0.0685 | **+0.0419** | 18% |
+
+At the primary cell qLogNEI identifies its own best well **22% of the time against
+qLogEI's 8%** — nearly three times as often — and its identification gap is a fifth
+smaller. That is exactly what noisy EI is for: it does not trust a single incumbent
+reading. **It is a real improvement, and it is not enough.**
+
+### Result 2 — the primary headline survives, and is stronger on tested-best
+
+| cell | vs | rule A (DoE−BO) | tested-best (DoE−BO) |
+|---|---|---|---|
+| d=6 σ=0.25 | qLogEI | −0.0595 [−0.0797,−0.0375] | −0.0158 [−0.0257,−0.0062] |
+| d=6 σ=0.25 | **qLogNEI** | **−0.0574** [−0.0776,−0.0376] | **−0.0237** [−0.0379,−0.0111] |
+| d=8 σ=0.25 | qLogEI | −0.0284 [−0.0447,−0.0139] | −0.0127 [−0.0251,−0.0008] |
+| d=8 σ=0.25 | **qLogNEI** | **−0.0142** [−0.0251,−0.0036] | −0.0111 [−0.0225,−0.0003] |
+
+**Both higher-noise cells give the same verdict under both acquisitions, on both
+locators.** The classical arm still selects a better well *and* still tested better
+conditions. At the primary cell the tested-best advantage is **larger** against qLogNEI
+(−0.0237) than against qLogEI (−0.0158), because qLogNEI's better identification pulls its
+rule-A number down without improving where it looked.
+
+> **The headline is not an artefact of the acquisition function.** That was the loophole
+> Workstream 3 existed to close, and it is closed in the direction that keeps the result.
+
+### Result 3 — two quiet-assay verdicts ARE acquisition-dependent, and one of them retracts a Q55 sentence
+
+| cell | locator | qLogEI says | qLogNEI says |
+|---|---|---|---|
+| d=6 σ=0.10 | tested-best | null | **BO** (+0.0109 [+0.0021,+0.0194], p = 0.0342) |
+| d=8 σ=0.10 | tested-best | **DoE** (−0.0153, p = 0.0056) | null (−0.0064, p = 0.5602) |
+
+**This retracts a sentence from the Q57 entry's predecessor.** Q55 reported d=8 σ=0.10 as
+*"the classical arm tested materially better conditions and the noisy readout hid it
+entirely"*, calling it the interesting cell. **Against qLogNEI that contrast is null.** The
+effect was a property of qLogEI's search, not of the classical design, and the claim is
+withdrawn. It is struck rather than deleted, per §5 of the cleanup brief.
+
+The d=6 σ=0.10 flip runs the other way and is new: under qLogNEI, **BO** tested better
+conditions at the quiet assay, which no qLogEI analysis showed.
+
+### What may now be written
+
+* **At the higher-noise condition, on both locators, under both acquisitions** — the
+  classical arm's advantage is a result, not an artefact of the acquisition.
+* **At the quiet assay, nothing about tested-best may be stated without naming the
+  acquisition.** Both σ=0.10 cells change verdict.
+* Measured-value argmax is stable everywhere: all four cells give the same verdict under
+  both acquisitions (DoE, null, DoE, null).
+
+---
+
+## Q58 — selection-rule sensitivity. **Three confirmation wells erase the classical arm's entire advantage.** `current` 🔴
+
+**Ran:** `scripts/run_q58_selection_sensitivity.py` · `results/q58-selection-sensitivity.json` ·
+new module `src/boec/selection.py`, 10 tests written first. Workstream 6.
+**Status:** current
+
+### Why
+
+Every headline in this project scores the campaign at the **single noisy readout**. Q55/Q57
+showed that rule is poor — the noisy argmax is the genuinely best visited well only 2–22% of
+the time — and that the adaptive arm suffers more, because it clusters its wells where the
+differences are smaller than the noise. So the obvious objection is that the classical arm's
+lead is a fact about **one selection convention**, not about design geometry.
+
+This re-selects from **the same campaigns** under four rules. Only the final pick moves.
+
+### Result
+
+d=6, σ=0.25, n=25 landscapes × 2 seeds:
+
+| rule | extra wells | BO | DoE | DoE − BO | Wilcoxon p | vs published |
+|---|---|---|---|---|---|---|
+| **single** (published) | 0 | 0.1553 | 0.0958 | **−0.0595** [−0.0797,−0.0375] | 0.0000 | 1.00× |
+| replicate every well | +48 | 0.1447 | 0.1185 | −0.0262 [−0.0446,−0.0079] | 0.0173 | **0.44×** |
+| **confirm top 3** | **+3** | 0.1446 | 0.1437 | **−0.0009** [−0.0263,+0.0253] | 0.9158 | **0.01×** |
+| posterior mean at visited | 0 | 0.1387 | 0.1160 | −0.0227 [−0.0438,−0.0022] | 0.1135 | 0.38× |
+
+> **Every better selection rule cuts the advantage by more than half, and confirming three
+> wells removes it entirely.** −0.0595 becomes −0.0009 — a dead tie — for **three extra
+> measurements on a 48-well campaign.**
+
+### Why three wells do so much
+
+They do not help both arms equally. Confirmation moves BO from 0.1553 to 0.1446 and moves
+the classical arm from 0.0958 to **0.1437 — it makes the classical arm worse.**
+
+That is the mechanism running in reverse. The classical arm's single reading was already
+comparatively reliable because its design replicates the centre and spreads the rest; the
+adaptive arm's was a lottery among near-ties. A protocol that **decides by a fresh single
+reading** therefore takes away the classical arm's advantage rather than improving both.
+
+### A stated limit on the top-3 rule
+
+`top_k_confirm` shortlists by the first reading and **decides by the confirmation reading
+alone**, discarding the first. That is one real protocol — *"re-run the best three, keep
+whichever confirms best"* — and it is what produced the tie. A lab that instead decided by
+the **mean of the original and the confirmation** would be closer to `replicate` at a third
+of the cost, and that variant **was not run**. The tie above is a property of the protocol
+as implemented, and the alternative is an open question, not a claim.
+
+### A registered disagreement between the two tests
+
+The posterior-mean row has a bootstrap interval excluding zero, [−0.0438, −0.0022], and a
+Wilcoxon p of 0.1135. **Q20 §2 registers that Wilcoxon governs yes/no and the bootstrap
+reports magnitude, with disagreements reported and not resolved.** By that rule the
+posterior-mean contrast is **null**, and both numbers are recorded here rather than the
+convenient one.
+
+### What this does to the project's headline
+
+The measured-value-argmax result stands exactly as published — it was always a claim about
+that decision rule, and Q57 showed it survives both acquisitions. What Q58 adds is how
+**narrow** the rule is:
+
+* It survives replication and a model-based pick at **roughly 40% of its published
+  magnitude**.
+* It does **not** survive a three-well confirmation protocol.
+* The confirmation protocol costs **3 wells out of 48** — 6% of the campaign.
+
+A laboratory that confirms its top three candidates before committing sees **no difference
+between the two methods at the primary cell.** That belongs beside the headline, not in a
+supplement.

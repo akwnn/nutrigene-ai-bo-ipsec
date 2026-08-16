@@ -37,17 +37,36 @@ SERIES = (("qlogei", "rule_a"), ("qlogei", "rule_c"),
           ("random", "rule_a"),
           ("doe", "rule_a"), ("doe", "rule_c"), ("doe", "rule_c_constrained"))
 
-#: Q52 §2's arrival table. Counts transcribed from `docs/RESULTS.md` and must match
-#: `results/q52-rounds-to-arrival.json` (reconstructed rounds; not logged).
-ARRIVAL = [
-    dict(sigma=0.10, target=0.10, bo=24, bo_n="32", bo_r="6",  doe=13, doe_n="48", doe_r="3",  disc="11 : 0", p=0.0010, holm=True),
-    dict(sigma=0.10, target=0.08, bo=22, bo_n="74", bo_r="16.5", doe=13, doe_n="96", doe_r="6", disc="10 : 1", p=0.0117, holm=False),
-    dict(sigma=0.10, target=0.05, bo=18, bo_n="100", bo_r="23", doe=7,  doe_n="96", doe_r="6",  disc="15 : 4", p=0.0192, holm=False),
-    dict(sigma=0.10, target=0.12, bo=24, bo_n="32", bo_r="6",  doe=20, doe_n="48", doe_r="3", disc="5 : 1",  p=0.2188, holm=False),
-    dict(sigma=0.25, target=0.15, bo=21, bo_n="32", bo_r="6",  doe=23, doe_n="48", doe_r="3", disc="1 : 3",  p=0.6250, holm=False),
-    dict(sigma=0.25, target=0.10, bo=14, bo_n="82", bo_r="18.5", doe=11, doe_n="96", doe_r="6", disc="7 : 4", p=0.5488, holm=False),
-    dict(sigma=0.25, target=0.08, bo=10, bo_n="125", bo_r="29", doe=6,  doe_n="72", doe_r="4.5", disc="7 : 3",  p=0.3438, holm=False),
-]
+#: Workstream 7's arrival family, and the targets P(T<=n) is drawn at. The seven cells
+#: are Q52 §2's, kept so the curve and the table answer the same question.
+ARRIVAL_CELLS = ((0.10, 0.10), (0.10, 0.08), (0.10, 0.05), (0.10, 0.12),
+                 (0.25, 0.15), (0.25, 0.10), (0.25, 0.08))
+HIT_TARGETS = (0.15, 0.12, 0.10, 0.08, 0.05)
+
+#: The relocating classical arm, added by Workstream 7 so the cost picture is not drawn
+#: against an arm that was never allowed to move. Read from its own file; absent on a
+#: clone that has not run it, in which case the fourth series is simply omitted.
+Q56 = ROOT / "results" / "q56-doe-ascent.json"
+#: Which ascent policy the figure uses. The registered primary — the alternative is
+#: reported in `docs/RESULTS.md` and is not what a figure should quietly pick.
+Q56_RULE = "path_argmax"
+
+
+def _mcnemar_exact(b: int, c: int) -> float:
+    """Two-sided exact McNemar on discordant pairs. 1.0 when there are none."""
+    from scipy import stats
+    n = b + c
+    return 1.0 if n == 0 else float(min(1.0, 2.0 * stats.binom.cdf(min(b, c), n, 0.5)))
+
+
+def _holm(ps: list[float]) -> list[float]:
+    """Holm step-down, monotonised. Q39's form."""
+    order = sorted(range(len(ps)), key=lambda i: ps[i])
+    m, adj, run = len(ps), [0.0] * len(ps), 0.0
+    for rank, i in enumerate(order):
+        run = max(run, min(1.0, (m - rank) * ps[i]))
+        adj[i] = run
+    return adj
 
 
 def rounds_for(arm: str, n: int) -> int:
@@ -60,10 +79,116 @@ def rounds_for(arm: str, n: int) -> int:
     return 1
 
 
+def _ascent_curves() -> dict:
+    """``(instance_id, sigma) -> {rule: curve}`` for the relocating classical arm.
+
+    The two campaign seeds are averaged into one arrival per landscape by the run's own
+    registered rule, so this only has to pick the primary ascent policy and the first
+    seed slot — matching Q52's single-campaign comparators, which is the like-for-like
+    pairing. Returns empty if the run has not happened on this clone.
+    """
+    if not Q56.exists():
+        return {}
+    out = {}
+    for r in json.loads(Q56.read_text())["rows"]:
+        if r.get("ascent_rule", Q56_RULE) != Q56_RULE or r.get("seed_slot", 0) != 0:
+            continue
+        out[(r["instance_id"], r["sigma"])] = {"rule_a": r["rule_a"], "rule_c": r["rule_c"]}
+    return out
+
+
+def compute_arrival(rows: list[dict], ascent: dict) -> list[dict]:
+    """The arrival family, computed from per-instance rows rather than transcribed.
+
+    The previous version of this file carried these counts as a literal list copied out of
+    `docs/RESULTS.md`. That is the defect this script's own docstring warns about, one
+    level down: the page was regenerable except for the one table that mattered most.
+    Everything here is now derived, and the pairing is per landscape rather than
+    reconstructed from two marginal totals.
+    """
+    out, ps = [], []
+    for sigma, target in ARRIVAL_CELLS:
+        rs = [r for r in rows if abs(r["sigma"] - sigma) < 1e-9]
+        bo_hit, doe_hit, asc_hit, b, c = 0, 0, 0, 0, 0
+        bo_ev, doe_ev, n_asc = [], [], 0
+        for r in rs:
+            a_bo = first_budget_to_target(r["arms"]["qlogei"]["rule_a"], target=target, cap=CAP)
+            a_doe = first_budget_to_target(r["arms"]["doe"]["rule_a"], target=target, cap=CAP)
+            hb, hd = a_bo is not ARRIVAL_CENSORED, a_doe is not ARRIVAL_CENSORED
+            bo_hit += hb; doe_hit += hd
+            b += hb and not hd; c += hd and not hb
+            if hb: bo_ev.append(int(a_bo))
+            if hd: doe_ev.append(int(a_doe))
+            k = (r["instance_id"], r["sigma"])
+            if k in ascent:
+                n_asc += 1
+                if first_budget_to_target(ascent[k]["rule_a"], target=target,
+                                          cap=CAP) is not ARRIVAL_CENSORED:
+                    asc_hit += 1
+        p = _mcnemar_exact(b, c)
+        ps.append(p)
+        out.append(dict(sigma=sigma, target=target, n=len(rs),
+                        bo=bo_hit, doe=doe_hit,
+                        ascent=(asc_hit if n_asc else None), n_ascent=n_asc,
+                        bo_n=str(int(np.median(bo_ev))) if bo_ev else "—",
+                        doe_n=str(int(np.median(doe_ev))) if doe_ev else "—",
+                        bo_r=str(rounds_for("qlogei", int(np.median(bo_ev)))) if bo_ev else "—",
+                        doe_r=str(rounds_for("doe", int(np.median(doe_ev)))) if doe_ev else "—",
+                        disc=f"{b} : {c}", p=round(p, 4)))
+    for cell, adj in zip(out, _holm(ps)):
+        cell["holm"] = bool(adj < 0.05)
+        cell["p_holm"] = round(adj, 4)
+    return out
+
+
+def compute_hit_probability(rows: list[dict], ascent: dict) -> dict:
+    """P(T <= n) for every arm, target and noise level.
+
+    **Failure to hit stays in the denominator.** That is the whole point of Workstream 7:
+    a median among the landscapes that arrived silently changes the denominator per
+    method, and the arm that arrives least often gets the flattering median. A hit
+    probability cannot do that — every landscape counts, arrived or not.
+    """
+    out: dict = {}
+    arms = [("qlogei", "rule_a"), ("doe", "rule_a"), ("spread_gp", "rule_a")]
+    for sigma in (0.25, 0.10):
+        rs = [r for r in rows if abs(r["sigma"] - sigma) < 1e-9]
+        key = f"{sigma}"
+        out[key] = {}
+        grid = sorted({int(k) for r in rs for k in r["arms"]["qlogei"]["rule_a"]})
+        for arm, rule in arms:
+            for t in HIT_TARGETS:
+                pts = []
+                for n in grid:
+                    hits = sum(
+                        1 for r in rs
+                        if first_budget_to_target(r["arms"][arm][rule], target=t, cap=n)
+                        is not ARRIVAL_CENSORED)
+                    pts.append(dict(n=n, p=round(hits / len(rs), 4)))
+                out[key][f"{arm}|{t}"] = pts
+        if ascent:
+            sub = {k: v for k, v in ascent.items() if abs(k[1] - sigma) < 1e-9}
+            if sub:
+                for t in HIT_TARGETS:
+                    pts = []
+                    for n in grid:
+                        hits = sum(1 for v in sub.values()
+                                   if first_budget_to_target(v["rule_a"], target=t, cap=n)
+                                   is not ARRIVAL_CENSORED)
+                        pts.append(dict(n=n, p=round(hits / len(sub), 4)))
+                    out[key][f"doe_ascent|{t}"] = pts
+    return out
+
+
 def build_data() -> dict:
     grid = json.loads((ROOT / "results" / "q52-budget-to-target.json").read_text())
     rows = grid["rows"]
-    out = {"series": {}, "cost": {}, "targets": list(TARGETS_RULE_C), "arrival": ARRIVAL}
+    ascent = _ascent_curves()
+    out = {"series": {}, "cost": {}, "targets": list(TARGETS_RULE_C),
+           "arrival": compute_arrival(rows, ascent),
+           "hit": compute_hit_probability(rows, ascent),
+           "hit_targets": list(HIT_TARGETS),
+           "has_ascent": bool(ascent)}
     for sigma in (0.25, 0.10):
         rs = [r for r in rows if abs(r["sigma"] - sigma) < 1e-9]
         key = f"{sigma}"
@@ -113,7 +238,7 @@ HEAD = r"""<title>The Savings Curve That Isn't</title>
   --ground:#F6F7F9; --surface:#FFFFFF; --sunk:#EDF0F4;
   --ink:#161B22; --ink-2:#39424E; --muted:#5A6472; --line:#DCE1E8; --rule:#C8D0DA;
   --qlogei:#2563EB; --spread:#0D9488; --doe:#C2410C; --random:#94A3B8;
-  --cens:#C2410C; --good:#0F766E;
+  --ascent:#7A4FD0; --cens:#C2410C; --good:#0F766E;
   --serif:ui-serif,Georgia,"Iowan Old Style","Times New Roman",serif;
   --sans:ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;
   --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
@@ -123,14 +248,14 @@ HEAD = r"""<title>The Savings Curve That Isn't</title>
     --ground:#0F1319; --surface:#161B22; --sunk:#1B212A;
     --ink:#E6EAF0; --ink-2:#C2CAD6; --muted:#94A0B0; --line:#252D38; --rule:#39434F;
     --qlogei:#6098F5; --spread:#2DD4BF; --doe:#FB8B3C; --random:#8593A6;
-    --cens:#FB8B3C; --good:#2DD4BF;
+    --ascent:#A98BE8; --cens:#FB8B3C; --good:#2DD4BF;
   }
 }
 :root[data-theme="dark"]{
   --ground:#0F1319; --surface:#161B22; --sunk:#1B212A;
   --ink:#E6EAF0; --ink-2:#C2CAD6; --muted:#94A0B0; --line:#252D38; --rule:#39434F;
   --qlogei:#6098F5; --spread:#2DD4BF; --doe:#FB8B3C; --random:#8593A6;
-  --cens:#FB8B3C; --good:#2DD4BF;
+  --ascent:#A98BE8; --cens:#FB8B3C; --good:#2DD4BF;
 }
 *{box-sizing:border-box}
 body{margin:0;background:var(--ground);color:var(--ink);font-family:var(--sans);
@@ -255,6 +380,25 @@ waiting rather than wells consumed. Nothing about the measurements changed; only
   property of the batch structure, fixed in advance, not a result of the experiment.</p>
 </div>
 
+<h2>Probability of getting there at all</h2>
+<p class="prose">Everything above this point is a median among the landscapes that arrived
+&mdash; and <strong>each arm arrives on a different subset</strong>, so those medians are
+computed over different denominators. The arm that arrives least often gets the most
+flattering median, because only its easiest landscapes are in the average.
+<strong>P(T&nbsp;&le;&nbsp;n) has no such freedom:</strong> every landscape counts, arrived
+or not. This is the honest cost picture, and it is the one to read first.</p>
+<div class="panel">
+  <div class="ctrls" id="hit-ctrls"></div>
+  <div class="legend" id="hit-legend"></div>
+  <div class="scroll"><svg id="hit" viewBox="0 0 900 430" role="img"
+    aria-label="Probability of reaching the target by budget n, for each arm"></svg></div>
+  <p class="cap">Share of all 25 landscapes that have reached the target by budget
+  <em>n</em>. The classical arms step because they can only answer when a whole pipeline
+  completes &mdash; that is a real property of the method, not a plotting artefact.
+  <strong>The relocating classical arm is the one that changes the picture</strong>: it
+  climbs where the fixed-region arm stays flat.</p>
+</div>
+
 <h2>The one result that survives</h2>
 <p class="prose">Everything above conditions on arriving, and arriving is what the classical arm
 mostly fails to do. <strong>Arrival itself is unconditioned</strong> &mdash; all 25 landscapes
@@ -264,7 +408,7 @@ Paired per landscape, exact binomial on the discordant pairs.</p>
   <div class="scroll"><table>
     <thead><tr><th>&sigma;</th><th>target</th><th>BO reaches</th><th>BO wells</th><th>BO rounds</th>
       <th>DoE reaches</th><th>DoE wells</th><th>DoE rounds</th>
-      <th>discordant</th><th>exact p</th><th>survives Holm</th></tr></thead>
+      <th>relocating DoE</th><th>discordant</th><th>exact p</th><th>survives Holm</th></tr></thead>
     <tbody id="arrival"></tbody>
   </table></div>
   <p class="cap">At the optimistic assay, BO reaches a regret of <span class="num">0.10</span> in
@@ -307,15 +451,17 @@ from 25 toward 3, so reading a trend down a column is partly survivorship.</li>
 </div>
 """
 
-SCRIPT = r"""const C = {qlogei:'--qlogei', spread_gp:'--spread', doe:'--doe', random:'--random'};
-const NAME = {qlogei:'qLogEI (BO)', spread_gp:'spread + GP', doe:'DoE pipeline', random:'random'};
+SCRIPT = r"""const C = {qlogei:'--qlogei', spread_gp:'--spread', doe:'--doe', random:'--random',
+  doe_ascent:'--ascent'};
+const NAME = {qlogei:'qLogEI (BO)', spread_gp:'spread + GP', doe:'DoE, fixed region',
+  random:'random', doe_ascent:'DoE, relocating'};
 const cv = k => getComputedStyle(document.documentElement).getPropertyValue(k).trim();
 const SVG = 'http://www.w3.org/2000/svg';
 const el = (n,a) => { const e=document.createElementNS(SVG,n);
   for(const k in (a||{})) e.setAttribute(k,a[k]); return e; };
 const txt = (e,s) => { e.textContent = s; return e; };
 
-let sigma = '0.25', rule = 'rule_c';
+let sigma = '0.25', rule = 'rule_c', hitTarget = 0.10;
 
 /* ---------------- censoring strip ---------------- */
 function drawCens(){
@@ -427,13 +573,68 @@ function drawLines(id, xkey){
   });
 }
 
+/* ---------------- P(T <= n) ---------------- */
+function drawHit(){
+  const s = document.getElementById('hit'); if(!s) return; s.innerHTML='';
+  const W=900,H=430,L=64,R=26,TOP=26,B=58;
+  const set = D.hit[sigma]; if(!set) return;
+  const arms = ['qlogei','doe_ascent','doe','spread_gp'].filter(a => set[a+'|'+hitTarget]);
+  if(!arms.length) return;
+  const all = set[arms[0]+'|'+hitTarget];
+  const x0 = all[0].n, x1 = all[all.length-1].n;
+  const sx = v => L + (Math.log(v)-Math.log(x0))/(Math.log(x1)-Math.log(x0))*(W-L-R);
+  const sy = p => H-B - p*(H-TOP-B);
+
+  for(let i=0;i<=5;i++){
+    const p=i/5, y=sy(p);
+    s.appendChild(el('line',{x1:L,x2:W-R,y1:y,y2:y,stroke:cv('--line'),'stroke-width':1}));
+    s.appendChild(txt(el('text',{x:L-11,y:y+4,'text-anchor':'end',fill:cv('--muted'),
+      'font-size':12,'font-family':cv('--mono')}), Math.round(p*100)+'%'));
+  }
+  [8,16,32,48,100,200].filter(t=>t>=x0&&t<=x1).forEach(t=>{
+    const x=sx(t);
+    s.appendChild(el('line',{x1:x,x2:x,y1:TOP,y2:H-B,stroke:cv('--line'),
+      'stroke-width':1,opacity:.55}));
+    s.appendChild(txt(el('text',{x:x,y:H-B+22,'text-anchor':'middle',fill:cv('--muted'),
+      'font-size':12,'font-family':cv('--mono')}), String(t)));
+  });
+  s.appendChild(txt(el('text',{x:(L+W-R)/2,y:H-14,'text-anchor':'middle',fill:cv('--muted'),
+    'font-size':11,'font-family':cv('--mono'),'letter-spacing':'.1em'}),
+    'EVALUATIONS SPENT  (log scale)'));
+  s.appendChild(txt(el('text',{x:14,y:TOP+8,fill:cv('--muted'),'font-size':11,
+    'font-family':cv('--mono'),'letter-spacing':'.1em'}), 'P(T ≤ n)'));
+
+  arms.forEach(a=>{
+    const pp = set[a+'|'+hitTarget], col = cv(C[a]);
+    // step, not line: these arms only answer at the budgets they can stop at
+    let d='';
+    pp.forEach((q,i)=>{
+      if(i===0){ d += 'M'+sx(q.n)+','+sy(q.p); }
+      else { d += 'L'+sx(q.n)+','+sy(pp[i-1].p)+'L'+sx(q.n)+','+sy(q.p); }
+    });
+    s.appendChild(el('path',{d:d,fill:'none',stroke:col,'stroke-width':2.5,
+      'stroke-linejoin':'round','stroke-linecap':'round'}));
+    pp.forEach(q=>s.appendChild(el('circle',{cx:sx(q.n),cy:sy(q.p),r:3.2,
+      fill:cv('--surface'),stroke:col,'stroke-width':1.8})));
+  });
+
+  const lg = document.getElementById('hit-legend'); lg.innerHTML='';
+  arms.forEach(a=>{
+    const sp=document.createElement('span'), sw=document.createElement('i');
+    sw.className='swatch'; sw.style.background=cv(C[a]);
+    sp.appendChild(sw); sp.appendChild(document.createTextNode(NAME[a]));
+    lg.appendChild(sp);
+  });
+}
+
 function drawArrival(){
   const tb = document.getElementById('arrival'); tb.innerHTML='';
   D.arrival.forEach(a=>{
     const tr = document.createElement('tr');
     if(a.holm) tr.className='hit';
     const cells = [a.sigma.toFixed(2), a.target.toFixed(2),
-                   a.bo+'/25', a.bo_n, a.bo_r, a.doe+'/25', a.doe_n, a.doe_r,
+                   a.bo+'/'+a.n, a.bo_n, a.bo_r, a.doe+'/'+a.n, a.doe_n, a.doe_r,
+                   (a.ascent===null||a.ascent===undefined ? '—' : a.ascent+'/'+a.n_ascent),
                    a.disc, a.p.toFixed(4)];
     cells.forEach(v=>{ const td=document.createElement('td'); td.textContent=v; tr.appendChild(td); });
     const td = document.createElement('td');
@@ -465,10 +666,14 @@ function drawAll(){
     {spacer:true},
     {label:'rule A  best measured', on:rule==='rule_a', act:()=>{rule='rule_a';drawAll();}},
     {label:'rule C  the model’s pick', on:rule==='rule_c', act:()=>{rule='rule_c';drawAll();}}];
+  const ht = [{spacer:true}].concat(D.hit_targets.map(t => ({
+    label:'τ '+t.toFixed(2), on:hitTarget===t, act:()=>{hitTarget=t;drawAll();}})));
   btns('cens-ctrls', sig);
   btns('curve-ctrls', sig.concat(rl));
   btns('rounds-ctrls', sig.concat(rl));
-  drawCens(); drawLines('curve','n'); drawLines('rounds','rounds'); drawArrival();
+  btns('hit-ctrls', sig.concat(ht));
+  drawCens(); drawLines('curve','n'); drawLines('rounds','rounds');
+  drawHit(); drawArrival();
 }
 drawAll();
 if(matchMedia) matchMedia('(prefers-color-scheme:dark)').addEventListener('change', drawAll);

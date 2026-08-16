@@ -153,3 +153,9 @@ COMMIT_MSG.txt
 # twenty hardcoded numbers, which is a defect recorded in docs/TRIAGE.md, not a licence.
 !results/figures/fig1-scoring.html
 !results/figures/fig3-saddle.html
+
+# Q57 (search vs identification, both acquisitions) and Q58 (selection-rule
+# sensitivity). Anchored by path from docs/RESULTS.md; Q57 is 600 campaigns and 21 min,
+# Q58 carries the three-well result that qualifies the project's headline.
+!results/q57-search-vs-id.json
+!results/q58-selection-sensitivity.json

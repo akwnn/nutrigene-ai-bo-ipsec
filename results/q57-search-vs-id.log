@@ -1,0 +1,80 @@
+====================================================================================================
+Q55 — oracle-best beside rule A, both arms
+====================================================================================================
+  cells [(6, 0.25), (6, 0.1), (8, 0.25), (8, 0.1)], budget 48, q 4
+  gate: published rule A must reproduce per row at 1e-12
+
+  200 rows to run on 3 workers
+
+      10/200    1.0 min elapsed, ~ 19.8 min left
+      20/200    1.7 min elapsed, ~ 15.2 min left
+      30/200    2.4 min elapsed, ~ 13.7 min left
+      40/200    3.1 min elapsed, ~ 12.6 min left
+      50/200    3.8 min elapsed, ~ 11.5 min left
+      60/200    4.8 min elapsed, ~ 11.3 min left
+      70/200    5.8 min elapsed, ~ 10.8 min left
+      80/200    7.0 min elapsed, ~ 10.5 min left
+      90/200    8.2 min elapsed, ~ 10.0 min left
+     100/200    9.7 min elapsed, ~  9.7 min left
+     110/200   10.7 min elapsed, ~  8.8 min left
+     120/200   11.5 min elapsed, ~  7.6 min left
+     130/200   12.3 min elapsed, ~  6.6 min left
+     140/200   13.2 min elapsed, ~  5.6 min left
+     150/200   14.2 min elapsed, ~  4.7 min left
+     160/200   15.4 min elapsed, ~  3.8 min left
+     170/200   16.8 min elapsed, ~  3.0 min left
+     180/200   18.0 min elapsed, ~  2.0 min left
+     190/200   19.4 min elapsed, ~  1.0 min left
+     200/200   20.6 min elapsed, ~  0.0 min left
+
+  GATE PASSED — rule A reproduced for 200 BO and 200 DoE rows
+    worst |delta|: BO 0.000e+00, DoE 0.000e+00
+    16 published cell means reproduced to 5e-05
+
+====================================================================================================
+  THE TWO LOCATORS, BOTH ACQUISITIONS — mean regret, n=25 landscapes
+====================================================================================================
+              cell      arm    rule A    tested      gap    id%   |  DoE rule A  DoE tested  DoE gap  DoE id%
+        d=6 s=0.25   qLogEI    0.1553    0.0755  +0.0797     8%   |      0.0958      0.0597  +0.0361      12%
+                    qLogNEI    0.1532    0.0834  +0.0698    22%   |      0.0958      0.0597  +0.0361      12%
+         d=6 s=0.1   qLogEI    0.0874    0.0496  +0.0378    18%   |      0.0892      0.0544  +0.0348      16%
+                    qLogNEI    0.0808    0.0435  +0.0373    16%   |      0.0892      0.0544  +0.0348      16%
+        d=8 s=0.25   qLogEI    0.1247    0.0702  +0.0545    12%   |      0.0963      0.0575  +0.0388      14%
+                    qLogNEI    0.1105    0.0685  +0.0419    18%   |      0.0963      0.0575  +0.0388      14%
+         d=8 s=0.1   qLogEI    0.0972    0.0653  +0.0319    14%   |      0.0948      0.0500  +0.0448       2%
+                    qLogNEI    0.0849    0.0564  +0.0284    16%   |      0.0948      0.0500  +0.0448       2%
+
+====================================================================================================
+  THE CONTRAST, ON EACH LOCATOR, AGAINST EACH ACQUISITION. Negative = DoE better.
+====================================================================================================
+              cell       vs           rule A (DoE-BO)        p        tested-best (DoE-BO)        p      sign
+        d=6 s=0.25   qLogEI    -0.0595 [-0.0797,-0.0375]   0.0000      -0.0158 [-0.0257,-0.0062]   0.0067      same
+                    qLogNEI    -0.0574 [-0.0776,-0.0376]   0.0000      -0.0237 [-0.0379,-0.0111]   0.0012      same
+         d=6 s=0.1   qLogEI    +0.0018 [-0.0086,+0.0117]   0.6915      +0.0048 [-0.0030,+0.0131]   0.2872      same
+                    qLogNEI    +0.0084 [-0.0059,+0.0214]   0.1336      +0.0109 [+0.0021,+0.0194]   0.0342      same
+        d=8 s=0.25   qLogEI    -0.0284 [-0.0447,-0.0139]   0.0023      -0.0127 [-0.0251,-0.0008]   0.0588      same
+                    qLogNEI    -0.0142 [-0.0251,-0.0036]   0.0367      -0.0111 [-0.0225,-0.0003]   0.0667      same
+         d=8 s=0.1   qLogEI    -0.0024 [-0.0095,+0.0053]   0.4261      -0.0153 [-0.0254,-0.0059]   0.0056      same
+                    qLogNEI    +0.0100 [-0.0010,+0.0207]   0.1014      -0.0064 [-0.0182,+0.0041]   0.5602     FLIPS
+
+====================================================================================================
+  DOES EVERY QUALITATIVE HEADLINE SURVIVE BOTH ACQUISITIONS?
+====================================================================================================
+    A conclusion that holds against qLogEI but not qLogNEI is a conclusion
+    about an acquisition function, not about Bayesian optimization.
+
+      d=6 sigma=0.25  measured-value argmax  qLogEI: DoE, qLogNEI: DoE
+      d=6 sigma=0.25  tested-best            qLogEI: DoE, qLogNEI: DoE
+       d=6 sigma=0.1  measured-value argmax  qLogEI: null, qLogNEI: null
+       d=6 sigma=0.1  tested-best            qLogEI: null, qLogNEI: BO   <<< DISAGREES
+      d=8 sigma=0.25  measured-value argmax  qLogEI: DoE, qLogNEI: DoE
+      d=8 sigma=0.25  tested-best            qLogEI: DoE, qLogNEI: DoE
+       d=8 sigma=0.1  measured-value argmax  qLogEI: null, qLogNEI: null
+       d=8 sigma=0.1  tested-best            qLogEI: DoE, qLogNEI: null   <<< DISAGREES
+
+    2 verdicts change with the acquisition. Each must be
+    reported as acquisition-dependent, not as a property of BO:
+      d=6 sigma=0.1 / tested-best: qLogEI says null, qLogNEI says BO
+      d=8 sigma=0.1 / tested-best: qLogEI says DoE, qLogNEI says null
+
+  written to results/q57-search-vs-id.json  (21 min)

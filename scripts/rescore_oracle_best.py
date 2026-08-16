@@ -1,9 +1,17 @@
-"""Q55 — score the well a researcher would pick AND the hidden true-best well, both arms.
+"""Search versus identification, both classical and Bayesian, under BOTH acquisitions.
 
     python scripts/rescore_oracle_best.py                  # all four cells
     python scripts/rescore_oracle_best.py --cell 6 0.25    # one cell
     python scripts/rescore_oracle_best.py --gate-only      # reproduce, gate, report nothing
     python scripts/rescore_oracle_best.py --workers 4
+
+Workstreams 1 and 3 of the revision program. Q55 was this file with one acquisition;
+qLogNEI is now co-primary, because a result that holds against qLogEI alone is a result
+about an acquisition function. Noisy EI exists precisely because the incumbent is itself
+uncertain when observations carry noise, and the executed comparison this project is
+answering to used it. **qLogNEI is better than qLogEI at all four cells** (0.1532 / 0.0808
+/ 0.1105 / 0.0849 against 0.1553 / 0.0874 / 0.1247 / 0.0972), so promoting it is the
+harder test for the classical arm's lead, not a friendlier one.
 
 WHAT IS ACTUALLY BEING ASKED
 -----------------------------
@@ -70,6 +78,7 @@ sys.path.insert(0, str(ROOT / "src"))
 from boec.campaign import Campaign, CampaignConfig                   # noqa: E402
 from boec.diagnostics import instance_bootstrap, reported_best_curve  # noqa: E402
 from boec.doe import run_doe_arm                                     # noqa: E402
+from boec.optimizers import AcqConfig                                # noqa: E402
 from boec.oracles import load_ensemble                               # noqa: E402
 from boec.torch_oracle import BiphasicOracle                         # noqa: E402
 
@@ -87,6 +96,13 @@ GATE_TOL = 1e-12
 #: file is caught rather than absorbed.
 PUBLISHED_BO_RULE_A = {(6, 0.25): 0.1553, (6, 0.10): 0.0874,
                        (8, 0.25): 0.1247, (8, 0.10): 0.0972}
+#: Workstream 3. qLogNEI is **better than qLogEI at all four cells**, so promoting it to
+#: co-primary is the *harder* test for the classical arm's lead, not a friendlier one.
+#: That is exactly why it has to be here: a reviewer can otherwise dismiss the whole
+#: result as "wrong acquisition function", and observations really are noisy — noisy EI
+#: exists because the incumbent is itself uncertain, and Rummukainen used it.
+PUBLISHED_NEI_RULE_A = {(6, 0.25): 0.1532, (6, 0.10): 0.0808,
+                        (8, 0.25): 0.1105, (8, 0.10): 0.0849}
 PUBLISHED_DOE_RULE_A = {(6, 0.25): 0.0958, (6, 0.10): 0.0892,
                         (8, 0.25): 0.0963, (8, 0.10): 0.0948}
 PUBLISHED_DOE_ORACLE_BEST = {(6, 0.25): 0.0597, (6, 0.10): 0.0544,
@@ -96,7 +112,11 @@ PUBLISHED_DOE_ORACLE_BEST = {(6, 0.25): 0.0597, (6, 0.10): 0.0544,
 CELL_TOL = 5e-5
 
 N_BOOT = 4000
-OUT = ROOT / "results" / "q55-oracle-best.json"
+#: Named for Workstream 1's requested artefact rather than for the run number, because the
+#: revision program lists this filename and someone will grep for it. Q55 was this file
+#: without the qLogNEI arm; it is extended here, not superseded — its numbers reproduce
+#: exactly, which the per-row gate below re-checks.
+OUT = ROOT / "results" / "q57-search-vs-id.json"
 E2_GRID = ROOT / "results" / "e2-grid.json"
 E2_DOE_D8 = ROOT / "results" / "e2-doe-d8.json"
 RULE = "=" * 100
@@ -141,11 +161,16 @@ def one(job: tuple[int, float, int, int]) -> dict:
     bounds = torch.stack([torch.zeros(dim, dtype=torch.double),
                           torch.ones(dim, dtype=torch.double)])
 
-    # --- BO: regenerate the campaign, then check it IS the published one -------
-    o = BiphasicOracle(inst, sigma_rel=sigma, seed=seed)
-    camp = Campaign(o, bounds, CampaignConfig(d=dim, budget=BUDGET, q=Q, seed=seed))
-    camp.run()
-    bo_a, bo_ob, bo_id = _score(o.truth(camp.train_X), camp.train_Y, opt)
+    # --- BO, both acquisitions: regenerate, then check each IS the published one ---
+    out = {}
+    for tag, kind in (("bo", "qlogei"), ("nei", "qlognei")):
+        o = BiphasicOracle(inst, sigma_rel=sigma, seed=seed)
+        cfg = AcqConfig(kind=kind)  # type: ignore[arg-type]
+        camp = Campaign(o, bounds,
+                        CampaignConfig(d=dim, budget=BUDGET, q=Q, seed=seed, acq=cfg))
+        camp.run()
+        a, ob, ident = _score(o.truth(camp.train_X), camp.train_Y, opt)
+        out |= {f"{tag}_rule_a": a, f"{tag}_oracle_best": ob, f"{tag}_identified": ident}
 
     # --- DoE: same, on its own evaluator ---------------------------------------
     od = BiphasicOracle(inst, sigma_rel=sigma, seed=seed)
@@ -154,8 +179,8 @@ def one(job: tuple[int, float, int, int]) -> dict:
 
     return dict(dim=dim, sigma=sigma, instance=inst.instance_id, instance_index=idx,
                 seed=seed, secs=round(time.time() - t0, 1),
-                bo_rule_a=bo_a, bo_oracle_best=bo_ob, bo_identified=bo_id,
-                doe_rule_a=doe_a, doe_oracle_best=doe_ob, doe_identified=doe_id)
+                doe_rule_a=doe_a, doe_oracle_best=doe_ob, doe_identified=doe_id,
+                **out)
 
 
 def gate(rows: list[dict]) -> dict:
@@ -164,11 +189,16 @@ def gate(rows: list[dict]) -> dict:
     Raises rather than reporting. Prompt 2 §3: *"If the gate fails, the campaign is not
     reproduced and the new column is worthless."*
     """
-    worst = {"bo": 0.0, "doe": 0.0}
-    n = {"bo": 0, "doe": 0}
-    for arm, key in (("bo", "bo_rule_a"), ("doe", "doe_rule_a")):
+    arms = {"bo": "qlogei", "nei": "qlognei", "doe": "doe"}
+    worst = {a: 0.0 for a in arms}
+    n = {a: 0 for a in arms}
+    for arm, published_name in arms.items():
+        key_col = f"{arm}_rule_a"
         for r in rows:
-            want = _stored(r["dim"], r["sigma"], "qlogei" if arm == "bo" else "doe")
+            if key_col not in r:
+                continue          # a row from before this arm existed
+            key = key_col
+            want = _stored(r["dim"], r["sigma"], published_name)
             k = (r["instance"], r["seed"])
             if k not in want:
                 raise AssertionError(
@@ -199,8 +229,11 @@ def gate(rows: list[dict]) -> dict:
             continue
         for label, key, published in (
                 ("bo_rule_a", "bo_rule_a", PUBLISHED_BO_RULE_A),
+                ("nei_rule_a", "nei_rule_a", PUBLISHED_NEI_RULE_A),
                 ("doe_rule_a", "doe_rule_a", PUBLISHED_DOE_RULE_A),
                 ("doe_oracle_best", "doe_oracle_best", PUBLISHED_DOE_ORACLE_BEST)):
+            if key not in sub[0]:
+                continue
             got = float(np.mean([r[key] for r in sub]))
             exp = published[(dim, sigma)]
             if abs(got - exp) > CELL_TOL:
@@ -231,11 +264,6 @@ def analyse(rows: list[dict]) -> list[dict]:
         sub = [r for r in rows if r["dim"] == dim and abs(r["sigma"] - sigma) < 1e-12]
         if not sub:
             continue
-        bo_a = _per_instance(sub, "bo_rule_a")
-        bo_ob = _per_instance(sub, "bo_oracle_best")
-        doe_a = _per_instance(sub, "doe_rule_a")
-        doe_ob = _per_instance(sub, "doe_oracle_best")
-
         def contrast(d: np.ndarray) -> dict:
             m, lo, hi = instance_bootstrap(d, n_boot=N_BOOT)
             w = stats.wilcoxon(d) if np.any(d != 0) else None
@@ -243,64 +271,111 @@ def analyse(rows: list[dict]) -> list[dict]:
                         wilcoxon_p=float(w.pvalue) if w is not None else 1.0,
                         n=int(d.size))
 
-        out.append(dict(
-            dim=dim, sigma=sigma, n_instances=int(bo_a.size),
-            bo_rule_a=float(bo_a.mean()), bo_oracle_best=float(bo_ob.mean()),
-            doe_rule_a=float(doe_a.mean()), doe_oracle_best=float(doe_ob.mean()),
-            bo_gap=float((bo_a - bo_ob).mean()), doe_gap=float((doe_a - doe_ob).mean()),
-            bo_identified=float(np.mean([r["bo_identified"] for r in sub])),
-            doe_identified=float(np.mean([r["doe_identified"] for r in sub])),
-            # the two contrasts the language rules hang on
-            contrast_rule_a=contrast(doe_a - bo_a),
-            contrast_oracle_best=contrast(doe_ob - bo_ob),
-            # and the gap itself, by arm
-            gap_bo=contrast(bo_a - bo_ob), gap_doe=contrast(doe_a - doe_ob),
-            gap_difference=contrast((bo_a - bo_ob) - (doe_a - doe_ob))))
+        doe_a = _per_instance(sub, "doe_rule_a")
+        doe_ob = _per_instance(sub, "doe_oracle_best")
+        cell = dict(dim=dim, sigma=sigma, n_instances=int(doe_a.size),
+                    doe_rule_a=float(doe_a.mean()),
+                    doe_oracle_best=float(doe_ob.mean()),
+                    doe_gap=float((doe_a - doe_ob).mean()),
+                    doe_identified=float(np.mean([r["doe_identified"] for r in sub])),
+                    gap_doe=contrast(doe_a - doe_ob), arms={})
+
+        # Workstream 3: every contrast is computed against BOTH acquisitions. A headline
+        # that survives only one of them is not a headline about Bayesian optimization,
+        # it is a headline about qLogEI.
+        for tag in ("bo", "nei"):
+            if f"{tag}_rule_a" not in sub[0]:
+                continue
+            a = _per_instance(sub, f"{tag}_rule_a")
+            ob = _per_instance(sub, f"{tag}_oracle_best")
+            cell["arms"][tag] = dict(
+                rule_a=float(a.mean()), oracle_best=float(ob.mean()),
+                gap=float((a - ob).mean()),
+                identified=float(np.mean([r[f"{tag}_identified"] for r in sub])),
+                contrast_rule_a=contrast(doe_a - a),
+                contrast_oracle_best=contrast(doe_ob - ob),
+                gap_arm=contrast(a - ob),
+                gap_difference=contrast((a - ob) - (doe_a - doe_ob)))
+
+        # Back-compatible top-level keys so anything reading the Q55 shape still works.
+        if "bo" in cell["arms"]:
+            b = cell["arms"]["bo"]
+            cell |= dict(bo_rule_a=b["rule_a"], bo_oracle_best=b["oracle_best"],
+                         bo_gap=b["gap"], bo_identified=b["identified"],
+                         contrast_rule_a=b["contrast_rule_a"],
+                         contrast_oracle_best=b["contrast_oracle_best"],
+                         gap_bo=b["gap_arm"], gap_difference=b["gap_difference"])
+        out.append(cell)
     return out
 
 
+NAME = {"bo": "qLogEI", "nei": "qLogNEI"}
+
+
+def _verdict(c: dict) -> str | None:
+    """Which arm the interval favours, or ``None`` if it covers zero."""
+    if c["hi"] < 0 or c["lo"] > 0:
+        return "DoE" if c["mean"] < 0 else "BO"
+    return None
+
+
 def report(summary: list[dict]) -> None:
-    print(f"\n{RULE}\n  THE TWO LOCATORS, SIDE BY SIDE — mean regret, n=25 landscapes"
+    print(f"\n{RULE}\n  THE TWO LOCATORS, BOTH ACQUISITIONS — mean regret, n=25 landscapes"
           f"\n{RULE}")
-    print(f"    {'cell':>14}{'BO rule A':>11}{'BO oracle':>11}{'BO gap':>9}"
-          f"{'DoE rule A':>12}{'DoE oracle':>12}{'DoE gap':>9}"
-          f"{'BO id%':>8}{'DoE id%':>9}")
+    print(f"    {'cell':>14}{'arm':>9}{'rule A':>10}{'tested':>10}{'gap':>9}{'id%':>7}"
+          f"   |{'DoE rule A':>12}{'DoE tested':>12}{'DoE gap':>9}{'DoE id%':>9}")
     for s in summary:
-        cell = f"d={s['dim']} s={s['sigma']}"
-        print(f"    {cell:>14}{s['bo_rule_a']:>11.4f}{s['bo_oracle_best']:>11.4f}"
-              f"{s['bo_gap']:>+9.4f}{s['doe_rule_a']:>12.4f}"
-              f"{s['doe_oracle_best']:>12.4f}{s['doe_gap']:>+9.4f}"
-              f"{100*s['bo_identified']:>7.0f}%{100*s['doe_identified']:>8.0f}%")
+        for tag, a in sorted(s["arms"].items()):
+            cell = f"d={s['dim']} s={s['sigma']}" if tag == "bo" else ""
+            print(f"    {cell:>14}{NAME[tag]:>9}{a['rule_a']:>10.4f}"
+                  f"{a['oracle_best']:>10.4f}{a['gap']:>+9.4f}{100*a['identified']:>6.0f}%"
+                  f"   |{s['doe_rule_a']:>12.4f}{s['doe_oracle_best']:>12.4f}"
+                  f"{s['doe_gap']:>+9.4f}{100*s['doe_identified']:>8.0f}%")
 
-    print(f"\n{RULE}\n  THE CONTRAST, ON EACH LOCATOR. Negative = DoE better."
+    print(f"\n{RULE}\n  THE CONTRAST, ON EACH LOCATOR, AGAINST EACH ACQUISITION. "
+          f"Negative = DoE better.\n{RULE}")
+    print(f"    {'cell':>14}{'vs':>9}{'rule A (DoE-BO)':>26}{'p':>9}"
+          f"{'tested-best (DoE-BO)':>28}{'p':>9}{'sign':>10}")
+    for s in summary:
+        for tag, arm in sorted(s["arms"].items()):
+            a, o = arm["contrast_rule_a"], arm["contrast_oracle_best"]
+            same = "same" if np.sign(a["mean"]) == np.sign(o["mean"]) else "FLIPS"
+            cell = f"d={s['dim']} s={s['sigma']}" if tag == "bo" else ""
+            print(f"    {cell:>14}{NAME[tag]:>9}"
+                  f"{a['mean']:>+11.4f} [{a['lo']:>+.4f},{a['hi']:>+.4f}]"
+                  f"{a['wilcoxon_p']:>9.4f}"
+                  f"{o['mean']:>+13.4f} [{o['lo']:>+.4f},{o['hi']:>+.4f}]"
+                  f"{o['wilcoxon_p']:>9.4f}{same:>10}")
+
+    # ---- Workstream 3's actual deliverable -----------------------------------
+    print(f"\n{RULE}\n  DOES EVERY QUALITATIVE HEADLINE SURVIVE BOTH ACQUISITIONS?"
           f"\n{RULE}")
-    print(f"    {'cell':>14}{'rule A (DoE-BO)':>26}{'p':>9}"
-          f"{'oracle-best (DoE-BO)':>28}{'p':>9}{'same sign?':>12}")
+    print("    A conclusion that holds against qLogEI but not qLogNEI is a conclusion")
+    print("    about an acquisition function, not about Bayesian optimization.\n")
+    disagree = []
     for s in summary:
-        a, o = s["contrast_rule_a"], s["contrast_oracle_best"]
-        same = "yes" if np.sign(a["mean"]) == np.sign(o["mean"]) else "NO — FLIPS"
-        cell = f"d={s['dim']} s={s['sigma']}"
-        print(f"    {cell:>14}"
-              f"{a['mean']:>+11.4f} [{a['lo']:>+.4f},{a['hi']:>+.4f}]{a['wilcoxon_p']:>9.4f}"
-              f"{o['mean']:>+13.4f} [{o['lo']:>+.4f},{o['hi']:>+.4f}]"
-              f"{o['wilcoxon_p']:>9.4f}{same:>12}")
-
-    print(f"\n{RULE}\n  WHAT MAY NOW BE WRITTEN (Prompt 2 §7, fixed before these numbers "
-          f"existed)\n{RULE}")
-    for s in summary:
+        if len(s["arms"]) < 2:
+            continue
         cell = f"d={s['dim']} sigma={s['sigma']}"
-        a, o = s["contrast_rule_a"], s["contrast_oracle_best"]
-        a_sig = a["hi"] < 0 or a["lo"] > 0
-        o_sig = o["hi"] < 0 or o["lo"] > 0
-        sel = ("DoE" if a["mean"] < 0 else "BO") if a_sig else None
-        tst = ("DoE" if o["mean"] < 0 else "BO") if o_sig else None
-        print(f"    {cell}:")
-        print("      selected a better well from the noisy readings: "
-              + (f"{sel}" if sel else "neither — interval covers zero"))
-        print("      tested better conditions:                       "
-              + (f"{tst}" if tst else "neither — interval covers zero"))
-        if sel and tst and sel != tst:
-            print("      >>> THE TWO LOCATORS DISAGREE IN SIGN. Both must be written.")
+        for locator, key in (("measured-value argmax", "contrast_rule_a"),
+                             ("tested-best", "contrast_oracle_best")):
+            v = {t: _verdict(a[key]) for t, a in s["arms"].items()}
+            agree = len(set(v.values())) == 1
+            shown = ", ".join(f"{NAME[t]}: {x or 'null'}" for t, x in sorted(v.items()))
+            flag = "" if agree else "   <<< DISAGREES"
+            print(f"    {cell:>16}  {locator:<22} {shown}{flag}")
+            if not agree:
+                disagree.append((cell, locator, v))
+    print()
+    if not disagree:
+        print("    Every verdict is IDENTICAL under both acquisitions. No headline in this")
+        print("    file depends on the choice of acquisition function.")
+    else:
+        print(f"    {len(disagree)} verdicts change with the acquisition. Each must be")
+        print("    reported as acquisition-dependent, not as a property of BO:")
+        for cell, loc, v in disagree:
+            print(f"      {cell} / {loc}: "
+                  + ", ".join(f"{NAME[t]} says {x or 'null'}" for t, x in sorted(v.items())))
 
 
 def _provenance(argv) -> dict:

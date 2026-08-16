@@ -100,10 +100,13 @@ nearly as good as everything else and the differences are smaller than the measu
 noise — so picking the winner is a coin toss. The textbook grid repeats its centre point
 and spreads the rest out, so its readings are easier to tell apart.
 
-**One setting flips it.** At 8 ingredients with a quiet assay, the two methods look
-identical if you go by the highest reading — but the textbook method genuinely tested
-better recipes and the readout hid it completely. Its spotting rate there is 2%, the worst
-in the whole study.
+**One setting looked like it flipped — and then didn't hold up.** At 8 ingredients with a
+quiet assay, the two methods look identical by the highest reading, but the textbook method
+appeared to have genuinely tested better recipes. **When we re-ran the whole thing with a
+better-suited AI method, that difference vanished.** So it was a fact about the particular
+AI setting we had used, not about the textbook method, and we withdrew it. See the last
+section for what happened there. What does stand: the spotting rate at that setting is 2%,
+the worst in the study.
 
 ### What this does and doesn't mean
 
