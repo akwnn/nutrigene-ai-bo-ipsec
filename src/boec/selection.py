@@ -42,7 +42,8 @@ from collections.abc import Callable
 import torch
 from torch import Tensor
 
-__all__ = ["SELECTION_RULES", "mean_of_replicates", "posterior_mean_at_visited",
+__all__ = ["GATE_TOL", "Q58_RULES", "SELECTION_RULES", "gate_against_q58",
+           "mean_of_replicates", "posterior_mean_at_visited",
            "single_readout", "top_k_average", "top_k_confirm"]
 
 #: The registered set. Named so a stored row can carry which rule produced it, and so the
@@ -148,3 +149,31 @@ def posterior_mean_at_visited(mean_fn: Callable[[Tensor], Tensor], X: Tensor) ->
     with torch.no_grad():
         m = mean_fn(X.double()).reshape(-1)
     return int(torch.argmax(m))
+
+
+Q58_RULES = ("single", "replicate", "top3", "posterior")
+GATE_TOL = 1e-12
+
+
+def gate_against_q58(fresh: list[dict], stored: list[dict]) -> dict:
+    """Every Q58 rule must reproduce per (instance, seed, arm) at 1e-12."""
+    want = {(r["instance"], int(r["seed"])): r["arms"] for r in stored}
+    worst = 0.0
+    n = 0
+    for r in fresh:
+        k = (r["instance"], int(r["seed"]))
+        if k not in want:
+            raise AssertionError(f"Q60 row {k} has no Q58 counterpart")
+        for arm in ("bo", "doe"):
+            for rule in Q58_RULES:
+                got = float(r["arms"][arm][rule])
+                exp = float(want[k][arm][rule])
+                delta = abs(got - exp)
+                worst = max(worst, delta)
+                n += 1
+                if delta > GATE_TOL:
+                    raise AssertionError(
+                        f"Q58 rule {rule!r} does not reproduce at {arm} {k}: "
+                        f"{got:.15f} vs {exp:.15f} (|delta|={delta:.3e}). "
+                        "Stop. The average column would describe a different campaign.")
+    return dict(rows_checked=n, worst_abs_delta=worst, tol=GATE_TOL)

@@ -135,6 +135,35 @@ def test_top_k_average_rejects_mismatched_shapes():
         top_k_average(_col([1.0, 2.0]), _col([1.0, 2.0, 3.0]), k=1)
 
 
+def test_q60_gate_helper_rejects_a_drifted_rule():
+    from boec.selection import gate_against_q58
+
+    stored = [{"instance": "x", "seed": 0, "arms": {
+        "bo": {"single": 0.1, "replicate": 0.1, "top3": 0.2, "posterior": 0.3},
+        "doe": {"single": 0.1, "replicate": 0.1, "top3": 0.2, "posterior": 0.3},
+    }}]
+    fresh = [{"instance": "x", "seed": 0, "arms": {
+        "bo": {"single": 0.1, "replicate": 0.1, "top3": 0.9, "posterior": 0.3,
+               "top3_average": 0.4},
+        "doe": {"single": 0.1, "replicate": 0.1, "top3": 0.2, "posterior": 0.3,
+                "top3_average": 0.4},
+    }}]
+    with pytest.raises(AssertionError, match="top3"):
+        gate_against_q58(fresh, stored)
+
+
+def test_q60_gate_helper_accepts_a_reproduced_row():
+    from boec.selection import gate_against_q58
+
+    row = {"instance": "x", "seed": 0, "arms": {
+        "bo": {"single": 0.1, "replicate": 0.2, "top3": 0.3, "posterior": 0.4},
+        "doe": {"single": 0.5, "replicate": 0.6, "top3": 0.7, "posterior": 0.8},
+    }}
+    out = gate_against_q58([row], [row])
+    assert out["rows_checked"] == 8
+    assert out["worst_abs_delta"] == 0.0
+
+
 # --------------------------------------------------------------- posterior mean
 def test_posterior_mean_at_visited_returns_a_visited_index():
     """It must choose among measured wells, never invent one.
