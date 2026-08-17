@@ -2056,3 +2056,16 @@ sub-box explanation, which does real work on the Hill oracle, does not transfer 
 * *"The unconstrained gap is extrapolation out of the design region"* is a claim about the
   Hill oracle. On Hartmann6 it is mostly **model misspecification**, and the two should not
   be pooled.
+
+---
+
+## 2026-08-17 — TOST applied; Q60/Q61 deferred
+
+`results/tost-contrasts.json`. SESOI = 0.02. Primary in-region and Q58 top-3 are
+**inconclusive** (MDE 0.027 and 0.042). Low-noise measured-argmax is **equivalent**.
+Q58 posterior is **different**.
+
+Q60 smoke: DoE `single` matched Q58 at 1e-12; BO did not
+(0.2421 vs stored 0.2411 on instance 0 seed 0). Q57 replay of the same cell also
+drifts. Acquisition optimizer retried after a scipy failure. No `src/boec` campaign
+code changed since Q58 (`a189ddd`). Paper is written from stored JSON; Q60/Q61 not run.

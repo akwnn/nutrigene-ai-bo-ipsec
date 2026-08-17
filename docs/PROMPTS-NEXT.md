@@ -1,5 +1,9 @@
 # Revision program: make the paper defensible
 
+**Status (2026-08-17).** Workstreams 1–7 are closed (Q54–Q59). Sequential RSM exists (`src/boec/sequential_rsm.py`). The living paper is `docs/RESEARCH-SUMMARY.md`; long tables live in `docs/SUPPLEMENT.md`.
+
+**Registered next, not run:** Q60 (`top_k_average`) and Q61 (q=1). BO replay of Q58/E2 failed the 1e-12 gate (acquisition-optimizer retry; DoE still matches). Do not block the paper on those runs. TOST is in `results/tost-contrasts.json`. Spec: `docs/superpowers/specs/2026-08-17-review-response-design.md`. Plan: `docs/superpowers/plans/2026-08-17-q60-q61-tost.md`. Do not re-run closed workstreams from the checklist below.
+
 Hand this file to the agent that will do the next month of work. Do not mix campaigns in one run. Do not invent a winner.
 
 **The paper to publish is not** “BO and DoE address different estimands” or “which acronym wins.”
@@ -13,7 +17,7 @@ Locked science that must not regress:
 - Do not cite −0.0708, voided E2 runs 1–2, retracted savings crossover at 0.15, or Ackley as a DoE-versus-BO cell.
 - JSON wins over RESULTS.md.
 - Measured-value argmax = `reported_best_curve` (pick by noisy y, score noiseless f). Hidden tested-best = `curve_true`. Never mix labels.
-- Unconstrained quadratic argmax is a **naïve diagnostic**, not “the DoE recommendation.” Constrained/ridge is the principal classical readout. Sequential RSM with relocation is not yet implemented.
+- Unconstrained quadratic argmax is a **naïve diagnostic**, not “the DoE recommendation.” Constrained/ridge is the principal classical readout. Sequential RSM with relocation is implemented (`doe_ascent`, `path_argmax`, commit `fd842ac`).
 
 What is **not** novel (do not claim it):
 
