@@ -34,7 +34,7 @@ Lab notebooks (not the paper): `docs/RESULTS.md`, `docs/WHAT-WE-FOUND.md`. New c
 
 **Holm–Bonferroni.** Used when several arms share a family. Primary DoE-versus-BO tables in the paper §4.1 are single planned contrasts and are not Holm-adjusted.
 
-An interval covering 0 is “not distinguished at n = 25,” not “the methods are identical.” TOST at SESOI = 0.02 is in `results/tost-contrasts.json` (supplement §S10).
+An interval covering 0 is “not distinguished at n = 25,” not “the methods are identical.” TOST at SESOI = 0.02 is in `results/tost-contrasts.json` (supplement §S9).
 
 **Inferential hierarchy.** Confirmatory, unadjusted: sequential DoE versus named BO at d = 6, σ = 0.25, N = 48, under measured-value argmax and under in-region recommendation (commit `d289e7d`). The other three cells are exploratory. Holm is for multi-arm and multi-target families. Secondary: naïve unconstrained diagnostic, design × surrogate factorial, arrival / P(T ≤ N). Exploratory: control arms, Q42, one-shot GP (five Hill draws). Effect size and interval first; p second.
 
@@ -283,7 +283,7 @@ Source: `results/tost-contrasts.json`. Both one-sided t-tests must reject to cal
 
 ---
 
-## S9. Adversarial novelty checklist (working note)
+## S10. Adversarial novelty checklist (working note)
 
 Not for the submitted paper. Keep while editing.
 
