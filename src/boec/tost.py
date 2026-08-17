@@ -14,9 +14,17 @@ from scipy import stats
 
 from boec.diagnostics import instance_bootstrap
 
-__all__ = ["tost_paired", "wilcoxon_mde"]
+__all__ = ["tost_paired", "wilcoxon_mde", "per_instance"]
 
 SESOI_DEFAULT = 0.02
+
+
+def per_instance(rows: list[dict], key: str) -> np.ndarray:
+    """One number per landscape, averaging seeds. Sorted by instance id."""
+    by: dict[str, list[float]] = {}
+    for r in rows:
+        by.setdefault(str(r["instance"]), []).append(float(r[key]))
+    return np.array([float(np.mean(v)) for _, v in sorted(by.items())])
 
 
 def tost_paired(
@@ -75,16 +83,19 @@ def wilcoxon_mde(
     if sigma <= 0:
         raise ValueError(f"sigma must be positive, got {sigma}")
     rng = np.random.default_rng(seed)
+    mean_w = n * (n + 1) / 4.0
+    sd_w = np.sqrt(n * (n + 1) * (2 * n + 1) / 24.0)
 
     def _power(delta: float) -> float:
-        hits = 0
-        for i in range(n_sim):
-            d = rng.normal(delta, sigma, n)
-            if np.allclose(d, 0.0):
-                continue
-            p = stats.wilcoxon(d).pvalue
-            hits += int(p < alpha)
-        return hits / n_sim
+        d = rng.normal(delta, sigma, size=(n_sim, n))
+        absd = np.abs(d)
+        order = np.argsort(absd, axis=1)
+        ranks = np.empty_like(absd)
+        ranks[np.arange(n_sim)[:, None], order] = np.arange(1, n + 1, dtype=float)
+        w = np.where(d > 0, ranks, 0.0).sum(axis=1)
+        z = (w - mean_w) / sd_w
+        p = 2.0 * stats.norm.sf(np.abs(z))
+        return float(np.mean(p < alpha))
 
     lo, hi = 0.0, max(6.0 * sigma, 1e-3)
     while _power(hi) < power:

@@ -70,3 +70,16 @@ def test_wilcoxon_mde_grows_with_noise():
     quiet = wilcoxon_mde(0.02, n=25, power=0.80, n_sim=400, seed=0)
     noisy = wilcoxon_mde(0.06, n=25, power=0.80, n_sim=400, seed=0)
     assert noisy > quiet
+
+
+def test_per_instance_mean_averages_two_seeds():
+    from boec.tost import per_instance
+
+    rows = [
+        {"instance": "b", "seed": 0, "x": 0.10},
+        {"instance": "b", "seed": 1, "x": 0.20},
+        {"instance": "a", "seed": 0, "x": 0.00},
+        {"instance": "a", "seed": 1, "x": 0.10},
+    ]
+    got = per_instance(rows, "x")
+    assert list(got) == pytest.approx([0.05, 0.15])
