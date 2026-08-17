@@ -43,7 +43,7 @@ import torch
 from torch import Tensor
 
 __all__ = ["SELECTION_RULES", "mean_of_replicates", "posterior_mean_at_visited",
-           "single_readout", "top_k_confirm"]
+           "single_readout", "top_k_average", "top_k_confirm"]
 
 #: The registered set. Named so a stored row can carry which rule produced it, and so the
 #: sensitivity table cannot quietly gain a rule that was tried and liked.
@@ -104,6 +104,37 @@ def top_k_confirm(Y: Tensor, Y_confirm: Tensor, *, k: int) -> int:
     shortlist = torch.topk(y, k).indices
     conf = Y_confirm.double().reshape(-1)[shortlist]
     return int(shortlist[int(torch.argmax(conf))])
+
+
+def top_k_average(Y: Tensor, Y_confirm: Tensor, *, k: int) -> int:
+    """Shortlist ``k`` by first reading; pick argmax of (Y + Y_confirm) / 2.
+
+    The protocol a lab actually uses when it re-measures a shortlist and keeps
+    both readings. :func:`top_k_confirm` uses the confirmation reading **alone**,
+    which discards the CCD's first readout. Q60 exists because those two rules
+    can disagree.
+
+    Cost is still ``k`` extra wells. A well outside the shortlist cannot be
+    promoted.
+
+    Raises:
+        ValueError: if ``Y`` and ``Y_confirm`` differ in shape, or ``k`` is
+            outside ``1..n``.
+    """
+    y = Y.double().reshape(-1)
+    c = Y_confirm.double().reshape(-1)
+    if y.shape != c.shape:
+        raise ValueError(
+            f"replicates must be the same shape, got {tuple(y.shape)} and "
+            f"{tuple(c.shape)}; pairing mismatched vectors would average two "
+            "different wells together.")
+    n = int(y.numel())
+    if not 1 <= k <= n:
+        raise ValueError(f"k={k} outside 1..{n}; a shortlist cannot be longer "
+                         "than the campaign or empty.")
+    shortlist = torch.topk(y, k).indices
+    avg = (y[shortlist] + c[shortlist]) / 2.0
+    return int(shortlist[int(torch.argmax(avg))])
 
 
 def posterior_mean_at_visited(mean_fn: Callable[[Tensor], Tensor], X: Tensor) -> int:

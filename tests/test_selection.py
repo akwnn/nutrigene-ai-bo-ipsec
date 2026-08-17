@@ -22,7 +22,8 @@ import pytest
 import torch
 
 from boec.selection import (SELECTION_RULES, mean_of_replicates,
-                            posterior_mean_at_visited, single_readout, top_k_confirm)
+                            posterior_mean_at_visited, single_readout,
+                            top_k_average, top_k_confirm)
 
 
 def _col(v):
@@ -89,6 +90,49 @@ def test_top_k_confirm_with_k_of_one_is_the_single_readout():
 def test_top_k_confirm_rejects_a_k_bigger_than_the_campaign():
     with pytest.raises(ValueError, match="k="):
         top_k_confirm(_col([1.0, 2.0]), _col([1.0, 2.0]), k=5)
+
+
+# --------------------------------------------------------------- top-k average (Q60)
+def test_top_k_average_is_not_a_registered_q58_rule():
+    """Q58's four-column table must not grow a fifth rule by accident."""
+    assert "top3_average" not in SELECTION_RULES
+    assert "average" not in SELECTION_RULES
+    assert SELECTION_RULES == ("single", "replicate", "top3", "posterior")
+
+
+def test_top_k_average_disagrees_with_confirmation_alone():
+    """The point of Q60: averaging can keep a well that confirmation-alone drops.
+
+    Well 0 reads highest first and mediocre on confirm. Well 1 is slightly
+    quieter first and slightly louder on confirm. Confirmation-alone picks 1;
+    the average of the two readings still prefers 0.
+    """
+    first = _col([0.99, 0.80, 0.10])
+    conf = _col([0.50, 0.60, 0.99])
+    assert top_k_confirm(first, conf, k=2) == 1
+    assert top_k_average(first, conf, k=2) == 0
+
+
+def test_top_k_average_never_leaves_the_shortlist():
+    first = _col([0.9, 0.8, 0.2, 0.1])
+    conf = _col([0.1, 0.5, 0.4, 0.99])
+    assert top_k_average(first, conf, k=2) in (0, 1)
+
+
+def test_top_k_average_with_k_of_one_stays_on_the_single_readout():
+    first = _col([0.2, 0.7, 0.5])
+    conf = _col([0.9, 0.1, 0.9])
+    assert top_k_average(first, conf, k=1) == single_readout(first)
+
+
+def test_top_k_average_rejects_a_k_bigger_than_the_campaign():
+    with pytest.raises(ValueError, match="k="):
+        top_k_average(_col([1.0, 2.0]), _col([1.0, 2.0]), k=5)
+
+
+def test_top_k_average_rejects_mismatched_shapes():
+    with pytest.raises(ValueError, match="same shape"):
+        top_k_average(_col([1.0, 2.0]), _col([1.0, 2.0, 3.0]), k=1)
 
 
 # --------------------------------------------------------------- posterior mean
