@@ -4544,3 +4544,27 @@ rule is not hard-coded, and there is a test asserting it can leave the boundary.
   banked findings are the paper.
 * Plate 2 does not beat 8 **random** wells → the LSE criterion is not earning its place,
   and the honest result is *"a second plate helps; the criterion does not"*.
+
+## Step 0 — oracle-best for the spread arms. Registered before its runner exists.
+
+**Why.** Q57 has oracle-best for `doe` (0.0597) and `qlogei` (0.0755) and **not** for any
+spread arm. Without it the 0.0588 regret gap between `doe` and `versionb` cannot be
+attributed, and the two candidate repairs have very different costs.
+
+**Decision rule, fixed now, before the number is read.**
+
+| `lhs` oracle-best | attribution | which fix |
+|---|---|---|
+| ≈ 0.06 (near `doe`'s) | **identification** — the wells found a good point, the terminal rule missed it | Fix 1, free, re-score only |
+| ≈ 0.10 (near its rule-A 0.1270) | **search** — a spread design in 6D never visits a point as good as a 1/16-volume sub-box does | Fix 3, and Fix 1 alone cannot close it |
+
+**Definition, matching Q57 exactly.** `oracle_best = optimum_value - max(truth(X_visited))`
+— the true value at the genuinely best *visited* well, which is the ceiling any terminal
+rule could reach. Rule A is `optimum_value - truth(argmax observed Y)`. Their difference
+is the identification gap.
+
+**Arms.** `lhs`, `sobol`, `random`, `versionb`, `plate1_only`, plus `doe` and `qlognei`
+regenerated as a gate — the latter two must reproduce Q57's committed
+`doe_oracle_best` / `nei_oracle_best` before any new number is read.
+
+Winner not pre-written. Either attribution is reported.
