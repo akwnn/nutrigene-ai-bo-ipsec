@@ -4359,3 +4359,80 @@ surfaces"* · design SD wherever a `spread_gp` number appears.
 
 **No follow-up run. One run, registered, reported once.** If the result is null or unfavourable it
 is reported as-is.
+
+---
+
+# K-SERIES — SPADE GO/NO-GO
+
+Registered 2026-08-20, **before any runner in this series exists**. Plan:
+`docs/superpowers/plans/2026-08-20-spade-go-no-go.md` (body + Amendments A, B, C).
+Timestamps are checkable against the commits that add each script.
+
+## K1-gate — can a committed campaign be regenerated?
+
+No file in `results/` stores `X` or `Y`. `results/e2-grid.json` rows carry
+`[instance, dim, sigma, seed, arm, best, regret, auc_post_init]` and nothing else, and
+Q42/Q57/Q58/d20 are likewise scalar-only. Every downstream K-test needs the observations,
+so they must be regenerated from `(instance, dim, sigma, seed, arm)`.
+
+**Question.** Does a regenerated campaign reproduce the committed `regret` column exactly?
+
+**Decision rule, fixed before the numbers exist.** The **measured** per-arm worst
+`|delta|` becomes the gating policy for K0, K6, K1 and K3.
+
+* `doe` has no acquisition optimiser, so **exact equality is the right bar** and a failure
+  there is a hard stop: it would mean the ensemble order or seeding convention has
+  drifted, and every downstream number is unsafe until that is understood.
+* `qlogei` / `qlognei` route through multi-start L-BFGS-B. Q54 measured that path at
+  worst `|delta|` 2.463e-06 with 482/550 exact. **If they are not exact they get Q54's
+  treatment** — gate on whether a *verdict* changes under a ±(worst delta) shift, with a
+  ceiling far below the effect being measured. **A constant is never raised to make a
+  gate pass.**
+
+Winner not pre-written. Either outcome is reported.
+
+## K6 — does the design-space deliverable rank arms differently from regret?
+
+**Primary metric:** Brier score and AUC of the probability map against `1{f >= tau}`, plus
+IoU of `D_gamma` against the true superlevel set.
+**Primary object:** Peterson `D_gamma = {x : P(Y >= tau | x) >= gamma}` on the posterior
+**predictive** (Peterson 2008; Peterson & Lief 2010). The **latent** map is reported
+alongside as secondary, because E3 measured latent coverage at 0.7644 against nominal
+0.95 while predictive coverage recovers to ~0.90-0.92 — so **the gap between the two maps
+is itself a result**, and it is the one a certificate would be built on.
+
+**Grids, fixed now.** `gamma in {0.50, 0.70, 0.80, 0.90, 0.95, 0.99}`. Sobol 20,000 at
+seed 0. **`tau` is registered as a FRACTION of `tau_max(gamma)`**, never as an absolute:
+`tau_frac in {0.60, 0.75, 0.85, 0.95}` where
+`tau_max = mu_max * (1 - z * sigma_rel)` and `s_typical = 0.19`.
+
+Absolute `tau` must not be pre-registered, for a measured reason: at `sigma_rel = 0.25,
+gamma = 0.95`, `tau_max = 0.589` at `s = 0`, so **any absolute grid above ~0.59 certifies
+nothing for any arm at any budget** and returns a table of zeros. An earlier draft of this
+registration carried `{0.70, 0.80, 0.85, 0.90}` and would have done exactly that.
+
+**Dropped-factor policy.** For an axis with zero design variation (the classical arm's
+screened-out factors, held at one value by `dropped_held_at`):
+**(a) refuse to certify is PRIMARY** — a batch record needs a range for every CPP, and a
+factor never varied has no evidence for any range. **(b) full range** is the declared
+sensitivity, being what practice implicitly assumes; `false_inclusion_rate` exposes it if
+unsafe. **(c) the GP's own answer is reported and labelled prior-driven**, because on a
+zero-variance axis the likelihood is flat and the lengthscale reverts to the prior mode
+0.5016 — so (c) is what fires silently if nobody decides, and its certified range would be
+set by a BoTorch default.
+
+**Empty regions are reported as counts, never as zeros in a mean.**
+
+**Decision.** If the arm ranking on the primary metric matches the ranking on simple
+regret, the design-space reframe adds nothing and SPADE Stages 4-5 are dropped. If it
+diverges with the spread arm ahead, Version B is built. If it diverges with the clustered
+arm ahead, that is a different paper and SPADE is not built.
+
+## What is NOT registered here, and why
+
+**The cost-assurance curve is withdrawn before running.** It rested on the yield optimum
+being expensive. Measured across every family in the repo, `c(x*)` is hill 0.355,
+hartmann6 0.345, ackley 0.500, levy 0.550, rosenbrock 0.744, against a space-filling
+average of 0.500 — so four of five have no binding constraint, and rosenbrock's optimum is
+identical in every coordinate, making it symmetric rather than a counterexample. Reported
+as a negative result, not run as a metric.
