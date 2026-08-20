@@ -467,3 +467,53 @@ that surface is catastrophic. Which gives the finding:
    are defensible; they disagree; and *which one a lab uses decides which method wins.*
    That is this project's thesis, now demonstrated on the regret axis rather than the
    design-space axis.
+
+---
+
+## D21 🟢 Fix 5 (predictive straddle) is a NULL. I predicted it would be the best fix.
+
+300 rows, **250 gated comparisons, 0 failures**. Paired against the latent straddle, n=50:
+
+| metric | Δ | p |
+|---|---|---|
+| regret | −0.0036 [−0.0110, +0.0036] | 0.22 |
+| AUC@0.75 | −0.0029 [−0.0125, +0.0069] | 0.59 |
+| α\*@0.75 | −0.0047 [−0.0388, +0.0293] | 0.96 |
+| AUC@0.95 | +0.0003 [−0.0174, +0.0184] | 0.96 |
+
+**Every CI spans zero.** I called this *"one line, highest expected gain per hour in the
+list."* It gains nothing measurable. The reasoning — that plate 2 was resolving the latent
+contour while the deliverable is the predictive region — was sound, and the change is still
+more correct than what it replaced. It simply does not move the numbers.
+
+**One real difference, and it is not in any registered metric.** Non-vacuous certification
+at τ_frac=0.60, α=0.95: **22/50 → 29/50**, a 32% increase in campaigns that produce a
+usable certificate at *identical* containment (both 1.000). **Labelled post-hoc**: no kill
+test names emptiness, and this is the second time an emptiness effect has surfaced with no
+registered home. If emptiness matters it should be registered as a metric, not discovered.
+
+## D22 ⭐ The two diagnostics answer their questions, and one of them closes D8.
+
+**E1 — the acquisition surface was NEVER flat.** `acq_cv < 0.04` in **0 of 100** LSE-arm
+campaigns. So Amendment E1's central worry — that at n=40 the straddle is flat and the 8
+wells are chosen by numerical noise — **does not occur even once**. KILL 2's earlier pass
+was not diluted by flat campaigns, because there were none. This was unanswerable from any
+committed file before tonight.
+
+**E2 — the exclusion mechanism binds in 45 of 100 campaigns.** Independent confirmation of
+D8's retraction, at a higher rate than the 22/50 that overturned me. **My "the exclusion is
+inert" claim is now refuted three ways**: the agent's live-fit measurement, my own 10/20
+check, and now the production run's own logging.
+
+## ✅ STOP CONDITION HELD — the strongest result survived every fix.
+
+`versionb` empirical containment at τ_frac=0.60 after all Phase 1 changes:
+
+| arm | α=0.50 | α=0.80 | α=0.95 |
+|---|---|---|---|
+| `versionb` | 0.940 (n=50) | 1.000 (n=50) | 1.000 (n=22) |
+| `versionb_predictive` | 0.940 (n=50) | 1.000 (n=50) | 1.000 (n=29) |
+
+**Unchanged.** The registered stop — *if containment moves off 0.940/1.000/1.000, halt* —
+never fired. The fixes that helped regret did not cost the certificate, which was the
+specific risk flagged before Phase 1 began.

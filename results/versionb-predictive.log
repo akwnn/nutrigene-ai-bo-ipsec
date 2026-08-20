@@ -290,3 +290,21 @@ out=results/versionb-predictive.json · gate=results/versionb.json (250 rows) ·
 [ 48/50] versionb_random      ef2815cdafff288c seed=1 n=48 regret=0.1348 a*=0.730      -    d2=0.374 GATED (3.2s)
 [ 48/50] plate1_only          ef2815cdafff288c seed=1 n=48 regret=0.0361 a*=0.303      -             GATED (2.0s)
 [ 48/50] doe                  ef2815cdafff288c seed=1 n=48 regret=0.1149 a*=0.715      -             GATED (2.9s)
+[ 48/50] qlognei              ef2815cdafff288c seed=1 n=48 regret=0.1149 a*=0.184      -             GATED (13.2s)
+[ 48/50] versionb_predictive  ef2815cdafff288c seed=1 n=48 regret=0.1348 a*=0.852 cv= 0.851 d2=0.201   new (4.4s)
+[ 49/50] versionb             f79c5cf175034acd seed=0 n=48 regret=0.1326 a*=0.463 cv= 1.975 d2=0.220 GATED (5.2s)
+[ 49/50] versionb_random      f79c5cf175034acd seed=0 n=48 regret=0.1388 a*=0.248      -    d2=0.251 GATED (3.1s)
+[ 49/50] plate1_only          f79c5cf175034acd seed=0 n=48 regret=0.0648 a*=0.639      -             GATED (2.6s)
+[ 49/50] doe                  f79c5cf175034acd seed=0 n=48 regret=0.1102 a*=0.928      -             GATED (4.6s)
+[ 49/50] qlognei              f79c5cf175034acd seed=0 n=48 regret=0.2032 a*=0.299      -             GATED (16.0s)
+[ 49/50] versionb_predictive  f79c5cf175034acd seed=0 n=48 regret=0.1388 a*=0.453 cv= 0.553 d2=0.219   new (3.5s)
+[ 50/50] versionb             f79c5cf175034acd seed=1 n=48 regret=0.1819 a*=0.828 cv= 1.290 d2=0.136 GATED (3.1s)
+[ 50/50] versionb_random      f79c5cf175034acd seed=1 n=48 regret=0.1819 a*=0.814      -    d2=0.374 GATED (2.8s)
+[ 50/50] plate1_only          f79c5cf175034acd seed=1 n=48 regret=0.1848 a*=0.363      -             GATED (2.4s)
+[ 50/50] doe                  f79c5cf175034acd seed=1 n=48 regret=0.0713 a*=0.885      -             GATED (3.3s)
+[ 50/50] qlognei              f79c5cf175034acd seed=1 n=48 regret=0.2560 a*=0.912      -             GATED (14.3s)
+[ 50/50] versionb_predictive  f79c5cf175034acd seed=1 n=48 regret=0.1819 a*=0.811 cv= 0.598 d2=0.197   new (1.9s)
+
+300 rows in 3051s · 250 gated comparisons, 0 failures
+acq_cv over 100 LSE-arm campaigns: below 0.04 in 0
+exclusion bound in 45/100 LSE-arm campaigns
