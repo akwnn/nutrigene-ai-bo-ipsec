@@ -588,6 +588,84 @@ and must not be reported as a headline.
 
 ---
 
+## Amendment E — Version B v2. Four fixes, one of which can invalidate the v1 verdict.
+
+Version B v1 (Task 8, Amendment D) ran. **Do not read its result until these are
+addressed** — two of the four were measured and confirmed before this was written.
+
+### E1 — The acquisition surface may be FLAT at n=40. This is the one that matters.
+
+Measured neighbour density per fitted lengthscale (ell=0.42, d=6, 300 designs each):
+
+| n | neighbours |
+|---|---|
+| 48 | 0.487 |
+| **44** | **0.438** |
+| **40** | **0.378** |
+
+At 0.378, `s(x)` sits near the prior almost everywhere, so it is nearly **flat**. And
+`sqrt(s^2 + sigma^2)` is then ~0.3, a third of the response range, so the distance term
+`|mu - theta|` is nearly flat too. **The straddle surface goes flat and the 8 wells get
+chosen by numerical noise plus the exclusion radius — which is a space-filling draw.**
+
+If that happens, Version B returns *"LSE ties random"* and it would be read as **"the
+criterion does not work"** when the truth is **"the criterion had no signal to act on at
+this density."** Those are different findings and only one of them is about the method.
+
+**Fix, ~20 lines.** Before selecting plate 2, compute the acquisition surface's relative
+dispersion `SD(a(x)) / |mean(a(x))|` on the candidate grid, log it per campaign, and
+**pre-register a threshold** below which the campaign reports *"acquisition uninformative
+at this density"* rather than silently contributing a null to the contrast. Report the
+fraction of campaigns in that state. **A finding either way.**
+
+### E2 — The exclusion radius is INERT. Measured, not suspected.
+
+`exclusion_radius` returns `median_lengthscale / 4` = **0.105** Chebyshev at ell=0.42.
+Measured over 2,000 random 8-point batches in 6D: the median minimum pairwise Chebyshev
+distance is **0.320**, and the exclusion binds in **0% of them**.
+
+So the diversity mechanism does nothing and `batch_lse` is **top-8 by score**. That is not
+necessarily wrong — but it is not what the module docstring claims, and it means the
+"greedy batch collapses without exclusion" argument is untested at this dimension.
+
+**Fix.** Log the achieved minimum pairwise distance per batch. If it stays far above the
+radius, either raise the radius on a stated rule or **delete the mechanism and say the
+batch is top-q by score** — do not keep a docstring describing machinery that never fires.
+
+### E3 — A 44+4 arm, because a 40+8 loss is currently uninterpretable.
+
+Only 40+8 is registered. If it loses, there is no way to tell whether the problem is
+**the criterion** or **the 8 wells taken out of plate 1** — plate 1 drops from 0.487 to
+0.378 neighbours, which E1 says may be the difference between a usable and a flat
+acquisition surface. 44+4 costs one extra arm and separates the two explanations.
+
+### E4 — The arms must share a common prefix.
+
+Nothing in v1 pairs the branches. They should: run plate 1 to 40 wells, **store the
+state**, then branch into LSE-8, random-8 and continue-spread-8 from **identical first 40
+wells and an identical noise stream**. That is the variance-reduction argument that
+already works elsewhere in this project, and against a SESOI of 0.02 with effects that may
+themselves be ~0.02, it could be the difference between a verdict and an inconclusive.
+
+### E5 — Which gamma does plate 2 target? Register it.
+
+`straddle_score` takes one `theta`, and C2 registers tau as a fraction of `tau_max(gamma)`.
+Plate 2 can only aim at one boundary while K6 scores across four. **Optimising for
+gamma=0.95 and scoring at gamma=0.50 is a self-inflicted handicap.** v1 targeted
+`tau_frac = 0.75` with the threshold `theta = tau_frac * mu_max`, which by C2's algebra is
+gamma-invariant — so v1 is defensible — but this must be **stated in the write-up**, not
+left implicit, and the alternative (run plate 2 once per gamma) should be priced.
+
+### E6 — sigma convention in the straddle.
+
+`predictive_probability_map` requires `sigma` as an array (`sigma_rel * mean`) because the
+noise here is relative; a scalar silently answers a homoscedastic question. **v1's
+straddle uses the GP's `sd` alone**, which is the estimation term only. That is correct
+for Bryan's straddle as published, but it means plate 2 targets the **latent** contour
+while the deliverable is the **predictive** region. Register which one is intended.
+
+---
+
 ## File Structure
 
 | Path | Responsibility | Task |
