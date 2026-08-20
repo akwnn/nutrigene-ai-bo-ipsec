@@ -167,3 +167,8 @@ COMMIT_MSG.txt
 !results/q60-top3-average.json
 !results/q61-q1-sequential.json
 !results/tost-contrasts.json
+
+# Q62 TuRBO-1. Anchored by path from docs/RESEARCH-SUMMARY.md and
+# docs/TURBO-OCBA-GONOGO.md. Without these exceptions a clone cannot rebuild Figure 4.
+!results/q62-turbo.json
+!results/q62-turbo-n200.json

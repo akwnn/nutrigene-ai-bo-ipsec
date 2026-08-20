@@ -2069,3 +2069,67 @@ Q60 smoke: DoE `single` matched Q58 at 1e-12; BO did not
 (0.2421 vs stored 0.2411 on instance 0 seed 0). Q57 replay of the same cell also
 drifts. Acquisition optimizer retried after a scipy failure. No `src/boec` campaign
 code changed since Q58 (`a189ddd`). Paper is written from stored JSON; Q60/Q61 not run.
+
+---
+
+## Q62 — TuRBO-1. Locally constrained qLogNEI does not close the noisy-argmax gap. `current`
+
+**Ran:** `scripts/run_q62_turbo.py` · `results/q62-turbo.json` (N=48) ·
+`results/q62-turbo-n200.json` (N=200) · module `src/boec/turbo.py` ·
+`CampaignConfig.use_turbo` · Figure 4 from `src/boec/paper_figures.py`.
+Ticket **Q62**. Q60/Q61 remain unrun.
+**Status:** current
+
+### Why
+
+The remaining easy reviewer line is *"unconstrained BO searches the whole box;
+RSM does not."* TuRBO-1 (Eriksson et al. 2019; BoTorch defaults) is the one-knob
+answer: the same qLogNEI acquisition, proposals clipped to an adaptive trust
+region around the posterior-mean incumbent. Restart **keeps** history — a
+registered deviation from canonical TuRBO so `doe_ascent` is not compared to an
+amnesiac. Frozen `length_init=0.8`, `length_min=0.5**7`, `length_max=1.6`. Gate:
+stored E2 qLogNEI instance means round to 0.1532 / 0.0808 before any row is
+trusted.
+
+This is a **sampling constraint**, not a new terminal rule and not walking RSM.
+
+### Result 1 — N=48 measured argmax, primary cell
+
+| Arm | σ=0.25 | σ=0.10 |
+|---|---|---|
+| 48-well DoE | 0.0958 | 0.0892 |
+| Unconstrained qLogNEI | 0.1532 | 0.0808 |
+| TuRBO-1 qLogNEI | **0.1538** | **0.0736** |
+| DoE − TuRBO | **−0.0580 [−0.0768, −0.0390]** | **+0.0156 [+0.0041, +0.0274]** |
+| TuRBO − qLogNEI | +0.0006 [−0.0205, +0.0206] | −0.0072 [−0.0214, +0.0071] |
+| Identification gap | 0.0704 | 0.0337 |
+| Unique wells / restarts / collapse | 48/48 · 0 · 0 | 48/48 · 0 · 0 |
+
+> **The box is not the result.** At the noisy primary cell TuRBO is statistically
+> the same as unconstrained qLogNEI. DoE's measured-argmax lead is not "BO
+> wandered."
+
+### Result 2 — N=200 arrival, τ=0.10, both seeds must hit
+
+Do **not** subtract 48-well E2 DoE from 200-well TuRBO regret.
+
+| σ | TuRBO | Q56 `doe_ascent` | Q56 qLogEI |
+|---|---|---|---|
+| 0.25 | **11/25** | 8/25 | 14/25 |
+| 0.10 | **25/25** | 16/25 | 24/25 |
+
+Mean unique locations ≈ 199; ~2 restarts per campaign. No collapse. The noisy
+primary cell still does not show a general BO well-count saving versus relocating
+RSM. At lower noise everyone arrives.
+
+### What this licenses
+
+* The paper may answer the local-search objection with a number, not a shrug.
+* Language: **locally constrained sequential search**. Do not write isomorphic
+  to RSM.
+* Paper 1 is not blocked on Q63 (OCBA).
+
+### What this does not license
+
+TuRBO as a wet-lab method, a new estimand, or a reason to retire the terminal-rule
+reversal. Q60/Q61 remain unrun.

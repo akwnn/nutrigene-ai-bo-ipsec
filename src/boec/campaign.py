@@ -75,7 +75,8 @@ import torch
 from torch import Tensor
 
 from boec.optimizers import AcqConfig, propose, sobol_design
-from boec.surrogate import build_gp, predictive
+from boec.surrogate import build_gp, lengthscales, predictive
+from boec.turbo import TurboState, posterior_mean_incumbent, tr_bounds, update_trust_region
 
 __all__ = [
     "Campaign",
@@ -185,6 +186,7 @@ class CampaignConfig:
     metric_units: str = "coded"
     protocol_version: str = "phase1"
     kernel_structure: str = "product"
+    use_turbo: bool = False
 
 
 @dataclass
@@ -246,6 +248,11 @@ class Campaign:
         # Reference points, drawn once, never changed. Offsetting the seed keeps
         # them from coinciding with the opening design.
         self.holdout_X = sobol_design(self.bounds, config.n_holdout, seed=config.seed + 10_000)
+        self.turbo_state: TurboState | None = (
+            TurboState(dim=config.d, batch_size=config.q) if config.use_turbo else None
+        )
+        self.last_tr_bounds: Tensor | None = None
+        self.tr_history: list[Tensor] = []
 
     # -- reproducibility ---------------------------------------------------
 
@@ -285,9 +292,43 @@ class Campaign:
         if self.n_observed == 0:
             raise RuntimeError("nothing measured yet — call initialize() first")
         return build_gp(
-            self.train_X, self.train_Y, self.train_Yvar, self.bounds,
+            self.train_X.detach(), self.train_Y.detach(), self.train_Yvar.detach(),
+            self.bounds,
             kernel_structure=self.config.kernel_structure,
         )
+
+    def _acquisition_bounds(self, model) -> Tensor:
+        if self.turbo_state is None:
+            return self.bounds
+        _, x_inc, _ = posterior_mean_incumbent(model, self.train_X)
+        ls = lengthscales(model).reshape(-1)
+        tr = tr_bounds(x_inc, ls, self.turbo_state.length, self.bounds).detach()
+        self.last_tr_bounds = tr
+        self.tr_history.append(tr.clone())
+        return tr
+
+    def _sync_turbo_incumbent(self, *, init: bool) -> None:
+        if self.turbo_state is None:
+            return
+        # Detach so acquisition backward graphs from ask() cannot leak into the
+        # next GP fit (BoTorch LBFGS would then hit "backward a second time").
+        model = build_gp(
+            self.train_X.detach(), self.train_Y.detach(), self.train_Yvar.detach(),
+            self.bounds, kernel_structure=self.config.kernel_structure,
+        )
+        _, _, mu = posterior_mean_incumbent(model, self.train_X.detach())
+        value = float(mu.detach())
+        if init:
+            self.turbo_state = TurboState(
+                dim=self.config.d,
+                batch_size=self.config.q,
+                best_value=value,
+                keep_history=True,
+            )
+            return
+        self.turbo_state = update_trust_region(self.turbo_state, value)
+        if self.turbo_state.restart_triggered:
+            self.turbo_state = self.turbo_state.after_restart()
 
     # -- the loop ----------------------------------------------------------
 
@@ -311,6 +352,7 @@ class Campaign:
         )
         self._round = 1
         self._record(X, *self._measure(X))
+        self._sync_turbo_incumbent(init=True)
 
     def ask(self, q: int) -> Tensor:
         """Propose ``q`` recipes, and write down what we expect before finding out.
@@ -322,9 +364,10 @@ class Campaign:
         if self.n_observed == 0:
             raise RuntimeError("call initialize() before ask()")
         model = self.fit()
+        bounds = self._acquisition_bounds(model)
 
         X = propose(
-            model, self.bounds, q, self.train_X, self.train_Y,
+            model, bounds, q, self.train_X, self.train_Y,
             config=self.config.acq,
             X_pending=self.X_pending if self.X_pending.shape[0] else None,
         )
@@ -352,6 +395,7 @@ class Campaign:
         """Fold measured results back in and clear them from the in-flight list."""
         self._record(X, Y, Yvar)
         self._drop_pending(X)
+        self._sync_turbo_incumbent(init=False)
 
     def run(self) -> Campaign:
         """Run the whole thing to budget."""
@@ -430,6 +474,20 @@ class Campaign:
             "round": self._round,
             # Without this the identical-trace test cannot pass.
             "rng_state": self._rng_state(),
+            "turbo": None if self.turbo_state is None else {
+                "dim": self.turbo_state.dim,
+                "batch_size": self.turbo_state.batch_size,
+                "length": self.turbo_state.length,
+                "length_min": self.turbo_state.length_min,
+                "length_max": self.turbo_state.length_max,
+                "failure_counter": self.turbo_state.failure_counter,
+                "success_counter": self.turbo_state.success_counter,
+                "success_tolerance": self.turbo_state.success_tolerance,
+                "best_value": self.turbo_state.best_value,
+                "restart_triggered": self.turbo_state.restart_triggered,
+                "keep_history": self.turbo_state.keep_history,
+                "n_restarts": self.turbo_state.n_restarts,
+            },
             "versions": {
                 "botorch": botorch.__version__,
                 "torch": torch.__version__,
@@ -465,4 +523,7 @@ class Campaign:
         # Restored last: constructing the campaign above re-seeded, which would
         # otherwise overwrite the state we are trying to restore.
         cls._set_rng_state(state["rng_state"])
+        raw_tr = state.get("turbo")
+        if raw_tr:
+            c.turbo_state = TurboState(**raw_tr)
         return c

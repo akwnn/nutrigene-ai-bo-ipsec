@@ -1,14 +1,16 @@
 # Supplementary tables
 
-The paper is `docs/RESEARCH-SUMMARY.md`. This file is the SI: long tables, Q-ids, and working notes. Edit freely; do not copy these tables back into the main file.
+The teaching summary is `docs/RESEARCH-SUMMARY.md`. This file is the SI: long tables, Q-ids, and working notes. Edit freely; do not copy these tables back into the main file.
 
-**How we split.** Headline numbers, three figures, and the laboratory decision guide stay in the paper. Internal run names (E2, Q34, …) are reproducibility tags here.
+**How we split.** Explanations and headline numbers live in the summary. Internal run names (E2, Q34, …) are reproducibility tags here.
 
 | Figure | File | Generator |
 |---|---|---|
-| 1. Winner by terminal rule and noise | `results/figures/fig1-scoring.html` | `scripts/make_scoring_figure.py` |
-| 2. Cost in wells and in rounds | `results/figures/cost-curves.html` | `scripts/make_cost_curve_page.py` |
-| 3. Saddle and ridge constraint | `results/figures/fig3-saddle.html` | `scripts/make_saddle_figure.py` |
+| 1. Winner by terminal rule | `docs/figures/fig1-terminal-rules.pdf` | `scripts/make_paper_figures.py` |
+| 2. Cost in wells and in rounds | `docs/figures/fig2-cost.pdf` | `scripts/make_paper_figures.py` |
+| 3. Saddle and ridge constraint | `docs/figures/fig3-saddle.pdf` | `scripts/make_paper_figures.py` |
+
+Interactive lab pages (not for the journal file) remain at `results/figures/fig1-scoring.html`, `results/figures/cost-curves.html`, and `results/figures/fig3-saddle.html`.
 
 Lab notebooks (not the paper): `docs/RESULTS.md`, `docs/WHAT-WE-FOUND.md`. New campaigns go there first.
 
@@ -32,7 +34,7 @@ Lab notebooks (not the paper): `docs/RESULTS.md`, `docs/WHAT-WE-FOUND.md`. New c
 
 **Bootstrap interval.** Resample the 25 landscapes and recompute the mean gap. Answers “how large,” which Wilcoxon does not.
 
-**Holm–Bonferroni.** Used when several arms share a family. Primary DoE-versus-BO tables in the paper §4.1 are single planned contrasts and are not Holm-adjusted.
+**Holm–Bonferroni.** Used when several arms share a family. The paper’s primary DoE-versus-BO contrasts (measured-response argmax and in-region recommendation at six factors and higher noise) are single planned comparisons and are not Holm-adjusted.
 
 An interval covering 0 is “not distinguished at n = 25,” not “the methods are identical.” TOST at SESOI = 0.02 is in `results/tost-contrasts.json` (supplement §S9).
 
@@ -60,6 +62,8 @@ An interval covering 0 is “not distinguished at n = 25,” not “the methods 
 | Q59 | Hartmann6 with and without the 6→4 screen (d = 6). | Is BO’s Hartmann win a screening artefact? |
 | Q60 | Average original + confirmation on the top-3 shortlist. | Is Q58’s confirmation-alone interval covering 0 an artefact of discarding the first reading? **Not run.** BO replay failed the 1e-12 gate. |
 | Q61 | qLogEI and qLogNEI at q = 1, primary cell. | Is the 0.0595 lead batching rather than terminal rule? **Not run.** Same replay risk. |
+| Q62 | TuRBO-1 qLogNEI (local box) vs unconstrained qLogNEI and `doe_ascent`. | Locked. Primary: TuRBO 0.1538 ≈ qLogNEI 0.1532; DoE − TuRBO −0.0580. N=200: 11/25 vs `doe_ascent` 8/25 at σ=0.25, τ=0.10. |
+| Q63 | Adaptive explore vs confirm allocation. | Paper 2. Not started. |
 
 | Experiment | Held fixed | Varied |
 |---|---|---|
@@ -72,6 +76,7 @@ An interval covering 0 is “not distinguished at n = 25,” not “the methods 
 | Q56 | d = 6, cap 200 | Relocation vs `doe_repeat` |
 | Q58 | Primary cell campaigns | Final pick |
 | Q59 | d = 6, N = 48 | 6→4 cut |
+| Q62 | d = 6, TR on vs off | Sampling box |
 
 ---
 
@@ -265,7 +270,22 @@ Q56 `path_argmax` vs `first_decline`: 4 of 26 cells flip. Primary ascent rule is
 
 ---
 
-## S9. TOST at SESOI = 0.02
+## S9. Q62 TuRBO-1 (locally constrained qLogNEI)
+
+Source: `results/q62-turbo.json` (`"smoke": false`, 25 landscapes × 2 seeds, d = 6, *N* = 48). Sign is DoE − TuRBO (negative favours DoE). Hyperparameters frozen: `length_init=0.8`, `length_min=0.5**7`, `length_max=1.6`, restart keeps history. Collapse (<20 unique wells on every seed of a landscape) = **0**. Every campaign visited **48/48** distinct wells; **0** restarts.
+
+| σ | TuRBO measured | TuRBO search | ID gap | GP rec. (box) | GP rec. (TR) | qLogNEI | DoE | DoE − TuRBO | TuRBO − qLogNEI | Hit τ=0.10 both seeds |
+|---|---|---|---|---|---|---|---|---|---|---|
+| 0.25 | **0.1538** | 0.0833 | 0.0704 | 0.1288 | 0.1385 | 0.1532 | 0.0958 | **−0.0580** [−0.0768, −0.0390] | +0.0006 [−0.0205, +0.0206] | 5/25 |
+| 0.10 | **0.0736** | 0.0400 | 0.0337 | 0.0631 | 0.0637 | 0.0808 | 0.0892 | **+0.0156** [+0.0041, +0.0274] | −0.0072 [−0.0214, +0.0071] | 20/25 |
+
+Q56 `doe_ascent` arrivals at τ=0.10, cap 200 (rule A): 8/25 (σ=0.25) and 16/25 (σ=0.10). TuRBO *N*=200 (`results/q62-turbo-n200.json`): **11/25** and **25/25** (both seeds must hit). Q56 qLogEI: 14/25 and 24/25. Terminal measured regret at 200 wells: 0.1267 / 0.0492; identification 0.0791 / 0.0312. Do not subtract 48-well E2 DoE from those regrets.
+
+Figure: `docs/figures/fig4-turbo.pdf` (48-well cell).
+
+---
+
+## S10. TOST at SESOI = 0.02
 
 Source: `results/tost-contrasts.json`. Both one-sided t-tests must reject to call **equivalent**. **Different** = bootstrap interval excludes 0. Otherwise **inconclusive**. Wilcoxon MDE is the smallest |mean| at 80% power given that cell’s observed SD (n = 25).
 
@@ -283,7 +303,7 @@ Source: `results/tost-contrasts.json`. Both one-sided t-tests must reject to cal
 
 ---
 
-## S10. Adversarial novelty checklist (working note)
+## S11. Adversarial novelty checklist (working note)
 
 Not for the submitted paper. Keep while editing.
 

@@ -4,6 +4,9 @@
 
 **Registered next, not run:** Q60 (`top_k_average`) and Q61 (q=1). BO replay of Q58/E2 failed the 1e-12 gate (acquisition-optimizer retry; DoE still matches). Do not block the paper on those runs. TOST is in `results/tost-contrasts.json`. Spec: `docs/superpowers/specs/2026-08-17-review-response-design.md`. Plan: `docs/superpowers/plans/2026-08-17-q60-q61-tost.md`. Do not re-run closed workstreams from the checklist below.
 
+**Q62 (done, 2026-08-20):** TuRBO-1 qLogNEI. Locked JSON `results/q62-turbo.json` and
+`results/q62-turbo-n200.json`. Figure 4. Do not overwrite E2/Q56. Q63 (OCBA) is Paper 2.
+
 Hand this file to the agent that will do the next month of work. Do not mix campaigns in one run. Do not invent a winner.
 
 **The paper to publish is not** “BO and DoE address different estimands” or “which acronym wins.”
