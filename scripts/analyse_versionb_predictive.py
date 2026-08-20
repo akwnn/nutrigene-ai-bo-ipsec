@@ -152,17 +152,26 @@ def main():
     thr = cfg["acq_cv_flat"]
     print(f"\n{'='*78}\nE1 — ACQUISITION FLATNESS.  registered threshold acq_cv < {thr}")
     for arm in ("versionb", "versionb_predictive"):
-        cv = np.array([r["acq_cv"] for r in rows
-                       if r["arm"] == arm and r.get("acq_cv") is not None], float)
-        if not cv.size:
+        sub = [r for r in rows if r["arm"] == arm and r.get("acq_cv") is not None]
+        if not sub:
             continue
+        cv = np.array([r["acq_cv"] for r in sub], float)
         below = int((cv < thr).sum())
-        print(f"  {arm:22s} n={cv.size}  min {cv.min():.4f}  p05 {np.percentile(cv,5):.4f}  "
-              f"median {np.median(cv):.4f}  p95 {np.percentile(cv,95):.4f}  "
-              f"max {cv.max():.4f}")
+        print(f"  {arm:22s} acq_cv  n={cv.size}  min {cv.min():.4f}  "
+              f"p05 {np.percentile(cv,5):.4f}  median {np.median(cv):.4f}  "
+              f"p95 {np.percentile(cv,95):.4f}  max {cv.max():.4f}")
         print(f"  {'':22s} below threshold: {below}/{cv.size}"
               + ("  -> acquisition uninformative at this density" if below else
                  "  -> NO campaign is flat; E1's worry is not what diluted KILL 2"))
+        # The ratio's denominator is NOT comparable across the two criteria: the
+        # predictive straddle's mean is larger by construction (sqrt(sd^2+sigma^2) > sd),
+        # so a smaller acq_cv there is not less structure. The raw SD is what carries the
+        # structure and it is printed so the two are never silently compared as ratios.
+        sd = np.array([r["acq_sd"] for r in sub], float)
+        mu = np.array([r["acq_mean"] for r in sub], float)
+        print(f"  {'':22s} raw: SD median {np.median(sd):.4f} (min {sd.min():.4f}) · "
+              f"mean(a) median {np.median(mu):+.4f} · "
+              f"campaigns with mean(a) <= 0: {int((mu <= 0).sum())}")
 
     # ---- E2: exclusion ------------------------------------------------------------
     print(f"\n{'='*78}\nE2 — DID THE EXCLUSION RADIUS BIND?")
