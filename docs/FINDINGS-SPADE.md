@@ -258,20 +258,58 @@ table of zeros.
 a second look: `random` places second or third at three of four thresholds, and `sobol` is
 **last at three of four** despite being a low-discrepancy design.
 
-**The finding that matters most — the guarantee is real.** Achieved containment against
-nominal, every arm:
+**🔴 RETRACTED — the containment check was circular, and the corrected result inverts it.**
 
-| nominal α | achieved |
-|---|---|
-| 0.50 | 0.560 – 0.592 |
-| 0.80 | 0.864 – 0.872 |
-| 0.95 | **0.972 – 0.998** |
+The original version of this section reported achieved containment of 0.972–0.998 at
+nominal 0.95 and called the joint guarantee real. **It was a tautology.**
+`conservative_estimate` selects the largest set whose containment exceeds α *measured on
+`draws`*, and the runner then re-measured containment on **the same draws**. It cannot
+fall below nominal by construction: 0 of 1,401 non-empty cases fell below, with minima of
+exactly 0.5000 / 0.8008 / 0.9512.
 
-**At or above nominal everywhere.** The conservative estimate is genuinely conservative
-*even with plug-in hyperparameters* — the failure mode Azzimonti et al. flag, and the one
-we recorded as a stated limit, does not bite at this budget. `CE_alpha` is empty 52–88% of
-the time, so the emptiness warning held and `alpha*` did exactly the job it was designed
-for.
+A second defect compounded it: `run_k6b_conservative.py` contained **zero** references to
+`kept_factors`, so Amendment B3's refuse-to-certify policy was implemented in K6 only and
+every K6b `doe` number certified along axes the CCD never varied.
+
+Both were fixed and **K6b was re-run**. The non-circular test is
+`empirical_containment` — against one realisation a set is wholly contained or it is not,
+so the guarantee is the **fraction of campaigns contained**, which must be at least α.
+
+| arm | α=0.50 | α=0.80 | α=0.95 |
+|---|---|---|---|
+| **doe** (active=4) | **0.155** | **0.420** | **0.510** |
+| lhs | 0.912 | 1.000 | 1.000 |
+| sobol | 0.959 | 1.000 | 1.000 |
+| qlogei | 0.884 | 0.983 | 1.000 |
+| qlognei | 0.923 | 0.968 | 0.970 |
+| random | 0.646 | 0.930 | 1.000 |
+
+**Seven of eight arms hold at every level. The screened classical arm fails at every
+level**, and it fails *with* B3 applied — at α=0.50 the subspace restriction makes it
+**worse** (0.155 against 0.250 unrestricted), so the arm is miscalibrated on the very
+slice it operates in.
+
+The starkest evidence for why the circular metric had to go: at nominal 0.95 the `doe`
+arm's circular figure reads **0.9997** while its empirical containment is **0.5098**. The
+in-sample statistic ranks the failing arm first.
+
+**Version B measured it too** (`tau_frac=0.60`, the only threshold where all three α
+levels are testable):
+
+| arm | α=0.50 | α=0.80 | α=0.95 |
+|---|---|---|---|
+| versionb | 0.940 (n=50) | 1.000 (n=50) | 1.000 (n=22) |
+| plate1_only | 0.940 (n=50) | 1.000 (n=47) | 1.000 (n=16) |
+| qlognei | 0.900 (n=50) | 0.979 (n=48) | 0.968 (n=31) |
+| **doe** | **0.000 (0 of 50)** | **0.240 (n=50)** | **0.500 (n=50)** |
+
+**At α=0.50 the classical arm's certified region is contained in zero of fifty
+campaigns.** SPADE meets nominal in all six of its scorable cells.
+
+**A hard limit on all of this.** Only `doe` has n=50 in every cell; the other arms' α=0.95
+rates rest on 16–31 scorable campaigns. **At `tau_frac=0.95` nothing is testable for any
+arm at any α** — empty in 50 of 50, fifteen cells of n=0. Cells with n=1–8 are excluded
+from claims: a 1.0000 at n=3 has a Wilson lower bound of 0.439.
 
 ### 4.9 ❗ WHAT WE HAVE **NOT** TESTED: SPADE is a two-round method
 
@@ -323,9 +361,16 @@ arms that differ in nothing else, and running exactly opposite to regret. This i
 strongest and most portable result of the investigation. It needs no new method, no new
 campaign, and does not depend on SPADE winning anything.
 
-**Joint certification works at this budget.** Achieved containment sits at or above nominal
-at every level for every arm, so a `(gamma, alpha)` statement built from 48 wells is
-honest — with plug-in hyperparameters, which was the flagged risk.
+**Joint certification works for seven of eight arms.** Under the corrected, non-circular
+test, every arm except the screened classical one meets nominal at every level, so a
+`(gamma, alpha)` statement built from 48 wells is honest — with plug-in hyperparameters,
+which was the flagged risk. The classical arm fails at every level, and at `tau_frac=0.60,
+alpha=0.50` its region is contained in **zero of fifty** campaigns.
+
+**And model-internal metrics cannot be trusted alone.** `doe` posts the *highest* `alpha*`
+at easy thresholds and the *worst* empirical containment. `alpha*` measures how confident
+a model is, not whether that confidence is earned. Only AUC, Brier and empirical
+containment are scored against known truth.
 
 **A one-shot spread design does not beat the strongest BO arm on the map.** It beats
 qLogEI in 9 of 24 cells and never loses to it, but loses to qLogNEI in 15 of 24. Choosing
