@@ -167,3 +167,5 @@ COMMIT_MSG.txt
 !results/k6-designspace.json
 !results/k6-designspace.log
 !results/k6-analysis.json
+!results/k6b-conservative.json
+!results/k6b-conservative.log
