@@ -166,3 +166,4 @@ COMMIT_MSG.txt
 !results/k1-replay-gate.log
 !results/k6-designspace.json
 !results/k6-designspace.log
+!results/k6-analysis.json
