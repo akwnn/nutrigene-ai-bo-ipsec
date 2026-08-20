@@ -169,3 +169,4 @@ COMMIT_MSG.txt
 !results/k6-analysis.json
 !results/k6b-conservative.json
 !results/k6b-conservative.log
+!results/k6b-analysis.json
