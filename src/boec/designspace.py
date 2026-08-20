@@ -1,0 +1,223 @@
+"""The design-space deliverables: a probability map, a certified region, and a box.
+
+------------------------------------------------------------------------------
+THE PRIMARY OBJECT IS PETERSON'S D_gamma, NOT AN LCB ON THE LATENT MEAN
+------------------------------------------------------------------------------
+
+    D_gamma = {x : P(Y >= tau | x, data) >= gamma}
+
+with ``Y`` a **future observation** (Peterson 2008; Peterson & Lief 2010). It therefore
+carries ``sigma^2`` as well as the estimation variance ``s^2``. Overlapping-mean and
+mean-LCB regions are the thing that literature exists to replace: they are too large,
+because they certify a statement about the *mean response* when the batch record needs a
+statement about *the next batch*.
+
+E3 measured this repo's latent 95% interval at **0.7644** coverage while the predictive
+interval recovers to ~0.90-0.92, and wrote: *"the interval a lab would actually use is
+roughly trustworthy; the model's belief about the underlying smooth response is not."*
+Under a point-optimum deliverable that is a footnote. Under a certificate it inverts --
+the broken interval is precisely the one you would certify with. Both maps are therefore
+computed and **the gap between them is a reported result**.
+
+------------------------------------------------------------------------------
+WHY THE ASSURANCE LEVEL IS SWEPT AND tau IS REGISTERED AS A FRACTION
+------------------------------------------------------------------------------
+
+Set ``s = 0`` -- infinite data, perfect knowledge. Certifying still requires
+``mu - tau >= z*sigma``. This repo's noise is relative (``y = f(1+eps) + eta``), so the
+noise SD scales with ``mu`` and the ceiling is closed-form:
+
+    tau_max = mu_max * (1 - z * sigma_rel)          [:func:`tau_max`]
+
+At ``sigma_rel = 0.25, gamma = 0.95`` that is **0.589 at any budget, forever**. So a
+grid of absolute ``tau`` above ~0.59 certifies nothing for any arm and returns a table of
+zeros. An earlier draft of the K6 registration carried ``{0.70, 0.80, 0.85, 0.90}`` and
+would have done exactly that. ``tau`` is registered as a fraction of ``tau_max``.
+
+The gamma sweep is not a robustness check. It is the only thing keeping the object
+non-empty, and that fact is itself the finding.
+
+------------------------------------------------------------------------------
+EMPTY IS NOT ZERO
+------------------------------------------------------------------------------
+
+Measured neighbour density for a 48-point design in 6D at the fitted lengthscale 0.42 is
+**0.49 points within one lengthscale**, so ``s(x)`` sits near the prior SD and a certified
+region can be genuinely empty. Every function here distinguishes *empty* from *small*:
+:func:`false_inclusion_rate` and :func:`iou` return ``nan`` rather than a number that
+would average into a mean and read as "safe".
+"""
+
+from __future__ import annotations
+
+import torch
+from torch import Tensor
+from torch.distributions import Normal
+
+__all__ = ["brier_and_auc", "certified_mask", "certified_volume_curve",
+           "false_inclusion_rate", "gp_adapter", "inscribed_box", "iou",
+           "predictive_probability_map", "probability_map", "tau_max"]
+
+_STD_NORMAL = Normal(0.0, 1.0)
+
+
+def _z_for(gamma: float) -> float:
+    """The one-sided normal multiplier for an assurance level."""
+    return float(_STD_NORMAL.icdf(torch.tensor(float(gamma), dtype=torch.double)))
+
+
+def tau_max(gamma: float, sigma_rel: float, mu_max: float = 1.0) -> float:
+    """The highest ``tau`` certifiable at assurance ``gamma``, **at any budget**.
+
+    ``mu_max * (1 - z * sigma_rel)``. Derived with ``s = 0``, so no design, no model and
+    no number of wells can beat it -- ``D_gamma`` is floored by *process* noise, not by
+    estimation noise.
+    """
+    return round(mu_max * (1.0 - _z_for(gamma) * sigma_rel), 10)
+
+
+def gp_adapter(model):
+    """Adapt a BoTorch model to the ``posterior_mean_and_sd`` protocol used here."""
+
+    class _Adapted:
+        def posterior_mean_and_sd(self, X: Tensor) -> tuple[Tensor, Tensor]:
+            with torch.no_grad():
+                post = model.posterior(X)
+            return (post.mean.reshape(-1).double(),
+                    post.variance.reshape(-1).clamp_min(0).sqrt().double())
+
+    return _Adapted()
+
+
+def probability_map(model, X_grid: Tensor, tau: float) -> Tensor:
+    """``P(f(x) >= tau)`` under the Gaussian **latent** posterior. Shape ``(n,)``.
+
+    **SECONDARY.** :func:`predictive_probability_map` is the primary object. This is
+    retained because E3 showed the latent interval is the anti-conservative one, so the
+    gap between the two maps is a result in its own right.
+    """
+    mean, sd = model.posterior_mean_and_sd(X_grid)
+    return _STD_NORMAL.cdf((mean - tau) / sd.clamp_min(1e-12))
+
+
+def predictive_probability_map(model, X_grid: Tensor, tau: float,
+                               sigma: Tensor | float) -> Tensor:
+    """``P(Y >= tau | x)`` under the posterior **predictive** -- Peterson's ``D_gamma``.
+
+    Args:
+        sigma: observation SD **at each grid point**. This repo's noise is relative, so
+            pass ``sigma_rel * mean``; a scalar silently answers a homoscedastic question
+            the campaigns never asked.
+    """
+    mean, sd = model.posterior_mean_and_sd(X_grid)
+    sig = torch.as_tensor(sigma, dtype=sd.dtype)
+    total = (sd ** 2 + sig ** 2).clamp_min(1e-24).sqrt()
+    return _STD_NORMAL.cdf((mean - tau) / total)
+
+
+def certified_mask(model, X_grid: Tensor, tau: float, z: float) -> Tensor:
+    """``(n,)`` bool: grid points whose lower confidence bound on the mean clears ``tau``."""
+    mean, sd = model.posterior_mean_and_sd(X_grid)
+    return (mean - z * sd) >= tau
+
+
+def certified_volume_curve(model, X_grid: Tensor, tau: float,
+                           z_values) -> dict[float, float]:
+    """Certified grid fraction per confidence multiplier. **Always defined.**
+
+    Reported as a curve rather than a single 95% number, because at measured spread-design
+    neighbour density the fixed-95% volume is plausibly zero for every arm, and a table of
+    zeros is degenerate rather than informative.
+    """
+    return {float(z): float(certified_mask(model, X_grid, tau, z).double().mean())
+            for z in z_values}
+
+
+def false_inclusion_rate(mask: Tensor, truth: Tensor, tau: float) -> float:
+    """Of the points a region certifies, the fraction genuinely below ``tau``.
+
+    The safety number. Returns ``nan`` for an empty region -- ``0.0`` would read as
+    perfectly safe when the honest answer is that nothing was claimed.
+    """
+    if int(mask.sum()) == 0:
+        return float("nan")
+    return float((truth.reshape(-1)[mask] < tau).double().mean())
+
+
+def iou(mask: Tensor, truth: Tensor, tau: float) -> float:
+    """Intersection-over-union against the true superlevel set. ``nan`` if both empty."""
+    true_set = truth.reshape(-1) >= tau
+    union = int((mask | true_set).sum())
+    if union == 0:
+        return float("nan")
+    return float(int((mask & true_set).sum()) / union)
+
+
+def brier_and_auc(p: Tensor, truth: Tensor, tau: float) -> tuple[float, float]:
+    """Brier score (lower better) and AUC (higher better) against ``1{f >= tau}``.
+
+    AUC is ``nan`` when one class is absent. ``0.5`` would read as "no skill" when the
+    honest answer is "undefined", and it would average into a mean as if it were data.
+    """
+    label = (truth.reshape(-1) >= tau).double()
+    brier = float(((p.reshape(-1) - label) ** 2).mean())
+    n_pos, n_neg = int(label.sum()), int((1 - label).sum())
+    if n_pos == 0 or n_neg == 0:
+        return brier, float("nan")
+    order = torch.argsort(p.reshape(-1))
+    ranks = torch.empty(p.numel(), dtype=torch.double)
+    ranks[order] = torch.arange(1, p.numel() + 1, dtype=torch.double)
+    auc = float((ranks[label == 1].sum() - n_pos * (n_pos + 1) / 2) / (n_pos * n_neg))
+    return brier, auc
+
+
+def inscribed_box(model, X_grid: Tensor, tau: float, z: float, n_steps: int = 20,
+                  active: Tensor | None = None) -> tuple[Tensor, float]:
+    """Largest axis-aligned box with ``LCB >= tau`` throughout, by greedy expansion.
+
+    Args:
+        active: ``(d,)`` bool, which axes may expand. **Amendment B3**: an axis with no
+            design variation is not certifiable -- you cannot certify a factor you never
+            varied -- so it is pinned to zero width and the NOR is reported in the active
+            subspace only. Default: all axes active.
+
+    Returns:
+        ``((2, d) lower/upper, volume)``. Volume over the **active** axes. An empty
+        certified region returns a degenerate box and ``0.0``; callers must distinguish
+        that from a genuinely small box, which is what
+        :func:`certified_volume_curve` is for.
+    """
+    mean, sd = model.posterior_mean_and_sd(X_grid)
+    lcb = mean - z * sd
+    d = X_grid.shape[1]
+    if active is None:
+        active = torch.ones(d, dtype=torch.bool)
+
+    if not bool((lcb >= tau).any()):
+        centre = torch.full((d,), 0.5, dtype=torch.double)
+        return torch.stack([centre, centre]), 0.0
+
+    seed = X_grid[int(torch.argmax(lcb))].double()
+    lo, hi = seed.clone(), seed.clone()
+    step = 1.0 / n_steps
+
+    moved = True
+    while moved:
+        moved = False
+        for j in range(d):
+            if not bool(active[j]):
+                continue
+            for bound, sign in ((hi, 1.0), (lo, -1.0)):
+                proposed = float(min(max(bound[j] + sign * step, 0.0), 1.0))
+                if proposed == float(bound[j]):
+                    continue
+                new_lo = lo.clone()
+                new_hi = hi.clone()
+                (new_hi if sign > 0 else new_lo)[j] = proposed
+                inside = ((X_grid >= new_lo) & (X_grid <= new_hi)).all(dim=1)
+                if bool(inside.any()) and bool((lcb[inside] >= tau).all()):
+                    bound[j] = proposed
+                    moved = True
+
+    widths = (hi - lo)[active]
+    return torch.stack([lo, hi]), float(torch.prod(widths)) if widths.numel() else 0.0

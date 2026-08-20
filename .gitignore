@@ -162,3 +162,5 @@ COMMIT_MSG.txt
 
 # Q59 — Hartmann6 with and without the screen. Anchored by path from docs/RESULTS.md.
 !results/q59-hartmann-no-screen.json
+!results/k1-replay-gate.json
+!results/k1-replay-gate.log
