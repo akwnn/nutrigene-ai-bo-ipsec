@@ -44,7 +44,8 @@ from boec.replay import committed_rows, instance_by_id, regenerate, unit_bounds
 from boec.surrogate import build_gp
 from boec.torch_oracle import BiphasicOracle
 from boec.vorobev import (alpha_star, conservative_estimate, containment_probability,
-                          excursion_probability, vorobev_deviation, vorobev_expectation)
+                          empirical_containment, excursion_probability,
+                          vorobev_deviation, vorobev_expectation)
 
 OUT = Path("results/k6b-conservative.json")
 GATE = Path("results/k1-replay-gate.json")
@@ -138,19 +139,36 @@ def main() -> None:
                 print(f"  !! GATE {arm} {inst_id} seed={seed}")
 
             model = build_gp(rec.X, rec.Y, rec.Yvar, unit_bounds(args.dim))
-            draws = joint_draws(model, X_sub, seed=seed)
+
+            # AMENDMENT B3, which the first K6b run did not implement. An arm that never
+            # varied a factor may not certify a range for it, so its region is evaluated
+            # on the ACTIVE SUBSPACE: the same Sobol points, with every screened-out
+            # coordinate pinned to where the screen held it. Without this the DoE arm
+            # certifies along axes its response surface never saw move -- the prior-driven
+            # variant the registration itself calls "not defensible in a batch record".
+            if rec.kept_factors is not None and rec.dropped_held_at:
+                X_eval = X_sub.clone()
+                for j, v in rec.dropped_held_at.items():
+                    X_eval[:, j] = v
+            else:
+                X_eval = X_sub
+            with torch.no_grad():
+                truth_eval = orc.truth(X_eval).reshape(-1).double()
+            draws = joint_draws(model, X_eval, seed=seed)
 
             for tf in TAU_FRACS:
                 theta = tf * mu_max
                 p = excursion_probability(draws, theta)
                 q = vorobev_expectation(p, draws, theta)
-                true_set = truth >= theta
+                true_set = truth_eval >= theta
                 inter = int((q & true_set).sum())
                 union = int((q | true_set).sum())
                 row = {"instance": inst_id, "dim": args.dim, "sigma": args.sigma,
                        "seed": seed, "arm": arm, "regret": rec.regret,
                        "tau_frac": tf, "theta": theta,
                        "true_frac_above": float(true_set.double().mean()),
+                       "n_active": (args.dim if rec.kept_factors is None
+                                    else len(rec.kept_factors)),
                        "alpha_star": alpha_star(draws, theta),
                        "vorobev_deviation": vorobev_deviation(draws, theta),
                        "vorobev_expectation_vol": float(q.double().mean()),
@@ -162,10 +180,16 @@ def main() -> None:
                     row[f"ce_vol_{a}"] = n_ce / ce.numel()
                     row[f"ce_empty_{a}"] = n_ce == 0
                     row[f"ce_false_in_{a}"] = (
-                        float((truth[ce] < theta).double().mean()) if n_ce
+                        float((truth_eval[ce] < theta).double().mean()) if n_ce
                         else float("nan"))
+                    # CIRCULAR -- conservative_estimate SELECTS on this, so it cannot
+                    # fall below alpha. Kept only so the tautology is visible in the data.
                     row[f"ce_contain_{a}"] = (containment_probability(draws, ce, theta)
                                               if n_ce else float("nan"))
+                    # The real test: is the set ACTUALLY inside the true excursion set?
+                    emp = empirical_containment(ce, truth_eval, theta)
+                    row[f"ce_empirical_{a}"] = (float("nan") if emp is None
+                                                else float(emp))
                 rows.append(row)
 
             print(f"[{i:3d}/{len(keys)}] {arm:14s} {inst_id} seed={seed} "

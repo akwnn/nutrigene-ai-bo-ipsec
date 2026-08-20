@@ -110,3 +110,34 @@ def test_vorobev_deviation_is_zero_for_a_deterministic_field():
 
 def test_vorobev_deviation_is_positive_when_the_field_is_uncertain():
     assert vorobev_deviation(_draws(), theta=0.5) > 0.0
+
+
+# --- the circularity fix -----------------------------------------------------------
+
+def test_containment_probability_is_model_internal_not_validation():
+    """Documents the defect. `conservative_estimate` SELECTS on containment measured from
+    `draws`, so re-measuring containment on the SAME draws cannot fall below alpha. It is
+    a tautology and must never be reported as 'the guarantee holds'."""
+    d = _draws()
+    for alpha in (0.5, 0.8, 0.95):
+        ce = conservative_estimate(d, theta=0.5, alpha=alpha)
+        if int(ce.sum()):
+            assert containment_probability(d, ce, 0.5) >= alpha   # true BY CONSTRUCTION
+
+
+def test_empirical_containment_is_a_hard_zero_or_one_against_truth():
+    """The non-circular check: against one realisation a set is contained, or it is not."""
+    import torch
+    from boec.vorobev import empirical_containment
+    truth = torch.tensor([0.9, 0.8, 0.2], dtype=torch.double)
+    assert empirical_containment(torch.tensor([True, True, False]), truth, 0.5) is True
+    assert empirical_containment(torch.tensor([True, False, True]), truth, 0.5) is False
+
+
+def test_empirical_containment_of_an_empty_set_is_none_not_true():
+    """An empty set is vacuously contained. Counting it as a success would inflate the
+    measured rate with campaigns that certified nothing."""
+    import torch
+    from boec.vorobev import empirical_containment
+    truth = torch.tensor([0.9, 0.2], dtype=torch.double)
+    assert empirical_containment(torch.zeros(2, dtype=torch.bool), truth, 0.5) is None

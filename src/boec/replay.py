@@ -121,6 +121,10 @@ class CampaignRecord:
     #: test would therefore find nothing and silently certify a factor on 20 screening
     #: points that the response-surface fit never saw vary.
     kept_factors: tuple[int, ...] | None = None
+    #: Where the screen pinned each dropped factor. Needed to build the ACTIVE SUBSPACE
+    #: for Amendment B3: an arm that never varied a factor may not certify a range for it,
+    #: so its region is evaluated on a grid holding those factors at the pinned value.
+    dropped_held_at: dict[int, float] | None = None
 
 
 def unit_bounds(d: int) -> Tensor:
@@ -174,13 +178,13 @@ def regenerate(instance: str, dim: int, sigma: float, seed: int,
         c = Campaign(orc, bounds, cfg)
         c.run()
         X, Y, Yvar = c.train_X, c.train_Y, c.train_Yvar
-        kept = None
+        kept = held = None
     elif arm in SPREAD_ARMS:
         # One call to evaluate, exactly as `run_e2.static_curve` does. Calling it twice
         # would draw fresh noise and return a different campaign.
         X = static_design(bounds, arm, BUDGET, seed)
         Y, Yvar = orc.evaluate(X)
-        kept = None
+        kept = held = None
     elif arm in DETERMINISTIC_ARMS:
         r = run_doe_arm(orc, bounds, truth=orc.truth, budget=BUDGET, seed=seed)
         X, Y = r.X_visited, r.Y_visited
@@ -188,6 +192,7 @@ def regenerate(instance: str, dim: int, sigma: float, seed: int,
         Yvar = torch.from_numpy(
             _plug_in_yvar(Y.detach().cpu().numpy(), orc.sigma_rel, orc.sigma_add))
         kept = tuple(int(j) for j in r.kept_factors)
+        held = {int(k): float(v) for k, v in r.dropped_held_at.items()}
     else:
         raise ValueError(
             f"unknown arm {arm!r}; expected one of "
@@ -215,4 +220,5 @@ def regenerate(instance: str, dim: int, sigma: float, seed: int,
         X=X, Y=Y, Yvar=Yvar, instance=instance, dim=dim, sigma=sigma, seed=seed,
         arm=arm, regret=float(inst.optimum_value - curve[-1]),
         optimum_value=float(inst.optimum_value), kept_factors=kept,
+        dropped_held_at=held,
     )

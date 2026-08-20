@@ -72,6 +72,7 @@ import torch
 from torch import Tensor
 
 __all__ = ["alpha_star", "conservative_estimate", "containment_probability",
+           "empirical_containment",
            "excursion_probability", "vorobev_deviation", "vorobev_expectation",
            "vorobev_quantile"]
 
@@ -110,6 +111,10 @@ def containment_probability(draws: Tensor, mask: Tensor, theta: float) -> float:
     The empty set is trivially contained and returns 1.0. Callers that would otherwise
     exploit that -- :func:`alpha_star`, :func:`conservative_estimate` -- exclude it
     explicitly.
+
+    **THIS IS MODEL-INTERNAL, NOT VALIDATION.** :func:`conservative_estimate` selects on
+    this quantity, so re-measuring it on the same draws is circular and cannot fall below
+    ``alpha``. Use :func:`empirical_containment` against known truth to test the guarantee.
     """
     if int(mask.sum()) == 0:
         return 1.0
@@ -150,6 +155,27 @@ def conservative_estimate(draws: Tensor, theta: float, alpha: float,
             if int(mask.sum()) > int(best.sum()):
                 best = mask
     return best
+
+
+def empirical_containment(mask: Tensor, truth: Tensor, theta: float) -> bool | None:
+    """Is this set **actually** inside the true excursion set? The non-circular check.
+
+    ``containment_probability`` is measured on the same draws that
+    :func:`conservative_estimate` used to *select* the set, so it cannot fall below
+    ``alpha`` -- it is a tautology and must never be reported as "the guarantee holds".
+    Measured on this repo's K6b output: 0 of 1,390 non-empty cases fell below nominal,
+    with minima of exactly 0.5000 / 0.8008 / 0.9512.
+
+    This is the real test. Against one realisation of the truth a set is either wholly
+    contained or it is not, so the guarantee is checked by the **fraction of campaigns**
+    whose set is contained, which must be at least ``alpha``.
+
+    Returns ``None`` for an empty set -- vacuously contained, and counting that as a
+    success would inflate the measured rate with campaigns that certified nothing.
+    """
+    if int(mask.sum()) == 0:
+        return None
+    return bool((truth.reshape(-1)[mask] >= theta).all())
 
 
 def vorobev_deviation(draws: Tensor, theta: float) -> float:
