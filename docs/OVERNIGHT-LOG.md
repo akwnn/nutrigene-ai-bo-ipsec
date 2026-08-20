@@ -374,3 +374,15 @@ path.
 excluded here for time, not because they fail — worth running before anything is
 published, since one of them is E1's kill condition and a kill condition that only runs
 when someone remembers to ask is not a kill condition.
+
+## D18 🟢 Stopped an idle agent that was burning tokens on a run I had taken over.
+
+The E1/E2/Fix 5 agent finished its edits, then notified *"standing by"* four times across
+54 minutes while its background campaign ran — reaching **172k tokens and 72 tool calls**
+without doing further work. Since D16 had already moved monitoring to me, the agent was
+pure overhead. Stopped it.
+
+**Worth noting for the next brief.** An agent that launches a long background run and then
+waits is a bad pattern: it holds context, re-notifies on every poll, and duplicates
+monitoring the parent is doing anyway. Agents should **launch and exit**, leaving the
+parent to collect. I wrote the prompt that caused this.
