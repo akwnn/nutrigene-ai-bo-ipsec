@@ -4701,3 +4701,168 @@ Rule P re-scores the **same wells**. It cannot say that any arm would have *run*
 experiments, and it says nothing about a method that chooses where to look. A rule-P regret
 is also not comparable to any published rule-A number: they are different estimands, and
 every table that carries both must say which column is which.
+
+## Amendment E, Phase 1.1 + 1.5 — E2 exclusion, E1 flatness, E6 the predictive straddle
+
+Registered before `scripts/run_versionb.py` gains any diagnostic and before
+`src/boec/lse.py` gains a predictive criterion. **`results/versionb.json` is not
+regenerated and not overwritten**: it carries the headline containment result
+(0.940 / 1.000 / 1.000 at `tau_frac = 0.60`) and the committed `versionb` column must stay
+comparable across everything below. The new run writes to
+`results/versionb-predictive.json`, and the four arms it shares with the committed file
+must reproduce it at `|delta| = 0.0` or the run is a failure, not a finding.
+
+### E2 — the exclusion radius. MEASURED FIRST, then resolved. Not a pre-registration.
+
+This section records a measurement that was taken **before** it was written, because
+Amendment E2 asserted a fact about the code and the first job was to check it. It is
+labelled as such and must not be read as a registered prediction.
+
+**Amendment E2 said:** `exclusion_radius` returns `median_lengthscale / 4 = 0.105`
+Chebyshev at `ell = 0.42`; the median minimum pairwise Chebyshev distance among 8 random
+points in 6D is **0.320**; the exclusion binds in **0 of 2,000** sampled batches; therefore
+`batch_lse` is top-8 by score and the "WHY EXCLUSION IS NOT OPTIONAL" docstring describes
+machinery that never fires.
+
+**Both of its numbers reproduce exactly.** 2,000 batches of 8 uniform points in 6D,
+`Generator().manual_seed(0)`: median minimum pairwise Chebyshev **0.3219**, and at
+`r = 0.105` the radius binds in **0.15%** of them (3 of 2,000). Drawing the 8 points from
+the runner's own 4,096-point Sobol candidate grid instead of the continuum gives **0.3265**
+— the same answer.
+
+**The inference does not survive, because the reference population is wrong.**
+`batch_lse` does not draw 8 random points. It takes the greedy argmax of a straddle
+surface, whose high-scoring candidates are concentrated near one contour, so its batch is
+about **half** as spread out as a random batch. Measured on the live operating point — 50
+plate-1 fits, `d = 6`, `sigma_rel = 0.25`, 40 LHS wells, the 4,096-point Sobol candidate
+grid, `theta = 0.75 * mu_max`, exactly what `run_versionb.py` does:
+
+| quantity | measured over 50 campaigns |
+|---|---|
+| median fitted ARD lengthscale (n=40) | **0.5982** |
+| median exclusion radius, `ell/4` | **0.1495** |
+| min pairwise Chebyshev of the **top-8 by score** | median **0.1572**, min 0.0869 |
+| min pairwise Chebyshev of the **excluded batch** | median **0.1943**, min 0.1035 |
+| campaigns where the top-8 batch **violates** its own radius | **22 / 50 (44%)** |
+| wells relocated by the exclusion | mean **0.56** of 8 |
+
+**Two corrections to E2's arithmetic.** `ell = 0.42` is the n=48 figure quoted in
+`src/boec/designspace.py`; plate 1 is **40** wells and fits a longer lengthscale, so the
+live radius is 0.150, not 0.105. And 0.320 is the spread of a *random* batch, which is the
+population the criterion is supposed to beat, not the population it produces.
+
+**Resolution: the mechanism is kept, the radius is NOT raised, and the docstring is
+rewritten to state what was measured rather than what was assumed.** Raising a radius that
+already binds in 44% of campaigns would be tuning a live knob to satisfy a claim the code
+already meets; deleting a mechanism that relocates wells in 44% of campaigns would change
+the committed `versionb` column, which is out of scope here. A regression test asserts
+both halves — that the returned batch honours the radius, **and** that the top-q batch
+would violate it — so the alarm fires if the mechanism ever does go inert, in either
+direction. The achieved minimum pairwise Chebyshev distance is logged per batch, as
+Amendment E2's own "Fix" asks, so the question never again has to be settled by argument.
+
+### E1 — acquisition flatness. Threshold derived from the kernel, fixed before the run.
+
+**Statistic**, computed on the 4,096-point Sobol candidate grid immediately before plate 2
+is selected, per campaign, for the LSE arms only:
+
+    acq_cv = SD(a(x)) / |mean(a(x))|,    a(x) = the arm's own straddle
+
+`acq_sd` and `acq_mean` are logged raw beside it so `acq_cv` is recomputable and the
+degenerate case `mean(a) ~ 0` is visible rather than hidden inside a ratio.
+
+**Registered threshold: `acq_cv < 0.04` -> "acquisition uninformative at this density".**
+
+**Derivation, from the kernel and the definition of the straddle. No campaign data was
+consulted.** `build_gp` fits a Matern 5/2 (`use_rbf_kernel=False`,
+`src/boec/surrogate.py:492`). For a unit-signal GP, a candidate at distance `r` from its
+nearest design point has `s(r)/s_prior = sqrt(1 - k(r)^2)` with
+`k(r) = (1 + sqrt(5)r/l + 5r^2/(3l^2)) exp(-sqrt(5)r/l)`:
+
+| `r / l` | 0.25 | 0.50 | **1.00** | 1.50 | **2.00** |
+|---|---|---|---|---|---|
+| `s / s_prior` | 0.3093 | 0.5598 | **0.8517** | 0.9591 | **0.9903** |
+
+Take **one fitted lengthscale** as the reference contrast — the shortest distance over
+which this kernel says two candidates are meaningfully differently determined. Between a
+candidate one lengthscale from the design and one effectively at the prior, `s` spans
+`0.9903 - 0.8517 = 0.1386 s_prior`, so the straddle's `1.96 s(x)` term spans
+`0.2717 s_prior`. Its mean is `1.96 s_prior - E|mu - theta| <= 1.96 s_prior`. Spreading
+that range across the grid gives `SD = range/sqrt(12)`, so
+
+    acq_cv(one lengthscale of contrast) = 0.1386 / sqrt(12) = 0.0400
+
+**Using the largest admissible mean makes the threshold conservative in the safe
+direction**: any smaller mean raises `acq_cv`, so a campaign is flagged only when it is
+genuinely flat, never merely because its distance term is large. A grid below 0.04 contains
+no candidate that is even one fitted lengthscale better determined than the typical one —
+the criterion is ranking points the model cannot tell apart, and its top 8 are chosen by
+whatever residual structure survives, which is a space-filling draw wearing a criterion's
+name.
+
+**Policy.** A campaign with `acq_cv < 0.04` is reported as *"acquisition uninformative at
+this density"* and is **excluded from the E1 flatness-conditioned contrast**, reported as a
+count, never averaged into a silent null. It is **not** dropped from the primary
+`versionb` column, which stays exactly as committed.
+
+**Decision, winner not pre-written.** Report the distribution of `acq_cv` over the 50
+campaigns and the count below 0.04. If **no** campaign is below threshold, KILL 2's null is
+not explained by flatness and E1 is closed as a negative result. If **some** are, the
+`versionb` vs `versionb_random` contrast is re-run on the informative subset and reported
+beside the full-sample contrast, with both `n` values stated. A subset result that reverses
+the full-sample one is reported as a reversal, not substituted for it.
+
+**Also logged per campaign, both LSE arms and the random control:** the achieved minimum
+pairwise Chebyshev distance of the plate-2 batch, and the plate-2 design coordinates
+themselves — so every claim in this section is recomputable from the committed file
+without re-running a GP.
+
+### E6 — `versionb_predictive`, a NEW arm. Registered before it exists.
+
+**The defect.** `straddle_score(mean, sd, theta) = 1.96*sd - |mean - theta|` uses the GP's
+`sd` alone: the **estimation** term. K6's registered primary object is Peterson's
+**predictive** `D_gamma`, which additionally absorbs process noise, and section 5.7 of the
+technical report measured the two regions differing enormously — 54%-69% of predictive
+regions empty against 16%-25% of latent ones. **Plate 2 is currently resolving a boundary
+that is not the boundary of the deliverable.**
+
+**The new criterion.**
+
+    straddle_predictive_score(mean, sd, theta, sigma)
+        = 1.96 * sqrt(sd^2 + sigma^2) - |mean - theta|
+    sigma(x) = sqrt((sigma_rel * mean(x))^2 + sigma_add^2)
+
+`sigma` is an **array over the candidate grid, never a scalar**. This repo's noise is
+relative (`y = f(1 + eps) + eta`), so a scalar `sigma` silently answers a homoscedastic
+question the campaigns never asked — the same trap `predictive_probability_map` already
+documents. The plug-in is the one `run_versionb.py` already uses for scoring, so the arm
+targets the object it is scored against.
+
+**It is an ADDITIONAL arm, not a replacement.** `versionb` keeps Bryan's published latent
+straddle unchanged so the committed column stays comparable; `versionb_predictive` is a
+sixth arm at the same 40+8 budget, same plate 1, same seeds, same refit, same scoring.
+
+**Registered kills, winner not pre-written.**
+* The predictive straddle does not beat the latent one on **AUC** — the validated metric —
+  then E6 is a defect of description, not of design: the deliverable's boundary is not
+  worth targeting at this density, and the committed `versionb` column needs no asterisk.
+* It beats the latent one on `alpha*` but **not** on AUC or empirical containment -> the
+  gain is model-internal and is reported as such, under section 1.4's rule that a validated
+  metric beats a model-internal one and the disagreement is reported, not resolved.
+* Its **empirical containment falls below nominal at any level** -> reported as a failure
+  of the predictive arm. It cannot be repaired by re-tuning `sigma_pred`.
+
+### Statistics for every contrast in this section
+
+Unit of analysis `(instance, seed)`, **n = 50**, paired. **4,000-resample percentile
+bootstrap of the paired differences** (`numpy.random.default_rng(0)`) and a **two-sided
+Wilcoxon signed-rank** on the same pairs. **Holm across the cells** of each family.
+**SESOI 0.02.** Per Q20 section 2, Wilcoxon governs yes/no and the bootstrap reports
+magnitude; **disagreements between them are reported, not resolved.** Empirical containment
+is a fraction of non-empty certified sets and is reported with its `n`, never averaged
+across cells with different `n`.
+
+**Metric status, carried with every number:** AUC and empirical containment are
+**validated** — they consult the noiseless oracle. `alpha*` is **model-internal** — it is a
+functional of the fitted posterior and nothing else, and section 1.4 of the technical
+report shows it flattering exactly the arm whose posterior is least trustworthy.
