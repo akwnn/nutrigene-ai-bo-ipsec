@@ -187,3 +187,4 @@ COMMIT_MSG.txt
 # overwritten, so the two are comparable row for row.
 !results/versionb-predictive.json
 !results/versionb-predictive.log
+!results/versionb-predictive-analysis.log
