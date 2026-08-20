@@ -4,8 +4,35 @@
 each, what closing it requires, and whether closing it can move a number that is currently in print.
 Written to be executed from, not read once.
 
-**Audited 2026-08-20.** Branch `q60-q61-tost`, last commit `f697724`, working tree dirty.
-Test suite at audit time: **832 passed, 1 failed, 152 s**.
+**Audited 2026-08-20.** **Executed same day.** Branch `q60-q61-tost`. G17 commit `9b9575e`.
+
+| ID | Status | What happened |
+|---|---|---|
+| G1 | **Running** | Q64 checkpoints to `results/q64-gp-inregion.json` after every 5 rows. Primary cell (`d=6`, σ=0.25) first. Every finished row so far has unconstrained GP peak **inside** the visited box. Do not replace Table 3 until 25 landscapes × 2 seeds × 2 acqs are in that file. |
+| G2 | **Open** | n = 100 needs overnight compute. Not started. n = 25 remains the prespecified primary. |
+| G3 | **Open** | Q60 still fails the required Q58 replay gate at 1e-12 (`single`, BO, instance `ce7334da318bc5e5`, seed 0: 0.230719353652210 vs 0.241092111819447). Treat as blocked, not merely unrun. |
+| G4 | **Open** | Calibration curve / surrogate fix is days of science. Worst coverage 76.4% still the reported number. |
+| G5 | **Open** | Strong-interaction Hill not started. |
+| G6 | **Running** | Same Q64 JSON. `paper_figures.locator_means` reads Q64 when a cell has 25 landscapes; otherwise qLogEI falls back to q34 and qLogNEI model bars stay empty. |
+| G7a | **Closed** | `spread_gp` gate is **< 1e-6**, declared in METHODS §2.11. |
+| G7b | **Closed for new runs** | `Campaign.ask` reseeds `(seed, round, n_observed)` before `optimize_acqf`. E2 visit-log splice remains impossible; Q60/Q61 must re-run from seed. |
+| G8 | **Open** | Q61 shadow gate fails against stored E2 qLogEI (`ce7334da318bc5e5`, seed 0: 0.230719353652210 vs 0.241092111819447). q = 1 remains blocked until the q = 4 shadow issue is resolved honestly. |
+| G9 | **Partial** | Five-draw Hill one-shot study already exists and gates cleanly (`results/q54-hill-spread-gp-draws.json`). A 10–20 draw expansion is still optional if this arm stays prominent. |
+| G10 | **Closed** | Figure 3A is the stored Hessian of `ce7334da318bc5e5` seed 0, not a generic x²−y² cartoon. |
+| G11 | **Closed** | Rummukainen, Lapierre, Ndahiro recorded in `docs/source_verification.md` Part 1.3 (STATES / IMPLIES / INFERS). |
+| G12 | **Partial** | Continuous kernel still “not established.” Predicted-DoE SI arithmetic not re-paged; “both can be correct” framing stands. |
+| G13 | **Closed** | Gisperg 2025 is a review (DOI 10.1002/bit.28960); recorded in Part 1.3. |
+| G14 | **Open** | Needs a public repo + Zenodo login. Cannot mint a DOI from this session. |
+| G15 | **Closed** | RESEARCH-SUMMARY uses **measured-value argmax**. |
+| G16 | **Closed** | RESEARCH-SUMMARY purged “estimand.” CLAIMS.md and MAIN-LINE.md stamped superseded. |
+| G17 | **Closed** | Commit `9b9575e`. |
+| G18 | **Closed as draft** | `docs/MANUSCRIPT.md` is a full IMRaD draft from locked JSON. Q64 numbers not yet substituted. |
+| G19 | **Closed** | One-page table reports DoE vs qLogEI **and** qLogNEI (0.0595 / 0.0574). |
+| G20 | **Closed** | Q62 locked. |
+
+**Still blocking a flagship applied journal:** G2 power, G3/G8 runs, G14 DOI, wet-lab. Methods journals can proceed from the closed items plus honest “unrun” labels.
+
+---
 
 **Scope.** Everything here is doable with the current repo and compute. No wet-lab work appears in
 this document. The applied/wet-lab programme is a separate track and does not block any item below.
@@ -56,6 +83,16 @@ contrast.
 ---
 
 ### G2. The primary fair-comparison contrast is underpowered, not null
+
+> **CLOSED for the primary cell, 2026-08-20 (Q68).** At n=100 the in-region contrast is
+> **equivalent within the 0.02 SESOI**, not inconclusive: DoE quad vs qLogEI GP
+> **−0.0023 [−0.0100, +0.0057]** (p=0.6749, TOST equivalent) and vs qLogNEI GP
+> **−0.0006 [−0.0098, +0.0082]** (p=0.9288, TOST equivalent). At n=25 both read
+> "inconclusive". The committed 25 are a verified exact prefix and are reported alongside.
+> DoE gated bit-exact on 50 overlapping rows; stage-2 refit drift 0.0. Also confirms G1 at
+> n=100: the GP peak lies inside the sampled region in **100%** of campaigns.
+> Still open: sigma=0.10 and the d=8 cells; `results/q68-inregion-n100.json`.
+
 
 **Finding.** In-region primary is **inconclusive**: MDE ≈ 0.027 against a SESOI of 0.02. The design
 cannot resolve the effect it was built to test.
@@ -194,22 +231,25 @@ the paper. (b) blocks Rule 8 (G3) and q=1 BO (G8).
 
 ### G8. q=1 sequential BO is unrun
 
-**Finding.** Specified, blocked on G7(b).
+**Finding.** Specified, and still blocked in practice: the Q61 q=4 shadow does not reproduce stored
+E2 qLogEI rows after the current BO path changes.
 
 **Why it matters.** Answers "your DoE win is a batching artefact," which is a standard reviewer move
 against any batch-BO comparison.
 
-**To close.** Fix G7(b), run at the primary cell, report beside q=4.
+**To close.** Restore an honest shadow path that reproduces stored q=4 rows, then run q=1 at the
+primary cell and report it beside q=4. Until then, keep Q61 as blocked.
 
 ### G9. One-shot GP sits at the floor of its own spec
 
-**Finding.** Hill `spread_gp` uses **5** LHS draws. `docs/PROMPTS-NEXT.md` Workstream 4 asks for
-">= 5, prefer 10-20."
+**Finding.** Hill `spread_gp` already has a committed **5-draw** study (`results/q54-hill-spread-gp-draws.json`).
+That closes the "one draw is not a conclusion" hole, but it still sits at the low end of the
+registered ">= 5, prefer 10-20" range.
 
 **Why it matters.** One-shot GP reaching 24.4/25 in a single round is one of the most striking
 claims in the paper, and it is resting on the minimum acceptable number of design draws.
 
-**To close.** Rerun at 10-20 independent LHS draws, treat draw as a random factor, pair by
+**To close fully.** Extend to 10-20 independent LHS draws, treat draw as a random factor, pair by
 landscape. Do not pool with the Q53 external-family draws.
 
 **Effort.** Overnight compute.
@@ -272,8 +312,7 @@ G7 so the archived snapshot passes its own gates.
 
 ### G15. The paper and its own supplement use different names for the same rule
 
-**Evidence (verified).** `docs/RESEARCH-SUMMARY.md`: "measured-response argmax" x4.
-`docs/SUPPLEMENT.md`: "measured-value argmax" x11, "measured-response argmax" x1.
+**Evidence (verified, then closed).** RESEARCH-SUMMARY, SUPPLEMENT, MODELS-EXPLAINED, and MANUSCRIPT now use **measured-value argmax**. Historical files (CLAIMS, RESULTS, OPEN-QUESTIONS) still say “estimand”; they are not manuscript sources.
 `docs/PROMPTS-NEXT.md` checklist item 4 mandates **measured-value argmax**.
 
 **Why it matters.** Two names for the single most important terminal rule, split across a paper and
@@ -340,6 +379,61 @@ TuRBO 0.1538 vs unconstrained qLogNEI 0.1532; DoE − TuRBO −0.0580
 `docs/figures/fig4-turbo.pdf`. JSON must stay un-ignored (see `.gitignore`).
 
 **Remaining risk.** Uncommitted until G17. Do not quote a smoke row.
+
+
+### G21. Stored BO results cannot be reproduced from code and seed
+
+**Severity: highest on this list.** Found 2026-08-20, independently confirmed twice.
+
+**Finding.** Every BO number in the paper was produced under process state that nothing
+records. They can be re-generated; they cannot be reproduced.
+
+**Evidence (verified).** Replaying Q57 at **its own commit** (`a189ddd`), with its own
+loop order (qLogEI then qLogNEI) and a byte-identical environment -- python 3.11.15,
+numpy 2.4.6, scipy 1.17.1, torch 2.13.0, botorch 0.18.1, gpytorch 1.15.2, exactly as
+recorded in that file's own provenance:
+
+```
+inst0 seed0 qlogei   fresh 0.242109  stored 0.241092   delta 1.0e-03
+inst0 seed1 qlognei  fresh 0.106015  stored 0.162994   delta 5.7e-02
+inst1 seed0 qlogei   fresh 0.202393  stored 0.080345   delta 1.2e-01
+inst1 seed1 qlogei   fresh 0.258449  stored 0.258449   delta 0.0      <- bit-exact
+```
+
+Some rows land bit-exact, others are wholly different. That is a branch taken differently,
+not numerical drift. A campaign IS perfectly reproducible **within one process** (run twice,
+delta exactly 0), so the seed is not the problem.
+
+**Independently confirmed.** The Q61 shadow gate reached the same conclusion from the other
+direction on the same row: `ce7334da318bc5e5` seed 0, stored **0.241092** vs fresh
+**0.230719**. Two routes, one problem.
+
+**Mechanism.** BoTorch's acquisition-optimizer retry depended on whether a warning had
+already fired in that worker process. These runs called `warnings.filterwarnings("ignore")`
+and were sharded across worker processes, so the retry -- and therefore the whole campaign
+trajectory -- depended on which worker a job landed on and what ran before it.
+
+**Scope.** Affects E2 / Table 1 / Table 2, q34, q35's BO side, q57, q58 -- every BO number.
+**The DoE arm is unaffected and replays bit-exactly** (verified at delta 0.0 in Q65, Q66,
+Q67 and Q68); it never touches the acquisition optimizer. So the classical comparator is
+sound and only the BO side is in question.
+
+**Already fixed forward.** G7b's `Campaign.ask()` reseed from `(seed, round, n_observed)`
+makes future runs replayable. It also means post-fix runs do not match pre-fix stored
+values -- that is the fix working, not a regression.
+
+**To close — a decision, not a task.** Three options, in ascending cost:
+1. Declare it in Methods. Cheapest; a reviewer asking "can I reproduce Table 1" gets "no".
+2. **Regenerate the two primary confirmatory contrasts** under the fixed `ask()` and treat
+   the rest as pre-fix. Proportionate. Recommended.
+3. Regenerate everything. Days of compute; every number in the manuscript moves.
+
+**Do not** quietly reprint pre-fix numbers beside post-fix ones without labelling which is
+which. Q65-Q68 each carry their own in-run BO baseline for exactly this reason.
+
+**Reassurance.** The identification finding that drives the BO work (BO's gap 2.2x the
+classical arm's) is a consistent effect across 25 landscapes, so its direction is very
+unlikely to move. The digits would.
 
 ---
 
