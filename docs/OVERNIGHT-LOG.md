@@ -131,3 +131,66 @@ tautology. Caught on a final check. Had I pushed without looking, you would have
 committed document asserting something already known false.
 
 ---
+
+## D8 🔴 **MY E2 CONCLUSION WAS WRONG.** An agent overturned it; I verified and it is right.
+
+**What I told you.** *"The exclusion radius is INERT. Measured, not suspected. `batch_lse`
+is top-8 by score, and the docstring claims machinery that never fires."* I said this
+confidently, twice, and it went into Amendment E2 and into the technical report §6.15.
+
+**Two errors, both mine.**
+
+1. **Wrong reference population.** I tested whether the radius binds against **random**
+   8-point batches. But `batch_lse` does not pick random points — it picks the **top-8 by
+   straddle score**, which cluster on one contour and are therefore far closer together.
+   Measured on 20 live plate-1 fits: top-8-by-score minimum pairwise Chebyshev is
+   **0.1389**, against **0.3219** for random batches — a factor of 2.3. I compared the
+   radius to a spacing no real batch ever has.
+2. **Wrong lengthscale.** I cited a median fitted lengthscale of 0.42 and derived a radius
+   of 0.105. **0.42 is the n = 48 figure. Plate 1 is n = 40**, where the measured median is
+   **0.5664** (the agent got 0.5982 across all 50), giving a radius of **0.1416**.
+
+**Against the correct reference the radius binds.** 0.1416 sits right at the top-8 spacing
+of 0.1389, and the exclusion **changes the selected batch in 10 of 20** campaigns in my
+independent check (the agent measured 22/50, relocating a mean of 0.56 of 8 wells).
+
+**Agent's decision, which I endorse:** keep the mechanism, do not raise the radius, rewrite
+the docstring to the measurement, and add tests that fail if the exclusion silently stops
+operating. That is the right call — the alternative I had proposed (delete the mechanism)
+would have removed something that demonstrably works.
+
+**Consequences to carry forward.**
+* `docs/K6-TECHNICAL-REPORT.md` §6.15 says *"the exclusion radius never fires at this
+  dimension"*. **Now contradicted by measurement. Must be corrected before publication.**
+* **Amendment E2 is retracted** and needs rewriting in the plan.
+* Everything I said about `batch_lse` being "top-8 by score" is wrong.
+
+**The general lesson, and it is the same one this project keeps relearning.** A null
+measured against the wrong null hypothesis is not a null. I checked "does the radius bind"
+against a population the algorithm never produces. The fix was not more precision — it was
+asking what the comparison population actually is. This is D8 in the same family as the
+circular-containment error (D4) and the prior-mode threshold error (D8 in `RESULTS.md`):
+**an anchor chosen for convenience rather than derived from the object.**
+
+---
+
+## D9 🟢 Agent decisions accepted on E1 and E6, with reasoning recorded.
+
+**E1 flatness threshold `acq_cv < 0.04`, registered at `d624fa2` BEFORE any runner
+change.** Derived from the Matérn 5/2 kernel geometry rather than from the data: one
+fitted lengthscale of contrast spans `s/s_prior` 0.8517→0.9903 = 0.1386, so the `1.96·s`
+term spans 0.2717·s_prior against a mean of at most 1.96·s_prior, and `range/√12` = 0.0400.
+Using the largest admissible mean makes it **conservative** — a campaign is flagged only
+when genuinely flat. Deriving it from geometry rather than from the observed distribution
+is the right discipline; a data-derived threshold would have been tuned on the thing it
+tests.
+
+**E6 added as a SIXTH arm (`versionb_predictive`), not as a replacement**, and placed last
+in the loop so it cannot perturb any arm above it. `batch_lse(sigma=None)` still defaults
+to Bryan's published latent criterion, so the committed `versionb` column stays
+byte-identical and remains comparable. Correct call — replacing the arm in place would
+have silently invalidated the committed headline.
+
+**The runner now gates itself** against `results/versionb.json` (read-only, never written),
+every shared column at |Δ| = 0.0, one failure stops the run. This closes the report's
+§6.16 finding that Version B was the one production run with no gate at all.
