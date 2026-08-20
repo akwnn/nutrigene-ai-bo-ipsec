@@ -12,7 +12,7 @@
 (2026-08-20T23:27:38+08:00)
 **Plan:** `docs/superpowers/plans/2026-08-20-spade-go-no-go.md`, body plus Amendments A–E
 **Specs under test:** `docs/SPADE-SPEC.md`, `docs/ODIN-SPEC.md`; reviewed in `docs/ODIN-VERDICT.md`
-**Status:** current as of commit `1045874`. Plain-language companion:
+**Status:** current as of commit `97a8352`. Plain-language companion:
 `docs/FINDINGS-SPADE.md` — **§8 of this document lists where that companion and the
 committed JSONs disagree.**
 
@@ -31,11 +31,25 @@ evidence.
 > headline — the classical arm's certified region misses its nominal joint level by 2–3x
 > — is at §5.10.2 and is the single most important result in this document.
 
-**Scope.** K6 and K6b score **plate 1 only**. **Version B — the two-plate arm — has now
-been run** (`results/versionb.json`, committed at `0e3ea3a`) and is reported at §5.11,
-with its methods at §3.9 and its known defects at §6.15. Version B is 5 arms × 50
-campaigns × 1 row = 250 rows at 40+8 = 48 wells. It is **not gated** and it does **not**
-compute containment; see §6.15.
+> **Version B was re-run too, and it now measures containment.** The revision of this
+> document written at `0e3ea3a` carried, as its single largest stated gap, that *"no
+> containment statistic exists for any Version B arm in any committed file"*. It does now.
+> `results/versionb.json` was re-generated at `547b8af` and committed at `97a8352` with
+> `ce_vol_*`, `ce_empty_*`, `ce_contain_*` (circular, labelled) and `ce_empirical_*` at
+> `alpha in {0.50, 0.80, 0.95}` for all four `tau_frac`, plus `n_active`, and with
+> **Amendment B3 applied to the `doe` arm**. **The gap is closed and the limitation that
+> named it is retracted** (§1.4 point 2, §5.11.7). The result: SPADE's certified region
+> meets its nominal joint level at every level and threshold with enough campaigns to test,
+> and the classical `doe` arm's is contained in **0 of 50** campaigns at
+> `tau_frac = 0.60, alpha = 0.50`. Version B's `doe`, `qlognei` and `plate1_only` arms now
+> reproduce `results/k6b-conservative{,-spread}.json` **bitwise on containment as well as
+> on regret and AUC** (§9.3).
+
+**Scope.** K6 and K6b score **plate 1 only**. **Version B — the two-plate arm — has been
+run and re-run** (`results/versionb.json`, committed at `97a8352`) and is reported at
+§5.11, with its methods at §3.9 and its known defects at §6.15. Version B is 5 arms × 50
+campaigns × 1 row = 250 rows at 40+8 = 48 wells. It is still **not gated** (§6.16), but it
+now computes containment against ground truth (§5.11.7).
 
 ---
 
@@ -106,9 +120,13 @@ by `max_x p(x)` and so is always defined, which is why it was chosen over certif
 
 **What this study does NOT estimate.** Certified volume at fixed confidence (withdrawn as
 primary before running, §2.4); the cost-assurance curve (withdrawn before running,
-Amendment C1); anything at d=8 or at sigma_rel=0.10; and — the gap §1.4 exists to make
-unmissable — **the empirical containment of any Version B certificate, which no committed
-file computes.**
+Amendment C1); and anything at d=8 or at sigma_rel=0.10.
+
+*(A fourth item stood here in the revision at `0e3ea3a` — "the empirical containment of any
+Version B certificate, which no committed file computes". It is **retracted**:
+`results/versionb.json` at `97a8352` computes it for all five arms at all four `tau_frac`
+and all three alphas. What the containment grid can and cannot carry is set out with the
+per-cell `n` at §5.11.7.)*
 
 ### 1.4 Validated metrics versus model-internal metrics — read this before any table
 
@@ -153,16 +171,46 @@ a metric that only consults the model inherits the model's errors as if they wer
 1. No ranking on `alpha*` or Vorob'ev deviation is evidence that one arm certifies *better*
    than another. It is evidence about the arms' posteriors, and it must be labelled that
    way. §5.8 and §5.9 are labelled that way.
-2. **Version B's `alpha*` advantage over qLogNEI (§5.11) is UNVALIDATED.**
-   `scripts/run_versionb.py` **as committed** (`f8290a5`, the version that produced
-   `results/versionb.json`) computes `regret`, `auc`, `brier`, `alpha_star` and
-   `vorobev_dev` and **does not call `conservative_estimate` or `empirical_containment`**.
-   Confirmed in the data, not only in the source: the 250 committed rows carry **no
-   `ce_*` column of any kind** (row keys listed at §3.9). Its `truth_sub` is computed,
-   passed into `_score`, and never used. So the KILL-1 and KILL-2 verdicts rest on one
-   validated metric (AUC) and one model-internal metric (`alpha*`), and **only the AUC half
-   carries a guarantee-relevant meaning**. The same table that K6b uses to fail the `doe`
-   arm cannot be built for Version B from any committed file.
+2. **RETRACTED AND REPLACED — Version B's certificates are now measured against truth.**
+   The revision of this document at `0e3ea3a` carried here: *"Version B's `alpha*` advantage
+   over qLogNEI (§5.11) is UNVALIDATED … the same table that K6b uses to fail the `doe` arm
+   cannot be built for Version B from any committed file."* That was true of the v1 runner
+   at `f8290a5`, whose 250 rows carried no `ce_*` column of any kind and whose `truth_sub`
+   was computed, passed into `_score` and never used. **It is no longer true.** The runner
+   at `547b8af` calls `conservative_estimate`, `containment_probability` and
+   `empirical_containment` at `alpha in {0.50, 0.80, 0.95}` for every `tau_frac`
+   (`scripts/run_versionb.py:121-132`), `truth_sub` is consumed as `t_eval`, and the 250
+   rows committed at `97a8352` carry `ce_vol_*`, `ce_empty_*`, `ce_contain_*` and
+   `ce_empirical_*` — 48 new columns — plus `n_active`. **The table K6b used to fail the
+   `doe` arm can now be built for Version B, and has been (§5.11.7).**
+
+   **What it shows, at `tau_frac = 0.60` — the only threshold at which all three alpha
+   levels are testable for every arm.** Fraction of **non-empty** certified sets wholly
+   inside the true excursion set; must be `>= alpha`:
+
+   | arm | `alpha`=0.50 | `alpha`=0.80 | `alpha`=0.95 |
+   |---|---|---|---|
+   | `versionb` | 0.940 (47/50) | 1.000 (50/50) | 1.000 (22/22) |
+   | `versionb_random` | 0.816 (40/49) | 1.000 (43/43) | 1.000 (18/18) |
+   | `plate1_only` | 0.940 (47/50) | 1.000 (47/47) | 1.000 (16/16) |
+   | `qlognei` | 0.900 (45/50) | 0.979 (47/48) | 0.968 (30/31) |
+   | **`doe`** | **0.000 (0/50) FAIL** | **0.240 (12/50) FAIL** | **0.500 (25/50) FAIL** |
+
+   Three readings, and the third is the one that bears on this section:
+
+   - **Version B's certificate holds.** `versionb` meets nominal at all three levels here
+     and at every other cell with a testable `n` (§5.11.7). Its `alpha*` advantage is
+     therefore **not** the `doe` pathology — the arm that scores well on the model-internal
+     metric also survives the validated one. That is a materially stronger position than
+     the previous revision could state, and it is now a measurement.
+   - **The `doe` arm fails again, on a second, independently-written runner.** Version B's
+     `doe` rows reproduce `results/k6b-conservative.json` **bitwise** (§9.3), so this is a
+     cross-run confirmation of §5.10.2, not a second piece of evidence.
+   - **Passing containment does not distinguish the arms.** `plate1_only` — plate 1 alone,
+     no LSE, no second plate — scores **identically to `versionb` at every cell of this
+     table**. Containment is a floor that four of five arms clear, not a ranking metric.
+     **`alpha*` still cannot be read as "certifies better"** (consequence 1 above); what has
+     changed is that it can no longer be suspected of the `doe` failure mode.
 3. Where a validated and a model-internal metric disagree, the validated one wins and the
    disagreement is reported. Two such disagreements exist and both are reported: `doe` in
    K6b (§5.10.2), and Version B's simultaneous gain in `alpha*` and *loss* in Vorob'ev
@@ -195,10 +243,12 @@ a metric that only consults the model inherits the model's errors as if they wer
 | **23:27:38** | **`2731778`** | **Version B registration. `docs/OPEN-QUESTIONS.md` only, +36 lines, no code.** |
 | 23:29:25 | `f8290a5` | `src/boec/lse.py`, `tests/test_lse.py`, `scripts/run_versionb.py` created |
 | 23:29:53 | `72d423b` | `scripts/analyse_versionb.py` created |
-| 23:42:14 | `0e3ea3a` | **Version B run committed (`results/versionb.json`)** |
+| 23:42:14 | `0e3ea3a` | **Version B v1 run committed (`results/versionb.json`) — superseded at `97a8352`** |
 | 2026-08-21 00:09:08 | `b3de1d2` | **two K6b defects fixed: circular containment, unimplemented B3** |
 | 00:09:52 | `3d57e25` | `analyse_k6b.py` reports the non-circular figure beside the circular one |
 | 00:50:34 | `1045874` | **K6b re-run committed. All prior K6b containment numbers void.** |
+| 01:00:26 | `547b8af` | **Version B gains `CE_alpha`, both containment statistics and B3; `GAMMA_FOR_AUC` dead constant deleted** |
+| 01:15:47 | `97a8352` | **Version B re-run committed. `results/versionb.json` v1 superseded.** |
 
 `git show --stat ef118dd`, `git show --stat a35b1fc` and `git show --stat 2731778` each
 touch exactly one file, `docs/OPEN-QUESTIONS.md`. The runner commits are 17 minutes, 2
@@ -231,10 +281,20 @@ Four honest qualifications on that chain:
    fact and nothing more.
 4. **Version B's registration does not name the threshold plate 2 targets.** The registered
    text (§2.9) says *"batch LSE on the `D_gamma` boundary"* without fixing which boundary.
-   `run_versionb.py:37` sets `DESIGN_TAU_FRAC = 0.75` in code. Amendment E5 explicitly
+   `run_versionb.py:38` sets `DESIGN_TAU_FRAC = 0.75` in code. Amendment E5 explicitly
    demands this be registered and it was not. The choice is defensible (§2.4's algebra makes
    `theta = tau_frac * mu_max` gamma-invariant) but it is a code-level, not a
    registration-level, decision.
+5. **The Version B re-run (`547b8af`, 01:00:26) post-dates the reading of the v1 verdict.**
+   The v1 result was committed at `0e3ea3a` (23:42:14) and analysed in the revision of this
+   document written against it. The re-run adds metrics; it does not change any arm's
+   design, seed or well count, and the four six-factor arms' `regret`, `auc`, `brier`,
+   `alpha_star` and `vorobev_dev` are **bitwise unchanged** from v1 (verified cell by cell,
+   §5.11). The `doe` arm's `alpha*` and Vorob'ev figures *did* change, because B3 was
+   applied to it (§2.8). Adding a metric to a run whose verdict has already been read is a
+   real ordering weakness and is recorded as one; what bounds it is that the metric added is
+   the one Amendment E and §1.4 had **already demanded in writing**, and that the arm it
+   most damages is the classical control, not SPADE.
 
 ### 2.2 K6, as registered (verbatim, `docs/OPEN-QUESTIONS.md`, commit `ef118dd`)
 
@@ -446,14 +506,23 @@ itself calls *"not defensible in a batch record"*. That run's numbers are void.
    containment for `doe` at `alpha = 0.50` is **0.155 with B3 applied** against **0.250
    without** it in the void run. The arm is *more* miscalibrated on the very subspace it
    claims to operate in (§5.10.2).
-3. **Version B's `doe` arm does not have B3 applied.** `run_versionb.py` calls
-   `regenerate(...)` and uses `rec.X, rec.Y, rec.Yvar` directly, with no reference to
-   `kept_factors` or `dropped_held_at`. Its `doe` `alpha*` is therefore the full-6D,
-   policy-(c) number and differs from K6b's: 0.9998 / 0.7251 / 0.2126 / 0.0377 in
-   `results/versionb.json` against 1.0000 / 0.7875 / 0.2424 / 0.0332 in
-   `results/k6b-conservative.json`. **The two files disagree by up to +0.062 on the same
-   arm, the same campaigns and the same threshold**, and the difference is entirely the B3
-   policy. Do not pool them.
+3. **RESOLVED — Version B's `doe` arm now has B3 applied, and the two files agree
+   bitwise.** *The revision at `0e3ea3a` recorded here that "Version B's `doe` arm does not
+   have B3 applied … the two files disagree by up to +0.062 on the same arm, the same
+   campaigns and the same threshold. Do not pool them." That was correct for the v1 run and
+   is now superseded.* Since `547b8af`, `run_versionb.py` takes `rec.kept_factors` and
+   `rec.dropped_held_at` from `regenerate(...)` and passes them into `_score`, which pins
+   the screened coordinates on the 2,000-point subset and recomputes truth there
+   (`scripts/run_versionb.py:93-100, 177-183`) — the same construction as
+   `run_k6b_conservative.py`. Version B's `doe` `alpha*` is now
+   **1.0000 / 0.7875 / 0.2424 / 0.0332**, identical to `results/k6b-conservative.json`.
+   Verified across all 50 campaigns × 4 thresholds: `alpha_star`, `vorobev_deviation`,
+   `ce_vol_*` and `ce_empirical_*` agree at **worst `|delta| = 0.000e+00`**, and the
+   empty/non-empty pattern matches cell for cell. **The "do not pool" prohibition is lifted
+   for `doe`**; the two files are now the same numbers computed twice by two separately
+   written runners, which is a consistency check rather than new evidence. Consequence 1
+   above — that `doe` is scored on an easier 4D slice than the other arms — **still stands
+   and now applies to §5.11 as well.**
 
 ### 2.9 Version B, as registered (verbatim, commit `2731778`)
 
@@ -509,9 +578,11 @@ across all five arms.
 
 Amendment E (plan, line 591) opens: *"Version B v1 (Task 8, Amendment D) ran. **Do not read
 its result until these are addressed** — two of the four were measured and confirmed before
-this was written."* Six items are recorded, E1–E6. **None of the six has been fixed**; the
-Version B reported at §5.11 is v1. They are carried as limitations at §6.15, and two of
-them are measurements, not suspicions:
+this was written."* Six items are recorded, E1–E6. **None of the six has been fixed.** The
+Version B reported at §5.11 is v2 (`547b8af`, committed `97a8352`), and the re-run added
+containment metrics and Amendment B3 only — it touched none of E1–E6, all of which are
+properties of the *design*, not of the scoring. They are carried as limitations at §6.15,
+and two of them are measurements, not suspicions:
 
 - **E1 (measured):** neighbour density per fitted lengthscale at `ell = 0.42, d = 6`, over
   300 designs each — **n=48 → 0.487, n=44 → 0.438, n=40 → 0.378**. At 0.378 the posterior
@@ -767,7 +838,7 @@ scripts:
   counts are computed and reported here alongside the raw counts wherever they change the
   reading (§5.4, §5.5).
 
-### 3.9 The Version B method (`scripts/run_versionb.py`, commit `f8290a5`)
+### 3.9 The Version B method (`scripts/run_versionb.py`, re-run at commit `547b8af`)
 
 **Plate 1.** `static_design(bounds, "lhs", 40, seed)` — a 40-point Latin hypercube. A GP is
 fitted to it (`build_gp`, same configuration as §3.4).
@@ -797,19 +868,37 @@ plate 2 places wells at *new* locations and there is no first reading to average
 - `auc`, `brier` from `predictive_probability_map` on the 20,000-point grid, with
   `sigma_pred = sqrt((sigma_rel * mu)^2 + sigma_add^2)` — the same plug-in as K6 (§3.6);
 - `alpha_star`, `vorobev_dev` from 512 joint draws on the 2,000-point Sobol subset — the
-  same construction as K6b (§3.7).
+  same construction as K6b (§3.7);
+- and, **since the re-run at `547b8af`**, for each `alpha in {0.50, 0.80, 0.95}`:
+  `CE_alpha = conservative_estimate(draws, theta, alpha)`, its volume `ce_vol` as a
+  fraction of the 2,000-point subset, `ce_empty`, the **circular** in-sample
+  `ce_contain = containment_probability(draws, CE_alpha, theta)` — retained and labelled
+  `CIRCULAR` in the source for the reason at §5.10.1 — and the **validated**
+  `ce_empirical = empirical_containment(CE_alpha, t_eval, theta)`, which is `nan` for an
+  empty set and never counted as a success.
 
-The 250 committed rows carry exactly these keys: `alpha_star_{tf}`, `auc_{tf}`,
-`brier_{tf}`, `vorobev_dev_{tf}` for the four `tf`, plus `arm`, `dim`, `instance`,
-`n_wells`, `regret`, `rounds`, `seed`, `sigma`. **There is no `ce_*` column, no
-`n_active`, and no `gate_failures` block.**
+**Amendment B3 is applied to the `doe` arm here**, exactly as in K6b: `kept_factors` and
+`dropped_held_at` come back from `regenerate(...)`, the screened coordinates of the
+2,000-point subset are pinned to the values the stage-1 screen held them at, and truth,
+the joint draws, `alpha*`, Vorob'ev and every `CE_alpha` are computed on that 4-dimensional
+slice. `n_active` is written into every row: **6 for `versionb`, `versionb_random`,
+`plate1_only` and `qlognei`; 4 for `doe`**, in all 50 campaigns. AUC and Brier are **not**
+restricted — they are computed on the full 6D grid for every arm, matching K6 (§2.8).
+
+The 250 committed rows carry these keys: `alpha_star_{tf}`, `auc_{tf}`, `brier_{tf}`,
+`vorobev_dev_{tf}` for the four `tf`; `ce_vol_{tf}_{a}`, `ce_empty_{tf}_{a}`,
+`ce_contain_{tf}_{a}`, `ce_empirical_{tf}_{a}` for the four `tf` × three `a` — 48 columns —
+plus `arm`, `dim`, `instance`, `n_active`, `n_wells`, `regret`, `rounds`, `seed`, `sigma`.
+**There is still no `gate_failures` block** (§6.16). *The revision at `0e3ea3a` recorded
+"there is no `ce_*` column, no `n_active`, and no `gate_failures` block"; the first two
+clauses are retracted, the third stands.*
 
 **Version B's AUC threshold is exactly K6's `gamma = 0.50` row.** K6 scores at
 `tau = tau_frac * tau_max(gamma)`; at `gamma = 0.50` the normal quantile `z` is 0, so
 `tau_max = mu_max` and `tau = tau_frac * mu_max = theta`. Verified numerically against the
 committed JSONs — `doe`, `qlognei` and `lhs`/`plate1_only` reproduce their K6
-`gamma = 0.50` AUC to **delta = 0.000000 at all four `tau_frac`**, i.e. bitwise. Two
-consequences:
+`gamma = 0.50` `auc_pred` to **delta = 0.000000 at all four `tau_frac`** (50 paired
+campaigns per cell), i.e. bitwise. Two consequences:
 
 1. It is a strong independent consistency check across two separately-written runners.
 2. **Version B's map evidence lives in 4 of K6's 24 cells, and they are the
@@ -819,16 +908,56 @@ consequences:
    therefore evaluated on the row where a plain LHS already wins. §5.11.3 decomposes how
    much of the KILL-1 margin that accounts for.
 
+#### 3.9.1 `GAMMA_FOR_AUC` — the dead constant, and why it was deleted rather than wired in
+
+The v1 runner defined `GAMMA_FOR_AUC = 0.90` at line **38** of
+`git show f8290a5:scripts/run_versionb.py` and **never used it**; the AUC actually computed
+was at `gamma = 0.50`. *(The revision of this document at `0e3ea3a` cited line 39; the
+constant sat at 38, directly under `DESIGN_TAU_FRAC` at 37. The off-by-one is corrected
+here and changes nothing about the finding.)* The audit that produced the previous
+revision of this document flagged it inside Amendment E5 (§6.15). **It is resolved at
+`97a8352` by deletion**, and the reasoning is now recorded in the source at
+`run_versionb.py:39-46` in place of the constant.
+
+**The reasoning, and it checks out.** Version B labels its AUC against the **latent**
+excursion set `Gamma = {x : f(x) >= theta}` with `theta = tau_frac * mu_max`. By §2.4's
+algebra — Amendment C2 — `theta = tau / (1 - z_gamma * sigma_rel)` and
+`tau = tau_frac * tau_max(gamma)` with
+`tau_max(gamma) = mu_max * (1 - z_gamma * sigma_rel)` (`src/boec/designspace.py:70-77`),
+so the `(1 - z_gamma * sigma_rel)` factors cancel and `theta = tau_frac * mu_max` **for
+every gamma**. Neither the labels nor the forecast carry a gamma: the forecast is
+`predictive_probability_map(model, grid, theta, sigma_pred)` with
+`sigma_pred = sqrt((sigma_rel * mu)^2 + sigma_add^2)`, which has no gamma argument either.
+So `GAMMA_FOR_AUC` had **nothing to multiply**. Setting it to 0.90 and threading it through
+would have had to change either `theta` or `sigma_pred`, and both changes would have
+asserted a dependence the algebra says does not exist. **Deleting it is correct.**
+
+**One qualification, and it is the reason consequence 2 above survives.** The
+gamma-invariance is a property of the **latent** set `{f >= theta}`. K6's own AUC is *not*
+gamma-invariant, because `run_k6_designspace.py:105` labels against the **observable**
+threshold `tau` itself — `brier_and_auc(p_pred, truth, tau)` — and `tau` falls from
+`tau_frac * 1.0000` at `gamma = 0.50` to `tau_frac * 0.4184` at `gamma = 0.99`. Those rows
+are a *different labelling* of the grid at a much higher positive prevalence (§6.6), not a
+harder version of the same question. So both statements hold and neither cancels the other:
+Version B's AUC is complete for the latent object and carries no gamma to sweep, **and**
+Version B has never been scored against K6's higher-gamma observable labellings, which are
+where §5.4 measured `lhs` losing to qLogNEI. §5.11.3 point 4 and §10 state the limit in
+those terms.
+
 **Three arms are shared with K6/K6b and reproduce exactly**, which is the only pairing
 check available: `doe` regret 0.0958, `qlognei` regret 0.1532, and `plate1_only` regret
 0.12701957315434098 — bitwise identical to K6's `lhs`, because `plate1_only` *is*
 `static_design(bounds, "lhs", 48, seed)`.
 
-**Version B is not gated.** `run_versionb.py` never reads `results/k1-replay-gate.json`,
-never compares a regenerated regret to `results/e2-grid.json`, and writes no
-`gate_failures` block. The three regenerated arms match K6 by inspection above, but the
-two novel arms (`versionb`, `versionb_random`) have no committed comparator and could not
-be gated even in principle.
+**Version B is still not gated.** `run_versionb.py` never reads
+`results/k1-replay-gate.json`, never compares a regenerated regret to
+`results/e2-grid.json`, and writes no `gate_failures` block. What the re-run *did* change is
+the strength of the by-inspection check: the three shared arms now agree with
+`results/k6b-conservative{,-spread}.json` on **containment** as well as on regret and AUC —
+`doe`, `qlognei` and `plate1_only`/`lhs` reproduce `ce_empirical_*` and `ce_vol_*` at worst
+`|delta| = 0.000e+00`, with identical empty/non-empty patterns, across all 4 `tau_frac` ×
+3 `alpha` (§9.3). The two novel arms (`versionb`, `versionb_random`) still have no committed
+comparator and could not be gated even in principle.
 
 ---
 
@@ -880,7 +1009,7 @@ has no gate (§3.9).
 | K6 spread | `k6-designspace-spread.json` | `fdd74596423990e0b9b6bc142d42e1df9e2b0af5` | 3,600 | 150 | 309 s |
 | **K6b main (re-run)** | `k6b-conservative.json` | **`b3de1d27e8698f67f8caa97247fad709cbf9e75a`** | 1,000 | 250 | **2,287 s** |
 | **K6b spread (re-run)** | `k6b-conservative-spread.json` | **`3d57e25bd86587168720aff483a31546cffc11cb`** | 600 | 150 | **123 s** |
-| **Version B** | `versionb.json` | **`f8290a5bf5612f5151661e82c43cd6877bd7f0a8`** | 250 | 250 | **700 s** |
+| **Version B (re-run)** | `versionb.json` | **`547b8af2652d0064ccbec8f2024f2ec360ac723e`** | 250 | 250 | **862 s** |
 
 K6 total 9,600 rows; K6b total 1,600 rows; Version B 250 rows. `analyse_k6.py` asserts the
 spread run agrees with the main run on `dim`, `sigma`, `gammas`, `tau_fracs`, `grid_n`,
@@ -1498,13 +1627,24 @@ level, which is what "fails" means here, needs no cross-arm pairing. (ii) `n` ra
 so "ok" for the individual passing arms at `alpha = 0.95` means "not contradicted", not
 "demonstrated". The `doe` failures at n=97/69/51 are far outside sampling noise.
 
-### 5.11 Version B — the two-plate arm. Both registered kills passed, on a narrow base.
+### 5.11 Version B — the two-plate arm. Both registered kills passed, and its certificate now holds against truth.
 
 All numbers regenerated by `scripts/analyse_versionb.py` from `results/versionb.json`
-(committed blob at `0e3ea3a`, `provenance.git_sha` = `f8290a5b…`, 250 rows). Contrasts
-beyond the script's own output are recomputed from the same committed blob with the
-script's statistics (paired on `(instance, seed)`, n = 50, 4,000-resample percentile
-bootstrap at `default_rng(0)`, two-sided Wilcoxon).
+(**committed blob at `97a8352`, `provenance.git_sha` = `547b8af2…`, 862 s, 250 rows** —
+the re-run that added containment and Amendment B3). Contrasts beyond the script's own
+output are recomputed from the same committed blob with the script's statistics (paired on
+`(instance, seed)`, n = 50, 4,000-resample percentile bootstrap at `default_rng(0)`,
+two-sided Wilcoxon).
+
+**What moved between v1 (`0e3ea3a`) and this run, verified cell by cell.** For the four
+arms that vary all six factors — `versionb`, `versionb_random`, `plate1_only`, `qlognei` —
+`regret`, `auc`, `brier`, `alpha_star` and `vorobev_dev` are **bitwise unchanged**, so
+§5.11.2 through §5.11.5 below are re-verified rather than restated. The `doe` arm's
+`alpha*` and Vorob'ev deviation **did** move, because Amendment B3 is now applied to it
+(§2.8): `alpha*` 0.9998/0.7251/0.2126/0.0377 → **1.0000/0.7875/0.2424/0.0332**, Vorob'ev
+0.1461/0.0941/0.0368/0.0069 → **0.0755/0.2783/0.0981/0.0065**. `doe`'s regret, AUC and
+Brier are unchanged, because those are computed on the full 6D grid for every arm. The new
+material is §5.11.7.
 
 #### 5.11.1 Design and arms
 
@@ -1579,7 +1719,10 @@ committed analysis script does not apply it** (§3.8 multiplicity note).
 | **AUC** @ tau_f=0.95 | +0.0980 | [+0.0405, +0.1581] | **0.0025** | **0.020** |
 
 **The kill does not fire: `versionb` is positive on all 8 tests and significant on 6 at raw
-p < 0.05.** But four qualifications belong in the same breath:
+p < 0.05.** *Re-verified against the re-run blob at `97a8352`: all 8 means, CIs, raw p and
+Holm-adjusted p above are **bitwise unchanged** from the v1 run — both arms in this contrast
+vary all six factors, so Amendment B3 does not touch them.* But four qualifications belong
+in the same breath:
 
 1. **Under Holm across the 8, only two survive — both AUC, both at the hard thresholds
    (0.85, 0.95), both at 0.020.** All four `alpha*` tests fail Holm. Since `alpha*` is the
@@ -1604,13 +1747,29 @@ p < 0.05.** But four qualifications belong in the same breath:
    | `alpha*` @ 0.95 | +0.0264 | +0.0071 | +0.0193 | **73%** |
 
    **At the two thresholds where KILL 1 survives Holm, 74% and 85% of the effect is the
-   plate-1 LHS design, not the LSE plate.** The `plate1_only - qlognei` column is K6's
-   `lhs - qlognei` contrast at `gamma = 0.50` (§5.4), reproduced exactly.
-4. **The comparison lives on the lowest-assurance row of K6's grid.** Version B's four AUC
-   cells are bitwise identical to K6's `gamma = 0.50` cells (§3.9) — the corner where §5.4
-   already measured `lhs` beating qLogNEI. Version B was never scored at `gamma = 0.90` or
-   `0.99`, where §5.4 measured `lhs` **losing** to qLogNEI in most cells. **KILL 1 has not
-   been run at high assurance.**
+   plate-1 LHS design, not the LSE plate.** *Re-verified against `97a8352`: every cell of
+   this decomposition is unchanged, and the identity closes to `|residual| <= 1.4e-17` in
+   all eight rows.* The `plate1_only - qlognei` column is K6's `lhs - qlognei` contrast at
+   `gamma = 0.50` (§5.4), reproduced exactly — `plate1_only`'s and `qlognei`'s AUC each
+   match the K6 JSONs bitwise at all four `tau_frac` (§9.3), so the shares above are K6's
+   own numbers rearranged.
+4. **The comparison lives on the lowest-assurance row of K6's grid — and the reason is
+   subtler than it looks.** Version B's four AUC cells are bitwise identical to K6's
+   `gamma = 0.50` cells (§3.9), the corner where §5.4 already measured `lhs` beating
+   qLogNEI. Two things are true at once and §3.9.1 works through why:
+   - Version B scores against the **latent** excursion set `{f >= tau_frac * mu_max}`,
+     which by Amendment C2's algebra is **the same set for every gamma**. There is no gamma
+     sweep to run on that object; that is why `GAMMA_FOR_AUC` was deleted rather than wired
+     in (§3.9.1, §6.15/E5).
+   - But K6's higher-gamma rows label against the **observable** `tau`, which falls with
+     gamma and re-labels the grid at much higher prevalence (§6.6). Those are the rows where
+     §5.4 measured `lhs` **losing** to qLogNEI, and **Version B has never been scored against
+     them.**
+
+   So the honest statement is not "KILL 1 was run at low assurance and might fail at high"
+   — the latent object has no assurance axis — but **"KILL 1 has been run against one
+   labelling of the excursion set, the gamma-invariant one, and not against K6's
+   observable-threshold labellings where the plate-1 design is known to lose."**
 
 #### 5.11.4 KILL 2 — does the LSE criterion beat 8 random wells?
 
@@ -1626,9 +1785,11 @@ its place, and the honest result is 'a second plate helps; the criterion does no
 
 **The kill does not fire on the script's registered comparison: positive at all four
 thresholds, significant at three.** Under Holm across the four only `tau_frac = 0.75`
-survives — which is, notably, **the threshold the criterion was aimed at**
+survives (adjusted 0.0211) — which is, notably, **the threshold the criterion was aimed at**
 (`DESIGN_TAU_FRAC = 0.75`), so the surviving cell is the one the design predicts and not a
-cherry-pick.
+cherry-pick. *Re-verified against the re-run blob at `97a8352`: unchanged. Both arms in this
+contrast are six-factor, so B3 does not touch them, and the KILL-2 count is still **1 of
+4**.*
 
 **Amendment E1 is the reason KILL 2 matters more than KILL 1.** E1 predicted that at n=40
 the straddle surface might be flat, in which case *"LSE ties random"* would mean *"the
@@ -1672,11 +1833,42 @@ criterion's benefit in opposite directions.** Both are model-internal; the valid
 | AUC @ tau_f=0.95 | +0.0148 | [-0.0245, +0.0539] | 0.2187 |
 | regret *(positive = worse)* | **+0.0276** | [+0.0055, +0.0486] | **0.0166** |
 
-**A second plate helps the map at the easy thresholds and costs regret.** Three of eight
-map contrasts reach raw p < 0.05 and none would survive a Holm correction across the eight
-(smallest raw p = 0.0030, m = 8 → 0.024; the second smallest, 0.0283, → 0.198). This is
-the weakest of the three Version B comparisons and it is the one that isolates the second
-plate *per se* from the criterion.
+**A second plate helps the map at the easy threshold and costs regret.**
+
+**CORRECTION to the revision at `0e3ea3a`, which stated the Holm result wrongly.** That
+revision read: *"Three of eight map contrasts reach raw p < 0.05 and none would survive a
+Holm correction across the eight (smallest raw p = 0.0030, m = 8 → 0.024; the second
+smallest, 0.0283, → 0.198)."* Two errors, both arithmetic rather than stale — the eight raw
+p-values are bitwise unchanged in the re-run. First, **0.0283 is the third smallest, not the
+second**; the second is `alpha*` @ 0.60 at 0.0038, which that sentence skipped. Second, and
+materially, **an adjusted p of 0.024 is below 0.05, so it does not fail Holm — it passes.**
+Recomputed in full (m = 8, step-down with monotonicity enforced):
+
+| rank | contrast | raw p | Holm-adjusted | at 0.05 |
+|---|---|---|---|---|
+| 1 | AUC @ 0.60 | 0.002996 | **0.0240** | **survives** |
+| 2 | `alpha*` @ 0.60 | 0.003818 | **0.0267** | **survives** |
+| 3 | AUC @ 0.75 | 0.028257 | 0.1695 | no |
+| 4 | `alpha*` @ 0.75 | 0.113727 | 0.5686 | no |
+| 5 | AUC @ 0.85 | 0.151503 | 0.6060 | no |
+| 6 | AUC @ 0.95 | 0.218662 | 0.6560 | no |
+| 7 | `alpha*` @ 0.85 | 0.354061 | 0.7081 | no |
+| 8 | `alpha*` @ 0.95 | 0.779498 | 0.7795 | no |
+
+**So two of eight survive Holm, not zero**, and the corrected reading is stronger for the
+second plate than the previous revision's. It should not be over-read:
+
+- **Both survivors are at `tau_frac = 0.60`, the easiest threshold**, and both effects are
+  small — +0.0328 AUC and +0.0236 `alpha*`. Everything at `tau_frac >= 0.75` fails Holm.
+- **One of the two is `alpha*`, which is model-internal** (§1.4). The validated half of the
+  pair is AUC @ 0.60 at Holm 0.0240 — that is the load-bearing survivor.
+- The comparison is **not** on a shared prefix: a 40-point LHS is not a prefix of a
+  48-point LHS (Amendment E4, §6.15), so this contrast forgoes the variance reduction that
+  KILL 2 gets, and its CIs are correspondingly wider than they need to be.
+- It still costs regret: +0.0276, p = 0.0166.
+
+This remains the weakest of the three Version B comparisons in effect size, and it is the
+one that isolates the second plate *per se* from the criterion.
 
 #### 5.11.6 Full per-arm Version B tables
 
@@ -1701,22 +1893,186 @@ are **model-internal** (§1.4). `nan` count for AUC: **0/50 in every arm at ever
 
 | arm | `alpha*` @0.60 | @0.75 | @0.85 | @0.95 | Vorob'ev dev @0.60 | @0.75 | @0.85 | @0.95 |
 |---|---|---|---|---|---|---|---|---|
-| `versionb` | 0.982 | 0.691 | 0.319 | 0.087 | 0.2901 | 0.1609 | 0.0532 | 0.0100 |
+| `versionb` | 0.982 | 0.691 | **0.319** | **0.087** | 0.2901 | 0.1609 | 0.0532 | 0.0100 |
 | `versionb_random` | 0.956 | 0.605 | 0.274 | 0.076 | 0.2643 | 0.1484 | 0.0496 | 0.0095 |
 | `plate1_only` | 0.958 | 0.629 | 0.287 | 0.080 | 0.3061 | 0.1681 | 0.0541 | 0.0096 |
-| `doe` | 1.000 | 0.725 | 0.213 | 0.038 | **0.1461** | **0.0941** | **0.0368** | 0.0069 |
-| `qlognei` | 0.970 | 0.605 | 0.244 | 0.060 | 0.3339 | 0.1357 | 0.0376 | 0.0068 |
+| `doe` (B3) | **1.000** | **0.787** | 0.242 | 0.033 | **0.0755** | 0.2783 | 0.0981 | **0.0065** |
+| `qlognei` | 0.970 | 0.605 | 0.244 | 0.060 | 0.3339 | **0.1357** | **0.0376** | 0.0068 |
 
-**`doe`'s Version B rows are the pre-B3, full-6D numbers** and differ from §5.8/§5.9 by up
-to +0.062 on `alpha*` (§2.8, consequence 3). They are shown for completeness within this
-file and must not be pooled with K6b's.
+**`doe`'s Version B rows now carry Amendment B3 and are identical to §5.8/§5.9.** *This
+retracts the note carried in the revision at `0e3ea3a`: "`doe`'s Version B rows are the
+pre-B3, full-6D numbers … must not be pooled with K6b's."* Since `547b8af` the arm is
+evaluated on its 4-dimensional active subspace here as in K6b, and the two files agree at
+worst `|delta| = 0.000e+00` on `alpha_star`, `vorobev_deviation`, `ce_vol_*` and
+`ce_empirical_*` over all 50 campaigns × 4 thresholds (§2.8 consequence 3, §9.3). Bold marks
+the best value in each column, and note that **B3 reverses `doe`'s Vorob'ev story beyond
+the easiest threshold**: it has the *lowest* deviation of the five arms at
+`tau_frac = 0.60` (0.0755) and the *highest* at 0.75 and 0.85 (0.2783, 0.0981).
+`doe`'s 4D slice remains an easier slice than the other four arms' 6D grid (§2.8
+consequence 1), so cross-arm `alpha*` and Vorob'ev comparisons in this table are **not
+like-for-like**, and the direction of the bias favours `doe`.
 
 **Brier and AUC disagree again**, as they did in K6 (§5.2): `versionb` has the best AUC at
 three of four thresholds, but the best Brier at only one; `plate1_only` and `qlognei` take
 the other three. The registration names both as primary and `analyse_versionb.py` reports
 only AUC in its kill tests. Same live ambiguity as §6.10.
 
-#### 5.11.7 What Version B does and does not establish
+#### 5.11.7 THE NEW RESULT — `CE_alpha` and containment against truth for all five arms
+
+This subsection did not exist in the revision at `0e3ea3a`, because no committed file
+carried the numbers. It does now: `results/versionb.json` at `97a8352` computes
+`CE_alpha`, its volume, its emptiness, the circular in-sample containment and the
+**validated** empirical containment at `alpha in {0.50, 0.80, 0.95}` for all four
+`tau_frac`, on all 250 campaigns. Everything below is regenerated from that blob.
+
+**What the statistic is, and the exclusion rule.** `empirical_containment` asks whether the
+certified set is **wholly inside the true excursion set** `{f >= theta}` on the 2,000-point
+Sobol subset. Against one realisation the answer is boolean, so the guarantee
+`P(CE_alpha subset of Gamma) >= alpha` is estimated by the **fraction of campaigns
+contained**, which must be at least `alpha`. **Empty sets return `nan` and are dropped**,
+never counted as successes — an arm that certifies nothing is vacuously contained, and
+counting that would inflate every rate. `n` below is therefore the number of **non-empty,
+i.e. scorable** campaigns out of 50, and the empty count is reported beside it because the
+two together are the result.
+
+##### The full grid. `n` is scorable campaigns; `e` is how many of the 50 certified nothing.
+
+**`tau_frac = 0.60` — the only threshold where all three alpha levels are scorable for
+every arm, and the only place a cross-arm claim is supportable.**
+
+| arm | `alpha`=0.50 | n / e | `alpha`=0.80 | n / e | `alpha`=0.95 | n / e |
+|---|---|---|---|---|---|---|
+| `versionb` | 0.9400 ok | 50 / 0 | **1.0000** ok | 50 / 0 | **1.0000** ok | 22 / 28 |
+| `versionb_random` | 0.8163 ok | 49 / 1 | **1.0000** ok | 43 / 7 | **1.0000** ok | 18 / 32 |
+| `plate1_only` | 0.9400 ok | 50 / 0 | **1.0000** ok | 47 / 3 | **1.0000** ok | 16 / 34 |
+| `qlognei` | 0.9000 ok | 50 / 0 | 0.9792 ok | 48 / 2 | 0.9677 ok | 31 / 19 |
+| **`doe`** | **0.0000 FAIL** | 50 / 0 | **0.2400 FAIL** | 50 / 0 | **0.5000 FAIL** | 50 / 0 |
+
+**`tau_frac = 0.75`.**
+
+| arm | `alpha`=0.50 | n / e | `alpha`=0.80 | n / e | `alpha`=0.95 | n / e |
+|---|---|---|---|---|---|---|
+| `versionb` | 0.9302 ok | 43 / 7 | 1.0000 ok | 14 / 36 | — | **0 / 50** |
+| `versionb_random` | 0.9310 ok | 29 / 21 | 1.0000 *(thin)* | 9 / 41 | — | **0 / 50** |
+| `plate1_only` | 0.8684 ok | 38 / 12 | 1.0000 *(thin)* | 5 / 45 | — | **0 / 50** |
+| `qlognei` | 0.9429 ok | 35 / 15 | 0.9231 ok | 13 / 37 | 1.0000 *(n=2)* | 2 / 48 |
+| **`doe`** | **0.3191 FAIL** | 47 / 3 | 0.8947 ok | 19 / 31 | 1.0000 *(n=1)* | 1 / 49 |
+
+**`tau_frac = 0.85` — too thin to support any claim.**
+
+| arm | `alpha`=0.50 | n / e | `alpha`=0.80 | n / e | `alpha`=0.95 | n / e |
+|---|---|---|---|---|---|---|
+| `versionb` | 0.8750 *(n=8)* | 8 / 42 | — | 0 / 50 | — | 0 / 50 |
+| `versionb_random` | 0.6667 *(n=6)* | 6 / 44 | — | 0 / 50 | — | 0 / 50 |
+| `plate1_only` | 1.0000 *(n=3)* | 3 / 47 | — | 0 / 50 | — | 0 / 50 |
+| `qlognei` | 1.0000 *(n=6)* | 6 / 44 | 1.0000 *(n=1)* | 1 / 49 | — | 0 / 50 |
+| `doe` | — | **0 / 50** | — | 0 / 50 | — | 0 / 50 |
+
+**`tau_frac = 0.95` — nothing is testable at all.** Every arm, every alpha:
+**n = 0, empty in 50 of 50 campaigns.** No number is reported because none exists. This
+matches K6b (§5.10) and §5.7's emptiness finding: at the hardest threshold the certified
+region is empty for every design at this budget, and the honest output is "certified
+nothing", not a rate.
+
+**Where the evidence is too thin to support a claim.** Any cell with a *(thin)* or *(n=k)*
+marker: `versionb_random` and `plate1_only` at `tau_frac = 0.75, alpha = 0.80` (n = 9 and
+n = 5); `doe` and `qlognei` at `0.75, alpha = 0.95` (n = 1 and n = 2); every scorable cell
+at `tau_frac = 0.85` (n = 1 to 8); and the whole of `tau_frac = 0.95`. **A 1.0000 at n = 3
+is 3 of 3, whose Wilson 95% interval reaches down to 0.439 — it is "not contradicted", not
+"demonstrated".** Even at `tau_frac = 0.60` the `alpha = 0.95` row rests on 16–31 scorable
+campaigns for the four six-factor arms; `versionb`'s 1.0000 there is 22 of 22 with a Wilson
+interval of [0.851, 1.000], so it clears nominal but with roughly one campaign of slack.
+Only the `alpha = 0.50` and `alpha = 0.80` rows at `tau_frac = 0.60`, and the
+`alpha = 0.50` row at `0.75`, carry n large enough for a confident statement about a single
+arm.
+
+##### The three findings
+
+**1. Version B's certified region holds at every level and threshold that can be tested.**
+`versionb` is at or above nominal in all six scorable cells:
+0.9400 (47/50, Wilson [0.838, 0.979]) and 1.0000 (50/50, [0.929, 1.000]) and 1.0000 (22/22,
+[0.851, 1.000]) at `tau_frac = 0.60`; 0.9302 (40/43) and 1.0000 (14/14) at `0.75`; 0.8750
+(7/8, and this one is thin) at `0.85`. Pooled across the four thresholds it is
+**0.9307 (94/101) / 1.0000 (64/64) / 1.0000 (22/22)** against nominal 0.50 / 0.80 / 0.95.
+**This is what §1.4 point 2 previously could not say, and it is a measurement, not an
+inference from plate 1.**
+
+**2. The `doe` arm fails, and the failure reproduces K6b bitwise.** Four cells with usable
+n, four verdicts, all against it: at `tau_frac = 0.60` it is contained in **0 of 50**
+campaigns at `alpha = 0.50` (exact one-sided binomial p = 8.9e-16, Wilson [0.000, 0.071]),
+12 of 50 at `alpha = 0.80` (p = 2.5e-17), 25 of 50 at `alpha = 0.95` (p = 1.1e-19); and at
+`tau_frac = 0.75, alpha = 0.50` it is 15 of 47 = **0.3191** against nominal 0.50
+(p = 0.0093). It passes only at `0.75, alpha = 0.80` (0.8947, n = 19) and in its single
+n = 1 cell (`0.75, alpha = 0.95`), which carries nothing. Its remaining six cells —
+everything at `tau_frac >= 0.85` — are empty in 50 of 50 and cannot be scored at all. **This is not independent evidence.** Version B's `doe` rows
+reproduce `results/k6b-conservative.json` at worst `|delta| = 0.000e+00` on every
+containment cell (§9.3) — same campaigns, same B3 policy, same 512 draws — so §5.10.2 and
+this are one result measured twice by two separately written runners. What it adds is that
+the failure is now visible **inside the file that carries SPADE's own verdict**, next to the
+arm it is being compared against.
+
+**3. Containment does not separate the SPADE arms from their controls.** `plate1_only` —
+plate 1 alone, one round, no LSE, no second plate — is **identical to `versionb` at every
+cell of the `tau_frac = 0.60` table** (0.9400 / 1.0000 / 1.0000). `versionb_random` is
+lower at `alpha = 0.50` (0.8163 against 0.9400) but still far above nominal, and `qlognei`
+clears nominal everywhere too. **Four of five arms clear the bar; the bar does not rank
+them.** Containment is a floor, and the only arm that falls through it is the screened
+classical one. Any reading of §5.11.3–§5.11.5 that treats `versionb`'s `alpha*` advantage
+as evidence of a *better* certificate is still unsupported (§1.4 consequence 1) — what has
+changed is that it can no longer be suspected of being the `doe` pathology in disguise.
+
+##### Emptiness, and why it must be read beside the containment numbers
+
+Non-empty (scorable) cells out of 200 per arm — 50 campaigns × 4 thresholds:
+
+| arm | `alpha`=0.50 | `alpha`=0.80 | `alpha`=0.95 |
+|---|---|---|---|
+| `versionb` | **101** (49.5% empty) | **64** (68.0% empty) | 22 (89.0% empty) |
+| `versionb_random` | 84 (58.0%) | 52 (74.0%) | 18 (91.0%) |
+| `plate1_only` | 91 (54.5%) | 52 (74.0%) | 16 (92.0%) |
+| `qlognei` | 91 (54.5%) | 62 (69.0%) | **33** (83.5%) |
+| `doe` | 97 (51.5%) | 69 (65.5%) | **51** (74.5%) |
+
+Two things follow, and the second is a caution on the first.
+
+- **The second plate buys non-vacuity.** `versionb` certifies something in more campaigns
+  than `plate1_only` at `alpha = 0.50` (101 vs 91) and `alpha = 0.80` (64 vs 52) while
+  scoring the same containment, and more than its own random control at both (101 vs 84,
+  64 vs 52). At `alpha = 0.95` it does not — `qlognei` leads at 33. **This is a post-hoc,
+  unregistered comparison** — no kill test names emptiness — and no paired significance
+  test is reported for it, so it is a descriptive count and must be labelled as one.
+- **`doe`'s high non-empty count is the failure, not a strength.** It is scorable in 97 /
+  69 / **51** of 200, more than any other arm at `alpha = 0.95`, because it certifies
+  enormous regions: at `tau_frac = 0.60, alpha = 0.50` its mean `CE` is **1,524 of the
+  2,000 subset points**, against 40 for `versionb`, 31 for `plate1_only` and 24 for
+  `qlognei`. Pooled over thresholds the non-empty means are 829.4 / 668.0 / 436.8 points for
+  `doe` against 21.2 / 8.7 / 2.4 for `versionb` — a factor of 39 to 182 — and those are the
+  same numbers as K6b's §5.10 size table, bitwise. A large certified region that is wrong is
+  worse than an empty one, and `alpha*` cannot tell the difference.
+
+##### The circular statistic reproduces its tautology here too
+
+`ce_contain_*` is retained in Version B's rows and labelled `CIRCULAR` in the runner, for
+the reason set out at §5.10.1. Over all **903 non-empty Version B cases** the minima are
+**exactly 0.5000 at `alpha = 0.50`, 0.8008 at `alpha = 0.80` and 0.9512 at `alpha = 0.95`,
+with zero cases below nominal** — the same one-Monte-Carlo-quantum-above-the-bar signature
+as K6b's 1,401 cases, and the signature of a threshold-selection rule rather than of a
+guarantee being tested.
+
+**The single cleanest demonstration in this document is now the `doe` arm's two containment
+columns side by side at `tau_frac = 0.60`:**
+
+| `alpha` | circular `ce_contain` | empirical, against truth | verdict |
+|---|---|---|---|
+| 0.50 | 0.5495 — "passes" | **0.0000** | contained in **0 of 50** |
+| 0.80 | 0.8805 — "passes" | **0.2400** | 12 of 50 |
+| 0.95 | **1.0000** — "passes perfectly" | **0.5000** | 25 of 50 |
+
+At `alpha = 0.95` the in-sample statistic reads a **flawless 1.0000** on an arm whose
+certified set is actually right half the time. Reporting that column as evidence — which
+`docs/FINDINGS-SPADE.md` §4.8 did (§8) — is not a small error.
+
+#### 5.11.8 What Version B does and does not establish
 
 **Establishes**, at `d = 6`, `sigma_rel = 0.25`, 48 wells, on the Hill ensemble:
 
@@ -1728,13 +2084,34 @@ only AUC in its kill tests. Same live ambiguity as §6.10.
 - The LSE criterion beats a random second plate on both a model-internal metric (`alpha*`,
   3/4 thresholds) and a validated one (AUC, 2/4), and loses to it on a second
   model-internal one (Vorob'ev deviation, 2/4).
+- **That the second plate itself — not the criterion — improves the map at the easiest
+  threshold.** `versionb - plate1_only` survives Holm across its own eight tests at
+  `tau_frac = 0.60` on both AUC (+0.0328, adjusted 0.0240) and `alpha*` (+0.0236, adjusted
+  0.0267), and at no harder threshold. This **corrects** the previous revision, which
+  reported zero survivors here (§5.11.5), and it is the weakest-powered of the three
+  contrasts because it forgoes a shared prefix (Amendment E4, §6.15).
+- **That `versionb`'s certified region meets its nominal joint confidence against ground
+  truth** at every `(tau_frac, alpha)` cell with enough non-empty campaigns to test — 0.940
+  and 1.000 and 1.000 at `tau_frac = 0.60` on n = 50 / 50 / 22, pooled 0.9307 / 1.000 /
+  1.000 (§5.11.7). **This replaces the previous revision's largest stated gap.**
+- **That the screened classical arm's certified region does not**, on this file as well as
+  on K6b's — 0 of 50 at `tau_frac = 0.60, alpha = 0.50`, reproduced bitwise across two
+  runners (§5.11.7, §9.3).
 
 **Does not establish:**
 
-- **That Version B's certificates are sound.** No containment statistic exists for any
-  Version B arm in any committed file (§1.4, §3.9). The `alpha*` advantage is exactly the
-  kind of claim K6b showed can be maximal on an arm whose certificate fails against truth.
-- **Anything at `gamma > 0.50`.** All four AUC cells are K6's easiest assurance row (§3.9).
+- **That plate 2, or the LSE criterion, makes the certificate *sounder*.** Containment is a
+  floor that four of the five arms clear, and `plate1_only` matches `versionb` exactly at
+  every cell of the `tau_frac = 0.60` table (§5.11.7). The `alpha*` advantage is still not
+  evidence of a better certificate — only evidence that `versionb`'s posterior admits a
+  non-empty set at a higher confidence, which §1.4 forbids reading as certification quality.
+- **Containment at `tau_frac >= 0.85`, or anywhere at `tau_frac = 0.95`.** The certified
+  set is empty in 42–50 of 50 campaigns there, and at `tau_frac = 0.95` it is empty in
+  **50 of 50 for every arm at every alpha**, so `n = 0` and nothing is testable (§5.11.7).
+- **Anything against K6's higher-gamma observable labellings.** All four AUC cells are the
+  `gamma = 0.50` row. That row is gamma-*invariant* for the latent excursion set by
+  Amendment C2 (§3.9.1), so there is no sweep to run on that object — but K6's
+  `gamma >= 0.70` rows label a different set, and Version B was never scored against them.
 - **That the LSE machinery is doing what its docstring says.** The exclusion radius never
   fires (Amendment E2), so `batch_lse` is top-8 by score.
 - **That 40+8 is the right split**, or that a 40-well plate 1 has a usable acquisition
@@ -1757,27 +2134,35 @@ K6b score **Version A** — no sampling change at all, a re-scoring of campaigns
 existed. Running A first was the registered sequencing (Amendment B1) and was correct as a
 cheap kill test.
 
-**Version B (40+8) is now committed and reported at §5.11**, so the blanket statement
-*"only plate 1 has been run"* — which the previous revision of this document carried, and
-which `docs/FINDINGS-SPADE.md` §4.9 still carries — is **out of date**. What remains true:
+**Version B (40+8) is committed, re-run with containment, and reported at §5.11**, so the
+blanket statement *"only plate 1 has been run"* — which an earlier revision of this document
+carried, and which `docs/FINDINGS-SPADE.md` §4.9 still carries — is **out of date**. What
+remains true:
 
 - *"A one-shot spread design does not map better than qLogNEI"* is supported by K6 at
   `gamma >= 0.70` and contradicted at `gamma = 0.50` (§5.4).
 - *"SPADE beats qLogNEI on the map at 2 rounds against 10"* is now **supported at
   `gamma = 0.50`**, at `tau_frac >= 0.75`, on AUC, surviving Holm at two thresholds
   (§5.11.3).
-- *"SPADE beats qLogNEI"* **as a general claim is still not tested**, for three reasons that
-  are separate and each sufficient: Version B was scored only at `gamma = 0.50` (§3.9);
-  74%–85% of its KILL-1 margin at the surviving thresholds is the plate-1 LHS rather than
-  plate 2 (§5.11.3); and **no Version B certificate has been checked against truth at all**
-  (§1.4).
-- *"SPADE's certificate is sound"* is **not tested anywhere in this repository.** K6b tested
-  it for eight plate-1 arms and one of them failed. Version B computes no containment
-  statistic.
+- *"SPADE beats qLogNEI"* **as a general claim is still not tested**, for two reasons that
+  are separate and each sufficient: Version B was scored only against the `gamma = 0.50` /
+  latent labelling (§3.9, §3.9.1); and 74%–85% of its KILL-1 margin at the surviving
+  thresholds is the plate-1 LHS rather than plate 2 (§5.11.3). *A third reason stood here in
+  the revision at `0e3ea3a` — "no Version B certificate has been checked against truth at
+  all" — and is **retracted**: they now have been (§5.11.7).*
+- *"SPADE's certificate is sound"* is **now tested, and holds where it can be tested.**
+  `versionb`'s certified region meets its nominal joint level at every `(tau_frac, alpha)`
+  cell with a scorable `n`: 0.940 / 1.000 / 1.000 at `tau_frac = 0.60` on n = 50 / 50 / 22,
+  and 0.930 / 1.000 at `0.75` on n = 43 / 14 (§5.11.7). *This retracts the previous
+  revision's "not tested anywhere in this repository".* Three limits travel with it: it is
+  untestable at `tau_frac >= 0.85` (empty in 42–50 of 50) and entirely untestable at 0.95
+  (empty in 50 of 50, every arm, every alpha); `plate1_only` scores **identically**, so
+  containment does not show that plate 2 or the LSE criterion contributed anything; and the
+  result is one oracle family at one dimension and one noise level (§6.4).
 
 Everything in §5.1–§5.10 remains a statement about **plate 1**. §5.11 is the only two-plate
-evidence, it is 250 rows, it is ungated, and it is v1 of a design whose own Amendment E
-lists six defects (§6.15).
+evidence, it is 250 rows, it is **ungated** (§6.16), and its design is unchanged from v1 —
+Amendment E's six defects all still stand (§6.15).
 
 ### 6.2 Acquisition-function dependence — the result flips between qLogEI and qLogNEI
 
@@ -2001,8 +2386,18 @@ plug-in for that arm.
 
 Amendment E (plan, line 591; §2.11) was written **after** Version B v1 ran and **before**
 its result was read, and it opens *"Do not read its result until these are addressed."* The
-result at §5.11 was read anyway, so the six items are limitations on it. **None has been
-fixed in any committed file**; `results/versionb.json` is v1 output from commit `f8290a5`.
+result at §5.11 was read anyway, so the six items are limitations on it. **None of the six
+has been fixed in any committed file.**
+
+**Provenance correction.** The revision at `0e3ea3a` closed this paragraph with
+*"`results/versionb.json` is v1 output from commit `f8290a5`"*. That is no longer the file:
+`results/versionb.json` is now **v2, produced at `547b8af` and committed at `97a8352`**.
+The re-run added `CE_alpha`, both containment statistics and Amendment B3, and deleted the
+dead `GAMMA_FOR_AUC` constant. **It changed nothing about the design**: same 40+8 split,
+same `static_design` calls, same seeds, same `batch_lse` with the same `exclusion_radius`,
+same `DESIGN_TAU_FRAC = 0.75`, same `straddle_score`. E1–E6 are all properties of the
+design or of what is logged about it, so all six survive the re-run untouched, and the four
+six-factor arms' regret/AUC/Brier/`alpha*`/Vorob'ev figures are bitwise identical to v1.
 
 **E1 — the acquisition surface may be flat at n=40. Measured, not fixed.**
 Neighbour density per fitted lengthscale (`ell = 0.42`, `d = 6`, 300 designs each):
@@ -2051,19 +2446,40 @@ their first 40 wells, and the `versionb` / `versionb_random` pair share plate 1 
 both call the identical 40-point design. The variance-reduction argument this project uses
 elsewhere (Q18 shared openings) is therefore realised for KILL 2 and **not** for KILL 1 or
 for §5.11.5. Against a SESOI of 0.02 and effects that are themselves ~0.02–0.03, E4 states
-this *"could be the difference between a verdict and an inconclusive"*, and §5.11.5's
-mostly-null result is exactly where it would show.
+this *"could be the difference between a verdict and an inconclusive"*, and §5.11.5 is
+exactly where it would show: that contrast survives Holm at `tau_frac = 0.60` on both
+metrics and fails it at every harder threshold, on effects of +0.015 to +0.033 — the size
+range where a forgone variance reduction plausibly decides the verdict. *(The revision at
+`0e3ea3a` described §5.11.5 as a "mostly-null result"; the corrected Holm arithmetic at
+§5.11.5 makes it two-of-eight rather than zero-of-eight, which strengthens rather than
+weakens E4's point — the unshared prefix is now costing power on a contrast that is
+detecting something.)*
 
-**E5 — the targeted threshold is in code, not in the registration.** Plate 2 aims at one
-contour; K6 scores four. `DESIGN_TAU_FRAC = 0.75` at `run_versionb.py:38`, with
-`theta = tau_frac * mu_max`, which by §2.4's algebra is gamma-invariant — so the choice is
-defensible and is **stated here as Amendment E5 requires**. But it was not registered
-(§2.1, qualification 4), and it shows in the results: KILL 2's only Holm-surviving cell is
-`tau_frac = 0.75`, the targeted one. The alternative E5 asks to be priced — run plate 2 once
-per `gamma` — was not run. Relatedly, `GAMMA_FOR_AUC = 0.90` is defined at
-`run_versionb.py:39` and **never used**; the AUC actually computed is at `gamma = 0.50`
-(§3.9). A dead constant naming a different gamma from the one scored is exactly the kind of
-thing a reader should not have to discover.
+**E5 — the targeted threshold is in code, not in the registration. Still open; its
+sub-issue is closed.** Plate 2 aims at one contour; K6 scores four. `DESIGN_TAU_FRAC = 0.75`
+at `run_versionb.py:38`, with `theta = tau_frac * mu_max`, which by §2.4's algebra is
+gamma-invariant — so the choice is defensible and is **stated here as Amendment E5
+requires**. But it was not registered (§2.1, qualification 4), and it shows in the results:
+KILL 2's only Holm-surviving cell is `tau_frac = 0.75`, the targeted one. The alternative E5
+asks to be priced — run plate 2 once per `gamma` — was not run.
+
+**`GAMMA_FOR_AUC` — RESOLVED at `97a8352`, by deletion.** The revision at `0e3ea3a`
+recorded here that *"`GAMMA_FOR_AUC = 0.90` is defined at `run_versionb.py:39` \[sic — it
+was line 38, §3.9.1\] and **never used**; the AUC actually computed is at `gamma = 0.50`.
+A dead constant naming a different gamma from the one scored is exactly the kind of thing a
+reader should not have to discover."* The finding was correct and the constant is gone. **It was removed rather than
+wired in**, and the reason now occupies its lines in the source
+(`run_versionb.py:39-46`): by Amendment C2's algebra the latent threshold is
+`theta = tau_frac * mu_max` **for every gamma** — the `(1 - z_gamma * sigma_rel)` factor in
+`tau_max` (`src/boec/designspace.py:70-77`) cancels against the same factor in the latent
+conversion — so AUC scored against the true excursion set `{f >= theta}` has **no gamma
+dependence to express**. Wiring the constant in would have had to alter `theta` or
+`sigma_pred` and would thereby have asserted a dependence that does not exist. **The
+reasoning is checked and this report agrees with it**, with one qualification recorded at
+§3.9.1 and carried into §5.11.3 point 4: the invariance is a property of the *latent* set,
+whereas K6's own AUC labels against the *observable* `tau`, which does fall with gamma, so
+"no gamma dependence" does **not** mean Version B has covered K6's higher-`gamma` rows. It
+means those rows are a different question, not an unrun sweep of the same one.
 
 **E6 — the straddle targets the latent contour; the deliverable is the predictive region.**
 `straddle_score(mean, sd, theta)` uses the GP's `sd` alone — the estimation term. That is
@@ -2075,19 +2491,30 @@ deliverable.** Which one is intended was never registered. This is a plausible p
 explanation for why plate 2's own contribution is small (§5.11.3, +0.0148 to +0.0328 on AUC)
 relative to the plate-1 design, and it is untested.
 
-### 6.16 Version B is ungated, and two of its arms are ungatable
+### 6.16 Version B is still ungated, and two of its arms are ungatable — but the by-inspection check is now much stronger
 
 `run_versionb.py` reads no gate file, writes no `gate_failures` block, and never compares a
-regenerated regret to `results/e2-grid.json`. Three of its five arms happen to reproduce
-committed values exactly by inspection (§3.9) — `doe` 0.0958, `qlognei` 0.1532,
-`plate1_only` 0.12701957315434098 matching K6's `lhs` bitwise — but that check was performed
-in writing this report, not by the runner, and it is not recorded in any committed file.
-The two novel arms have no committed comparator and **could not be gated even in principle**;
-their only reproducibility guarantee is `Campaign.seed_everything` plus the fixed
-`Generator().manual_seed(10_000 + seed)` for the random plate.
+regenerated regret to `results/e2-grid.json`. **The re-run at `547b8af` did not change
+this**, and it remains a weaker provenance standard than every other run in this document,
+all of which carry a `gate_failures` array and 0 failures across 800 gated comparisons
+(§3.3).
 
-This is a weaker provenance standard than every other run in this document, all of which
-carry a `gate_failures` array and 0 failures across 800 gated comparisons (§3.3).
+What did change is how much the three shared arms now demonstrate by inspection. In the
+revision at `0e3ea3a` the check was three regret scalars: `doe` 0.0958, `qlognei` 0.1532,
+`plate1_only` 0.12701957315434098 matching K6's `lhs` bitwise. With the containment columns
+added, the same three arms now agree with `results/k6-designspace{,-spread}.json` and
+`results/k6b-conservative{,-spread}.json` on **four families of quantity at once** — regret,
+`auc_pred` at `gamma = 0.50`, `alpha_star` / `vorobev_deviation`, and `ce_vol_*` /
+`ce_empirical_*` — at worst `|delta| = 0.000e+00` across 50 campaigns × 4 thresholds ×
+3 alphas, with identical empty/non-empty patterns (§9.3). Two separately written runners
+now produce the same 1,800-odd numbers. **That is still a check performed in writing this
+report rather than by the runner, and it is still recorded in no committed file** — the
+distinction that makes it "by inspection" rather than "gated" is unchanged.
+
+The two novel arms (`versionb`, `versionb_random`) have no committed comparator and **could
+not be gated even in principle**; their only reproducibility guarantee is
+`Campaign.seed_everything` plus the fixed `Generator().manual_seed(10_000 + seed)` for the
+random plate.
 
 ---
 
@@ -2161,8 +2588,9 @@ and remains open.
 
 `docs/FINDINGS-SPADE.md` is the plain-language companion. It was written at `3c5ca88`
 (22:37:42) and last revised at `d920541` (23:21:58) — **before Version B was analysed
-(`0e3ea3a`, 23:42:14) and before the two K6b defects were found and the run repeated
-(`b3de1d2` 00:09:08 / `1045874` 00:50:34).** It has not been updated since. In every case
+(`0e3ea3a`, 23:42:14), before the two K6b defects were found and the run repeated
+(`b3de1d2` 00:09:08 / `1045874` 00:50:34), and before Version B was re-run with containment
+(`547b8af` 01:00:26 / `97a8352` 01:15:47).** It has not been updated since. In every case
 the committed JSON is the authority under RESULTS.md rule 1.
 
 **The entire §4.8 of the companion is void.** It reports the circular statistic as the
@@ -2216,10 +2644,20 @@ retraction.
 11. **§4.9, "❗ WHAT WE HAVE NOT TESTED: SPADE is a two-round method ... *'SPADE does not
     map better than qLogNEI'* is not tested."** ⏳ **Out of date.** Version B ran and is
     committed (§5.11). Both registered kills passed. The companion's §4.9 is nonetheless
-    still right in substance about three narrower things it did not know it was asserting:
-    Version B is scored only at `gamma = 0.50`, most of its KILL-1 margin is plate 1 rather
-    than plate 2, and **no Version B certificate has been checked against truth**. §6.1
-    restates what is and is not now tested.
+    still right in substance about **two** narrower things it did not know it was asserting:
+    Version B is scored only against the `gamma = 0.50` / latent labelling, and most of its
+    KILL-1 margin is plate 1 rather than plate 2. **Its third implicit point — that no
+    Version B certificate has been checked against truth — is now false**, and the revision
+    of *this* document at `0e3ea3a` repeated it; `results/versionb.json` at `97a8352`
+    measures containment for all five arms and `versionb` meets nominal wherever `n` allows
+    a test (§5.11.7). §6.1 restates what is and is not now tested.
+12. **§4.8's `doe` numbers, applied to Version B.** Any Version B `doe` figure quoted from
+    before `97a8352` is pre-B3 and superseded: `alpha*` 0.9998/0.7251/0.2126/0.0377 →
+    1.0000/0.7875/0.2424/0.0332, Vorob'ev 0.1461/0.0941/0.0368/0.0069 →
+    0.0755/0.2783/0.0981/0.0065 (§5.11.6). The "do not pool `doe` across
+    `results/versionb.json` and `results/k6b-conservative.json`" prohibition carried by the
+    previous revision of this document is **lifted** — the two files now agree bitwise
+    (§2.8 consequence 3).
 
 **Recommended action on the companion:** §4.8 should be rewritten around §5.10.2, §4.9
 replaced by §6.1, and the `alpha*` table refreshed from the re-run. Until then, §4.8 of
@@ -2256,7 +2694,8 @@ The `provenance.argv` array in each result JSON records the command that produce
   --arms lhs,sobol,random --out results/k6b-conservative-spread.json \
   2>&1 | tee results/k6b-conservative-spread.log
 
-# Version B, the two-plate arm. 5 arms x 50 = 250 rows (~12 min)
+# Version B, the two-plate arm, RE-RUN at 547b8af with CE_alpha, both containment
+# statistics and Amendment B3. 5 arms x 50 = 250 rows (~14.4 min)
 .venv/bin/python scripts/run_versionb.py --dim 6 --sigma 0.25 \
   2>&1 | tee results/versionb.log
 
@@ -2288,16 +2727,25 @@ Wilcoxon), and are labelled "regenerated" where they appear.
 | `results/k6-designspace-spread.json` | `fdd74596423990e0b9b6bc142d42e1df9e2b0af5` | `[… ,"--arms","lhs,sobol,random","--out","results/k6-designspace-spread.json"]` | 3.11.15 |
 | `results/k6b-conservative.json` | **`b3de1d27e8698f67f8caa97247fad709cbf9e75a`** | `["scripts/run_k6b_conservative.py","--dim","6","--sigma","0.25"]` | 3.11.15 |
 | `results/k6b-conservative-spread.json` | **`3d57e25bd86587168720aff483a31546cffc11cb`** | `[… ,"--arms","lhs,sobol,random","--out","results/k6b-conservative-spread.json"]` | 3.11.15 |
-| `results/versionb.json` | **`f8290a5bf5612f5151661e82c43cd6877bd7f0a8`** | `["scripts/run_versionb.py","--dim","6","--sigma","0.25"]` | 3.11.15 |
+| `results/versionb.json` | **`547b8af2652d0064ccbec8f2024f2ec360ac723e`** | `["scripts/run_versionb.py","--dim","6","--sigma","0.25"]` | 3.11.15 |
 
 `_head()` records `git rev-parse HEAD` **at the moment the runner starts**, so these SHAs
 identify the repository state the run executed against, not the commit that stored the
 output. The two K6b SHAs are the defect-fix commits (`b3de1d2`, `3d57e25`), which is the
-machine-checkable evidence that the re-run post-dates the fixes. `results/versionb.json`
-was stored at `0e3ea3a` and ran against `f8290a5`, the commit that created `boec.lse`.
+machine-checkable evidence that the re-run post-dates the fixes. **The same pattern now
+holds for Version B**: `results/versionb.json` ran against `547b8af`, *"Measure Version B's
+containment instead of inferring it, and apply B3 there too"*, and was stored at `97a8352`.
+`547b8af` is the only commit between the v1 run and this one that touches
+`scripts/run_versionb.py`, so the SHA is the machine-checkable evidence that the committed
+rows post-date the containment and B3 changes. Its predecessor — the v1 file, run against
+`f8290a5` and stored at `0e3ea3a` — is superseded and appears in no table in this document.
 
-**Version B's `provenance` block has no `gate_failures` field** because the runner writes
-none (§6.16). The other five files all carry one, and all five are empty.
+`provenance` carries `git_sha`, `argv` and `python` only; **wall time is not in the
+provenance block** and is read from the last line of `results/versionb.log`
+(*"250 rows in 862s"*), on one unspecified machine (§9.4).
+
+**Version B's `provenance` block still has no `gate_failures` field** because the runner
+writes none (§6.16). The other five files all carry one, and all five are empty.
 
 ### 9.3 Determinism actually verified
 
@@ -2310,11 +2758,25 @@ none (§6.16). The other five files all carry one, and all five are empty.
 - **Campaign regeneration is exact.** 500/500 committed `doe`/`qlogei`/`qlognei` rows at
   `worst |delta| = 0.000e+00`; a further 300 gated comparisons across the four gated
   production runs with 0 failures.
-- **Cross-runner agreement.** `run_versionb.py` and `run_k6_designspace.py` were written
-  separately and reproduce each other bitwise where they overlap: `doe`, `qlognei` and
-  `lhs`/`plate1_only` AUC agree to `delta = 0.000000` at all four `tau_frac` between
-  `results/versionb.json` and `results/k6-designspace{,-spread}.json` at `gamma = 0.50`
-  (§3.9), and the three shared regret values agree to full double precision.
+- **Cross-runner agreement, now on four families of quantity.** `run_versionb.py`,
+  `run_k6_designspace.py` and `run_k6b_conservative.py` were written separately and
+  reproduce each other bitwise where they overlap. Verified for this revision over the
+  three shared arms (`doe`, `qlognei`, `lhs`/`plate1_only`), 50 paired campaigns per cell:
+  - **regret** — all three agree to full double precision (0.09580089411672021,
+    0.15321199940788324, 0.12701957315434098);
+  - **AUC** — `versionb` vs `k6-designspace{,-spread}.json` at `gamma = 0.50`,
+    `max|delta| = 0.000e+00` at all four `tau_frac`;
+  - **`alpha_star` and `vorobev_deviation`** — `versionb` vs `k6b-conservative.json`,
+    `max|delta| = 0.000e+00` at all four `tau_frac`, for the `doe` arm now that B3 is
+    applied in both;
+  - **`ce_vol_*` and `ce_empirical_*`** — `versionb` vs
+    `k6b-conservative{,-spread}.json`, `max|delta| = 0.000e+00` at all 4 `tau_frac` × 3
+    `alpha`, with the empty/non-empty pattern matching cell for cell (e.g. `doe` compared on
+    50/47/0/0 non-empty cells at `alpha = 0.50`, `lhs`/`plate1_only` on 50/38/3/0, and the
+    remaining cells `nan` in both files).
+
+  This is the strongest consistency evidence in the document, and it is **not** a gate — it
+  is recorded in no committed file (§6.16).
 - **Unit tests pass: 56 tests** — `test_designspace.py` (20), `test_vorobev.py` (16),
   `test_replay.py` (8), `test_norms.py` (6), `test_lse.py` (6). Verified by running them.
 
@@ -2331,7 +2793,12 @@ none (§6.16). The other five files all carry one, and all five are empty.
   batches, binding in 0%). **Neither has a committed results file**, and neither can be
   recomputed from `results/versionb.json`, which stores no design coordinates and no
   acquisition diagnostics (§6.15).
-- **No Version B containment statistic exists at all**, in any file (§1.4).
+- *(An item stood here in the revision at `0e3ea3a` — "No Version B containment statistic
+  exists at all, in any file". **Retracted**: `results/versionb.json` at `97a8352` carries
+  `ce_vol_*`, `ce_empty_*`, `ce_contain_*` and `ce_empirical_*` for all 250 rows, §5.11.7.)*
+- **Version B still stores no design coordinates**, so the wells plate 2 actually chose —
+  and therefore E1's flatness and E2's exclusion-radius diagnostics — remain unrecoverable
+  from committed output even after the re-run (§6.15).
 - The wall-clock figures in §5 come from the `.log` files, which record elapsed seconds on
   one unspecified machine.
 
@@ -2367,7 +2834,16 @@ none (§6.16). The other five files all carry one, and all five are empty.
 - **Version B passed both pre-registered kills** (§5.11), with the Holm-corrected reading
   stated alongside: KILL 1 survives Holm in 2 of 8 tests (AUC at `tau_frac` 0.85 and 0.95,
   both at 0.020), KILL 2 in 1 of 4 (at `tau_frac = 0.75`, the threshold the criterion
-  targets). **Version B ties qLogNEI on regret at 2 rounds against 10** (+0.0014, p = 0.86).
+  targets). Both counts re-verified against the re-run blob at `97a8352` and **unchanged**.
+  **Version B ties qLogNEI on regret at 2 rounds against 10** (+0.0014, p = 0.86).
+- **That Version B's certified region meets its nominal joint confidence against ground
+  truth wherever it can be tested** — 0.940 (47/50), 1.000 (50/50) and 1.000 (22/22) at
+  `tau_frac = 0.60` against nominal 0.50 / 0.80 / 0.95, and 0.930 (40/43) and 1.000 (14/14)
+  at `tau_frac = 0.75` — **provided the sentence also says where it cannot be tested**: the
+  certified set is empty in 42–50 of 50 campaigns at `tau_frac = 0.85` and in **50 of 50 for
+  every arm and every alpha at `tau_frac = 0.95`** (§5.11.7). This must be written as
+  "SPADE's certificate is not miscalibrated on the cells that carry evidence", never as
+  "SPADE's certificate is sound at `tau_frac = 0.95`", where there is no evidence at all.
 - **That 74%–85% of Version B's KILL-1 margin at the surviving thresholds is contributed by
   plate 1 being an LHS, not by plate 2** (§5.11.3), and that plate 2's own contribution
   costs regret (+0.0276 vs `plate1_only`, p = 0.0166).
@@ -2384,21 +2860,35 @@ none (§6.16). The other five files all carry one, and all five are empty.
   screened arm, at any of the three levels tested (§5.10.2). And never on the basis of the
   in-sample `ce_contain` column (§5.10.1) — that column is a tautology and
   `docs/FINDINGS-SPADE.md` §4.8 must be treated as retracted (§8).
-- **Any claim that Version B's certificates are sound, or that its `alpha*` advantage means
-  its certified regions are trustworthy.** No containment statistic exists for any Version B
-  arm in any committed file. The `alpha*` advantage is exactly the kind of claim K6b showed
-  can be maximal on an arm whose certificate fails (§1.4, §5.11.7).
-- **Any Version B claim at `gamma > 0.50`.** All four of its AUC cells are bitwise identical
-  to K6's `gamma = 0.50` row — the lowest-assurance row, and the corner where §5.4 already
-  measured a plain LHS beating qLogNEI (§3.9).
+- **That Version B's `alpha*` advantage means its certified regions are *better*.**
+  *(The previous revision's stronger prohibition — "any claim that Version B's certificates
+  are sound … no containment statistic exists for any Version B arm in any committed file" —
+  is **retracted in its factual half**: containment now exists and `versionb` passes it,
+  §5.11.7.) What survives is the ranking prohibition, and it survives intact:*
+  `plate1_only` scores **identically to `versionb` at every cell** of the `tau_frac = 0.60`
+  containment table, so nothing in the containment data shows that plate 2 or the LSE
+  criterion improved the certificate. `alpha*` remains model-internal (§1.4).
+- **Any containment claim at `tau_frac >= 0.85`.** `n` is 0 to 8 scorable campaigns per cell
+  at 0.85 and **0 everywhere at 0.95**. A 1.0000 at n = 3 has a Wilson lower bound of 0.439
+  (§5.11.7).
+- **Any Version B claim against K6's `gamma >= 0.70` labellings.** All four of its AUC cells
+  are K6's `gamma = 0.50` row. That row is gamma-*invariant* for the latent excursion set by
+  Amendment C2, which is why `GAMMA_FOR_AUC` was deleted rather than wired in (§3.9.1) — but
+  K6's higher-`gamma` rows label against the observable `tau` and are a different question,
+  and they are the corner where §5.4 measured a plain LHS beating qLogNEI (§3.9).
 - **"SPADE beats qLogNEI"** without naming the assurance level, the threshold, and the fact
   that most of the margin is the plate-1 design (§5.11.3, §6.1).
 - **Any claim that `batch_lse`'s diversity mechanism contributed anything.** The exclusion
   radius binds in 0% of batches at this dimension; it is top-8 by score (Amendment E2,
   §6.15).
-- **Any pooling of `doe` numbers across `results/k6b-conservative.json` and
-  `results/versionb.json`.** The first applies Amendment B3 and the second does not; they
-  disagree by up to +0.062 on `alpha*` for the same arm and the same campaigns (§2.8).
+- *(A prohibition stood here in the revision at `0e3ea3a` — "any pooling of `doe` numbers
+  across `results/k6b-conservative.json` and `results/versionb.json` … they disagree by up
+  to +0.062 on `alpha*`". **Retracted**: both files now apply Amendment B3 to `doe` and
+  agree at worst `|delta| = 0.000e+00` on `alpha*`, Vorob'ev, `ce_vol_*` and
+  `ce_empirical_*`, §2.8 consequence 3. Pooling them adds no information, because they are
+  the same numbers — but it is no longer an error.)*
+- **Any Version B `doe` figure quoted from before `97a8352`.** Those are policy-(c),
+  full-6D numbers and are superseded (§5.11.6).
 - **Any cross-arm comparison of `doe`'s K6b volumes or `alpha*` as like-for-like.** `doe` is
   scored on a 4-dimensional slice whose true excursion prevalence is higher than the 6D grid
   the other seven use (0.8251 vs 0.7355 at `tau_frac = 0.60`), which biases in `doe`'s favour
