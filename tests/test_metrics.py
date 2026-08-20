@@ -148,3 +148,14 @@ def test_rsm_model_plugs_into_the_metric():
     res = over_prediction_at_constrained_argmax(model.predict, truth_fn, UNIT_2D, seed=0)
     # Fitted on [0, 0.3]^2, asked about [0, 1]^2 -> it should overshoot.
     assert res.over_prediction > 0.0
+
+
+def test_sampled_region_is_the_axis_aligned_box_of_visited_wells():
+    from boec.metrics import point_in_region, sampled_region_bounds
+
+    X = torch.tensor([[0.1, 0.8], [0.4, 0.2]], dtype=torch.double)
+    region = sampled_region_bounds(X)
+    assert torch.allclose(region[0], torch.tensor([0.1, 0.2], dtype=torch.double))
+    assert torch.allclose(region[1], torch.tensor([0.4, 0.8], dtype=torch.double))
+    assert point_in_region(torch.tensor([0.2, 0.5], dtype=torch.double), region)
+    assert not point_in_region(torch.tensor([0.9, 0.5], dtype=torch.double), region)

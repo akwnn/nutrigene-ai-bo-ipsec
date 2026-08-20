@@ -466,6 +466,15 @@ with thread counts pinned before framework import; this is a correctness require
 than a performance choice, because altering thread counts changes floating-point reduction
 order and therefore results.
 
+**Declared replay tolerances.** The one-shot GP (`spread_gp`) fidelity gate against
+`results/q52-budget-to-target.json` requires worst absolute drift **< 1e-6**, not bit
+equality. Environmental float32/BLAS ordering can move ~3e-7; that does not change any
+four-decimal number in the paper. Sequential BO `ask()` reseeds from
+`(campaign_seed, round, n_observed)` before each `optimize_acqf` call so BoTorch's
+internal retry is a function of recorded campaign state (G7b). Replaying *stored visit
+logs* from E2 remains a different problem: those logs do not record optimizer retries.
+Q60/Q61 therefore re-run from seed rather than splice confirmation onto frozen BO traces.
+
 Generated ensembles are committed as versioned artefacts rather than regenerated from seeds.
 The acceptance procedure wraps a numerical optimiser, and the ensemble version hash covers
 the construction parameters but not the optimiser's behaviour; two installations with

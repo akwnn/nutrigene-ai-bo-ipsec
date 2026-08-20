@@ -1,8 +1,8 @@
 """Publication figures for the matched-budget DoE vs BO paper.
 
-Numbers come from committed JSON. Empty cells stay empty. GP in-region uses
-the stored unconstrained GP peak, which the manuscript states already lies
-inside the sampled region.
+Numbers come from committed JSON. Empty cells stay empty. GP model bars prefer
+``results/q64-gp-inregion.json`` when that cell is complete; otherwise qLogEI
+falls back to q34 and qLogNEI model bars stay empty.
 """
 
 from __future__ import annotations
@@ -191,6 +191,41 @@ def _q35() -> list[dict]:
     return _load(ROOT / "results" / "q35-constrained-rsm.json")
 
 
+def _q64_rows() -> list[dict] | None:
+    path = ROOT / "results" / "q64-gp-inregion.json"
+    if not path.exists():
+        return None
+    data = json.loads(path.read_text())
+    return list(data.get("rows", []))
+
+
+def _q64_gp_means(dim: int, sigma: float, acq: str) -> tuple[tuple[float, float, float] | None, tuple[float, float, float] | None]:
+    """Unconstrained and in-region GP regret from Q64, or (None, None) if incomplete."""
+    box = _q64_gp_per_instance(dim, sigma, acq, "R_gp_box")
+    reg = _q64_gp_per_instance(dim, sigma, acq, "R_gp_region")
+    if box is None or reg is None:
+        return None, None
+    return _ci(box), _ci(reg)
+
+
+def _q64_gp_per_instance(
+    dim: int, sigma: float, acq: str, field: str,
+) -> np.ndarray | None:
+    rows = _q64_rows()
+    if not rows:
+        return None
+    sub = [
+        r for r in rows
+        if int(r["dim"]) == dim and abs(float(r["sigma"]) - sigma) < 1e-12 and r["acq"] == acq
+    ]
+    if len({r["instance"] for r in sub}) < 25:
+        return None
+    by_inst: dict[str, list[float]] = {}
+    for r in sub:
+        by_inst.setdefault(r["instance"], []).append(float(r[field]))
+    return np.array([float(np.mean(v)) for _, v in sorted(by_inst.items())])
+
+
 def locator_means(dim: int, sigma: float) -> dict[str, dict[str, tuple[float, float, float] | None]]:
     """Landscape-mean regret and 95% bootstrap interval, or None if not stored."""
     q57 = _cell(_q57(), dim, sigma)
@@ -209,10 +244,14 @@ def locator_means(dim: int, sigma: float) -> dict[str, dict[str, tuple[float, fl
         if arm == "doe":
             unconstrained = _ci(per_instance(q35, "unconstrained"))
             inregion = _ci(per_instance(q35, "constrained"))
-        elif arm == "qlogei":
-            gp = _ci(per_instance(q34, "cell4_bo_gp"))
-            unconstrained = gp
-            inregion = gp
+        elif arm in ("qlogei", "qlognei"):
+            box, reg = _q64_gp_means(dim, sigma, arm)
+            if box is not None and reg is not None:
+                unconstrained, inregion = box, reg
+            elif arm == "qlogei":
+                gp = _ci(per_instance(q34, "cell4_bo_gp"))
+                unconstrained = gp
+                inregion = gp
         out[arm] = {
             "tested": tested,
             "measured": measured,
@@ -484,15 +523,21 @@ def saddle_stats() -> dict:
     g_mean, g_lo, g_hi = _ci(gap)
     exits = [r["ridge_exit_radius"] for r in rows if r.get("ridge_exit_radius") is not None]
     corners = [r["ridge_region_corner_radius"] for r in rows]
-    gp = per_instance(_cell(_q34(), 6, 0.25), "cell4_bo_gp")
-    inregion_gap = con - gp
+    gp_reg_inst = _q64_gp_per_instance(6, 0.25, "qlogei", "R_gp_region")
+    if gp_reg_inst is not None and gp_reg_inst.size == con.size:
+        inregion_gap = con - gp_reg_inst
+        gp_scalar = float(gp_reg_inst.mean())
+    else:
+        gp_vals = per_instance(_cell(_q34(), 6, 0.25), "cell4_bo_gp")
+        inregion_gap = con - gp_vals
+        gp_scalar = float(gp_vals.mean())
     ir_mean, ir_lo, ir_hi = _ci(inregion_gap)
     return {
         "n": len(rows),
         "n_saddle": n_saddle,
         "unc": float(unc.mean()),
         "con": float(con.mean()),
-        "gp": float(gp.mean()),
+        "gp": gp_scalar,
         "gap": g_mean,
         "gap_lo": g_lo,
         "gap_hi": g_hi,
@@ -521,14 +566,21 @@ def figure_saddle(path: Path) -> dict[str, Path]:
         "saddle_muted",
         ["#2F4A6E", "#F4F1EC", "#B23A2F"],
     )
-    x = np.linspace(-1.08, 1.08, 360)
-    y = np.linspace(-1.08, 1.08, 360)
+    example = next(
+        r for r in _q35()
+        if r["instance"] == "ce7334da318bc5e5" and r["dim"] == 6
+        and abs(float(r["sigma"]) - 0.25) < 1e-12 and r["seed"] == 0
+    )
+    eigs = sorted(float(v) for v in example["eigenvalues"])
+    lam_neg, lam_pos = eigs[0], eigs[-1]
+    x = np.linspace(-0.85, 0.85, 360)
+    y = np.linspace(-0.85, 0.85, 360)
     X, Y = np.meshgrid(x, y)
-    Z = X**2 - Y**2
-    norm = TwoSlopeNorm(vmin=-1.05, vcenter=0.0, vmax=1.05)
+    Z = 0.5 * (lam_neg * X**2 + lam_pos * Y**2)
+    norm = TwoSlopeNorm(vmin=float(Z.min()), vcenter=0.0, vmax=float(Z.max()))
     ax0.contourf(X, Y, Z, levels=9, cmap=muted, norm=norm)
     ax0.contour(X, Y, Z, levels=9, colors="white", linewidths=0.35, alpha=0.55)
-    region = 0.44
+    region = float(example["ridge_region_corner_radius"])
     box = Rectangle(
         (-region, -region), 2 * region, 2 * region, fill=False,
         edgecolor=INK, linewidth=1.2, linestyle=(0, (3.5, 2.0)), zorder=4,
@@ -573,7 +625,10 @@ def figure_saddle(path: Path) -> dict[str, Path]:
         side.set_visible(True)
         side.set_color(INK)
         side.set_linewidth(0.5)
-    ax0.set_title("Fitted quadratic is a saddle", loc="left", fontsize=8.5, color=INK, pad=8)
+    ax0.set_title(
+        "Fitted quadratic is a saddle  ·  instance ce7334da seed 0",
+        loc="left", fontsize=8.5, color=INK, pad=8,
+    )
     ax0.text(
         0.0, -0.10,
         f"{s['n_saddle']}/{s['n']} Hill fits are saddles"

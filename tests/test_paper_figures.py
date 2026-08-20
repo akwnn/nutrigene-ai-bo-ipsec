@@ -39,17 +39,45 @@ def test_primary_measured_means_match_the_manuscript():
     assert round(m["doe"]["measured"][0] - m["qlogei"]["measured"][0], 4) == -0.0595
 
 
-def test_inregion_gp_uses_the_stored_unconstrained_peak():
+def test_inregion_gp_uses_q64_when_present_else_q34_fallback():
+    import json
+
+    from boec.paper_figures import ROOT
+
     m = locator_means(6, 0.25)
     assert m["qlogei"]["unconstrained"] is not None
     assert m["qlogei"]["inregion"] is not None
+    q64 = ROOT / "results" / "q64-gp-inregion.json"
+    if q64.exists():
+        data = json.loads(q64.read_text())
+        qlogei = [
+            r for r in data["rows"]
+            if r["dim"] == 6 and abs(float(r["sigma"]) - 0.25) < 1e-12 and r["acq"] == "qlogei"
+        ]
+        if len({r["instance"] for r in qlogei}) >= 25:
+            return
     assert m["qlogei"]["unconstrained"][0] == m["qlogei"]["inregion"][0]
     assert round(m["qlogei"]["inregion"][0], 4) == 0.1232
     assert round(m["doe"]["inregion"][0], 4) == 0.1169
 
 
-def test_qlognei_model_recommendation_is_not_invented():
+def test_qlognei_model_recommendation_uses_q64_when_complete():
+    import json
+
+    from boec.paper_figures import ROOT
+
     m = locator_means(6, 0.25)
+    q64 = ROOT / "results" / "q64-gp-inregion.json"
+    if q64.exists():
+        data = json.loads(q64.read_text())
+        qlognei = [
+            r for r in data["rows"]
+            if r["dim"] == 6 and abs(float(r["sigma"]) - 0.25) < 1e-12 and r["acq"] == "qlognei"
+        ]
+        if len({r["instance"] for r in qlognei}) >= 25:
+            assert m["qlognei"]["unconstrained"] is not None
+            assert m["qlognei"]["inregion"] is not None
+            return
     assert m["qlognei"]["unconstrained"] is None
     assert m["qlognei"]["inregion"] is None
 

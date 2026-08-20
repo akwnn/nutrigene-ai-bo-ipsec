@@ -34,7 +34,7 @@ Lab notebooks (not the paper): `docs/RESULTS.md`, `docs/WHAT-WE-FOUND.md`. New c
 
 **Bootstrap interval.** Resample the 25 landscapes and recompute the mean gap. Answers “how large,” which Wilcoxon does not.
 
-**Holm–Bonferroni.** Used when several arms share a family. The paper’s primary DoE-versus-BO contrasts (measured-response argmax and in-region recommendation at six factors and higher noise) are single planned comparisons and are not Holm-adjusted.
+**Holm–Bonferroni.** Used when several arms share a family. The paper’s primary DoE-versus-BO contrasts (measured-value argmax and in-region recommendation at six factors and higher noise) are single planned comparisons and are not Holm-adjusted.
 
 An interval covering 0 is “not distinguished at n = 25,” not “the methods are identical.” TOST at SESOI = 0.02 is in `results/tost-contrasts.json` (supplement §S9).
 

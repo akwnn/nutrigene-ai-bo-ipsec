@@ -1,6 +1,6 @@
 # What this project is
 
-This file teaches the project from zero. It is not a journal manuscript. Locked numbers here are the ones a paper may use. Long tables: `docs/SUPPLEMENT.md`. Campaign notes: `docs/RESULTS.md`. Figures: `python scripts/make_paper_figures.py`. JSON filenames under **Methods** are where those numbers were stored, not names of methods.
+This file teaches the project from zero. It is not a journal manuscript. A submission draft is `docs/MANUSCRIPT.md`. Locked numbers here are the ones a paper may use. Long tables: `docs/SUPPLEMENT.md`. Campaign notes: `docs/RESULTS.md`. Figures: `python scripts/make_paper_figures.py`. JSON filenames under **Methods** are where those numbers were stored, not names of methods.
 
 If you read only one page, read **The result in one page**, then **How a campaign is scored**.
 
@@ -16,7 +16,7 @@ If you read only one page, read **The result in one page**, then **How a campaig
 
 | Terminal rule | What it asks | Primary-cell verdict (6 factors, higher noise, 48 wells) |
 |---|---|---|
-| Keep the well with the largest noisy measurement | Identification under assay noise | DoE/RSM better by **0.0595** regret |
+| Keep the well with the largest noisy measurement | Identification under assay noise | DoE/RSM better by **0.0595** vs qLogEI and **0.0574** vs qLogNEI |
 | Keep the truly best well already visited | Search quality (not available in a lab) | DoE/RSM better by only **0.0158**; **~73%** of the 0.0595 was identification |
 | Maximize the fitted quadratic over the whole box | Naïve model recommendation | BO better by **0.27–0.36**; all 200 quadratics are **saddles** |
 | Maximize the model only where data exist | Fair model recommendation | **Inconclusive** (−0.0063; neither different nor equivalent within 0.02) |
@@ -58,7 +58,7 @@ Published bioprocess papers do not all answer the same question. Some compare BO
 
 **Contrast.** Always DoE/RSM minus BO on the same 25 landscapes. **Negative: DoE/RSM better. Positive: BO better.**
 
-**Primary setting.** Six factors, \(\sigma = 0.25\), \(N = 48\) wells. Locked before the main grid at commit `d289e7d`. The two confirmatory contrasts are measured-response argmax and in-region recommendation, DoE/RSM vs the named BO method.
+**Primary setting.** Six factors, \(\sigma = 0.25\), \(N = 48\) wells. Locked before the main grid at commit `d289e7d`. The two confirmatory contrasts are measured-value argmax and in-region recommendation, DoE/RSM vs the named BO method.
 
 **Exploratory.** The other three factor–noise cells, extra arms, and robustness benchmarks, unless stated otherwise.
 
@@ -176,7 +176,7 @@ At higher noise, the planned DoE geometry (center replicates, space-filling CCD)
 
 Rescore the same wells using hidden tested-best.
 
-**Table 2.** Hidden tested-best regret and the share of the measured-response contrast that is identification.
+**Table 2.** Hidden tested-best regret and the share of the measured-value contrast that is identification.
 
 | Setting | DoE/RSM | qLogEI | Hidden contrast | Measured contrast | Identification share |
 |---|---:|---:|---:|---:|---:|
@@ -210,7 +210,7 @@ The GP peak already lies in the sampled region in this implementation, so uncons
 
 ![Figure 3. Saddle geometry and unconstrained versus in-region gap](figures/fig3-saddle.png)
 
-**Figure 3.** (A) Cartoon of a saddle; not a fitted contour from one run. (B) Primary setting: unconstrained − in-region DoE = +0.2995; in-region DoE − GP = −0.0063. Grey band ±0.02.
+**Figure 3.** (A) Canonical-plane contour of the fitted quadratic for instance `ce7334da318bc5e5` seed 0 (most negative vs most positive Hessian eigenvalue; box is the stored stage-2 circumradius 0.50). (B) Primary setting: unconstrained − in-region DoE = +0.2995; in-region DoE − GP = −0.0063. Grey band ±0.02.
 
 A design × surrogate factorial (same wells, swap the model) shows **both** sampling geometry and surrogate class matter; it is not “only the GP” or “only the CCD.” Four-factor refits remove a dimension confound. Details: `docs/SUPPLEMENT.md`.
 
@@ -235,9 +235,9 @@ Campaigns were extended to a **200-well cap** at six factors. Arrival means: fra
 
 ![Figure 2. Arrival at regret 0.10 by wells and by rounds](figures/fig2-cost.png)
 
-**Figure 2.** \(P(\text{regret} \le 0.10)\) under measured-response argmax. Walking RSM is plotted against wells only (its checkpoints are not on qLogEI’s round grid). The one-shot GP marker on rounds panels is the 48-well Latin hypercube (one round).
+**Figure 2.** \(P(\text{regret} \le 0.10)\) under measured-value argmax. Walking RSM is plotted against wells only (its checkpoints are not on qLogEI’s round grid). The one-shot GP marker on rounds panels is the 48-well Latin hypercube (one round).
 
-**Table 5.** Landscapes reaching the target (measured-response, six factors, cap 200).
+**Table 5.** Landscapes reaching the target (measured-value argmax, six factors, cap 200).
 
 | Noise | Target regret | Relocating RSM | qLogEI | CCD in place | One-shot GP | Multiplicity-adjusted \(P\) |
 |---|---:|---:|---:|---:|---:|---:|
@@ -322,7 +322,7 @@ These are the main “you cheated” lines, and the answers on disk.
 
 **BO.** qLogEI (BoTorch 0.18.1); qLogNEI co-primary. Sobol \(2d+2\), then \(q = 4\). Optional Q62 arm: same acquisition inside a TuRBO-1 trust region (`length_init=0.8`, `length_min=0.5^7`, `length_max=1.6`); noisy incumbent = posterior mean at visited wells; restart keeps all wells.
 
-**Inference.** Paired bootstrap 95% intervals. TOST at 0.02. Wilcoxon for yes/no. Holm on multi-arm and multi-target arrival families. Identification share: measured-response contrast minus hidden-tested-best contrast (formula in `docs/SUPPLEMENT.md`). Arrival: \(P(T \le N)\) to a regret target, cap 200.
+**Inference.** Paired bootstrap 95% intervals. TOST at 0.02. Wilcoxon for yes/no. Holm on multi-arm and multi-target arrival families. Identification share: measured-value contrast minus hidden-tested-best contrast (formula in `docs/SUPPLEMENT.md`). Arrival: \(P(T \le N)\) to a regret target, cap 200.
 
 **Software.** Python 3.11, BoTorch 0.18.1, GPyTorch 1.15.2, PyTorch 2.13.0.
 
@@ -407,11 +407,11 @@ Not prose. Order of argument only.
 
 **Abstract.** Problem → design → measured −0.0595 and 73% identification → unconstrained +0.27–0.36 and 200 saddles → in-region inconclusive → confirmation inconclusive → TuRBO does not close the noisy-argmax gap → one-shot vs ten-round on Hill → prespecify pick, noise, extrapolation, confirmation, batching, cost unit.
 
-**Introduction.** Cost of grids → RSM vs BO toolkits, including “saddle ⇒ relocate, do not box-max” → literature estimands differ → isolate the terminal rule → this study is synthetic Hill, Hall/Ogle structure only.
+**Introduction.** Cost of grids → RSM vs BO toolkits, including “saddle ⇒ relocate, do not box-max” → literature terminal rules differ → isolate the terminal rule → this study is synthetic Hill, Hall/Ogle structure only.
 
 **Results, this order.** Figure 1 (flip) → Table 1 (noisy argmax) → Table 2 (identification) → Figure 3 and Table 3 (saddle / in-region) → Table 4 (confirmation) → Figure 4 (TuRBO vs full-box qLogNEI) → Figure 2 and Table 5 (wells vs rounds) → one-shot vs Hartmann.
 
-**Discussion.** Three estimands; unconstrained ≠ classical RSM; local BO ≠ walking RSM; literature can disagree without contradiction; choose method by constraint (map / rounds / multimodality); limitations (synthetic, n = 25, GP coverage, averaged top-3 confirmation and one-well-per-round BO unrun, no wet lab).
+**Discussion.** Three terminal rules; unconstrained ≠ classical RSM; local BO ≠ walking RSM; literature can disagree without contradiction; choose method by constraint (map / rounds / multimodality); limitations (synthetic, n = 25, GP coverage, averaged top-3 confirmation and one-well-per-round BO unrun, no wet lab).
 
 **Methods.** Copy from **Methods** above.
 

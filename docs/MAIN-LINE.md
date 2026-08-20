@@ -1,5 +1,8 @@
 # MAIN LINE — the paper's skeleton
 
+**SUPERSEDED — not a source for the manuscript.** This file predates the locked teaching
+summary. Do not copy claims from here into a submission. Use `docs/RESEARCH-SUMMARY.md`.
+
 **CORE and DEFENCE only.** Everything else is in `docs/TRIAGE.md` and `docs/archive/`.
 Labels and reasons: `TRIAGE.md`. Full entries with limits: `RESULTS.md`.
 

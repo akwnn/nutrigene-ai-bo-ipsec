@@ -1,5 +1,9 @@
 # CLAIMS — what the evidence supports, and what it does not
 
+**SUPERSEDED — not a source for the manuscript.** Scoring-convention language in this
+file (including “estimand”) is historical. Locked numbers and wording live in
+`docs/RESEARCH-SUMMARY.md`. Keep this file as an audit trail only.
+
 **STATUS: DRAFT PROPOSAL by B, for A and Alan to cut. Nothing here is settled.**
 
 > ## 🔵 TRIAGED — every claim below now traces to a labelled item in `docs/TRIAGE.md`

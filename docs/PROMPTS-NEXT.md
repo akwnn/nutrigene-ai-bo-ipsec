@@ -9,7 +9,7 @@
 
 Hand this file to the agent that will do the next month of work. Do not mix campaigns in one run. Do not invent a winner.
 
-**The paper to publish is not** “BO and DoE address different estimands” or “which acronym wins.”
+**The paper to publish is not** “BO and DoE address different questions” or “which acronym wins.”
 
 **The paper to publish is:** matched-budget BO-versus-RSM rankings are not a property of the algorithm names. They depend on campaign geometry + surrogate + terminal decision + noise + allowed extrapolation + unit of cost. We quantify each piece under identical budgets and identical latent landscapes.
 

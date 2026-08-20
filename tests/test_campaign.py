@@ -86,6 +86,16 @@ def test_budget_too_small_raises():
         batch_plan(12, 20, 4)
 
 
+def test_batch_plan_q1_is_thirty_five_rounds():
+    """Q61: n0=14 then 34 singles. Opening counts as round 1 -> 35 rounds."""
+    n_init, batches = batch_plan(6, 48, 1)
+    assert n_init == 14
+    assert batches == [1] * 34
+    assert n_init + sum(batches) == 48
+    n_rounds = 1 + len(batches)
+    assert n_rounds == 35
+
+
 # --------------------------------------------------------------------------
 # The loop
 # --------------------------------------------------------------------------

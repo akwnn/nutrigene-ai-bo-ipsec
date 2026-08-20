@@ -168,3 +168,48 @@ These are starting points, chosen so the experiments can measure what they claim
 **Someone questions a claim?** Check which part it falls in. If Part 3, say so and verify rather than defending it.
 
 **Adding a new factual claim to any document?** Add it here with its status at the same time. A claim without a status line in this document has not been checked.
+
+---
+
+# PART 1.3 — Applied BO-vs-DoE papers (verified 2026-08-20 from publisher HTML)
+
+Convention: **STATES** = the paper says it; **IMPLIES** = follows from what it says; **INFERS** = our reading, labelled as such.
+
+## Rummukainen et al., *Heliyon* **10**, e24484 (2024). DOI 10.1016/j.heliyon.2024.e24484
+
+| | |
+|---|---|
+| **STATES** | Pilot alkaline wood delignification. Box–Behnken: 15 runs (three-level, three centre points). BO: 5 of those BBD runs as initialization, then 10 sequential experiments. Total 25 pilot experiments *across* the two methods. GP, Matérn 5/2. First nine BO iterations selected by *noisy expected improvement*. Authors report BO did not reduce the number of experiments needed to reach the optimum, but sampled more densely near it. |
+| **IMPLIES** | Experiment *count* is not matched 15-vs-15 as a single paired budget; BO’s 5+10 is a different design from the full BBD. |
+| **INFERS** | The paper does not isolate a laboratory “pick the noisiest well” vs “maximize the model” terminal rule the way this project does. Do not claim they used measured-value argmax. Noisy EI is the *acquisition*, not the final-pick rule. |
+
+## Lapierre et al., *J. Chem. Technol. Biotechnol.* **100**, 1571–1583 (2025). DOI 10.1002/jctb.7860
+
+| | |
+|---|---|
+| **STATES** | Wet-lab media optimization for *S. pasteurii* in a 48-well BioLector. DoE: software-chosen designs with a maximum of 48 simultaneous cultures; screen (D-optimal) then face-centred composite (CCF) after dropping insignificant factors (8→6). Batch BO compared against that DoE-optimized medium (+28% max backscatter). In silico, 48 parallel cultures per iteration. |
+| **IMPLIES** | Classical arm is allowed to drop factors after screening; BO is not described as being forced onto the same reduced factor set. Plate size 48 is a hardware constraint, not automatically a matched *locator*. |
+| **INFERS** | This supports “matched well-count is not a matched comparison” as a *motivation*, not as a claim that Lapierre used the same terminal rule we do. |
+
+## Ndahiro et al., *iScience* **28**, 112944 (2025). DOI 10.1016/j.isci.2025.112944
+
+| | |
+|---|---|
+| **STATES** | CHO media; BO with UNIFAC thermodynamic precipitation constraints; AMBR up to 48 reactors; UCB acquisition; batched MSMR. Experimental figure caption: BO achieved higher titers “with the same number of experiments” as space-filling. In silico: 20 equally spaced points vs BO. Wet-lab: 5 seed points, then 12 BO designs vs 12 space-filling. |
+| **IMPLIES** | The matched-count claim is vs *space-filling*, not vs a screen+CCD pipeline with a named terminal rule. |
+| **INFERS** | Safe to cite as a same-N BO vs space-filling / DOE-framework comparison with extra solubility constraints. Do not cite as evidence they prespecified measured-value argmax. |
+
+## Gisperg et al., *Biotechnol. Bioeng.* **122**, 1313–1325 (2025). DOI 10.1002/bit.28960
+
+| | |
+|---|---|
+| **STATES** | Review: DoE has been the traditional preferred method in bioprocess optimization; BO remains relatively underexplored; article surveys principles and published BO applications in upstream/downstream. |
+| **IMPLIES** | Citing Gisperg supports “the field still treats DoE as default,” not a new empirical ranking. |
+| **INFERS** | Keep in the introduction as a field review. Not a matched-budget experiment. |
+
+## Narayanan predicted-DoE denominator (G12)
+
+| | |
+|---|---|
+| **STATES** (already Part 1) | Narayanan et al. *Nat. Commun.* 16:6055 compares BO to a *predicted* full DoE size in places. Continuous kernel **not established** (Part 3). |
+| **INFERS** | Re-reading the SI for the exact predicted-DoE arithmetic was not repeated in this pass. Do not invent a page number. The “both can be correct” framing still holds: their denominator is not our 48-well matched count. |

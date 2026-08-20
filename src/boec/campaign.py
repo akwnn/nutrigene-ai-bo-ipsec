@@ -365,6 +365,9 @@ class Campaign:
             raise RuntimeError("call initialize() before ask()")
         model = self.fit()
         bounds = self._acquisition_bounds(model)
+        # Seed from (campaign seed, round, n) so BoTorch's internal retry is a
+        # function of recorded state, not of how many warnings a prior call raised.
+        torch.manual_seed(self.config.seed * 1_000_003 + self._round * 97 + self.n_observed)
 
         X = propose(
             model, bounds, q, self.train_X, self.train_Y,

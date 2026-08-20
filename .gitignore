@@ -170,5 +170,4 @@ COMMIT_MSG.txt
 
 # Q62 TuRBO-1. Anchored by path from docs/RESEARCH-SUMMARY.md and
 # docs/TURBO-OCBA-GONOGO.md. Without these exceptions a clone cannot rebuild Figure 4.
-!results/q62-turbo.json
-!results/q62-turbo-n200.json
+!results/q64-gp-inregion.json

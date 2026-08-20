@@ -29,6 +29,8 @@ __all__ = [
     "OverPrediction",
     "constrained_argmax",
     "over_prediction_at_constrained_argmax",
+    "point_in_region",
+    "sampled_region_bounds",
 ]
 
 # Predicts a model's mean outcome. Takes (n, d), returns (n, 1).
@@ -136,6 +138,24 @@ def constrained_argmax(
 
     x_out = torch.from_numpy(np.clip(best_x, lo, hi))
     return x_out, best_y, n_ok
+
+
+def sampled_region_bounds(X: Tensor) -> Tensor:
+    """Axis-aligned box of visited wells — the BO analogue of DoE ``stage2_bounds``."""
+    if X.ndim != 2 or X.shape[0] < 1:
+        raise ValueError(f"X must be (n, d) with n>=1, got {tuple(X.shape)}")
+    lo = X.detach().double().amin(dim=0)
+    hi = X.detach().double().amax(dim=0)
+    degenerate = hi - lo < 1e-12
+    hi = torch.where(degenerate, lo + 1e-6, hi)
+    return torch.stack([lo, hi])
+
+
+def point_in_region(x: Tensor, region: Tensor, atol: float = 1e-9) -> bool:
+    """Whether ``x`` lies in the closed box ``region`` (2, d)."""
+    z = x.detach().double().reshape(-1)
+    lo, hi = region[0].double(), region[1].double()
+    return bool(torch.all(z >= lo - atol) and torch.all(z <= hi + atol))
 
 
 def over_prediction_at_constrained_argmax(

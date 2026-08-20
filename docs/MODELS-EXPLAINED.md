@@ -163,7 +163,7 @@ than a single next experiment.
 
 qLogEI is the BO arm in the main headline comparison.
 
-Against measured-response argmax in the primary setting, DoE/RSM beat qLogEI by
+Against measured-value argmax in the primary setting, DoE/RSM beat qLogEI by
 0.0595 regret. But when the same visited wells are rescored by the hidden best
 visited point, that gap shrinks to 0.0158. This is one of the most important
 results in the study: much of the headline difference was about **identifying**
