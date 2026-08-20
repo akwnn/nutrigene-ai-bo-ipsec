@@ -60,6 +60,29 @@ nothing to do, that test fails and this docstring stops being true out loud.
 If exclusion empties the candidate pool, this returns **fewer points rather than
 duplicates**: silently handing back repeats would spend wells while reporting a batch size
 that was never achieved.
+
+TWO CONTOURS, AND ONLY ONE OF THEM IS THE DELIVERABLE
+-----------------------------------------------------
+:func:`straddle_score` uses the GP's ``sd`` alone. That is Bryan's straddle exactly as
+published, and it targets the **latent** contour ``{f = theta}`` -- the boundary of what
+the *mean response* does. The registered deliverable is Peterson's **predictive**
+``D_gamma = {x : P(Y >= tau | x) >= gamma}``, whose boundary additionally absorbs process
+noise. These are not the same set: section 5.7 of the technical report measured 54%-69%
+of predictive regions empty against 16%-25% of latent ones at the same thresholds. So a
+plate 2 driven by :func:`straddle_score` **spends its eight wells resolving a boundary
+that is not the boundary of the deliverable** (Amendment E6).
+
+:func:`straddle_predictive_score` is the variant that targets the deliverable's own
+boundary, ``1.96*sqrt(sd^2 + sigma(x)^2) - |mean - theta|``. It is **added, never
+substituted**: the committed ``versionb`` column is the published criterion and stays
+comparable, and the predictive variant runs as its own arm so the difference between the
+two is a measurement rather than a revision.
+
+``sigma`` is an **array**, from :func:`predictive_sigma`. This repo's noise is relative
+(``y = f(1 + eps) + eta``), so ``sigma`` scales with the response and a scalar would
+silently answer a homoscedastic question the campaigns never asked -- the identical trap
+:func:`boec.designspace.predictive_probability_map` documents on its own ``sigma``
+argument, and the reason that function refuses to default it.
 """
 
 from __future__ import annotations
@@ -67,7 +90,8 @@ from __future__ import annotations
 import torch
 from torch import Tensor
 
-__all__ = ["batch_lse", "exclusion_radius", "min_pairwise_chebyshev", "straddle_score"]
+__all__ = ["batch_lse", "exclusion_radius", "min_pairwise_chebyshev", "predictive_sigma",
+           "straddle_predictive_score", "straddle_score"]
 
 #: Bryan's (2005) constant. The 1.96 is the 95% normal quantile, not a tuned knob.
 STRADDLE_Z = 1.96
@@ -78,6 +102,33 @@ EXCLUSION_FRACTION = 0.25
 def straddle_score(mean: Tensor, sd: Tensor, theta: float) -> Tensor:
     """``1.96*sd - |mean - theta|``. High where uncertain AND near the threshold."""
     return STRADDLE_Z * sd - (mean - theta).abs()
+
+
+def predictive_sigma(mean: Tensor, sigma_rel: float, sigma_add: float) -> Tensor:
+    """``sqrt((sigma_rel*mean)^2 + sigma_add^2)`` -- the observation SD **at each point**.
+
+    The same plug-in ``scripts/run_versionb.py`` already uses to score against Peterson's
+    ``D_gamma``, so a criterion built on it targets the object it will be judged by.
+    ``abs`` on the mean, because a standardised posterior goes negative and a signed
+    ``sigma_rel*mean`` would cancel against the additive floor instead of adding to it.
+    """
+    return ((sigma_rel * mean).abs() ** 2 + float(sigma_add) ** 2).clamp_min(1e-24).sqrt()
+
+
+def straddle_predictive_score(mean: Tensor, sd: Tensor, theta: float,
+                              sigma: Tensor) -> Tensor:
+    """``1.96*sqrt(sd^2 + sigma^2) - |mean - theta|`` -- the straddle on ``D_gamma``.
+
+    Amendment E6. Identical to :func:`straddle_score` except that the uncertainty term
+    carries **process** noise as well as **estimation** noise, which is what makes its
+    contour the deliverable's rather than the latent field's.
+
+    Args:
+        sigma: ``(n,)`` observation SD per candidate, from :func:`predictive_sigma`. Not
+            optional and not a scalar: see the module docstring.
+    """
+    total = (sd ** 2 + sigma ** 2).clamp_min(1e-24).sqrt()
+    return STRADDLE_Z * total - (mean - theta).abs()
 
 
 def exclusion_radius(model, fallback: float = 0.1) -> float:
@@ -110,13 +161,22 @@ def min_pairwise_chebyshev(X: Tensor) -> float:
 
 
 def batch_lse(model, X_cand: Tensor, theta: float, q: int,
-              exclude: float = 0.1) -> Tensor:
+              exclude: float = 0.1, sigma: Tensor | None = None) -> Tensor:
     """``(<=q, d)`` batch of candidates maximising the straddle, greedily, with exclusion.
 
     Returns fewer than ``q`` points if exclusion empties the pool -- never duplicates.
+
+    Args:
+        sigma: ``None`` (default) selects Bryan's published **latent** straddle, which is
+            what the committed ``versionb`` column was run with and must keep running
+            with. Passing a ``(n,)`` observation SD selects the **predictive** variant of
+            Amendment E6. The default is the published criterion on purpose: an arm that
+            silently changed its criterion when a keyword appeared elsewhere would break
+            the comparison this whole file exists to support.
     """
     mean, sd = model.posterior_mean_and_sd(X_cand)
-    score = straddle_score(mean, sd, theta)
+    score = (straddle_score(mean, sd, theta) if sigma is None
+             else straddle_predictive_score(mean, sd, theta, sigma))
     available = torch.ones(X_cand.shape[0], dtype=torch.bool)
     picks: list[Tensor] = []
 

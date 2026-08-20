@@ -185,3 +185,73 @@ def test_a_zero_radius_is_what_inert_looks_like():
     picks = batch_lse(model, cand, theta, LIVE_Q, exclude=0.0)
     assert min_pairwise_chebyshev(picks) == 0.0
     assert all(torch.equal(p, picks[0]) for p in picks)
+
+
+# ---------------------------------------------------------------------------------
+# Amendment E6: the straddle on the PREDICTIVE contour, which is the deliverable's.
+# ---------------------------------------------------------------------------------
+
+from boec.lse import predictive_sigma, straddle_predictive_score
+
+
+def test_predictive_sigma_is_relative_not_a_scalar():
+    """``sigma(x) = sqrt((sigma_rel*mean)^2 + sigma_add^2)``. The noise here is RELATIVE,
+    so a scalar sigma silently answers a homoscedastic question the campaigns never
+    asked -- the trap ``predictive_probability_map`` already documents."""
+    mean = torch.tensor([0.0, 0.4, 0.8], dtype=torch.double)
+    sig = predictive_sigma(mean, sigma_rel=0.25, sigma_add=0.01)
+    assert sig.shape == mean.shape
+    assert sig[0] == pytest.approx(0.01)                       # the additive floor
+    assert sig[2] == pytest.approx(math.hypot(0.2, 0.01))
+    assert float(sig[0]) < float(sig[1]) < float(sig[2])       # it must NOT be constant
+
+
+def test_predictive_sigma_uses_the_magnitude_of_a_negative_mean():
+    """Standardised posteriors go negative. ``sigma_rel * mean`` must not cancel."""
+    sig = predictive_sigma(torch.tensor([-0.8], dtype=torch.double), 0.25, 0.01)
+    assert float(sig[0]) == pytest.approx(math.hypot(0.2, 0.01))
+
+
+def test_predictive_straddle_reduces_to_the_latent_one_at_zero_noise():
+    mean = torch.tensor([0.4, 0.5, 0.6], dtype=torch.double)
+    sd = torch.tensor([0.1, 0.2, 0.3], dtype=torch.double)
+    zero = torch.zeros_like(mean)
+    assert torch.allclose(straddle_predictive_score(mean, sd, 0.5, zero),
+                          straddle_score(mean, sd, 0.5))
+
+
+def test_predictive_straddle_is_a_different_criterion_from_the_latent_one():
+    """E6's whole point: the two contours are not the same object. Section 5.7 measured
+    54%-69% of predictive regions empty against 16%-25% of latent ones."""
+    mean = torch.tensor([0.50, 0.90], dtype=torch.double)
+    sd = torch.tensor([0.30, 0.05], dtype=torch.double)
+    sig = predictive_sigma(mean, sigma_rel=0.25, sigma_add=0.01)
+    # Latent: point 0 sits on the threshold and is uncertain, so it wins outright.
+    assert int(torch.argmax(straddle_score(mean, sd, 0.5))) == 0
+    # Predictive: point 1's process noise (0.225) dwarfs its estimation SD (0.05), which
+    # is exactly the term the latent criterion throws away.
+    assert float(straddle_predictive_score(mean, sd, 0.5, sig)[1]) > \
+           float(straddle_score(mean, sd, 0.5)[1])
+
+
+def test_predictive_straddle_never_scores_below_the_latent_one():
+    """``sqrt(sd^2 + sigma^2) >= sd`` pointwise, so the predictive criterion can only add
+    uncertainty. A variant that scored lower somewhere would be a sign error."""
+    mean = torch.linspace(-1.0, 1.0, 41, dtype=torch.double)
+    sd = torch.full_like(mean, 0.2)
+    sig = predictive_sigma(mean, 0.25, 0.01)
+    assert bool((straddle_predictive_score(mean, sd, 0.3, sig)
+                 >= straddle_score(mean, sd, 0.3) - 1e-12).all())
+
+
+def test_batch_lse_accepts_the_predictive_criterion_and_still_excludes():
+    """The E6 arm is the same batching machinery with a different score, so every
+    exclusion guarantee must survive the swap."""
+    model, cand, theta = _live_case(0)
+    mean, _ = model.posterior_mean_and_sd(cand)
+    sig = predictive_sigma(mean, 0.25, 0.01)
+    picks = batch_lse(model, cand, theta, LIVE_Q, exclude=LIVE_RADIUS, sigma=sig)
+    latent = batch_lse(model, cand, theta, LIVE_Q, exclude=LIVE_RADIUS)
+    assert picks.shape == (LIVE_Q, LIVE_DIM)
+    assert min_pairwise_chebyshev(picks) >= LIVE_RADIUS
+    assert not torch.equal(picks, latent), "the two criteria chose the identical batch"
