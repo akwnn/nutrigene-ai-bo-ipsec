@@ -54,9 +54,10 @@ import torch
 from torch import Tensor
 from torch.distributions import Normal
 
-__all__ = ["brier_and_auc", "certified_mask", "certified_volume_curve",
-           "false_inclusion_rate", "gp_adapter", "inscribed_box", "iou",
-           "predictive_probability_map", "probability_map", "tau_max"]
+__all__ = ["POSTERIOR_CHUNK", "brier_and_auc", "certified_mask", "certified_volume_curve",
+           "false_inclusion_rate", "gp_adapter", "inscribed_box",
+           "inscribed_box_from_mask", "iou", "predictive_probability_map",
+           "probability_map", "tau_max"]
 
 _STD_NORMAL = Normal(0.0, 1.0)
 
@@ -76,15 +77,35 @@ def tau_max(gamma: float, sigma_rel: float, mu_max: float = 1.0) -> float:
     return round(mu_max * (1.0 - _z_for(gamma) * sigma_rel), 10)
 
 
-def gp_adapter(model):
-    """Adapt a BoTorch model to the ``posterior_mean_and_sd`` protocol used here."""
+#: Grid rows per ``posterior`` call. See :func:`gp_adapter` for why this is not optional.
+POSTERIOR_CHUNK = 2048
+
+
+def gp_adapter(model, chunk: int = POSTERIOR_CHUNK):
+    """Adapt a BoTorch model to the ``posterior_mean_and_sd`` protocol, **chunked**.
+
+    The chunking is a correctness-of-runtime issue, not a micro-optimisation.
+    ``model.posterior(X)`` builds the **joint** covariance over all of ``X``, so it is
+    quadratic in grid size while only the per-point marginals are ever used here.
+    Measured on this repo's d=6 GP:
+
+        N =  2,000  ->   0.06 s
+        N = 20,000  -> 100.60 s
+
+    A 10x larger grid costs ~1700x more time, and 20,000 doubles is a 3.2 GB dense
+    matrix -- the same class of trap that produced Q54's memory leak. Chunking at 2,048
+    turns the 20,000-point grid into ~0.6 s.
+    """
 
     class _Adapted:
         def posterior_mean_and_sd(self, X: Tensor) -> tuple[Tensor, Tensor]:
+            means, sds = [], []
             with torch.no_grad():
-                post = model.posterior(X)
-            return (post.mean.reshape(-1).double(),
-                    post.variance.reshape(-1).clamp_min(0).sqrt().double())
+                for start in range(0, X.shape[0], chunk):
+                    post = model.posterior(X[start:start + chunk])
+                    means.append(post.mean.reshape(-1).double())
+                    sds.append(post.variance.reshape(-1).clamp_min(0).sqrt().double())
+            return torch.cat(means), torch.cat(sds)
 
     return _Adapted()
 
@@ -188,16 +209,36 @@ def inscribed_box(model, X_grid: Tensor, tau: float, z: float, n_steps: int = 20
         :func:`certified_volume_curve` is for.
     """
     mean, sd = model.posterior_mean_and_sd(X_grid)
-    lcb = mean - z * sd
+    return inscribed_box_from_mask(X_grid, (mean - z * sd) >= tau,
+                                   n_steps=n_steps, active=active,
+                                   seed_score=mean - z * sd)
+
+
+def inscribed_box_from_mask(X_grid: Tensor, mask: Tensor, n_steps: int = 20,
+                            active: Tensor | None = None,
+                            seed_score: Tensor | None = None) -> tuple[Tensor, float]:
+    """Largest axis-aligned box lying entirely inside ``mask``, by greedy expansion.
+
+    Takes the certified set as a **boolean mask** rather than recomputing an LCB, so the
+    same routine serves Peterson's ``D_gamma`` and the mean-LCB region. That matters:
+    the primary object is ``D_gamma``, and a box routine that could only inscribe into an
+    LCB region would quietly hold the secondary object as the deliverable.
+
+    Args:
+        seed_score: what to maximise when choosing the starting point. Defaults to the
+            mask itself, which picks an arbitrary certified point; pass a continuous
+            score (an LCB, or the predictive probability) for a better seed.
+    """
     d = X_grid.shape[1]
     if active is None:
         active = torch.ones(d, dtype=torch.bool)
+    lcb = mask.double() if seed_score is None else seed_score
 
-    if not bool((lcb >= tau).any()):
+    if not bool(mask.any()):
         centre = torch.full((d,), 0.5, dtype=torch.double)
         return torch.stack([centre, centre]), 0.0
 
-    seed = X_grid[int(torch.argmax(lcb))].double()
+    seed = X_grid[int(torch.argmax(torch.where(mask, lcb, lcb.min() - 1)))].double()
     lo, hi = seed.clone(), seed.clone()
     step = 1.0 / n_steps
 
@@ -215,7 +256,7 @@ def inscribed_box(model, X_grid: Tensor, tau: float, z: float, n_steps: int = 20
                 new_hi = hi.clone()
                 (new_hi if sign > 0 else new_lo)[j] = proposed
                 inside = ((X_grid >= new_lo) & (X_grid <= new_hi)).all(dim=1)
-                if bool(inside.any()) and bool((lcb[inside] >= tau).all()):
+                if bool(inside.any()) and bool(mask[inside].all()):
                     bound[j] = proposed
                     moved = True
 

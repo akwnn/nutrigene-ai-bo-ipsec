@@ -27,12 +27,19 @@ def sobol_grid(dim: int, n: int, seed: int = 0) -> Tensor:
 def _mean_and_truth(model, truth_fn, X_grid: Tensor) -> tuple[Tensor, Tensor]:
     """``(mean, truth)`` as flat double tensors.
 
-    Accepts either the ``posterior_mean`` protocol used by the analytic stand-ins in the
-    tests, or a BoTorch model exposing ``posterior``. One code path for both, so a test
-    double cannot pass through logic the real model skips.
+    Accepts three protocols, in order: ``posterior_mean_and_sd`` (what
+    :mod:`boec.designspace` uses, and what a chunked adapter exposes), ``posterior_mean``
+    (the analytic stand-ins in the tests), or a raw BoTorch ``posterior``.
+
+    The first is checked first on purpose. A caller that has already paid for a chunked
+    posterior over a 20,000-point grid must not be silently routed back into
+    ``model.posterior(X_grid)``, which builds the joint covariance and costs 100.6s
+    against 0.06s at 2,000 points -- see :func:`boec.designspace.gp_adapter`.
     """
     with torch.no_grad():
-        if hasattr(model, "posterior_mean"):
+        if hasattr(model, "posterior_mean_and_sd"):
+            mean = model.posterior_mean_and_sd(X_grid)[0]
+        elif hasattr(model, "posterior_mean"):
             mean = model.posterior_mean(X_grid)
         else:
             mean = model.posterior(X_grid).mean

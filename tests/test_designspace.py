@@ -11,7 +11,8 @@ import torch
 
 from boec.designspace import (brier_and_auc, certified_mask, certified_volume_curve,
                               false_inclusion_rate, inscribed_box, iou,
-                              predictive_probability_map, probability_map, tau_max)
+                              inscribed_box_from_mask, predictive_probability_map,
+                              probability_map, tau_max)
 from boec.norms import sobol_grid
 
 
@@ -159,3 +160,45 @@ def test_auc_is_nan_when_one_class_is_absent_not_half():
     truth = torch.tensor([0.95, 0.99], dtype=torch.double)   # all above tau
     _, auc = brier_and_auc(p, truth, tau=0.9)
     assert math.isnan(auc)
+
+
+def test_inscribed_box_from_mask_serves_peterson_not_just_an_lcb():
+    """The primary object is D_gamma. A box routine that could only inscribe into an LCB
+    region would quietly hold the secondary object as the deliverable."""
+    grid = sobol_grid(3, 2048, seed=0)
+    m = _Linear(sd=0.05)
+    d_gamma = predictive_probability_map(m, grid, tau=0.3, sigma=0.10) >= 0.90
+    assert int(d_gamma.sum()) > 0
+    box, vol = inscribed_box_from_mask(grid, d_gamma)
+    assert vol > 0.0
+    inside = ((grid >= box[0]) & (grid <= box[1])).all(dim=1)
+    assert bool((d_gamma | ~inside).all()), "box escapes D_gamma"
+
+
+def test_inscribed_box_from_mask_is_empty_for_an_empty_mask():
+    grid = sobol_grid(3, 512, seed=0)
+    _, vol = inscribed_box_from_mask(grid, torch.zeros(512, dtype=torch.bool))
+    assert vol == 0.0
+
+
+def test_gp_adapter_chunking_gives_the_same_answer_as_one_shot():
+    """Chunking is for runtime, so it must be numerically invisible.
+
+    model.posterior(X) builds the JOINT covariance, so it is quadratic in grid size while
+    only marginals are used. Measured here: 0.06s at N=2,000 and 100.6s at N=20,000.
+    """
+    from boec.designspace import gp_adapter
+    from boec.replay import unit_bounds
+    from boec.surrogate import build_gp
+
+    torch.manual_seed(0)
+    X = torch.rand(16, 3, dtype=torch.double)
+    Y = X.sum(dim=1, keepdim=True)
+    Yvar = torch.full_like(Y, 0.01)
+    model = build_gp(X, Y, Yvar, unit_bounds(3))
+    grid = sobol_grid(3, 300, seed=0)
+
+    m_small, s_small = gp_adapter(model, chunk=32).posterior_mean_and_sd(grid)
+    m_big, s_big = gp_adapter(model, chunk=10_000).posterior_mean_and_sd(grid)
+    assert torch.allclose(m_small, m_big, atol=1e-9)
+    assert torch.allclose(s_small, s_big, atol=1e-9)

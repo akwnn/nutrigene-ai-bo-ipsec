@@ -52,3 +52,19 @@ def test_grid_r2_is_one_for_a_perfect_model():
 def test_sobol_grid_is_deterministic_in_its_seed():
     assert torch.equal(sobol_grid(4, 128, seed=7), sobol_grid(4, 128, seed=7))
     assert not torch.equal(sobol_grid(4, 128, seed=7), sobol_grid(4, 128, seed=8))
+
+
+def test_norms_accepts_the_designspace_protocol_without_refitting():
+    """A caller holding a chunked posterior must not be routed back into model.posterior,
+    which builds the joint covariance (100.6s at N=20,000 vs 0.06s at N=2,000)."""
+    grid = sobol_grid(2, 128, seed=0)
+
+    class _PairOnly:
+        """Exposes ONLY posterior_mean_and_sd. No posterior, no posterior_mean."""
+
+        def posterior_mean_and_sd(self, X):
+            mean = torch.zeros(X.shape[0], dtype=torch.double)
+            return mean, torch.full_like(mean, 0.1)
+
+    assert sup_err(_PairOnly(), lambda X: torch.full((X.shape[0], 1), 0.4,
+                                                     dtype=torch.double), grid) == 0.4
