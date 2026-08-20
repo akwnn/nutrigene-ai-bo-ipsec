@@ -290,3 +290,69 @@ which was genuinely in doubt.
 * *"Version B carries the headline"* — **partly wrong.** The safety headline (contained
   **0 of 50**) is bitwise identical in `k6b-conservative.json`, which **is** gated. Version
   B's uniquely ungated claims are only the rounds axis and the two kills.
+
+---
+
+## D15 🟢 Checked `metrics.py` rather than trusting the file-ownership boundary.
+
+The Fix 1 agent modified `src/boec/metrics.py`, which was **not** on my do-not-touch list
+but contains `constrained_argmax` — used by `spread_gp` and other committed paths. If it
+had been changed, committed results would have been silently invalidated.
+
+**Verified: 89 insertions, 0 deletions.** Purely additive (`ScreenedArgmax`,
+`grid_screened_argmax`); existing functions untouched. No stop condition.
+
+**Lesson for the next brief.** My do-not-touch list named four files by name. It should
+name the *property* — "any module a committed result depends on" — because I cannot
+enumerate that list correctly in advance, and I didn't.
+
+---
+
+## D16 🟢 Took over an idling agent's work rather than leaving it parked.
+
+The E1/E2/Fix 5 agent finished its edits and then sat idle waiting on its own background
+campaign, notifying "standing by" three times. Rather than let it hold state, I picked up
+monitoring directly. Its edits are committed and its run is in flight and self-gating.
+
+---
+
+## Run state at time of writing
+
+| run | progress | note |
+|---|---|---|
+| `run_fix1_terminal_rule.py` | 28/50 | posterior-mean terminal rule, 5 workers |
+| `run_versionb.py` → predictive | 21/50 | **self-gating and reporting `GATED`** — closes the report's §6.16 finding that Version B was the one production run with no gate |
+| `run_step0_oracle_best.py` | 20/50 | re-run with the `qlognei` gate and the corrected row label |
+| `pytest tests/` | running | full suite after the `metrics.py` change |
+
+---
+
+## 🔴 OPEN — needs your decision, not mine
+
+1. **Amendment A1: re-run Q30, or drop it?** `results/q30-additive.json` never existed, so
+   the kernel arms cannot be gated, and regenerating the comparator flips the contrast
+   sign. The A1 *null* is unaffected in direction, but its evidentiary status is not
+   citable under rule 1 either way. Cost of a re-run is ~200 campaigns. **Scope call.**
+2. **Phase 3 τ re-registration.** Cross-family at fixed τ_frac is invalid (prevalence
+   0.00000 → 0.95550). The audit recommends re-registering τ as a **per-family response
+   quantile**. That changes a registered quantity, which under the standing rules is
+   exactly the kind of thing I do not do unilaterally. **Needs your sign-off before any
+   cross-family run.**
+3. **Ackley in or out.** Every metric is `nan` at the registered grid and the DoE design
+   hits its exact optimum 7 times. My recommendation is **out**, as a declared sensitivity
+   rather than a headline family — but the audit laid out the case both ways and it is
+   your call.
+
+---
+
+## What I would NOT claim this morning, in one place
+
+* *"The exclusion mechanism is inert"* — **retracted, D8.** It binds in 22/50 campaigns.
+* *"The joint guarantee is real, 0.972–0.998"* — **retracted, D4/D7.** Circular.
+* *"LSE beats random-8"* — **retracted, D12.** It beats *no second plate*.
+* *"All eight A1 α\* contrasts p > 0.16"* — **retracted, D4.** One is p = 0.0125.
+* *"A1 is null"* — **direction holds, evidentiary status downgraded, D11.** Not citable.
+* *"Screening is fatal"* — **holds on hill, post-hoc, and untested off hill.** The spread
+  arms were added after K6 ran.
+* *"SPADE's certificate holds"* — **holds where measured**, but only 6 scorable cells, and
+  at τ_frac = 0.95 nothing is testable for any arm at any α.
