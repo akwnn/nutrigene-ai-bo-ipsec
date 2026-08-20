@@ -351,6 +351,22 @@ existing STATES / IMPLIES / INFERS convention. Specifically confirm:
 
 ### G12. Narayanan's denominator underpins the "both can be correct" framing
 
+> **BLOCKED on access, 2026-08-20. Not a research question — a paywall.** Three fetch attempts
+> failed: nature.com/articles/s41467-025-61113-5 returns a 303 to `idp.nature.com/authorize`
+> for both the article-number and article-ID forms, and a PMC title search did not resolve the
+> record. The article is CC-BY, so this is a fetch-path problem rather than a licensing one.
+>
+> **Corrected while checking:** the article ID is **s41467-025-61113-5**; `6055` is the article
+> *number*, not the ID. The repo's citation ("Nat. Commun. 16, 6055") is right, but anyone
+> building a URL from 6055 will 404.
+>
+> **To close:** open the article and its SI in a browser, or fetch the PDF, and confirm at page
+> level that the DoE comparator is a *predicted* experiment count rather than an executed
+> campaign. That single fact carries the paper's "both Narayanan and Rummukainen can be
+> correct because denominators differ" framing. Until it is confirmed, do not tighten that
+> sentence beyond what `source_verification.md` Part 1 already supports.
+
+
 **To close.** Read the SI and confirm the predicted-DoE count calculation at page level. Record it.
 Note `source_verification.md:117` already flags that Narayanan's continuous kernel is **not
 established** — do not cite that paper for a kernel choice.
