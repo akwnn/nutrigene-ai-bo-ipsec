@@ -171,3 +171,20 @@ COMMIT_MSG.txt
 # Q62 TuRBO-1. Anchored by path from docs/RESEARCH-SUMMARY.md and
 # docs/TURBO-OCBA-GONOGO.md. Without these exceptions a clone cannot rebuild Figure 4.
 !results/q64-gp-inregion.json
+
+# Q65-Q68 BO steelman probes. Anchored by path from docs/BO-EVIDENCE-REVIEW.md,
+# docs/PRE-SUBMISSION-GAPS.md and docs/MANUSCRIPT.md.
+!results/q65-confirm-split.json
+!results/q66-local-quadratic.json
+!results/q67-posterior-mean-n100.json
+!results/q68-inregion-n100.json
+
+# READ THIS BEFORE ADDING A RESULT FILE.
+# `results/*` above is ignored wholesale and un-ignored one file at a time. A new
+# results JSON without an explicit `!` line here is NOT untracked-and-visible -- it is
+# invisible to `git status` and silently dropped from `git add -A`, which is how a run
+# that a paper cites can fail to exist in a clone. Add the exception in the same commit
+# as the run, or `git add -f` it and add the line immediately after.
+# Currently ignored on purpose (older artefacts, not cited by the paper):
+#   bench-surrogate, e2-bo-regeneration, e4-robustness, q29-rescore, q29-symmetric,
+#   q30-additive
