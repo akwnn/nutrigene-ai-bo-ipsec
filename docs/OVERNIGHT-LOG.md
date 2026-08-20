@@ -517,3 +517,51 @@ check, and now the production run's own logging.
 **Unchanged.** The registered stop — *if containment moves off 0.940/1.000/1.000, halt* —
 never fired. The fixes that helped regret did not cost the certificate, which was the
 specific risk flagged before Phase 1 began.
+
+---
+
+## D23 ⚠️ Three caveats that qualify D20's headline. The third one matters.
+
+**1. `plate1_only` is NOT independent evidence.** It is the same 48 wells as `lhs` —
+committed columns agree to 4.44e-16. Both are reported, and **neither may be counted twice
+in any ranking.** I listed them as separate rows in D20's table; they are one arm.
+
+**2. The 20k grid screen never won.** The `constrained_argmax` polish beat it in **500/500**
+campaigns, so rule P is numerically identical under the polish alone. The grid is a floor
+that was never needed. `regret_p_grid` is stored separately so this stays checkable.
+
+**3. ⚠️ Part of `doe`'s collapse is a BoTorch prior, not the design.** `doe`'s posterior on
+its two screened-out axes is **prior-driven** — the likelihood is flat there, so the
+lengthscale reverts to the prior mode 0.5016 (Amendment A3(c), and the D8 defect recorded in
+`RESULTS.md`). So *"DoE's regret advantage depends on not using its own model"* is **partly
+a statement about a library default**, not purely about the design.
+
+**This must travel with D20.** The reversal is real and the gate is clean, but the
+mechanism is at least two things: a genuinely poor response surface (`grid_r2 = −6.19`)
+**and** an unidentified posterior on axes the CCD never varied. Disentangling them needs
+the arm re-scored on its active subspace under rule P — **which has not been run.** Adding
+it to the open list.
+
+**Also noted:** `doe`'s rule A already includes a confirmation well at its fitted optimum,
+so "model vs no model" overstates the contrast. Rule A is model-informed once, at one point.
+
+---
+
+## D24 🟢 The agent hit the same ULP bug I did, and fixed it the same way.
+
+Its first smoke run missed `lhs` by 3.331e-16 and `random` by 2.220e-16 — the identical
+`static_curve` averaging artefact I hit hours earlier (the float64 mean of 20 identical
+values is not bitwise that value). It fixed it by **taking `rec.regret` from
+`replay.regenerate`**, which already reproduces the committed arithmetic, rather than by
+raising a tolerance.
+
+**That is the standing rule holding under independent pressure.** Two workers, hours apart,
+hit the same trap and both matched the arithmetic instead of widening the gate. The rule is
+doing its job.
+
+**Registration timing verified:** `4e14769` at 02:12:41, runner's first commit `63783aa` at
+02:34:20. Registration precedes the runner by 22 minutes. Citable.
+
+**Gate:** 500/500 at |Δ| = 0.000e+00, re-verified against `git show HEAD:` blobs rather than
+the working tree, because other agents were writing concurrently. That was the right
+paranoia — the working tree was not a safe reference last night.
