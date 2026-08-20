@@ -60,12 +60,14 @@ from boec.diagnostics import reported_best_curve
 from boec.doe import run_doe_arm
 from boec.optimizers import AcqConfig
 from boec.oracles import load_ensemble
+from boec.runner import PAIRING_EXEMPT, static_design
 from boec.torch_oracle import BiphasicOracle, _plug_in_yvar
 
 __all__ = [
     "CampaignRecord",
     "DETERMINISTIC_ARMS",
     "OPTIMISED_ARMS",
+    "SPREAD_ARMS",
     "committed_rows",
     "instance_by_id",
     "regenerate",
@@ -77,6 +79,8 @@ __all__ = [
 #: different campaign and cannot be gated against the committed column.
 BUDGET = 48
 Q_BATCH = 4
+#: `run_e2.static_curve`'s ordering count. Load-bearing for bitwise reproduction.
+N_ORDERINGS = 20
 
 #: Arms whose acquisition never calls an optimiser, so exact equality is the right bar.
 DETERMINISTIC_ARMS = ("doe",)
@@ -84,6 +88,14 @@ DETERMINISTIC_ARMS = ("doe",)
 OPTIMISED_ARMS = ("qlogei", "qlognei")
 #: Q30's post-hoc kernel arms, needed by K6 (Amendment A1). Same acquisition, other kernel.
 KERNEL_ARMS = {"qlogei-add": "additive+interaction", "qlogei-addonly": "additive"}
+#: One-shot space-filling arms: 48 points, evaluated once, ONE round against BO's ten.
+#:
+#: **This is the comparator SPADE is actually about**, and the first K6 run did not have
+#: it. That run used ``doe`` as the classical arm, which is not a spread design at all --
+#: it is a 20-run screen plus a 27-run CCD confined to a sub-box, with two of six axes
+#: pinned by the screen. It answers "is screening fatal for a design space" (it is), not
+#: "does a one-shot spread design map better than adaptive search".
+SPREAD_ARMS = ("lhs", "sobol", "random")
 
 
 @dataclass(frozen=True)
@@ -163,6 +175,12 @@ def regenerate(instance: str, dim: int, sigma: float, seed: int,
         c.run()
         X, Y, Yvar = c.train_X, c.train_Y, c.train_Yvar
         kept = None
+    elif arm in SPREAD_ARMS:
+        # One call to evaluate, exactly as `run_e2.static_curve` does. Calling it twice
+        # would draw fresh noise and return a different campaign.
+        X = static_design(bounds, arm, BUDGET, seed)
+        Y, Yvar = orc.evaluate(X)
+        kept = None
     elif arm in DETERMINISTIC_ARMS:
         r = run_doe_arm(orc, bounds, truth=orc.truth, budget=BUDGET, seed=seed)
         X, Y = r.X_visited, r.Y_visited
@@ -173,9 +191,26 @@ def regenerate(instance: str, dim: int, sigma: float, seed: int,
     else:
         raise ValueError(
             f"unknown arm {arm!r}; expected one of "
-            f"{DETERMINISTIC_ARMS + OPTIMISED_ARMS + tuple(KERNEL_ARMS)}")
+            f"{DETERMINISTIC_ARMS + OPTIMISED_ARMS + SPREAD_ARMS + tuple(KERNEL_ARMS)}")
 
-    curve = scored_curve(orc, X, Y)
+    if arm in SPREAD_ARMS:
+        # Reproduce run_e2.static_curve's ARITHMETIC, not merely its result. It averages
+        # `N_ORDERINGS` curves whose final values are all identical (the final value is
+        # order-invariant), and the float64 mean of 20 copies of x is not bitwise x --
+        # measured at up to 5.6e-17, a few ULP. Computing a single curve therefore misses
+        # the committed column by ~1e-16 and the gate fires on an arithmetic artefact.
+        # The fix is to match the arithmetic, so the gate stays EXACT and no tolerance is
+        # invented. Constants below are run_e2's, not chosen here.
+        n_init = 2 * dim + 2 if arm not in PAIRING_EXEMPT else 0
+        rng = np.random.default_rng(seed)
+        curves = []
+        for _ in range(N_ORDERINGS):
+            order = np.concatenate([np.arange(n_init),
+                                    n_init + rng.permutation(BUDGET - n_init)])
+            curves.append(scored_curve(orc, X[order], Y[order]))
+        curve = np.stack(curves).mean(axis=0)
+    else:
+        curve = scored_curve(orc, X, Y)
     return CampaignRecord(
         X=X, Y=Y, Yvar=Yvar, instance=instance, dim=dim, sigma=sigma, seed=seed,
         arm=arm, regret=float(inst.optimum_value - curve[-1]),

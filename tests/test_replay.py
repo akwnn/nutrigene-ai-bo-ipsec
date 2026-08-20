@@ -88,3 +88,30 @@ def test_adaptive_arms_report_no_screen():
     row = _primary_rows("qlogei")[0]
     rec = regenerate(row["instance"], row["dim"], row["sigma"], row["seed"], row["arm"])
     assert rec.kept_factors is None
+
+
+def test_one_shot_spread_arm_reproduces_committed_regret_exactly():
+    """The comparator SPADE is actually about: one-shot LHS, 48 points, one round.
+
+    The first K6 run used `doe` as the classical arm, which is NOT a spread design --
+    it is a screen plus a CCD confined to a sub-box with two axes pinned. Without this
+    arm the registered K6 question is unanswered.
+
+    The committed curve averages 20 random orderings, but the FINAL value is
+    order-invariant (it is the true value at the argmax of all observed Y), so a single
+    regeneration must match.
+    """
+    for arm in ("lhs", "sobol"):
+        rows = [r for r in committed_rows(GRID)
+                if r["dim"] == 6 and r["sigma"] == 0.25 and r["arm"] == arm][:3]
+        assert rows, f"no committed rows for arm={arm}"
+        for row in rows:
+            rec = regenerate(row["instance"], 6, 0.25, row["seed"], arm)
+            assert rec.X.shape == (48, 6)
+            assert rec.kept_factors is None, "a spread arm screens nothing"
+            # EXACT, not a tolerance. `static_curve` averages 20 identical curves and
+            # the float64 mean of 20 copies of x is not bitwise x (measured up to 5.6e-17),
+            # so `replay` reproduces that arithmetic rather than inventing a tolerance.
+            assert rec.regret == row["regret"], (
+                f"{arm} {row['instance']} seed={row['seed']}: "
+                f"{rec.regret!r} != {row['regret']!r}")

@@ -132,7 +132,17 @@ def main() -> None:
     ap.add_argument("--sigma", type=float, default=0.25)
     ap.add_argument("--limit", type=int, default=None,
                     help="instances to score; default all")
+    ap.add_argument("--arms", type=str, default=None,
+                    help="comma-separated subset; default all ARMS")
+    ap.add_argument("--out", type=str, default=None,
+                    help="output path; default results/k6-designspace.json")
     args = ap.parse_args()
+
+    global ARMS, OUT
+    if args.arms:
+        ARMS = tuple(a.strip() for a in args.arms.split(","))
+    if args.out:
+        OUT = Path(args.out)
 
     head = _head()
     print(f"K6 · design space vs regret · HEAD={head} · python={platform.python_version()}")
