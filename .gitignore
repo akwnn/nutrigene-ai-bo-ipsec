@@ -178,3 +178,12 @@ COMMIT_MSG.txt
 !results/versionb.log
 !results/step0-oracle-best.json
 !results/step0-oracle-best.log
+!results/fix1-terminal-rule.json
+!results/fix1-terminal-rule.log
+!results/fix1-analysis.json
+
+# Amendment E phase 1.1 + 1.5 — the E6 predictive arm plus the E1/E2 diagnostics.
+# A SEPARATE file: results/versionb.json is the gate and the headline and is never
+# overwritten, so the two are comparable row for row.
+!results/versionb-predictive.json
+!results/versionb-predictive.log

@@ -11,18 +11,51 @@ comparison that adds wells is not budget-matched and must not be a headline.
 
 ROUNDS ARE REPORTED. Every K6 contrast was at equal wells only. plate1_only is 1 round,
 versionb is 2, doe is 3, qlognei is 10.
+
+------------------------------------------------------------------------------
+AMENDMENT E, PHASE 1.1 + 1.5 — registered at `d624fa2`, before this file changed
+------------------------------------------------------------------------------
+
+**E6 adds a SIXTH arm, `versionb_predictive`, and replaces nothing.** The published
+straddle uses the GP's `sd` alone -- the estimation term -- so `versionb` resolves the
+**latent** contour while the registered deliverable is Peterson's **predictive**
+`D_gamma`. The new arm targets the deliverable's own boundary with
+`1.96*sqrt(sd^2 + sigma(x)^2) - |mu - theta|`, `sigma` an array because this repo's noise
+is relative. It runs LAST in the arm loop so it cannot perturb any arm above it, and
+`versionb` is untouched so the committed column stays comparable.
+
+**E1 adds per-campaign flatness logging.** At n=40 the neighbour density is 0.378 per
+fitted lengthscale, at which `s(x)` may sit at the prior everywhere and the eight wells
+would be chosen by numerical noise -- a space-filling draw wearing a criterion's name.
+`acq_cv = SD(a)/|mean(a)|` on the candidate grid decides, against the registered threshold
+`ACQ_CV_FLAT`, and a campaign below it reports "acquisition uninformative at this density"
+instead of contributing a silent null.
+
+**E2 adds the batch-geometry logging its own Fix asked for**: the achieved minimum
+pairwise Chebyshev distance of every plate-2 batch, the radius that produced it, whether
+the top-q batch would have violated that radius, and the plate-2 coordinates themselves.
+The E2 claim that the exclusion is inert does not reproduce -- it binds in 22 of 50
+campaigns -- and this file is where that stops being an argument.
+
+**THIS RUNNER NEVER WRITES `results/versionb.json`.** That file carries the headline
+containment result and is the comparator, not the target. It is loaded read-only as a
+**gate**: every column the five shared arms have in common with it must agree at
+`|delta| = 0.0`, and a single failure stops the run. Section 6.16 of the technical report
+recorded that Version B was the one production run in this project without a gate. It has
+one now.
 """
 
 from __future__ import annotations
 
-import argparse, gc, json, platform, subprocess, sys, time
+import argparse, gc, json, math, platform, subprocess, sys, time
 from pathlib import Path
 
 import numpy as np
 import torch
 
 from boec.designspace import gp_adapter, brier_and_auc, predictive_probability_map
-from boec.lse import batch_lse, exclusion_radius
+from boec.lse import (batch_lse, exclusion_radius, min_pairwise_chebyshev,
+                      predictive_sigma, straddle_predictive_score, straddle_score)
 from boec.norms import sobol_grid
 from boec.replay import committed_rows, instance_by_id, regenerate, scored_curve, unit_bounds
 from boec.runner import static_design
@@ -31,7 +64,9 @@ from boec.torch_oracle import BiphasicOracle, _plug_in_yvar
 from boec.vorobev import (alpha_star, conservative_estimate, containment_probability,
                           empirical_containment, excursion_probability, vorobev_deviation)
 
-OUT = Path("results/versionb.json")
+#: NEVER the output. Loaded read-only as the gate. See the module docstring.
+COMMITTED = Path("results/versionb.json")
+OUT_DEFAULT = Path("results/versionb-predictive.json")
 N_PLATE1, N_PLATE2, BUDGET = 40, 8, 48
 TAU_FRACS = (0.60, 0.75, 0.85, 0.95)
 #: Threshold the LSE criterion TARGETS. Registered; scoring still spans all TAU_FRACS.
@@ -45,8 +80,21 @@ DESIGN_TAU_FRAC = 0.75
 #: not exist. What DOES depend on gamma is the absolute tau a lab may promise, and that
 #: is reported in the write-up, not computed here.
 GRID_N, SUBSET_N, N_DRAWS, GRID_SEED = 20_000, 2_000, 512, 0
+CAND_N = 4096
 ALPHAS = (0.50, 0.80, 0.95)
-ROUNDS = {"versionb": 2, "versionb_random": 2, "plate1_only": 1, "doe": 3, "qlognei": 10}
+#: Amendment E1, registered at `d624fa2` from the Matern 5/2 kernel and NOT from the data.
+#: One fitted lengthscale of contrast in s spans 0.9903 - 0.8517 = 0.1386 s_prior, so the
+#: straddle's 1.96*s term spans 0.2717 s_prior against a mean of at most 1.96 s_prior;
+#: spreading that range over the grid gives SD = range/sqrt(12) and acq_cv = 0.0400.
+#: Below it, no candidate is even one lengthscale better determined than the typical one.
+ACQ_CV_FLAT = 0.04
+#: `versionb_predictive` is LAST so it cannot perturb the five arms above it.
+ARMS = ("versionb", "versionb_random", "plate1_only", "doe", "qlognei",
+        "versionb_predictive")
+ROUNDS = {"versionb": 2, "versionb_random": 2, "versionb_predictive": 2,
+          "plate1_only": 1, "doe": 3, "qlognei": 10}
+#: Diagnostics, provenance and the new arm are not comparable to the committed file.
+UNGATED_KEYS = {"instance", "seed", "arm", "plate2_X", "plate2_mode"}
 
 
 def _head():
@@ -57,25 +105,68 @@ def _fit(X, Y, Yvar, d):
     return build_gp(X, Y, Yvar, unit_bounds(d))
 
 
-def _two_plate(orc, dim, seed, mu_max, use_lse: bool):
-    """Plate 1 space-filling, plate 2 by LSE or at random. Returns (X, Y, Yvar)."""
+def _plate2_diag(X2, radius=None, topq=None, score=None):
+    """The E1/E2 diagnostics for one plate-2 batch. Every claim recomputable from these."""
+    d = {"plate2_min_cheb": min_pairwise_chebyshev(X2),
+         "plate2_X": X2.tolist(),
+         "excl_radius": radius,
+         "topq_min_cheb": None if topq is None else min_pairwise_chebyshev(topq),
+         "acq_cv": None, "acq_sd": None, "acq_mean": None, "acq_flat": None}
+    if radius is not None and topq is not None:
+        # E2: did the exclusion have anything to do? True means the score alone would
+        # have stacked wells closer together than the model's own lengthscale allows.
+        d["excl_bound"] = bool(d["topq_min_cheb"] < radius)
+    else:
+        d["excl_bound"] = None
+    if score is not None:
+        sd, mu = float(score.std()), float(score.mean())
+        d["acq_sd"], d["acq_mean"] = sd, mu
+        # E1: relative dispersion. |mean| ~ 0 is a knife-edge, not the flat limit; it
+        # inflates the ratio and so can only UNDER-report flatness, never over-report it.
+        d["acq_cv"] = float("inf") if mu == 0.0 else sd / abs(mu)
+        d["acq_flat"] = bool(d["acq_cv"] < ACQ_CV_FLAT)
+    return d
+
+
+def _two_plate(orc, dim, seed, mu_max, mode: str):
+    """Plate 1 space-filling; plate 2 by the latent straddle, the predictive straddle, or
+    at random. Returns ``(X, Y, Yvar, diag)``.
+
+    ``mode="lse"`` is bit-for-bit what produced the committed ``versionb`` column: same
+    design, same candidate grid, same criterion, same radius. The diagnostics are read
+    off the same deterministic (mean, sd) the batch was chosen from, so they describe the
+    batch that was actually taken rather than a re-derivation of it.
+    """
     bounds = unit_bounds(dim)
     X1 = static_design(bounds, "lhs", N_PLATE1, seed)
     Y1, V1 = orc.evaluate(X1)
     model = _fit(X1, Y1, V1, dim)
 
-    if use_lse:
-        cand = sobol_grid(dim, 4096, seed=seed)
-        theta = DESIGN_TAU_FRAC * mu_max
-        X2 = batch_lse(gp_adapter(model), cand, theta, N_PLATE2,
-                       exclude=exclusion_radius(model))
-    else:
+    if mode == "random":
         g = torch.Generator().manual_seed(10_000 + seed)
         X2 = torch.rand(N_PLATE2, dim, generator=g, dtype=torch.double)
+        diag = _plate2_diag(X2)
+    else:
+        cand = sobol_grid(dim, CAND_N, seed=seed)
+        theta = DESIGN_TAU_FRAC * mu_max
+        radius = exclusion_radius(model)
+        ad = gp_adapter(model)
+        mean, sd = ad.posterior_mean_and_sd(cand)
+        if mode == "predictive":
+            sig = predictive_sigma(mean, orc.sigma_rel, orc.sigma_add)
+            score = straddle_predictive_score(mean, sd, theta, sig)
+        else:
+            sig = None
+            score = straddle_score(mean, sd, theta)
+        X2 = batch_lse(ad, cand, theta, N_PLATE2, exclude=radius, sigma=sig)
+        topq = cand[torch.topk(score, N_PLATE2).indices]
+        diag = _plate2_diag(X2, radius=radius, topq=topq, score=score)
+        del cand, mean, sd, score, topq
+    diag["plate2_mode"] = mode
 
     Y2, V2 = orc.evaluate(X2)
     del model; gc.collect()
-    return torch.cat([X1, X2]), torch.cat([Y1, Y2]), torch.cat([V1, V2])
+    return torch.cat([X1, X2]), torch.cat([Y1, Y2]), torch.cat([V1, V2]), diag
 
 
 def _score(X, Y, Yvar, orc, dim, mu_max, grid, truth, X_sub, truth_sub, seed,
@@ -134,17 +225,60 @@ def _score(X, Y, Yvar, orc, dim, mu_max, grid, truth, X_sub, truth_sub, seed,
     return out
 
 
+def _load_gate(path: Path) -> dict:
+    """`(instance, seed, arm) -> committed row`. Missing file is a hard error, not a skip.
+
+    A gate that silently degrades to "no comparison available" is not a gate; the whole
+    point is that the five shared arms cannot drift without the run stopping.
+    """
+    if not path.exists():
+        raise SystemExit(f"gate file {path} is missing; refusing to run ungated")
+    return {(r["instance"], r["seed"], r["arm"]): r
+            for r in json.loads(path.read_text())["rows"]}
+
+
+def _gate(row: dict, ref: dict | None) -> list[str]:
+    """Every shared numeric column at `|delta| = 0.0`. No tolerance is introduced."""
+    if ref is None:
+        return []
+    bad = []
+    for k, v in row.items():
+        if k in UNGATED_KEYS or k not in ref or v is None or ref[k] is None:
+            continue
+        a, b = v, ref[k]
+        if isinstance(a, bool) or isinstance(b, bool):
+            if bool(a) != bool(b):
+                bad.append(f"{k}: {a!r} != committed {b!r}")
+        elif isinstance(a, (int, float)) and isinstance(b, (int, float)):
+            if math.isnan(float(a)) and math.isnan(float(b)):
+                continue
+            if float(a) != float(b):
+                bad.append(f"{k}: {a!r} != committed {b!r} (delta {float(a)-float(b):.3e})")
+        elif a != b:
+            bad.append(f"{k}: {a!r} != committed {b!r}")
+    return bad
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--dim", type=int, default=6)
     ap.add_argument("--sigma", type=float, default=0.25)
     ap.add_argument("--limit", type=int, default=None)
+    ap.add_argument("--out", type=Path, default=OUT_DEFAULT)
     args = ap.parse_args()
 
+    out = args.out
+    if out.resolve() == COMMITTED.resolve():
+        raise SystemExit(f"refusing to overwrite {COMMITTED} -- it is the gate and the "
+                         f"headline. Pass a different --out.")
+
     head = _head()
+    gate = _load_gate(COMMITTED)
     print(f"Version B · two-plate SPADE · HEAD={head}")
     print(f"{N_PLATE1} + {N_PLATE2} = {N_PLATE1+N_PLATE2} wells · LSE targets "
-          f"tau_frac={DESIGN_TAU_FRAC} · rounds {ROUNDS}\n")
+          f"tau_frac={DESIGN_TAU_FRAC} · rounds {ROUNDS}")
+    print(f"out={out} · gate={COMMITTED} ({len(gate)} rows) · acq_cv flat below "
+          f"{ACQ_CV_FLAT}\n")
 
     keys = sorted({(r["instance"], r["seed"]) for r in committed_rows()
                    if r["dim"] == args.dim and r["sigma"] == args.sigma
@@ -154,7 +288,7 @@ def main():
 
     grid = sobol_grid(args.dim, GRID_N, seed=GRID_SEED)
     X_sub = sobol_grid(args.dim, SUBSET_N, seed=GRID_SEED)
-    rows, t0 = [], time.time()
+    rows, gate_failures, n_gated, t0 = [], [], 0, time.time()
 
     for i, (inst_id, seed) in enumerate(keys, 1):
         inst = instance_by_id(inst_id, args.dim)
@@ -164,12 +298,15 @@ def main():
             truth_sub = orc_t.truth(X_sub).reshape(-1).double()
         mu_max = float(inst.optimum_value)
 
-        for arm in ("versionb", "versionb_random", "plate1_only", "doe", "qlognei"):
+        for arm in ARMS:
             t = time.time()
             kept = held = None
+            diag = {}
             orc = BiphasicOracle(inst, sigma_rel=args.sigma, seed=seed)
-            if arm in ("versionb", "versionb_random"):
-                X, Y, V = _two_plate(orc, args.dim, seed, mu_max, arm == "versionb")
+            if arm.startswith("versionb"):
+                mode = {"versionb": "lse", "versionb_random": "random",
+                        "versionb_predictive": "predictive"}[arm]
+                X, Y, V, diag = _two_plate(orc, args.dim, seed, mu_max, mode)
             elif arm == "plate1_only":
                 X = static_design(unit_bounds(args.dim), "lhs", BUDGET, seed)
                 Y, V = orc.evaluate(X)
@@ -181,27 +318,56 @@ def main():
                 kept = held = None
             r = _score(X, Y, V, orc_t, args.dim, mu_max, grid, truth, X_sub, truth_sub,
                        seed, kept=kept, held=held)
+            r.update(diag)
             r.update({"instance": inst_id, "seed": seed, "arm": arm,
                       "rounds": ROUNDS[arm], "dim": args.dim, "sigma": args.sigma})
+
+            ref = gate.get((inst_id, seed, arm))
+            bad = _gate(r, ref)
+            n_gated += ref is not None
+            if bad:
+                gate_failures.append({"instance": inst_id, "seed": seed, "arm": arm,
+                                      "failures": bad})
+                print(f"\nGATE FAILURE {arm} {inst_id} seed={seed}:")
+                for b in bad[:8]:
+                    print(f"    {b}")
+                raise SystemExit("a regenerated campaign missed its committed column; "
+                                 "stopping rather than absorbing it")
+
             rows.append(r)
-            print(f"[{i:3d}/{len(keys)}] {arm:16s} {inst_id} seed={seed} "
-                  f"n={r['n_wells']} rounds={ROUNDS[arm]:2d} regret={r['regret']:.4f} "
-                  f"a*={r[f'alpha_star_{DESIGN_TAU_FRAC}']:.3f} ({time.time()-t:.1f}s)",
+            cv = r.get("acq_cv")
+            cvs = "     -   " if cv is None else f"cv={cv:6.3f}"
+            mc = r.get("plate2_min_cheb")
+            mcs = "        " if mc is None else f"d2={mc:.3f}"
+            print(f"[{i:3d}/{len(keys)}] {arm:20s} {inst_id} seed={seed} "
+                  f"n={r['n_wells']} regret={r['regret']:.4f} "
+                  f"a*={r[f'alpha_star_{DESIGN_TAU_FRAC}']:.3f} {cvs} {mcs} "
+                  f"{'GATED' if ref is not None else '  new'} ({time.time()-t:.1f}s)",
                   flush=True)
 
-        OUT.write_text(json.dumps({
+        out.write_text(json.dumps({
             "provenance": {"git_sha": head, "argv": sys.argv,
-                           "python": platform.python_version()},
+                           "python": platform.python_version(),
+                           "gate_file": str(COMMITTED), "gate_rows_checked": n_gated,
+                           "gate_failures": gate_failures},
             "config": {"dim": args.dim, "sigma": args.sigma,
                        "n_plate1": N_PLATE1, "n_plate2": N_PLATE2,
                        "tau_fracs": list(TAU_FRACS),
                        "design_tau_frac": DESIGN_TAU_FRAC, "rounds": ROUNDS,
-                       "alphas": list(ALPHAS),
-                       "grid_n": GRID_N, "subset_n": SUBSET_N, "n_draws": N_DRAWS},
+                       "arms": list(ARMS), "alphas": list(ALPHAS),
+                       "grid_n": GRID_N, "subset_n": SUBSET_N, "cand_n": CAND_N,
+                       "n_draws": N_DRAWS, "acq_cv_flat": ACQ_CV_FLAT},
             "rows": rows}, indent=2))
         del truth, truth_sub; gc.collect()
 
-    print(f"\n{len(rows)} rows in {time.time()-t0:.0f}s")
+    print(f"\n{len(rows)} rows in {time.time()-t0:.0f}s · "
+          f"{n_gated} gated comparisons, {len(gate_failures)} failures")
+    flat = [r for r in rows if r.get("acq_flat")]
+    lse_rows = [r for r in rows if r.get("acq_cv") is not None]
+    print(f"acq_cv over {len(lse_rows)} LSE-arm campaigns: "
+          f"below {ACQ_CV_FLAT} in {len(flat)}")
+    bound = [r for r in rows if r.get("excl_bound")]
+    print(f"exclusion bound in {len(bound)}/{len(lse_rows)} LSE-arm campaigns")
 
 
 if __name__ == "__main__":
