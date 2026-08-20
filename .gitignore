@@ -176,3 +176,5 @@ COMMIT_MSG.txt
 !results/k6b-conservative-spread.log
 !results/versionb.json
 !results/versionb.log
+!results/step0-oracle-best.json
+!results/step0-oracle-best.log

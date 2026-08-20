@@ -1,0 +1,18 @@
+Step 0 · oracle-best · HEAD=14449698d351f8cf1f040dc800f07812f0587058 · 50 instance-seeds
+
+[ 10/50] 116s
+[ 20/50] 277s
+[ 30/50] 568s
+[ 40/50] 667s
+[ 50/50] 815s
+
+gate failures (doe vs Q57 committed): 0
+
+arm              rule A  oracle-best   id gap
+doe              0.0958       0.0597   0.0361
+qlognei          0.1532       0.0834   0.0698
+lhs              0.1270       0.0795   0.0475
+sobol            0.1724       0.0993   0.0730
+random           0.2216       0.0965   0.1251
+plate1_only      0.1270       0.0795   0.0475
+versionb         0.1638       0.0867   0.0771
