@@ -144,12 +144,201 @@ off a curve rather than run. Converts a deferred stage into a lookup, for an aft
 **σ = 0.20 and 0.15 are new campaigns and cannot be gated against anything.** Label them
 exploratory and keep them out of any confirmatory contrast.
 
-### A6 — Get the `r` number in parallel
+### A6 — Get the lab numbers in parallel *(extended by B5)*
 
 One correlation on an existing Nutrigene plate: day-0 confluence against day-6 endpoint,
 across wells. Blocks nothing, costs an afternoon, and with A5 it turns Stage 0 from an
 open question into a go/no-go: `r < 0.4` → Stage 0 comes out, σ̂ rests on replicates
 alone; `r > 0.7` → Stage 0 is half the variance.
+
+**Second number, added by B5: reagent cost per well**, from Nutrigene's ordering records.
+It decides whether the matched-plates argument is decisive or merely suggestive, and it is
+the number the product claim rests on. Neither blocks anything; both are an afternoon.
+
+---
+
+## Amendment B — 2026-08-20, second review
+
+Supersedes parts of Amendment A. **A3's primary policy flips.** Three arithmetic
+claims were checked; two hold exactly, one does not.
+
+### B0 — What was verified
+
+**Peterson's noise floor holds, and it is the most important number here.**
+`D_γ = {x : P(Y ≥ τ | x) ≥ γ}` uses the posterior *predictive*, so it carries `σ²`:
+
+```
+P(Y >= tau | x) = Phi( (mu(x) - tau) / sqrt(s(x)^2 + sigma^2) )
+```
+
+Set `s = 0` — infinite data, perfect knowledge. Certifying still requires
+`mu - tau >= z*sigma`. This repo's noise is **relative** (`y = f(1+eps) + eta`), so the
+noise SD scales with `mu` and the floor comes out the same:
+
+```
+tau_max = mu_max * (1 - z * sigma_rel)
+```
+
+| γ | z | τ_max at s=0 | τ_max at s=0.15 |
+|---|---|---|---|
+| 0.95 | 1.645 | **0.589** | 0.520 |
+| 0.90 | 1.282 | 0.679 | 0.626 |
+| 0.80 | 0.842 | 0.789 | 0.755 |
+| 0.70 | 0.524 | 0.869 | 0.847 |
+
+All four right-hand values reproduce the proposal's table exactly.
+
+> **At σ_rel = 0.25, no method can certify above τ ≈ 0.59 at γ = 0.95, at any budget,
+> ever.** `D_γ` is floored by *process* noise, not estimation noise.
+
+Two consequences. The γ sweep is **not** a robustness check — it is the only thing
+keeping the object non-empty. And the product "a 95% assured design space from one
+plate" does not exist at this noise level **for anyone**, which is a finding, not a
+failure. It is also a design rule: *never make a primary metric that can be identically
+zero for every arm.*
+
+**Variance scaling holds, with one correction.** `mean prediction variance = σ²p/n` is
+right. But `p = 24` is not this repo's number — `second_order_n_terms(6) = C(8,2) = 28`.
+Corrected:
+
+| n | s (p=28) | τ_max, LCB z=1.96 |
+|---|---|---|
+| 48 | 0.191 | 0.626 |
+| **96** | **0.135** | **0.735** |
+| 250 | 0.084 | 0.836 |
+| 384 | 0.068 | 0.868 |
+
+The proposal's figures (0.755 at n=96) used p=24 and run ~2–3% optimistic. **The
+conclusion is unaffected: the empty box is a 48-well artefact, not a fundamental limit.**
+
+**The cost-concentration finding holds. Its stated mechanism does not.**
+`SD(c) = 1/sqrt(12d) = 0.1179` at d=6, so ±2SD spans [0.264, 0.736] and
+`Phi(-2.121) = 1.69%` of wells fall below cost 0.25 — **0.76 wells out of 48.** Confirmed
+by simulation.
+
+But the claim that *"Stein's theorem is exactly what makes LHS blind along the cost
+direction"* is **wrong**, and it is the kind of wrong that a reviewer will enjoy.
+Measured over 4,000 designs:
+
+| n | SD(c), iid | SD(c), LHS |
+|---|---|---|
+| 48 | 0.11789 | 0.11776 |
+| 96 | 0.11792 | 0.11795 |
+
+**No difference.** LHS does not concentrate cost more than random sampling. Stein's
+theorem concerns the variance of a *sample-mean estimator* over the design; the spread of
+an additive functional *across design points* is a different quantity, governed by plain
+CLT on a sum of `d` bounded coordinates. Drop the reversal. **State it as CLT** — which
+is simpler, still true, and applies to every space-filling design including OA-LHS,
+maximin and MaxPro:
+
+> Under any space-filling design, fewer than one well in 48 lands in the cheapest quarter
+> of the cost range, and that is where the answer lives. This is CLT, not Stein.
+
+### B1 — Three versions, and only one is being planned now
+
+| version | what it is | build when |
+|---|---|---|
+| **A · map only** | Change no sampling. Re-score committed campaigns on Peterson `D_γ` + cost frontier. | **now — it is K6** |
+| **B · two-plate LSE** | A, plus plate 2 spends wells on the `D_γ` boundary by straddle/LSE, not on the peak. | only if A diverges with spread ahead |
+| **C · conformal** | B, plus jackknife+/split-conformal bands for finite-sample coverage. | only after B has a result. Paper 3 |
+
+**Do not build current SPADE.** Its Stage 1 (OA-LHS, triplicate anchors, 55 wells), Stage
+3 regime detector, and Stage 5 peak confirmation are all dropped from Version A.
+
+### B2 — The scientific object changes
+
+| | was | now |
+|---|---|---|
+| certified region | `LCB of latent f >= tau`, z=1.96 | **`D_γ = {x : P(Y >= tau | x) >= gamma}`** (Peterson 2008; Peterson & Lief 2010) |
+| box | inscribed hyperrectangle over all `d` | **NOR = inscribed box on ACTIVE axes only** (Stockdale & Cheng 2009: design space ≠ normal operating region) |
+| plate-2 allocation | confirm the peak | **batch straddle** `argmax 1.96*s(x) - |mu(x) - tau|` (Bryan 2005; Gotovos 2013; Bect 2012) |
+
+`designspace.py` gains `predictive_probability_map(model, X_grid, tau)` alongside
+`probability_map`. Both are reported; the difference between them **is** a result, since
+the mean-based region is the one E3 showed is anti-conservative.
+
+### B3 — A3 REVERSED: refuse is now primary
+
+Amendment A registered (b) full-range as primary. **That flips.** For an axis with zero
+design variation:
+
+| policy | status now |
+|---|---|
+| **(a) refuse to certify** | **PRIMARY** — a batch record needs a range for every CPP, and you cannot certify a factor you never varied |
+| (b) full range | declared sensitivity — what practice implicitly assumes; `false_inclusion_rate` exposes it |
+| (c) GP's own prior-driven slab | reported and labelled, because it is what fires silently |
+
+Under (a) the screened DoE arm's NOR is defined **in 4D, not 6D**, and its 6D volume is
+identically zero. That is the finding, stated cleanly.
+
+### B4 — Cost frontier: the always-defined deliverable
+
+The structural fact this literature ignores: **recipe cost is known exactly, linearly and
+noiselessly**, `c(x) = sum_j w_j x_j` from the catalogue. Zero wells to evaluate. So the
+real problem is `minimize c(x) s.t. f(x) >= tau` — the objective is free and all 48 wells
+buy the constraint.
+
+Define `G(k) = max{ f(x) : c(x) <= k }`. `G` is **non-decreasing by construction**, and
+the whole decision is one threshold crossing `k* = min{k : G(k) >= tau}`. Six-dimensional
+noisy argmax becomes **1D monotone threshold crossing**.
+
+**Report the cost-assurance curve** `k*_γ = min{k : P(G(k) >= tau) >= gamma}` swept over
+γ ∈ [0.5, 0.99]. Why this is the right primary metric:
+
+| | certified box volume | cheapest certifiable recipe |
+|---|---|---|
+| can be zero for every arm | **yes** | no, while the peak certifies |
+| units | dimensionless | **currency per litre** |
+| ranking when empty | undefined | always ordered |
+
+**One trap, flagged by the proposal and real.** `G` is a max over a posterior draw, so a
+plug-in estimate is **biased upward** — the same optimizer's-curse mechanism this project
+already documented as its identification result, now reappearing *inside the metric*.
+Compute `G` by sampling the posterior over the whole curve, never by plugging in the
+posterior mean, and report the bias.
+
+### B5 — Matched plates, not matched wells
+
+A 96-well plate costs one scientist-week whether 48 or 96 wells are filled. Reagents scale
+with wells; scientist time, incubator slot, cell prep and calendar scale with **plates**.
+
+| | plates | wells | calendar |
+|---|---|---|---|
+| classical RSM | 3 | 48 | ~6 weeks |
+| batch BO | 10 | 48 | ~20 weeks |
+| one full plate | **1** | 96 | ~2 weeks |
+
+**Report both axes.** Whether this argument is decisive depends on one number nobody has:
+**reagent cost per well from Nutrigene's ordering.** If reagents dominate, the argument
+weakens; if scientist-weeks dominate, it is decisive. Added to A6.
+
+**Gating caveat, unchanged from A5:** n=96 campaigns are new and cannot be gated against
+any committed column. Exploratory, and kept out of confirmatory contrasts.
+
+### B6 — Screening structurally overpays
+
+**A factor screened as non-significant is precisely the factor to reduce to zero to save
+money.** Screening drops it from the model and pins it at its centre level forever, so
+classical RSM pays mid-range price for every factor it proved didn't matter.
+
+This is a clean economic argument against a universal practice, it needs no new method,
+and **it does not depend on SPADE winning anything.** It is measurable directly on the
+committed DoE arm via `dropped_held_at`. Abstract-worthy on its own.
+
+### B7 — Constrained BO is now a required baseline
+
+If the objective becomes cost-constrained, **constrained BO is the fair comparator and
+must be in the paper.** It may win at matched wells. If it does, the finding is "nobody in
+bioprocess runs constrained BO, and here is what it is worth", plus the rounds/plates win
+— thinner, still publishable. Do not omit it and hope nobody asks.
+
+### B8 — What is now explicitly NOT built
+
+- OA-LHS vs maximin vs MaxPro as a *stage* (old K2). B0 shows the cost-blindness is CLT and hits every space-filling design equally, so this is a **sensitivity, not a mechanism**. Demote K2; keep A4's paired design only if K6 justifies it
+- Interior triplicate anchors — σ̂ is a calibration footnote once `Yvar` is known
+- The regime detector (old K4) as a *gate*; report `D_γ` disconnectedness on deceptive families instead of switching acquisition
+- NUTS, I-splines, shape constraints — closed by Q30 unless K0 reopens the L∞ channel
 
 ---
 
@@ -1170,8 +1359,39 @@ Task 6 (K2)   OA-LHS cuts Hartmann6 design SD ............ Stage 1 has a mechani
               design SD unchanged ....................... Stage 1 is plain LHS with extra
                                                             steps
 
-GO   if K6 diverges WITH SPREAD AHEAD on (b) and (c), OR (K2 wins AND K3 wins).
-NO-GO if K6 matches, OR K6 diverges with clustered ahead everywhere, AND K2 fails. SPADE is then spread_gp plus a terminal rule, both
+### Superseded by Amendment B — use this tree
+
+```
+K6 map ranking == regret ranking  AND  cost-curve ranking == regret ranking
+    -> STOP. Write up Q53/Q54/Q55/Q57/Q58. No new algorithm.
+
+K6 cost curve diverges, SPREAD ahead
+    -> GO on the cost frontier. Build cost-stratified design (Version B).
+
+K6 map diverges, SPREAD ahead, cost curve does not
+    -> GO on Version A only. Map paper, no new algorithm.
+
+Clustered ahead on BOTH map and cost
+    -> different paper: "the design-space deliverable favours adaptive designs."
+       Still novel. Not SPADE.
+```
+
+**Findings that land regardless of which branch fires**, because none of them needs a new
+method or a new campaign:
+
+- `tau_max = mu_max(1 - z*sigma_rel)` — no method certifies above **0.589** at
+  σ_rel=0.25, γ=0.95, at any budget (B0)
+- fewer than **one well in 48** lands in the cheapest cost quartile, under every
+  space-filling design, by CLT (B0)
+- **screening structurally overpays** on every factor it drops (B6)
+- the `(n, tau, gamma)` surface at which each arm's region becomes non-empty — which
+  converts "the box is empty" into a **plate-size specification** (A5)
+
+### Recommendation
+
+**Run Version A (K6) immediately.** If spread wins on the probability map or the cost
+curve, build Version B — two plates, Peterson `D_γ`, LSE straddle on plate 2, NOR on
+active axes only. **Do not build current SPADE. Do not build C until B has a result.** SPADE is then spread_gp plus a terminal rule, both
       already measured -- write up Q53/Q54/Q55/Q57/Q58 as they stand.
 ```
 
@@ -1195,10 +1415,13 @@ Commit before Task 2 runs:
 
 - K0 statistic: Spearman ρ, 10,000-resample instance-level paired bootstrap on the ρ difference
 - K6 grids: τ ∈ {0.70, 0.80, 0.85, 0.90}, z ∈ {1.00, 1.28, 1.64, 1.96, 2.58}, Sobol 20,000 at seed 0
-- K6 primary metric: **(b) Brier/AUC**. (a) and (c) are secondary, reported as curves over z
+- K6 primary metrics: **Brier/AUC of the map** and **the cost-assurance curve** (B4). Certified volume and NOR are secondary, reported as curves over γ
+- K6 region definition: **Peterson `D_γ` on the posterior predictive** is primary; the mean-LCB region is reported alongside, and the gap between them is a result (B2)
+- K6 γ sweep: {0.50, 0.70, 0.80, 0.90, 0.95, 0.99}. **Not a robustness check — it is what keeps the object non-empty** (B0)
+- `G(k)` computed by **posterior sampling, never plug-in**; the upward bias is reported (B4)
 - K1 conditions: `plug_in(y)` / `plug_in(truth)` / pooled scalar
 - K2: **paired within-instance SD** across D=20 draws, 25 pairs, Wilcoxon on the pairs (A4). Not a comparison of two grand SDs
-- K6 dropped-factor policy: **(b) full range primary, (a) refuse as declared sensitivity, (c) GP's own prior-driven answer reported alongside and labelled** (A3)
+- K6 dropped-factor policy — **REVERSED BY B3**: **(a) refuse to certify is PRIMARY**, (b) full range is the declared sensitivity, (c) the GP's prior-driven slab is reported and labelled. Under (a) the screened DoE arm's NOR is defined in 4D and its 6D volume is identically zero
 - K6 Brier decomposition: Murphy calibration–refinement, **10 equal-count bins** (A5)
 - K6 sigma sweep: {0.25, 0.20, 0.15, 0.10}; **0.20 and 0.15 are exploratory and ungated** (A5)
 - SESOI 0.02; Wilcoxon governs yes/no and the bootstrap reports magnitude, with disagreements reported and not resolved (Q20 §2)
