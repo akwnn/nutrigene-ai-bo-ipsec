@@ -4436,3 +4436,75 @@ hartmann6 0.345, ackley 0.500, levy 0.550, rosenbrock 0.744, against a space-fil
 average of 0.500 — so four of five have no binding constraint, and rosenbrock's optimum is
 identical in every coordinate, making it symmetric rather than a counterexample. Reported
 as a negative result, not run as a metric.
+
+## K6b — joint certification, and `alpha*` as a non-degenerate metric
+
+Registered **before `scripts/run_k6b_conservative.py` exists**, and before any K6b number
+is read. Additive to K6; K6 is not modified and its registered primary metric stands.
+
+### Why
+
+`{x : LCB(x) >= tau}` is 20,000 **marginal** statements presented as one **regional**
+statement. A batch record asserts the joint quantity — the probability that *no*
+certified point is false. Prior art: Chevalier (2013) Vorob'ev machinery; Azzimonti,
+Ginsbourger, Chevalier, Bect & Richet (2016; SIAM/ASA JUQ 2021) conservative estimates;
+Chevalier et al. (Technometrics 2014) batch SUR.
+
+### The algebra, checked before it was used
+
+Peterson's `P(Y >= tau|x) >= gamma` mixes **process** noise (irreducible) with
+**estimation** uncertainty (reducible). Separating them, margin 1 is a threshold shift on
+the latent field. Under this repo's **relative** noise `sigma(x) = sigma_rel*f(x)`:
+
+```
+Gamma = {f >= tau + z*sigma}
+      = {f(1 - z*sigma_rel) >= tau}
+      = {f >= tau / (1 - z*sigma_rel)}
+```
+
+and since `tau = tau_frac * tau_max` with `tau_max = mu_max(1 - z*sigma_rel)`:
+
+```
+theta = tau / (1 - z*sigma_rel) = tau_frac * mu_max        EXACTLY, for every gamma
+```
+
+Verified to machine precision at 12 `(gamma, tau_frac)` combinations before the runner
+was written. **Margin 1 is therefore fully absorbed by the tau-as-fraction
+parameterisation already registered for K6** — the latent excursion set depends on
+`tau_frac` alone. `gamma` re-enters only as interpretation: at a given `tau_frac`, the
+absolute `tau` promisable at content level `gamma` is `tau_frac * tau_max(gamma)`.
+
+Consequence: K6b scores **4 thresholds** per campaign, not 24. This was not a convenience
+choice; it is what the algebra forces, and it is a second reason the tau-as-fraction
+registration was correct.
+
+### What is computed
+
+Per regenerated campaign, on a **2,000-point** Sobol subset (seed 0) with **512** joint
+posterior draws — the joint covariance is 3.2 GB at 20,000 points but 0.14 s at 2,000
+(measured), so conditional simulation replaces orthant probabilities and is a Monte Carlo
+approximation of the same object:
+
+* `alpha_star(theta)` — the largest confidence at which a **non-empty** conservative
+  estimate exists. **Always defined**: as `rho -> 1` the Vorob'ev quantile shrinks to the
+  most-certain point, so `alpha*` is bounded below by `max_x p(x)`. This is the metric
+  that cannot degenerate the way a fixed-95% volume can.
+* `vorobev_deviation(theta)` — expected symmetric-difference volume; the set-valued
+  analogue of posterior variance, reported beside Brier and AUC.
+* IoU of the **Vorob'ev expectation** against the true excursion set.
+* `|CE_alpha|` at `alpha in {0.50, 0.80, 0.95}`, with **empty counted, never averaged**.
+
+`theta in {0.60, 0.75, 0.85, 0.95} * optimum_value`, matching K6's `tau_frac` grid.
+
+### Decision
+
+Same as K6 and it does not get its own escape hatch. If the arm ranking on `alpha*` and
+Vorob'ev deviation **matches** the ranking on simple regret, the reframe adds nothing and
+SPADE v2 dies with v1. If it **diverges with the spread arm ahead**, v2 is the build. If
+it diverges with the clustered arm ahead, that is a different paper.
+
+### Stated limit, which travels with every number
+
+`CE_alpha` is conservative **given the model**. Hyperparameters are plug-in, so their
+uncertainty sits *outside* the guarantee — Azzimonti et al. flag this themselves. The
+E3-style coverage check is reported beside it to quantify what that costs.
