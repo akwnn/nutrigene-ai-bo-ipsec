@@ -36,7 +36,14 @@ N_PLATE1, N_PLATE2, BUDGET = 40, 8, 48
 TAU_FRACS = (0.60, 0.75, 0.85, 0.95)
 #: Threshold the LSE criterion TARGETS. Registered; scoring still spans all TAU_FRACS.
 DESIGN_TAU_FRAC = 0.75
-GAMMA_FOR_AUC = 0.90
+#: DELIBERATELY ABSENT. An earlier revision defined GAMMA_FOR_AUC = 0.90 and never used
+#: it, so the AUC actually computed was at the gamma=0.50 row -- the lowest-assurance
+#: corner, and the one where plain LHS already beat qLogNEI. The constant is removed
+#: rather than wired in, because by Amendment C2's algebra the latent threshold is
+#: theta = tau_frac * mu_max for EVERY gamma, so AUC against the true excursion set does
+#: not depend on gamma at all. A gamma constant here would imply a dependence that does
+#: not exist. What DOES depend on gamma is the absolute tau a lab may promise, and that
+#: is reported in the write-up, not computed here.
 GRID_N, SUBSET_N, N_DRAWS, GRID_SEED = 20_000, 2_000, 512, 0
 ALPHAS = (0.50, 0.80, 0.95)
 ROUNDS = {"versionb": 2, "versionb_random": 2, "plate1_only": 1, "doe": 3, "qlognei": 10}
