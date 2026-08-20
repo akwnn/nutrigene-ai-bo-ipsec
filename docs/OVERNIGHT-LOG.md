@@ -194,3 +194,99 @@ have silently invalidated the committed headline.
 **The runner now gates itself** against `results/versionb.json` (read-only, never written),
 every shared column at |Δ| = 0.0, one failure stops the run. This closes the report's
 §6.16 finding that Version B was the one production run with no gate at all.
+
+## D10 🔴 **TWO DEFECTS IN MY OWN STEP 0 SCRIPT.** Found by the audit, verified, fixed, re-running.
+
+**Defect 1 — my docstring promised a gate the code did not have.** Line 10 says *"doe and
+qlognei must reproduce Q57's committed oracle-best"*. Line 67 checked **only** `doe`. The
+`qlognei` check was never written.
+
+This is precisely the failure I criticised in `lse.py` three hours earlier — a docstring
+describing behaviour the code lacks — and I shipped it myself in the next script I wrote.
+Fixed: both arms are now gated. (The audit ran the missing check by hand; it passes at
+|Δ| = 0, so **no reported number changes** — but the gate was decorative until now.)
+
+**Defect 2 — a 40-well number filed under a 48-well arm.** The row labelled `versionb` in
+`results/step0-oracle-best.json` records `n_wells = 40`. I *did* document the caveat in the
+script comment and the commit message, but the JSON row itself was mislabelled, so anyone
+reading the data without the commit message would be misled. Renamed to
+`versionb_plate1_ceiling`, with the reason in the source. **Re-running.**
+
+**No conclusion changes** — D1's decomposition used the number knowing it was a plate-1
+ceiling. But the artefact was wrong and a reader could not have known.
+
+---
+
+## D11 🔴 **AMENDMENT A1 IS IMPOSSIBLE. `results/q30-additive.json` NEVER EXISTED.** ✅
+
+Amendment A1 requires gating the kernel arms (`qlogei-add`, `qlogei-addonly`) against
+`results/q30-additive.json`. Verified: `git log --all -- results/q30-additive.json` returns
+**nothing**, and the file is not on disk. It has never been committed.
+
+So the kernel arms are **CANNOT GATE**, not merely ungated — a stronger and worse status
+than the audit brief assumed.
+
+**And the audit found this is not academic.** The only committed Q30 artefact is a log
+whose comparator column does **not** reproduce from `e2-grid.json` for exactly the two
+optimiser arms (`qlogei` 0.1666 vs committed 0.1553; `qlognei` 0.1512 vs 0.1532), while
+all five static arms match exactly. Regenerating flips `qlogei-addonly − qlogei` from
+**−0.0123 to +0.0071 — a sign change.**
+
+**Consequence for A1's headline.** I reported the A1 result as null three times (regret,
+map AUC, `alpha*`). That conclusion is unaffected in direction — but **the arms it rests on
+have no reproducible comparator**, so under this project's own rule 1 the A1 numbers are
+not citable until Q30 is re-run and committed. **Needs your call:** re-run Q30 (cost
+unknown, ~200 campaigns) or drop A1 from the paper.
+
+---
+
+## D12 🔴 KILL 2 does not mean what we said it means.
+
+The audit measured: **`versionb_random`'s 8 plate-2 wells beat the best of the 40 LHS wells
+in 0 of 50 campaigns.** (LSE manages it in 8 of 50.)
+
+So the random control's plate 2 contributes **nothing at all** on rule A. The contrast we
+reported as *"LSE beats random-8"* is really *"LSE beats no second plate"* — a much weaker
+statement, because it no longer isolates the **criterion** from the **extra wells**.
+
+This is exactly the attribution problem Amendment E3's 44+4 arm was registered to solve,
+and it is now measured rather than suspected. **KILL 2's interpretation must be rewritten.**
+
+---
+
+## D13 🟢 Audit blockers — Phase 3 is possible but not as specified.
+
+**B1 — normalisation: PASSES arithmetically, FAILS scientifically.** `mu_max` is exactly
+1.0 on all four non-Hill families (`oracles.UnitScaled`, literal `return 1.0`). But
+measured superlevel-set prevalence at τ_frac = 0.60 runs **0.00000 (ackley) · 0.00805
+(hartmann6) · 0.73569 (hill) · 0.85745 (levy) · 0.95550 (rosenbrock)**.
+
+**A fixed τ_frac is not the same question on different families.** Cross-family tables at
+fixed τ_frac would be meaningless, and on ackley every metric is literally `nan`. The
+audit's recommendation — re-register τ as a **per-family response quantile** — is the
+right repair, and it must be registered before anything cross-family runs.
+
+**B2 — noise: relative on every family, bit-for-bit.** `tau_max` re-derives identically;
+the grid does not move. One small defect found: `designspace.tau_max` omits `σ_add`
+(7.4e-4 optimistic at σ=0.25, proportionally 10× worse at σ=0.10).
+
+**B3 — ackley: the objection transfers and is WORSE than stated.** The *screen* also
+evaluates the box centre, so the DoE design hits ackley's exact optimum **7 times**. Moot
+at the registered grid anyway, since ackley's metrics are all `nan`.
+
+**B4 — replay: NO for both families and Version B arms. 11 engineering hours.** But the
+audit found decisive good news by running it live: **family campaigns regenerate
+bit-exactly and ARE gateable** — `qlogei` and `qlognei` on hartmann6 both hit |Δ| = 0
+against `q42-families.json` and `q59-hartmann-no-screen.json`. So Phase 3 is *possible*,
+which was genuinely in doubt.
+
+---
+
+## D14 🟢 Two of my "known gaps" were wrong, in the useful direction.
+
+* *"Oracle-best exists only for `doe` and `qlogei`"* — **refuted twice.** Q57 carries
+  `nei_oracle_best` on all 200 rows; Q59 carries it for four arms on hartmann6; Q56 for
+  `doe_ascent`. More was already measured than I believed.
+* *"Version B carries the headline"* — **partly wrong.** The safety headline (contained
+  **0 of 50**) is bitwise identical in `k6b-conservative.json`, which **is** gated. Version
+  B's uniquely ungated claims are only the rounds axis and the two kills.

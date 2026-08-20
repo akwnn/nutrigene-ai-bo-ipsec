@@ -44,12 +44,17 @@ def main():
     for i, (inst_id, seed) in enumerate(keys, 1):
         inst = instance_by_id(inst_id, 6)
         mu_max = float(inst.optimum_value)
-        for arm in ("doe", "qlognei", "lhs", "sobol", "random", "plate1_only", "versionb"):
+        # NOTE THE NAME. The two-plate arm's ceiling is computed from plate 1 only, so it
+        # is a LOWER BOUND on the best visited point and an UPPER BOUND on oracle-best
+        # regret. Naming the row `versionb` invited exactly the misreading the audit
+        # caught: a 40-well number filed under a 48-well arm.
+        for arm in ("doe", "qlognei", "lhs", "sobol", "random", "plate1_only",
+                    "versionb_plate1_ceiling"):
             orc = BiphasicOracle(inst, sigma_rel=0.25, seed=seed)
             if arm == "plate1_only":
                 X = static_design(unit_bounds(6), "lhs", BUDGET, seed)
                 Y, _ = orc.evaluate(X)
-            elif arm == "versionb":
+            elif arm == "versionb_plate1_ceiling":
                 # Plate 1 only is enough for the CEILING: plate 2 adds wells, so the
                 # true best VISITED point can only improve. Reported as a lower bound and
                 # labelled, rather than re-running the LSE selection here.
@@ -63,8 +68,12 @@ def main():
             rows.append({"instance": inst_id, "seed": seed, "arm": arm,
                          "rule_a": ra, "oracle_best": ob, "identification_gap": ra - ob,
                          "n_wells": int(X.shape[0])})
-            if arm == "doe":
-                ref = q57[(inst_id, seed)]["doe_oracle_best"]
+            # BOTH gated arms are checked. An earlier revision's docstring promised doe
+            # AND qlognei and the code checked only doe -- exactly the defect this project
+            # keeps finding elsewhere: a docstring describing behaviour the code lacks.
+            ref_key = {"doe": "doe_oracle_best", "qlognei": "nei_oracle_best"}.get(arm)
+            if ref_key is not None:
+                ref = q57[(inst_id, seed)][ref_key]
                 if abs(ob - ref) > 0.0:
                     gate.append({"arm": arm, "instance": inst_id, "seed": seed,
                                  "committed": ref, "regenerated": ob,
@@ -78,7 +87,8 @@ def main():
     if gate:
         print(f"  worst |delta| = {max(g['abs_delta'] for g in gate):.3e}")
     print(f"\n{'arm':14s} {'rule A':>8} {'oracle-best':>12} {'id gap':>8}")
-    for arm in ("doe","qlognei","lhs","sobol","random","plate1_only","versionb"):
+    for arm in ("doe","qlognei","lhs","sobol","random","plate1_only",
+                "versionb_plate1_ceiling"):
         s = [r for r in rows if r["arm"] == arm]
         print(f"{arm:14s} {np.mean([r['rule_a'] for r in s]):>8.4f} "
               f"{np.mean([r['oracle_best'] for r in s]):>12.4f} "
