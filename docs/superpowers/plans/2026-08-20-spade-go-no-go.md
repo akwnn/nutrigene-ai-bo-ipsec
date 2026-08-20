@@ -342,6 +342,117 @@ bioprocess runs constrained BO, and here is what it is worth", plus the rounds/p
 
 ---
 
+## Amendment C — 2026-08-20, pre-flight checks
+
+Two checks run before starting. One confirms the proposal exactly. **One kills B4.**
+
+### C0 — The regret column is closed. Confirmed, all six figures.
+
+Read from `results/q57-search-vs-id.json`:
+
+| d=6 | rule A | oracle-best (search floor) | identification gap |
+|---|---|---|---|
+| classical, σ=0.25 | 0.0958 | **0.0597** | **0.0361** |
+| qLogEI, σ=0.25 | 0.1553 | **0.0755** | 0.0797 |
+| classical, σ=0.10 | 0.0892 | 0.0544 | **0.0348** |
+
+Cutting noise 60% moved the classical identification gap 0.0361 → 0.0348 — **0.0013**,
+because the top design points differ by δ ≪ σ and the campaign sits on the flat part of
+`Phi(-delta / (sigma*sqrt(2)))`. Against a SESOI of 0.02, **nothing wins on regret.**
+Any spec claiming otherwise gets caught.
+
+**One correction to the proposal.** *"Floor is roughly 0.085 to 0.090"* is a σ=0.25
+statement. At σ=0.10, qLogNEI already achieves **rule A = 0.0808**, below that floor, and
+its search floor is 0.0435. State the floor per cell, not globally.
+
+### C1 — B4 IS DEAD: the cost frontier has no test bed
+
+The cost-assurance curve was made co-primary on the premise that the yield optimum is
+expensive, so `min c(x) s.t. f(x) >= tau` has a binding constraint. **Measured across
+every family in the repo, it does not.**
+
+| family | `c(x*)` = mean coordinate at the true optimum | lever? |
+|---|---|---|
+| **hill** (the primary oracle) | **0.355** | none — already cheap |
+| **hartmann6** | **0.345** | none — already cheap |
+| ackley | 0.500 | none — exactly the design average |
+| levy | 0.550 | negligible |
+| rosenbrock | 0.744 | real, but see below |
+
+A space-filling design averages `c = 0.500`. **Four of five families put the optimum at
+or below that.** Hill's optimum is in the cheap half on *every one* of its six
+coordinates (per-coordinate medians 0.30–0.38, range 0.221–0.604).
+
+**Skewed prices do not rescue it.** At 100× weight on one factor, Hill's median `c(x*)`
+moves 0.355 → 0.357, because that factor's optimum is low too.
+
+**Rosenbrock is not a counterexample.** Its optimum is at 0.744 in *every* coordinate —
+it is symmetric, so its cost problem collapses to a 1D radial profile, not a genuine 6D
+constrained problem. Same for ackley (0.5 everywhere) and levy (0.55 everywhere).
+
+**Cause:** the Hill oracle is biphasic — each factor rises then falls, and the interior
+peak sits below midrange because too much growth factor is inhibitory. That is realistic
+biology, and it makes *"the optimum is expensive"* a false premise on the one landscape
+family built to resemble the application.
+
+**Decision: B4 is demoted from co-primary metric to a reported negative result.**
+
+> Across five landscape families — including a biology-motivated biphasic oracle and the
+> standard deceptive benchmark — the yield optimum already sits at or below median recipe
+> cost. Cost-constrained optimisation is therefore **not** the binding problem the framing
+> assumes.
+
+That is worth one paragraph and it saves building the entire apparatus. Rescuing B4 would
+require a new oracle whose optimum is expensive and asymmetric — **building a test bed to
+make the method look good, which is precisely what this project exists to warn against.**
+Do not do it. If Nutrigene's real data later shows an expensive optimum, B4 returns with
+evidence behind it.
+
+**Consequence for K6:** it is now purely the **map** question — Brier/AUC and IoU of
+`D_γ` against the true superlevel set. B4 no longer supplies the always-defined metric,
+so the γ sweep in B0 is doing that job alone, and the empty-region count must be reported
+explicitly.
+
+### C2 — The registered τ grid was self-defeating. Fixed.
+
+A5 registered τ ∈ {0.70, 0.80, 0.85, 0.90}. B0 then proved
+`tau_max = mu_max(1 - z*sigma_rel)` = **0.483–0.589 at γ=0.95**. Every registered τ
+exceeds it, so at γ=0.95 **every arm returns empty at every τ** — a guaranteed table of
+zeros, written into the pre-registration across two amendments without reconciling them.
+
+**Re-registered relative to the floor**, so the grid is feasible by construction:
+
+```
+tau_frac in {0.60, 0.75, 0.85, 0.95}   of tau_max(gamma, s_typical)
+```
+
+with `s_typical = 0.19` (= `sigma*sqrt(p/n)` at p=28, n=48). Absolute τ is then reported
+alongside for readability. Pre-register `tau_frac`, never absolute τ — the proposal's own
+warning applies: *moderate τ favours spread, τ near the peak favours clustered BO, do not
+pick after seeing the table.*
+
+### C3 — The "good at both" tweaks: four in, one dead
+
+| tweak | verdict |
+|---|---|
+| **1 · dual deliverable from one posterior** | **IN.** Free bookkeeping. Setpoint *and* `D_γ` + NOR from one fit, zero extra wells |
+| **2 · split plate 2 boundary/peak 70:30** | **IN, with a caveat.** Q58 measured peak confirmation *hurting* the spread arm (0.0958 → 0.1437), so the 30% may be actively wasted. Register 70:30 as primary and **100:0 as the declared sensitivity** |
+| **3 · setpoint inside the certified box** | **IN.** The one genuine trade, and it is favourable: a point you cannot certify a neighbourhood around is not manufacturable |
+| **4 · cost frontier as shared metric** | **DEAD.** See C1 |
+| **5 · drop triplicates, keep covariate** | **IN.** Triplicates estimate the floor; knowing a floor better does not raise it. The covariate *lowers* it via `sigma_eff = sigma*sqrt(1 - R^2)` |
+
+### C4 — The catch, restated because it governs everything
+
+Regret parity is **already measured** — Q54, one-shot spread tying 10-round qLogEI on
+non-deceptive families. So the optimisation half of "good at both" is in the bag **and is
+not new.** Everything new is on the design-space side, and with B4 dead that means the
+map alone.
+
+**K6 still decides whether the paper exists.** If the design-space ranking matches the
+regret ranking, no amount of deliverable tweaking saves it.
+
+---
+
 ## File Structure
 
 | Path | Responsibility | Task |
@@ -891,6 +1002,12 @@ git commit -m "K1: the noise ceiling and the Yvar-to-reading coupling"
 
 ## Task 4: K6 — does the deliverable reverse the ranking
 
+> **Amendments A, B and C govern this task and override the text below where they
+> conflict.** In particular: the primary object is Peterson `D_γ` on the posterior
+> predictive, not the mean LCB (B2); refusing to certify an unvaried axis is primary
+> (B3); the cost frontier is dead (C1); and τ is registered as a fraction of `τ_max`,
+> never absolute (C2). Read all three amendments before implementing.
+
 **Decides:** whether SPADE Stages 4 and 5 exist at all.
 
 **A correction that changes this task's metrics.** The SPADE note predicts spread designs win on certified volume and on the inscribed hyperrectangle. Measured neighbour density says both metrics may be **identically zero** for a spread arm:
@@ -1019,7 +1136,8 @@ import torch
 from torch import Tensor
 
 __all__ = ["brier_and_auc", "certified_mask", "certified_volume_curve",
-           "false_inclusion_rate", "gp_adapter", "inscribed_box", "probability_map"]
+           "false_inclusion_rate", "gp_adapter", "inscribed_box", "iou",
+           "predictive_probability_map", "probability_map"]
 
 
 def gp_adapter(model):
@@ -1036,10 +1154,44 @@ def gp_adapter(model):
 
 
 def probability_map(model, X_grid: Tensor, tau: float) -> Tensor:
-    """``P(f(x) >= tau)`` under the Gaussian latent posterior. Shape ``(n,)``."""
+    """``P(f(x) >= tau)`` under the Gaussian LATENT posterior. Shape ``(n,)``.
+
+    **SECONDARY.** Amendment B2 makes :func:`predictive_probability_map` the primary
+    object. This one is retained because E3 showed the latent interval is the
+    anti-conservative one, so the GAP between the two maps is itself a result.
+    """
     mean, sd = model.posterior_mean_and_sd(X_grid)
     normal = torch.distributions.Normal(0.0, 1.0)
     return normal.cdf((mean - tau) / sd.clamp_min(1e-12))
+
+
+def predictive_probability_map(model, X_grid: Tensor, tau: float,
+                               sigma: Tensor | float) -> Tensor:
+    """``P(Y >= tau | x)`` under the posterior PREDICTIVE — Peterson's ``D_gamma``.
+
+    **PRIMARY** (Amendment B2; Peterson 2008, Peterson & Lief 2010). Carries ``sigma^2``
+    as well as ``s^2``, so it is floored by process noise:
+
+        tau_max = mu_max * (1 - z * sigma_rel)
+
+    At ``sigma_rel = 0.25, gamma = 0.95`` that is **0.589 regardless of budget**. A grid
+    of ``tau`` above the floor certifies nothing for any arm, which is why C2 registers
+    ``tau`` as a FRACTION of ``tau_max`` and never as an absolute value.
+
+    ``sigma`` is the observation SD at each grid point. This repo's noise is RELATIVE
+    (``y = f(1 + eps) + eta``), so pass ``sigma_rel * mean``, not a scalar -- a constant
+    here silently answers a homoscedastic question the campaigns did not ask.
+    """
+    mean, sd = model.posterior_mean_and_sd(X_grid)
+    total = (sd ** 2 + torch.as_tensor(sigma, dtype=sd.dtype) ** 2).clamp_min(1e-24).sqrt()
+    return torch.distributions.Normal(0.0, 1.0).cdf((mean - tau) / total)
+
+
+def iou(mask: Tensor, truth: Tensor, tau: float) -> float:
+    """Intersection-over-union of a certified region against the true superlevel set."""
+    true_set = truth.reshape(-1) >= tau
+    union = (mask | true_set).sum()
+    return float((mask & true_set).sum() / union) if union > 0 else float("nan")
 
 
 def brier_and_auc(p: Tensor, truth: Tensor, tau: float) -> tuple[float, float]:
@@ -1362,14 +1514,15 @@ Task 6 (K2)   OA-LHS cuts Hartmann6 design SD ............ Stage 1 has a mechani
 ### Superseded by Amendment B — use this tree
 
 ```
-K6 map ranking == regret ranking  AND  cost-curve ranking == regret ranking
+K6 map ranking == regret ranking
     -> STOP. Write up Q53/Q54/Q55/Q57/Q58. No new algorithm.
 
-K6 cost curve diverges, SPREAD ahead
-    -> GO on the cost frontier. Build cost-stratified design (Version B).
+K6 map diverges, SPREAD ahead on Brier/AUC and IoU of D_gamma
+    -> GO. Build Version B: two plates, Peterson D_gamma, LSE straddle on plate 2,
+       NOR on active axes only.
 
-K6 map diverges, SPREAD ahead, cost curve does not
-    -> GO on Version A only. Map paper, no new algorithm.
+(the cost-frontier branch is REMOVED -- C1 measured that four of five families put
+ the optimum at or below median cost, so there is no test bed for it)
 
 Clustered ahead on BOTH map and cost
     -> different paper: "the design-space deliverable favours adaptive designs."
@@ -1415,15 +1568,17 @@ Commit before Task 2 runs:
 
 - K0 statistic: Spearman ρ, 10,000-resample instance-level paired bootstrap on the ρ difference
 - K6 grids: τ ∈ {0.70, 0.80, 0.85, 0.90}, z ∈ {1.00, 1.28, 1.64, 1.96, 2.58}, Sobol 20,000 at seed 0
-- K6 primary metrics: **Brier/AUC of the map** and **the cost-assurance curve** (B4). Certified volume and NOR are secondary, reported as curves over γ
+- K6 primary metric: **Brier/AUC of the map, plus IoU of `D_γ` against the true superlevel set**. The cost-assurance curve is **DEAD (C1)**. Certified volume and NOR are secondary, reported as curves over γ, with the empty-region count stated explicitly
 - K6 region definition: **Peterson `D_γ` on the posterior predictive** is primary; the mean-LCB region is reported alongside, and the gap between them is a result (B2)
 - K6 γ sweep: {0.50, 0.70, 0.80, 0.90, 0.95, 0.99}. **Not a robustness check — it is what keeps the object non-empty** (B0)
-- `G(k)` computed by **posterior sampling, never plug-in**; the upward bias is reported (B4)
+- ~~`G(k)` computed by posterior sampling~~ — **removed, B4 is dead (C1)**
 - K1 conditions: `plug_in(y)` / `plug_in(truth)` / pooled scalar
 - K2: **paired within-instance SD** across D=20 draws, 25 pairs, Wilcoxon on the pairs (A4). Not a comparison of two grand SDs
 - K6 dropped-factor policy — **REVERSED BY B3**: **(a) refuse to certify is PRIMARY**, (b) full range is the declared sensitivity, (c) the GP's prior-driven slab is reported and labelled. Under (a) the screened DoE arm's NOR is defined in 4D and its 6D volume is identically zero
 - K6 Brier decomposition: Murphy calibration–refinement, **10 equal-count bins** (A5)
 - K6 sigma sweep: {0.25, 0.20, 0.15, 0.10}; **0.20 and 0.15 are exploratory and ungated** (A5)
+- K6 tau grid — **RE-REGISTERED BY C2**: `tau_frac in {0.60, 0.75, 0.85, 0.95}` of `tau_max(gamma, s=0.19)`, never absolute tau. The old absolute grid {0.70, 0.80, 0.85, 0.90} was entirely above the gamma=0.95 floor and guaranteed an empty table
+- Plate-2 split (C3, tweak 2): **70:30 boundary:peak primary, 100:0 declared sensitivity**
 - SESOI 0.02; Wilcoxon governs yes/no and the bootstrap reports magnitude, with disagreements reported and not resolved (Q20 §2)
 
 ## What is explicitly NOT being built
