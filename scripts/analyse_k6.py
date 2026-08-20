@@ -23,6 +23,10 @@ import numpy as np
 from scipy.stats import wilcoxon
 
 IN = Path("results/k6-designspace.json")
+#: The one-shot spread arms, run separately and merged here. They are the comparator
+#: SPADE is actually about; the main run's `doe` is a screened sub-box CCD, not a spread
+#: design, so without these the registered question is unanswered.
+IN_SPREAD = Path("results/k6-designspace-spread.json")
 OUT = Path("results/k6-analysis.json")
 SPREAD, CLUSTERED = "doe", "qlogei"
 
@@ -63,9 +67,22 @@ def main() -> None:
     data = json.loads(IN.read_text())
     rows = data["rows"]
     cfg = data["config"]
-    arms = cfg["arms"]
+    arms = list(cfg["arms"])
+    n_fail = len(data["gate_failures"])
+
+    if IN_SPREAD.exists():
+        extra = json.loads(IN_SPREAD.read_text())
+        rows = rows + extra["rows"]
+        arms = arms + [a for a in extra["config"]["arms"] if a not in arms]
+        n_fail += len(extra["gate_failures"])
+        for k in ("dim", "sigma", "gammas", "tau_fracs", "grid_n", "grid_seed"):
+            assert extra["config"][k] == cfg[k], (
+                f"spread run disagrees with the main run on {k!r} -- not mergeable")
+        print(f"merged {len(extra['rows'])} spread rows "
+              f"({', '.join(extra['config']['arms'])})")
+
     print(f"K6 analysis · {len(rows)} rows · d={cfg['dim']} sigma={cfg['sigma']}")
-    print(f"gate failures in the source run: {len(data['gate_failures'])}\n")
+    print(f"gate failures across both runs: {n_fail}\n")
 
     # --- regret ranking, which the design space is being compared against -------------
     regret = {a: np.mean([r["regret"] for r in rows
