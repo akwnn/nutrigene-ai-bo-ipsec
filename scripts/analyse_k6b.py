@@ -110,7 +110,11 @@ def main() -> None:
                   f"[{c['lo']:+.4f},{c['hi']:+.4f}] p={c['wilcoxon_p']:.4f}{star}")
             out.setdefault("a1", {}).setdefault(add, []).append({"tau_frac": tf, **c})
 
-    print("\nCE_alpha emptiness and ACTUAL containment (nominal vs achieved):")
+    print("\nCE_alpha: emptiness, the CIRCULAR check, and the REAL one.")
+    print("  ce_contain is measured on the SAME draws conservative_estimate selected on,")
+    print("  so it cannot fall below nominal. It is a tautology, printed only so that is")
+    print("  visible. `empirical` is the fraction of campaigns whose set is ACTUALLY")
+    print("  inside the true excursion set, and THAT must be >= alpha.")
     for a in cfg["alphas"]:
         print(f"  alpha={a}:")
         for arm in arms:
@@ -118,13 +122,21 @@ def main() -> None:
             emp = float(np.mean([r[f"ce_empty_{a}"] for r in sub]))
             fi = np.array([r[f"ce_false_in_{a}"] for r in sub], float)
             ct = np.array([r[f"ce_contain_{a}"] for r in sub], float)
-            print(f"    {arm:15s} empty={emp:5.0%}  "
-                  f"false_in={np.nanmean(fi) if np.isfinite(fi).any() else float('nan'):.4f}  "
-                  f"contain={np.nanmean(ct) if np.isfinite(ct).any() else float('nan'):.4f}")
+            ec = np.array([r.get(f"ce_empirical_{a}", float("nan")) for r in sub], float)
+            ec = ec[np.isfinite(ec)]
+            emp_c = float(ec.mean()) if len(ec) else float("nan")
+            verdict = "FAIL" if (len(ec) and emp_c < a) else "ok"
+            n_act = sub[0].get("n_active", "?")
+            print(f"    {arm:15s} active={n_act} empty={emp:5.0%}  "
+                  f"circular={np.nanmean(ct) if np.isfinite(ct).any() else float('nan'):.4f}  "
+                  f"EMPIRICAL={emp_c:.4f} {verdict:4s} (n={len(ec)})")
             out.setdefault("ce", {}).setdefault(str(a), {})[arm] = {
                 "empty_frac": emp,
                 "false_in": float(np.nanmean(fi)) if np.isfinite(fi).any() else None,
-                "containment": float(np.nanmean(ct)) if np.isfinite(ct).any() else None}
+                "containment_circular": float(np.nanmean(ct)) if np.isfinite(ct).any() else None,
+                "containment_empirical": emp_c if len(ec) else None,
+                "empirical_n": int(len(ec)),
+                "empirical_holds": bool(len(ec) and emp_c >= a)}
 
     n_match = sum(c["matches_regret_rank"] for c in out["cells"])
     print(f"\nVERDICT INPUT: alpha* ranking matches regret ranking in "
