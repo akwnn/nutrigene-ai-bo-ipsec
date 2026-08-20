@@ -20,13 +20,42 @@ near-threshold point that is already well determined. Hard-coding "sample the bo
 would be an approximation to this, not an implementation of it. There is a test asserting
 the criterion can leave the boundary.
 
-WHY EXCLUSION IS NOT OPTIONAL
-------------------------------
-The straddle surface is smooth, so a greedy batch takes ``q`` near-identical points --
-eight wells at one location, which is a replicate dressed up as a design. Each pick
-therefore masks a Chebyshev ball around itself. The radius is derived from the model's own
-fitted lengthscale, never hardcoded, because a fixed radius means something different at
-every noise level.
+EXCLUSION: WHAT IT DOES, MEASURED RATHER THAN ASSERTED
+-----------------------------------------------------
+The straddle surface is smooth and the greedy loop re-scores nothing between picks, so
+with no exclusion it re-selects its own argmax every iteration: ``q`` wells at **one
+location**, a replicate dressed up as a design. That is not an argument, it is what this
+code does at ``exclude=0.0``, and there is a test asserting it. Each pick therefore masks
+a Chebyshev ball around itself. The radius is read from the model's own fitted
+lengthscale, never hardcoded, because a fixed radius means something different at every
+noise level and dimension.
+
+**Amendment E2 claimed this mechanism is inert at d=6. It is not, and the claim's two
+numbers are both correct -- it is the reference population that is wrong.** E2 measured
+the median minimum pairwise Chebyshev distance among 8 **random** points in 6D at 0.320
+and concluded that a radius of ``ell/4`` could never bind. Reproduced here exactly:
+0.3219 over 2,000 random batches, binding in 0.15% of them. But ``batch_lse`` does not
+draw random points. It takes the greedy argmax of a straddle surface whose high scores
+concentrate on one contour, so its batch is about **half** as spread out as a random one.
+Measured over the 50 live Version B campaigns -- ``d=6``, ``sigma_rel=0.25``, 40 LHS
+plate-1 wells, the runner's own 4,096-point Sobol candidate grid, ``theta=0.75*mu_max``:
+
+    median fitted ARD lengthscale (n=40)   0.5982      (E2 assumed 0.42, the n=48 figure)
+    median exclusion radius, ell/4         0.1495      (E2 computed 0.105 from that)
+    top-q-by-score batch, min pairwise     0.1572      median; 0.0869 worst
+    returned batch, min pairwise           0.1943      median; 0.1035 worst
+    campaigns where the radius BINDS       22 / 50     the top-q batch violates it
+    wells relocated by the exclusion       0.56 of 8   mean
+
+So ``batch_lse`` is **not** top-q by score: in 44% of campaigns it moves wells the score
+alone would have stacked. The radius is **not** raised on the strength of that -- raising a
+knob that already fires would be tuning, and it would change the committed ``versionb``
+column. The achieved minimum pairwise distance is instead logged per batch by
+``scripts/run_versionb.py`` (:func:`min_pairwise_chebyshev`), so this never again has to be
+settled by argument, and a test asserts both halves of the mechanism: that the returned
+batch honours its radius, **and** that the top-q batch would have violated it. The second
+half is the alarm. If the operating point ever drifts far enough that the exclusion has
+nothing to do, that test fails and this docstring stops being true out loud.
 
 If exclusion empties the candidate pool, this returns **fewer points rather than
 duplicates**: silently handing back repeats would spend wells while reporting a batch size
@@ -38,7 +67,7 @@ from __future__ import annotations
 import torch
 from torch import Tensor
 
-__all__ = ["batch_lse", "exclusion_radius", "straddle_score"]
+__all__ = ["batch_lse", "exclusion_radius", "min_pairwise_chebyshev", "straddle_score"]
 
 #: Bryan's (2005) constant. The 1.96 is the 95% normal quantile, not a tuned knob.
 STRADDLE_Z = 1.96
@@ -63,6 +92,21 @@ def exclusion_radius(model, fallback: float = 0.1) -> float:
         return float(ls.median()) * EXCLUSION_FRACTION
     except AttributeError:
         return fallback
+
+
+def min_pairwise_chebyshev(X: Tensor) -> float:
+    """The batch's achieved minimum pairwise Chebyshev separation. ``inf`` below 2 points.
+
+    The diagnostic Amendment E2 asked for. Chebyshev because that is the metric
+    :func:`batch_lse` excludes in, so the logged number is directly comparable to the
+    radius that produced it -- a Euclidean number would not be, and would have made the
+    E2 question harder to settle rather than easier.
+    """
+    if X.shape[0] < 2:
+        return float("inf")
+    d = (X[:, None, :] - X[None, :, :]).abs().amax(dim=-1)
+    d = d + torch.eye(X.shape[0], dtype=d.dtype) * (float(d.max()) + 1.0)
+    return float(d.min())
 
 
 def batch_lse(model, X_cand: Tensor, theta: float, q: int,
