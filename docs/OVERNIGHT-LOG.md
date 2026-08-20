@@ -417,3 +417,53 @@ reason every agent tonight was told to push back rather than accept what it was 
 **Action:** the `tau_max` omission is a genuine small defect and should be fixed, but it
 moves nothing at the reported precision — 3.3e-04 against effects of 0.02 and above.
 Recorded, not urgently patched. **Your call whether to fix before publication.**
+
+---
+
+## D20 ⭐ **THE HEADLINE. The regret ranking INVERTS under a posterior-mean terminal rule.** ✅
+
+Registration precedes the runner (`ac88cda` → runner commit, `git merge-base` confirms),
+so this is citable under rule 1. Gate: **500 rows, worst |Δ| = 0.000e+00, 0 failures.**
+
+| arm | rule A (noisy argmax) | rule P (posterior mean) | Δ |
+|---|---|---|---|
+| **doe** | **0.0958 — 1st** | **0.1993 — 10th** | **+0.1035** ⬆ worse, Holm-sig |
+| **versionb** | 0.1546 — 6th | **0.1003 — 1st** | −0.0543 Holm-sig |
+| sobol | 0.1724 | 0.1050 | −0.0673 |
+| qlogei-add | 0.1483 | 0.1082 | −0.0400 |
+| lhs / plate1_only | 0.1270 | 0.1134 | −0.0136 **(ns, p=0.13)** |
+| qlogei | 0.1553 | 0.1232 | −0.0320 |
+| random | 0.2216 | 0.1242 | −0.0975 |
+| qlognei | 0.1532 | 0.1286 | −0.0246 |
+
+**`doe` goes from first to last. `versionb` goes from sixth to first.** Every one of the
+ten arms improves under rule P **except `doe`**, which nearly doubles its regret.
+
+**The registered kill did not fire.** The contrast `improvement(versionb) −
+improvement(doe)` is **+0.1578 [0.1244, 0.1944], p = 2.4e-13**.
+
+**But it did not arrive the predicted way, and that matters.** The prediction was that
+SPADE would *gain*. SPADE gains, but the reversal is driven by **`doe` collapsing**, not by
+the spread arm's improvement — and `lhs`'s gain alone is **not significant** (p = 0.13).
+
+**Mechanism, and it was already measured.** `doe`'s `grid_r2 = −6.19`: its posterior is a
+worse predictor of the response than the constant grid mean. A terminal rule that trusts
+that surface is catastrophic. Which gives the finding:
+
+> **DoE's regret advantage depends on not using its own model.** It wins by reading the
+> best well and ignoring the response surface it just fitted.
+
+**Four limits that must travel with this.**
+
+1. **One cell, one family.** d=6, σ_rel=0.25, hill only. Q42/Q53 already established that
+   this project's spread-versus-adaptive results are landscape-shaped.
+2. **`random` improves by 0.0975.** A *uniformly random* design gains more than SPADE does.
+   So rule P is recovering identification loss for **every** spread design — this is not
+   something special about SPADE, it is something general about scoring spread designs by
+   their model instead of their luckiest well.
+3. **`doe`'s rule A is not model-free.** Its arm already spends one confirmation well at
+   the fitted optimum, so rule A is model-informed once, at one point.
+4. **The reversal is a claim about the terminal rule, not about the designs.** Both rules
+   are defensible; they disagree; and *which one a lab uses decides which method wins.*
+   That is this project's thesis, now demonstrated on the regret axis rather than the
+   design-space axis.
