@@ -27,7 +27,9 @@ from torch.quasirandom import SobolEngine
 
 __all__ = [
     "OverPrediction",
+    "ScreenedArgmax",
     "constrained_argmax",
+    "grid_screened_argmax",
     "over_prediction_at_constrained_argmax",
 ]
 
@@ -136,6 +138,93 @@ def constrained_argmax(
 
     x_out = torch.from_numpy(np.clip(best_x, lo, hi))
     return x_out, best_y, n_ok
+
+
+@dataclass(frozen=True)
+class ScreenedArgmax:
+    """Where a model says the optimum is, after a grid screen and a local polish.
+
+    Attributes:
+        x: ``(d,)`` the point the rule nominates — whichever of the screened and
+            polished points has the higher predicted value.
+        value: ``predict`` at ``x``.
+        x_grid: ``(d,)`` the best point of the screening grid, kept so the polish's
+            contribution can be reported rather than assumed.
+        value_grid: ``predict`` at ``x_grid``.
+        from_grid: ``True`` when the screen beat the polish and was kept.
+        n_starts_converged: local optimizations the polish completed.
+    """
+
+    x: Tensor
+    value: float
+    x_grid: Tensor
+    value_grid: float
+    from_grid: bool
+    n_starts_converged: int
+
+
+def grid_screened_argmax(
+    predict: PredictFn,
+    X_grid: Tensor,
+    grid_values: Tensor,
+    bounds: Tensor,
+    *,
+    n_restarts: int = 20,
+    raw_samples: int = 4096,
+    seed: int = 0,
+) -> ScreenedArgmax:
+    """Maximize ``predict`` by screening a **precomputed** grid, then polishing.
+
+    :func:`constrained_argmax` already screens with its own Sobol draw. This adds a
+    second, larger screen that the caller has already paid for — the registered
+    20,000-point grid — and keeps whichever point predicts higher. At a shared Sobol
+    seed the polish's ``raw_samples`` draw is literally the first ``raw_samples`` rows
+    of a ``sobol_grid`` of the same seed, so the grid is a **strict superset** of the
+    screen and the two candidates are commensurable rather than unrelated draws.
+
+    ``grid_values`` is passed in, never recomputed. For a BoTorch model
+    ``model.posterior(X_grid)`` builds the **joint** covariance over the whole grid:
+    100.6 s at 20,000 points against 0.06 s at 2,000, and a 3.2 GB dense matrix whose
+    off-diagonal is never used. Callers evaluate the grid once, chunked, through
+    :func:`boec.designspace.gp_adapter`; a locator that quietly re-evaluated it would
+    put that trap back.
+
+    Args:
+        predict: maps ``(n, d)`` to ``(n, 1)``. Must be the same function
+            ``grid_values`` came from, or the two candidates are not comparable.
+        X_grid: ``(n, d)`` the screening grid.
+        grid_values: ``(n,)`` (or ``(n, 1)``) ``predict`` evaluated on ``X_grid``.
+        bounds: ``(2, d)`` the box the polish may search.
+        n_restarts: passed to :func:`constrained_argmax`.
+        raw_samples: passed to :func:`constrained_argmax`.
+        seed: passed to :func:`constrained_argmax`; fixes its Sobol screen.
+
+    Returns:
+        A :class:`ScreenedArgmax`. ``.x`` is never worse than ``.x_grid`` under
+        ``predict``, so adding the polish cannot cost an arm ground it had already won.
+    """
+    if X_grid.ndim != 2:
+        raise ValueError(f"X_grid must be (n, d), got {tuple(X_grid.shape)}")
+    values = grid_values.reshape(-1).double()
+    if values.numel() != X_grid.shape[0]:
+        raise ValueError(
+            "grid_values must carry one value per grid row; got "
+            f"{values.numel()} for {X_grid.shape[0]} rows"
+        )
+
+    idx = int(torch.argmax(values))
+    x_grid = X_grid[idx].double().clone()
+    v_grid = float(values[idx])
+
+    x_pol, v_pol, n_ok = constrained_argmax(
+        predict, bounds, n_restarts=n_restarts, raw_samples=raw_samples, seed=seed
+    )
+    if v_pol > v_grid:
+        return ScreenedArgmax(x=x_pol.double(), value=v_pol, x_grid=x_grid,
+                              value_grid=v_grid, from_grid=False,
+                              n_starts_converged=n_ok)
+    return ScreenedArgmax(x=x_grid, value=v_grid, x_grid=x_grid, value_grid=v_grid,
+                          from_grid=True, n_starts_converged=n_ok)
 
 
 def over_prediction_at_constrained_argmax(

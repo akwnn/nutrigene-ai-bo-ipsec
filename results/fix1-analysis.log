@@ -1,0 +1,58 @@
+========================================================================================================
+FIX 1 — the posterior-mean terminal rule, against the committed argmax-of-the-noisy-reading
+========================================================================================================
+  d=6 sigma=0.25 · n=50 (instance, seed) pairs · 10 arms · gate worst |delta| = 0.000e+00
+  rule P: optimum_value - truth(argmax posterior mean), located on the 20000-point Sobol grid at seed 0 and polished with constrained_argmax(n_restarts=20, raw_samples=4096, seed=0)
+  bootstrap 4000 resamples, default_rng(0); Wilcoxon two-sided; Holm across 10 arms; SESOI 0.02
+
+========================================================================================================
+  1. PER ARM — mean regret under both rules. Delta = rule P - rule A; NEGATIVE means the posterior-mean rule is BETTER.
+========================================================================================================
+                arm  rnd   rule A   rule P   P grid    Delta               95% CI        p   p Holm  SESOI    P<A
+                doe    3   0.0958   0.1993   0.2206  +0.1035  [+0.0723,+0.1367]   0.0000   0.0000    yes    22%
+                lhs    1   0.1270   0.1134   0.1217  -0.0136  [-0.0305,+0.0041]   0.0635   0.1269     no    66%
+              sobol    1   0.1724   0.1050   0.1216  -0.0673  [-0.0925,-0.0445]   0.0000   0.0000    yes    74%
+             random    1   0.2216   0.1242   0.1337  -0.0975  [-0.1177,-0.0766]   0.0000   0.0000    yes    94%
+             qlogei   10   0.1553   0.1232   0.1335  -0.0320  [-0.0489,-0.0151]   0.0011   0.0044    yes    64%
+            qlognei   10   0.1532   0.1286   0.1389  -0.0246  [-0.0417,-0.0076]   0.0054   0.0162    yes    64%
+         qlogei-add   10   0.1483   0.1082   0.1283  -0.0400  [-0.0582,-0.0208]   0.0001   0.0007    yes    74%
+     qlogei-addonly   10   0.1623   0.1150   0.1340  -0.0473  [-0.0699,-0.0247]   0.0004   0.0019    yes    64%
+        plate1_only    1   0.1270   0.1134   0.1217  -0.0136  [-0.0305,+0.0041]   0.0635   0.1269     no    66%  (= lhs)
+           versionb    2   0.1546   0.1003   0.1118  -0.0543  [-0.0693,-0.0398]   0.0000   0.0000    yes    82%
+
+========================================================================================================
+  2. THE REGISTERED KILL — is the effect ASYMMETRIC?
+========================================================================================================
+    improvement = rule A regret - rule P regret  (positive = rule P helps)
+             versionb:   +0.0543
+                  doe:   -0.1035
+           difference:   +0.1578 [+0.1245,+0.1944]  p=0.0000  SESOI 0.02
+
+    KILL DID NOT FIRE — the registered condition is met: the asymmetry survives.
+    Registered reading: `versionb` improves materially more than `doe`; the asymmetry survives.
+
+========================================================================================================
+  3. DOES THE ARM ORDER CHANGE? Best (lowest regret) first.
+========================================================================================================
+    rule A: doe > lhs > plate1_only > qlogei-add > qlognei > versionb > qlogei > qlogei-addonly > sobol > random
+    rule P: versionb > sobol > qlogei-add > lhs > plate1_only > qlogei-addonly > qlogei > random > qlognei > doe
+    order CHANGED
+
+    `doe` minus each arm, under each rule. NEGATIVE means `doe` is ahead.
+                arm    rule A               95% CI        p       rule P               95% CI        p        sign
+                lhs   -0.0312  [-0.0491,-0.0133]   0.0028      +0.0858  [+0.0501,+0.1241]   0.0001       FLIPS
+              sobol   -0.0766  [-0.1031,-0.0513]   0.0000      +0.0943  [+0.0650,+0.1251]   0.0000       FLIPS
+             random   -0.1258  [-0.1403,-0.1114]   0.0000      +0.0751  [+0.0398,+0.1113]   0.0010       FLIPS
+             qlogei   -0.0595  [-0.0784,-0.0400]   0.0000      +0.0761  [+0.0410,+0.1119]   0.0002       FLIPS
+            qlognei   -0.0574  [-0.0766,-0.0387]   0.0000      +0.0707  [+0.0374,+0.1044]   0.0002       FLIPS
+         qlogei-add   -0.0525  [-0.0754,-0.0305]   0.0000      +0.0911  [+0.0566,+0.1265]   0.0000       FLIPS
+     qlogei-addonly   -0.0665  [-0.0889,-0.0454]   0.0000      +0.0842  [+0.0496,+0.1195]   0.0000       FLIPS
+        plate1_only   -0.0312  [-0.0491,-0.0133]   0.0028      +0.0858  [+0.0501,+0.1241]   0.0001       FLIPS
+           versionb   -0.0588  [-0.0738,-0.0425]   0.0000      +0.0990  [+0.0680,+0.1327]   0.0000       FLIPS
+
+========================================================================================================
+  4. BOOTSTRAP vs WILCOXON
+========================================================================================================
+    None. Every per-arm contrast agrees between the two.
+
+  written to results/fix1-analysis.json
