@@ -4568,3 +4568,136 @@ regenerated as a gate — the latter two must reproduce Q57's committed
 `doe_oracle_best` / `nei_oracle_best` before any new number is read.
 
 Winner not pre-written. Either attribution is reported.
+
+## Fix 1 — the posterior-mean terminal rule. Registered before `scripts/run_fix1_terminal_rule.py` exists.
+
+**Why.** Every regret number in this study is **rule A**: `reported_best_curve` picks the
+well with the best *noisy* reading and scores the truth there. That rule **ignores the
+surrogate entirely**. It is therefore applied identically to an arm whose posterior maps
+the response well and to one whose posterior does not, and the two are scored as if
+neither had a model. From `results/versionb.json`, mean AUC of the predictive map against
+`1{f >= tau}` across `tau_frac in {0.60, 0.75, 0.85, 0.95}`:
+
+| arm | AUC by `tau_frac` | rule-A regret |
+|---|---|---|
+| `versionb` | 0.7148 / 0.7435 / 0.8105 / **0.8850** | 0.1546 |
+| `plate1_only` | 0.6819 / 0.7176 / 0.7904 / 0.8703 | 0.1270 |
+| `qlognei` | 0.7061 / 0.6995 / 0.7344 / 0.7871 | 0.1532 |
+| `doe` | **0.5704** / 0.5747 / 0.5982 / 0.6489 | **0.0958** |
+
+**The claim under test.** That a posterior-mean terminal rule differentially favours the
+arm with the better posterior — i.e. that the ordering above inverts, or narrows, when the
+terminal rule is allowed to read the model.
+
+**Why that is not implied by the AUC gap, and must be measured.** K6 measured `grid_r2`
+**negative for every arm** — `-0.1756` (`lhs`) to `-6.1883` (`doe`) — so every arm's
+posterior mean is a worse point predictor of `f` than the constant grid mean of `f`.
+Negative `grid_r2` says the **level** is mis-scaled; AUC says the **ranking** is fine; and
+an argmax needs only the ranking. A mis-scaled surface can still put its maximum in the
+right place. The asymmetry is therefore neither implied nor excluded by K6's numbers, and
+asserting it from them would be reading a ranking statistic as a statement about location.
+
+**No new campaigns.** Every arm below is a *regeneration* of a committed campaign, gated
+against its committed `regret` column before any new number is read.
+
+### The two rules, stated exactly
+
+* **Rule A (committed).** `optimum_value - truth(argmax_i Y_i)`, computed by the same
+  `boec.replay.scored_curve` -> `reported_best_curve` path the committed column used. This
+  is the gate, not a new number.
+* **Rule P (new).** `optimum_value - truth(x_P)` where `x_P` is the argmax of the fitted
+  GP's **posterior mean**:
+  1. `model = build_gp(X, Y, Yvar, unit_bounds(6))` — the same fit K6 and Version B used,
+     on the campaign's own observations. No refit variation, no hyperparameter change.
+  2. **Screen** on the 20,000-point Sobol grid at **seed 0** (`boec.norms.sobol_grid`),
+     evaluated through `boec.designspace.gp_adapter` — **chunked**, because
+     `model.posterior` on a 20k grid is 100.6 s against 0.06 s at 2k and builds a 3.2 GB
+     joint covariance whose off-diagonal is never used.
+  3. **Polish** with `boec.metrics.constrained_argmax(posterior_mean, unit_bounds(6),
+     n_restarts=20, raw_samples=4096, seed=0)`.
+  4. `x_P` = whichever of the screened argmax and the polished point has the **higher
+     posterior mean**.
+
+  **Why the polish, and why those constants.** This repo already has a posterior-mean
+  terminal rule — "rule C" in `boec.spread_gp.spread_gp_once`, `run_q52_floor.py`,
+  `run_q53_spread_gp_families.py`, `run_q42_families.py` — and it is `constrained_argmax`
+  at exactly `n_restarts=20, raw_samples=4096`. `spread_gp`'s docstring records those two
+  constants as **load-bearing and not parameters by accident**, so that two arms' rule-C
+  figures are produced by the same locator at the same effort. Fix 1 matches them rather
+  than inventing a locator, or its numbers are not comparable to any rule-C number already
+  on disk.
+
+  **Why Sobol seed 0 rather than the campaign seed.** `spread_gp` passes the campaign
+  seed; the grid registered here is seed 0. At seed 0 `constrained_argmax`'s 4,096-point
+  screen is *literally the first 4,096 rows of the 20,000-point grid*, so the grid is a
+  strict superset of the screen and step 4 is well defined instead of being a comparison
+  of two unrelated draws. The Sobol seed is not one of the two load-bearing constants.
+
+  The **grid-only** regret is written to the results file beside the combined one, so the
+  polish's contribution is visible rather than assumed.
+
+### Arms, and the committed column each is gated against
+
+`d = 6`, `sigma_rel = 0.25`, budget 48, the 50 `(instance, seed)` pairs of the primary cell.
+
+| arm | committed column | rounds |
+|---|---|---|
+| `doe`, `lhs`, `sobol`, `random`, `qlogei`, `qlognei` | `results/e2-grid.json` | 3 / 1 / 1 / 1 / 10 / 10 |
+| `qlogei-add`, `qlogei-addonly` | `results/k6-designspace.json` (Q30's kernel arms have no E2 column; K6 is the committed artefact that carries their regret) | 10 |
+| `plate1_only`, `versionb` | `results/versionb.json` | 1 / 2 |
+
+**`versionb` is in the arm list because the registered kill below is stated about it.** It
+is a regeneration of a committed campaign, not a new one; a kill that names an arm the
+runner never scores is unfalsifiable.
+
+**`plate1_only` is the same 48 wells as `lhs`.** Measured, not assumed: the two committed
+columns agree to a worst `|delta|` of 4.44e-16 across all 50 pairs, an artefact of the
+20-ordering mean `run_e2.static_curve` takes for the spread arms (`boec.replay`, module
+docstring). It is kept because it is `versionb.json`'s Version A label and is gated against
+that file, where it reproduces exactly; it is **not independent evidence** and must not be
+counted as a separate arm in any ranking.
+
+### The gate
+
+Per row, `|regenerated rule-A regret - committed regret| == 0` **exactly**, for every arm.
+K1 (`results/k1-replay-gate.json`) measured `doe`, `qlogei` and `qlognei` at worst
+`|delta| = 0.0` over 500 rows; the spread arms are a single `evaluate` call; `plate1_only`
+and `versionb` were checked at exactly 0.0 on a 3-key pre-flight run **before** this
+registration was written. **No tolerance is introduced.** A single failure stops the run
+and is reported, not absorbed.
+
+### Statistics
+
+Unit of analysis `(instance, seed)`, **n = 50**, paired. Per arm: mean regret under both
+rules; the paired difference with a **4,000-resample percentile bootstrap of the paired
+differences** (`numpy.random.default_rng(0)`) and a **two-sided Wilcoxon signed-rank** on
+the same pairs. **Holm** across the arms. **SESOI 0.02.** Per Q20 §2, Wilcoxon governs
+yes/no and the bootstrap reports magnitude; **disagreements between them are reported, not
+resolved.**
+
+*Caveat carried with every interval here:* Q57 clusters inference on landscapes (n = 25);
+K6 and Version B pair on `(instance, seed)` (n = 50). This registration follows K6. The
+intervals below are therefore the **narrower** of the two conventions in use in this
+project and are not interchangeable with Q57's.
+
+### Registered kill, winner not pre-written
+
+Define **improvement** for an arm as `regret_A - regret_P`, positive when the posterior-mean
+rule helps. The claim is an *asymmetry*, so it is tested as one, on the single
+pre-registered contrast
+
+    C = improvement(versionb) - improvement(doe),   paired on (instance, seed), n = 50
+
+**If `doe` improves as much as `versionb` — that is, if `C` fails to favour `versionb` by
+at least the SESOI of 0.02 with a significant Wilcoxon — the claimed asymmetry is not
+there**, and a posterior-mean terminal rule is not the free repair. This is one test and
+sits **outside** the per-arm Holm family, so it is not corrected twice.
+
+Both outcomes are reported. A kill that fires is written up as a kill.
+
+### What this may not conclude
+
+Rule P re-scores the **same wells**. It cannot say that any arm would have *run* different
+experiments, and it says nothing about a method that chooses where to look. A rule-P regret
+is also not comparable to any published rule-A number: they are different estimands, and
+every table that carries both must say which column is which.
