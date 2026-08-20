@@ -91,8 +91,20 @@ DIM, SIGMA = 6, 0.25
 N_SEEDS, SESOI = 2, 0.02
 N_RESTARTS, RAW_SAMPLES, REFIT_TOL = 20, 4096, 1e-6
 Q57 = ROOT / "results" / "q57-search-vs-id.json"
-OUT = ROOT / "results" / "q68-inregion-n100.json"
+OUT = ROOT / "results" / os.environ.get("BOEC_OUT_NAME", "q68-inregion-n100.json")
 ENS_ROOT = Path(os.environ.get("BOEC_ENSEMBLE_ROOT", ROOT / "data" / "oracles"))
+
+
+def _ensemble(dim: int):
+    """Load from ENS_ROOT, auto-detecting the version-stamped subdirectory.
+
+    An alternate ensemble (different SamplerConfig) hashes to a different version dir, so
+    hardcoding the default version silently fails on it rather than loading the wrong one.
+    """
+    vers = [q for q in ENS_ROOT.iterdir() if (q / "sidecars").is_dir()]
+    if len(vers) != 1:
+        raise SystemExit(f"expected exactly one oracle version under {ENS_ROOT}, got {vers}")
+    return load_ensemble(dim=dim, root=ENS_ROOT, version=vers[0].name)
 
 
 def _bounds(d: int) -> torch.Tensor:
@@ -120,7 +132,7 @@ def _gp_peaks(X, Y, Yvar, bounds, seed):
 def one(job: tuple[int, int]) -> dict:
     idx, seed = job
     t0 = time.time()
-    inst = load_ensemble(dim=DIM, root=ENS_ROOT)[idx]
+    inst = _ensemble(DIM)[idx]
     opt = float(inst.optimum_value)
     bounds = _bounds(DIM)
     row = dict(instance=inst.instance_id, instance_index=idx, seed=seed,
@@ -186,6 +198,11 @@ def _gate(rows):
             worst = max(worst, abs(r["doe_measured"] - stored[k]))
             checked += 1
     if checked < 20:
+        if os.environ.get("BOEC_ALT_ORACLE"):
+            return dict(overlap_rows=checked, doe_worst_abs_delta=None,
+                        max_refit_drift=max(r["refit_drift"] for r in rows),
+                        note="alternate oracle family: no committed prefix to gate against; "
+                             "the refit-fidelity gate still applies")
         raise SystemExit(f"gate overlapped only {checked} rows; prefix not intact")
     if worst != 0.0:
         raise SystemExit(f"DoE arm does not reproduce Q57: worst {worst:.3e}")
@@ -230,7 +247,7 @@ def main() -> None:
     p.add_argument("--workers", type=int, default=6)
     p.add_argument("--n-instances", type=int, default=100)
     a = p.parse_args()
-    n = min(a.n_instances, len(load_ensemble(dim=DIM, root=ENS_ROOT)))
+    n = min(a.n_instances, len(_ensemble(DIM)))
     jobs = [(i, s) for i in range(n) for s in range(N_SEEDS)]
     print(f"Q68 — primary cell d={DIM} sigma={SIGMA}, n={n} x {N_SEEDS} seeds")
     print(f"  ensemble root: {ENS_ROOT}\n")

@@ -200,6 +200,36 @@ calibration upgrades both from caveated to usable.
 
 ### G5. The headline result may be an artefact of a near-separable landscape
 
+> **TESTED, 2026-08-20 (Q70). The headline survives.** Hill ensembles regenerated at
+> `gamma_max` 2.0 and 3.0 against the committed 1.0. Interaction strength rises as intended:
+> the best no-interaction degree-6 polynomial fit explains **0.986 / 0.966 / 0.927** of the
+> variance respectively. (That statistic is *not* the project's Q22 measure -- it reads 0.986
+> where Q22 reports 0.930 for the same committed ensemble -- so it is used only to compare
+> gamma settings, never quoted as an absolute.)
+>
+> Primary cell, `gamma_max = 3.0`, n=25, DoE gate is the refit-fidelity gate only (an
+> alternate oracle family has no committed prefix to replay against):
+>
+> | Rule | Committed oracle | Strong interaction | Verdict |
+> |---|---|---|---|
+> | measured-value argmax | −0.0640 | **−0.0612** [−0.0799, −0.0405] | DoE better, **unchanged** |
+> | unconstrained model | +0.2940 | **+0.2715** [+0.2386, +0.3040] | BO better, **unchanged** |
+> | in-region, qLogEI GP | −0.0055 (equivalent at n=100) | −0.0263 [−0.0519, −0.0027] | see below |
+> | in-region, qLogNEI GP | −0.0091 | −0.0097 [−0.0344, +0.0097] | not separated |
+>
+> **The objection is answered.** The classical arm's identification advantage is *not* an
+> artefact of a near-separable surface: strengthen the interactions and it is essentially
+> unmoved. So is the unconstrained-extrapolation failure. The two results the paper leads on
+> both survive the manipulation designed to break them.
+>
+> **One caveat, stated because it cuts the other way.** The in-region contrast against qLogEI
+> moves from equivalent toward favouring the classical arm. Report it carefully: the bootstrap
+> interval excludes zero but **Wilcoxon gives P = 0.0626**, and by this project's own
+> convention Wilcoxon governs the directional declaration. So it is *not* a declared
+> difference. Against qLogNEI it is not separated at all. Worth re-running at n=100 before
+> anything is claimed from it. `results/q70-strong-interaction.json`.
+
+
 **Finding.** The Hill family is **~93% additive**. The headline is that a quadratic identifies
 better under noise.
 
