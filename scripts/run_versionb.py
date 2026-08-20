@@ -28,7 +28,8 @@ from boec.replay import committed_rows, instance_by_id, regenerate, scored_curve
 from boec.runner import static_design
 from boec.surrogate import build_gp
 from boec.torch_oracle import BiphasicOracle, _plug_in_yvar
-from boec.vorobev import alpha_star, excursion_probability, vorobev_deviation
+from boec.vorobev import (alpha_star, conservative_estimate, containment_probability,
+                          empirical_containment, excursion_probability, vorobev_deviation)
 
 OUT = Path("results/versionb.json")
 N_PLATE1, N_PLATE2, BUDGET = 40, 8, 48
@@ -37,6 +38,7 @@ TAU_FRACS = (0.60, 0.75, 0.85, 0.95)
 DESIGN_TAU_FRAC = 0.75
 GAMMA_FOR_AUC = 0.90
 GRID_N, SUBSET_N, N_DRAWS, GRID_SEED = 20_000, 2_000, 512, 0
+ALPHAS = (0.50, 0.80, 0.95)
 ROUNDS = {"versionb": 2, "versionb_random": 2, "plate1_only": 1, "doe": 3, "qlognei": 10}
 
 
@@ -69,7 +71,10 @@ def _two_plate(orc, dim, seed, mu_max, use_lse: bool):
     return torch.cat([X1, X2]), torch.cat([Y1, Y2]), torch.cat([V1, V2])
 
 
-def _score(X, Y, Yvar, orc, dim, mu_max, grid, truth, X_sub, truth_sub, seed):
+def _score(X, Y, Yvar, orc, dim, mu_max, grid, truth, X_sub, truth_sub, seed,
+           kept=None, held=None):
+    """Score one campaign. `kept`/`held` apply Amendment B3: an arm that never varied a
+    factor is evaluated on its ACTIVE SUBSPACE, with screened-out coordinates pinned."""
     model = _fit(X, Y, Yvar, dim)
     mean, sd = gp_adapter(model).posterior_mean_and_sd(grid)
 
@@ -77,8 +82,18 @@ def _score(X, Y, Yvar, orc, dim, mu_max, grid, truth, X_sub, truth_sub, seed):
         def posterior_mean_and_sd(self, Z): return mean, sd
 
     sigma_pred = ((orc.sigma_rel * mean).abs() ** 2 + orc.sigma_add ** 2).sqrt()
+
+    X_eval = X_sub
+    t_eval = truth_sub
+    if kept is not None and held:
+        X_eval = X_sub.clone()
+        for j, v in held.items():
+            X_eval[:, j] = v
+        with torch.no_grad():
+            t_eval = orc.truth(X_eval).reshape(-1).double()
+
     with torch.no_grad():
-        post = model.posterior(X_sub)
+        post = model.posterior(X_eval)
         cov = post.mvn.covariance_matrix.double()
         cov = cov + 1e-8 * torch.eye(cov.shape[0], dtype=torch.double)
         L = torch.linalg.cholesky(cov)
@@ -86,7 +101,8 @@ def _score(X, Y, Yvar, orc, dim, mu_max, grid, truth, X_sub, truth_sub, seed):
         z = torch.randn(cov.shape[0], N_DRAWS, generator=g, dtype=torch.double)
         draws = (post.mean.reshape(-1, 1).double() + L @ z).T
 
-    out = {"regret": float(mu_max - scored_curve(orc, X, Y)[-1]), "n_wells": int(X.shape[0])}
+    out = {"regret": float(mu_max - scored_curve(orc, X, Y)[-1]), "n_wells": int(X.shape[0]),
+           "n_active": dim if kept is None else len(kept)}
     for tf in TAU_FRACS:
         theta = tf * mu_max
         p = predictive_probability_map(_M(), grid, theta, sigma_pred)
@@ -95,6 +111,18 @@ def _score(X, Y, Yvar, orc, dim, mu_max, grid, truth, X_sub, truth_sub, seed):
         out[f"brier_{tf}"] = b
         out[f"alpha_star_{tf}"] = alpha_star(draws, theta)
         out[f"vorobev_dev_{tf}"] = vorobev_deviation(draws, theta)
+        for a in ALPHAS:
+            ce = conservative_estimate(draws, theta, a)
+            n_ce = int(ce.sum())
+            out[f"ce_vol_{tf}_{a}"] = n_ce / ce.numel()
+            out[f"ce_empty_{tf}_{a}"] = n_ce == 0
+            # CIRCULAR -- conservative_estimate selects on this. Kept, labelled, so the
+            # tautology is visible rather than silently removed.
+            out[f"ce_contain_{tf}_{a}"] = (containment_probability(draws, ce, theta)
+                                           if n_ce else float("nan"))
+            # THE REAL TEST: is the set actually inside the TRUE excursion set?
+            emp = empirical_containment(ce, t_eval, theta)
+            out[f"ce_empirical_{tf}_{a}"] = float("nan") if emp is None else float(emp)
     del model, draws, mean, sd; gc.collect()
     return out
 
@@ -131,6 +159,7 @@ def main():
 
         for arm in ("versionb", "versionb_random", "plate1_only", "doe", "qlognei"):
             t = time.time()
+            kept = held = None
             orc = BiphasicOracle(inst, sigma_rel=args.sigma, seed=seed)
             if arm in ("versionb", "versionb_random"):
                 X, Y, V = _two_plate(orc, args.dim, seed, mu_max, arm == "versionb")
@@ -140,7 +169,11 @@ def main():
             else:
                 rec = regenerate(inst_id, args.dim, args.sigma, seed, arm)
                 X, Y, V = rec.X, rec.Y, rec.Yvar
-            r = _score(X, Y, V, orc_t, args.dim, mu_max, grid, truth, X_sub, truth_sub, seed)
+                kept, held = rec.kept_factors, rec.dropped_held_at
+            if arm != "doe":
+                kept = held = None
+            r = _score(X, Y, V, orc_t, args.dim, mu_max, grid, truth, X_sub, truth_sub,
+                       seed, kept=kept, held=held)
             r.update({"instance": inst_id, "seed": seed, "arm": arm,
                       "rounds": ROUNDS[arm], "dim": args.dim, "sigma": args.sigma})
             rows.append(r)
@@ -156,6 +189,7 @@ def main():
                        "n_plate1": N_PLATE1, "n_plate2": N_PLATE2,
                        "tau_fracs": list(TAU_FRACS),
                        "design_tau_frac": DESIGN_TAU_FRAC, "rounds": ROUNDS,
+                       "alphas": list(ALPHAS),
                        "grid_n": GRID_N, "subset_n": SUBSET_N, "n_draws": N_DRAWS},
             "rows": rows}, indent=2))
         del truth, truth_sub; gc.collect()
