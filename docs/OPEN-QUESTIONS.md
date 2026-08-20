@@ -4508,3 +4508,39 @@ it diverges with the clustered arm ahead, that is a different paper.
 `CE_alpha` is conservative **given the model**. Hyperparameters are plug-in, so their
 uncertainty sits *outside* the guarantee — Azzimonti et al. flag this themselves. The
 E3-style coverage check is reported beside it to quantify what that costs.
+
+## Version B — the two-plate arm. Registered before `src/boec/lse.py` exists.
+
+**Why.** K6 and K6b tested plate 1 only. SPADE v2 is a two-plate method — its own spec
+says *"the certificate is 2 rounds by default; one round is the map, not the batch
+record"* — so plate 1 losing to qLogNEI (15 of 24 cells) does not settle it.
+
+**Design.** Plate 1 = **40** wells space-filling. Plate 2 = **8** wells chosen by batch
+LSE on the `D_gamma` boundary. Total **48**, budget-matched to every committed column.
+The confirmation budget comes **out of** the design, never on top.
+
+**Arms.** `versionb` (40+8 LSE) · `versionb_random` (40+8 random — the criterion must
+earn its place) · `plate1_only` (48 one-shot, the Version A arm) · `qlognei` at 10 rounds
+(the arm that actually beats plate 1) · `doe`.
+
+**Reported on BOTH axes: wells and rounds.** Version B is 2 rounds against qLogNEI's 10.
+Every K6 contrast was at equal wells only, and that under-reporting is corrected here.
+
+**A design correction, recorded because it changes the implementation.** The averaging
+rule from SPADE Stage 5 (*"decide by the mean of first and confirmation, never the
+confirmation alone"*) governs **terminal selection among candidates**. Plate 2 here does
+something different: it places wells at **new locations** to improve the map, so there is
+no first reading at those points to average against. All 48 observations feed one refit.
+Implementing "averaging" where it does not apply would be cargo-culting a rule from a
+different stage.
+
+**A correction carried from the research pass.** The optimal SUR points are **not** all on
+the boundary — Azzimonti's own figures place some in the interior to secure regions a
+boundary-only rule leaves uncertain. The criterion decides for itself; a boundary-only
+rule is not hard-coded, and there is a test asserting it can leave the boundary.
+
+**Registered kills, winner not pre-written.**
+* Plate 2 does not close the map / `alpha*` gap to qLogNEI → **SPADE is dead** and the
+  banked findings are the paper.
+* Plate 2 does not beat 8 **random** wells → the LSE criterion is not earning its place,
+  and the honest result is *"a second plate helps; the criterion does not"*.
