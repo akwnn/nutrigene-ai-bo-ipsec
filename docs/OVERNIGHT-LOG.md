@@ -386,3 +386,34 @@ pure overhead. Stopped it.
 waits is a bad pattern: it holds context, re-notifies on every poll, and duplicates
 monitoring the parent is doing anyway. Agents should **launch and exit**, leaving the
 parent to collect. I wrote the prompt that caused this.
+
+---
+
+## D19 ✅ Two agents disagreed on a number. I re-derived it; the second agent was right.
+
+The Phase 0 audit reported that `designspace.tau_max` omits `sigma_add`, with the error at
+γ=0.95, σ_rel=0.25 being **7.4e-4** and the σ=0.10 case **"10× worse"**. The report agent
+refused to adopt those figures and gave **3.29e-4** and **2.50×** instead.
+
+**Re-derived from scratch:**
+
+| σ_rel | implemented | exact (carrying σ_add) | error |
+|---|---|---|---|
+| 0.25 | 0.588787 | 0.588458 | **3.288e-04** |
+| 0.10 | 0.835515 | 0.834694 | **8.204e-04** |
+
+Ratio **2.49**, not 10×. And the audit's quoted `tau_max` of 0.58805 back-solves to
+`sigma_add = 0.01497` — **it used σ_add ≈ 0.015 where this repo's default is 0.01.**
+
+**The report agent is right on both counts, and it was right to refuse.** It also noticed
+the audit contradicted *itself* — §6 said "10× worse" while its own §4 said "triples".
+
+**Why this matters beyond the number.** The defect is real: `tau_max` should carry
+`sigma_add` and does not. But the magnitude was wrong by 2.2×, and the σ=0.10 impact
+overstated by 4×, which would have made a trivial correction look like a material one.
+Agent-versus-agent verification caught it. **That is the process working**, and it is the
+reason every agent tonight was told to push back rather than accept what it was handed.
+
+**Action:** the `tau_max` omission is a genuine small defect and should be fixed, but it
+moves nothing at the reported precision — 3.3e-04 against effects of 0.02 and above.
+Recorded, not urgently patched. **Your call whether to fix before publication.**

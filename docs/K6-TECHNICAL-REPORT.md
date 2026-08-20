@@ -6,13 +6,16 @@
 **Result files:** `results/k1-replay-gate.{json,log}`,
 `results/k6-designspace{,-spread}.{json,log}`,
 `results/k6b-conservative{,-spread}.{json,log}`, `results/versionb.{json,log}`,
-`results/k6-analysis.json`, `results/k6b-analysis.json`
+`results/k6-analysis.json`, `results/k6b-analysis.json`;
+`results/step0-oracle-best.json` (§5.12, `scripts/run_step0_oracle_best.py`)
 **Registered:** `docs/OPEN-QUESTIONS.md` §K-SERIES, commits `ef118dd` (2026-08-20T17:14:37+08:00),
 `a35b1fc` (2026-08-20T21:38:53+08:00) and §"Version B", commit `2731778`
 (2026-08-20T23:27:38+08:00)
 **Plan:** `docs/superpowers/plans/2026-08-20-spade-go-no-go.md`, body plus Amendments A–E
 **Specs under test:** `docs/SPADE-SPEC.md`, `docs/ODIN-SPEC.md`; reviewed in `docs/ODIN-VERDICT.md`
-**Status:** current as of commit `97a8352`. Plain-language companion:
+**Status:** K6/K6b/Version B numbers current as of commit `97a8352`; **four retractions
+written against `HEAD = 1c7bc60`** — see the retraction block below, and §5.12 for a result
+that post-dates `97a8352`. Plain-language companion:
 `docs/FINDINGS-SPADE.md` — **§8 of this document lists where that companion and the
 committed JSONs disagree.**
 
@@ -44,6 +47,36 @@ evidence.
 > `tau_frac = 0.60, alpha = 0.50`. Version B's `doe`, `qlognei` and `plate1_only` arms now
 > reproduce `results/k6b-conservative{,-spread}.json` **bitwise on containment as well as
 > on regret and AUC** (§9.3).
+
+> **FOUR RETRACTIONS, written against `HEAD = 1c7bc60`. Read before §5 or §6.** Four claims carried
+> by earlier revisions of this document are withdrawn. Each is restated **as a retraction**
+> at every place it appears, with the superseded number printed beside the corrected one.
+> Nothing was silently edited.
+>
+> | # | withdrawn claim | superseded | corrected | sections |
+> |---|---|---|---|---|
+> | **R1** | Amendment E2's *"the exclusion radius never fires at this dimension"* | radius **0.105** against a min pairwise spacing of **0.320**; binds in **0%**; `batch_lse` is top-8 by score | radius **0.1416–0.1495** against a top-q spacing of **0.1389–0.1572**; binds in **22 of 50** live campaigns, relocating **0.56 of 8** wells | §2.11, §3.9, §5.11.8, §6.15, §9.4, §10 |
+> | **R2** | *"`qlogei-add` / `qlogei-addonly` are ungated"* | ungated, but gateable against `results/q30-additive.json` | **CANNOT GATE.** That file **never existed in git history**, and the one committed Q30 artefact does not reproduce for the two optimiser comparators. §5.5's numbers are **not citable under rule 1** until Q30 is re-run | §2.7, §4, §5.1, §5.5, §6.11, §9.4, §10 |
+> | **R3** | KILL 2 read as *"the LSE criterion beats 8 random wells"* | LSE-8 against random-8 | **LSE-8 against no second plate.** `versionb_random`'s 8 wells move rule A in **0 of 50** campaigns; the LSE arm's move it in **8 of 50**. The contrast never isolated the criterion from the extra wells | §5.11.2, §5.11.4, §5.11.8, §6.15, §10 |
+> | **R4** | that the family axis at §6.4 is merely `NOT RUN`, and that a fixed `tau_frac` transfers across families | `mu_max = 1.0` on every family, so the τ grid is comparable | arithmetically true, **scientifically invalid**. Superlevel-set prevalence at `tau_frac = 0.60` runs **0.00000 (ackley) · 0.00805 (hartmann6) · 0.73569 (hill) · 0.85745 (levy) · 0.95550 (rosenbrock)**. Ackley is `CANNOT RUN` — every metric is literally `nan` — and the DoE design hits its exact optimum **7 times**. `tau_max` also omits `sigma_add` | §2.4, §6.4, §10 |
+>
+> **Direction of travel: R1 makes this document's Version B claims stronger; R2 and R3 make
+> them weaker; R4 closes a door that §6.4 described as open.** Sources: `docs/OVERNIGHT-LOG.md`
+> D8 (R1), D11 (R2), D12 (R3), D13 (R4), and the Phase 0 audit `docs/COVERAGE-MATRIX.md`.
+> Where this report disagrees with either of those documents it says so and shows the
+> arithmetic — see §2.4, where the audit's `sigma_add` figures are **not** adopted.
+>
+> **The VALIDATED / MODEL-INTERNAL distinction of §1.4 is unchanged by all four**, and every
+> table touched below still carries it.
+>
+> **Also new at this revision: §5.12**, which reports Step 0 (oracle-best for the spread
+> arms, `results/step0-oracle-best.json`) and two defects in its own runner — a docstring
+> promising a `qlognei` gate the code did not have, and a 40-well number filed under a
+> 48-well arm name. Both are fixed at `63783aa`; **neither changes a reported number**, and
+> the reason each is recorded anyway is that the first made a gate decorative and the second
+> made a committed artefact unreadable without its commit message. Step 0's headline is that
+> the pre-committed decision rule — ≈0.06 means *identification*, ≈0.10 means *search* —
+> measured **0.0795** and **refuted itself**: the answer is both.
 
 **Scope.** K6 and K6b score **plate 1 only**. **Version B — the two-plate arm — has been
 run and re-run** (`results/versionb.json`, committed at `97a8352`) and is reported at
@@ -363,6 +396,41 @@ implemented at `src/boec/designspace.py:70-77`. At `sigma_rel = 0.25`:
 budget, with any design, ever.** `D_gamma` is floored by *process* noise, which no amount
 of data reduces.
 
+> **RETRACTION R4c — that ceiling is slightly optimistic, because `tau_max` omits
+> `sigma_add`.** `designspace.tau_max` is `mu_max * (1 - z * sigma_rel)`
+> (`src/boec/designspace.py:70-77`) and has **no `sigma_add` term**. The campaigns' noise is
+> `y = f(1 + eps) + eta` with `eta ~ N(0, sigma_add^2)` and `sigma_add = 0.01` by default on
+> both oracle classes (`src/boec/torch_oracle.py:109`, `:178`), so at the optimum
+> `Var(Y) = mu_max^2 * sigma_rel^2 + sigma_add^2` and the exact `s = 0` ceiling is
+> `mu_max * (1 - z * sqrt(sigma_rel^2 + sigma_add^2))`. Regenerated with
+> `.venv/bin/python -c "import math; from boec.designspace import tau_max, _z_for; [print(g, tau_max(g,s), round(1-_z_for(g)*math.hypot(s,0.01),10)) for g in (0.5,0.7,0.8,0.9,0.95,0.99) for s in (0.25,0.10)]"`:
+>
+> | gamma | reported, sigma_rel=0.25 | exact | error | reported, sigma_rel=0.10 | exact | error |
+> |---|---|---|---|---|---|---|
+> | 0.50 | 1.000000 | 1.000000 | 0 | 1.000000 | 1.000000 | 0 |
+> | 0.70 | 0.868900 | 0.868795 | 1.05e-04 | 0.947560 | 0.947299 | 2.61e-04 |
+> | 0.80 | 0.789595 | 0.789426 | 1.68e-04 | 0.915838 | 0.915418 | 4.20e-04 |
+> | 0.90 | 0.679612 | 0.679356 | 2.56e-04 | 0.871845 | 0.871206 | 6.39e-04 |
+> | **0.95** | **0.588787** | **0.588458** | **3.29e-04** | **0.835515** | **0.834694** | **8.20e-04** |
+> | 0.99 | 0.418413 | 0.417948 | 4.65e-04 | 0.767365 | 0.766205 | 1.16e-03 |
+>
+> **This report does not adopt `docs/COVERAGE-MATRIX.md`'s figures for this defect, because
+> they are wrong.** That audit (§4 B2) gives the exact value at `gamma = 0.95,
+> sigma_rel = 0.25` as **0.58805** and the error as **7.4e-04**, and its §6 item 5 calls the
+> `sigma_rel = 0.10` case *"proportionally 10x worse"* (its own §4 B2 says *"triples"*, so the
+> two disagree internally). Recomputed above: the exact value is **0.588458**, the error is
+> **3.29e-04**, and `sigma_rel = 0.10` is worse by a factor of **2.50**, not 10 or 3 — which
+> is what the leading term `z * sigma_add^2 / (2 * sigma_rel)` predicts (2.0e-04 against
+> 5.0e-04 before the `z` factor). 0.58805 is the value implied by `sigma_add = 0.015`, which
+> is not this repository's default. **The defect is real and its direction is right; its
+> magnitude is smaller than the audit states.**
+>
+> **Nothing in §5 moves.** Every arm is scored against the same `tau = tau_frac * tau_max`,
+> so the error is common to all eight arms and every contrast is within-grid. What it
+> touches is the *absolute* sentence above — the true `gamma = 0.95` ceiling is **0.5885**,
+> not 0.5889 — and any future `sigma_rel = 0.10` cell, where the error is 8.2e-04 at
+> `gamma = 0.95` and 1.2e-03 at `gamma = 0.99` and should be corrected before that cell runs.
+
 **What the earlier draft registered.** Amendment A5 registered absolute
 `tau in {0.70, 0.80, 0.85, 0.90}`. **All four exceed 0.589.** Had that grid run, every arm
 would have certified nothing at `gamma = 0.95`, the ranking would have been undefined, and
@@ -466,6 +534,26 @@ registration** — it is the right check and it is not a registered one.
 > show a large gain on the probability map, the project gets its cleanest single figure:
 > **Doubling surrogate accuracy is worth nothing for choosing a point and a great deal for
 > certifying a region.**
+
+The same amendment fixes the gate: *"Arm names `qlogei-add` and `qlogei-addonly` map to
+`additive+interaction` and `additive`. **Gate them against `results/q30-additive.json`
+under the Task 1 policy**"* (plan, lines 64–66).
+
+> **RETRACTION R2 — that gate is not merely unimplemented, it is IMPOSSIBLE.**
+> `results/q30-additive.json` **has never existed in this repository's git history.**
+> Verified three ways, all read-only:
+> `git log --all -- results/q30-additive.json` returns **nothing**;
+> `git log --all --pretty=format:%H --name-only | grep -i q30 | sort -u` returns exactly two
+> paths, `results/q30-additive.log` and `scripts/run_q30_additive.py`, and no `.json`;
+> and the file is not on disk. **The registered comparator for these two arms does not
+> exist and never has.**
+>
+> The status of `qlogei-add` and `qlogei-addonly` is therefore **`CANNOT GATE`**, not
+> "ungated" — a stronger and worse condition, because no amount of care in this run could
+> have fixed it. The consequences for §5.5 are set out there and at §6.11; the short form is
+> that the A1 null **stands in direction and is not citable in magnitude** under
+> `docs/RESULTS.md` rule 1 until Q30 is re-run against the current `results/e2-grid.json`
+> and committed. (Source: `docs/OVERNIGHT-LOG.md` D11; audit `docs/COVERAGE-MATRIX.md` §3.6.)
 
 ### 2.8 Amendment B3 — the screened-axis policy
 
@@ -578,7 +666,8 @@ across all five arms.
 
 Amendment E (plan, line 591) opens: *"Version B v1 (Task 8, Amendment D) ran. **Do not read
 its result until these are addressed** — two of the four were measured and confirmed before
-this was written."* Six items are recorded, E1–E6. **None of the six has been fixed.** The
+this was written."* Six items are recorded, E1–E6. **None of the six has been fixed — and
+E2 turned out not to be a defect at all (R1, §6.15).** The
 Version B reported at §5.11 is v2 (`547b8af`, committed `97a8352`), and the re-run added
 containment metrics and Amendment B3 only — it touched none of E1–E6, all of which are
 properties of the *design*, not of the scoring. They are carried as limitations at §6.15,
@@ -590,17 +679,26 @@ and two of them are measurements, not suspicions:
   8 wells chosen by numerical noise. The registered fix — log the acquisition surface's
   relative dispersion per campaign and pre-register a flatness threshold — **is not
   implemented**; `run_versionb.py` contains no dispersion logging.
-- **E2 (measured):** `exclusion_radius` returns `median_lengthscale / 4` = **0.105**
-  Chebyshev at `ell = 0.42`. Over **2,000 random 8-point batches in 6D the median minimum
-  pairwise Chebyshev distance is 0.320, and the exclusion binds in 0% of them.** The
-  diversity mechanism therefore **never fires**, and `batch_lse` is in practice **top-8 by
-  score**. `src/boec/lse.py`'s docstring section *"WHY EXCLUSION IS NOT OPTIONAL"* describes
-  machinery that is inert at this dimension.
+- **E2 — RETRACTED.** As registered it read: *"`exclusion_radius` returns
+  `median_lengthscale / 4` = **0.105** Chebyshev at `ell = 0.42`. Over 2,000 random 8-point
+  batches in 6D the median minimum pairwise Chebyshev distance is **0.320**, and the
+  exclusion binds in **0%** of them … `batch_lse` is in practice **top-8 by score**."*
+  **Both numbers are correct and the conclusion drawn from them is wrong**, for two
+  independent reasons; the full retraction is at §6.15 and the corrected figures are there.
+  In one line: the reference population was **random** batches, but `batch_lse` takes the
+  greedy argmax of a straddle surface whose high scores concentrate on one contour, and
+  `ell = 0.42` is the **n = 48** lengthscale where plate 1 is **n = 40**. Against the correct
+  reference the exclusion **binds in 22 of 50** live campaigns.
 - **E3, E4, E5, E6** are design gaps rather than measurements and are set out at §6.15.
+  **E3 has since been promoted from a design gap to a measured defect** (§5.11.4, R3).
 
-Neither the 0.487/0.438/0.378 density figures nor the 0.320/0% exclusion figures have a
-committed result file. **They are recorded in the plan only**, and under RESULTS.md rule 1
-they are design rationale, not evidence. They are cited here because Amendment E is the
+Neither the 0.487/0.438/0.378 density figures nor the E2 exclusion figures — the retracted
+0.320/0% or the corrected 0.1495/22-of-50 — have a committed file in `results/`. E1's
+remain **plan-only**. E2's corrected figures are now recorded in **committed source**
+(`src/boec/lse.py`'s module docstring, commit `cee1f45`) and guarded by **committed tests**
+(`tests/test_lse.py`), which is a materially better standard than a plan line but is still
+not a result file; §9.4 records exactly what that buys. Under RESULTS.md rule 1 all of them
+remain design rationale rather than evidence. They are cited here because Amendment E is the
 document that registered them as defects *before* the Version B verdict was read, which is
 what makes them limitations rather than excuses.
 
@@ -852,10 +950,16 @@ straddle_score(mean, sd, theta) = 1.96 * sd - |mean - theta|
 
 evaluated at `theta = DESIGN_TAU_FRAC * mu_max` with `DESIGN_TAU_FRAC = 0.75`. `batch_lse`
 picks greedily, masking a Chebyshev ball of radius `exclusion_radius(model) =
-median_ARD_lengthscale / 4` around each pick, and returns **fewer than q points rather than
-duplicates** if the pool empties. **The exclusion radius never fires at this dimension —
-Amendment E2, §6.15.** The straddle uses the GP's `sd` alone, i.e. the **latent** contour,
-while the deliverable is the **predictive** region (Amendment E6).
+median_ARD_lengthscale / 4` around each pick (`EXCLUSION_FRACTION = 0.25`,
+`src/boec/lse.py:99`), and returns **fewer than q points rather than duplicates** if the
+pool empties. **RETRACTION R1 — an earlier revision of this line read *"The exclusion radius
+never fires at this dimension — Amendment E2, §6.15."* That is contradicted by measurement.**
+At the live operating point (`d = 6`, `sigma_rel = 0.25`, 40 LHS plate-1 wells, the runner's
+own 4,096-point Sobol candidate grid) the radius is **0.1416–0.1495**, not 0.105, and it
+**binds in 22 of 50** campaigns, relocating a mean of **0.56 of 8** wells. `batch_lse` is
+therefore **not** top-8 by score. Full retraction, both superseded numbers and both errors,
+at §6.15. The straddle uses the GP's `sd` alone, i.e. the **latent** contour, while the
+deliverable is the **predictive** region (Amendment E6).
 
 **Plate 2, random control.** `torch.rand(8, 6, generator=Generator().manual_seed(10_000 + seed))`
 — 8 uniform points, same wells, same refit, no criterion.
@@ -974,8 +1078,8 @@ sigma_rel = 0.25`, all on the same 25 instances x 2 seeds.
 | `random` | one-shot uniform, 48 points, sharing the 14-point opening. | **1** | 6 | `e2-grid.json`, exact |
 | `qlogei` | BoTorch qLogExpectedImprovement, product Matern-5/2 ARD kernel. 14-point opening + 8 batches of 4 + 1 batch of 2. | **10** | 6 | `e2-grid.json`, exact |
 | `qlognei` | qLogNoisyExpectedImprovement, otherwise identical. | **10** | 6 | `e2-grid.json`, exact |
-| `qlogei-add` | Q30's arm: `kernel_structure = "additive+interaction"`, acquisition `qlogei`. | **10** | 6 | not gated (no committed `e2-grid` column; Q30's own JSON is a different key space) |
-| `qlogei-addonly` | Q30's arm: `kernel_structure = "additive"`, acquisition `qlogei`. | **10** | 6 | not gated |
+| `qlogei-add` | Q30's arm: `kernel_structure = "additive+interaction"`, acquisition `qlogei`. | **10** | 6 | **CANNOT GATE** — no committed `e2-grid` column, and the registered comparator `results/q30-additive.json` has never existed (R2, §6.11) |
+| `qlogei-addonly` | Q30's arm: `kernel_structure = "additive"`, acquisition `qlogei`. | **10** | 6 | **CANNOT GATE** (R2, §6.11) |
 
 Round counts are from `boec.campaign.batch_plan(6, 48, 4, None)`, which returns
 `n_init = 14` and `batches = [4,4,4,4,4,4,4,4,2]` — 1 opening + 9 adaptive = **10 rounds**;
@@ -1038,6 +1142,18 @@ Mean regret over n = 50, from `results/k6-analysis.json` `regret`:
 | 6 | `qlogei-addonly` | 0.1623 | 10 |
 | 7 | `sobol` | 0.1724 | 1 |
 | 8 | `random` | 0.2216 | 1 |
+
+**RETRACTION R2 applies to ranks 3 and 6: they are `CANNOT GATE` (§6.11), and their
+placement in this ladder is not citable.** Six of the eight rows reproduce a committed
+`results/e2-grid.json` value at `|delta| = 0`. `qlogei-add` (0.1483) and `qlogei-addonly`
+(0.1623) reproduce nothing, because the comparator Amendment A1 registered for them,
+`results/q30-additive.json`, was never committed. The only committed Q30 artefact,
+`results/q30-additive.log`, records **0.1560** and **0.1544** for these two arms — 0.0077 and
+0.0079 away from the regenerated values above (`docs/COVERAGE-MATRIX.md` §3.6). Those two
+figures **cannot simply be substituted into this ladder**, because the same log's `qlogei`
+and `qlognei` comparators do not reproduce either (0.1666 vs 0.1553 and 0.1512 vs 0.1532)
+while all five of its static arms match exactly. Which set is right cannot be determined
+from committed files, so neither is quoted as this study's number.
 
 Paired regret contrasts (n = 50; positive means the first arm has **worse** regret):
 
@@ -1205,6 +1321,40 @@ The `lhs`-vs-qLogNEI sign structure is systematic, not noise: `lhs` loses at low
 
 ### 5.5 Amendment A1 — the additive-kernel intervention is null on all three deliverables
 
+> **RETRACTION R2 — THE EVIDENTIARY STATUS OF THIS ENTIRE SECTION IS DOWNGRADED.**
+> An earlier revision closed §6.11 with *"their 2,400 K6 rows and 400 K6b rows are therefore
+> ungated"*. The correct status is **`CANNOT GATE`**: `results/q30-additive.json`, the
+> comparator Amendment A1 registered, **has never existed in git history** (§2.7, §6.11).
+> Every number in §5.5 is regenerated from `replay.regenerate` with a `kernel_structure`
+> override and has been compared to **nothing**.
+>
+> **That is not academic here.** The only committed Q30 artefact is
+> `results/q30-additive.log`, and its comparator column does not reproduce from the
+> committed `results/e2-grid.json` for exactly the two optimiser arms, while all five static
+> arms match to the digit (`docs/COVERAGE-MATRIX.md` §3.6):
+>
+> | Q30-style per-instance mean, d=6 σ=0.25 | `q30-additive.log` | recomputed from `e2-grid.json` | |
+> |---|---|---|---|
+> | `doe` / `lhs` / `sobol` / `random` / `coord` | 0.0958 / 0.1270 / 0.1724 / 0.2216 / 0.1420 | identical | ✅ |
+> | **`qlogei`** | **0.1666** | **0.1553** | ❌ |
+> | **`qlognei`** | **0.1512** | **0.1532** | ❌ |
+>
+> and the paired contrast this section reports **changes sign** on regeneration:
+>
+> | paired contrast | as Q30 logged it | regenerated, `k6-designspace.json` |
+> |---|---|---|
+> | `qlogei-add − qlogei` | −0.0106 | **−0.0070** |
+> | **`qlogei-addonly − qlogei`** | **−0.0123** | **+0.0071 — sign flips** |
+>
+> **Consequence, stated exactly.** The A1 conclusion **stands in direction** — every
+> contrast below is null or, on the map, positive-but-not-Holm-significant, and no
+> regeneration changes that. Its **magnitudes are not citable** under `docs/RESULTS.md`
+> rule 1 until Q30 is re-run against the current `e2-grid.json` and
+> `results/q30-additive.json` is committed. The tables below are retained rather than
+> deleted, because deleting them would hide what the sign flip is evidence *about*; they
+> are to be read as **provenance-flagged**, not as this project's A1 numbers.
+> (`docs/OVERNIGHT-LOG.md` D11.)
+
 Q30 measured that roughly doubling held-out R^2 moved regret by 0.0015, p = 0.71
 (RESULTS.md §Q30). A1 asked whether the same campaigns gain on the certification objects.
 
@@ -1263,6 +1413,14 @@ which is contradicted by the committed JSON; see §8.8.
 map quality or joint certifiability under the registered multiplicity control. The
 consistently positive direction on the map (24/24 and 24/24) is a signal worth one
 adequately powered follow-up, not a claim.
+
+**And under R2 even that reading is a direction, not a number.** The regret contrasts above
+(−0.0070 and +0.0071) are the regenerated pair whose Q30-logged counterparts were −0.0106
+and −0.0123; the second of those is a sign change, on a shift ~5× the effect Q30 reported
+and ~0.4 × SESOI. The 24/24 map direction is robust to this — it is a count of signs across
+cells computed entirely within `results/k6-designspace.json`, so it does not depend on the
+missing comparator — but every **magnitude** in this section does. The re-run that would fix
+it is priced at ≈2.6 CPU-hours for 200 campaigns (`docs/COVERAGE-MATRIX.md` §5, P1).
 
 ### 5.6 A registered prediction of ours was wrong, in the opposite direction — RETRACTED
 
@@ -1690,9 +1848,21 @@ Three readings, and the third is the uncomfortable one:
 
 1. **Version B ties qLogNEI on regret at 2 rounds against 10** (+0.0014, p = 0.86). If
    rounds are the currency, that is the strongest thing in this section.
-2. **The LSE criterion does help regret** against its own random control (-0.0091,
-   p = 0.0117), which is a small but consistent effect on a metric plate 2 was not designed
-   to improve.
+2. **RETRACTED (R3) — this is not a criterion-versus-criterion contrast.** The earlier
+   revision read: *"**The LSE criterion does help regret** against its own random control
+   (-0.0091, p = 0.0117), which is a small but consistent effect on a metric plate 2 was not
+   designed to improve."* The arithmetic is unchanged and the sign is unchanged, but the
+   **reference arm is not what it was described as**: `versionb_random`'s regret is
+   *bitwise identical* to a 40-well plate-1-only campaign in **50 of 50** cases, so its 8
+   random plate-2 wells contribute exactly nothing to rule A and −0.0091 measures
+   *LSE plate 2 against **no** plate 2*, not *LSE against random*. Regenerated from two
+   committed files (`0` differing cases for the random arm, `8` for the LSE arm):
+   ```
+   .venv/bin/python -c "import json; vb={(r['instance'],r['seed'],r['arm']):r for r in json.load(open('results/versionb.json'))['rows']}; s0=[r for r in json.load(open('results/step0-oracle-best.json'))['rows'] if r['arm'].startswith('versionb')]; print(len(s0), sum(abs(r['rule_a']-vb[(r['instance'],r['seed'],'versionb_random')]['regret'])>0 for r in s0), sum(abs(r['rule_a']-vb[(r['instance'],r['seed'],'versionb')]['regret'])>0 for r in s0))"
+   # -> 50 0 8      (`startswith` because the Step 0 arm was renamed; see §5.12)
+   ```
+   (`results/step0-oracle-best.json`'s `versionb` row is a 40-well plate-1-only campaign —
+   see §5.12 and its labelling defect.) Full retraction at §5.11.4.
 3. **Spending 8 of 48 wells on a second plate costs regret**: `versionb` is worse than
    `plate1_only` by +0.0276 (p = 0.0166), and `versionb_random` is worse by +0.0368. Plate 2
    buys map and `alpha*` at the price of the point estimate. That trade is the whole thesis
@@ -1771,10 +1941,45 @@ in the same breath:
    labelling of the excursion set, the gamma-invariant one, and not against K6's
    observable-threshold labellings where the plate-1 design is known to lose."**
 
-#### 5.11.4 KILL 2 — does the LSE criterion beat 8 random wells?
+#### 5.11.4 KILL 2 — RETRACTED IN ITS INTERPRETATION. The contrast is not "LSE against random-8"
 
 Registered kill: *"plate 2 does not beat 8 **random** wells → the criterion is not earning
 its place, and the honest result is 'a second plate helps; the criterion does not'."*
+
+> **RETRACTION R3.** Earlier revisions of this section, and of §5.11.8 and §10, reported the
+> `versionb − versionb_random` contrast as *"the LSE criterion beats a random second plate"*
+> and treated it as isolating **the criterion** from **the extra 8 wells**. **It does not,
+> and the reason is measurable in two committed files.**
+>
+> **`versionb_random`'s 8 plate-2 wells beat the best of the 40 LHS plate-1 wells in 0 of
+> 50 campaigns.** Its rule-A regret is *bitwise identical* — worst `|delta| = 0.000e+00`,
+> 50 of 50 — to `results/step0-oracle-best.json`'s 40-well plate-1-only rule A. The LSE arm
+> manages it in **8 of 50** (worst `|delta| = 0.2046`). Regenerated by the one-liner in
+> §5.11.2, which prints `50 0 8`; independently reported at `docs/COVERAGE-MATRIX.md` §6
+> item 3 and `docs/OVERNIGHT-LOG.md` D12.
+>
+> **So the reference arm is a null second plate, not a random one.** On rule A,
+> `versionb_random` *is* the 40-well campaign; the 8 uniform wells are spent and contribute
+> nothing that the terminal rule can see. Everything below is therefore a measurement of
+> **"LSE-8 against no second plate"**, and it does **not** separate the criterion from the
+> extra wells.
+>
+> **What survives, and what does not.**
+> * **Survives, unchanged:** every number in the tables below. No arithmetic moves, no p-value
+>   moves, the KILL-2 count is still **1 of 4** under Holm, and the kill still does not fire.
+>   The registered kill asked whether plate 2 beats 8 random wells; on the committed
+>   comparison it does.
+> * **Does not survive:** the *attribution*. "The criterion is earning its place" cannot be
+>   read off this contrast, because the comparison it actually runs cannot distinguish a
+>   good criterion from any non-empty use of 8 extra wells.
+> * **This is precisely what Amendment E3's 44+4 arm was registered to resolve** (§6.15),
+>   and it has moved from *suspected* to *measured*. E3's argument was about plate 1 being
+>   thinned; the measurement here adds that the control's plate 2 is inert, so **both** arms
+>   of the ambiguity are now evidenced rather than hypothesised.
+> * **The R3 caveat does not touch the AUC and Vorob'ev rows below**, which score the whole
+>   map rather than the terminal point and to which the 8 random wells *do* contribute — the
+>   random arm's map is not the 40-well map. It touches the regret reading (§5.11.2) and the
+>   interpretive claim, which is what is retracted.
 
 | metric | mean | 95% bootstrap CI | Wilcoxon p | Holm (m=4) |
 |---|---|---|---|---|
@@ -1798,6 +2003,20 @@ criterion with no signal cannot produce +0.085 (p = 0.0053) against its own rand
 on paired campaigns, so **the flatness worry is answered in the direction that keeps the
 criterion alive** — though not by the registered mechanism, since the dispersion diagnostic
 E1 asked for was never implemented (§6.15).
+
+*(Under R3 this inference is weakened but not destroyed. The `alpha*` and AUC rows it rests
+on are map quantities, to which the control's 8 wells do contribute, so the comparison is
+still LSE-8 against uniform-8 **on the map** even though it is LSE-8 against no-plate-2 on
+regret. What R3 removes is any reading of the effect size as "the value of the criterion
+over an equally sized random design", which was never what the regret row measured.)*
+
+**And R1 changes what "the criterion" means in this contrast.** Earlier revisions closed
+KILL 2 by noting it compares *top-8-by-straddle* against *8 uniform*, because Amendment E2
+said the exclusion never fires. **That is retracted (§6.15).** The exclusion binds in 22 of
+50 campaigns and relocates a mean of 0.56 of 8 wells, so the arm under test is
+*straddle-with-diversity*, which is what its docstring claims and what the design intends.
+R1 therefore makes this contrast **more** interpretable, in the same passage where R3 makes
+it less.
 
 **Extending KILL 2 to the validated metric, which the script does not report.** Recomputed
 from the same committed rows:
@@ -2078,12 +2297,19 @@ certified set is actually right half the time. Reporting that column as evidence
 
 - Both pre-registered kills passed on the script's own comparisons. Under Holm, KILL 1
   survives in 2 of 8 tests (AUC at `tau_frac` 0.85 and 0.95) and KILL 2 in 1 of 4 (at the
-  threshold the criterion targets).
+  threshold the criterion targets). **KILL 2's counts are unchanged by R3; its
+  interpretation is not** — the comparison it runs is against a second plate that is inert
+  on rule A, not against a random criterion (§5.11.4).
 - **Version B ties qLogNEI on regret at 2 rounds against 10** (+0.0014, p = 0.86) while
   beating it on the map (+0.044 to +0.098 AUC at `tau_frac >= 0.75`).
-- The LSE criterion beats a random second plate on both a model-internal metric (`alpha*`,
+- The LSE arm beats the `versionb_random` arm on both a model-internal metric (`alpha*`,
   3/4 thresholds) and a validated one (AUC, 2/4), and loses to it on a second
-  model-internal one (Vorob'ev deviation, 2/4).
+  model-internal one (Vorob'ev deviation, 2/4). **RETRACTION R3 — this must no longer be
+  written as "the criterion beats a random second plate."** `versionb_random`'s 8 plate-2
+  wells beat the best of its 40 plate-1 wells in **0 of 50** campaigns, so on rule A the
+  control *is* a no-second-plate arm (§5.11.4). The map contrasts above do still receive the
+  control's 8 wells; the regret contrast does not, and the attribution claim does not hold
+  for either.
 - **That the second plate itself — not the criterion — improves the map at the easiest
   threshold.** `versionb - plate1_only` survives Holm across its own eight tests at
   `tau_frac = 0.60` on both AUC (+0.0328, adjusted 0.0240) and `alpha*` (+0.0236, adjusted
@@ -2112,13 +2338,114 @@ certified set is actually right half the time. Reporting that column as evidence
   `gamma = 0.50` row. That row is gamma-*invariant* for the latent excursion set by
   Amendment C2 (§3.9.1), so there is no sweep to run on that object — but K6's
   `gamma >= 0.70` rows label a different set, and Version B was never scored against them.
-- **That the LSE machinery is doing what its docstring says.** The exclusion radius never
-  fires (Amendment E2), so `batch_lse` is top-8 by score.
+- *(**RETRACTED — R1.** A bullet stood here reading: *"**That the LSE machinery is doing
+  what its docstring says.** The exclusion radius never fires (Amendment E2), so `batch_lse`
+  is top-8 by score."* Measured at the live operating point, the radius **binds in 22 of 50**
+  campaigns and relocates a mean of **0.56 of 8** wells, so `batch_lse` is **not** top-8 by
+  score and the docstring — rewritten to the measurement at `cee1f45` — is now true. This
+  moves from "does not establish" to **established, in committed source and tests but not in
+  any `results/` file** (§6.15, §9.4).)*
 - **That 40+8 is the right split**, or that a 40-well plate 1 has a usable acquisition
   surface at all. Amendment E1 measured 0.378 neighbours per lengthscale at n=40 against
   0.487 at n=48 and asked for a 44+4 arm (E3) to separate "the criterion failed" from "the
-  8 wells taken out of plate 1 broke plate 1". That arm was not run.
+  8 wells taken out of plate 1 broke plate 1". That arm was not run. **R3 makes this the
+  most consequential of the unrun arms**: with the random control's plate 2 measured inert
+  on rule A (0 of 50, §5.11.4), no committed arm separates *the criterion* from *8 extra
+  wells* on any deliverable, which is exactly the gap E3 was registered to close.
 - **Anything gated.** Version B has no gate block (§3.9).
+
+---
+
+### 5.12 Step 0 — is the regret gap SEARCH or IDENTIFICATION? Both, and the split differs by arm
+
+**Post-dates `97a8352`.** Registered at `1444969` *before* `scripts/run_step0_oracle_best.py`
+existed; run and committed at `6edf708` as `results/step0-oracle-best.json` (350 rows,
+7 arms × 50 instance-seeds at `d = 6`, `sigma_rel = 0.25`, `gate_failures: []`). It is
+reported here because it decomposes §5.1's and §5.11.2's regret ladder into two components
+that this document has so far reported only as one number.
+
+**The quantity.** `oracle_best = mu_max - max f(x)` over the wells the arm actually
+*visited* — the ceiling any terminal rule could reach on that campaign. `rule_a` is the
+regret the arm's own reported-best rule achieves. Their difference is the
+**identification gap**: regret the arm suffers despite having visited a good point.
+Both are **VALIDATED** (§1.4): `oracle_best` calls the noiseless oracle, and `rule_a`
+reproduces §5.1's committed regret exactly.
+
+Means over n = 50, read from `results/step0-oracle-best.json` and regenerated with
+`.venv/bin/python -c "import json,statistics as st; from collections import defaultdict; d=json.load(open('results/step0-oracle-best.json'))['rows']; b=defaultdict(list); [b[r['arm']].append(r) for r in d]; [print(a, len(v), round(st.mean(x['rule_a'] for x in v),4), round(st.mean(x['oracle_best'] for x in v),4), round(st.mean(x['identification_gap'] for x in v),4)) for a,v in b.items()]"`:
+
+| arm | wells | rule A | oracle-best | identification gap | class |
+|---|---|---|---|---|---|
+| `doe` | 48 | 0.0958 | **0.0597** | 0.0361 | VALIDATED |
+| `lhs` = `plate1_only` | 48 | 0.1270 | **0.0795** | 0.0475 | VALIDATED |
+| `qlognei` | 48 | 0.1532 | **0.0834** | 0.0698 | VALIDATED |
+| `sobol` | 48 | 0.1724 | 0.0993 | 0.0730 | VALIDATED |
+| `random` | 48 | 0.2216 | 0.0965 | 0.1251 | VALIDATED |
+| `versionb` **(40 wells — plate-1 ceiling only, see the defect below)** | **40** | 0.1638 | **0.0867** | 0.0771 | VALIDATED, **upper bound** |
+
+**The registered decision rule refuted itself, which is why the run was worth doing.** The
+registration pre-committed a two-way reading: `lhs` oracle-best ≈ 0.06 would mean the gap is
+**identification** (the wells visit good points and the terminal rule misses them), ≈ 0.10
+would mean **search** (the wells never get there). The measured value is **0.0795 — between
+the two branches**. The answer is *both*, and no single repair closes the gap.
+
+**Decomposed against `doe`, the split flips between arms.** Search excess is
+`oracle_best(arm) − oracle_best(doe)`; identification excess is
+`identification_gap(arm) − identification_gap(doe)`:
+
+| arm | search excess | identification excess | split |
+|---|---|---|---|
+| `lhs` | **+0.0198** | +0.0114 | **63% search / 37% identification** |
+| `versionb` (40-well ceiling) | +0.0270 | **+0.0410** | **40% search / 60% identification** |
+
+So a posterior-mean terminal rule has real headroom on the two-plate arm and much less on
+plain LHS — the opposite of what a single-threshold reading would have predicted, and the
+basis on which the Fix-1 work was dispatched (`docs/OVERNIGHT-LOG.md` D1).
+
+**This bears directly on §5.11.5 and §6.1.** `versionb`'s 40-well ceiling of 0.0867 is an
+*upper bound* on its true oracle-best — plate 2 adds 8 wells and the best visited point can
+only improve — so its identification share of 60% is a **lower** bound. The +0.0276 regret
+that §5.11.2 charges to the second plate is therefore at least partly a terminal-rule
+failure rather than a design failure, and that is a testable distinction rather than an
+interpretive one.
+
+**Two defects in the Step 0 runner, both found by the Phase 0 audit, both fixed at
+`63783aa`, neither changing a number above.**
+
+1. **A docstring promising a gate the code did not have.** `scripts/run_step0_oracle_best.py`
+   line 10 registered *"`doe` **and** `qlognei` must reproduce Q57's committed oracle-best"*;
+   the code checked `if arm == "doe"` and nothing else, so the `qlognei` half **was never
+   run**. The audit ran it by hand and it **passes at `|delta| = 0.000e+00`, 50 of 50**
+   against `results/q57-search-vs-id.json`'s `nei_oracle_best`, so **no reported number
+   changes** — the gate was *decorative*, not *failing*. It is now written: the script maps
+   `{"doe": "doe_oracle_best", "qlognei": "nei_oracle_best"}` and gates both. This is the
+   same class of defect as R1's — a docstring describing behaviour the code lacks — recorded
+   here rather than elsewhere because this project keeps finding it.
+2. **A 40-well number filed under a 48-well arm name.** The row labelled `arm: "versionb"`
+   in `results/step0-oracle-best.json` is a **plate-1-only, 40-well** campaign; it carries
+   `n_wells: 40` but no label saying so, and its `rule_a` is bitwise identical to
+   `results/versionb.json`'s **`versionb_random`** regret in 50 of 50 (which is what R3 is
+   built on) while differing from `versionb`'s by up to 0.2046. Any join on
+   `arm == "versionb"` across the two files silently compares two different campaigns. The
+   runner at `63783aa` renames it **`versionb_plate1_ceiling`** with the reason in the source.
+
+   > **Provenance, stated exactly.** The **committed** `results/step0-oracle-best.json` is
+   > the `6edf708` artefact and carries the old name `versionb` on its 40-well rows; every
+   > figure in the tables above is read from it. The re-run under the corrected name
+   > **completed while this revision was being written and is NOT committed**
+   > (`provenance.git_sha = f681e713`, working tree only). Compared row-group by row-group
+   > against the committed file it reproduces **every** `rule_a`, `oracle_best` and
+   > `identification_gap` mean to four decimals on all seven arms, with the 40-well rows now
+   > labelled `versionb_plate1_ceiling` and `gate_failures: []` under the **restored**
+   > two-arm gate. Under `docs/RESULTS.md` rule 1 the re-run's output is still not citable,
+   > and nothing above depends on it — as predicted, **the rename changed a label and the
+   > restored gate changed no value.** Queries in this document that select the 40-well rows
+   > therefore match on the `versionb` *prefix*, so they work against either file.
+
+**What Step 0 does not establish.** Nothing about the map or the certificate: `oracle_best`
+is a regret-class quantity only, and no design-space metric exists for it. Nothing outside
+`d = 6, sigma_rel = 0.25`, on the Hill ensemble. And nothing about `versionb` at 48 wells —
+only its plate-1 ceiling.
 
 ---
 
@@ -2162,7 +2489,8 @@ remains true:
 
 Everything in §5.1–§5.10 remains a statement about **plate 1**. §5.11 is the only two-plate
 evidence, it is 250 rows, it is **ungated** (§6.16), and its design is unchanged from v1 —
-Amendment E's six defects all still stand (§6.15).
+**five of Amendment E's six defects still stand; E2 is retracted as an error of its own
+(R1, §6.15)**.
 
 ### 6.2 Acquisition-function dependence — the result flips between qLogEI and qLogNEI
 
@@ -2231,6 +2559,81 @@ Everything in §5 is `d = 6`, `sigma_rel = 0.25`, the biphasic Hill ensemble, 25
   ones. None of hartmann6, ackley, levy or rosenbrock was scored under K6's metrics. The
   Hill oracle is biphasic and coordinate-wise unimodal, which is the regime SPADE's own
   Stage 3 says it is *supposed* to win in.
+
+> **RETRACTION R4 — the family axis is not "`NOT RUN`". At the registered τ grid it is
+> partly `CANNOT RUN`, and any pooled cross-family table is invalid.** Earlier revisions of
+> this bullet, and §10's closing prohibition, treated families as a coverage gap that a
+> future run would fill at the existing grid. That is wrong, and the reason is measured.
+>
+> **The arithmetic premise is true.** `mu_max` **is exactly 1.0** on all four non-Hill
+> families: every family runner wraps its oracle in `oracles.UnitScaled`
+> (`scripts/run_q42_families.py:105` and three others), whose `optimum_value` is a literal
+> `return 1.0` (`src/boec/oracles.py:381-382`). So `theta = tau_frac * mu_max` and
+> `tau_max(gamma, sigma_rel)` are the *same absolute numbers* on every family, and the grid
+> does not move.
+>
+> **What is not the same is what that number selects.** True superlevel-set prevalence
+> `P(f >= tau_frac * mu_max)` on the registered 20,000-point Sobol grid at seed 0, `d = 6`.
+> The four analytic families were regenerated for this revision with
+> `.venv/bin/python -c "import sys,numpy as np; sys.path.insert(0,'scripts'); from boec.norms import sobol_grid; from boec.oracles import UnitScaled; from run_q42_families import FAMILIES; X=np.asarray(sobol_grid(6,20_000,seed=0),dtype=float); [print(f, [round(float((np.asarray(UnitScaled(FAMILIES[f](6)).f(X))>=tf).mean()),5) for tf in (0.6,0.75,0.85,0.95)]) for f in ('ackley','hartmann6','levy','rosenbrock')]"`;
+> the hill row is read from `results/k6-designspace.json`'s committed `true_frac_above_tau`
+> column (0.735688 at `tau_frac = 0.60`, mean over 50 rows) and independently reproduced on
+> the same grid over the 25 K6 instances:
+>
+> | family (d=6) | grid `f` range | τ_f=0.60 | 0.75 | 0.85 | 0.95 |
+> |---|---|---|---|---|---|
+> | **ackley** | 0.001 – **0.410** | **0.00000** | **0.00000** | **0.00000** | **0.00000** |
+> | hartmann6 | 0.000 – 0.921 | 0.00805 | 0.00195 | 0.00045 | **0.00000** |
+> | **hill** (this document's family) | 0.143 – 0.989 | 0.73569 | 0.28944 | 0.06844 | 0.00294 |
+> | levy | 0.059 – 0.991 | 0.85745 | 0.54170 | 0.24505 | 0.01810 |
+> | rosenbrock | 0.146 – 0.999 | 0.95550 | 0.78250 | 0.50150 | 0.10635 |
+>
+> **A fixed `tau_frac` asks a different question on each family.** At `tau_frac = 0.60` it
+> selects an *empty* set on ackley and **95.6% of the box** on rosenbrock. A pooled
+> cross-family table at fixed `tau_frac` is not a comparison of designs; it is a comparison
+> of five unrelated events. (`docs/COVERAGE-MATRIX.md` §2.4, §4 B1, which also carries the
+> `d = 8` row of this table: ackley 0.00000 at all four, rosenbrock 0.91415 at 0.60.)
+>
+> **Ackley is `CANNOT RUN` at the registered grid — not expensive, undefined.** Its
+> normalised optimum is a needle at the exact box centre that a 20,000-point Sobol grid
+> never lands on; the grid maximum is **0.410** at `d = 6`, below every registered τ. With
+> one class empty, `brier_and_auc` returns `nan` for AUC
+> (`src/boec/designspace.py`, `if pos.numel() == 0 or neg.numel() == 0`), `iou` returns
+> `nan` on an empty union and `false_inclusion_rate` returns `nan` on an empty region — so
+> **AUC, Brier's decomposition, IoU, false inclusion, empirical containment and `alpha*`'s
+> excursion set are all `nan` on ackley at all four τ_fracs and both dimensions.** hartmann6
+> is `CANNOT RUN` at `tau_frac = 0.95` and *runnable but degenerate* at 0.60–0.85, at
+> prevalence 0.008 down to 0.0005 — two orders of magnitude past the extreme-prevalence
+> threat §6.6 already flags on hill. levy and rosenbrock are runnable and non-degenerate at
+> `tau_frac <= 0.85`.
+>
+> **Ackley carries a second, independent degeneracy, and it is worse than the regret-side
+> objection Q42 already records.** It is not only the CCD that evaluates the box centre —
+> the **screen** does too. `screening_design` appends `n_centre` rows of coded zeros
+> (`src/boec/designs.py:314`), `central_composite` appends `n_centre` more (`:260`),
+> `scale_to_box` maps coded 0 to the box midpoint (`:329`), and `run_doe_arm` runs
+> `n_centre_stage1 = 4` plus `n_centre_stage2 = 3` (`src/boec/doe.py:197-198`). So the
+> `doe` design contains **7 exact box-centre rows**, which on ackley is **7 evaluations of
+> the exact optimum**, at Chebyshev distance 0.0000, max true value visited 1.000000
+> (`docs/COVERAGE-MATRIX.md` §4 B3; `results/q42-families.json` already carries
+> `optimum_at_design_centre = True` for ackley on all 400 rows and `False` for the other
+> three). Unlike the regret objection, **this one transfers to a map deliverable**: the GP's
+> posterior SD collapses at the peak and its mean is pinned there, so `D_gamma` near the
+> peak is a property of where the design was told to look. levy and rosenbrock have the same
+> disease in milder form (max true value visited 0.995989 and 0.999651) and are **not**
+> flagged by the committed column.
+>
+> **Consequence for this document.** Nothing in §5 changes — every number here is hill at
+> `d = 6`, `sigma_rel = 0.25`. What changes is §10's prohibition, which is strengthened
+> there: a cross-family design-space table at fixed `tau_frac` may not be written at all,
+> and the repair is to **re-register τ as a per-family quantile of the true response** — a
+> new estimand requiring registration before any family campaign runs, not a parameter
+> change. (`docs/OVERNIGHT-LOG.md` D13; `docs/COVERAGE-MATRIX.md` §4 B1 recommendation, §5
+> P5.) The engineering half is not the blocker: the audit measured that family campaigns
+> **regenerate bit-exactly and are gateable**, `qlogei` and `qlognei` on hartmann6 both at
+> `|delta| = 0` against `results/q42-families.json` and
+> `results/q59-hartmann-no-screen.json` (§4 B4) — so Phase 3 is possible, but not at this τ
+> grid.
 
 ### 6.5 The anti-conservatism prediction was retracted, and the retraction has a lesson
 
@@ -2343,15 +2746,44 @@ Murphy calibration–refinement decomposition of Brier with 10 equal-count bins;
 committed file contains it.** Since calibration is the component E3's result bears on, the
 missing decomposition is the missing half of the registered primary.
 
-### 6.11 Two arms are ungated
+### 6.11 Two arms CANNOT be gated — retracted upward from "ungated"
 
-`qlogei-add` and `qlogei-addonly` have no column in `results/e2-grid.json`. They were run
-through `replay.regenerate` with `kernel_structure` overrides and were **not** compared to
-any committed value. Amendment A1 specified *"Gate them against `results/q30-additive.json`
-under the Task 1 policy"*; the K6 runner's `committed` dictionary is built from
-`e2-grid.json` only, so `committed.get(...)` returns `None` for these arms and the gate is
-skipped silently. Their 2,400 K6 rows and 400 K6b rows are therefore ungated, and §5.5's
-A1 conclusion rests on ungated campaigns.
+> **RETRACTION R2.** This section previously ended: *"Their 2,400 K6 rows and 400 K6b rows
+> are therefore **ungated**, and §5.5's A1 conclusion rests on ungated campaigns."* The
+> correct status is **`CANNOT GATE`** — a strictly worse condition, because "ungated" implies
+> a gate that was skipped and could be run, and there is no such gate to run.
+
+**The mechanism, unchanged and confirmed.** `qlogei-add` and `qlogei-addonly` have no column
+in `results/e2-grid.json`. They were run through `replay.regenerate` with `kernel_structure`
+overrides and were **not** compared to any committed value. `scripts/run_k6_designspace.py:161-162`
+builds its `committed` dictionary from `committed_rows()`, whose default path is
+`results/e2-grid.json` (`src/boec/replay.py:141`); that file holds seven arms — `qlogei`,
+`qlognei`, `random`, `sobol`, `lhs`, `coord`, `doe` — and no kernel arms, so line 180's
+`committed.get(...)` returns `None`, line 181's `if ref is not None` skips 100 campaigns
+silently, and `scripts/run_k6b_conservative.py:135-136` skips the same 100. The tolerance is
+not the issue: `_gate_tol` would return 0.0 for these arms. The missing key is.
+
+**What is new is that the registered fallback does not exist.** Amendment A1 specified
+*"Gate them against `results/q30-additive.json` under the Task 1 policy"* (plan, line 65).
+**`results/q30-additive.json` has never existed in this repository's git history**
+(§2.7 records the three read-only checks). The only committed Q30 artefact is
+`results/q30-additive.log`, and it cannot substitute, because its comparator column does not
+reproduce from `e2-grid.json` for exactly the two optimiser arms while all five static arms
+match — and regenerating flips `qlogei-addonly − qlogei` from −0.0123 to **+0.0071**, a sign
+change (§5.5). Whether that shift is a regeneration failure or a consequence of a superseded
+comparator **cannot be determined from committed files**; it is `docs/RESULTS.md`'s
+provenance-flagged category exactly.
+
+**The proposed alternative is circular and is rejected here.** The Fix-1 registration
+(`docs/OPEN-QUESTIONS.md`, commit `4e14769`) proposes gating the kernel arms against
+`results/k6-designspace.json` instead. K6 is itself the regeneration under test, so such a
+check would report only that the code agrees with itself. It should be labelled a
+**reproducibility check**, never a gate (`docs/COVERAGE-MATRIX.md` §3.6).
+
+**Consequence.** §5.5's A1 conclusion **stands in direction and is not citable in
+magnitude** until Q30 is re-run against the current `e2-grid.json` and committed — priced at
+200 campaigns, ≈2.6 CPU-hours (`docs/COVERAGE-MATRIX.md` §5, P1). Until then these two arms
+should not appear in any ranking quoted outside this document (§5.1).
 
 ### 6.12 The `doe` inscribed-box volumes are not comparable across arms
 
@@ -2382,12 +2814,18 @@ the predictive map's noise term a function of the model's own (mis-scaled, §5.2
 the predictive-versus-latent gap reported as a result is therefore an artefact of the
 plug-in for that arm.
 
-### 6.15 Version B's six known defects, all recorded before the verdict was read, none fixed
+### 6.15 Version B's six known defects — five stand, and E2 is RETRACTED as an error of its own
 
 Amendment E (plan, line 591; §2.11) was written **after** Version B v1 ran and **before**
 its result was read, and it opens *"Do not read its result until these are addressed."* The
-result at §5.11 was read anyway, so the six items are limitations on it. **None of the six
-has been fixed in any committed file.**
+result at §5.11 was read anyway, so the items are limitations on it.
+
+**Status changed at this revision.** Five of the six stand and none of the five has been
+fixed in any committed file. **E2 is different: it was not a defect at all.** Its two
+measurements are correct and the conclusion drawn from them is wrong, so it is retracted
+rather than closed — see the E2 entry below, which prints the superseded numbers beside the
+corrected ones. **E3 moves in the opposite direction**: it was registered as a suspicion and
+is now backed by measurement (R3, §5.11.4).
 
 **Provenance correction.** The revision at `0e3ea3a` closed this paragraph with
 *"`results/versionb.json` is v1 output from commit `f8290a5`"*. That is no longer the file:
@@ -2398,6 +2836,8 @@ same `static_design` calls, same seeds, same `batch_lse` with the same `exclusio
 same `DESIGN_TAU_FRAC = 0.75`, same `straddle_score`. E1–E6 are all properties of the
 design or of what is logged about it, so all six survive the re-run untouched, and the four
 six-factor arms' regret/AUC/Brier/`alpha*`/Vorob'ev figures are bitwise identical to v1.
+*(E2 is retracted below on its own merits, not by the re-run: the re-run changed nothing
+about the exclusion mechanism, and the mechanism was never inert.)*
 
 **E1 — the acquisition surface may be flat at n=40. Measured, not fixed.**
 Neighbour density per fitted lengthscale (`ell = 0.42`, `d = 6`, 300 designs each):
@@ -2413,21 +2853,77 @@ universal flatness — a flat criterion cannot beat random at +0.085, p = 0.0053
 an inference from the outcome, not the diagnostic E1 asked for, and it cannot tell us
 whether *some* campaigns were flat and diluted the effect.
 
-**E2 — the exclusion radius is inert. Measured, not fixed.**
-`exclusion_radius` returns `median_lengthscale / 4` = **0.105** Chebyshev at `ell = 0.42`.
-Over **2,000 random 8-point batches in 6D the median minimum pairwise Chebyshev distance is
-0.320 and the exclusion binds in 0% of them.** So the diversity mechanism **never fires** and
-`batch_lse` is **top-8 by straddle score**. `src/boec/lse.py`'s docstring section *"WHY
-EXCLUSION IS NOT OPTIONAL"* — *"a greedy batch takes q near-identical points ... eight wells
-at one location, which is a replicate dressed up as a design"* — describes machinery that
-does not operate at this dimension. The registered fix was to log the achieved minimum
-pairwise distance per batch and either raise the radius on a stated rule or delete the
-mechanism and say the batch is top-q by score. **No per-batch distance is logged and
-`results/versionb.json` stores no design coordinates**, so this cannot be checked from
-committed output either. The consequence for §5.11 is narrow but real: KILL 2 compares
-*top-8-by-straddle* against *8 uniform*, not *diversified LSE* against *8 uniform*, and the
-`test_batch_lse_does_not_collapse_onto_one_location` test that motivates the mechanism runs
-at `d = 3` with an artificially smooth score, not at `d = 6` on a fitted GP.
+**E2 — RETRACTED (R1). The exclusion radius is NOT inert; it binds in 22 of 50 campaigns.**
+
+**What was written, verbatim, and is now withdrawn:** *"`exclusion_radius` returns
+`median_lengthscale / 4` = **0.105** Chebyshev at `ell = 0.42`. Over **2,000 random 8-point
+batches in 6D the median minimum pairwise Chebyshev distance is 0.320 and the exclusion binds
+in 0% of them.** So the diversity mechanism **never fires** and `batch_lse` is **top-8 by
+straddle score** … the consequence for §5.11 is narrow but real: KILL 2 compares
+*top-8-by-straddle* against *8 uniform*, not *diversified LSE* against *8 uniform*."*
+
+**Both of E2's numbers are correct. Neither is a measurement of the thing E2 concluded
+about.** Two independent errors:
+
+1. **Wrong reference population.** E2 measured the minimum pairwise spacing of **random**
+   8-point batches. `batch_lse` does not draw random points: it takes the greedy argmax of a
+   straddle surface whose high scores concentrate on one contour, so its batch is roughly
+   **half** as spread out. The 0.320 figure reproduces exactly — 0.3219 over 2,000 random
+   batches, binding in 0.15% of them — and is simply the wrong comparator.
+2. **Wrong lengthscale.** `ell = 0.42` is the **n = 48** figure. Plate 1 is **n = 40**, where
+   the fitted median is **0.5664–0.5982**, so the radius is **0.1416–0.1495**, not 0.105.
+
+**Superseded against corrected**, at the live operating point (`d = 6`, `sigma_rel = 0.25`,
+40 LHS plate-1 wells, the runner's own 4,096-point Sobol candidate grid,
+`theta = 0.75 * mu_max`):
+
+| quantity | Amendment E2 (superseded) | measured (corrected) |
+|---|---|---|
+| median fitted ARD lengthscale | 0.42 *(the n = 48 value)* | **0.5664 – 0.5982** *(n = 40)* |
+| exclusion radius, `ell/4` | 0.105 | **0.1416 – 0.1495** |
+| reference batch spacing | 0.320, **random** 8-point batches | **0.1389 – 0.1572**, **top-q-by-score** batches (worst 0.0869) |
+| returned batch, min pairwise | — | 0.1943 median; 0.1035 worst |
+| campaigns where the radius binds | **0%** | **22 of 50** (agent, 50 campaigns) · **10 of 20** (independent re-check, 20 campaigns) |
+| wells relocated by the exclusion | 0 of 8 | **0.56 of 8**, mean |
+
+**Every range in that table is two independent measurements, not an interval estimate**: the
+lower number of each pair is a 20-campaign re-check run separately, the upper is the
+50-campaign figure recorded in `src/boec/lse.py`'s docstring. They are reported as a range
+because both were run and neither supersedes the other; the 50-campaign figures are the ones
+the source and tests carry.
+
+**So `batch_lse` is not top-q by score**: in 44% of campaigns it moves wells the score alone
+would have stacked. The two measurements were confirmed against `src/boec/lse.py` as it now
+stands — `EXCLUSION_FRACTION = 0.25` at `src/boec/lse.py:99`, `exclusion_radius` returning
+`median(lengthscale) * 0.25` off the live model at `:134-150`, called by
+`scripts/run_versionb.py:152` and passed to `batch_lse` at `:161` — and this report agrees
+with the retraction.
+
+**What was done about it, and what was deliberately not done.** The docstring was rewritten
+to the measurement rather than the mechanism being deleted (commit `cee1f45`); the achieved
+minimum pairwise distance is now logged per batch by `scripts/run_versionb.py` via
+`min_pairwise_chebyshev`; and `tests/test_lse.py` asserts **both halves** — that the returned
+batch honours its radius, *and* that the top-q batch would have violated it, the second being
+an alarm that fires if the mechanism ever goes inert again. The radius was **not raised**:
+raising a knob that already fires is tuning, and it would change the committed `versionb`
+column.
+
+**Evidentiary status, stated exactly, because it is not as strong as it looks.** None of the
+corrected figures is in a `results/` file. They are recorded in **committed source**
+(`src/boec/lse.py`'s module docstring) and guarded by **committed tests**, but
+`tests/test_lse.py`'s live-operating-point test runs against an **analytic Matérn-5/2
+stand-in posterior** at `ell = 0.60` over 8 seeds and asserts only `binding >= 4`, not the
+22-of-50 figure itself; the 22/50 and 0.56/8 numbers come from 50 live plate-1 GP fits whose
+output was never written to `results/`. `results/versionb.json` still stores **no design
+coordinates**, so the retracted claim and the corrected one are *both* uncheckable from the
+committed Version B output (§9.4). The registered E2 fix — log the achieved distance — is
+implemented in the runner at HEAD but its output is not in a committed results file.
+
+**Consequences for §5.11, both of which favour the arm.** KILL 2 compares *diversified LSE*
+against *8 uniform* on the map, as the design intended, not *top-8-by-straddle*; and
+`test_batch_lse_does_not_collapse_onto_one_location`, which previously ran only at `d = 3`
+with an artificially smooth score, is now joined by tests at the live `d = 6` geometry.
+(`docs/OVERNIGHT-LOG.md` D8.)
 
 **E3 — a 40+8 loss would have been uninterpretable, and the disambiguating arm was not run.**
 Only 40+8 is registered. Plate 1 drops from 0.487 to 0.378 neighbours per lengthscale when 8
@@ -2437,6 +2933,16 @@ separate them. It was not run. Version B **won**, so the ambiguity does not bite
 headline — but it does bite the interpretation of §5.11.2, where `versionb` is **worse on
 regret than `plate1_only`** by +0.0276 (p = 0.0166): that could be the cost of the criterion
 or the cost of a thinner plate 1, and there is no committed arm that distinguishes them.
+
+**PROMOTED FROM SUSPICION TO MEASUREMENT (R3).** E3 was registered as an argument about
+plate 1 being thinned. The attribution problem is now measured from the other end as well:
+`versionb_random`'s 8 plate-2 wells beat the best of its 40 plate-1 wells in **0 of 50**
+campaigns (LSE: 8 of 50), so on rule A the random control *is* a no-second-plate arm and
+KILL 2 never isolated the criterion from the extra wells (§5.11.4, §5.11.2). **No committed
+arm separates *the criterion* from *8 extra wells* on any deliverable**, which makes the
+unrun 44+4 arm the highest-value missing arm in this study rather than a nicety. It also
+means E3 and R3 are the same defect seen from two ends — the thinned plate 1 and the inert
+control plate 2 — and one arm answers both.
 
 **E4 — the arms do not share a common prefix.** `versionb` and `versionb_random` use
 `static_design(bounds, "lhs", 40, seed)`; `plate1_only` uses
@@ -2786,13 +3292,42 @@ writes none (§6.16). The other five files all carry one, and all five are empty
   conditional-simulation figure are recorded in docstrings and in the plan. **None has a
   committed results file.** They are design rationale, not evidence, and nothing in §5
   depends on them.
-- **Amendment E's two measurements are in the same category and matter more**, because they
-  are the load-bearing limitations on Version B: the neighbour-density table
-  (0.487 / 0.438 / 0.378 at n = 48 / 44 / 40) and the exclusion-radius measurement
-  (0.105 radius against a median minimum pairwise Chebyshev distance of 0.320 over 2,000
-  batches, binding in 0%). **Neither has a committed results file**, and neither can be
-  recomputed from `results/versionb.json`, which stores no design coordinates and no
-  acquisition diagnostics (§6.15).
+- **Amendment E's measurements are in the same category and matter more**, because they are
+  the load-bearing limitations on Version B. E1's neighbour-density table
+  (0.487 / 0.438 / 0.378 at n = 48 / 44 / 40) remains **plan-only**. E2's figures have
+  changed status twice and neither state is a results file:
+  - *(An item stood here reading "the exclusion-radius measurement — 0.105 radius against a
+    median minimum pairwise Chebyshev distance of 0.320 over 2,000 batches, binding in 0%".
+    **Retracted (R1)**: that measurement used the wrong reference population and the wrong
+    lengthscale; the corrected figures are radius **0.1416–0.1495** against a top-q spacing
+    of **0.1389–0.1572**, binding in **22 of 50**, §6.15.)*
+  - The **corrected** figures live in committed source (`src/boec/lse.py`'s module
+    docstring, `cee1f45`) and are guarded by committed tests (`tests/test_lse.py`), which is
+    a better standard than a plan line — but **`tests/test_lse.py` asserts a weakened form**
+    (`binding >= 4` of 8 seeds, against an analytic Matérn-5/2 stand-in posterior at
+    `ell = 0.60`), not the 22-of-50 figure, and **no `results/` file carries either number**.
+  - Neither can be recomputed from `results/versionb.json`, which stores no design
+    coordinates and no acquisition diagnostics (§6.15). `scripts/run_versionb.py` at HEAD
+    does log `min_pairwise_chebyshev` per batch; that output is not in a committed file.
+- **`results/q30-additive.json` does not exist and never has (R2).** The two kernel arms are
+  therefore `CANNOT GATE`, and §5.5's magnitudes are not citable under rule 1 (§2.7, §6.11).
+  The one committed Q30 artefact, `results/q30-additive.log`, is provenance-flagged: its own
+  header records a different `HEAD` and a working directory from a clone whose
+  `e2-grid.json` was never shared (`docs/COVERAGE-MATRIX.md` §3.6).
+- **§5.12's Step 0 arm names are one revision behind their runner.** The committed
+  `results/step0-oracle-best.json` (`6edf708`) labels a 40-well plate-1-only campaign
+  `arm: "versionb"`; `scripts/run_step0_oracle_best.py` at `63783aa` renames it
+  `versionb_plate1_ceiling` and gates `qlognei` as well as `doe`. The re-run under the
+  corrected name **exists in the working tree and is not committed**, so every Step 0 figure
+  in §5.12 is read from the file with the old label, and the corrected `qlognei` gate is
+  reported on the strength of the audit's by-hand check (|Δ| = 0, 50/50) plus an uncommitted
+  `gate_failures: []`, not on a committed gate block. The two files agree on every mean.
+- The per-family superlevel-set prevalences in §6.4 for the four non-Hill families have **no
+  committed results file** — no `results/*.json` carries both a family key and a
+  design-space metric key (`docs/COVERAGE-MATRIX.md` §3.3). They are regenerated by the
+  command printed at §6.4 from committed inputs (`src/boec/oracles.py`,
+  `scripts/run_q42_families.py`). The hill row *is* committed, as
+  `results/k6-designspace.json`'s `true_frac_above_tau`.
 - *(An item stood here in the revision at `0e3ea3a` — "No Version B containment statistic
   exists at all, in any file". **Retracted**: `results/versionb.json` at `97a8352` carries
   `ce_vol_*`, `ce_empty_*`, `ce_contain_*` and `ce_empirical_*` for all 250 rows, §5.11.7.)*
@@ -2805,6 +3340,11 @@ writes none (§6.16). The other five files all carry one, and all five are empty
 ---
 
 ## 10. What may and may not be written from these data
+
+**Four retractions apply to this list and are marked R1–R4 in place.** R1 *adds* a permission
+(the LSE diversity mechanism demonstrably operates); R2 and R3 *remove* two (the A1
+magnitudes, and KILL 2's attribution); R4 closes the cross-family door §6.4 described as
+open. The retraction block at the top of this document is the index.
 
 **May be written.**
 
@@ -2836,6 +3376,21 @@ writes none (§6.16). The other five files all carry one, and all five are empty
   both at 0.020), KILL 2 in 1 of 4 (at `tau_frac = 0.75`, the threshold the criterion
   targets). Both counts re-verified against the re-run blob at `97a8352` and **unchanged**.
   **Version B ties qLogNEI on regret at 2 rounds against 10** (+0.0014, p = 0.86).
+  **R3 — KILL 2 may be written only as "Version B's second plate beats the random-second-plate
+  arm", never as "the LSE criterion beats 8 random wells."** The counts are unaffected; the
+  attribution is (§5.11.4).
+- **R1 — that `batch_lse`'s diversity mechanism operates at this dimension**, provided the
+  sentence says where the number lives: the exclusion radius (0.1416–0.1495) binds in
+  **22 of 50** live campaigns and relocates a mean of **0.56 of 8** wells, recorded in
+  committed source and tests but in **no `results/` file** (§6.15, §9.4). *(This replaces the
+  opposite prohibition, listed below and struck.)*
+- **R3/Step 0 — that SPADE's regret gap is BOTH search and identification, and that the split
+  differs by arm**: oracle-best `doe` 0.0597, `lhs` 0.0795, `versionb` (40-well plate-1
+  ceiling) 0.0867, `qlognei` 0.0834, decomposing against `doe` as 63% search / 37%
+  identification for `lhs` and 40% / 60% for `versionb` (§5.12,
+  `results/step0-oracle-best.json`). The sentence must also say that the registered decision
+  rule pre-committed ≈0.06 *or* ≈0.10 and measured 0.0795 — **it refuted itself** — and that
+  the `versionb` figure is a 40-well ceiling, so its identification share is a lower bound.
 - **That Version B's certified region meets its nominal joint confidence against ground
   truth wherever it can be tested** — 0.940 (47/50), 1.000 (50/50) and 1.000 (22/22) at
   `tau_frac = 0.60` against nominal 0.50 / 0.80 / 0.95, and 0.930 (40/43) and 1.000 (14/14)
@@ -2847,9 +3402,15 @@ writes none (§6.16). The other five files all carry one, and all five are empty
 - **That 74%–85% of Version B's KILL-1 margin at the surviving thresholds is contributed by
   plate 1 being an LHS, not by plate 2** (§5.11.3), and that plate 2's own contribution
   costs regret (+0.0276 vs `plate1_only`, p = 0.0166).
-- Doubling surrogate accuracy via an additive kernel is null on regret, and is not
+- **R2 — Doubling surrogate accuracy via an additive kernel is null on regret, and is not
   demonstrated to help on map quality or `alpha*` under the registered multiplicity control,
-  despite being positive in direction in 24 of 24 map cells.
+  despite being positive in direction in 24 of 24 map cells — as a DIRECTION ONLY.** No
+  magnitude from §5.5 may be quoted. `results/q30-additive.json`, the comparator Amendment
+  A1 registered, **never existed**, so both arms are `CANNOT GATE`; the one committed Q30
+  artefact does not reproduce for the two optimiser comparators, and regeneration flips
+  `qlogei-addonly − qlogei` from −0.0123 to **+0.0071**, a sign change (§2.7, §5.5, §6.11).
+  The 24/24 sign count is safe because it is computed entirely within
+  `results/k6-designspace.json`; every effect size is not.
 - Our own registered prediction that nominal-95% certified regions would be materially
   anti-conservative is **retracted**; measured false inclusion is 10x–500x below the 0.05
   target.
@@ -2878,9 +3439,30 @@ writes none (§6.16). The other five files all carry one, and all five are empty
   and they are the corner where §5.4 measured a plain LHS beating qLogNEI (§3.9).
 - **"SPADE beats qLogNEI"** without naming the assurance level, the threshold, and the fact
   that most of the margin is the plate-1 design (§5.11.3, §6.1).
-- **Any claim that `batch_lse`'s diversity mechanism contributed anything.** The exclusion
-  radius binds in 0% of batches at this dimension; it is top-8 by score (Amendment E2,
-  §6.15).
+- *(**RETRACTED — R1.** A prohibition stood here: *"**Any claim that `batch_lse`'s diversity
+  mechanism contributed anything.** The exclusion radius binds in 0% of batches at this
+  dimension; it is top-8 by score (Amendment E2, §6.15)."* Measured against the correct
+  reference population and the n=40 lengthscale, the radius binds in **22 of 50** campaigns
+  and relocates **0.56 of 8** wells, so `batch_lse` is **not** top-8 by score and the
+  prohibition is withdrawn — see the permission added above. **What replaces it is narrower
+  and still binding:** no claim that the mechanism improved any *deliverable*, because no
+  arm was run with the exclusion disabled, and no claim citing a `results/` file for the
+  22-of-50 figure, because none carries it, §9.4.)*
+- **R3 — that the LSE criterion beats an equally sized random second plate.** The
+  `versionb − versionb_random` contrast does not measure that. The control's 8 plate-2 wells
+  beat the best of its 40 plate-1 wells in **0 of 50** campaigns, so on rule A it is a
+  no-second-plate arm, and the contrast conflates *the criterion* with *8 extra wells*
+  (§5.11.4). The arm registered to separate them — Amendment E3's 44+4 — was not run.
+- **R4 — any cross-family design-space table at fixed `tau_frac`, for any metric, on any
+  arm.** `mu_max` is exactly 1.0 on every family, so the grid is arithmetically shared, but
+  measured superlevel-set prevalence at `tau_frac = 0.60` runs **0.00000 (ackley) · 0.00805
+  (hartmann6) · 0.73569 (hill) · 0.85745 (levy) · 0.95550 (rosenbrock)** — a fixed
+  `tau_frac` asks a different question on each family (§6.4). Specifically:
+  **any design-space metric on ackley at the registered grid may not be written at all** —
+  AUC, IoU, false inclusion and empirical containment are literally `nan` — and any ackley
+  figure at a lower τ must state that the `doe` design evaluates ackley's **exact optimum
+  7 times** by construction. The repair is to re-register τ as a per-family response
+  quantile; that is a new estimand and must be registered before any family campaign runs.
 - *(A prohibition stood here in the revision at `0e3ea3a` — "any pooling of `doe` numbers
   across `results/k6b-conservative.json` and `results/versionb.json` … they disagree by up
   to +0.062 on `alpha*`". **Retracted**: both files now apply Amendment B3 to `doe` and
@@ -2894,6 +3476,14 @@ writes none (§6.16). The other five files all carry one, and all five are empty
   the other seven use (0.8251 vs 0.7355 at `tau_frac = 0.60`), which biases in `doe`'s favour
   (§2.8).
 - Anything at `d = 8`, at `sigma_rel != 0.25`, or on any landscape family other than Hill.
+  **R4 sharpens the last clause: the family axis is not merely unrun.** hartmann6 is
+  `CANNOT RUN` at `tau_frac = 0.95` and degenerate at 0.60–0.85 (prevalence 0.008 to
+  0.0005); ackley is `CANNOT RUN` at every registered τ; only levy and rosenbrock are
+  runnable and non-degenerate, and only at `tau_frac <= 0.85` (§6.4). **R4c also applies to
+  the `sigma_rel` clause**: `designspace.tau_max` omits `sigma_add`, which is 3.29e-04
+  optimistic at `sigma_rel = 0.25, gamma = 0.95` and 8.20e-04 at `sigma_rel = 0.10` — a
+  factor of 2.50, **not** the 7.4e-04 / "10x" that `docs/COVERAGE-MATRIX.md` reports (§2.4).
+  Fix it before the `sigma_rel = 0.10` cell runs.
 - Anything about a spread design beating adaptive search without naming the acquisition
   (§6.2).
 - Any comparison of `box_vol_pred` across arms (§6.12).
