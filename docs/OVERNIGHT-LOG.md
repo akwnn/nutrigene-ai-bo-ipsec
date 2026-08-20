@@ -356,3 +356,21 @@ monitoring directly. Its edits are committed and its run is in flight and self-g
   arms were added after K6 ran.
 * *"SPADE's certificate holds"* — **holds where measured**, but only 6 scorable cells, and
   at τ_frac = 0.95 nothing is testable for any arm at any α.
+
+---
+
+## D17 ✅ Full suite green after every agent's changes.
+
+`874 passed, 5 deselected, 4 warnings in 886.99s`, exit 0. The suite stood at **808** at
+session start, so **66 tests were added tonight** — each written before the code it
+covers, per the standing rule.
+
+This is the check that matters after four agents edited the tree in parallel: the
+`metrics.py` addition, the `lse.py` docstring-and-tests rewrite, the E1 flatness logging,
+the E6 predictive arm, and the Step 0 gate fix all coexist without breaking a committed
+path.
+
+**Deselected are the 5 `slow` markers**, which run full optimisation loops. They are
+excluded here for time, not because they fail — worth running before anything is
+published, since one of them is E1's kill condition and a kill condition that only runs
+when someone remembers to ask is not a kill condition.
