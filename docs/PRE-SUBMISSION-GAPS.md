@@ -144,6 +144,37 @@ G2 ensemble extension already supplies.
 
 ### G4. Two terminal rules rest on a surrogate we have declared untrustworthy
 
+> **MEASURED, 2026-08-20 (Q69). Improvable, not fixable.** Seven `build_gp` configurations
+> swept against **latent** coverage on 64 held-out Sobol points per campaign, n=25x2 seeds,
+> nominal 0.95. Coverage reported with sharpness and PIT KS, because coverage alone is
+> trivially perfect for a model predicting +/- infinity.
+>
+> | config | cov (s=0.25) | cov (s=0.10) | sharpness (0.25) | PIT KS (0.25) |
+> |---|---:|---:|---:|---:|
+> | baseline | 0.852 | 0.900 | 0.1187 | 0.360 |
+> | **gamma_prior** | **0.907** | **0.937** | 0.1300 | **0.314** |
+> | restarts4 | 0.858 | 0.900 | 0.1195 | 0.350 |
+> | additive | 0.700 | 0.838 | 0.0848 | 0.392 |
+> | additive+inter | 0.783 | 0.890 | 0.1030 | 0.371 |
+> | warped | 0.600 | 0.709 | 0.0663 | 0.328 |
+> | warped+restarts4 | 0.632 | 0.716 | 0.0705 | 0.295 |
+>
+> `lengthscale_prior="gamma"` is a real improvement and the only one: +5.5pp at high noise,
+> +3.7pp at low, and a **better** PIT KS, so it is not buying coverage by widening -- it pays
+> about 10% sharpness for it. It still does not reach nominal.
+>
+> **Registered prediction scored honestly: 2 of 4 right.** Correct that `restarts4` would
+> barely help, so this is a model-specification problem and not a bad-MLE problem. Correct
+> that nothing would reach 0.95 without paying in sharpness. **Wrong** that input warping
+> would help -- it is the worst config tested, roughly halving coverage. **Wrong** that an
+> additive kernel would help -- also worse than baseline.
+>
+> **Decision required, not taken here.** Switching the `build_gp` default to the gamma prior
+> would change every GP in the project, including stored results, and interacts with G21.
+> Recommended as a deliberate, separately-committed change, not folded into other work.
+> `results/q69-calibration.json`.
+
+
 **Finding.** GP latent coverage falls to **76.4%** against a nominal 95%. Intervals that include
 observation noise cover about 90-92%.
 
