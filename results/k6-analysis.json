@@ -4,14 +4,20 @@
     "qlogei": 0.15525130489063754,
     "qlognei": 0.15321199940788324,
     "qlogei-add": 0.14825293449216528,
-    "qlogei-addonly": 0.16231308631174826
+    "qlogei-addonly": 0.16231308631174826,
+    "lhs": 0.12701957315434098,
+    "sobol": 0.17235601039484308,
+    "random": 0.22164136190927614
   },
   "regret_rank": [
     "doe",
+    "lhs",
     "qlogei-add",
     "qlognei",
     "qlogei",
-    "qlogei-addonly"
+    "qlogei-addonly",
+    "sobol",
+    "random"
   ],
   "cells": [
     {
@@ -23,18 +29,24 @@
         "qlogei": 0.6699500354639383,
         "qlognei": 0.7060608164045236,
         "qlogei-add": 0.6894480264261982,
-        "qlogei-addonly": 0.6971993967802335
+        "qlogei-addonly": 0.6971993967802335,
+        "lhs": 0.681929066366891,
+        "sobol": 0.6929946290502784,
+        "random": 0.6639046131467444
       },
       "auc_rank": [
         "qlognei",
         "qlogei-addonly",
+        "sobol",
         "qlogei-add",
+        "lhs",
         "qlogei",
+        "random",
         "doe"
       ],
       "matches_regret_rank": false,
       "empty_frac": 0.0,
-      "false_inclusion_pred": 0.15851558224783713
+      "false_inclusion_pred": 0.16784713963631187
     },
     {
       "gamma": 0.5,
@@ -45,18 +57,24 @@
         "qlogei": 0.6687619789521428,
         "qlognei": 0.6994958460554921,
         "qlogei-add": 0.7036690416524632,
-        "qlogei-addonly": 0.7049074089812656
+        "qlogei-addonly": 0.7049074089812656,
+        "lhs": 0.717640409461675,
+        "sobol": 0.7000737151457779,
+        "random": 0.657401613532548
       },
       "auc_rank": [
+        "lhs",
         "qlogei-addonly",
         "qlogei-add",
+        "sobol",
         "qlognei",
         "qlogei",
+        "random",
         "doe"
       ],
       "matches_regret_rank": false,
-      "empty_frac": 0.204,
-      "false_inclusion_pred": 0.2372364502952535
+      "empty_frac": 0.2,
+      "false_inclusion_pred": 0.22487934941248372
     },
     {
       "gamma": 0.5,
@@ -67,18 +85,24 @@
         "qlogei": 0.7007615411132538,
         "qlognei": 0.7344431028408595,
         "qlogei-add": 0.7566050722975887,
-        "qlogei-addonly": 0.7519251450158049
+        "qlogei-addonly": 0.7519251450158049,
+        "lhs": 0.790444344977401,
+        "sobol": 0.7371921379908851,
+        "random": 0.6647201444825902
       },
       "auc_rank": [
+        "lhs",
         "qlogei-add",
         "qlogei-addonly",
+        "sobol",
         "qlognei",
         "qlogei",
+        "random",
         "doe"
       ],
       "matches_regret_rank": false,
-      "empty_frac": 0.828,
-      "false_inclusion_pred": 0.2840449759779747
+      "empty_frac": 0.8625,
+      "false_inclusion_pred": 0.3128966898471589
     },
     {
       "gamma": 0.5,
@@ -89,14 +113,20 @@
         "qlogei": 0.7448524334448839,
         "qlognei": 0.7870922502499453,
         "qlogei-add": 0.816153943522102,
-        "qlogei-addonly": 0.8183589414364424
+        "qlogei-addonly": 0.8183589414364424,
+        "lhs": 0.8702544653489425,
+        "sobol": 0.7641851986964879,
+        "random": 0.6451243567563663
       },
       "auc_rank": [
+        "lhs",
         "qlogei-addonly",
         "qlogei-add",
         "qlognei",
+        "sobol",
         "qlogei",
-        "doe"
+        "doe",
+        "random"
       ],
       "matches_regret_rank": false,
       "empty_frac": 1.0,
@@ -111,18 +141,24 @@
         "qlogei": 0.6896465404328367,
         "qlognei": 0.7280845547380488,
         "qlogei-add": 0.7037888161846592,
-        "qlogei-addonly": 0.7124608928119152
+        "qlogei-addonly": 0.7124608928119152,
+        "lhs": 0.6916734146027685,
+        "sobol": 0.7114362200168566,
+        "random": 0.6821426059724497
       },
       "auc_rank": [
         "qlognei",
         "qlogei-addonly",
+        "sobol",
         "qlogei-add",
+        "lhs",
         "qlogei",
+        "random",
         "doe"
       ],
       "matches_regret_rank": false,
       "empty_frac": 0.0,
-      "false_inclusion_pred": 0.04417335176874227
+      "false_inclusion_pred": 0.04725462605453392
     },
     {
       "gamma": 0.7,
@@ -133,18 +169,24 @@
         "qlogei": 0.6634954207567959,
         "qlognei": 0.6979183026930564,
         "qlogei-add": 0.6868829785908601,
-        "qlogei-addonly": 0.6934758361370703
+        "qlogei-addonly": 0.6934758361370703,
+        "lhs": 0.6855427733914422,
+        "sobol": 0.689053490311188,
+        "random": 0.6576551274844568
       },
       "auc_rank": [
         "qlognei",
         "qlogei-addonly",
+        "sobol",
         "qlogei-add",
+        "lhs",
         "qlogei",
+        "random",
         "doe"
       ],
       "matches_regret_rank": false,
-      "empty_frac": 0.26,
-      "false_inclusion_pred": 0.0676532507180692
+      "empty_frac": 0.2825,
+      "false_inclusion_pred": 0.05451407980942724
     },
     {
       "gamma": 0.7,
@@ -155,18 +197,24 @@
         "qlogei": 0.6663781678097984,
         "qlognei": 0.6971781211402798,
         "qlogei-add": 0.699584921468542,
-        "qlogei-addonly": 0.7017914023221489
+        "qlogei-addonly": 0.7017914023221489,
+        "lhs": 0.7114965284222745,
+        "sobol": 0.697619863874272,
+        "random": 0.6567108207782821
       },
       "auc_rank": [
+        "lhs",
         "qlogei-addonly",
         "qlogei-add",
+        "sobol",
         "qlognei",
         "qlogei",
+        "random",
         "doe"
       ],
       "matches_regret_rank": false,
-      "empty_frac": 0.868,
-      "false_inclusion_pred": 0.03881191914133454
+      "empty_frac": 0.9025,
+      "false_inclusion_pred": 0.034732682636836806
     },
     {
       "gamma": 0.7,
@@ -177,13 +225,19 @@
         "qlogei": 0.6901246464864408,
         "qlognei": 0.7227456634219336,
         "qlogei-add": 0.7396455113259265,
-        "qlogei-addonly": 0.736880048555554
+        "qlogei-addonly": 0.736880048555554,
+        "lhs": 0.7689751678872979,
+        "sobol": 0.7253986339417503,
+        "random": 0.6619604157369102
       },
       "auc_rank": [
+        "lhs",
         "qlogei-add",
         "qlogei-addonly",
+        "sobol",
         "qlognei",
         "qlogei",
+        "random",
         "doe"
       ],
       "matches_regret_rank": false,
@@ -199,18 +253,24 @@
         "qlogei": 0.7036882371040485,
         "qlognei": 0.7447727763296379,
         "qlogei-add": 0.7143826320996378,
-        "qlogei-addonly": 0.7252872624184218
+        "qlogei-addonly": 0.7252872624184218,
+        "lhs": 0.7038305939153651,
+        "sobol": 0.7272564119705568,
+        "random": 0.6968700314038047
       },
       "auc_rank": [
         "qlognei",
+        "sobol",
         "qlogei-addonly",
         "qlogei-add",
+        "lhs",
         "qlogei",
+        "random",
         "doe"
       ],
       "matches_regret_rank": false,
       "empty_frac": 0.0,
-      "false_inclusion_pred": 0.017444091161297665
+      "false_inclusion_pred": 0.017793709567974013
     },
     {
       "gamma": 0.8,
@@ -221,18 +281,24 @@
         "qlogei": 0.6716743835805249,
         "qlognei": 0.7075838236157087,
         "qlogei-add": 0.6903487941952222,
-        "qlogei-addonly": 0.6981761015373142
+        "qlogei-addonly": 0.6981761015373142,
+        "lhs": 0.682107763923127,
+        "sobol": 0.6943620928054177,
+        "random": 0.6649797927663829
       },
       "auc_rank": [
         "qlognei",
         "qlogei-addonly",
+        "sobol",
         "qlogei-add",
+        "lhs",
         "qlogei",
+        "random",
         "doe"
       ],
       "matches_regret_rank": false,
-      "empty_frac": 0.312,
-      "false_inclusion_pred": 0.027688908011734924
+      "empty_frac": 0.3625,
+      "false_inclusion_pred": 0.020284034620192612
     },
     {
       "gamma": 0.8,
@@ -243,18 +309,24 @@
         "qlogei": 0.6622516099740191,
         "qlognei": 0.6958301377644507,
         "qlogei-add": 0.6873143090157449,
-        "qlogei-addonly": 0.6928761012870766
+        "qlogei-addonly": 0.6928761012870766,
+        "lhs": 0.6890469080871405,
+        "sobol": 0.6890118956050918,
+        "random": 0.6565147492678003
       },
       "auc_rank": [
         "qlognei",
         "qlogei-addonly",
+        "lhs",
+        "sobol",
         "qlogei-add",
         "qlogei",
+        "random",
         "doe"
       ],
       "matches_regret_rank": false,
-      "empty_frac": 0.9,
-      "false_inclusion_pred": 0.001568627450980392
+      "empty_frac": 0.93,
+      "false_inclusion_pred": 0.0014005602240896359
     },
     {
       "gamma": 0.8,
@@ -265,13 +337,19 @@
         "qlogei": 0.6687909730532651,
         "qlognei": 0.6995198137819139,
         "qlogei-add": 0.7036891950117559,
-        "qlogei-addonly": 0.7049798171785646
+        "qlogei-addonly": 0.7049798171785646,
+        "lhs": 0.7177106539308947,
+        "sobol": 0.7000865142718351,
+        "random": 0.6574268589367231
       },
       "auc_rank": [
+        "lhs",
         "qlogei-addonly",
         "qlogei-add",
+        "sobol",
         "qlognei",
         "qlogei",
+        "random",
         "doe"
       ],
       "matches_regret_rank": false,
@@ -287,18 +365,24 @@
         "qlogei": 0.725947378563176,
         "qlognei": 0.7727488780648839,
         "qlogei-add": 0.7347608639856889,
-        "qlogei-addonly": 0.7464773651869834
+        "qlogei-addonly": 0.7464773651869834,
+        "lhs": 0.7247163640148762,
+        "sobol": 0.7518402194533236,
+        "random": 0.7200863460329893
       },
       "auc_rank": [
         "qlognei",
+        "sobol",
         "qlogei-addonly",
         "qlogei-add",
         "qlogei",
+        "lhs",
+        "random",
         "doe"
       ],
       "matches_regret_rank": false,
       "empty_frac": 0.0,
-      "false_inclusion_pred": 0.004027146607969445
+      "false_inclusion_pred": 0.0035497653176608723
     },
     {
       "gamma": 0.9,
@@ -309,18 +393,24 @@
         "qlogei": 0.6921534107570969,
         "qlognei": 0.7319836410429427,
         "qlogei-add": 0.7064923382572451,
-        "qlogei-addonly": 0.7156625339050064
+        "qlogei-addonly": 0.7156625339050064,
+        "lhs": 0.6944481219833929,
+        "sobol": 0.7150160562370579,
+        "random": 0.6850924446649003
       },
       "auc_rank": [
         "qlognei",
         "qlogei-addonly",
+        "sobol",
         "qlogei-add",
+        "lhs",
         "qlogei",
+        "random",
         "doe"
       ],
       "matches_regret_rank": false,
-      "empty_frac": 0.352,
-      "false_inclusion_pred": 0.005353201858413817
+      "empty_frac": 0.4525,
+      "false_inclusion_pred": 0.003989515001685545
     },
     {
       "gamma": 0.9,
@@ -331,17 +421,23 @@
         "qlogei": 0.6744480023503157,
         "qlognei": 0.7109590773215038,
         "qlogei-add": 0.6923230393744955,
-        "qlogei-addonly": 0.7004071404830401
+        "qlogei-addonly": 0.7004071404830401,
+        "lhs": 0.6833364551997865,
+        "sobol": 0.6969804293227496,
+        "random": 0.6676468384034128
       },
       "auc_rank": [
         "qlognei",
         "qlogei-addonly",
+        "sobol",
         "qlogei-add",
+        "lhs",
         "qlogei",
+        "random",
         "doe"
       ],
       "matches_regret_rank": false,
-      "empty_frac": 0.952,
+      "empty_frac": 0.97,
       "false_inclusion_pred": 0.0
     },
     {
@@ -353,13 +449,19 @@
         "qlogei": 0.6639281333463488,
         "qlognei": 0.6983572510076784,
         "qlogei-add": 0.6867457023349646,
-        "qlogei-addonly": 0.6935407945836326
+        "qlogei-addonly": 0.6935407945836326,
+        "lhs": 0.6849415792187626,
+        "sobol": 0.6890339047315015,
+        "random": 0.6580497954206254
       },
       "auc_rank": [
         "qlognei",
         "qlogei-addonly",
+        "sobol",
         "qlogei-add",
+        "lhs",
         "qlogei",
+        "random",
         "doe"
       ],
       "matches_regret_rank": false,
@@ -375,18 +477,24 @@
         "qlogei": 0.747922994838502,
         "qlognei": 0.7931363079497211,
         "qlogei-add": 0.753590388667368,
-        "qlogei-addonly": 0.7654893170384155
+        "qlogei-addonly": 0.7654893170384155,
+        "lhs": 0.7407636960837829,
+        "sobol": 0.774363998007691,
+        "random": 0.7414038312319642
       },
       "auc_rank": [
         "qlognei",
+        "sobol",
         "qlogei-addonly",
         "qlogei-add",
         "qlogei",
+        "random",
+        "lhs",
         "doe"
       ],
       "matches_regret_rank": false,
       "empty_frac": 0.0,
-      "false_inclusion_pred": 0.0010597495554921087
+      "false_inclusion_pred": 0.000776024992615583
     },
     {
       "gamma": 0.95,
@@ -397,18 +505,24 @@
         "qlogei": 0.7137496495430884,
         "qlognei": 0.7579751104389476,
         "qlogei-add": 0.7247469217978295,
-        "qlogei-addonly": 0.734648937249419
+        "qlogei-addonly": 0.734648937249419,
+        "lhs": 0.7139003251724079,
+        "sobol": 0.7385225600496422,
+        "random": 0.7067294509487472
       },
       "auc_rank": [
         "qlognei",
+        "sobol",
         "qlogei-addonly",
         "qlogei-add",
+        "lhs",
         "qlogei",
+        "random",
         "doe"
       ],
       "matches_regret_rank": false,
-      "empty_frac": 0.42,
-      "false_inclusion_pred": 0.0012997498220113932
+      "empty_frac": 0.535,
+      "false_inclusion_pred": 0.0010132458289873762
     },
     {
       "gamma": 0.95,
@@ -419,17 +533,23 @@
         "qlogei": 0.69535870191805,
         "qlognei": 0.7351005727833809,
         "qlogei-add": 0.7087592208342889,
-        "qlogei-addonly": 0.7180482856735747
+        "qlogei-addonly": 0.7180482856735747,
+        "lhs": 0.6968744890352006,
+        "sobol": 0.7182845902524435,
+        "random": 0.6880776291719437
       },
       "auc_rank": [
         "qlognei",
+        "sobol",
         "qlogei-addonly",
         "qlogei-add",
+        "lhs",
         "qlogei",
+        "random",
         "doe"
       ],
       "matches_regret_rank": false,
-      "empty_frac": 0.976,
+      "empty_frac": 0.985,
       "false_inclusion_pred": 0.0
     },
     {
@@ -441,13 +561,19 @@
         "qlogei": 0.6790252488237476,
         "qlognei": 0.7163868562252401,
         "qlogei-add": 0.6953968746806471,
-        "qlogei-addonly": 0.704432497201233
+        "qlogei-addonly": 0.704432497201233,
+        "lhs": 0.6854667146567733,
+        "sobol": 0.7007124847333047,
+        "random": 0.6720753559704903
       },
       "auc_rank": [
         "qlognei",
         "qlogei-addonly",
+        "sobol",
         "qlogei-add",
+        "lhs",
         "qlogei",
+        "random",
         "doe"
       ],
       "matches_regret_rank": false,
@@ -463,18 +589,24 @@
         "qlogei": 0.7828494704710471,
         "qlognei": 0.8252238710703569,
         "qlogei-add": 0.7835372421607762,
-        "qlogei-addonly": 0.7995479745862767
+        "qlogei-addonly": 0.7995479745862767,
+        "lhs": 0.7863874122056501,
+        "sobol": 0.8128254544937968,
+        "random": 0.7897440009143974
       },
       "auc_rank": [
         "qlognei",
+        "sobol",
         "qlogei-addonly",
+        "random",
+        "lhs",
         "qlogei-add",
         "qlogei",
         "doe"
       ],
       "matches_regret_rank": false,
-      "empty_frac": 0.028,
-      "false_inclusion_pred": 2.425265136670184e-05
+      "empty_frac": 0.045,
+      "false_inclusion_pred": 1.5427733722797244e-05
     },
     {
       "gamma": 0.99,
@@ -485,17 +617,23 @@
         "qlogei": 0.7601501917652216,
         "qlognei": 0.8088101519546964,
         "qlogei-add": 0.7684067327807901,
-        "qlogei-addonly": 0.7808310055707283
+        "qlogei-addonly": 0.7808310055707283,
+        "lhs": 0.7602207831676503,
+        "sobol": 0.7921849306952385,
+        "random": 0.7613546502298489
       },
       "auc_rank": [
         "qlognei",
+        "sobol",
         "qlogei-addonly",
         "qlogei-add",
+        "random",
+        "lhs",
         "qlogei",
         "doe"
       ],
       "matches_regret_rank": false,
-      "empty_frac": 0.696,
+      "empty_frac": 0.8,
       "false_inclusion_pred": 0.0
     },
     {
@@ -507,17 +645,23 @@
         "qlogei": 0.747617741005633,
         "qlognei": 0.7932721068544447,
         "qlogei-add": 0.7534570046491039,
-        "qlogei-addonly": 0.764597388017811
+        "qlogei-addonly": 0.764597388017811,
+        "lhs": 0.7400578779475628,
+        "sobol": 0.773548659710942,
+        "random": 0.7410324266095395
       },
       "auc_rank": [
         "qlognei",
+        "sobol",
         "qlogei-addonly",
         "qlogei-add",
         "qlogei",
+        "random",
+        "lhs",
         "doe"
       ],
       "matches_regret_rank": false,
-      "empty_frac": 0.992,
+      "empty_frac": 0.995,
       "false_inclusion_pred": 0.0
     },
     {
@@ -529,13 +673,19 @@
         "qlogei": 0.7291424883336256,
         "qlognei": 0.7758251913894231,
         "qlogei-add": 0.7382631882494757,
-        "qlogei-addonly": 0.7503293215947859
+        "qlogei-addonly": 0.7503293215947859,
+        "lhs": 0.728115089116785,
+        "sobol": 0.7553287706904611,
+        "random": 0.723793414932144
       },
       "auc_rank": [
         "qlognei",
+        "sobol",
         "qlogei-addonly",
         "qlogei-add",
         "qlogei",
+        "lhs",
+        "random",
         "doe"
       ],
       "matches_regret_rank": false,
@@ -844,6 +994,21 @@
       "predictive": 0.00015083332224133706,
       "latent": 0.00729199822663285,
       "empty_excluded": 125
+    },
+    "lhs": {
+      "predictive": 0.00010066416642366459,
+      "latent": 0.006483686696115147,
+      "empty_excluded": 129
+    },
+    "sobol": {
+      "predictive": 0.00015200586791200166,
+      "latent": 0.007918178572327619,
+      "empty_excluded": 149
+    },
+    "random": {
+      "predictive": 0.00044308917526976336,
+      "latent": 0.013339057155336335,
+      "empty_excluded": 131
     }
   }
 }

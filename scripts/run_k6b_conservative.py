@@ -91,7 +91,15 @@ def main() -> None:
     ap.add_argument("--dim", type=int, default=6)
     ap.add_argument("--sigma", type=float, default=0.25)
     ap.add_argument("--limit", type=int, default=None)
+    ap.add_argument("--arms", type=str, default=None)
+    ap.add_argument("--out", type=str, default=None)
     args = ap.parse_args()
+
+    global ARMS, OUT
+    if args.arms:
+        ARMS = tuple(a.strip() for a in args.arms.split(","))
+    if args.out:
+        OUT = Path(args.out)
 
     head = _head()
     print(f"K6b · conservative excursion sets · HEAD={head}")

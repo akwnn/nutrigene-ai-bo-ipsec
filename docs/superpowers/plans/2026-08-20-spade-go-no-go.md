@@ -453,6 +453,141 @@ regret ranking, no amount of deliverable tweaking saves it.
 
 ---
 
+## Amendment D — Version B, the two-plate arm. THE DECISIVE TEST.
+
+**Why this exists.** K6 and K6b tested **plate 1 only** (Version A, no sampling change).
+That was the registered gate and running it was correct. But SPADE v2 is a **two-plate**
+method — its own spec says *"the certificate is 2 rounds by default; one round is the map,
+not the batch record"* — so concluding from plate 1 that SPADE fails is judging a
+two-stage method on stage one. **Plate 2 is the machinery designed to repair a weak
+certified region, and it has not been run.**
+
+What plate 1 established, and its limit:
+
+| established | not established |
+|---|---|
+| screening is fatal for a design space (24/24) | whether plate 2 closes the gap |
+| the two objects rank differently (0/24, 0/4) | whether SPADE beats qLogNEI |
+| joint certification is honest at n=48 | anything on the rounds axis |
+| one-shot spread loses to qLogNEI (15/24) | |
+
+**And the rounds axis has been under-reported throughout.** Every K6 contrast is at equal
+*wells*. Plate 1 is **1 round against 10**; Version B is **2 against 10**. Even a tie on
+the map is a 5x rounds result, and rounds was one of the three original claims.
+
+### Task 8: the plate-2 LSE arm
+
+**Files:**
+- Create: `src/boec/lse.py`, `tests/test_lse.py`, `scripts/run_versionb.py`
+- Modify: `docs/OPEN-QUESTIONS.md`, `.gitignore`
+
+**Interfaces:**
+- Consumes: `boec.vorobev` (`excursion_probability`, `vorobev_deviation`,
+  `conservative_estimate`), `boec.designspace.gp_adapter`, `boec.replay.regenerate`
+- Produces:
+  - `straddle_score(mean, sd, theta) -> Tensor` — `1.96*sd - |mean - theta|` (Bryan 2005)
+  - `batch_lse(model, X_cand, theta, q, *, exclude) -> Tensor` — q points, greedy with a
+    lengthscale-scaled exclusion radius so a batch does not collapse onto one location
+  - `plate_two(rec, orc, theta, n_wells) -> CampaignRecord` — returns the **combined**
+    campaign, first and confirmation readings **averaged**, never replaced
+
+- [ ] **Step 1: Register, and commit before the runner exists**
+
+```markdown
+**Version B.** Plate 1 = 40 wells space-filling. Plate 2 = 8 wells by batch LSE on the
+D_gamma boundary, decided by the MEAN of first and confirmation readings. Total 48, so it
+is budget-matched to every committed column and to plate-1-only at 48. Comparators:
+qLogNEI at 10 rounds (the arm that actually beats plate 1), doe_ascent, plate-1-only at
+48, and **8 RANDOM wells instead of LSE**. Reported on BOTH axes, wells and rounds.
+Winner not pre-written.
+
+Registered kills: (i) plate 2 does not close the map/alpha* gap to qLogNEI -> SPADE is
+dead; (ii) plate 2 does not beat 8 random wells -> the SUR machinery is not earning its
+place and the honest result is "a second plate helps, the criterion does not".
+
+Correction carried from the research pass: the optimal SUR points are NOT all on the
+boundary. Azzimonti's own figures place some deep in the interior, to secure regions a
+boundary-only rule leaves uncertain. The criterion decides for itself; do not hard-code a
+boundary-only rule.
+```
+
+- [ ] **Step 2: Write the failing test**
+
+```python
+import torch
+from boec.lse import batch_lse, straddle_score
+
+
+def test_straddle_peaks_at_the_threshold_where_uncertainty_is_equal():
+    mean = torch.tensor([0.5, 0.9, 0.1], dtype=torch.double)
+    sd = torch.full((3,), 0.1, dtype=torch.double)
+    s = straddle_score(mean, sd, theta=0.5)
+    assert int(torch.argmax(s)) == 0
+
+
+def test_straddle_prefers_the_uncertain_point_at_equal_distance():
+    mean = torch.tensor([0.6, 0.6], dtype=torch.double)
+    sd = torch.tensor([0.05, 0.30], dtype=torch.double)
+    assert int(torch.argmax(straddle_score(mean, sd, theta=0.5))) == 1
+
+
+def test_batch_lse_does_not_collapse_onto_one_location():
+    """A greedy batch on a smooth score picks q near-identical points unless excluded."""
+    torch.manual_seed(0)
+    X = torch.rand(500, 3, dtype=torch.double)
+
+    class _M:
+        def posterior_mean_and_sd(self, Z):
+            m = 1.0 - Z[:, 0].double()
+            return m, torch.full_like(m, 0.2)
+
+    picks = batch_lse(_M(), X, theta=0.5, q=4, exclude=0.15)
+    assert picks.shape == (4, 3)
+    d = torch.cdist(picks, picks) + torch.eye(4, dtype=torch.double) * 9
+    assert float(d.min()) >= 0.15
+
+
+def test_batch_lse_can_place_points_off_the_boundary():
+    """Azzimonti's figures put some SUR points in the interior. A boundary-only rule is
+    an approximation and must not be hard-coded."""
+    torch.manual_seed(0)
+    X = torch.rand(500, 2, dtype=torch.double)
+
+    class _M:
+        def posterior_mean_and_sd(self, Z):
+            m = 1.0 - Z[:, 0].double()
+            sd = torch.where(Z[:, 1] > 0.8, 0.9, 0.02).double()   # a far-from-boundary blob
+            return m, sd
+
+    picks = batch_lse(_M(), X, theta=0.5, q=4, exclude=0.15)
+    assert bool((picks[:, 1] > 0.8).any()), "criterion never left the boundary"
+```
+
+- [ ] **Step 3: Run it, watch it fail**
+
+```bash
+.venv/bin/python -m pytest tests/test_lse.py -v
+```
+Expected: `ModuleNotFoundError: No module named 'boec.lse'`.
+
+- [ ] **Step 4: Implement, then re-run until green**
+
+`straddle_score` is `1.96*sd - (mean - theta).abs()`. `batch_lse` picks greedily, masking
+a Chebyshev ball of radius `exclude` around each pick. Default `exclude` from the fitted
+median ARD lengthscale divided by 4, **read from the model, never hardcoded**.
+
+- [ ] **Step 5: Run Version B, then commit**
+
+```bash
+.venv/bin/python scripts/run_versionb.py --dim 6 --sigma 0.25 2>&1 | tee results/versionb.log
+```
+
+**Budget arithmetic, and it must not drift:** 40 + 8 = 48. The confirmation budget comes
+**out of** the design, never on top. Any comparison that adds wells is not budget-matched
+and must not be reported as a headline.
+
+---
+
 ## File Structure
 
 | Path | Responsibility | Task |

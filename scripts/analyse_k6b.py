@@ -18,6 +18,9 @@ import numpy as np
 from scipy.stats import wilcoxon
 
 IN = Path("results/k6b-conservative.json")
+#: Spread arms, run separately. Without them K6b answers the same partial question K6's
+#: first run did -- "is screening fatal" rather than "does a spread design certify better".
+IN_SPREAD = Path("results/k6b-conservative-spread.json")
 OUT = Path("results/k6b-analysis.json")
 SPREAD, CLUSTERED = "doe", "qlogei"
 
@@ -53,7 +56,15 @@ def _contrast(pa, pb, n_boot=4000, seed=0):
 def main() -> None:
     data = json.loads(IN.read_text())
     rows, cfg = data["rows"], data["config"]
-    arms, tfs = cfg["arms"], cfg["tau_fracs"]
+    arms, tfs = list(cfg["arms"]), cfg["tau_fracs"]
+    if IN_SPREAD.exists():
+        extra = json.loads(IN_SPREAD.read_text())
+        for k in ("dim", "sigma", "tau_fracs", "subset_n", "n_draws", "grid_seed"):
+            assert extra["config"][k] == cfg[k], f"spread run disagrees on {k!r}"
+        rows = rows + extra["rows"]
+        arms = arms + [a for a in extra["config"]["arms"] if a not in arms]
+        print(f"merged {len(extra['rows'])} spread rows "
+              f"({', '.join(extra['config']['arms'])})")
     print(f"K6b · {len(rows)} rows · d={cfg['dim']} sigma={cfg['sigma']} · "
           f"gate failures {len(data['gate_failures'])}\n")
 

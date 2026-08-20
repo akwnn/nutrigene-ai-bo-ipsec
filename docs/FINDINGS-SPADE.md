@@ -45,9 +45,9 @@ was the whole point.
 | test | question | status |
 |---|---|---|
 | **Task 1** | can committed campaigns be regenerated? | ✅ **COMPLETE** |
-| **K6** | does the design-space ranking differ from regret? | ✅ **COMPLETE**, but wrong classical arm — see §4.2 |
-| **K6-spread** | same, with a true one-shot spread arm | 🔄 **RUNNING** |
-| **K6b** | joint certification, `alpha*` | 🔄 **RUNNING** |
+| **K6** | does the design-space ranking differ from regret? | ✅ **COMPLETE** — 9,600 rows, 8 arms |
+| **K6b** | joint certification, `alpha*` | ✅ **COMPLETE** — 1,600 rows, 8 arms |
+| **Version B** | two-plate SPADE with an LSE round 2 | ❗ **NOT RUN — and it is the actual SPADE**, see §4.8 |
 | K0 | does sup-norm or R² govern regret? | not started |
 | K1 | what does replicate-identified noise buy? | not started |
 | K3 | confirm-and-average vs confirm-and-replace | not started |
@@ -77,32 +77,53 @@ measured that path at ~2.5e-06. They do not: Q54's non-reproducibility was in th
 the campaign, which `Campaign.seed_everything` pins exactly. Worth having measured rather
 than assumed.
 
-### 4.2 K6 — the two rankings disagree in 24 of 24 cells ✅ (with a caveat that matters)
+### 4.2 K6 — the two rankings disagree in 24 of 24 cells ✅
 
-**Result.** 6,000 rows, 50 instance-seeds, 0 gate failures.
+**Result.** 9,600 rows, 8 arms, 50 instance-seeds, 0 gate failures.
 
 | | ranking |
 |---|---|
-| simple regret | `doe` **0.0958** < qlogei-add < qlognei < qlogei 0.1553 < qlogei-addonly |
-| map quality (AUC) | qlognei > qlogei-addonly > qlogei-add > qlogei > **`doe`, last in all 24 cells** |
+| simple regret | `doe` 0.0958 < `lhs` 0.1270 < qlogei-add < qlognei < qlogei < qlogei-addonly < sobol < random |
+| map quality (AUC) | varies by cell; **`doe` last in 22 of 24** |
 
-`doe` − `qlogei` on AUC: **−0.09 to −0.12, p < 0.002 in every cell**, n=50 paired.
-**Zero of 24 cells agree.**
+**Zero of 24 cells agree with the regret ranking.**
 
-**What it signifies — and what it does not.** The design-space object does not measure
-what regret measures. That much is now data.
+**4.2a The cost of screening, isolated — the cleanest result in the study.**
 
-But **`doe` is not a spread design.** It is 20 screening runs, then a 27-run
-central-composite design confined to a *sub-box*, then one confirmation — with **two of
-six axes pinned by the screen** (the runner logged `active=4` throughout). So these 24
-cells establish, decisively, that **screening is fatal for a design-space deliverable**:
-an arm that never varied two factors cannot state a range for them, and a batch record
-needs a range for every factor.
+`lhs` and `doe` are both non-adaptive, both 48 wells, both one round. The only difference
+is that `doe` screens 6→4 and confines its response-surface design to a sub-box.
 
-They do **not** establish that a one-shot spread design maps better than adaptive search,
-because no one-shot spread arm was in the run. That was an arm-selection error on our
-part, not a property of the data. `lhs`, `sobol` and `random` are the genuine one-shot
-arms and are **RUNNING** now.
+| γ | τ_frac 0.60 | 0.75 | 0.85 | 0.95 |
+|---|---|---|---|---|
+| 0.50 | +0.112\* | +0.143\* | +0.192\* | +0.221\* |
+| 0.70 | +0.110\* | +0.118\* | +0.138\* | +0.179\* |
+| 0.80 | +0.112\* | +0.111\* | +0.121\* | +0.143\* |
+| 0.90 | +0.113\* | +0.111\* | +0.110\* | +0.117\* |
+| 0.95 | +0.113\* | +0.114\* | +0.112\* | +0.111\* |
+| 0.99 | +0.105\* | +0.114\* | +0.113\* | +0.114\* |
+
+**Significant in 24 of 24**, favouring the unscreened arm. And it runs exactly opposite to
+regret, where `doe` **beats** `lhs` by **+0.0312 [+0.0133, +0.0491], p=0.0028**.
+
+Two arms, one difference, a complete ranking reversal. **Screening buys the better single
+recipe and costs the ability to state a range for two of six factors** — which is what a
+batch record needs. This needs no new method and does not depend on SPADE winning
+anything.
+
+**4.2b Spread versus adaptive — and the acquisition decides it.**
+
+| contrast | wins | losses |
+|---|---|---|
+| `lhs` vs **qLogEI** | 9/24 | 0/24 |
+| `lhs` vs **qLogNEI** | 3/24 | **15/24** |
+| `sobol` vs qLogNEI | 0/24 | 0/24 |
+
+**qLogNEI is the strongest arm on the map.** A one-shot spread design beats qLogEI in a
+third of cells and never loses to it — but loses to qLogNEI in 15 of 24.
+
+**This is the Q57 trap repeating.** Q57 retracted a Q55 claim for exactly this reason: the
+headline held against qLogEI and died against the noisy acquisition. Had only qLogEI been
+run here, this would have been recorded as a win.
 
 ### 4.3 A1 — the additive kernel does not rescue itself on the map ❌ NULL
 
@@ -114,9 +135,12 @@ and a great deal for certifying a region.*
 **Result.** It is not there. `qlogei-add` AUC **+0.0143 [−0.0094, +0.0412], p=0.52**;
 `qlogei-addonly` **+0.0235 [−0.0059, +0.0542], p=0.13**.
 
-**What it signifies.** The accuracy channel is closed for *both* deliverables, not just
-for regret. A single-instance smoke test had shown `alpha*` of 0.30 against 0.03 and it
-did not survive n=50 — which is why it was reported as a hypothesis at the time.
+**And a third time, on `alpha*`.** All eight contrasts p > 0.16.
+
+**What it signifies.** The accuracy channel is closed for **all three** deliverables —
+regret, map quality, and joint certification. A single-instance smoke test had shown
+`alpha*` of 0.30 against 0.03 and it did not survive n=50, which is why it was reported as
+a hypothesis at the time.
 
 ### 4.4 A prediction of ours was wrong, in the opposite direction 🔴 RETRACTED
 
@@ -211,6 +235,66 @@ day-0 → day-6 paired series.
 at endpoint, same wells, recorded per well. Not an analysis task. The registered σ-sweep
 already turns it into a lookup when the number arrives.
 
+### 4.8 K6b — the joint guarantee holds, and `alpha*` ranks differently again ✅
+
+**Why.** `{x : LCB(x) >= tau}` is 20,000 *marginal* statements presented as one *regional*
+one. A batch record asserts the joint quantity: the probability that **no** certified point
+is false. Conservative excursion sets (Chevalier 2013; Azzimonti et al. 2016, 2021) give
+that, and `alpha*` — the largest confidence at which a non-empty conservative estimate
+exists — is **always defined**, so unlike certified volume it cannot degenerate into a
+table of zeros.
+
+**Result.** 1,600 rows, 8 arms, 0 gate failures. `alpha*` ranking matches regret in
+**0 of 4** thresholds, and it reverses *within itself*:
+
+| τ_frac | best → worst on `alpha*` |
+|---|---|
+| 0.60 | **doe 1.000** > qlogei-add 0.981 > qlogei 0.976 > … > lhs 0.958 > sobol 0.948 |
+| 0.75 | **doe 0.725** > random 0.652 > lhs 0.629 > … > sobol 0.527 |
+| 0.85 | qlogei-addonly 0.296 > random 0.290 > lhs 0.287 > … > **doe 0.213** > sobol 0.175 |
+| 0.95 | qlogei-addonly 0.097 > lhs 0.080 > random 0.080 > … > **doe 0.038** > sobol 0.035 |
+
+`doe` is **first** at easy thresholds and **last** at hard ones. Two further oddities worth
+a second look: `random` places second or third at three of four thresholds, and `sobol` is
+**last at three of four** despite being a low-discrepancy design.
+
+**The finding that matters most — the guarantee is real.** Achieved containment against
+nominal, every arm:
+
+| nominal α | achieved |
+|---|---|
+| 0.50 | 0.560 – 0.592 |
+| 0.80 | 0.864 – 0.872 |
+| 0.95 | **0.972 – 0.998** |
+
+**At or above nominal everywhere.** The conservative estimate is genuinely conservative
+*even with plug-in hyperparameters* — the failure mode Azzimonti et al. flag, and the one
+we recorded as a stated limit, does not bite at this budget. `CE_alpha` is empty 52–88% of
+the time, so the emptiness warning held and `alpha*` did exactly the job it was designed
+for.
+
+### 4.9 ❗ WHAT WE HAVE **NOT** TESTED: SPADE is a two-round method
+
+**This qualifies every conclusion above and was missed until late.**
+
+SPADE v2 (Version B) is **two plates**: plate 1 builds the map, **plate 2 spends wells on
+the `D_gamma` boundary by batch LSE / parallel SUR**. Its own specification says *"the
+certificate is 2 rounds by default; one round is the map, not the batch record."*
+
+Everything in §4.2 and §4.8 is **plate 1 only** — Version A, which changes no sampling.
+Running A as the gate was the registered sequencing and was correct. But concluding from
+it that *SPADE* fails is judging a two-stage method on stage one, and plate 2 is precisely
+the machinery meant to repair a weak certified region.
+
+**Two things follow.**
+
+1. *"A one-shot spread design does not map better than qLogNEI"* is supported.
+   *"SPADE does not map better than qLogNEI"* is **not tested**.
+2. **The rounds axis has been under-reported throughout.** Every contrast above is at
+   equal *wells*. Plate 1 is **1 round against qLogNEI's 10**; SPADE v2 is **2 against
+   10**. Even a tie on the map is a 5× rounds result, and rounds were one of the three
+   original claims.
+
 ---
 
 ## 5. Defects found and fixed along the way
@@ -228,49 +312,65 @@ Recorded because each one would have produced a plausible wrong number.
 
 ---
 
-## 6. What it all signifies so far
+## 6. What it all signifies
 
-**The design-space object is genuinely different from regret.** 0 of 24 cells agree, with
-large and consistently significant contrasts. That part of the thesis survives.
+**The design-space object is genuinely different from regret.** 0 of 24 cells agree on map
+quality, 0 of 4 on `alpha*`, with large and consistently significant contrasts. That part
+of the thesis is now data.
 
-**But the direction currently runs against the proposal.** The arm that wins on regret
-loses on the map, everywhere. Until the spread arms land we cannot say whether that is
-about *screening* (which we can prove) or about *spread designs in general* (which we
-cannot yet).
+**Screening is fatal for a design-space deliverable.** 24 of 24 cells, isolated between two
+arms that differ in nothing else, and running exactly opposite to regret. This is the
+strongest and most portable result of the investigation. It needs no new method, no new
+campaign, and does not depend on SPADE winning anything.
 
-**Two of the proposal's supporting arguments are dead**: the cost frontier has no test bed,
-and the additive-kernel figure is null. **One of our own predictions is retracted**: the
-certified regions are conservative, not anti-conservative.
+**Joint certification works at this budget.** Achieved containment sits at or above nominal
+at every level for every arm, so a `(gamma, alpha)` statement built from 48 wells is
+honest — with plug-in hyperparameters, which was the flagged risk.
 
-**One argument is stronger than when it was proposed**: screening is fatal for a
-design-space deliverable. It needs no new method, no new campaign, and it does not depend
-on SPADE winning anything.
+**A one-shot spread design does not beat the strongest BO arm on the map.** It beats
+qLogEI in 9 of 24 cells and never loses to it, but loses to qLogNEI in 15 of 24. Choosing
+only the weaker acquisition would have manufactured a win — the same trap Q57 documented.
+
+**Three supporting arguments are dead**: the cost frontier has no test bed, the
+additive-kernel figure is null on all three deliverables, and our own anti-conservatism
+prediction is retracted in the opposite direction.
+
+**And the headline question is still open**, because SPADE is a two-round method and only
+round one has been run.
 
 ---
 
 ## 7. What needs to be done
 
-**Immediate, running now.**
-1. **K6-spread** — `lhs`, `sobol`, `random` through the same scorer. Without it the
-   registered question is unanswered. *This is the decisive one.*
-2. **K6b** — `alpha*` and conservative excursion sets, for a joint rather than pointwise
-   guarantee.
+**The decisive one, and it is now the only thing that can settle the question.**
+
+1. **Version B — the two-plate arm.** Plate 1 space-filling, plate 2 batch LSE / parallel
+   SUR on the `D_gamma` boundary, decided by the **mean** of first and confirmation
+   readings. Comparators: qLogNEI at 10 rounds (the arm that actually beats plate 1), and
+   `doe_ascent`. Report **wells and rounds on separate axes**. Registered before it runs.
+   * Kill: plate 2 does not close the gap to qLogNEI on map AUC or `alpha*` → SPADE is
+     dead and the banked findings are the paper.
+   * Kill: plate 2 does not beat **8 random wells** → the SUR machinery is not earning its
+     place; that comparison arm stays in.
 
 **Then, in order.**
-3. **Decide on the registered tree.** Map ranking matches regret → stop and write up what
-   is banked. Diverges with spread ahead → build Version B. Diverges with clustered ahead
-   → different paper: *the design-space deliverable favours adaptive designs*.
-4. **K0** — does sup-norm error govern regret where R² does not? The only route by which
+
+2. **K0** — does sup-norm error govern regret where R² does not? The only route by which
    the deleted shape-constrained model returns.
-5. **K1** — what replicate-identified noise buys, and whether the `Yvar`-to-reading
+3. **K1** — what replicate-identified noise buys, and whether the `Yvar`-to-reading
    coupling explains the measured under-smoothing (fitted lengthscale ÷ true feature width
    is 0.56–0.70).
-6. **K3** — confirm-and-average versus confirm-and-replace, the variant Q58 registered as
+4. **K3** — confirm-and-average versus confirm-and-replace, the variant Q58 registered as
    unrun.
+5. **Explain two oddities from §4.8** — `random` placing second or third on `alpha*`, and
+   `sobol` placing last at three of four thresholds. Neither is predicted by any argument
+   in the specs, and an unexplained result that favours us is as dangerous as one that
+   does not.
 
 **Lab, blocking nothing but deciding what can be claimed.**
-7. **Day-0 covariate `R²`** — prospective, per well, day 0 and endpoint.
-8. **Reagent cost per well** — decides whether "matched plates, not matched wells" is
+
+6. **Day-0 covariate `R²`** — prospective, per well, day 0 and endpoint.
+7. **Reagent cost per well** — decides whether "matched plates, not matched wells" is
    decisive or merely suggestive.
 
 **Explicitly not being done.** NUTS and shape-constrained additive models (closed by Q30
