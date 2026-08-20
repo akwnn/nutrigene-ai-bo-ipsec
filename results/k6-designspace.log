@@ -185,3 +185,4 @@ Trying again with a new set of initial conditions.
   return _optimize_acqf_batch(opt_inputs=opt_inputs)
 [ 27/50] qlogei         7ef3fc89acece49c seed=0 regret=0.0540 active=6 (22.7s)
 [ 27/50] qlognei        7ef3fc89acece49c seed=0 regret=0.0836 active=6 (9.5s)
+[ 27/50] qlogei-add     7ef3fc89acece49c seed=0 regret=0.1773 active=6 (27.2s)

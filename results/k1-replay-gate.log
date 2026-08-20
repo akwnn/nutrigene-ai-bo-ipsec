@@ -308,3 +308,5 @@ Trying again with a new set of initial conditions.
 [269/500] qlognei  d=6 s=0.25 seed=1 033466197eba3ddb delta=0.000e+00 (5.6s)
 [270/500] doe      d=6 s=0.25 seed=1 033466197eba3ddb delta=0.000e+00 (0.0s)
 [271/500] qlogei   d=6 s=0.25 seed=0 e402c32907f27534 delta=0.000e+00 (8.0s)
+[272/500] qlognei  d=6 s=0.25 seed=0 e402c32907f27534 delta=0.000e+00 (14.4s)
+[273/500] doe      d=6 s=0.25 seed=0 e402c32907f27534 delta=0.000e+00 (0.1s)
