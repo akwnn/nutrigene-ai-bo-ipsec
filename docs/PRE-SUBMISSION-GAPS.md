@@ -499,7 +499,30 @@ sound and only the BO side is in question.
 makes future runs replayable. It also means post-fix runs do not match pre-fix stored
 values -- that is the fix working, not a regression.
 
-**To close — a decision, not a task.** Three options, in ascending cost:
+> **REGENERATED, 2026-08-20 (Q71). Every conclusion survives.** Tables 1 and 2 re-run under
+> the fixed acquisition seeding, same committed 25-landscape ensemble, same designs. DoE gated
+> bit-exact on all 200 rows. Primary cell:
+>
+> | quantity | stored (pre-fix) | regenerated (post-fix) |
+> |---|---:|---:|
+> | DoE measured | 0.0958 | 0.0958 |
+> | qLogEI measured | 0.1553 | 0.1598 |
+> | qLogNEI measured | 0.1532 | 0.1552 |
+> | DoE − qLogEI | −0.0595 | **−0.0640** [−0.0817, −0.0462] |
+> | DoE − qLogNEI | −0.0574 | **−0.0594** [−0.0816, −0.0377] |
+> | identification share | 73% | **75%** |
+>
+> The headline moves by 0.0045 and gets slightly *larger*. Direction, significance and the
+> identification story are unchanged in all four cells; d=8/σ=0.25 stays DoE-favouring
+> (−0.0235, −0.0200) and both low-noise cells stay unseparated. **So the reproducibility
+> defect was real but changed no conclusion** — worth knowing before a reviewer asks, and
+> worth saying plainly in Methods.
+>
+> Presentation note: `q71` computes identification share unconditionally, so cells with a
+> near-zero measured contrast produce meaningless values (−537%, 427%). Suppress those exactly
+> as the current paper does — report the share only where the measured contrast is directional.
+>
+> **Remaining decision** — three options, in ascending cost:
 1. Declare it in Methods. Cheapest; a reviewer asking "can I reproduce Table 1" gets "no".
 2. **Regenerate the two primary confirmatory contrasts** under the fixed `ask()` and treat
    the rest as pre-fix. Proportionate. Recommended.
