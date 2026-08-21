@@ -270,6 +270,11 @@ def test_error_volumes_reproduce_the_committed_iou_column():
     committed `iou_pred`, with ZERO impossible negative type-II volumes. This is the
     D12-clean bar: a committed column, not a regeneration of the same arithmetic.
 
+    **This test now guards the canonical `boec.calibration.error_volumes`.** It was
+    written against a second copy in `designspace.py`, which is deleted; gating against
+    the committed `iou_pred` column is a stronger bar than comparing two implementations
+    to each other, so the test moved rather than being dropped with the copy.
+
     **The bar is one machine epsilon and that is not a widening.** Measured here at
     2.220446049250313e-16, which IS `numpy.finfo(float).eps` exactly; the registration's
     "2.220e-16" is that same number at four significant figures. Asserting the literal
@@ -283,7 +288,7 @@ def test_error_volumes_reproduce_the_committed_iou_column():
     """
     import numpy as np
 
-    from boec.designspace import error_volumes
+    from boec.calibration import error_volumes
 
     rows = json.loads((ROOT / "results/k6-designspace.json").read_text())["rows"]
     worst, scorable, negative = 0.0, 0, 0
@@ -306,7 +311,7 @@ def test_error_volumes_are_exact_where_fi_and_iou_are_nan():
     An empty region certifies nothing, so it makes no type I error and its type II error
     is the whole true set. `fi` and `iou` are 0/0 there; both volumes are exact.
     """
-    from boec.designspace import error_volumes
+    from boec.calibration import error_volumes
 
     ev = error_volumes(vol=0.0, fi=float("nan"), prevalence=0.0625)
     assert ev["type_I_vol"] == 0.0
@@ -316,7 +321,7 @@ def test_error_volumes_are_exact_where_fi_and_iou_are_nan():
 
 
 def test_error_volumes_recover_a_perfect_region():
-    from boec.designspace import error_volumes
+    from boec.calibration import error_volumes
 
     ev = error_volumes(vol=0.25, fi=0.0, prevalence=0.25)
     assert ev["type_I_vol"] == 0.0

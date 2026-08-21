@@ -59,6 +59,7 @@ touches no other output. K6b is unaffected by construction: its threshold is
 from __future__ import annotations
 
 import argparse
+import contextlib
 import gc
 import json
 import os
@@ -80,8 +81,12 @@ from run_k6_designspace import GAMMAS, GRID_N, GRID_SEED, TAU_FRACS, score_campa
 from run_k6b_conservative import (ALPHAS, JITTER, N_DRAWS, SUBSET_N,  # noqa: E402
                                   TAU_FRACS as K6B_TAU_FRACS, joint_draws)
 
-from boec.calibration import average_precision  # noqa: E402
-from boec.designspace import (brier_and_auc, error_volumes,  # noqa: E402
+# `boec.calibration` is the CANONICAL home for both (commit 8c45e31). This file briefly
+# carried a second `error_volumes` in `designspace.py`; it is deleted rather than kept in
+# sync, for the same reason a GP fit is not shared between two scorers here -- one
+# committed quantity, one definition.
+from boec.calibration import average_precision, error_volumes  # noqa: E402
+from boec.designspace import (brier_and_auc,  # noqa: E402
                               false_inclusion_rate, gp_adapter,
                               inscribed_box_from_mask, iou,
                               predictive_probability_map, probability_map, tau_max,
@@ -90,10 +95,10 @@ from boec.norms import grid_r2, sobol_grid, sup_err  # noqa: E402
 from boec.replay import committed_rows, instance_by_id, regenerate, unit_bounds  # noqa: E402
 from boec.surrogate import build_gp  # noqa: E402
 from boec.torch_oracle import BiphasicOracle  # noqa: E402
+from boec import vorobev as _vorobev  # noqa: E402
 from boec.vorobev import (alpha_star, conservative_estimate,  # noqa: E402
-                          containment_probability, empirical_containment,
-                          excursion_probability, vorobev_deviation,
-                          vorobev_expectation)
+                          empirical_containment, excursion_probability,
+                          vorobev_deviation, vorobev_expectation)
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -238,6 +243,47 @@ def check_gate(rec, index, ungated: dict[str, str] | None = None) -> dict:
 
 # --- K6b, re-expressed from run_k6b_conservative.main and pinned to its committed rows --
 
+@contextlib.contextmanager
+def _memoised_containment():
+    """Compute each DISTINCT ``containment_probability`` once, within one campaign.
+
+    **Not an approximation and not a second estimator.** ``alpha_star`` and
+    ``conservative_estimate`` are called unchanged; every distinct call still reaches the
+    real :func:`boec.vorobev.containment_probability` and a hit returns the float that
+    function computed. Found and measured by the P2 worker; adopted here because this
+    scorer pays the identical cost.
+
+    **Why the calls repeat.** ``alpha_star`` scans ``torch.linspace(0, 1, 64)`` and
+    ``conservative_estimate`` scans ``torch.linspace(1, 0, 64)``, and those two tensors
+    are elementwise equal, so one ``alpha_star`` plus three ``conservative_estimate``
+    calls walk the SAME 64 Vorob'ev quantiles of the SAME coverage function four times.
+    ``containment_probability`` copies ``draws[:, mask]`` -- up to 512 x 2,000 doubles --
+    on every one of them.
+
+    **Why the key is safe.** ``(theta, the mask's exact bytes)``: no collision is
+    possible, and the scope is one campaign, entered and left inside :func:`score_k6b`,
+    which is exactly the region over which ``draws`` is fixed. A mask from one
+    ``tau_frac`` cannot answer for another because ``theta`` is in the key.
+
+    The proof is the existing gate: ``score_k6b`` still reproduces the committed
+    ``k6b-conservative.json`` rows at exact float equality with this active.
+    """
+    real = _vorobev.containment_probability
+    cache: dict[tuple[float, bytes], float] = {}
+
+    def memoised(draws, mask, theta):
+        key = (float(theta), mask.detach().cpu().numpy().tobytes())
+        if key not in cache:
+            cache[key] = real(draws, mask, theta)
+        return cache[key]
+
+    _vorobev.containment_probability = memoised
+    try:
+        yield
+    finally:
+        _vorobev.containment_probability = real
+
+
 def score_k6b(rec, orc, X_sub: torch.Tensor, mu_max: float) -> list[dict]:
     """The four ``tau_frac`` rows of K6b for one regenerated campaign.
 
@@ -258,36 +304,39 @@ def score_k6b(rec, orc, X_sub: torch.Tensor, mu_max: float) -> list[dict]:
     draws = joint_draws(model, X_eval, seed=rec.seed)
 
     rows = []
-    for tf in K6B_TAU_FRACS:
-        theta = tf * mu_max
-        p = excursion_probability(draws, theta)
-        q = vorobev_expectation(p, draws, theta)
-        true_set = truth_eval >= theta
-        inter = int((q & true_set).sum())
-        union = int((q | true_set).sum())
-        row = {"instance": rec.instance, "dim": rec.dim, "sigma": rec.sigma,
-               "seed": rec.seed, "arm": rec.arm, "regret": rec.regret,
-               "tau_frac": tf, "theta": theta,
-               "true_frac_above": float(true_set.double().mean()),
-               "n_active": (rec.dim if rec.kept_factors is None
-                            else len(rec.kept_factors)),
-               "alpha_star": alpha_star(draws, theta),
-               "vorobev_deviation": vorobev_deviation(draws, theta),
-               "vorobev_expectation_vol": float(q.double().mean()),
-               "iou_vorobev_expectation": (inter / union) if union else float("nan"),
-               "max_p": float(p.max())}
-        for a in ALPHAS:
-            ce = conservative_estimate(draws, theta, a)
-            n_ce = int(ce.sum())
-            row[f"ce_vol_{a}"] = n_ce / ce.numel()
-            row[f"ce_empty_{a}"] = n_ce == 0
-            row[f"ce_false_in_{a}"] = (float((truth_eval[ce] < theta).double().mean())
-                                       if n_ce else float("nan"))
-            row[f"ce_contain_{a}"] = (containment_probability(draws, ce, theta)
-                                      if n_ce else float("nan"))
-            emp = empirical_containment(ce, truth_eval, theta)
-            row[f"ce_empirical_{a}"] = float("nan") if emp is None else float(emp)
-        rows.append(row)
+    with _memoised_containment():
+      for tf in K6B_TAU_FRACS:
+          theta = tf * mu_max
+          p = excursion_probability(draws, theta)
+          q = vorobev_expectation(p, draws, theta)
+          true_set = truth_eval >= theta
+          inter = int((q & true_set).sum())
+          union = int((q | true_set).sum())
+          row = {"instance": rec.instance, "dim": rec.dim, "sigma": rec.sigma,
+                 "seed": rec.seed, "arm": rec.arm, "regret": rec.regret,
+                 "tau_frac": tf, "theta": theta,
+                 "true_frac_above": float(true_set.double().mean()),
+                 "n_active": (rec.dim if rec.kept_factors is None
+                              else len(rec.kept_factors)),
+                 "alpha_star": alpha_star(draws, theta),
+                 "vorobev_deviation": vorobev_deviation(draws, theta),
+                 "vorobev_expectation_vol": float(q.double().mean()),
+                 "iou_vorobev_expectation": (inter / union) if union else float("nan"),
+                 "max_p": float(p.max())}
+          for a in ALPHAS:
+              ce = conservative_estimate(draws, theta, a)
+              n_ce = int(ce.sum())
+              row[f"ce_vol_{a}"] = n_ce / ce.numel()
+              row[f"ce_empty_{a}"] = n_ce == 0
+              row[f"ce_false_in_{a}"] = (float((truth_eval[ce] < theta).double().mean())
+                                         if n_ce else float("nan"))
+              # The real function, not the memo -- it is looked up off the module so the
+              # committed runner's exact call is reproduced whether or not a cache is live.
+              row[f"ce_contain_{a}"] = (_vorobev.containment_probability(draws, ce, theta)
+                                        if n_ce else float("nan"))
+              emp = empirical_containment(ce, truth_eval, theta)
+              row[f"ce_empirical_{a}"] = float("nan") if emp is None else float(emp)
+          rows.append(row)
 
     del model, draws
     gc.collect()
@@ -360,12 +409,24 @@ def score_k6_dual_tau(rec, orc, grid: torch.Tensor, truth: torch.Tensor,
         # raw maps, which exist only here -- no stored row carries them, which is why the
         # registration folds F2b into a re-score rather than an analysis. `None` when a
         # class is absent; 1.0 would average in as if it were skill.
-        row["auprc_pred"] = average_precision(p_pred, truth, tau)
-        row["auprc_latent"] = average_precision(p_lat, truth, tau)
-        # Erratum 3: the baseline AP a no-skill ranker scores IS the prevalence, so the
-        # two are never read apart. `minority_prevalence` is the class AUC degrades on,
-        # and it degrades at BOTH ends of the gamma ladder, not just the rare-positive end.
-        row["minority_prevalence"] = min(prevalence, 1.0 - prevalence)
+        minority = min(prevalence, 1.0 - prevalence)
+        for name, pm in (("pred", p_pred), ("latent", p_lat)):
+            ap = average_precision(pm, truth, tau)
+            row[f"auprc_{name}"] = ap
+            # At HIGH gamma the minority class is the NEGATIVE one -- Erratum 3 again:
+            # tau_max decreases in gamma, so gamma=0.99 tau_frac=0.60 leaves ~17 negative
+            # points of 20,000 and a positive-class AP is trivially ~1 exactly where F2b
+            # calls it primary. Score the complement EXPLICITLY: `-truth >= -tau` would
+            # put a grid point with truth exactly tau in BOTH classes.
+            row[f"auprc_minority_{name}"] = (
+                ap if prevalence <= 0.5
+                else average_precision(1.0 - pm, (truth < tau).double(), 0.5))
+            # A no-skill ranker scores the PREVALENCE, not 0.5, so AP is not comparable
+            # across cells whose prevalence runs 0.0012 to 0.999 unless this travels.
+            row[f"auprc_baseline_{name}"] = minority
+        row["minority_prevalence"] = minority
+        row["minority_class"] = 1 if prevalence <= 0.5 else 0
+        row["auprc_is_primary"] = bool(minority < 0.01)
         return row
 
     std, exact = [], []
@@ -386,7 +447,16 @@ def score_k6_dual_tau(rec, orc, grid: torch.Tensor, truth: torch.Tensor,
 
 def _write(path: Path, head: str, dirty: bool, cfg: dict, gate_fail: list,
            ungated: dict, rows: list, started: str) -> None:
-    path.write_text(json.dumps({
+    """Checkpoint one cell. **Atomic**, because this box SIGKILLs processes.
+
+    A kill part-way through a 20 MB `write_text` leaves a truncated JSON that is not a
+    partial result but a corrupt one -- and it would have overwritten the last good
+    checkpoint. Writing to a temp file in the same directory and `os.replace`-ing it is
+    atomic on POSIX, so a kill at any instant leaves either the previous checkpoint or
+    the new one, never a half-written file.
+    """
+    tmp = path.with_suffix(path.suffix + ".tmp")
+    tmp.write_text(json.dumps({
         "provenance": {"git_sha": head, "git_dirty": dirty,
                        "generated_at": started, "argv": sys.argv, **_versions()},
         "config": cfg,
@@ -395,6 +465,7 @@ def _write(path: Path, head: str, dirty: bool, cfg: dict, gate_fail: list,
                                            .relative_to(ROOT)) for a in cfg["arms"]},
                         "ungated_arms": ungated},
         "gate_failures": gate_fail, "rows": rows}, indent=2))
+    os.replace(tmp, path)
 
 
 def main() -> None:
