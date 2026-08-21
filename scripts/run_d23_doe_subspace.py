@@ -544,7 +544,21 @@ def _provenance(argv) -> dict:
             "generated_at": time.strftime("%Y-%m-%dT%H:%M:%S%z"), "argv": list(argv),
             "python": platform.python_version(), "torch": torch.__version__,
             "botorch": botorch.__version__, "gpytorch": gpytorch.__version__,
-            "numpy": np.__version__, "scipy": scipy.__version__}
+            "numpy": np.__version__, "scipy": scipy.__version__,
+            # Documentation, not a control variable. This file's 50 campaigns were
+            # produced across BOTH thread settings -- the first 7 at the torch default,
+            # the remaining 43 with OMP/MKL/VECLIB/OPENBLAS capped to 1 after the
+            # throughput fix landed mid-run -- and the registered gate holds at
+            # |delta| = 0.000e+00 on all 50 regardless. The full-space rule-P column
+            # additionally reproduces `fix1-terminal-rule.json`, which was produced at the
+            # torch default, at |delta| = 0.000e+00 on all 50. So for this workload
+            # exactness is thread-independent, measured here rather than assumed.
+            "torch_num_threads": torch.get_num_threads(),
+            "thread_env": {k: os.environ.get(k) for k in
+                           ("OMP_NUM_THREADS", "MKL_NUM_THREADS",
+                            "VECLIB_MAXIMUM_THREADS", "OPENBLAS_NUM_THREADS")},
+            "thread_note": ("campaigns 1-7 at the torch default, 8-50 thread-capped; "
+                            "the |delta| = 0 gate held across the change")}
 
 
 def _committed() -> tuple[dict, dict]:

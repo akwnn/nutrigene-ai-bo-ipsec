@@ -1,8 +1,8 @@
 {
  "provenance": {
-  "git_sha": "36d69e45ab9e925b016db8f7da80e9242bef75d7",
+  "git_sha": "a934972513c5df066ac0bd6839f17fd936d2ad19",
   "git_dirty": true,
-  "generated_at": "2026-08-21T13:30:03+0800",
+  "generated_at": "2026-08-21T13:47:17+0800",
   "argv": [
    "scripts/run_d23_doe_subspace.py",
    "--analyse-only"
@@ -12,7 +12,15 @@
   "botorch": "0.18.1",
   "gpytorch": "1.15.2",
   "numpy": "2.4.6",
-  "scipy": "1.17.1"
+  "scipy": "1.17.1",
+  "torch_num_threads": 1,
+  "thread_env": {
+   "OMP_NUM_THREADS": "1",
+   "MKL_NUM_THREADS": "1",
+   "VECLIB_MAXIMUM_THREADS": "1",
+   "OPENBLAS_NUM_THREADS": "1"
+  },
+  "thread_note": "campaigns 1-7 at the torch default, 8-50 thread-capped; the |delta| = 0 gate held across the change"
  },
  "config": {
   "arm": "doe",

@@ -355,7 +355,11 @@ def _provenance(argv) -> dict:
             "generated_at": time.strftime("%Y-%m-%dT%H:%M:%S%z"), "argv": list(argv),
             "python": platform.python_version(), "torch": torch.__version__,
             "botorch": botorch.__version__, "gpytorch": gpytorch.__version__,
-            "numpy": np.__version__, "scipy": scipy.__version__}
+            "numpy": np.__version__, "scipy": scipy.__version__,
+            "torch_num_threads": torch.get_num_threads(),
+            "thread_env": {k: os.environ.get(k) for k in
+                           ("OMP_NUM_THREADS", "MKL_NUM_THREADS",
+                            "VECLIB_MAXIMUM_THREADS", "OPENBLAS_NUM_THREADS")}}
 
 
 def main() -> None:
