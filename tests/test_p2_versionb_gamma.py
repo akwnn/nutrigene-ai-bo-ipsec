@@ -309,6 +309,52 @@ def test_a_cell_that_certified_nothing_reports_n_zero_and_no_verdict(ana):
     assert cell["below_nominal"] is None, "no set certified is not a failed certificate"
 
 
+# -------------------------------------------------- provenance, and what is read-only
+
+
+def test_the_committed_result_files_cannot_be_written_over(mod):
+    """`versionb.json` is the gate and the headline; `versionb-predictive.json` is E6's.
+
+    `run_versionb.py` guards its own output the same way. The guard is by resolved path,
+    so a relative `--out` pointing at the same file is refused too.
+    """
+    guarded = {p.name for p in mod.NEVER_OVERWRITE}
+    assert {"versionb.json", "versionb-predictive.json", "k6-designspace-spread.json",
+            "k6-designspace.json"} <= guarded
+    for path in mod.NEVER_OVERWRITE:
+        argv = ["run_p2_versionb_gamma.py", "--out", str(path)]
+        with pytest.raises(SystemExit, match="refusing to overwrite"):
+            _run_main(mod, argv)
+
+
+def _run_main(mod, argv):
+    import sys as _sys
+    old = _sys.argv
+    _sys.argv = argv
+    try:
+        mod.main()
+    finally:
+        _sys.argv = old
+
+
+def test_provenance_carries_the_library_versions(mod):
+    """`results/q52-budget-to-target.json` is the model: sha, dirty, time, argv, libs."""
+    prov = mod._provenance(["scripts/run_p2_versionb_gamma.py"])
+    assert {"git_sha", "git_dirty", "generated_at", "argv", "python", "torch",
+            "botorch", "gpytorch", "numpy", "scipy"} <= set(prov)
+    assert len(prov["git_sha"]) == 40
+    assert prov["argv"] == ["scripts/run_p2_versionb_gamma.py"]
+
+
+def test_the_config_names_the_gate_and_the_ungatable_arms(mod):
+    cfg = mod._config(6, 0.25, None)
+    assert cfg["gate"]["target_arm"] == "lhs"
+    assert cfg["gate"]["tol"] == 0.0
+    assert cfg["ungatable"] == list(mod.UNGATABLE)
+    assert "ungatable" in cfg["note"].lower()
+    assert cfg["tau"].startswith("tau_frac * tau_max(gamma, sigma_rel)")
+
+
 def test_the_statistics_are_the_registered_ones(ana):
     assert ana.N_BOOT == 4000
     assert ana.BOOT_SEED == 0
