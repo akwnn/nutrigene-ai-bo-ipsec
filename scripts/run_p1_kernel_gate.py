@@ -138,6 +138,23 @@ Q30_KEYS = ("instance", "dim", "sigma", "seed", "arm")
 REGISTERED_K6_ROWS = 2400
 REGISTERED_K6B_ROWS = 400
 
+#: DECLARED SCOPE REDUCTION, registered by the lead 2026-08-21 rather than absorbed.
+#: The rule this honours: a reduction is never folded into a run that reads like the
+#: full one, so it travels in the output file and not only in a chat log.
+DEFERRED_SCOPE = [
+    {"what": "Gate the 100 sigma_rel=0.10 kernel campaigns in q30-additive.json "
+             "against their own regeneration (was PASS 3).",
+     "why": "Those campaigns carry NO design-space rows anywhere, so they sit outside "
+            "the registered kill condition, which rests on the 2,800 re-scored rows. "
+            "P3's (6, 0.10) cell performs the equivalent comparison against the same "
+            "committed q30 column through an independent code path, which is stronger "
+            "evidence than P1 gating its own regeneration against a column P1 produced.",
+     "cost_avoided": "~0.5-2 CPU-h on a machine at nine times its core count",
+     "how_to_run_it_anyway": "--include-sigma010-gate",
+     "unchanged": "the kill condition, the 2,800-row coverage, and both sigma halves "
+                  "of Step A itself, which P3 is blocked on"},
+]
+
 #: A1's comparator column, read as stored. Regenerating qLogEI to compare a fresh
 #: kernel arm against it would be one run compared with another (D12).
 A1_COMPARATOR_SOURCE = "results/e2-grid.json"
@@ -463,6 +480,8 @@ def main() -> None:
     ap.add_argument("--qlogei-control", type=int, default=5,
                     help="qLogEI control campaigns; 0 disables. Mirrors "
                          "run_q30_additive.FIDELITY_SUBSAMPLE.")
+    ap.add_argument("--include-sigma010-gate", action="store_true",
+                    help="run the deferred sigma_rel=0.10 gate; see DEFERRED_SCOPE.")
     ap.add_argument("--determinism-recheck", type=int, default=5,
                     help="kernel campaigns regenerated a SECOND time and gated again, "
                          "evidencing that regenerate() is deterministic; 0 disables.")
@@ -528,6 +547,7 @@ def main() -> None:
                         "design-space rows that rest on them",
             "verdict": v,
             "notes_rng_and_scoring_equivalence": RNG_NOTES,
+            "deferred_scope": ([] if args.include_sigma010_gate else DEFERRED_SCOPE),
             "registered_kill_condition": (
                 "|delta| = 0 on all 2800 re-scored rows -> the committed kernel-arm "
                 "rows are validated retroactively and Amendment A1 becomes citable. "
@@ -674,6 +694,12 @@ def main() -> None:
     # sigma_rel = 0.10 has no design-space rows anywhere, so it is gated and not scored.
     other = sorted({(r["instance"], r["sigma"], r["seed"], r["arm"]) for r in q30_rows
                     if r["sigma"] != PRIMARY_SIGMA})
+    if not args.include_sigma010_gate:
+        print(f"\nPASS 3 — DEFERRED by declared scope reduction, {len(other)} campaigns "
+              f"NOT gated here. Reason and how to run it are in the output's "
+              f"`deferred_scope`. P3's (6, 0.10) cell covers this against the same "
+              f"committed column through an independent code path.")
+        other = []
     if args.limit:
         keep = {p[0] for p in pairs}
         other = [o for o in other if o[0] in keep]

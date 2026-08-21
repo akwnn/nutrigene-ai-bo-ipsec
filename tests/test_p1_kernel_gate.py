@@ -266,6 +266,20 @@ def test_the_output_carries_the_rng_facts_that_justify_one_regeneration(mod):
     assert "seed_everything" in joined, "order-independence is load-bearing too"
 
 
+def test_the_deferred_scope_travels_with_the_result(mod):
+    """A scope reduction is never absorbed into a run that reads like the full one.
+
+    The σ=0.10 gate was deferred by the lead on 2026-08-21. The output must say so,
+    say why, and say how to run it, so a reader cannot mistake this file for the
+    unreduced run.
+    """
+    assert len(mod.DEFERRED_SCOPE) == 1
+    d = mod.DEFERRED_SCOPE[0]
+    assert {"what", "why", "cost_avoided", "how_to_run_it_anyway", "unchanged"} <= set(d)
+    assert "--include-sigma010-gate" in d["how_to_run_it_anyway"]
+    assert "kill condition" in d["unchanged"]
+
+
 def test_provenance_records_the_thread_environment(mod):
     """Registered remedy for Erratum 2: nothing in this repo recorded the thread count
     any |Δ| = 0 gate was measured under. BLAS reads these at library load, so the
