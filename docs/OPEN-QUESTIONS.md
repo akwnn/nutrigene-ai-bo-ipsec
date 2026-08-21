@@ -5331,3 +5331,72 @@ default that fell out:
 * **Wilson intervals with `n` reported per cell**, and refusing to count empty sets as
   successes.
 * **The τ-as-fraction re-registration**, without which every table would have been zeros.
+
+---
+
+## 📌 ERRATUM 1 to the Phases 2–4 registration · **P1's scope sentence was wrong. The spec was right.**
+
+**Raised by the P1 worker, verified, 2026-08-21. Recorded as an erratum rather than an edit —
+a registration that is silently corrected after the fact is not a registration.**
+
+**What P1 says:** *"Four arms, d ∈ {6,8} × σ_rel ∈ {0.25, 0.10}."*
+
+**What is true:** `scripts/run_q30_additive.py` as committed is **`DIM = 6`** (line 59) with
+**2 arms**. Two other statements in the record already agree with the code and disagree with
+my summary sentence:
+* P1's own **operative** instruction — *"`scripts/run_q30_additive.py` **as committed,
+  current code**"* — which is what the worker correctly followed.
+* `docs/COVERAGE-MATRIX.md` §5's cost model: *"200 campaigns; σ=0.25 at ~35 s and ~107 s,
+  σ=0.10 at ~17 s → ≈ 2.6 CPU-h"* = **2 arms × 2 σ × 25 seeds × 2**, i.e. d=6 only.
+
+So the summary was a **wrong gloss on a correct spec**, and the run proceeds as committed.
+Both readings stay visible here on purpose.
+
+**THE CONSEQUENCE, which is the part that matters.** `results/q30-additive.json` will carry
+**d = 6 only**. Therefore:
+
+| cell | `qlogei-add` / `qlogei-addonly` gate status |
+|---|---|
+| d=6, σ=0.25 | gateable once P1 lands |
+| d=6, σ=0.10 | gateable **only if** P1's committed run covers σ=0.10 — to be read off the file, never inferred from its name |
+| **d=8, σ=0.25** | **CANNOT GATE. No committed column exists and none is coming.** |
+| **d=8, σ=0.10** | **CANNOT GATE. Same.** |
+
+**P3 must mark those rows `gated: false` with an explicit `gate_reason`, not skip them.**
+Silent skipping is the §3.6 defect this work exists to fix: `committed.get(...)` returned
+`None`, `if ref is not None` swallowed it, and 100 campaigns lost their gate with no output
+saying so. This is the **one** case where an explicit recorded `false` is correct rather than
+a hard error, because the absence is now a registered fact rather than a bug.
+
+---
+
+## 📌 ERRATUM 2 · **Every `|Δ| = 0` gate in this project may be contingent on an unrecorded thread setting.**
+
+**Found while diagnosing throughput, 2026-08-21.** The machine was at **57.7% sys vs 32.7%
+user** with 116 processes runnable on 8 cores. Benchmarked back-to-back under that load, on
+the real workload (`SingleTaskGP` fit at n=48 + a 2,048-row posterior):
+
+```
+threads=4 (torch default)   8.553 s per fit+posterior
+threads=1                   1.865 s per fit+posterior     -> 4.6x faster
+```
+
+At n=48 the matrices are small enough that multithreaded BLAS is pure overhead, and five
+concurrent runners × 4 threads put 20 threads on 8 cores with lock contention *inside* each
+BLAS call. All workers were instructed to cap threads to 1.
+
+**Why this is registered rather than just done.** BLAS thread count changes the **order of
+floating-point reductions**, and this project's entire fidelity regime is **exact equality**.
+`results/k1-replay-gate.json` records `worst_abs_delta: 0.0, gate: "exact"` on 500 rows — but
+**nothing in the repository records the thread count under which that was measured**, on any
+run, ever.
+
+**Registered check, and it is not a formality.** Every worker must re-verify its |Δ| = 0 gate
+after capping threads. **If exactness breaks under thread-capping, that is a finding to
+report, not a tolerance to raise and not a reason to quietly revert to 4 threads.** It would
+mean every gate in this project is contingent on an environment variable nobody wrote down —
+which is the `e2-grid.json` lesson (a gate comparing a regeneration against an untracked
+file can only report that a clone agrees with itself) in a new costume.
+
+**If exactness holds**, the thread count should be recorded in every `provenance` block from
+now on, and that is the cheap permanent fix.
