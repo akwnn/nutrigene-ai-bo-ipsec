@@ -67,6 +67,7 @@ import sys
 import time
 import warnings
 from concurrent.futures import ProcessPoolExecutor
+from functools import lru_cache
 from pathlib import Path
 
 os.environ.setdefault("OMP_NUM_THREADS", "1")
@@ -175,16 +176,25 @@ def active_subspace_grid(rec: CampaignRecord, X_sub: torch.Tensor) -> torch.Tens
     return X
 
 
+@lru_cache(maxsize=1)
+def _p4():
+    """P4's runner, imported once per worker process.
+
+    Cached because importing it also imports K6's and K6b's runners; paying that on every
+    one of 50 units would cost more than the `coord` regenerations themselves.
+    """
+    from importlib.util import module_from_spec, spec_from_file_location
+    spec = spec_from_file_location("_p4_coord", ROOT / "scripts" / "run_p4_coord.py")
+    m = module_from_spec(spec)
+    sys.modules[spec.name] = m
+    spec.loader.exec_module(m)
+    return m
+
+
 def _regenerate(arm: str, instance: str, seed: int) -> CampaignRecord:
     """`coord` is not in `boec.replay`'s arm lists; P4's runner owns its regeneration."""
     if arm == "coord":
-        from importlib.util import module_from_spec, spec_from_file_location
-        spec = spec_from_file_location("_p4_coord",
-                                       ROOT / "scripts" / "run_p4_coord.py")
-        m = module_from_spec(spec)
-        sys.modules[spec.name] = m
-        spec.loader.exec_module(m)
-        return m.regenerate_coord(instance, DIM, SIGMA, seed)
+        return _p4().regenerate_coord(instance, DIM, SIGMA, seed)
     return regenerate(instance, DIM, SIGMA, seed, arm)
 
 
@@ -251,7 +261,13 @@ def spearman_across_arms(data: dict[str, dict[tuple[str, int], tuple[float, floa
         boots[b] = spearmanr(alpha[:, take].mean(axis=1),
                              regret[:, take].mean(axis=1)).statistic
     lo, hi = _boot_ci(boots)
+    # Two-sided bootstrap p: twice the smaller tail mass on the far side of 0, floored at
+    # 1/N_BOOT. Spearman's asymptotic p is not available — the coefficient is taken over
+    # nine arm MEANS, not over independent observations — and a CI-derived indicator would
+    # collapse the Holm step-down to two values.
+    p = min(1.0, 2 * min(float(np.mean(boots >= 0)), float(np.mean(boots <= 0))))
     return {"rho": rho, "ci_lo": lo, "ci_hi": hi,
+            "bootstrap_p": max(p, 1.0 / N_BOOT),
             "ci_excludes_zero": bool(lo > 0 or hi < 0),
             "n_arms": len(arms), "n_units": len(units), "n_boot": N_BOOT,
             #: Constant by construction — the bootstrap resamples units, so every
@@ -276,6 +292,50 @@ def _ols(x: np.ndarray, y: np.ndarray) -> dict:
     return {"slope": float(slope), "intercept": float(intercept),
             "r2": float("nan") if ss_tot == 0 else float(1 - ss_res / ss_tot),
             "n": int(len(x))}
+
+
+def _paired(name: str, a: np.ndarray, b: np.ndarray) -> dict:
+    """Paired ``a - b`` over the 50 units. Wilcoxon governs yes/no, bootstrap magnitude."""
+    d = np.asarray(a, dtype=float) - np.asarray(b, dtype=float)
+    rng = np.random.default_rng(BOOT_SEED)
+    idx = rng.integers(0, len(d), size=(N_BOOT, len(d)))
+    means = d[idx].mean(axis=1)
+    lo, hi = _boot_ci(means)
+    try:
+        p = float(wilcoxon(d).pvalue)
+    except ValueError:                                               # all-zero differences
+        p = float("nan")
+    return {"contrast": name, "n": int(len(d)), "mean_diff": float(d.mean()),
+            "ci_lo": lo, "ci_hi": hi, "p": p,
+            "bootstrap_excludes_zero": bool(lo > 0 or hi < 0),
+            "exceeds_sesoi": bool(abs(float(d.mean())) > SESOI)}
+
+
+def spread_arm_inversion(width: dict, alpha: dict, units: list, tf: float) -> dict:
+    """Is the three-way spread-arm inversion an ordering, or three means in a row?
+
+    The registration states it as a ranking — `random` > `lhs` > `sobol` on alpha*, and
+    the reverse on regret. A ranking of three means is not evidence that the underlying
+    quantities are ordered. Each pair is therefore tested **paired over the same 50
+    units**, on both axes, with Holm across the six contrasts. This is the registered
+    statistics applied to the registered claim; the decision rule itself is unchanged and
+    is still read off the rank correlation.
+    """
+    pairs = (("random", "lhs"), ("random", "sobol"), ("lhs", "sobol"))
+    out = []
+    for hi_arm, lo_arm in pairs:
+        out.append(_paired(
+            f"alpha*({hi_arm}) - alpha*({lo_arm})",
+            np.array([alpha[(u[0], u[1], hi_arm, tf)] for u in units]),
+            np.array([alpha[(u[0], u[1], lo_arm, tf)] for u in units])))
+        out.append(_paired(
+            f"regret({hi_arm}) - regret({lo_arm})",
+            np.array([width[(u[0], u[1], hi_arm)]["regret"] for u in units]),
+            np.array([width[(u[0], u[1], lo_arm)]["regret"] for u in units])))
+    return {"tau_frac": tf, "contrasts": _holm(out),
+            "note": ("A positive alpha* difference alongside a positive regret "
+                     "difference for the same pair IS the inversion: the arm that scores "
+                     "higher on the model-internal statistic is the one with more regret.")}
 
 
 def _holm(entries: list[dict], key: str = "p") -> list[dict]:
@@ -342,7 +402,8 @@ def analyse(width_rows: list[dict], alpha: dict) -> dict:
                                       "mean_posterior_sd":
                                           {a: float(arm_sd[i])
                                            for i, a in enumerate(arms)}},
-            "p": rank_p(rank),
+            "spread_arm_inversion": spread_arm_inversion(width, alpha, units, tf),
+            "p": rank["bootstrap_p"],
         }
 
     _holm([per_cell[tf] for tf in TAU_FRACS])
@@ -378,20 +439,6 @@ def analyse(width_rows: list[dict], alpha: dict) -> dict:
                          "rho_threshold": RHO_THRESHOLD,
                          "primary": prim,
                          "sesoi": SESOI}}
-
-
-def rank_p(rank: dict) -> float:
-    """A p-value for the Holm step-down over cells, from the bootstrap's own CI.
-
-    Spearman's asymptotic p-value is not available here — the coefficient is taken over
-    nine arm means, not over independent observations — so the two-sided bootstrap
-    p-value is used: twice the smaller tail mass on the far side of 0, floored at
-    ``1/N_BOOT`` because a resample count cannot resolve below its own resolution.
-    """
-    lo, hi = rank["ci_lo"], rank["ci_hi"]
-    if lo > 0 or hi < 0:
-        return 1.0 / N_BOOT
-    return 1.0
 
 
 # ======================================================================================
