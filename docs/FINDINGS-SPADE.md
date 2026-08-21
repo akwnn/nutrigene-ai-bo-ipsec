@@ -452,3 +452,280 @@ round one has been run.
 unless K0 reopens it); covariate adjustment as an algorithm stage (needs a real plate); the
 55-well budget (cannot be gated against any committed column); TuRBO and OCBA (different
 estimand — see the separate plan); the cost frontier (§4.6).
+
+---
+
+# PART II · PHASES 2–4 · findings as at 2026-08-21
+
+## 8. What we are doing in Phases 2–4, and why
+
+**Part I established SPADE's certificate at ONE point:** `hill`, d=6, σ_rel=0.25, τ_frac=0.60 —
+empirical containment 0.940 / 1.000 / 1.000. Everything else in this project — 11,450 committed
+design-space rows — sits at that same point.
+
+**Phases 2–4 ask three questions the single point cannot answer:**
+* **Phase 2 — is the comparison fair?** Version B has one γ, no IoU, no `sup_err`, no `grid_r2`,
+  no false-inclusion, and its kernel-arm comparators were never gated.
+* **Phase 3 — does anything generalise off Hill?** No design-space metric exists on any other
+  landscape family.
+* **Phase 4 — does it survive a different dimension or noise level?** Every committed row is
+  d=6, σ=0.25.
+
+**All eleven questions were registered — with gates, kill conditions and output paths — in a
+single commit (`5c44e6a`) BEFORE any runner file existed.**
+
+---
+
+## 9. Results
+
+### 9.1 ⭐⭐ The headline survived its own strongest challenge
+
+**`doe`'s collapse under a posterior-mean terminal rule is the DESIGN, not a library default.**
+
+Part I's headline (D20) was that the regret ranking **inverts** under a posterior-mean rule:
+`doe` 0.0958 → 0.1993 (first of ten to last), SPADE 0.1546 → 0.1003 (sixth to first). **The
+caveat that qualified it from the day it was written:** `doe`'s posterior on its two
+screened-out axes is prior-driven — the likelihood is flat there, so the lengthscale reverts to
+the prior mode 0.5016. If that were the cause, the headline would have been **partly a statement
+about a BoTorch default.**
+
+**Measured, n=50, gates clean:**
+
+| | |
+|---|---|
+| rule A | **0.0958** |
+| rule P, full space | **0.1993** |
+| **rule P, restricted to `doe`'s own 4 active factors** | **0.1988** |
+| distance to the rule-A anchor | **0.1030** — *five times SESOI* |
+| distance to the full-space anchor | **0.0005** |
+| **share of the collapse removed by the subspace restriction** | **0.5%** |
+
+`regret_p_subspace − regret_a` = +0.1030, Wilcoxon p = 5.76e-08, Holm 9.89e-08.
+
+**Both branches were pre-registered and the result lands cleanly on one, with nothing in
+between and no judgement call. It was called at 50, after the live 7-campaign signal was logged
+with its campaign keys** — so the prediction is on the record ahead of the result.
+
+### 9.2 ⭐⭐ But `doe`'s regret advantage is a SINGLE-CELL result
+
+`doe − qlognei` on regret, paired, Holm across four cells, **at both sample-size conventions**:
+
+| cell | mean | Holm (n=25) | verdict |
+|---|---|---|---|
+| **(6, 0.25)** | **−0.0574** | **3.27e-05** | **SIG, ≥ SESOI — `doe` better** |
+| (6, 0.10) | **+0.0084** | 0.203 | ns — **sign flipped** |
+| (8, 0.25) | −0.0142 | 0.110 | ns |
+| (8, 0.10) | **+0.0100** | 0.203 | ns — **sign flipped** |
+
+**The two units agree on all four cells.**
+
+**Why this matters:** K6's central claim is that *the map ranks arms differently from regret* —
+`doe` first on regret, last on `auc_pred` in 24/24 cells. **That contrast is anchored on `doe`
+being the regret winner.** It is the regret winner at **one cell out of four.**
+
+### 9.3 ⭐ And 59% of that advantage is IDENTIFICATION, not search
+
+Decomposing `regret = oracle-best (search) + identification gap`, `doe − qlognei`:
+
+```
+d=6 sigma=0.25   total +0.0574  =  search +0.0237  +  identification +0.0337   (59%)
+d=6 sigma=0.10   total -0.0084  =  search -0.0109  +  identification +0.0025
+```
+
+**And the asymmetry that explains it — `doe`'s identification gap is noise-invariant while every
+BO arm's roughly halves:**
+
+| arm | gap at σ=0.25 | at σ=0.10 | Δ |
+|---|---|---|---|
+| **`doe`** | 0.0361 | 0.0348 | **−0.0013** |
+| `qlogei` | 0.0797 | 0.0378 | −0.0420 |
+| `qlognei` | 0.0698 | 0.0373 | −0.0325 |
+
+**Hypothesis (post-hoc, labelled as such):** BO's rule A takes the **argmax of 48 noisy
+readings**, so its identification gap carries a winner's-curse term that **scales with σ**.
+`doe`'s rule A is a **single confirmation well** at a CCD-fitted optimum — no maximisation over
+noise — so its gap does not scale. **`doe`'s advantage is substantially the curse it declines to
+pay, not a better design.**
+
+**Three independent routes now give one mechanism**, none designed to test the others: the
+advantage inverts under a rule that does not maximise over noise (9.1), survives only at the
+highest σ (9.2), and is 59% identification with the only σ-invariant gap (9.3).
+
+### 9.4 The primary metric was the wrong one, and the replacement was free
+
+**AUC is invariant to monotone transformation**, so it scores *ranking*, never calibration —
+and a design space is a **calibrated absolute statement**. Mean `grid_r2` is **negative for all
+eight arms** (`doe` −6.19 through `lhs` −0.18): the posterior mean is a worse point predictor
+than the constant grid mean, everywhere. **AUC cannot see that.** It also misleads under the
+class imbalance here — at γ=0.99, τ_frac=0.60 the minority class is ~16 grid points of 20,000.
+
+**Expected type I / type II error volumes** (Azzimonti & Ginsbourger 2018) are what the
+excursion-set community actually reports, and they were **derivable from columns already
+committed** — validated against the committed `iou_pred` before being registered.
+
+**The registered decision rule FIRED, and not narrowly:**
+
+| | |
+|---|---|
+| Spearman ρ, error-volume ordering vs AUC ordering | **+0.071** (type II), +0.214 (type I) |
+| cells where the rankings differ | **24 of 24** |
+| scorable rows | **6,000 of 6,000** vs **2,553** under `fi_pred` |
+
+**The two orderings are close to unrelated. The error-volume ranking is now the reported one;
+AUC is retained as superseded.** `doe` is **last of eight** on type II, symmetric difference,
+IoU and Brier.
+
+**⚠️ Carried forward:** type I volume **read alone ranks silence first** — an arm certifying the
+empty set scores exactly 0. **The symmetric difference is the only honest single scalar.**
+
+### 9.5 A published containment table was withdrawn, and one claim did not survive
+
+§3.7 pooled containment across four `tau_frac` values computed on **the same campaign, the same
+posterior and the same 512 draws.** Not four Bernoulli trials. **Eleven pooling sites were
+found, not the one flagged** — including the `0.155 / 0.420 / 0.510` triple that *is* the `doe`
+headline.
+
+**Two claims did not survive un-pooling:**
+1. *"Seven of eight arms hold at every level"* → **six of eight.** `random` is contained in
+   **1 of 7** non-empty sets at τ_frac=0.85, α=0.50, against nominal 0.50. Pooling averaged that
+   against 30/50 and 31/39 and reported `0.646 ok`. The cell is thin (n=7, 86% empty), so this
+   is a failure that is **not demonstrated** — but *"only one arm fails"* was a **pooling
+   artefact.**
+2. **The B3 "made it worse" comparison is withdrawn entirely** — both sides pooled, and the
+   unrestricted run was never broken out per cell, so it **cannot be made from committed files
+   at all.** Whether B3's subspace restriction helps or hurts `doe`'s calibration is now an
+   **open question with no committed evidence either way.**
+
+**`doe` and SPADE are unaffected.** `doe` reads *worse* per-cell (0/50, 12/50, 25/50 at
+τ_frac=0.60). **SPADE's 0.940 / 1.000 / 1.000 was always per-cell and stands, at both units.**
+
+### 9.6 The sample-size convention contradicted itself — and the fix is ~9%, not 41%
+
+`K6-TECHNICAL-REPORT.md` §3.8 uses **n=50**, unit `(instance, seed)`. `RESEARCH-SUMMARY.md`
+uses **n=25**, seeds averaged first. **Nothing recorded the switch.** All 137 reported contrasts
+were recomputed at both.
+
+**Both headlines survive unchanged** — the 24/24 screening result is 24/24 at n=25, D20's
+reversal holds, **0 of 156 containment verdicts move.**
+
+**And the premise was wrong in an instructive way.** "√2" is the **ICC = 1 corner.** Measured
+per cell, √(1+ρ) matches the observed SE ratio to within **0.005**:
+
+| cell | ρ | cost of the conservative unit |
+|---|---|---|
+| (6, 0.25) | +0.192 | **+9.7%** |
+| (6, 0.10) | +0.199 | +9.8% |
+| **(8, 0.25)** | **−0.168** | **−27.6% — n=25 is the MORE precise unit** |
+
+**Two seeds on one landscape are barely correlated on the paired difference, because the
+landscape effect cancels in the difference — which is the quantity being tested.** That is why
+no verdict moved.
+
+**⚠️ It does NOT generalise to unpaired quantities.** Raw per-arm `auc_pred` ICC runs **−0.226
+to +0.581.** For arm means, containment proportions or prevalence figures, **n=25 stays the
+default.**
+
+### 9.7 The two noise levels are not independent samples
+
+`BiphasicOracle` seeds on `seed` alone, never on σ, and `normal(0, s)` is **bitwise**
+`s × standard_normal()` off the same stream. **So the σ=0.25 and σ=0.10 cells are ONE noise
+realisation at two amplitudes.**
+
+Bitwise-identical regret between the two σ levels, of 50: `lhs` **38**, `doe` **34**, `sobol`
+32, `random` 30, `coord` 15 — **`qlogei` 0, `qlognei` 0.** Exactly what the mechanism predicts:
+a one-shot design is fixed, so scaling the same draws rarely moves the argmax; adaptive arms
+diverge at the first acquisition.
+
+**Effective n for a cross-σ static-arm comparison is 12–27, not 50.** Nothing committed is
+invalidated — every campaign is a legitimate draw and every gate holds — but **any analysis
+treating the two σ as independent replicates is wrong.**
+
+### 9.8 Cross-family work was impossible as registered, and is now possible
+
+At one `tau_frac`, the true superlevel set covers **0.00000** of the box on ackley and
+**0.95550** on rosenbrock. **That is not a comparison.** τ was re-registered as **`tau_q`, a
+per-family prevalence quantile** — a *new* estimand; `tau_frac` is untouched.
+
+**Gate: worst |achieved prevalence − p| over 232 rows = 0.000e+00.** Exact. And **ackley becomes
+runnable** — its grid max is 0.410, *below every `tau_frac`*, which is why every metric was
+`nan`. **`CANNOT RUN` was a property of the threshold, not the family.**
+
+**But `tau_q` equalises prevalence, not certifiability.** τ is now fixed by prevalence while the
+noise ceiling `tau_max` still falls with γ, so **111 of 384 cells (28.9%) have τ above the
+ceiling** — ackley 0%, hartmann6 2%, levy 50%, **rosenbrock 64%**, ordered by grid range.
+**γ=0.50 is clean BY CONSTRUCTION** (z=0 ⇒ `tau_max` = 1.0 exactly; max `tau_q` = 0.98631), so
+**the cross-family headline is the γ=0.50 column** and higher γ is reported per family, never
+pooled. **The ceiling census is itself a registered result** — it measures how much of each
+family's response range is certifiable at a given assurance.
+
+---
+
+## 10. 🔴 What is MISSING — the scope gap, raised by Joseph
+
+**SPADE appears in ONE of the eight Phase 2–4 runs.** Murphy calibration (a *primary*
+deliverable), the α\* investigation, the entire cross-family programme, and the three missing
+(d, σ) cells all excluded it.
+
+**Cause:** the coverage audit marks Version B **"UNGATABLE — no committed comparator, and never
+will be"**, and gating is the organising principle of Phases 2–4. **"Cannot be gated" was
+allowed to become "do not run."** They are different: a Version B campaign is
+**seed-deterministic and fully scoreable**; it merely has no committed regret column to
+reproduce.
+
+**The two worst instances:**
+* **α\* IS SPADE's own statistic** — the conservative estimate is the certificate — and the
+  α\* investigation omitted every SPADE arm. F1's three Holm upgrades are **all on `alpha_star`,
+  all on Version B contrasts**, so the arm whose upgrades are in question was absent from the
+  test of the statistic that produced them.
+* **Calibration is the metric promoted to primary precisely because AUC cannot see it**, and
+  **SPADE's whole claim is a calibrated statement.**
+
+**Fix registered and issued:** all four Version B arms added to the four affected runners,
+ungated with a reason per row, `plate1_only` gated where a comparator exists and never
+double-counted, and every new row emitting the five columns whose absence from `versionb.json`
+has now blocked the error volumes twice.
+
+---
+
+## 11. What it signifies
+
+1. **The headline is stronger than it was**, and survived a challenge that could have reduced it
+   to a library default. **The mechanism is the response surface (`grid_r2` = −6.19), not the
+   prior.**
+2. **But it is narrower than it looked.** `doe`'s advantage needs **a specific terminal rule AND
+   a specific (d, σ) cell**, and **59% of it is identification rather than search.** The honest
+   claim is: *at high noise, a design that does not maximise over noisy readings avoids a
+   winner's curse that adaptive search pays.* That is a statement about **terminal rules**, not
+   about DoE versus BO.
+3. **The project's primary metric was the least standard one it computes**, and replacing it
+   changes the arm ranking in **24 of 24 cells.** The published rankings are superseded.
+4. **A published containment table was a pooling artefact**, and one of its two headline claims
+   does not survive. **SPADE's own number was always per-cell and is untouched.**
+5. **SPADE's certificate has been measured at exactly one (family, d, σ) point in the entire
+   project.** Until §10's gap is closed, **nothing in Phases 2–4 tests it anywhere else.**
+
+---
+
+## 12. What needs to be done
+
+**In flight:** Version B arms added to the four runners (§10); the three (d, σ) cells; the
+cross-family grid at γ=0.50; the Murphy decomposition; the α\* investigation with SPADE in;
+Version B on the full 24-cell γ ladder; the kernel-arm gate and the re-score of 2,800 committed
+rows.
+
+**Registered, not yet run:**
+* **F3 — the winner's curse inside `CE_α`.** `conservative_estimate` takes a **maximum over 64
+  noisy containment estimates on 512 draws**, so it is **anti-conservative by construction.** A
+  2048-draw sweep is registered. **This is the project's own optimizer's-curse result operating
+  inside its safety metric** — and it may already be visible in `doe`'s circular 0.972–0.998
+  against an empirical 0.000 / 0.240 / 0.500.
+* **E7's confirmatory arm** — re-score every arm's oracle-best under rule P at both σ. If the
+  identification mechanism is right, the gaps should **converge across arms** and `doe`'s
+  residual advantage should fall below SESOI.
+* **`run_versionb.py` must emit `vol_pred`, `vol_latent`, `fi_pred`, `fi_latent` and
+  `true_frac_above_tau`** — a small change that has now blocked the primary metric twice.
+* **`k1-replay-gate.json`'s 500 Hill rows** were measured at an unrecorded thread count and
+  remain the one unverified corner of the thread-exactness question.
+
+**Open, needing a decision:** whether the B3 subspace comparison is re-run per cell, since it
+cannot be made from committed files at all.
