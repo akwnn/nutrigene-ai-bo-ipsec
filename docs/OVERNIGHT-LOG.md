@@ -1394,3 +1394,56 @@ presented as having been obvious.
 200 K6b rows committed. **The design-space ranking is now nine arms wide** — `coord` lands
 mid-pack at regret 0.1420 (3rd of 9), `grid_r2` −0.585 (5th). Both P4 scorers were gated
 bitwise against a committed `lhs` row before any `coord` number was read.
+
+## D58 🔴 **The partial-file hazard is SYSTEMIC, and its cause is a fix I made. Two of two long runners hit it.**
+
+D55 recorded it on P2's corpse. It is now live in a **second** runner:
+
+| file | rows | keys present | expected | provenance | gate block | marker |
+|---|---|---|---|---|---|---|
+| `results/p2-versionb-gamma.json` | 768 | **8** | 50 | full | `gate_failures: []` | **NONE** |
+| `results/p7-murphy.json` | 576 | **4** | 50 | full | present | **NONE** |
+
+Both **untracked but stageable** — `.gitignore:199` and `:211`. **Two of two long runners wrote
+their in-progress checkpoint to the final result path**, which makes this a **default behaviour,
+not a lapse.**
+
+**The cause is my own fix for the opposite failure.** I added a `.gitignore` negation for every
+registered output path **at registration time, before any file existed** — deliberately, because
+this project has been bitten three times by *a cited file that no clone can see*
+(`q30-additive.json`, `e2-doe-d8.json`, the Q50 shards). **That negation un-ignores a partial
+just as eagerly as it un-ignores a finished result.** Fixing "the artefact is invisible" created
+"the artefact is visible and looks finished".
+
+**Rule now propagated to every runner:** write the checkpoint to a **scratch path**; promote to
+`results/` **once, whole, at the end**; and carry a top-level **`status`** plus
+**`keys_present` / `keys_expected`** so a partial cannot be silently consumed even if it does
+land at the final path.
+
+**Nothing has swept either file up**, because every commit this session used a path-scoped
+`git add -A docs/… .gitignore` rather than a bare `git add -A`. **Stated as a rule now rather
+than left as a habit** — a habit that only holds while one agent is committing is not a control.
+
+## D59 ⭐ **D23 is close, and both campaigns so far land on the SECOND registered branch.**
+
+Live, 7 of 35, gates clean, and the full-space rule P reproducing `fix1-terminal-rule.json`'s
+committed `regret_p` at exactly 0.0:
+
+```
+5b3926ef2c5fe4b6 seed=0   A=0.0673   P_full=0.1868   P_sub=0.1856   kept=[1,2,3,4]
+5b3926ef2c5fe4b6 seed=1   A=0.0973   P_full=0.2297   P_sub=0.2296   kept=[0,1,2,4]
+```
+
+**Subspace rule-P regret tracks full-space rule-P to ~1.2e-3 and ~1e-4** — nowhere near
+recovering to rule A's 0.0673 / 0.0973. Under the registered decision rule that is the **second
+branch**: *the prior is NOT the mechanism, the response surface is (`grid_r2` = −6.19), and D20
+stands as written.*
+
+**NOT CALLED at 7 of 35.** Recorded live, with the campaign keys, **precisely so that a
+confirmation at 35 cannot later be presented as having been obvious** — and so that a reversal
+in the remaining 28 is visibly a reversal. The registered thresholds are unchanged: within SESOI
+0.02 of 0.0958 → prior artefact; near 0.1993 → D20 stands; anything between → both mechanisms
+live, reported as a magnitude.
+
+**If this holds, the D23 caveat that has qualified D20 since it was written is discharged** —
+`doe`'s collapse under a posterior-mean rule is the design, not a BoTorch default.
