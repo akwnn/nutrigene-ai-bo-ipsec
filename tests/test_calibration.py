@@ -1,0 +1,259 @@
+"""Murphy's calibration-refinement decomposition of the Brier score.
+
+Registered in `docs/OPEN-QUESTIONS.md` under P7 / Amendment A5, committed at 5c44e6a
+before this file existed. The registered specification, restated so the tests can be
+read against it without opening the other document:
+
+    Brier = calibration - refinement + uncertainty          (Murphy 1973)
+
+    10 EQUAL-COUNT bins over the predicted probability. Not equal-width: prevalence at
+    tau_frac=0.95 is 0.003, so equal-width bins are empty exactly where these maps live.
+
+    The identity is the arbiter. It must hold to 1e-10 on every row, or the
+    decomposition is wrong and the row is not written.
+
+WHY THE DECOMPOSED QUANTITY IS THE BINNED BRIER, AND WHY THAT IS NOT A DODGE
+----------------------------------------------------------------------------
+Murphy (1973) is stated for a forecast taking finitely many values, where the bins ARE
+the distinct forecast values. Applied to a continuous forecast through binning, the
+three-term identity is exact for the *binned* forecast and inexact for the raw one --
+the gap is the within-bin term `mean_k n_k [var_k(p) - 2 cov_k(p, o)]`, which no choice
+of sign convention removes. So `brier` here is the Brier score of the binned forecast,
+which the identity governs exactly, and `brier_raw` is the project's published quantity
+(`designspace.brier_and_auc`), carried alongside with the gap named as `within_bin`.
+Hiding the gap inside a redefined "calibration" would make the identity hold by
+construction and test nothing.
+"""
+
+import math
+
+import numpy as np
+import torch
+
+from boec.calibration import equal_count_bins, murphy_decomposition
+from boec.designspace import brier_and_auc
+
+N_BINS = 10
+
+
+def _identity_residual(d: dict) -> float:
+    return abs(d["calibration"] - d["refinement"] + d["uncertainty"] - d["brier"])
+
+
+def _truth_for(label: torch.Tensor) -> torch.Tensor:
+    """A `truth` vector whose `>= 0.5` indicator is exactly `label`."""
+    return torch.where(label.bool(), 1.0, 0.0).double()
+
+
+# --- the identity, which is the arbiter -------------------------------------------
+
+def test_identity_holds_to_1e_10_on_a_random_map():
+    """calibration - refinement + uncertainty == brier. The registered check."""
+    g = torch.Generator().manual_seed(0)
+    p = torch.rand(5000, generator=g, dtype=torch.double)
+    label = (torch.rand(5000, generator=g, dtype=torch.double) < p).double()
+    d = murphy_decomposition(p, _truth_for(label), tau=0.5, n_bins=N_BINS)
+    assert _identity_residual(d) <= 1e-10
+
+
+def test_identity_holds_at_the_tail_prevalence_these_maps_actually_live_at():
+    """Prevalence 0.003 on a 20,000-point grid -- the tau_frac=0.95 cell."""
+    g = torch.Generator().manual_seed(1)
+    p = torch.rand(20_000, generator=g, dtype=torch.double) ** 6
+    label = (torch.rand(20_000, generator=g, dtype=torch.double) < 0.003).double()
+    d = murphy_decomposition(p, _truth_for(label), tau=0.5, n_bins=N_BINS)
+    assert 0.001 < float(label.mean()) < 0.010
+    assert _identity_residual(d) <= 1e-10
+
+
+def test_identity_holds_for_a_saturated_map():
+    """cdf() of a large z is exactly 1.0 in float64, so real maps carry heavy ties."""
+    p = torch.cat([torch.ones(9_000, dtype=torch.double),
+                   torch.zeros(9_000, dtype=torch.double),
+                   torch.rand(2_000, generator=torch.Generator().manual_seed(2),
+                              dtype=torch.double)])
+    label = (torch.rand(20_000, generator=torch.Generator().manual_seed(3),
+                        dtype=torch.double) < p).double()
+    d = murphy_decomposition(p, _truth_for(label), tau=0.5, n_bins=N_BINS)
+    assert _identity_residual(d) <= 1e-10
+
+
+# --- equal-count, which is the registered choice ----------------------------------
+
+def test_bins_are_equal_count_when_the_forecast_has_no_ties():
+    g = torch.Generator().manual_seed(4)
+    p = torch.rand(1000, generator=g, dtype=torch.double)
+    idx = equal_count_bins(p, N_BINS)
+    counts = torch.bincount(idx, minlength=N_BINS)
+    assert counts.tolist() == [100] * N_BINS
+
+
+def test_equal_count_populates_the_tail_where_equal_width_would_not():
+    """The measured reason the registration says equal-count and not equal-width."""
+    g = torch.Generator().manual_seed(5)
+    p = torch.rand(1000, generator=g, dtype=torch.double) ** 8
+    d = murphy_decomposition(p, _truth_for((p > 0.5).double()), tau=0.5, n_bins=N_BINS)
+    assert min(d["bin_counts"]) == 100
+    width_counts, _ = np.histogram(p.numpy(), bins=N_BINS, range=(0.0, 1.0))
+    assert (width_counts == 0).any(), "equal-width should starve the tail here"
+
+
+def test_ties_are_never_split_across_bins():
+    """A calibration function must be a function OF the forecast value.
+
+    Splitting identical forecasts into two bins with different observed frequencies
+    would manufacture refinement out of nothing but rank order.
+    """
+    p = torch.tensor([0.2] * 400 + [0.6] * 300 + [0.9] * 300, dtype=torch.double)
+    idx = equal_count_bins(p, N_BINS)
+    for v in (0.2, 0.6, 0.9):
+        assert len(set(idx[p == v].tolist())) == 1
+
+
+# --- the terms mean what they are named -------------------------------------------
+
+def test_calibration_is_zero_for_a_perfectly_calibrated_forecast():
+    """Ten distinct forecast values, each realised at exactly its own frequency."""
+    ps, labels = [], []
+    for k in range(N_BINS):
+        pk = (k + 0.5) / N_BINS
+        n_pos = int(round(200 * pk))
+        ps.append(torch.full((200,), pk, dtype=torch.double))
+        labels.append(torch.cat([torch.ones(n_pos, dtype=torch.double),
+                                 torch.zeros(200 - n_pos, dtype=torch.double)]))
+    p, label = torch.cat(ps), torch.cat(labels)
+    d = murphy_decomposition(p, _truth_for(label), tau=0.5, n_bins=N_BINS)
+    assert d["calibration"] < 1e-12
+    assert _identity_residual(d) <= 1e-10
+
+
+def test_refinement_is_zero_for_a_constant_forecast():
+    """One bin, so every observed frequency equals the base rate. No resolution."""
+    p = torch.full((1000,), 0.3, dtype=torch.double)
+    g = torch.Generator().manual_seed(6)
+    label = (torch.rand(1000, generator=g, dtype=torch.double) < 0.4).double()
+    d = murphy_decomposition(p, _truth_for(label), tau=0.5, n_bins=N_BINS)
+    assert d["refinement"] < 1e-12
+    assert d["bin_counts"] == [1000]
+    assert _identity_residual(d) <= 1e-10
+
+
+def test_refinement_equals_uncertainty_for_a_perfect_forecast():
+    """p == the outcome: brier 0, calibration 0, refinement carries all of it."""
+    g = torch.Generator().manual_seed(7)
+    label = (torch.rand(1000, generator=g, dtype=torch.double) < 0.35).double()
+    d = murphy_decomposition(label, _truth_for(label), tau=0.5, n_bins=N_BINS)
+    assert d["brier"] < 1e-12
+    assert d["calibration"] < 1e-12
+    assert abs(d["refinement"] - d["uncertainty"]) < 1e-12
+
+
+def test_uncertainty_is_the_base_rate_variance():
+    g = torch.Generator().manual_seed(8)
+    label = (torch.rand(2000, generator=g, dtype=torch.double) < 0.2).double()
+    p = torch.rand(2000, generator=g, dtype=torch.double)
+    d = murphy_decomposition(p, _truth_for(label), tau=0.5, n_bins=N_BINS)
+    o = float(label.mean())
+    assert abs(d["uncertainty"] - o * (1 - o)) < 1e-12
+
+
+# --- the degenerate cases, each returning deliberately ----------------------------
+
+def test_empty_input_returns_none_not_a_number():
+    """The `vorobev.empirical_containment` convention: nothing measured, nothing said."""
+    empty = torch.zeros(0, dtype=torch.double)
+    assert murphy_decomposition(empty, empty, tau=0.5, n_bins=N_BINS) is None
+
+
+def test_all_one_class_gives_zero_uncertainty_and_zero_refinement_and_says_so():
+    """Refinement is 0 BY CONSTRUCTION here, so the cell can rank nothing.
+
+    It is returned as the exact 0.0 it is -- nan would break the registered identity
+    check, which must hold on every row -- and flagged so no ranking can consume it.
+    """
+    g = torch.Generator().manual_seed(9)
+    p = torch.rand(1000, generator=g, dtype=torch.double)
+    for label in (torch.zeros(1000, dtype=torch.double),
+                  torch.ones(1000, dtype=torch.double)):
+        d = murphy_decomposition(p, _truth_for(label), tau=0.5, n_bins=N_BINS)
+        assert d["uncertainty"] == 0.0
+        assert d["refinement"] == 0.0
+        assert "single_class" in d["degenerate"]
+        assert _identity_residual(d) <= 1e-10
+
+
+def test_fewer_distinct_probabilities_than_bins_collapses_and_says_so():
+    p = torch.tensor([0.1] * 400 + [0.5] * 400 + [0.8] * 200, dtype=torch.double)
+    g = torch.Generator().manual_seed(10)
+    label = (torch.rand(1000, generator=g, dtype=torch.double) < p).double()
+    d = murphy_decomposition(p, _truth_for(label), tau=0.5, n_bins=N_BINS)
+    assert len(d["bin_counts"]) == 3
+    assert sum(d["bin_counts"]) == 1000
+    assert "few_bins" in d["degenerate"]
+    assert _identity_residual(d) <= 1e-10
+
+
+def test_a_single_member_bin_is_flagged_and_the_identity_still_holds():
+    """One point alone in a bin makes its observed frequency exactly 0 or 1."""
+    p = torch.cat([torch.zeros(999, dtype=torch.double),
+                   torch.ones(1, dtype=torch.double)])
+    label = torch.cat([torch.zeros(999, dtype=torch.double),
+                       torch.ones(1, dtype=torch.double)])
+    d = murphy_decomposition(p, _truth_for(label), tau=0.5, n_bins=N_BINS)
+    assert 1 in d["bin_counts"]
+    assert "singleton_bin" in d["degenerate"]
+    assert _identity_residual(d) <= 1e-10
+
+
+def test_a_clean_map_carries_no_degenerate_flag():
+    g = torch.Generator().manual_seed(11)
+    p = torch.rand(5000, generator=g, dtype=torch.double)
+    label = (torch.rand(5000, generator=g, dtype=torch.double) < p).double()
+    d = murphy_decomposition(p, _truth_for(label), tau=0.5, n_bins=N_BINS)
+    assert d["degenerate"] == []
+
+
+# --- the tie back to the number the project has already published -----------------
+
+def test_brier_raw_is_bitwise_the_published_brier():
+    """`brier_raw` must BE `designspace.brier_and_auc`'s Brier, not a re-derivation.
+
+    Everything P7 says about "the sum" is a statement about that committed column, so a
+    decomposition that quietly scored a different quantity would answer another question.
+    """
+    g = torch.Generator().manual_seed(12)
+    p = torch.rand(4000, generator=g, dtype=torch.double)
+    truth = torch.rand(4000, generator=g, dtype=torch.double)
+    tau = 0.7
+    d = murphy_decomposition(p, truth, tau=tau, n_bins=N_BINS)
+    published, _ = brier_and_auc(p, truth, tau)
+    assert d["brier_raw"] == published
+
+
+def test_within_bin_is_exactly_the_gap_the_binning_costs():
+    g = torch.Generator().manual_seed(13)
+    p = torch.rand(4000, generator=g, dtype=torch.double)
+    label = (torch.rand(4000, generator=g, dtype=torch.double) < p).double()
+    d = murphy_decomposition(p, _truth_for(label), tau=0.5, n_bins=N_BINS)
+    assert abs(d["within_bin"] - (d["brier_raw"] - d["brier"])) <= 1e-12
+    assert d["within_bin"] > 0, "a continuous forecast must lose something to binning"
+
+
+def test_within_bin_vanishes_when_the_forecast_is_already_discrete():
+    """No within-bin scatter, so the raw and binned Brier coincide and the classical
+    three-term identity holds against the raw score itself."""
+    p = torch.tensor([0.15] * 500 + [0.45] * 500 + [0.85] * 500, dtype=torch.double)
+    g = torch.Generator().manual_seed(14)
+    label = (torch.rand(1500, generator=g, dtype=torch.double) < p).double()
+    d = murphy_decomposition(p, _truth_for(label), tau=0.5, n_bins=N_BINS)
+    assert abs(d["within_bin"]) < 1e-15
+    assert abs(d["calibration"] - d["refinement"] + d["uncertainty"]
+               - d["brier_raw"]) <= 1e-10
+
+
+def test_bin_counts_are_reported_in_ascending_forecast_order():
+    p = torch.tensor([0.9] * 100 + [0.1] * 300 + [0.5] * 600, dtype=torch.double)
+    g = torch.Generator().manual_seed(15)
+    label = (torch.rand(1000, generator=g, dtype=torch.double) < p).double()
+    d = murphy_decomposition(p, _truth_for(label), tau=0.5, n_bins=N_BINS)
+    assert d["bin_counts"] == [300, 600, 100]
