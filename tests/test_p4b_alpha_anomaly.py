@@ -208,9 +208,19 @@ def test_an_all_axes_arm_is_scored_on_the_unpinned_grid(p4b):
 # NINE ARMS, NOT EIGHT
 # --------------------------------------------------------------------------------------
 
-def test_the_ranking_includes_coord(p4b):
-    """P4 exists so this ranking is 9 arms wide. Silently dropping to 8 is the failure."""
-    assert tuple(sorted(p4b.ARMS)) == NINE
+def test_the_ranking_includes_coord_and_every_spade_arm(p4b):
+    """The ranking has been silently too narrow twice, in two different directions.
+
+    P4 exists because `coord` was missing and it was 8 arms wide. The SPADE gap made it
+    9 when `alpha*` IS SPADE's own statistic and every Version B arm was absent. Both
+    are pinned here: nine gated arms plus the three ungatable ones, twelve ranked, and
+    `plate1_only` scored beside them without a thirteenth vote.
+    """
+    assert set(NINE) <= set(p4b.RANKING_ARMS)
+    assert set(p4b.UNGATABLE) <= set(p4b.RANKING_ARMS)
+    assert len(p4b.RANKING_ARMS) == 12
+    assert len(set(p4b.RANKING_ARMS)) == 12, "an arm is listed twice"
+    assert "plate1_only" in p4b.SCORED_ARMS and "plate1_only" not in p4b.RANKING_ARMS
 
 
 # --------------------------------------------------------------------------------------

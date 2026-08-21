@@ -88,6 +88,8 @@ from boec.designspace import gp_adapter                              # noqa: E40
 from boec.norms import sobol_grid                                    # noqa: E402
 from boec.replay import CampaignRecord, regenerate, unit_bounds      # noqa: E402
 from boec.surrogate import build_gp                                  # noqa: E402
+from boec.replay import instance_by_id                               # noqa: E402
+from boec.torch_oracle import BiphasicOracle                         # noqa: E402
 
 DIM, SIGMA = 6, 0.25
 #: K6b's subset and seed. `alpha_star` was computed on draws over exactly these points,
@@ -104,8 +106,105 @@ PRIMARY_TAU_FRAC = 0.75
 MATCHED_GAMMA = 0.50
 
 #: Nine, because P4 added the ninth. Eight is the failure mode this task exists to avoid.
-ARMS = ("coord", "doe", "lhs", "qlogei", "qlogei-add", "qlogei-addonly", "qlognei",
-        "random", "sobol")
+GATED_ARMS = ("coord", "doe", "lhs", "qlogei", "qlogei-add", "qlogei-addonly",
+              "qlognei", "random", "sobol")
+#: **UNGATABLE IN PRINCIPLE**, not merely ungated. They are two-plate designs no other
+#: runner in this project builds, so no committed comparator exists and none ever will.
+#: Seed determinism is their only guarantee and every row says so.
+UNGATABLE = ("versionb", "versionb_random", "versionb_predictive")
+#: `plate1_only` is `lhs` at 48 wells to a worst |delta| of 4.44e-16 (D23.1). It is
+#: scored -- it gates this runner's whole Version B scoring path at runtime rather than
+#: only in the tests -- and it is **never ranked**, because a Spearman across arms gives
+#: each arm one point and ranking both would give one design two votes.
+SCORED_ARMS = GATED_ARMS + UNGATABLE + ("plate1_only",)
+RANKING_ARMS = GATED_ARMS + UNGATABLE
+#: Back-compat for callers and tests written against the nine-arm run.
+ARMS = SCORED_ARMS
+
+#: Which way is better. **Not decoration.** `alpha*` and AUC are higher-is-better while
+#: regret, Brier and every error volume are lower-is-better, so a raw sign comparison
+#: across two of them is meaningless -- `+0.0261 on alpha*` and `-0.0071 on Brier`
+#: favour the SAME arm. That inversion flipped two of four readings in another worker's
+#: audit, and it lands hardest here because this whole task correlates alpha* against
+#: regret, which have opposite polarity.
+BENEFIT_DIRECTION = {
+    "alpha_star": "higher", "auc_pred": "higher", "auc_latent": "higher",
+    "iou_pred": "higher", "iou_latent": "higher", "auprc": "higher",
+    "auprc_minority": "higher", "mean_posterior_sd": "higher",
+    "regret": "lower", "brier_pred": "lower", "brier_latent": "lower",
+    "type_I_vol": "lower", "type_II_vol": "lower", "symmetric_difference": "lower",
+    "fi_pred": "lower", "fi_latent": "lower", "vorobev_deviation": "lower",
+}
+
+
+def gate_status(arm: str) -> dict:
+    """Whether this arm's regret can be reproduced against a committed column, and why.
+
+    The distinction is not bookkeeping. An ungated number is not a wrong number; it is a
+    number whose only guarantee is that the same code produces it again, which is not
+    independent validation and must not be presented as if it were.
+    """
+    if arm in UNGATABLE:
+        return {"gated": False,
+                "reason": ("ungatable in principle: a two-plate design no other runner "
+                           "in this project builds, so no comparator exists and none "
+                           "ever will. Seed determinism is the only guarantee, and "
+                           "reproduction by the same code path is not independent "
+                           "validation.")}
+    return {"gated": True, "reason": "reproduces a committed regret column at |delta| = 0"}
+
+
+def favours(metric: str, diff: float) -> str:
+    """Which side of a paired ``a - b`` difference the metric says is better.
+
+    ``"a"``, ``"b"`` or ``"neither"``. Exists so no caller has to remember polarity.
+    """
+    if diff == 0 or metric not in BENEFIT_DIRECTION:
+        return "neither"
+    better_is_higher = BENEFIT_DIRECTION[metric] == "higher"
+    return "a" if (diff > 0) == better_is_higher else "b"
+
+
+def metrics_agree(readings: list[tuple[str, float]]) -> bool:
+    """Do these ``(metric, signed difference)`` readings all favour the same arm?
+
+    Consumes the benefit direction, never the raw sign.
+    """
+    sides = {favours(m, d) for m, d in readings}
+    sides.discard("neither")
+    return len(sides) <= 1
+
+
+def checkpoint_split(rows: list[dict], units: list, arms: tuple
+                     ) -> tuple[list[dict], dict]:
+    """``(rows worth keeping, {unit: arms still missing})``. Arm-aware, deliberately.
+
+    The Version B arms were added after 22 of 50 units had been scored on the original
+    nine. A loader that demanded a complete arm set per unit -- which is what this
+    function replaced -- would have discarded every one of them.
+    """
+    unit_set = set(units)
+    keep = [r for r in rows
+            if (r["instance"], r["seed"]) in unit_set and r["arm"] in arms]
+    have: dict[tuple, set] = {}
+    for r in keep:
+        have.setdefault((r["instance"], r["seed"]), set()).add(r["arm"])
+    missing = {u: tuple(a for a in arms if a not in have.get(u, ()))
+               for u in units}
+    return keep, {u: m for u, m in missing.items() if m}
+
+
+def completeness(units: list, arms: tuple, rows: list[dict]) -> dict:
+    """Does this file describe a finished run? Declared, never inferred from a path.
+
+    Two runners on this team have now left an in-progress checkpoint at a final
+    `results/` path carrying full provenance and a gate block and no way to tell.
+    """
+    present = {(r["instance"], r["seed"], r["arm"]) for r in rows}
+    expected = {(u[0], u[1], a) for u in units for a in arms}
+    return {"status": "COMPLETE" if present >= expected else "PARTIAL",
+            "keys_present": len(present & expected), "keys_expected": len(expected),
+            "keys_missing": sorted(f"{i}|{s}|{a}" for (i, s, a) in expected - present)[:20]}
 
 E2_GRID = ROOT / "results" / "e2-grid.json"
 K6 = ROOT / "results" / "k6-designspace.json"
@@ -260,34 +359,125 @@ def _p4():
     return m
 
 
-def _regenerate(arm: str, instance: str, seed: int) -> CampaignRecord:
-    """`coord` is not in `boec.replay`'s arm lists; P4's runner owns its regeneration."""
+@lru_cache(maxsize=1)
+def _K6_module():
+    """K6's runner, for the Version B design-space columns. Imported, never copied."""
+    from importlib.util import module_from_spec, spec_from_file_location
+    spec = spec_from_file_location("_p4b_k6",
+                                   ROOT / "scripts" / "run_k6_designspace.py")
+    m = module_from_spec(spec)
+    sys.modules[spec.name] = m
+    spec.loader.exec_module(m)
+    return m
+
+
+@lru_cache(maxsize=1)
+def _p2():
+    """P2's Version B runner, imported read-only and once per worker.
+
+    `build_campaign` is the function that builds every committed Version B column, and
+    it carries a detail worth not re-deriving: `plate1_only` goes through
+    `regenerate(..., "lhs")` rather than `static_design` + `scored_curve`, because
+    `run_e2.static_curve` averages 20 orderings and a single curve misses the committed
+    `lhs` column by 4.44e-16. Reimplementing it here would reintroduce that.
+    """
+    from importlib.util import module_from_spec, spec_from_file_location
+    spec = spec_from_file_location("_p2_versionb",
+                                   ROOT / "scripts" / "run_p2_versionb_gamma.py")
+    m = module_from_spec(spec)
+    sys.modules[spec.name] = m
+    spec.loader.exec_module(m)
+    return m
+
+
+def _regenerate(arm: str, instance: str, seed: int, orc_t=None) -> CampaignRecord:
+    """One campaign, built by the arithmetic its committed column was built by.
+
+    `coord` is not in `boec.replay`'s arm lists, so P4's runner owns it. The Version B
+    arms are not either, and P2's runner owns them.
+    """
     if arm == "coord":
         return _p4().regenerate_coord(instance, DIM, SIGMA, seed)
+    if arm in UNGATABLE or arm == "plate1_only":
+        inst = instance_by_id(instance, DIM)
+        if orc_t is None:
+            orc_t = BiphasicOracle(inst, sigma_rel=SIGMA, seed=seed)
+        X, Y, V, regret = _p2().build_campaign(arm, instance, DIM, SIGMA, seed, orc_t)
+        return CampaignRecord(
+            X=X, Y=Y, Yvar=V, instance=instance, dim=DIM, sigma=SIGMA, seed=seed,
+            arm=arm, regret=float(regret), optimum_value=float(inst.optimum_value),
+            kept_factors=None, dropped_held_at=None)
     return regenerate(instance, DIM, SIGMA, seed, arm)
 
 
 def _one(job: tuple[str, int, tuple[str, ...]]) -> list[dict]:
-    """Every arm for one ``(instance, seed)``. The subset is built once."""
+    """The requested arms for one ``(instance, seed)``. The grids are built once.
+
+    Arms with committed K6b rows contribute only the posterior width, which is the one
+    thing no committed file carries. The Version B arms and `plate1_only` have no
+    committed `alpha_star` anywhere, so theirs is **computed here** -- through P4's
+    `score_k6b`, which is gated bitwise against a committed `lhs` row, and through K6's
+    own `score_campaign` for the design-space columns.
+    """
     instance, seed, arms = job
     X_sub = sobol_grid(DIM, SUBSET_N, seed=GRID_SEED)
+    needs_scoring = [a for a in arms if a in UNGATABLE or a == "plate1_only"]
+    inst = instance_by_id(instance, DIM) if arms else None
+    grid = truth = None
+    if needs_scoring:
+        grid = sobol_grid(DIM, GRID_N, seed=GRID_SEED)
+
     out = []
     for arm in arms:
         t0 = time.time()
-        rec = _regenerate(arm, instance, seed)
+        #: A separate oracle for scoring, so `truth` is never read off an oracle whose
+        #: noise stream a regeneration is still consuming. Fix 1's convention.
+        orc_t = BiphasicOracle(inst, sigma_rel=SIGMA, seed=seed)
+        if truth is None and grid is not None:
+            with torch.no_grad():
+                truth = orc_t.truth(grid).reshape(-1).double()
+        rec = _regenerate(arm, instance, seed, orc_t)
         model = build_gp(rec.X, rec.Y, rec.Yvar, unit_bounds(DIM))
         X_eval = active_subspace_grid(rec, X_sub)
         mean, sd = gp_adapter(model).posterior_mean_and_sd(X_eval)
-        out.append({
+        row = {
             "instance": instance, "seed": seed, "arm": arm, "regret": rec.regret,
             "n_active": DIM if rec.kept_factors is None else len(rec.kept_factors),
             "mean_posterior_sd": float(sd.mean()),
             "median_posterior_sd": float(sd.median()),
             "max_posterior_sd": float(sd.max()),
             "mean_posterior_mean": float(mean.mean()),
-            "secs": round(time.time() - t0, 2)})
+            **gate_status(arm),
+            "in_ranking": arm in RANKING_ARMS,
+        }
+        if arm == "plate1_only":
+            row["in_ranking_reason"] = (
+                "`plate1_only` IS `lhs` at 48 wells (worst |delta| 4.44e-16, D23.1). "
+                "Scored so this run gates its own Version B scoring path, never ranked, "
+                "because ranking both would give one design two votes.")
         del model, mean, sd
         gc.collect()
+
+        if arm in needs_scoring:
+            # No committed alpha_star exists for these anywhere. Computed here.
+            k6b = _p4().score_k6b(rec, orc_t, X_sub, float(inst.optimum_value))
+            row["alpha_star"] = {str(r["tau_frac"]): r["alpha_star"] for r in k6b}
+            row["vorobev_deviation"] = {str(r["tau_frac"]): r["vorobev_deviation"]
+                                        for r in k6b}
+            k6 = _K6_module().score_campaign(rec, orc_t, grid, truth,
+                                              torch.ones(DIM, dtype=torch.bool))
+            row["k6_rows"] = k6
+            row["symmetric_difference"] = {}
+            for r in k6:
+                if r["gamma"] == MATCHED_GAMMA:
+                    ev = error_volumes(r["vol_pred"], r["fi_pred"],
+                                       r["true_frac_above_tau"])
+                    row["symmetric_difference"][str(r["tau_frac"])] = \
+                        ev["total_error_vol"]
+            gc.collect()
+
+        row["secs"] = round(time.time() - t0, 2)
+        out.append(row)
     return out
 
 
@@ -542,7 +732,20 @@ def analyse(width_rows: list[dict], alpha: dict) -> dict:
     """Every registered quantity: the two regressions, the ranking rho, and the verdict."""
     width = {(r["instance"], r["seed"], r["arm"]): r for r in width_rows}
     units = sorted({(r["instance"], r["seed"]) for r in width_rows})
-    arms = sorted({r["arm"] for r in width_rows})
+    #: `plate1_only` is scored and never ranked -- it IS `lhs` (D23.1), and a Spearman
+    #: across arms gives every arm one point, so ranking both double-weights one design.
+    arms = sorted({r["arm"] for r in width_rows} & set(RANKING_ARMS))
+
+    # The Version B arms have no committed `alpha_star` anywhere, so `_one` computed it.
+    # Merged in here rather than in `committed_alpha_star`, which must keep meaning
+    # "read from a committed file" (D12).
+    alpha = dict(alpha)
+    local_symdiff: dict[tuple, float] = {}
+    for r in width_rows:
+        for tf_s, v in (r.get("alpha_star") or {}).items():
+            alpha[(r["instance"], r["seed"], r["arm"], float(tf_s))] = float(v)
+        for tf_s, v in (r.get("symmetric_difference") or {}).items():
+            local_symdiff[(r["instance"], r["seed"], r["arm"], float(tf_s))] = float(v)
 
     per_cell = {}
     for tf in TAU_FRACS:
@@ -556,6 +759,8 @@ def analyse(width_rows: list[dict], alpha: dict) -> dict:
         # and if alpha* anti-correlates with one but not the other that is the finding.
         # Read ONLY at gamma = 0.50, the single cell where K6's tau IS K6b's theta.
         sym = arm_symmetric_difference(MATCHED_GAMMA, tf)
+        sym.update({(k[0], k[1], k[2]): v for k, v in local_symdiff.items()
+                    if k[3] == tf})
         sym_dual = None
         if all((u[0], u[1], a) in sym for a in arms for u in units):
             sym_data = {a: {u: (alpha[(u[0], u[1], a, tf)], sym[(u[0], u[1], a)])
@@ -673,6 +878,22 @@ def _provenance(argv) -> dict:
                             "VECLIB_MAXIMUM_THREADS", "OPENBLAS_NUM_THREADS")}}
 
 
+def _apply_gate(r: dict, committed: dict) -> None:
+    """Attach the gate to one row, or record that no comparator exists for it.
+
+    `gate_abs_delta = None` is not a pass. It means the arm is ungatable in principle
+    and the number beside it rests on seed determinism alone.
+    """
+    key = (r["instance"], r["seed"], r["arm"])
+    if key in committed:
+        ref, src = committed[key]
+        r["regret_committed"], r["gate_source"] = ref, src
+        r["gate_abs_delta"] = abs(r["regret"] - ref)
+    else:
+        r["regret_committed"], r["gate_source"] = None, None
+        r["gate_abs_delta"] = None
+
+
 def _load_checkpoint(path: Path) -> list[dict]:
     """Rows already scored. Empty when there is no checkpoint or it is unreadable.
 
@@ -717,7 +938,7 @@ def main() -> None:
     if args.limit:
         units = units[:args.limit]
 
-    missing = [(u, a, tf) for u in units for a in ARMS for tf in TAU_FRACS
+    missing = [(u, a, tf) for u in units for a in GATED_ARMS for tf in TAU_FRACS
                if (u[0], u[1], a, tf) not in alpha]
     if missing:
         raise SystemExit(f"no committed alpha_star for {len(missing)} cells, first "
@@ -734,26 +955,22 @@ def main() -> None:
           f"|delta| = {GATE_TOL:g}\n", flush=True)
 
     ckpt = Path(args.checkpoint)
-    unit_set = set(units)
-    rows: list[dict] = [r for r in _load_checkpoint(ckpt)
-                        if (r["instance"], r["seed"]) in unit_set and r["arm"] in ARMS]
-    done = {(r["instance"], r["seed"]) for r in rows
-            if sum(1 for x in rows
-                   if (x["instance"], x["seed"]) == (r["instance"], r["seed"])) == len(ARMS)}
-    rows = [r for r in rows if (r["instance"], r["seed"]) in done]
-    jobs = [(u[0], u[1], ARMS) for u in units if u not in done]
+    # ARM-AWARE. The Version B arms were added after 22 of 50 units had been scored on
+    # the original nine; a loader demanding a complete arm set would discard all of it.
+    rows, missing = checkpoint_split(_load_checkpoint(ckpt), units, SCORED_ARMS)
+    jobs = [(u[0], u[1], m) for u, m in sorted(missing.items())]
     if rows:
-        print(f"  resuming — {len(done)} units already on the checkpoint, "
-              f"{len(jobs)} to go\n", flush=True)
+        n_full = len(units) - len(missing)
+        print(f"  resuming — {len(rows)} campaigns on the checkpoint "
+              f"({n_full} units complete), {sum(len(j[2]) for j in jobs)} campaigns "
+              f"across {len(jobs)} units still to run\n", flush=True)
 
     t0 = time.time()
 
     def _record(batch: list[dict], k: int) -> None:
         for r in batch:
-            ref, src = committed[(r["instance"], r["seed"], r["arm"])]
-            r["regret_committed"], r["gate_source"] = ref, src
-            r["gate_abs_delta"] = abs(r["regret"] - ref)
-            if r["gate_abs_delta"] > GATE_TOL:
+            _apply_gate(r, committed)
+            if r["gate_abs_delta"] is not None and r["gate_abs_delta"] > GATE_TOL:
                 print(f"  !! GATE {r['arm']} {r['instance']} seed={r['seed']} "
                       f"|delta|={r['gate_abs_delta']:.3e}", flush=True)
         rows.extend(batch)
@@ -766,15 +983,13 @@ def main() -> None:
     if args.analyse_only:
         if jobs:
             raise SystemExit(f"--analyse-only needs a COMPLETE checkpoint; {len(jobs)} of "
-                             f"{len(units)} units are missing from {ckpt}")
-        print(f"  --analyse-only: {len(done)} units read from the checkpoint, "
+                             f"{len(units)} units are incomplete in {ckpt}")
+        print(f"  --analyse-only: {len(rows)} campaigns read from the checkpoint, "
               f"none re-run\n", flush=True)
         # The gate is re-derived here too, so a re-analysis never inherits a pass it did
         # not itself compute.
         for r in rows:
-            ref, src = committed[(r["instance"], r["seed"], r["arm"])]
-            r["regret_committed"], r["gate_source"] = ref, src
-            r["gate_abs_delta"] = abs(r["regret"] - ref)
+            _apply_gate(r, committed)
     elif args.workers > 1:
         with ProcessPoolExecutor(max_workers=args.workers) as pool:
             for k, batch in enumerate(pool.map(_one, jobs), 1):
@@ -788,10 +1003,16 @@ def main() -> None:
     gate_failures = [{k_: r[k_] for k_ in
                       ("instance", "seed", "arm", "regret", "regret_committed",
                        "gate_abs_delta", "gate_source")}
-                     for r in rows if r["gate_abs_delta"] > GATE_TOL]
-    worst = max((r["gate_abs_delta"] for r in rows), default=0.0)
-    print(f"\n  gate: {len(rows)} rows checked, worst |delta| = {worst:.3e}, "
-          f"{len(gate_failures)} failures")
+                     for r in rows
+                     if r.get("gate_abs_delta") is not None
+                     and r["gate_abs_delta"] > GATE_TOL]
+    gated_rows = [r for r in rows if r.get("gate_abs_delta") is not None]
+    worst = max((r["gate_abs_delta"] for r in gated_rows), default=0.0)
+    n_ungated = len(rows) - len(gated_rows)
+    print(f"\n  gate: {len(gated_rows)} of {len(rows)} rows have a committed column, "
+          f"worst |delta| = {worst:.3e}, {len(gate_failures)} failures")
+    print(f"        {n_ungated} rows are UNGATABLE IN PRINCIPLE (Version B): no "
+          f"comparator exists, seed determinism only")
     if gate_failures:
         print("\n*** STOP. A regenerated campaign is not the committed campaign, so the "
               "posterior width beside it belongs to a different experiment. Reported, "
@@ -827,7 +1048,12 @@ def main() -> None:
                        "regret": "VALIDATED (consults the noiseless oracle)",
                        "rule": "A validated metric beats a model-internal one, and the "
                                "disagreement is reported."}},
-        "gate": {"tol": GATE_TOL, "rows_checked": len(rows), "worst_abs_delta": worst},
+        "status": completeness(units, SCORED_ARMS, rows),
+        "gate": {"tol": GATE_TOL, "rows_checked": len(gated_rows),
+                 "rows_ungatable": len(rows) - len(gated_rows),
+                 "worst_abs_delta": worst,
+                 "ungatable_note": gate_status("versionb")["reason"]},
+        "benefit_direction": BENEFIT_DIRECTION,
         "gate_failures": gate_failures,
         "summary": summary,
         "rows": rows}, indent=1))
