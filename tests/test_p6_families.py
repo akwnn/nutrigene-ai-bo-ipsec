@@ -452,3 +452,12 @@ def test_hill_is_the_only_family_whose_landscapes_straddle_the_ceiling(p6):
         "expected at least one near-tie cell; the count is what makes it visible")
     for r in straddling:
         assert 0 < r["n_landscapes_above"] < 25
+
+
+def test_the_registered_cell_order_puts_the_sigma_axis_second(p6):
+    """Registration Decision 2. (8, 0.25) is the cell most concordant with the headline
+    (Kendall tau-b +0.60 against +0.47 for (6, 0.10)), so it carries the least new
+    information and is demoted. (8, 0.10) is last because it moves two axes at once.
+    """
+    assert p6.CELL_ORDER == ((6, 0.25), (6, 0.10), (8, 0.25), (8, 0.10))
+    assert p6.CELL_ORDER[1] == (6, 0.10), "the sigma axis runs before the d axis"

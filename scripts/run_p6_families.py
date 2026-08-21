@@ -108,6 +108,26 @@ GRID_N, GRID_SEED = 20_000, 0
 N_SEEDS = 25
 #: Rows are keyed by this and nothing else. `instance` is deliberately absent.
 ROW_KEY = ("family", "dim", "sigma", "seed", "arm")
+
+#: **Registration Decision 2.** The order cells run in, and it is measured, not a guess.
+#:
+#: 1. ``(6, 0.25)`` -- the headline. Nothing displaces it.
+#: 2. ``(6, 0.10)`` -- the sigma axis is the one with demonstrated sensitivity. D37 found
+#:    `doe`'s regret advantage significant and beyond SESOI at (6, 0.25) ONLY, with the
+#:    sign flipping to `qlognei` at both sigma=0.10 cells. `tau_max` also moves
+#:    0.589 -> 0.836 there, so the entire emptiness structure changes -- which is what the
+#:    ceiling census and the error volumes are about, so the degeneracy flags do their
+#:    most interesting work in this cell. P3-B2's `tau_max_exact` sensitivity and P1's Q30
+#:    sigma=0.10 comparator land in the same cell, making all three mutually checkable.
+#: 3. ``(8, 0.25)`` -- demoted. P3's Kendall tau-b of each cell's six-arm regret ranking
+#:    against the (6, 0.25) baseline: (6, 0.10) +0.47, **(8, 0.25) +0.60**, (8, 0.10)
+#:    +0.33. The MOST concordant cell carries the LEAST new information.
+#: 4. ``(8, 0.10)`` -- most divergent (+0.33) and therefore interesting, but it moves two
+#:    axes at once and is only attributable once both single-axis cells exist.
+#:
+#: Stopping after 1 and 2 leaves a coherent pair -- the cross-family headline plus its
+#: sigma sensitivity on the axis known to flip. Stopping after 1 and 3 would not.
+CELL_ORDER = ((6, 0.25), (6, 0.10), (8, 0.25), (8, 0.10))
 #: The only family that is a declared sensitivity rather than a headline.
 SENSITIVITY_FAMILIES = ("ackley",)
 
