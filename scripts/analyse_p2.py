@@ -383,7 +383,11 @@ def main() -> None:
     n_keys = len({(r["instance"], r["seed"]) for r in rows})
     print(f"P2 · Version B on the gamma ladder · {len(rows)} rows · "
           f"{n_keys} (instance, seed) pairs · d={cfg['dim']} sigma={cfg['sigma']}")
-    print(f"source: {IN.relative_to(ROOT)} @ {data['provenance']['git_sha'][:8]} "
+    try:
+        src = IN.resolve().relative_to(ROOT)
+    except ValueError:
+        src = IN
+    print(f"source: {src} @ {data['provenance']['git_sha'][:8]} "
           f"({data['provenance']['generated_at']})\n")
 
     _print_gate(data)
