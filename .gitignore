@@ -216,3 +216,13 @@ COMMIT_MSG.txt
 !results/f1-dual-n.json
 !results/f2-error-volumes.json
 !results/f3-draw-sweep.json
+
+# Requested by the workers that produced them; results/* ignores by default.
+# f2-ce-error-volumes: error volumes for the CONSERVATIVE-ESTIMATE sets, zero new
+# campaigns, derived from k6b's ce_false_in_*/ce_vol_*/true_frac_above. It was
+# force-added to preserve it, which leaves it tracked-but-ignored -- the fragile
+# state the D17 block above warns about. This line fixes that.
+!results/f2-ce-error-volumes.json
+# p6-ceiling-census: regenerates deterministically from the committed tau table in
+# about a second, but it is cited by the P6 registration decision BY PATH.
+!results/p6-ceiling-census.json
