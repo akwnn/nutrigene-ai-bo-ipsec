@@ -393,6 +393,46 @@ def main() -> None:
     n_k6 = n_k6b = n_ctrl_k6 = n_ctrl_k6b = 0
     t0 = time.time()
 
+    def snapshot(v: str = "IN_PROGRESS", coverage_error: str | None = None) -> dict:
+        """The output file at any moment. Checkpointed after every pair, as
+        `run_k6_designspace.py` does, so a four-hour run survives an interruption."""
+        return {
+            "provenance": prov,
+            "question": "P1 — gate the A1 kernel arms and re-score the 2,800 committed "
+                        "design-space rows that rest on them",
+            "verdict": v,
+            "registered_kill_condition": (
+                "|delta| = 0 on all 2800 re-scored rows -> the committed kernel-arm "
+                "rows are validated retroactively and Amendment A1 becomes citable. "
+                "Any delta != 0 -> the committed kernel-arm rows are WITHDRAWN. Not "
+                "repaired by re-running."),
+            "config": {"dim": DIM, "primary_sigma": PRIMARY_SIGMA,
+                       "kernel_arms": list(KERNEL_ARMS),
+                       "control_arms": list(CONTROL_ARMS),
+                       "qlogei_control_campaigns": args.qlogei_control,
+                       "pairs": len(pairs), "gammas": list(GAMMAS),
+                       "tau_fracs": list(TAU_FRACS), "grid_n": GRID_N,
+                       "grid_seed": GRID_SEED, "k6b_subset_n": SUBSET_N,
+                       "k6b_n_draws": N_DRAWS, "tolerance": 0.0},
+            "coverage": {"gate_campaigns": len(gate_rows),
+                         "rescored_k6_rows": n_k6, "rescored_k6b_rows": n_k6b,
+                         "rescored_total": n_k6 + n_k6b,
+                         "registered_total": REGISTERED_K6_ROWS + REGISTERED_K6B_ROWS,
+                         "control_k6_rows": n_ctrl_k6, "control_k6b_rows": n_ctrl_k6b,
+                         "error": coverage_error},
+            "worst": {
+                "gate_abs_delta": max((g["abs_delta"] for g in gate_rows), default=0.0),
+                "rescore_abs_delta": max((f["abs_delta"] for f in rescore_failures),
+                                         default=0.0),
+                "control_abs_delta": max((f["abs_delta"] for f in control_failures),
+                                         default=0.0)},
+            "gate_failures": gate_failures,
+            "rescore_failures": rescore_failures,
+            "control_failures": control_failures,
+            "gate": gate_rows,
+            "elapsed_s": round(time.time() - t0, 1),
+        }
+
     # ---------------------------------------------------------------- PASS 1 · K6
     # regenerate -> gate -> score_campaign, which is `run_k6_designspace.py`'s order.
     print(f"\nPASS 1 — K6 re-score, {len(pairs)} pairs x "
@@ -445,6 +485,7 @@ def main() -> None:
             print(f"[{i:3d}/{len(pairs)}] K6  {tag}{arm:14s} {inst_id} seed={seed} "
                   f"regret={rec.regret:.4f} metric_fails={n_fail} "
                   f"({time.time() - t:.1f}s)", flush=True)
+        _write(snapshot())
         del truth
         gc.collect()
 
@@ -493,6 +534,7 @@ def main() -> None:
             tag = "CONTROL " if arm in CONTROL_ARMS else ""
             print(f"[{i:3d}/{len(pairs)}] K6b {tag}{arm:14s} {inst_id} seed={seed} "
                   f"metric_fails={n_fail} ({time.time() - t:.1f}s)", flush=True)
+        _write(snapshot())
         gc.collect()
 
     # ------------------------------------------------- PASS 3 · the gate-only cell
@@ -517,6 +559,7 @@ def main() -> None:
         print(f"[{j:3d}/{len(other)}] gate {arm:14s} {inst_id} sigma={sigma} "
               f"seed={seed} |d|={g['abs_delta']:.3e} ({time.time() - t:.1f}s)",
               flush=True)
+        _write(snapshot())
 
     # ------------------------------------------------------------------- the verdict
     coverage_error = None
@@ -529,43 +572,10 @@ def main() -> None:
     if coverage_error:
         v = "INCOMPLETE"
 
-    worst_gate = max((g["abs_delta"] for g in gate_rows), default=0.0)
-    worst_rescore = max((f["abs_delta"] for f in rescore_failures), default=0.0)
-    worst_control = max((f["abs_delta"] for f in control_failures), default=0.0)
-
-    payload = {
-        "provenance": prov,
-        "question": "P1 — gate the A1 kernel arms and re-score the 2,800 committed "
-                    "design-space rows that rest on them",
-        "verdict": v,
-        "registered_kill_condition": (
-            "|delta| = 0 on all 2800 re-scored rows -> the committed kernel-arm rows "
-            "are validated retroactively and Amendment A1 becomes citable. Any "
-            "delta != 0 -> the committed kernel-arm rows are WITHDRAWN. Not repaired "
-            "by re-running."),
-        "config": {"dim": DIM, "primary_sigma": PRIMARY_SIGMA,
-                   "kernel_arms": list(KERNEL_ARMS),
-                   "control_arms": list(CONTROL_ARMS),
-                   "qlogei_control_campaigns": args.qlogei_control,
-                   "pairs": len(pairs), "gammas": list(GAMMAS),
-                   "tau_fracs": list(TAU_FRACS), "grid_n": GRID_N,
-                   "grid_seed": GRID_SEED, "k6b_subset_n": SUBSET_N,
-                   "k6b_n_draws": N_DRAWS, "tolerance": 0.0},
-        "coverage": {"gate_campaigns": len(gate_rows),
-                     "rescored_k6_rows": n_k6, "rescored_k6b_rows": n_k6b,
-                     "rescored_total": n_k6 + n_k6b,
-                     "registered_total": REGISTERED_K6_ROWS + REGISTERED_K6B_ROWS,
-                     "control_k6_rows": n_ctrl_k6, "control_k6b_rows": n_ctrl_k6b,
-                     "error": coverage_error},
-        "worst": {"gate_abs_delta": worst_gate,
-                  "rescore_abs_delta": worst_rescore,
-                  "control_abs_delta": worst_control},
-        "gate_failures": gate_failures,
-        "rescore_failures": rescore_failures,
-        "control_failures": control_failures,
-        "gate": gate_rows,
-        "elapsed_s": round(time.time() - t0, 1),
-    }
+    payload = snapshot(v, coverage_error)
+    worst_gate = payload["worst"]["gate_abs_delta"]
+    worst_rescore = payload["worst"]["rescore_abs_delta"]
+    worst_control = payload["worst"]["control_abs_delta"]
     _write(payload)
 
     print(f"\n{'=' * 78}")
