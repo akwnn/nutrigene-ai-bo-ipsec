@@ -6703,3 +6703,88 @@ treating each report as current when it described a state already superseded.**
 run until told otherwise by a specific token, **do not stop for machine state.** Everything now
 checkpoints, so an OOM kill costs at most the in-flight key. **That arbitration is more honest
 than a queue I have been wrong about more often than right.**
+
+---
+
+## 📌 MEASUREMENT HAZARD · **Three process-inspection errors, one shape — and the third one is mine, in the numbers I made scheduling decisions on.**
+
+The P2 worker reported its **third** process-inspection command of the day returning something
+other than the truth, and named the common shape better than the individual bugs do:
+
+> **"The measurement included or excluded the wrong things and the answer still looked
+> plausible."**
+
+| # | command | defect | direction |
+|---|---|---|---|
+| 1 | `pkill -9 -f "spawn_main"` | matched **every agent's** multiprocessing children | too broad |
+| 2 | `ps \| awk '$2==PARENT'` | orphans reparent to PPID 1, so a dead parent makes survivors **structurally invisible** | too narrow |
+| 3 | `ps -eo args \| grep -c '[r]un_p2_versionb_gamma\.py'` | counted its own **enclosing `zsh -c` wrapper**, whose command line carries the pattern text | too broad |
+
+**The `[r]` trick suppresses the grep process itself but NOT a parent shell that happens to carry
+the string.** Its preflight printed *"p2 procs running: 2"* **before it had launched anything.**
+
+### 🔴 The same defect is in MY OWN monitoring, and it inflated the numbers I scheduled on
+
+I have used `grep "[.]venv/bin/python -u\? scripts/run_"` throughout this session to count heavy
+runners. Measured just now, side by side:
+
+```
+my pattern                                      -> 5
+executable-path AND script, excluding wrappers  -> 4
+```
+
+**One of my five "heavy runners" was a `zsh -c` wrapper**, and the wrapper lines were visible in my
+own output the whole time. **Every "N runners are up" figure I used to hold or release a worker was
+inflated by roughly one per attached agent.** The scheduling calls were directionally right — the
+box was genuinely constrained — but **the numbers were wrong, and I quoted them as measurements to
+workers who then reasoned from them.**
+
+**Registered rule, generalising the kill rule already recorded:** **match on the executable path
+as well as the script name, exclude shell wrappers explicitly, and never trust a bare count.**
+```
+ps -eo pid,ppid,etime,args | awk '/\.venv\/bin\/python/ && /scripts\/run_[a-z0-9_]+\.py/ && !/zsh -c/'
+```
+
+**Four process-inspection defects today, three of them self-reported by the worker that made them,
+one of them mine and found only because that worker reported its third.**
+
+---
+
+## 📌 THE `static_curve` ARTEFACT, FOURTH SIGHTING · **and this time it is a trap in the OBVIOUS implementation.**
+
+Building `plate1_only` **through `replay`'s `builder` hook** — the natural choice, since it is
+nominally a Version B arm — **misses the committed `lhs` regret by 3.3e-16 and fails an exact
+gate.**
+
+**Cause:** `replay.regenerate` reproduces `run_e2.static_curve`'s **20-ordering mean** only on its
+own **spread-arm** path. Supplying a `builder` substitutes a single `scored_curve` call. So
+`plate1_only` must be built **as `lhs` and relabelled**, which reproduces bitwise.
+
+**The fix pins BOTH directions in a test** — the good path asserts `==`, the hook path asserts
+`!=` but within 1e-14 — **so the hook cannot be quietly adopted later by someone reasoning "it's a
+Version B arm, use the Version B builder."** A test that only asserted the good path would leave
+the trap armed.
+
+**Sightings, all the same float-mean artefact:** (1) my first replay gate; (2) the Fix 1 worker,
+hours later, independently; (3) inside a **committed file** — `versionb.json`'s `plate1_only`
+column differs from the committed `lhs` column by 3.33e-16; (4) now, latent in the obvious
+implementation of a new arm. **The standing rule — match the arithmetic, never widen the
+tolerance — has caught it four separate times, which is the strongest evidence available that it
+is load-bearing rather than ceremonial.**
+
+---
+
+## 📌 WHY THE SPADE SCOPE GAP MATTERS — the P7 worker's argument, which is better than mine
+
+I argued for inclusion on coverage grounds. **The sharper argument:**
+
+> **Calibration is the one component of the Brier score that can distinguish *"this region holds
+> at assurance γ"* from *"this region is ranked above that one"* — and Version B is the only arm
+> that makes the first kind of claim.**
+>
+> **Scoring calibration across nine arms that make no calibrated claim, while omitting the one
+> that does, would have produced a technically clean result answering nobody's question.**
+
+**Measured cost of closing it: ~17 s/key for four arms** (`versionb` 12.1 s, `versionb_random`
+1.0 s, `versionb_predictive` 3.4 s, `plate1_only` 0.1 s) against **~126 s/key for the original
+six.** Four extra arms cost less than one BO arm.
