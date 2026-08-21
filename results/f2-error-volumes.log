@@ -1,0 +1,113 @@
+================================================================================================================
+AMENDMENT F2a — EXPECTED TYPE I / TYPE II ERROR VOLUMES AS THE PRIMARY DESIGN-SPACE METRIC
+================================================================================================================
+
+1. WHICH COMMITTED DESIGN-SPACE FILES CARRY THE COLUMNS
+   A file that does not is a finding. The prevalence is a property of the campaign's own
+   evaluation grid and must not be imputed from another file.
+   results/k6-designspace.json                  rows= 6000  computable=yes
+   results/k6-designspace-spread.json           rows= 3600  computable=yes
+   results/versionb.json                        rows=  250  computable=NO
+                                                  missing: fi_latent, fi_pred, true_frac_above_tau, vol_latent, vol_pred
+   results/versionb-predictive.json             rows=  300  computable=NO
+                                                  missing: fi_latent, fi_pred, true_frac_above_tau, vol_latent, vol_pred
+
+2. THE REGISTERED VALIDATION (the check on the algebra)
+   derived IoU vs committed `iou_pred`: worst |delta| = 2.220e-16 over 2553 rows
+   registered: 2.220e-16 over 2,553 rows, zero negative type-II volumes
+   negative type-II volumes: 0    REPRODUCES: True
+
+3. SCORABLE ROWS — the error volumes are defined where the false-inclusion rate is not
+   k6-designspace               pred    rows= 6000  error-vol scorable= 6000  fi scorable= 2553  committed IoU finite= 6000  empty= 57.5%
+   k6-designspace               latent  rows= 6000  error-vol scorable= 6000  fi scorable= 4927  committed IoU finite= 6000  empty= 17.9%
+   k6-designspace-spread        pred    rows= 3600  error-vol scorable= 3600  fi scorable= 1318  committed IoU finite= 3600  empty= 63.4%
+   k6-designspace-spread        latent  rows= 3600  error-vol scorable= 3600  fi scorable= 2827  committed IoU finite= 3600  empty= 21.5%
+
+================================================================================================================
+4. THE REGISTERED DECISION — does the error-volume ranking differ from AUC's?
+================================================================================================================
+   Error volumes: LOWER is better. AUC: HIGHER is better. Both descriptive arm means over
+   the cell's 400 rows; no n and no p is attached to a ranking (F4).
+
+   Spearman rho against the AUC ordering: +1 identical, -1 exactly reversed.
+   `tie` = every arm scores identically, so there is no ranking to compare.
+
+   gamma  tauF    prev  empty   rho typeI  rho typeII  rho total    tie
+    0.50  0.60  0.7357   0.0%      +0.119      +0.024     +0.190  .  .  .
+    0.50  0.75  0.2894  20.0%      +0.167      +0.071     +0.786  .  .  .
+    0.50  0.85  0.0684  86.2%      +0.167      +0.238     +0.452  .  .  .
+    0.50  0.95  0.0029 100.0%          --          --         --  T  T  T
+    0.70  0.60  0.8853   0.0%      +0.310      +0.024     +0.024  .  .  .
+    0.70  0.75  0.5961  28.2%      +0.690      -0.405     -0.405  .  .  .
+    0.70  0.85  0.3236  90.2%      +0.076      +0.143     +0.143  .  .  .
+    0.70  0.95  0.1075 100.0%          --          --         --  T  T  T
+    0.80  0.60  0.9379   0.0%      +0.619      +0.071     +0.071  .  .  .
+    0.80  0.75  0.7541  36.2%      +0.643      -0.619     -0.476  .  .  .
+    0.80  0.85  0.5368  93.0%      +0.082      +0.275     +0.275  .  .  .
+    0.80  0.95  0.2891 100.0%          --          --         --  T  T  T
+    0.90  0.60  0.9772   0.0%      +0.619      -0.167     -0.167  .  .  .
+    0.90  0.75  0.9001  45.2%      +0.409      -0.643     -0.643  .  .  .
+    0.90  0.85  0.7863  97.0%          --      +0.698     +0.698  T  .  .
+    0.90  0.95  0.6137 100.0%          --          --         --  T  T  T
+    0.95  0.60  0.9913   0.0%      +0.429      -0.190     -0.190  .  .  .
+    0.95  0.75  0.9609  53.5%      +0.577      -0.429     -0.429  .  .  .
+    0.95  0.85  0.9113  98.5%          --      +0.682     +0.682  T  .  .
+    0.95  0.95  0.8234 100.0%          --          --         --  T  T  T
+    0.99  0.60  0.9992   4.5%      +0.577      -0.262     -0.262  .  .  .
+    0.99  0.75  0.9962  80.0%          --      -0.214     -0.214  T  .  .
+    0.99  0.85  0.9909  99.5%          --      +0.577     +0.577  T  .  .
+    0.99  0.95  0.9809 100.0%          --          --         --  T  T  T
+     type_I: equals the AUC ranking in 0/24 cells · degenerate ties in 10 · median rho +0.419
+    type_II: equals the AUC ranking in 0/24 cells · degenerate ties in 6 · median rho +0.024
+      total: equals the AUC ranking in 0/24 cells · degenerate ties in 6 · median rho +0.048
+
+   Across all 24 cells (descriptive, no n):
+     AUC(pred), best first : qlognei > qlogei-addonly > sobol > lhs > qlogei-add > qlogei > random > doe
+     type_I vol           : qlognei < doe < qlogei-add < qlogei-addonly < qlogei < lhs < sobol < random
+                            qlognei=0.0022  doe=0.0037  qlogei-add=0.0045  qlogei-addonly=0.0052  qlogei=0.0055  lhs=0.0056  sobol=0.0061  random=0.0080
+                            Spearman vs AUC: +0.214
+     type_II vol          : random < sobol < lhs < qlogei-addonly < qlogei-add < qlogei < qlognei < doe
+                            random=0.5960  sobol=0.6035  lhs=0.6135  qlogei-addonly=0.6144  qlogei-add=0.6253  qlogei=0.6292  qlognei=0.6445  doe=0.6513
+                            Spearman vs AUC: +0.071
+     total vol            : random < sobol < lhs < qlogei-addonly < qlogei-add < qlogei < qlognei < doe
+                            random=0.6040  sobol=0.6096  lhs=0.6191  qlogei-addonly=0.6196  qlogei-add=0.6298  qlogei=0.6347  qlognei=0.6467  doe=0.6550
+                            Spearman vs AUC: +0.071
+
+   REGISTERED DECISION: error-volume and AUC rankings DIFFER on type_I, type_II, total.
+   -> reported ranking: error volumes   (prevalence spans 0.0029-0.9992)
+
+================================================================================================================
+5. AMENDMENT F2c — IoU AND BRIER, COMMITTED PER ROW AND RANKED BY NOTHING
+================================================================================================================
+   `scripts/analyse_k6.py` ranks on `auc_pred` and on neither. Both sit on all 9,600 rows.
+   iou_pred       (higher better), best first: random > sobol > lhs > qlogei-addonly > qlogei-add > qlogei > qlognei > doe
+                   agrees with the AUC ranking: False
+   iou_latent     (higher better), best first: random > sobol > lhs > qlogei-addonly > qlogei-add > qlogei > qlognei > doe
+                   agrees with the AUC ranking: False
+   brier_pred     (lower better), best first: sobol > lhs > qlogei-addonly > random > qlogei-add > qlogei > qlognei > doe
+                   agrees with the AUC ranking: False
+   brier_latent   (lower better), best first: sobol > lhs > qlogei-addonly > random > qlogei-add > qlogei > qlognei > doe
+                   agrees with the AUC ranking: False
+
+   The two K6 headline contrasts on IoU and Brier, at both units (Wilcoxon p):
+   contrast                          metric          n50 mean      n50 p  n25 mean      n25 p  status
+   lhs - doe g=0.5 tf=0.6            iou_pred         +0.3446   1.78e-15   +0.3446   5.96e-08  significant/significant
+   lhs - doe g=0.9 tf=0.75           iou_pred         -0.0075   3.35e-05   -0.0075   4.30e-04  significant/significant
+   lhs - doe g=0.5 tf=0.6            iou_latent       +0.3446   1.78e-15   +0.3446   5.96e-08  significant/significant
+   lhs - doe g=0.9 tf=0.75           iou_latent       +0.1892   8.88e-15   +0.1892   5.96e-08  significant/significant
+   lhs - doe g=0.5 tf=0.6            brier_pred       -0.2429   1.78e-15   -0.2429   5.96e-08  significant/significant
+   lhs - doe g=0.9 tf=0.75           brier_pred       -0.3299   1.78e-15   -0.3299   5.96e-08  significant/significant
+   lhs - doe g=0.5 tf=0.6            brier_latent     -0.2562   1.78e-15   -0.2562   5.96e-08  significant/significant
+   lhs - doe g=0.9 tf=0.75           brier_latent     -0.3607   1.78e-15   -0.3607   5.96e-08  significant/significant
+   doe - qlogei g=0.5 tf=0.6         iou_pred         -0.2891   1.95e-13   -0.2891   1.19e-07  significant/significant
+   doe - qlogei g=0.9 tf=0.75        iou_pred         +0.0097   1.07e-06   +0.0097   2.98e-07  significant/significant
+   doe - qlogei g=0.5 tf=0.6         iou_latent       -0.2891   1.95e-13   -0.2891   1.19e-07  significant/significant
+   doe - qlogei g=0.9 tf=0.75        iou_latent       -0.1346   1.06e-03   -0.1346   1.49e-06  significant/significant
+   doe - qlogei g=0.5 tf=0.6         brier_pred       +0.2341   1.78e-15   +0.2341   5.96e-08  significant/significant
+   doe - qlogei g=0.9 tf=0.75        brier_pred       +0.3283   1.78e-15   +0.3283   5.96e-08  significant/significant
+   doe - qlogei g=0.5 tf=0.6         brier_latent     +0.2473   1.78e-15   +0.2473   5.96e-08  significant/significant
+   doe - qlogei g=0.9 tf=0.75        brier_latent     +0.3622   1.78e-15   +0.3622   5.96e-08  significant/significant
+
+   The design is balanced -- 25 instances x 2 seeds, no nan drops -- so an arm MEAN is bitwise identical at both units and the RANKINGS above cannot differ between them. Only the contrasts move, which is where n is doing work.
+
+  written to results/f2-error-volumes.json
