@@ -83,26 +83,46 @@ import gc
 import importlib.util
 import json
 import math
+import os
 import platform
 import subprocess
 import sys
 import time
+import warnings
+from concurrent.futures import ProcessPoolExecutor
+from functools import lru_cache
 from pathlib import Path
 
-import torch
+os.environ.setdefault("OMP_NUM_THREADS", "1")
 
-from boec.designspace import (POSTERIOR_CHUNK, brier_and_auc, false_inclusion_rate,
-                              gp_adapter, inscribed_box_from_mask, iou,
-                              predictive_probability_map, probability_map, tau_max)
-from boec.norms import grid_r2, sobol_grid, sup_err
-from boec.replay import CampaignRecord, committed_rows, instance_by_id, regenerate, \
-    scored_curve, unit_bounds
-from boec.surrogate import build_gp
-from boec.torch_oracle import BiphasicOracle
-from boec.vorobev import (alpha_star, conservative_estimate, containment_probability,
-                          empirical_containment, vorobev_deviation)
+import torch                                                         # noqa: E402
+
+warnings.filterwarnings("ignore")
+# One BLAS thread per process, then one process per core. The 64-rho Vorob'ev scan is
+# memory-bandwidth-bound -- `containment_probability` copies `draws[:, mask]`, up to
+# 512 x 2,000 doubles, 256 times per cell -- so threads inside a campaign buy little and
+# processes across campaigns buy nearly linearly. **Measured to change nothing**: the
+# `plate1_only` gate reproduces the committed `lhs` columns at exactly 0.0 at
+# `set_num_threads(1)`, after burning the global RNG and fitting an unrelated GP first,
+# so neither the thread count nor the execution order moves a single ULP.
+torch.set_num_threads(1)
 
 ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "src"))
+
+from boec.designspace import (POSTERIOR_CHUNK, brier_and_auc,        # noqa: E402
+                              false_inclusion_rate, gp_adapter,
+                              inscribed_box_from_mask, iou,
+                              predictive_probability_map, probability_map, tau_max)
+from boec.norms import grid_r2, sobol_grid, sup_err                  # noqa: E402
+from boec.replay import (CampaignRecord, committed_rows,             # noqa: E402
+                         instance_by_id, regenerate, scored_curve, unit_bounds)
+from boec.surrogate import build_gp                                  # noqa: E402
+from boec.torch_oracle import BiphasicOracle                         # noqa: E402
+from boec.vorobev import (alpha_star, conservative_estimate,         # noqa: E402
+                          containment_probability, empirical_containment,
+                          vorobev_deviation)
+
 OUT_DEFAULT = ROOT / "results" / "p2-versionb-gamma.json"
 
 #: Read-only. The committed gate target for `plate1_only`, and the ONLY gate P2 has.
@@ -152,6 +172,14 @@ _VB = importlib.util.module_from_spec(
     importlib.util.spec_from_file_location("_run_versionb",
                                            ROOT / "scripts" / "run_versionb.py"))
 _VB.__spec__.loader.exec_module(_VB)
+
+
+def _rel(path: Path) -> str:
+    """Repo-relative when it can be, absolute otherwise. `--out` may be anywhere."""
+    try:
+        return str(Path(path).resolve().relative_to(ROOT))
+    except ValueError:
+        return str(path)
 
 
 def gate_note() -> str:
@@ -431,10 +459,58 @@ def _config(dim: int, sigma: float, limit: int | None) -> dict:
             "grid_seed": GRID_SEED, "n_draws": N_DRAWS, "limit": limit,
             "posterior_chunk": POSTERIOR_CHUNK,
             "tau": "tau_frac * tau_max(gamma, sigma_rel), as run_k6_designspace.py",
-            "gate": {"arm": GATED_ARM, "target": str(SPREAD.relative_to(ROOT)),
+            "gate": {"arm": GATED_ARM, "target": _rel(SPREAD),
                      "target_arm": "lhs", "tol": GATE_TOL,
                      "columns": list(GATED_COLUMNS)},
             "ungatable": list(UNGATABLE), "note": gate_note()}
+
+
+
+@lru_cache(maxsize=None)
+def _optimum_value(instance: str, dim: int) -> float:
+    """``inst.optimum_value``, cached. Read once per process, not once per campaign."""
+    return float(instance_by_id(instance, dim).optimum_value)
+
+
+def one(job: tuple[str, int, tuple[str, ...], int, float]) -> list[dict]:
+    """Every arm for one ``(instance, seed)``. The grid and the truth are built once.
+
+    Runs in a worker process. Nothing here reads global state that another campaign
+    could have moved: every arm gets a **fresh** oracle seeded by ``seed``, the plate-2
+    draws are seeded by ``seed``, and the GP fit was measured path-independent (see the
+    ``set_num_threads`` note above). So the rows do not depend on which worker ran them
+    or in what order, and the file is sorted before it is written.
+    """
+    inst_id, seed, arms, dim, sigma = job
+    inst = instance_by_id(inst_id, dim)
+    orc_t = BiphasicOracle(inst, sigma_rel=sigma, seed=seed)
+    grid = sobol_grid(dim, GRID_N, seed=GRID_SEED)
+    X_sub = sobol_grid(dim, SUBSET_N, seed=GRID_SEED)
+    with torch.no_grad():
+        truth = orc_t.truth(grid).reshape(-1).double()
+        truth_sub = orc_t.truth(X_sub).reshape(-1).double()
+
+    rows: list[dict] = []
+    for arm in arms:
+        t = time.time()
+        X, Y, V, regret = build_campaign(arm, inst_id, dim, sigma, seed, orc_t)
+        scored = score_campaign(X=X, Y=Y, Yvar=V, orc=orc_t, dim=dim, grid=grid,
+                                truth=truth, X_sub=X_sub, truth_sub=truth_sub,
+                                seed=seed, instance=inst_id, arm=arm, regret=regret)
+        for r in scored:
+            r["secs"] = round(time.time() - t, 2)
+        rows.extend(scored)
+        del X, Y, V
+        gc.collect()
+    del truth, truth_sub, grid, X_sub
+    gc.collect()
+    return rows
+
+
+def _sorted(rows: list[dict]) -> list[dict]:
+    """A stable file, independent of which worker finished first."""
+    return sorted(rows, key=lambda r: (r["instance"], r["seed"], r["arm"], r["gamma"],
+                                       r["tau_frac"]))
 
 
 def main() -> None:
@@ -445,7 +521,11 @@ def main() -> None:
                     help="(instance, seed) pairs to score; default all 50")
     ap.add_argument("--arms", type=str, default=None,
                     help="comma-separated subset; default all four")
+    ap.add_argument("--workers", type=int, default=4,
+                    help="worker processes; each pinned to one BLAS thread")
     ap.add_argument("--out", type=Path, default=OUT_DEFAULT)
+    ap.add_argument("--no-resume", action="store_true",
+                    help="ignore rows already on disk and rescore every campaign")
     args = ap.parse_args()
 
     out = args.out.resolve()
@@ -459,6 +539,8 @@ def main() -> None:
         raise SystemExit(f"unknown arms {sorted(unknown)}")
 
     prov = _provenance(sys.argv)
+    # Loaded BEFORE any campaign runs: an absent comparator must stop the run, not be
+    # discovered as a `None` two hours in (§3.6).
     gate_index = committed_lhs_index() if GATED_ARM in arms else {}
     det_index = committed_versionb_index()
 
@@ -467,7 +549,7 @@ def main() -> None:
     print(f"gamma={GAMMAS}\ntau_frac={TAU_FRACS} (of tau_max, never absolute) "
           f"· alpha={ALPHAS}")
     print(f"grid: {GRID_N} Sobol at seed {GRID_SEED} · draws: {N_DRAWS} on {SUBSET_N}")
-    print(f"out={out.relative_to(ROOT)}")
+    print(f"out={_rel(out)} · workers={args.workers}")
     print(f"GATE: {gate_note()}\n")
 
     keys = sorted({(r["instance"], r["seed"]) for r in committed_rows()
@@ -475,16 +557,22 @@ def main() -> None:
                    and r["arm"] == "qlogei"})
     if args.limit:
         keys = keys[:args.limit]
-    print(f"{len(keys)} (instance, seed) pairs x {len(arms)} arms = "
-          f"{len(keys) * len(arms)} campaigns x {len(GAMMAS) * len(TAU_FRACS)} cells\n")
 
-    grid = sobol_grid(args.dim, GRID_N, seed=GRID_SEED)
-    X_sub = sobol_grid(args.dim, SUBSET_N, seed=GRID_SEED)
     rows: list[dict] = []
+    if out.exists() and not args.no_resume:
+        rows = json.loads(out.read_text())["rows"]
+        print(f"  resuming — {len(rows)} rows already on disk")
+    have = {(r["instance"], r["seed"], r["arm"]) for r in rows}
+    jobs = [(i, s, tuple(a for a in arms if (i, s, a) not in have), args.dim, args.sigma)
+            for (i, s) in keys]
+    jobs = [j for j in jobs if j[2]]
+    print(f"{len(keys)} (instance, seed) pairs x {len(arms)} arms · "
+          f"{sum(len(j[2]) for j in jobs)} campaigns still to score "
+          f"x {len(GAMMAS) * len(TAU_FRACS)} cells\n", flush=True)
+
     gate_failures: list[dict] = []
     determinism: list[dict] = []
     n_gated = 0
-    t0 = time.time()
 
     def _write() -> None:
         out.write_text(json.dumps({
@@ -497,73 +585,70 @@ def main() -> None:
                 "what_it_is": ("reproduction of the committed Version B columns by the "
                                "same code path. Seed determinism only -- NOT independent "
                                "validation, and not a gate."),
-                "sources": [str(VERSIONB.relative_to(ROOT)),
-                            str(VERSIONB_PRED.relative_to(ROOT))],
+                "sources": [_rel(VERSIONB), _rel(VERSIONB_PRED)],
                 "checks": determinism},
-            "rows": rows}, indent=2))
+            "rows": _sorted(rows)}, indent=2))
 
-    for i, (inst_id, seed) in enumerate(keys, 1):
-        inst = instance_by_id(inst_id, args.dim)
-        orc_t = BiphasicOracle(inst, sigma_rel=args.sigma, seed=seed)
-        with torch.no_grad():
-            truth = orc_t.truth(grid).reshape(-1).double()
-            truth_sub = orc_t.truth(X_sub).reshape(-1).double()
+    t0 = time.time()
+    with ProcessPoolExecutor(max_workers=args.workers) as pool:
+        for k, batch in enumerate(pool.map(one, jobs), 1):
+            inst_id, seed = batch[0]["instance"], batch[0]["seed"]
+            for arm in {r["arm"] for r in batch}:
+                scored = [r for r in batch if r["arm"] == arm]
+                if arm == GATED_ARM:
+                    for row in scored:
+                        ref = gate_index.get((inst_id, seed, row["gamma"],
+                                              row["tau_frac"]))
+                        bad = gate_row(row, ref)
+                        n_gated += 1
+                        if bad:
+                            gate_failures.append(
+                                {"instance": inst_id, "seed": seed, "arm": arm,
+                                 "gamma": row["gamma"], "tau_frac": row["tau_frac"],
+                                 "failures": bad})
+                elif (ref := det_index.get((inst_id, seed, arm))) is not None:
+                    determinism.append(_determinism_check(
+                        scored, ref, _optimum_value(inst_id, args.dim), inst_id, seed,
+                        arm))
+            rows.extend(batch)
+            _write()
 
-        for arm in arms:
-            t = time.time()
-            X, Y, V, regret = build_campaign(arm, inst_id, args.dim, args.sigma, seed,
-                                             orc_t)
-            scored = score_campaign(X=X, Y=Y, Yvar=V, orc=orc_t, dim=args.dim, grid=grid,
-                                    truth=truth, X_sub=X_sub, truth_sub=truth_sub,
-                                    seed=seed, instance=inst_id, arm=arm, regret=regret)
+            if gate_failures:
+                print(f"\n*** GATE FAILURE {GATED_ARM} {inst_id} seed={seed} ***")
+                for f in gate_failures[-1]["failures"][:8]:
+                    print(f"    {f['column']}: {f['regenerated']!r} != committed "
+                          f"{f['committed']!r} (delta {f['abs_delta']:.3e})")
+                raise SystemExit(
+                    f"{GATED_ARM} missed its committed column by more than {GATE_TOL}. "
+                    f"Stop condition 1. Not repaired, not absorbed.")
 
-            if arm == GATED_ARM:
-                for row in scored:
-                    ref = gate_index.get((inst_id, seed, row["gamma"], row["tau_frac"]))
-                    bad = gate_row(row, ref)
-                    n_gated += 1
-                    if bad:
-                        gate_failures.append({"instance": inst_id, "seed": seed,
-                                              "arm": arm, "gamma": row["gamma"],
-                                              "tau_frac": row["tau_frac"],
-                                              "failures": bad})
-                if gate_failures:
-                    _write()
-                    print(f"\n*** GATE FAILURE {arm} {inst_id} seed={seed} ***")
-                    for f in gate_failures[-1]["failures"][:8]:
-                        print(f"    {f['column']}: {f['regenerated']!r} != committed "
-                              f"{f['committed']!r} (delta {f['abs_delta']:.3e})")
-                    raise SystemExit(
-                        f"{GATED_ARM} missed its committed column by more than "
-                        f"{GATE_TOL}. Stop condition 1. Not repaired, not absorbed.")
-            elif (ref := det_index.get((inst_id, seed, arm))) is not None:
-                determinism.append(_determinism_check(scored, ref, inst,
-                                                      inst_id, seed, arm))
-
-            rows.extend(scored)
-            print(f"[{i:3d}/{len(keys)}] {arm:20s} {inst_id} seed={seed} "
-                  f"n={int(X.shape[0])} regret={regret:.4f} "
-                  f"a*={scored[0]['alpha_star']:.3f} "
-                  f"{'GATED' if arm == GATED_ARM else 'ungatable'} "
-                  f"({time.time() - t:.1f}s)", flush=True)
-
-        _write()
-        del truth, truth_sub
-        gc.collect()
+            el = time.time() - t0
+            per_arm = {r["arm"]: r["regret"] for r in batch}
+            summary = "  ".join(f"{a}={per_arm[a]:.4f}" for a in sorted(per_arm))
+            print(f"  [{k:3d}/{len(jobs)}] {inst_id} seed={seed}  {summary}"
+                  f" | {el/60:5.1f} min elapsed, "
+                  f"~{el/k*(len(jobs)-k)/60:5.1f} min left", flush=True)
 
     _write()
-    print(f"\n{len(rows)} scored rows in {time.time() - t0:.0f}s")
-    print(f"{GATED_ARM} gate: {n_gated} row-comparisons x {len(GATED_COLUMNS)} columns, "
+    print(f"\n{len(rows)} scored rows in {(time.time() - t0)/60:.1f} min")
+    print(f"{GATED_ARM} gate: {n_gated} rows x {len(GATED_COLUMNS)} columns = "
+          f"{n_gated * len(GATED_COLUMNS)} comparisons at |delta| = {GATE_TOL}, "
           f"{len(gate_failures)} failures")
-    worst = max((c["worst_abs_delta"] for c in determinism), default=float("nan"))
-    print(f"determinism (NOT a gate): {len(determinism)} campaigns checked against the "
-          f"committed Version B columns, worst |delta| = {worst:.3e}")
+    if determinism:
+        worst = max(c["worst_abs_delta"] for c in determinism)
+        exact = [c for c in determinism if c["exact_mu_max"]]
+        print(f"determinism (NOT a gate): {len(determinism)} campaigns vs the committed "
+              f"Version B columns, worst |delta| = {worst:.3e}")
+        if exact:
+            print(f"  of those, {len(exact)} with optimum_value exactly 1.0: "
+                  f"worst |delta| = "
+                  f"{max(c['worst_abs_delta'] for c in exact):.3e}")
     if gate_failures:
         sys.exit(1)
 
 
-def _determinism_check(scored: list[dict], ref: dict, inst, inst_id: str, seed: int,
-                       arm: str) -> dict:
+def _determinism_check(scored: list[dict], ref: dict, mu_max: float, inst_id: str,
+                       seed: int, arm: str) -> dict:
     """Worst |delta| against the committed Version B row, per column.
 
     The committed columns were computed at ``theta = tau_frac * inst.optimum_value``
@@ -572,12 +657,12 @@ def _determinism_check(scored: list[dict], ref: dict, inst, inst_id: str, seed: 
     most but not all instances (§3.1's "1.0 +/- 2e-16 float offset"). ``exact_mu_max``
     records which case this campaign is, so the two are never pooled.
     """
-    mu_max = float(inst.optimum_value)
     at_050 = {r["tau_frac"]: r for r in scored if r["gamma"] == 0.50}
     per_column: dict[str, float] = {"regret": _delta(scored[0]["regret"], ref["regret"])}
     for tf, row in at_050.items():
         pairs = {f"auc_{tf}": "auc_pred", f"brier_{tf}": "brier_pred",
-                 f"alpha_star_{tf}": "alpha_star", f"vorobev_dev_{tf}": "vorobev_deviation"}
+                 f"alpha_star_{tf}": "alpha_star",
+                 f"vorobev_dev_{tf}": "vorobev_deviation"}
         for a in ALPHAS:
             for stem in ("ce_vol", "ce_empty", "ce_contain", "ce_empirical"):
                 pairs[f"{stem}_{tf}_{a}"] = f"{stem}_{a}"
