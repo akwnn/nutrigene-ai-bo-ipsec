@@ -413,6 +413,14 @@ def main() -> None:
                     rank == auc_rank and not rec[f"{metric}_degenerate"])
                 agree[metric] += rec[f"{metric}_agrees_with_auc"]
                 degen[metric] += rec[f"{metric}_degenerate"]
+            # Reported for the same reason it is on the CE cells: so vacuousness is
+            # visible as a number. Only EXACT degeneracy is excluded -- a cutoff on
+            # "nearly vacuous" would be judgement masquerading as measurement, and the
+            # tau_frac = 0.85 column decays smoothly (2.8e-04 -> 2.0e-06) with no
+            # natural break.
+            rec["separation_from_prevalence"] = float(
+                max(abs(rec["total_vol"][a] - rec["prevalence"]) for a in arms))
+            rec["ranking_is_prevalence_only"] = bool(rec["total_degenerate"])
             cells.append(rec)
     out["cells"] = cells
     print(f"\n   Spearman rho against the AUC ordering: +1 identical, -1 exactly "
@@ -428,12 +436,29 @@ def main() -> None:
         print(f"   {c['gamma']:>5.2f} {c['tau_frac']:>5.2f} {c['prevalence']:>7.4f} "
               f"{c['empty_frac']:>6.1%}  {_r('type_I'):>10} {_r('type_II'):>11} "
               f"{_r('total'):>10}  {tie:>5}")
+    print(f"\n   RANKABLE DENOMINATOR — and it differs BY METRIC. A cell where every arm "
+          f"ties has no\n   ranking to agree or disagree with, and is excluded rather "
+          f"than counted as a disagreement.")
     for metric in VOLUME_METRICS:
         rhos = np.array([c[f"{metric}_spearman_vs_auc"] for c in cells], dtype=float)
         rhos = rhos[np.isfinite(rhos)]
-        print(f"   {metric:>8}: equals the AUC ranking in {agree[metric]}/{len(cells)} "
-              f"cells · degenerate ties in {degen[metric]} · median rho "
-              f"{np.median(rhos) if rhos.size else float('nan'):+.3f}")
+        rankable = len(cells) - degen[metric]
+        print(f"   {metric:>8}: equals the AUC ranking in {agree[metric]}/{rankable} "
+              f"RANKABLE cells ({degen[metric]} of {len(cells)} excluded as exact ties) "
+              f"· median rho {np.median(rhos) if rhos.size else float('nan'):+.3f}")
+    excluded = sorted({(c["gamma"], c["tau_frac"]) for c in cells
+                       if c["total_degenerate"]})
+    print(f"   excluded for `total` and `type_II`: {excluded}")
+    print(f"   `type_I` excludes four more, where an all-empty region scores type I "
+          f"exactly 0\n   while type II still separates the arms.")
+    print(f"\n   separation |arm-mean total - prevalence|, so vacuousness is a number:")
+    print(f"   {'gamma':>6}" + "".join(f"{tf:>12}" for tf in tau_fracs))
+    for g in gammas:
+        row = f"   {g:>6.2f}"
+        for tf in tau_fracs:
+            c = next(x for x in cells if x["gamma"] == g and x["tau_frac"] == tf)
+            row += f"{c['separation_from_prevalence']:>12.2e}"
+        print(row)
 
     # The across-cell descriptive ranking, at the primary labelling.
     e_all = error_volumes(k6_rows, "pred")
@@ -462,8 +487,16 @@ def main() -> None:
     out["decision"] = {
         "rankings_differ": bool(differs),
         "differ_on": differs,
-        "per_cell_agreement": {m: f"{agree[m]}/{len(cells)}" for m in VOLUME_METRICS},
+        "per_cell_agreement": {m: f"{agree[m]}/{len(cells) - degen[m]} rankable"
+                               for m in VOLUME_METRICS},
         "per_cell_degenerate_ties": {m: degen[m] for m in VOLUME_METRICS},
+        "rankable_cells": {m: len(cells) - degen[m] for m in VOLUME_METRICS},
+        "denominator_note": (
+            "The denominator is the RANKABLE cells, not all 24, and it differs by "
+            "metric: 18 for the symmetric difference and type II, 14 for type I. A cell "
+            "in which every arm ties has no ranking to agree or disagree with. Only "
+            "EXACT ties are excluded; `separation_from_prevalence` is reported on every "
+            "cell so near-vacuousness is visible without a chosen cutoff."),
         "spearman_vs_auc_overall": {m: overall[f"{m}_spearman_vs_auc"]
                                     for m in VOLUME_METRICS},
         "type_I_alone_rewards_claiming_nothing": (

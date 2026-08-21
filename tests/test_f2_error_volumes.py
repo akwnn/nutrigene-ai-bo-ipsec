@@ -36,6 +36,8 @@ from boec.calibration import error_volumes as canonical_error_volumes  # noqa: E
 
 from analyse_f2_error_volumes import (  # noqa: E402
     REQUIRED_COLUMNS,
+    _arm_means,
+    _degenerate,
     alpha_star_vs_error_volume,
     committed_rows,
     ce_error_volumes,
@@ -278,3 +280,52 @@ def test_alpha_star_vs_error_volume_is_cell_dependent(k6_rows_all, k6b_rows):
     assert at_75["rho"] < 0.0, f"expected a negative rho at tau_frac=0.75, got {at_75['rho']:+.4f}"
     # n = 8 arms, so one rank swap moves rho by roughly 0.1 and no interval is attached.
     assert at_60["n_arms"] == 8 and "ci" not in at_60
+
+
+def test_the_rankable_denominator_is_metric_dependent(k6_rows_all):
+    """"24 of 24" was the wrong denominator, and the right one differs BY METRIC.
+
+    Six of the 24 map cells — every `tau_frac = 0.95` cell — are exactly degenerate: the
+    predictive region is empty in 100% of campaigns, so total error volume is the
+    prevalence for every arm, and on the map the prevalence is arm-identical, so all eight
+    arms tie exactly. There is no ranking there to agree or disagree with.
+
+    **type I degenerates in 10 cells, not 6**, because an all-empty region scores type I
+    exactly 0 at four further high-gamma cells where type II still separates the arms.
+    """
+    ev_deg = {}
+    for metric in ("type_I", "type_II", "total"):
+        deg = 0
+        for gamma in (0.50, 0.70, 0.80, 0.90, 0.95, 0.99):
+            for tf in (0.60, 0.75, 0.85, 0.95):
+                sub = [r for r in k6_rows_all
+                       if r["gamma"] == gamma and r["tau_frac"] == tf]
+                means = _arm_means(sub, error_volumes(sub, "pred")[metric],
+                                   sorted({r["arm"] for r in sub}))
+                deg += _degenerate(means)
+        ev_deg[metric] = deg
+    assert ev_deg == {"type_I": 10, "type_II": 6, "total": 6}, ev_deg
+    assert 24 - ev_deg["total"] == 18, "the symmetric-difference denominator is 18"
+    assert 24 - ev_deg["type_I"] == 14, "the type-I denominator is 14, not 18"
+
+
+def test_the_two_emptiness_flags_are_not_interchangeable(k6_rows_all, k6b_rows):
+    """`_degenerate` and `ranking_is_prevalence_only` catch different things.
+
+    On the MAP the prevalence is arm-identical, so full emptiness makes every arm tie and
+    the two flags coincide. On the CE sets Amendment B3 gives `doe` a different
+    prevalence, so at full emptiness the arms do NOT tie — they differ *by prevalence* —
+    and `_degenerate` stays silent while the ranking is still meaningless.
+
+    Neither flag alone is sufficient in general, which matters for P6 where families
+    differ in prevalence.
+    """
+    arms = sorted({r["arm"] for r in k6b_rows})
+    sub = [r for r in k6b_rows if r["tau_frac"] == 0.95]
+    ev = ce_error_volumes(sub, 0.5)
+    assert bool(ev["empty"].all()), "every CE_0.50 set is empty at tau_frac=0.95"
+    means = _arm_means(sub, ev["total"], arms)
+    assert not _degenerate(means), (
+        "_degenerate must NOT fire here: the arms differ by prevalence under B3, so a "
+        "tie test cannot see that the ranking is vacuous")
+    assert len({round(v, 12) for v in means.values()}) > 1

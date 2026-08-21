@@ -65,9 +65,24 @@ AMENDMENT F2a — EXPECTED TYPE I / TYPE II ERROR VOLUMES AS THE PRIMARY DESIGN-
     0.99  0.75  0.9962  80.0%          --      -0.214     -0.214  T  .  .
     0.99  0.85  0.9909  99.5%          --      +0.577     +0.577  T  .  .
     0.99  0.95  0.9809 100.0%          --          --         --  T  T  T
-     type_I: equals the AUC ranking in 0/24 cells · degenerate ties in 10 · median rho +0.419
-    type_II: equals the AUC ranking in 0/24 cells · degenerate ties in 6 · median rho +0.024
-      total: equals the AUC ranking in 0/24 cells · degenerate ties in 6 · median rho +0.048
+
+   RANKABLE DENOMINATOR — and it differs BY METRIC. A cell where every arm ties has no
+   ranking to agree or disagree with, and is excluded rather than counted as a disagreement.
+     type_I: equals the AUC ranking in 0/14 RANKABLE cells (10 of 24 excluded as exact ties) · median rho +0.419
+    type_II: equals the AUC ranking in 0/18 RANKABLE cells (6 of 24 excluded as exact ties) · median rho +0.024
+      total: equals the AUC ranking in 0/18 RANKABLE cells (6 of 24 excluded as exact ties) · median rho +0.048
+   excluded for `total` and `type_II`: [(0.5, 0.95), (0.7, 0.95), (0.8, 0.95), (0.9, 0.95), (0.95, 0.95), (0.99, 0.95)]
+   `type_I` excludes four more, where an all-empty region scores type I exactly 0
+   while type II still separates the arms.
+
+   separation |arm-mean total - prevalence|, so vacuousness is a number:
+    gamma         0.6        0.75        0.85        0.95
+     0.50    3.98e-01    1.59e-02    2.84e-04    0.00e+00
+     0.70    4.71e-01    2.28e-02    4.91e-04    0.00e+00
+     0.80    4.36e-01    1.79e-02    2.52e-04    0.00e+00
+     0.90    3.29e-01    1.09e-02    6.00e-05    1.11e-16
+     0.95    2.22e-01    7.02e-03    2.00e-05    0.00e+00
+     0.99    6.67e-02    1.50e-03    2.00e-06    1.11e-16
 
    Across all 24 cells (descriptive, no n):
      AUC(pred), best first : qlognei > qlogei-addonly > sobol > lhs > qlogei-add > qlogei > random > doe

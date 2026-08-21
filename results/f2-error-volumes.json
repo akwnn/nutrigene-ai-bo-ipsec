@@ -1,8 +1,8 @@
 {
  "provenance": {
-  "git_sha": "7223d78b240afe8e5850b0ed661ac51bdd0e18c3",
+  "git_sha": "c12a4df67a03b73df3d5eb6076c144a26d67f5f8",
   "git_dirty": true,
-  "generated_at": "2026-08-21T13:56:11+08:00",
+  "generated_at": "2026-08-21T14:23:43+08:00",
   "argv": [
    "scripts/analyse_f2_error_volumes.py"
   ],
@@ -211,7 +211,9 @@
    ],
    "total_degenerate": false,
    "total_spearman_vs_auc": 0.19047619047619052,
-   "total_agrees_with_auc": false
+   "total_agrees_with_auc": false,
+   "separation_from_prevalence": 0.39785300000000007,
+   "ranking_is_prevalence_only": false
   },
   {
    "gamma": 0.5,
@@ -306,7 +308,9 @@
    ],
    "total_degenerate": false,
    "total_spearman_vs_auc": 0.7857142857142858,
-   "total_agrees_with_auc": false
+   "total_agrees_with_auc": false,
+   "separation_from_prevalence": 0.015865000000000073,
+   "ranking_is_prevalence_only": false
   },
   {
    "gamma": 0.5,
@@ -401,7 +405,9 @@
    ],
    "total_degenerate": false,
    "total_spearman_vs_auc": 0.4523809523809524,
-   "total_agrees_with_auc": false
+   "total_agrees_with_auc": false,
+   "separation_from_prevalence": 0.00028400000000000647,
+   "ranking_is_prevalence_only": false
   },
   {
    "gamma": 0.5,
@@ -496,7 +502,9 @@
    ],
    "total_degenerate": true,
    "total_spearman_vs_auc": NaN,
-   "total_agrees_with_auc": false
+   "total_agrees_with_auc": false,
+   "separation_from_prevalence": 0.0,
+   "ranking_is_prevalence_only": true
   },
   {
    "gamma": 0.7,
@@ -591,7 +599,9 @@
    ],
    "total_degenerate": false,
    "total_spearman_vs_auc": 0.023809523809523815,
-   "total_agrees_with_auc": false
+   "total_agrees_with_auc": false,
+   "separation_from_prevalence": 0.47129099999999996,
+   "ranking_is_prevalence_only": false
   },
   {
    "gamma": 0.7,
@@ -686,7 +696,9 @@
    ],
    "total_degenerate": false,
    "total_spearman_vs_auc": -0.4047619047619048,
-   "total_agrees_with_auc": false
+   "total_agrees_with_auc": false,
+   "separation_from_prevalence": 0.022784000000000026,
+   "ranking_is_prevalence_only": false
   },
   {
    "gamma": 0.7,
@@ -781,7 +793,9 @@
    ],
    "total_degenerate": false,
    "total_spearman_vs_auc": 0.14285714285714288,
-   "total_agrees_with_auc": false
+   "total_agrees_with_auc": false,
+   "separation_from_prevalence": 0.0004910000000000192,
+   "ranking_is_prevalence_only": false
   },
   {
    "gamma": 0.7,
@@ -876,7 +890,9 @@
    ],
    "total_degenerate": true,
    "total_spearman_vs_auc": NaN,
-   "total_agrees_with_auc": false
+   "total_agrees_with_auc": false,
+   "separation_from_prevalence": 0.0,
+   "ranking_is_prevalence_only": true
   },
   {
    "gamma": 0.8,
@@ -971,7 +987,9 @@
    ],
    "total_degenerate": false,
    "total_spearman_vs_auc": 0.07142857142857144,
-   "total_agrees_with_auc": false
+   "total_agrees_with_auc": false,
+   "separation_from_prevalence": 0.43567200000000006,
+   "ranking_is_prevalence_only": false
   },
   {
    "gamma": 0.8,
@@ -1066,7 +1084,9 @@
    ],
    "total_degenerate": false,
    "total_spearman_vs_auc": -0.4761904761904762,
-   "total_agrees_with_auc": false
+   "total_agrees_with_auc": false,
+   "separation_from_prevalence": 0.017919000000000018,
+   "ranking_is_prevalence_only": false
   },
   {
    "gamma": 0.8,
@@ -1161,7 +1181,9 @@
    ],
    "total_degenerate": false,
    "total_spearman_vs_auc": 0.27545404024004955,
-   "total_agrees_with_auc": false
+   "total_agrees_with_auc": false,
+   "separation_from_prevalence": 0.00025199999999991896,
+   "ranking_is_prevalence_only": false
   },
   {
    "gamma": 0.8,
@@ -1256,7 +1278,9 @@
    ],
    "total_degenerate": true,
    "total_spearman_vs_auc": NaN,
-   "total_agrees_with_auc": false
+   "total_agrees_with_auc": false,
+   "separation_from_prevalence": 0.0,
+   "ranking_is_prevalence_only": true
   },
   {
    "gamma": 0.9,
@@ -1351,7 +1375,9 @@
    ],
    "total_degenerate": false,
    "total_spearman_vs_auc": -0.1666666666666667,
-   "total_agrees_with_auc": false
+   "total_agrees_with_auc": false,
+   "separation_from_prevalence": 0.32913099999999995,
+   "ranking_is_prevalence_only": false
   },
   {
    "gamma": 0.9,
@@ -1446,7 +1472,9 @@
    ],
    "total_degenerate": false,
    "total_spearman_vs_auc": -0.6428571428571429,
-   "total_agrees_with_auc": false
+   "total_agrees_with_auc": false,
+   "separation_from_prevalence": 0.010892000000000013,
+   "ranking_is_prevalence_only": false
   },
   {
    "gamma": 0.9,
@@ -1541,7 +1569,9 @@
    ],
    "total_degenerate": false,
    "total_spearman_vs_auc": 0.6976011479687815,
-   "total_agrees_with_auc": false
+   "total_agrees_with_auc": false,
+   "separation_from_prevalence": 6.0000000000060005e-05,
+   "ranking_is_prevalence_only": false
   },
   {
    "gamma": 0.9,
@@ -1636,7 +1666,9 @@
    ],
    "total_degenerate": true,
    "total_spearman_vs_auc": NaN,
-   "total_agrees_with_auc": false
+   "total_agrees_with_auc": false,
+   "separation_from_prevalence": 1.1102230246251565e-16,
+   "ranking_is_prevalence_only": true
   },
   {
    "gamma": 0.95,
@@ -1731,7 +1763,9 @@
    ],
    "total_degenerate": false,
    "total_spearman_vs_auc": -0.19047619047619052,
-   "total_agrees_with_auc": false
+   "total_agrees_with_auc": false,
+   "separation_from_prevalence": 0.22179500000000008,
+   "ranking_is_prevalence_only": false
   },
   {
    "gamma": 0.95,
@@ -1826,7 +1860,9 @@
    ],
    "total_degenerate": false,
    "total_spearman_vs_auc": -0.4285714285714286,
-   "total_agrees_with_auc": false
+   "total_agrees_with_auc": false,
+   "separation_from_prevalence": 0.007020000000000026,
+   "ranking_is_prevalence_only": false
   },
   {
    "gamma": 0.95,
@@ -1921,7 +1957,9 @@
    ],
    "total_degenerate": false,
    "total_spearman_vs_auc": 0.6819309069874762,
-   "total_agrees_with_auc": false
+   "total_agrees_with_auc": false,
+   "separation_from_prevalence": 2.0000000000131024e-05,
+   "ranking_is_prevalence_only": false
   },
   {
    "gamma": 0.95,
@@ -2016,7 +2054,9 @@
    ],
    "total_degenerate": true,
    "total_spearman_vs_auc": NaN,
-   "total_agrees_with_auc": false
+   "total_agrees_with_auc": false,
+   "separation_from_prevalence": 0.0,
+   "ranking_is_prevalence_only": true
   },
   {
    "gamma": 0.99,
@@ -2111,7 +2151,9 @@
    ],
    "total_degenerate": false,
    "total_spearman_vs_auc": -0.261904761904762,
-   "total_agrees_with_auc": false
+   "total_agrees_with_auc": false,
+   "separation_from_prevalence": 0.06674999999999998,
+   "ranking_is_prevalence_only": false
   },
   {
    "gamma": 0.99,
@@ -2206,7 +2248,9 @@
    ],
    "total_degenerate": false,
    "total_spearman_vs_auc": -0.2142857142857143,
-   "total_agrees_with_auc": false
+   "total_agrees_with_auc": false,
+   "separation_from_prevalence": 0.0014969999999998596,
+   "ranking_is_prevalence_only": false
   },
   {
    "gamma": 0.99,
@@ -2301,7 +2345,9 @@
    ],
    "total_degenerate": false,
    "total_spearman_vs_auc": 0.5773502691896257,
-   "total_agrees_with_auc": false
+   "total_agrees_with_auc": false,
+   "separation_from_prevalence": 1.999999999946489e-06,
+   "ranking_is_prevalence_only": false
   },
   {
    "gamma": 0.99,
@@ -2396,7 +2442,9 @@
    ],
    "total_degenerate": true,
    "total_spearman_vs_auc": NaN,
-   "total_agrees_with_auc": false
+   "total_agrees_with_auc": false,
+   "separation_from_prevalence": 1.1102230246251565e-16,
+   "ranking_is_prevalence_only": true
   }
  ],
  "overall_ranking": {
@@ -2495,15 +2543,21 @@
    "total"
   ],
   "per_cell_agreement": {
-   "type_I": "0/24",
-   "type_II": "0/24",
-   "total": "0/24"
+   "type_I": "0/14 rankable",
+   "type_II": "0/18 rankable",
+   "total": "0/18 rankable"
   },
   "per_cell_degenerate_ties": {
    "type_I": 10,
    "type_II": 6,
    "total": 6
   },
+  "rankable_cells": {
+   "type_I": 14,
+   "type_II": 18,
+   "total": 18
+  },
+  "denominator_note": "The denominator is the RANKABLE cells, not all 24, and it differs by metric: 18 for the symmetric difference and type II, 14 for type I. A cell in which every arm ties has no ranking to agree or disagree with. Only EXACT ties are excluded; `separation_from_prevalence` is reported on every cell so near-vacuousness is visible without a chosen cutoff.",
   "spearman_vs_auc_overall": {
    "type_I": 0.2142857142857143,
    "type_II": 0.07142857142857144,

@@ -1236,10 +1236,12 @@ regeneration.
 > **AMENDMENT F2a.** The AUC ranking below is **superseded** as the primary design-space
 > figure and is retained here as the record of what was registered and computed. The
 > reported ranking is now the expected type I / type II error volumes, which disagree with
-> AUC in **24 of 24 cells** at a Spearman rho of +0.071 — see §6.10.1 and
-> `results/f2-error-volumes.json`. The §5.2 verdict itself is unaffected: the map ranking
-> matches the regret ranking in 0 of 24 cells on AUC **and** on every error-volume
-> ranking.
+> AUC in **18 of 18 rankable cells** at a Spearman rho of +0.071 — see §6.10.1 and
+> `results/f2-error-volumes.json`. *An earlier revision said "24 of 24"; six of the 24
+> cells have no ranking at all and the corrected denominator is in §6.10.1.* The §5.2
+> verdict itself is unaffected: the map ranking matches the regret ranking in **0 of 24**
+> cells on AUC — AUC separates the arms in every cell — and in **0 of 18 rankable** cells
+> on the symmetric difference.
 
 Per-cell AUC-of-predictive-map ranking, from `results/k6-analysis.json` `cells`
 (regenerated identically by `scripts/analyse_k6.py`). `empty` is the fraction of the 400
@@ -3189,15 +3191,64 @@ true excursion set is empty and its `CE_alpha` is empty too, and there the error
 are both exactly 0 while IoU is genuinely 0/0 (§6.10.2).
 
 **The registered decision rule fires.** The error-volume ranking differs from the AUC
-ranking in **24 of 24 cells**, and the disagreement is not a near-miss: Spearman rho
-between the AUC ordering and the symmetric-difference ordering is **+0.071** overall
+ranking in **18 of 18 rankable cells**, and the disagreement is not a near-miss: Spearman
+rho between the AUC ordering and the symmetric-difference ordering is **+0.071** overall
 (type I +0.214, type II +0.071) and the per-cell median is **+0.048** — the two orderings
-are close to unrelated. **The error-volume ranking is therefore the reported one and the
-AUC ranking is retained beside it as superseded**, with the prevalence attached: it spans
-**0.0029 to 0.9992** across the 24 cells.
+are close to unrelated.
+
+> **CORRECTION TO THE DENOMINATOR — an earlier revision of this paragraph, and of §5.2,
+> said "24 of 24 cells".** Six of the 24 are **exactly degenerate**: at `tau_frac = 0.95`
+> the predictive region is empty in **100%** of campaigns at every gamma, so total error
+> volume is exactly the prevalence for every arm, and on the map the prevalence is
+> **identical across arms** — so all eight arms tie and there is no ranking to agree or
+> disagree with. The excluded cells are `(gamma, tau_frac)` =
+> **(0.50, 0.95), (0.70, 0.95), (0.80, 0.95), (0.90, 0.95), (0.95, 0.95), (0.99, 0.95)**.
+> **The finding is unchanged in direction and strength** — still 100% disagreement wherever
+> a ranking exists, and the Spearman figures already excluded these cells, since a
+> correlation against a constant is undefined. But six of the twenty-four could never have
+> agreed *or* disagreed, and a reader is entitled to know which denominator they are
+> reading. **This is the `ranking_is_prevalence_only` rule of §6.10.2 applied back to the
+> map**, where it was found in the CE sets first.
+>
+> **The denominator differs BY METRIC and is not 18 everywhere.** `type_I` degenerates in
+> **10** of 24, so its denominator is **14** — an all-empty region scores type I exactly 0
+> at four further high-gamma cells where type II still separates the arms. Stated because
+> "18 of 18" quoted for type I would be wrong in the other direction.
+>
+> **Only exact degeneracy is excluded, and the separation is reported rather than
+> thresholded.** `separation_from_prevalence = max |arm-mean total − prevalence|` sits on
+> every cell:
+>
+> | gamma | tau_f 0.60 | 0.75 | 0.85 | 0.95 |
+> |---|---|---|---|---|
+> | 0.50 | 3.98e-01 | 1.59e-02 | 2.84e-04 | **0** |
+> | 0.70 | 4.71e-01 | 2.28e-02 | 4.91e-04 | **0** |
+> | 0.80 | 4.36e-01 | 1.79e-02 | 2.52e-04 | **0** |
+> | 0.90 | 3.29e-01 | 1.09e-02 | 6.00e-05 | **1.1e-16** |
+> | 0.95 | 2.22e-01 | 7.02e-03 | 2.00e-05 | **0** |
+> | 0.99 | 6.67e-02 | 1.50e-03 | 2.00e-06 | **1.1e-16** |
+>
+> The `tau_frac = 0.85` column decays smoothly from 4.9e-04 to 2.0e-06 — **technically
+> rankable, nearly vacuous, and with no natural break.** It is retained, with its
+> separation shown, because **a chosen vacuousness cutoff would be judgement masquerading
+> as a measurement.** Report the separation; exclude only exact degeneracy.
+>
+> **The two emptiness flags are not interchangeable, which matters for Phase 6.** On the
+> map, prevalence is arm-identical, so full emptiness makes every arm tie and a tie test
+> catches it. On the **CE sets** Amendment B3 gives `doe` a different prevalence, so at
+> full emptiness the arms do **not** tie — they differ *by prevalence* — and a tie test
+> stays silent while the ranking is just as vacuous (§6.10.2). **Neither flag alone is
+> sufficient once families differ in prevalence**, which is exactly the cross-family case.
+
+**The error-volume ranking is therefore the reported one and the AUC ranking is retained
+beside it as superseded**, with the prevalence attached: it spans **0.0029 to 0.9992**
+across the 24 cells.
 
 Descriptive arm means over all 24 cells, `pred` labelling (no `n`, no `p` — a ranking is
-not an inferential summary, cf. F4):
+not an inferential summary, cf. F4). **These are descriptive means and so are computed
+over all 24 cells including the six degenerate ones**, which contribute the same
+prevalence to every arm and therefore shift all eight equally without changing their
+order:
 
 | metric | direction | ranking, best first | rho vs AUC |
 |---|---|---|---|
