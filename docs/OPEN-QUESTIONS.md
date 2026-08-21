@@ -6644,3 +6644,62 @@ has nothing to do with it.**
 **Not rewritten** — rewriting another agent's commit in a live shared tree is worse than the
 mislabelling. **Recorded here so the provenance is recoverable**, and as the concrete cost of a
 broad `git add` in a seven-agent tree. **Every agent uses path-scoped `git add` from here.**
+
+---
+
+## 📌 MULTI-AGENT HAZARD 2 · **A kill that silently failed, and a check structurally incapable of catching it.**
+
+**Found and self-reported by the P2 worker after it checked its own stop twice.** Two independent
+mistakes that **agreed with each other** — the class of failure where the verification confirms
+the bug instead of catching it.
+
+**1. In zsh, `kill $VAR` with a multi-line `$VAR` is a SILENT NO-OP.**
+```zsh
+KIDS=$(ps -eo pid,ppid | awk -v p=$PID '$2==p {print $1}')
+for k in $KIDS; do kill -9 $k; done      # zsh does NOT word-split unquoted expansions
+```
+`kill` receives **one newline-joined argument**, fails, and the error had been sent to
+`/dev/null`. **Use `${=VAR}` or `${(f)VAR}`, or list the PIDs literally.** This project's shell is
+zsh, and this is the difference from bash that bites.
+
+**2. ⚠️ After the parent dies, orphans reparent to PPID 1** — so a survivor check of
+`ps | awk '$2==PARENT'` **finds nothing and reads as success.** The workers were alive for
+another **~90 seconds** while the verification reported them gone.
+
+**The second is the more dangerous and it generalises well past process management:** the check
+was **structurally incapable of returning "still there."** Same failure as a monitor that only
+greps the happy path, and the same shape as the wrong-column gate that would have passed on 88%
+of ackley rows — **a test that cannot fail is not a test.**
+
+**Registered rule: kill by explicit PID list, then verify each PID individually.** Several agents
+are killing pools on this machine.
+
+**Second kill-command defect from the same worker today**, both self-reported unprompted:
+`pkill -9 -f spawn_main` (**over**-broad, matching every agent's multiprocessing children), and
+now this (**under**-broad, killing nothing). **It found the second only because the first made it
+check twice.** That is why the `BrokenProcessPool` attribution stays recorded as **ambiguous**
+rather than resolved in anyone's favour.
+
+---
+
+## 📌 COORDINATION DEFECT · **My instruction cadence caused five start-stop cycles. Standing instructions issued.**
+
+Recorded because it cost more compute today than any technical fault.
+
+| worker | crossings | cost |
+|---|---|---|
+| P6 | **3** — an ordering note read (correctly) as not-a-release; a hold arriving after launch; a hold-confirmed arriving after relaunch | 3 start-stop cycles |
+| P3 | 1 — a relaunch instruction premised on an accident that had not happened | 1 cycle, plus a false systemic diagnosis |
+| P2 | 1 — **"RELEASED"** then **"HOLD"**, the second written *after* reading its launch report | 1 cycle |
+
+**In every case the worker was right and flagged the crossing rather than complying.** P3 refused a
+relaunch and named the false premise; P6 removed its own data point from my diagnosis; P2 stopped
+and asked which instruction stood rather than sit idle on an ambiguous one.
+
+**Root cause: I was sending hold/release decisions faster than workers could act on them, and
+treating each report as current when it described a state already superseded.**
+
+**Fix, issued: standing instructions with an explicit abort keyword** (`ABORT-P6`, `ABORT-P2`) —
+run until told otherwise by a specific token, **do not stop for machine state.** Everything now
+checkpoints, so an OOM kill costs at most the in-flight key. **That arbitration is more honest
+than a queue I have been wrong about more often than right.**
