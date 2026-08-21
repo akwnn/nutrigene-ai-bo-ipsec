@@ -325,10 +325,20 @@ def _rows(refinement_by_arm: dict, n: int = 12, gamma: float = 0.50,
             out.append({
                 "instance": f"i{i}", "seed": 0, "arm": a, "gamma": gamma,
                 "tau_frac": tau_frac, "true_frac_above_tau": 0.3, "regret": 0.1,
+                "minority_prevalence": 0.3, "minority_class": 1,
+                "auprc_is_primary": False,
                 **{f"{mp}_{k}": v for mp in ("pred", "latent") for k, v in {
                     "brier_raw": cal + 0.001 * i, "brier": cal + 0.001 * i,
                     "refinement": ref + 0.0001 * i, "calibration": cal,
                     "uncertainty": 0.21, "within_bin": 0.0,
+                    # Amendment F columns. AUC is set to track refinement and the error
+                    # volume to track Brier, so the F2 ranking comparison in `summarise`
+                    # has something non-degenerate to compare.
+                    "auc": ref, "auprc": ref, "auprc_minority": ref,
+                    "auprc_baseline": 0.3, "vol": 0.2, "empty": False,
+                    "fi": 0.1, "iou": 0.5,
+                    "type_I_vol": 0.02, "intersect": 0.18,
+                    "type_II_vol": cal, "total_error_vol": 0.02 + cal,
                     "degenerate": (["single_class"]
                                    if flag_on == (f"i{i}", a) else []),
                 }.items()},
@@ -359,7 +369,11 @@ def test_the_rule_fires_when_a_single_pair_is_inverted():
     assert cell["pred"]["inversions"] == [["a", "b"]]
     assert s["verdict"].startswith("A5 FOUND SOMETHING")
     assert [t["pair"] for t in s["inversion_tests"] if t["map"] == "pred"] == [["a", "b"]]
-    assert "holm_p" in s["inversion_tests"][0]["refinement"]
+    # F1: both units present, Holm applied within each, and n=25 governs the verdict.
+    ref = s["inversion_tests"][0]["refinement"]
+    assert "holm_p" in ref["n50"] and "holm_p" in ref["n25"]
+    assert ref["n50"]["n"] == 12 and ref["n25"]["n"] == 12, "one seed per instance here"
+    assert "survives_conservative_unit" in s["inversion_tests"][0]
 
 
 def test_uncertainty_carries_no_across_arm_spread():
@@ -468,17 +482,21 @@ def test_average_precision_is_none_when_a_class_is_absent():
 def test_auc_looks_respectable_where_average_precision_does_not():
     """The registered motivation, constructed rather than hoped for.
 
-    24 positives in 20,000. A map that ranks them well but buries each under a hundred
-    false positives keeps a high AUC -- the false positives are still a tiny fraction of
-    the 19,976 negatives -- while precision, and therefore AP, collapses.
+    24 positives in 20,000. A map that puts them at the top but drags a hundred false
+    positives up WITH each one keeps a high AUC -- those 2,400 are still a tiny fraction
+    of the 19,976 negatives -- while precision, and therefore AP, collapses to ~1%.
+
+    The false positives must be INDISTINGUISHABLE from the positives, not merely below
+    them. An earlier version of this test scored them just below and got AP = 1.0, which
+    is correct for a map that separates the classes perfectly: the test was wrong, not
+    the code.
     """
     g = torch.Generator().manual_seed(25)
     n, n_pos = 20_000, 24
     label = torch.zeros(n, dtype=torch.double)
     label[:n_pos] = 1.0
     p = torch.rand(n, generator=g, dtype=torch.double) * 0.9
-    p[:n_pos] = 0.95                      # positives near the top
-    p[n_pos:n_pos + 2400] = 0.94          # but a hundred false positives each
+    p[:n_pos + 2400] = 0.95               # 24 true, 2,400 false, all tied at the top
     truth = _truth_for(label)
     _, auc = brier_and_auc(p, truth, 0.5)
     ap = average_precision(p, truth, 0.5)
@@ -515,11 +533,21 @@ def test_error_volumes_are_defined_exactly_where_iou_and_fi_are_nan():
     small number, it is no number at all.
     """
     p7 = _p7()
+    # D_est empty, true set NOT empty: fi is 0/0 and nan, but every volume is exact.
     ev = p7.error_volumes(vol=0.0, fi=float("nan"), prevalence=0.0294)
     assert ev["type_I_vol"] == 0.0
     assert ev["intersect"] == 0.0
     assert ev["type_II_vol"] == pytest.approx(0.0294)
-    assert math.isnan(ev["implied_iou"]), "IoU is genuinely undefined when both are empty"
+    assert ev["total_error_vol"] == pytest.approx(0.0294)
+    # IoU is 0 here, not nan -- the union is the true set and is non-empty. An earlier
+    # version of this test asserted nan by reading `fi is nan` as `iou is nan`; they are
+    # nan under DIFFERENT conditions, and that difference is the point of F2a.
+    assert ev["implied_iou"] == 0.0
+
+    # Both empty is the only genuinely undefined case, and `designspace.iou` agrees.
+    both = p7.error_volumes(vol=0.0, fi=float("nan"), prevalence=0.0)
+    assert both["type_I_vol"] == 0.0 and both["type_II_vol"] == 0.0
+    assert math.isnan(both["implied_iou"])
 
 
 def test_no_committed_row_produces_a_negative_type_ii_volume():

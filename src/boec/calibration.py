@@ -84,7 +84,8 @@ from __future__ import annotations
 import torch
 from torch import Tensor
 
-__all__ = ["N_BINS", "equal_count_bins", "murphy_decomposition"]
+__all__ = ["N_BINS", "average_precision", "equal_count_bins",
+           "murphy_decomposition"]
 
 #: Registered bin count. Not a parameter of the study -- a different value answers a
 #: different question, because both terms move monotonically with resolution.
@@ -185,3 +186,52 @@ def murphy_decomposition(p: Tensor, truth: Tensor, tau: float,
             "uncertainty": uncertainty, "bin_counts": bin_counts,
             "brier_raw": brier_raw, "within_bin": brier_raw - brier,
             "base_rate": base, "degenerate": degenerate}
+
+
+def average_precision(p: Tensor, truth: Tensor, tau: float) -> float | None:
+    """AUPRC (average precision) of ``p`` against ``1{truth >= tau}``. **Amendment F2b.**
+
+    Same ``(p, truth, tau)`` signature as :func:`boec.designspace.brier_and_auc`, so the
+    two score the identical object and can sit in one row.
+
+    **Why this is reported beside AUC and above it under imbalance.** AUC counts ranked
+    pairs, so a false positive is weighed against the whole negative class. When the
+    negative class is 19,976 of 20,000 grid points, a hundred false positives per true
+    positive barely move it -- AUC stays above 0.9 while precision, and therefore this,
+    collapses. F2 measures that imbalance at gamma=0.99, tau_frac=0.60: about 16 minority
+    points in 20,000 (Davis & Goadrich 2006).
+
+    **Read it against its baseline.** A ranker with no skill scores the prevalence, not
+    0.5, so AP is not comparable across cells whose prevalence runs from 0.0012 to 0.999
+    unless the prevalence travels with it. Callers report both.
+
+    Returns ``None`` when either class is absent -- as with AUC's ``nan`` there, the
+    honest answer is "undefined", and 1.0 (which is what a degenerate AP evaluates to
+    with no negatives) would average into a mean as if it were skill.
+
+    Ties are handled as ``sklearn.metrics.average_precision_score`` handles them: the
+    curve steps only at DISTINCT scores, so a tie group is wholly included or wholly
+    excluded and no ordering is invented inside it.
+    """
+    v = p.reshape(-1).double()
+    if v.numel() == 0:
+        return None
+    label = (truth.reshape(-1) >= tau).double()
+    n_pos = int(label.sum())
+    if n_pos == 0 or n_pos == v.numel():
+        return None
+
+    order = torch.argsort(v, descending=True, stable=True)
+    v_sorted, y_sorted = v[order], label[order]
+    # Step only where the score changes; within a tie group precision is not defined
+    # pointwise and sklearn does not pretend it is.
+    last = torch.ones(v.numel(), dtype=torch.bool)
+    last[:-1] = v_sorted[1:] != v_sorted[:-1]
+    idx = torch.nonzero(last, as_tuple=False).reshape(-1)
+
+    tps = torch.cumsum(y_sorted, dim=0)[idx]
+    predicted = (idx + 1).double()
+    precision = tps / predicted
+    recall = tps / float(n_pos)
+    prev_recall = torch.cat([torch.zeros(1, dtype=torch.double), recall[:-1]])
+    return float(((recall - prev_recall) * precision).sum())

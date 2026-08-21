@@ -54,6 +54,7 @@ import argparse
 import gc
 import itertools
 import json
+import os
 import platform
 import subprocess
 import sys
@@ -63,9 +64,17 @@ from pathlib import Path
 import numpy as np
 import torch
 
-from boec.calibration import N_BINS, murphy_decomposition
-from boec.designspace import (gp_adapter, predictive_probability_map, probability_map,
-                              tau_max)
+# ERRATUM 2: this project's fidelity regime is EXACT equality, and BLAS thread count
+# changes the order of floating-point reductions. Nothing in the repository has ever
+# recorded the thread count a |delta| = 0 gate was measured under. It is capped here,
+# recorded in `provenance`, and the map gate below -- which compares against k6 columns
+# produced at the torch DEFAULT thread count -- is what turns "expected to survive" into
+# a measurement.
+torch.set_num_threads(1)
+
+from boec.calibration import N_BINS, average_precision, murphy_decomposition  # noqa: E402
+from boec.designspace import (brier_and_auc, false_inclusion_rate, gp_adapter,  # noqa: E402
+                              iou, predictive_probability_map, probability_map, tau_max)
 from boec.norms import sobol_grid
 from boec.replay import committed_rows, instance_by_id, regenerate, unit_bounds
 from boec.surrogate import build_gp
@@ -123,6 +132,9 @@ def _provenance(argv: list[str]) -> dict:
         git_sha=_git("rev-parse", "HEAD"), git_dirty=bool(_git("status", "--porcelain")),
         generated_at=time.strftime("%Y-%m-%dT%H:%M:%S%z"), argv=argv,
         python=platform.python_version(), torch=torch.__version__,
+        torch_threads=torch.get_num_threads(),
+        thread_env={k: os.environ.get(k) for k in
+                    ("OMP_NUM_THREADS", "MKL_NUM_THREADS", "VECLIB_MAXIMUM_THREADS")},
         botorch=botorch.__version__, gpytorch=gpytorch.__version__,
         numpy=np.__version__, scipy=scipy.__version__,
         config=dict(family="hill", dim=DIM, sigma_rel=SIGMA, arms=list(ARMS),
@@ -133,6 +145,33 @@ def _provenance(argv: list[str]) -> dict:
     )
 
 
+def error_volumes(vol: float, fi: float, prevalence: float) -> dict:
+    """Expected type I / type II error volumes. **Amendment F2a**, Azzimonti &
+    Ginsbourger 2018 Table 1 -- what the cited community actually reports.
+
+        type_I_vol  = vol * fi                       |D_est \\ D_true| / |grid|
+        intersect   = vol * (1 - fi)
+        type_II_vol = prevalence - intersect         |D_true \\ D_est| / |grid|
+
+    **Defined exactly where `fi` and `iou` are nan.** An empty `D_est` certifies nothing,
+    so it makes no type I error and its type II error is the whole true set. `fi` is 0/0
+    there and `iou` is 0/0, but both volumes are exact -- and 54-69% of predictive
+    regions are empty at some cells, so this is the common case, not the corner.
+
+    `implied_iou` is carried only so the arithmetic can be gated against the committed
+    `iou_pred` column; it is not a new estimand.
+    """
+    if vol == 0.0:
+        type_i, inter = 0.0, 0.0
+    else:
+        type_i, inter = vol * fi, vol * (1.0 - fi)
+    type_ii = prevalence - inter
+    union = vol + prevalence - inter
+    return {"type_I_vol": type_i, "intersect": inter, "type_II_vol": type_ii,
+            "total_error_vol": type_i + type_ii,
+            "implied_iou": inter / union if union > 0 else float("nan")}
+
+
 def _gate_tol(arm: str) -> float:
     """The tolerance K1-gate MEASURED. Never a constant chosen here, never raised."""
     if not GATE.exists():
@@ -141,16 +180,43 @@ def _gate_tol(arm: str) -> float:
     return float(pol.get(arm, {}).get("worst_abs_delta", 0.0))
 
 
-def _committed_brier() -> dict:
-    """`(instance, seed, arm, gamma, tau_frac) -> (brier_pred, brier_latent)`."""
+#: Every K6 column this re-score independently recomputes. Gating all of them is a far
+#: stronger statement than gating regret alone: regret agreeing proves the CAMPAIGN
+#: reproduced, these agreeing prove the same 20,000-point MAP was rebuilt, which is the
+#: object being decomposed. Under ERRATUM 2 it is also the thread-count evidence -- these
+#: columns were produced at the torch default and are re-derived here at one thread.
+GATED_COLUMNS = ("true_frac_above_tau", "brier_pred", "brier_latent", "auc_pred",
+                 "auc_latent", "vol_pred", "vol_latent", "iou_pred", "iou_latent",
+                 "fi_pred", "fi_latent")
+
+
+def _committed_maps() -> dict:
+    """`(instance, seed, arm, gamma, tau_frac) -> {column: value}` from K6."""
     out = {}
     for path in MAP_GATE:
         if not path.exists():
             continue
         for r in json.loads(path.read_text())["rows"]:
-            out[(r["instance"], r["seed"], r["arm"], r["gamma"], r["tau_frac"])] = (
-                r["brier_pred"], r["brier_latent"])
+            out[(r["instance"], r["seed"], r["arm"], r["gamma"], r["tau_frac"])] = {
+                c: r[c] for c in GATED_COLUMNS}
     return out
+
+
+#: Committed K6 column -> the key this runner stores it under.
+MINE_FOR = {"true_frac_above_tau": "true_frac_above_tau",
+            "brier_pred": "pred_brier_raw", "brier_latent": "latent_brier_raw",
+            "auc_pred": "pred_auc", "auc_latent": "latent_auc",
+            "vol_pred": "pred_vol", "vol_latent": "latent_vol",
+            "iou_pred": "pred_iou", "iou_latent": "latent_iou",
+            "fi_pred": "pred_fi", "fi_latent": "latent_fi"}
+
+
+def _same(a: float, b: float) -> bool:
+    """Exact equality, with nan == nan. An empty region legitimately gives nan on both
+    sides, and `nan != nan` would report that agreement as a gate failure."""
+    if isinstance(a, float) and isinstance(b, float) and np.isnan(a) and np.isnan(b):
+        return True
+    return a == b
 
 
 def score_campaign(rec, orc, grid, truth) -> tuple[list[dict], list[dict], float]:
@@ -183,8 +249,19 @@ def score_campaign(rec, orc, grid, truth) -> tuple[list[dict], list[dict], float
             tau = round(tf * tmax, 10)
             maps = {"pred": predictive_probability_map(m, grid, tau, sigma_pred),
                     "latent": probability_map(m, grid, tau)}
+            prevalence = float((truth >= tau).double().mean())
+            # AUPRC's no-skill baseline is the prevalence of the class being scored, and
+            # F2b flags it primary where the MINORITY class is rarer than 1%. At high
+            # gamma the minority is the NEGATIVE class -- at gamma=0.99, tau_frac=0.60
+            # about 16 grid points of 20,000 are negative -- so the standard
+            # positive-class AP is trivially near 1 there and says nothing. The minority
+            # AP is computed by scoring the complement, and both travel with the row.
+            minority = min(prevalence, 1.0 - prevalence)
             row = {**base, "gamma": gamma, "tau_frac": tf, "tau": tau, "tau_max": tmax,
-                   "true_frac_above_tau": float((truth >= tau).double().mean())}
+                   "true_frac_above_tau": prevalence,
+                   "minority_prevalence": minority,
+                   "minority_class": 1 if prevalence <= 0.5 else 0,
+                   "auprc_is_primary": bool(minority < 0.01)}
             ok = True
             for name, p in maps.items():
                 d = murphy_decomposition(p, truth, tau, n_bins=N_BINS)
@@ -205,6 +282,29 @@ def score_campaign(rec, orc, grid, truth) -> tuple[list[dict], list[dict], float
                 row[f"{name}_within_bin"] = d["within_bin"]
                 row[f"{name}_identity_residual"] = resid
                 row[f"{name}_degenerate"] = d["degenerate"]
+
+                # --- F2b: AUPRC beside AUC, with the baseline both are read against ---
+                _, auc_v = brier_and_auc(p, truth, tau)
+                row[f"{name}_auc"] = auc_v
+                row[f"{name}_auprc"] = average_precision(p, truth, tau)
+                row[f"{name}_auprc_minority"] = (
+                    row[f"{name}_auprc"] if prevalence <= 0.5
+                    # Score the complement explicitly. `-truth >= -tau` would put a grid
+                    # point with truth exactly tau in BOTH classes.
+                    else average_precision(1.0 - p, (truth < tau).double(), 0.5))
+                row[f"{name}_auprc_baseline"] = minority
+
+                # --- F2a: the region, and its two error volumes ---
+                region = p >= gamma
+                vol = float(region.double().mean())
+                fi = false_inclusion_rate(region, truth, tau)
+                ev = error_volumes(vol, fi, prevalence)
+                row[f"{name}_vol"] = vol
+                row[f"{name}_empty"] = int(region.sum()) == 0
+                row[f"{name}_fi"] = fi
+                row[f"{name}_iou"] = iou(region, truth, tau)
+                for k, v in ev.items():
+                    row[f"{name}_{k}"] = v
             if ok:
                 rows.append(row)
     del model, mean, sd
@@ -217,6 +317,32 @@ def score_campaign(rec, orc, grid, truth) -> tuple[list[dict], list[dict], float
 def _order(arms: list[str], values: dict, higher_is_better: bool) -> list[str]:
     """Arms best-first. Ties broken by name so the comparison is deterministic."""
     return sorted(arms, key=lambda a: (-values[a] if higher_is_better else values[a], a))
+
+
+def dual_paired_stats(a: np.ndarray, b: np.ndarray, keys: list) -> dict:
+    """**Amendment F1**: every contrast at BOTH units, and n=25 governs.
+
+    * ``n50`` -- unit ``(instance, seed)``, as K6 reported.
+    * ``n25`` -- unit ``instance``, **seeds averaged first**, which is what the earlier
+      paper committed to. Two seeds on one landscape share the landscape, so treating
+      them as independent inflates the effective sample size and narrows every CI by
+      roughly sqrt(2).
+
+    The two means are identical whenever every instance carries the same number of
+    seeds; only the intervals and the p-values move. That is asserted, not assumed --
+    a differing mean would mean the design is unbalanced and the n=25 column is not the
+    same contrast.
+    """
+    diff = np.asarray(a, dtype=float) - np.asarray(b, dtype=float)
+    by_instance: dict = {}
+    for k, d in zip(keys, diff):
+        by_instance.setdefault(k[0], []).append(d)
+    inst_diff = np.array([float(np.mean(v)) for v in by_instance.values()])
+    out = {"n50": _paired_stats(diff), "n25": _paired_stats(inst_diff)}
+    out["means_agree"] = bool(abs(out["n50"]["mean_diff"]
+                                  - out["n25"]["mean_diff"]) < 1e-12)
+    out["seeds_per_instance"] = sorted({len(v) for v in by_instance.values()})
+    return out
 
 
 def _paired_stats(diff: np.ndarray) -> dict:
@@ -281,11 +407,20 @@ def summarise(rows: list[dict]) -> dict:
         cell["arms"] = present
 
         for mp in ("pred", "latent"):
-            vec = {q: {a: np.array([by[(a, *k)][f"{mp}_{q}"] for k in keys])
+            vec = {q: {a: np.array([(np.nan if by[(a, *k)][f"{mp}_{q}"] is None
+                                     else by[(a, *k)][f"{mp}_{q}"]) for k in keys],
+                                    dtype=float)
                        for a in present}
                    for q in ("brier_raw", "brier", "refinement", "calibration",
-                             "uncertainty")}
-            means = {q: {a: float(v.mean()) for a, v in vec[q].items()} for q in vec}
+                             "uncertainty", "auc", "auprc", "auprc_minority",
+                             "type_I_vol", "type_II_vol", "total_error_vol", "vol")}
+            # nanmean, because AUC/AUPRC are undefined (nan/None) when a class is
+            # absent and fi/iou are nan for an empty region. `n_defined` travels with
+            # every mean so a number averaged over fewer campaigns is visible as one.
+            means = {q: {a: float(np.nanmean(v)) if np.isfinite(v).any() else float("nan")
+                         for a, v in vec[q].items()} for q in vec}
+            n_defined = {q: {a: int(np.isfinite(v).sum()) for a, v in vec[q].items()}
+                         for q in vec}
             # Uncertainty is a function of (truth, tau) alone, so its across-arm spread
             # must be exactly 0. A nonzero value means the arms were not scored against
             # the same truth, which would invalidate every comparison below.
@@ -298,6 +433,13 @@ def summarise(rows: list[dict]) -> dict:
             # the two Brier rankings coincide, the binned/raw distinction is immaterial
             # to the verdict and can be said to be, rather than assumed.
             rank_binned = _order(present, means["brier"], higher_is_better=False)
+            # AMENDMENT F2's own decision rule: if the error-volume ranking differs from
+            # the AUC ranking, the ERROR-VOLUME ranking is the reported one and AUC is
+            # retained beside it as superseded. If they agree, AUC is vindicated AT THIS
+            # IMBALANCE, and the prevalence is stated with it.
+            rank_auc = _order(present, means["auc"], higher_is_better=True)
+            rank_err = _order(present, means["total_error_vol"], higher_is_better=False)
+            rank_auprc = _order(present, means["auprc_minority"], higher_is_better=True)
             inversions = [[a, b] for a, b in itertools.combinations(present, 2)
                           if ((rank_brier.index(a) < rank_brier.index(b))
                               != (rank_ref.index(a) < rank_ref.index(b)))]
@@ -312,7 +454,8 @@ def summarise(rows: list[dict]) -> dict:
                          "kendall_tau": float(kendalltau(ref_v, neg_b).statistic),
                          "n_pair_inversions": len(inversions),
                          "n_pairs": len(present) * (len(present) - 1) // 2}
-            cell[mp] = {"means": means, "across_arm_spread": spread,
+            cell[mp] = {"means": means, "n_defined": n_defined,
+                        "across_arm_spread": spread,
                         "agreement": agreement,
                         "mean_within_bin": {a: float(np.mean(
                             [by[(a, *k)][f"{mp}_within_bin"] for k in keys]))
@@ -322,30 +465,57 @@ def summarise(rows: list[dict]) -> dict:
                         "binned_brier_ranks_as_raw": rank_binned == rank_brier,
                         "rank_by_refinement": rank_ref,
                         "rankings_agree": rank_brier == rank_ref,
-                        "inversions": inversions}
+                        "inversions": inversions,
+                        "rank_by_auc": rank_auc,
+                        "rank_by_error_volume": rank_err,
+                        "rank_by_auprc_minority": rank_auprc,
+                        "error_volume_agrees_with_auc": rank_err == rank_auc,
+                        "auprc_agrees_with_auc": rank_auprc == rank_auc}
             for a, b in inversions:
                 tests.append({"gamma": gamma, "tau_frac": tf, "map": mp,
                               "pair": [a, b],
-                              "refinement": _paired_stats(vec["refinement"][a]
-                                                          - vec["refinement"][b]),
-                              "brier_raw": _paired_stats(vec["brier_raw"][a]
-                                                         - vec["brier_raw"][b])})
+                              "refinement": dual_paired_stats(vec["refinement"][a],
+                                                              vec["refinement"][b], keys),
+                              "brier_raw": dual_paired_stats(vec["brier_raw"][a],
+                                                             vec["brier_raw"][b], keys)})
         cells.append(cell)
 
+    # Holm across the cells, separately at each unit -- an adjustment computed across a
+    # mixture of units would not be an adjustment for either.
     for mp in ("pred", "latent"):
         idx = [i for i, t in enumerate(tests) if t["map"] == mp]
-        if idx:
-            adj = _holm([tests[i]["refinement"]["wilcoxon_p"] for i in idx])
-            for i, a in zip(idx, adj):
-                tests[i]["refinement"]["holm_p"] = a
+        for unit in ("n50", "n25"):
+            if idx:
+                adj = _holm([tests[i]["refinement"][unit]["wilcoxon_p"] for i in idx])
+                for i, a in zip(idx, adj):
+                    tests[i]["refinement"][unit]["holm_p"] = a
+    for t in tests:
+        # F1: significant at n=50 and not at n=25 is NOT a finding.
+        t["survives_conservative_unit"] = bool(
+            t["refinement"]["n25"].get("holm_p", 1.0) < 0.05)
 
     scored = [c for c in cells if "pred" in c]
     disagree = {mp: [[c["gamma"], c["tau_frac"]] for c in scored
                      if not c[mp]["rankings_agree"]] for mp in ("pred", "latent")}
-    verdict = ("A5 IS A NULL — refinement ranks the arms exactly as Brier does at every "
-               "scored cell" if not disagree["pred"] else
-               f"A5 FOUND SOMETHING — the two rankings differ at "
-               f"{len(disagree['pred'])} of {len(scored)} predictive-map cells")
+    sig = {u: sum(1 for t in tests if t["map"] == "pred"
+                  and t["refinement"][u].get("holm_p", 1.0) < 0.05)
+           for u in ("n50", "n25")}
+    n_inv = sum(1 for t in tests if t["map"] == "pred")
+    if not disagree["pred"]:
+        verdict = ("A5 IS A NULL — refinement ranks the arms exactly as Brier does at "
+                   "every scored cell")
+    elif sig["n25"] == 0:
+        verdict = (f"A5 IS A NULL AT THE CONSERVATIVE UNIT — the two rankings differ at "
+                   f"{len(disagree['pred'])} of {len(scored)} predictive-map cells, but "
+                   f"NONE of the {n_inv} inverted pairs survives Holm at n=25 "
+                   f"({sig['n50']} survive at the anti-conservative n=50). Per Amendment "
+                   f"F1, n=25 governs and a difference significant only at n=50 is not a "
+                   f"finding.")
+    else:
+        verdict = (f"A5 FOUND SOMETHING — the two rankings differ at "
+                   f"{len(disagree['pred'])} of {len(scored)} predictive-map cells, and "
+                   f"{sig['n25']} of {n_inv} inverted pairs survive Holm at the "
+                   f"conservative unit n=25 ({sig['n50']} at n=50)")
     flags = {f: sum(1 for r in rows for mp in ("pred", "latent")
                     if f in r[f"{mp}_degenerate"])
              for f in ("single_class", "few_bins", "singleton_bin")}
@@ -353,6 +523,7 @@ def summarise(rows: list[dict]) -> dict:
                             for c in cells if "pred" in c for mp in ("pred", "latent")),
                            default=0.0)
     return {"cells": cells, "inversion_tests": tests,
+            "n_inversions_surviving_holm": sig, "n_inversion_tests_pred": n_inv,
             "degenerate_flag_counts": flags,
             "worst_uncertainty_across_arm_spread": worst_unc_spread,
             "cells_where_rankings_differ": disagree,
@@ -387,6 +558,15 @@ def _print_summary(s: dict) -> None:
         n_same = sum(1 for c in scored if c["pred"]["binned_brier_ranks_as_raw"])
         print(f"binned Brier ranks the arms as the raw Brier does at {n_same} of "
               f"{len(scored)} cells")
+    if scored:
+        n_ev = sum(1 for c in scored if c["pred"]["error_volume_agrees_with_auc"])
+        n_ap = sum(1 for c in scored if c["pred"]["auprc_agrees_with_auc"])
+        print(f"F2 rule — error-volume ranking agrees with AUC at {n_ev} of "
+              f"{len(scored)} cells; AUPRC(minority) agrees with AUC at {n_ap}")
+        print(f"F1 — inverted pairs surviving Holm: n=50 "
+              f"{s['n_inversions_surviving_holm']['n50']}, n=25 "
+              f"{s['n_inversions_surviving_holm']['n25']}, of "
+              f"{s['n_inversion_tests_pred']}")
     print(f"degenerate flags fired: {s['degenerate_flag_counts']}")
     print("worst across-arm uncertainty spread (must be 0.0): "
           f"{s['worst_uncertainty_across_arm_spread']:.3e}")
@@ -448,7 +628,7 @@ def main() -> None:
 
     committed = {(r["instance"], r["seed"], r["arm"]): r["regret"] for r in committed_rows()
                  if r["dim"] == DIM and r["sigma"] == SIGMA}
-    committed_b = _committed_brier()
+    committed_b = _committed_maps()
     grid = sobol_grid(DIM, GRID_N, seed=GRID_SEED)
 
     rows: list[dict] = []
@@ -456,7 +636,7 @@ def main() -> None:
     map_fail: list[dict] = []
     identity_fail: list[dict] = []
     worst_identity = 0.0
-    worst_map = {"pred": 0.0, "latent": 0.0}
+    worst_map = {c: 0.0 for c in GATED_COLUMNS}
     n_map_checked = 0
     done: set[tuple[str, int]] = set()
     if prior is not None:
@@ -513,15 +693,16 @@ def main() -> None:
                 if key not in committed_b:
                     continue
                 n_map_checked += 1
-                for mp, cb in zip(("pred", "latent"), committed_b[key]):
-                    d = abs(r[f"{mp}_brier_raw"] - cb)
-                    worst_map[mp] = max(worst_map[mp], d)
-                    if d > 0.0:
-                        map_fail.append({"instance": inst_id, "seed": seed, "arm": arm,
-                                         "gamma": r["gamma"], "tau_frac": r["tau_frac"],
-                                         "map": mp, "committed": cb,
-                                         "regenerated": r[f"{mp}_brier_raw"],
-                                         "abs_delta": d})
+                for col, cb in committed_b[key].items():
+                    mine = r[MINE_FOR[col]]
+                    if _same(mine, cb):
+                        continue
+                    d = abs(mine - cb)
+                    worst_map[col] = max(worst_map.get(col, 0.0), d)
+                    map_fail.append({"instance": inst_id, "seed": seed, "arm": arm,
+                                     "gamma": r["gamma"], "tau_frac": r["tau_frac"],
+                                     "column": col, "committed": cb, "regenerated": mine,
+                                     "abs_delta": d})
             print(f"[{i:3d}/{len(keys)}] {arm:8s} {inst_id} seed={seed} "
                   f"regret={rec.regret:.4f} rows={len(new)} ({time.time() - t:.1f}s)",
                   flush=True)
@@ -546,9 +727,10 @@ def main() -> None:
 
     print(f"\n{len(rows)} scored rows in {time.time() - t0:.0f}s")
     print(f"regret gate failures: {len(gate_fail)}")
-    print(f"map gate: {n_map_checked} rows checked, worst |delta| "
-          f"pred={worst_map['pred']:.3e} latent={worst_map['latent']:.3e}, "
-          f"{len(map_fail)} failures")
+    print(f"map gate: {n_map_checked} rows x {len(GATED_COLUMNS)} committed columns, "
+          f"worst |delta| {max(worst_map.values()):.3e}, {len(map_fail)} failures")
+    print(f"  (ERRATUM 2) recomputed at torch_threads={torch.get_num_threads()} against "
+          f"columns produced at the default")
     print(f"identity: max residual {worst_identity:.3e} against bar {IDENTITY_BAR:.0e}, "
           f"{len(identity_fail)} rows withheld")
     _print_summary(summary)
