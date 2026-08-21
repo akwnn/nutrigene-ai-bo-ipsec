@@ -6978,3 +6978,69 @@ on P3's Kendall τ-b measurements before any of this cost was known, and it now 
 **The worker is not pausing and did not ask for a decision** — it stated the horizon because *"run
 the full programme"* and *"the OOM killer will decide"* are both compatible with 28 hours.
 **Recorded here so the choice is explicit rather than discovered at hour 20.**
+
+---
+
+## 📌 ⭐ **THE IDENTITY GATE FIRED, AND CAUGHT A BUG IN ITS OWN OWNER'S CODE. No tolerance was widened.**
+
+**First real P6 run, and the registered kill behaved exactly as specified.**
+
+```
+MissingGateTarget: hartmann6 versionb_random seed=1 p=0.75 gamma=0.5:
+  error-volume identity misses iou_pred by 3.331e-16,
+  over the 2.220e-16 bound measured on the spread arms
+```
+
+### The message contradicted itself, and that is what identified the bug
+
+**It names the SPREAD population while quoting the OPTIMISER number.** Cause: `SPREAD_POP` had
+been extended to include the four Version B arms, but `iou_bound_for` still repeated the literal
+`("lhs", "sobol", "random")`. So `versionb_random` was **checked against the optimiser bound while
+the failure text used `SPREAD_POP` for the name.**
+
+> **A constant and its consumer disagreeing — one level further down than the defect this gate was
+> added to catch.**
+
+Fixed by making `iou_population(arm)` **the single decision**, read by both the bound and the
+message.
+
+### And the test is why it shipped wrong — the same shape, again
+
+`test_the_iou_identity_bound_is_per_population_and_both_are_named` covered `lhs`/`sobol`/`random`
+and `doe`/`qlogei`/`qlognei` and **omitted the four arms that had just been added to the
+constant.** It now asserts the bound for all four **and** asserts, for **every** arm in `ARMS`,
+that `iou_bound_for` and the message name come from the same lookup.
+
+**That is the third distinct instance today of a check that could not see the case it was written
+for** — after the wrong-column gate that would have passed on 88% of ackley rows, and the survivor
+check structurally blind to reparented orphans.
+
+### 🔑 Nothing was widened, and the number is evidence in its own right
+
+**`3.3306690738754696e-16` is the already-registered spread bound**, measured on
+`k6-designspace-spread.json`. **Nothing moved.**
+
+**And `versionb_random` landing on EXACTLY the spread worst case is evidence the proxy
+classification was right** — the Version B arms **do** behave like the spread population
+numerically. **That is the first data anyone has on a population the registration explicitly
+recorded as unmeasured** (`SPREAD_POP` "states that the Version B arms are a proxy whose own
+population has never been measured"). The proxy is now measured, and it holds.
+
+### The registered stop behaviour is what made a 4e-17 discrepancy visible
+
+The runner **raised**, exited non-zero, and the driver **halted the entire programme** — ackley,
+levy and rosenbrock never started; **24 campaigns banked and intact.**
+
+> **A gate that stops the programme is what let a 4e-17 discrepancy surface as a stop rather than
+> as a column nobody reads.**
+
+**And the worker correctly did not treat the stop as a hold** — it was a registered kill, it fixed
+the cause, and it restarted **within the same standing instruction.** That is the distinction
+between a kill condition and a pause, and it was drawn without being asked.
+
+### One requirement carried to the `versionb_tauq` follow-up
+
+**Its kill condition must be written against a MAP metric, not regret.** The three two-plate
+variants measured **indistinguishable on regret** on both ackley and hartmann6 while **distinct on
+`vol_pred` / `iou` / `brier` / `auprc`.** **A regret-based kill would be unable to detect its own
+effect.**
