@@ -202,3 +202,59 @@ def test_gp_adapter_chunking_gives_the_same_answer_as_one_shot():
     m_big, s_big = gp_adapter(model, chunk=10_000).posterior_mean_and_sd(grid)
     assert torch.allclose(m_small, m_big, atol=1e-9)
     assert torch.allclose(s_small, s_big, atol=1e-9)
+
+
+# --- P3-B2: tau_max omits sigma_add ------------------------------------------------
+
+def test_tau_max_is_unchanged_by_the_p3_b2_amendment():
+    """The registered decision is that `tau_max` is NOT fixed. This pins that.
+
+    P3-B2 (`docs/OPEN-QUESTIONS.md`, commit 5c44e6a): correcting `tau_max` for the
+    sigma=0.10 cells while the committed sigma=0.25 cells keep the old definition would
+    confound the sigma axis with a definition change -- a far worse defect than 8e-4.
+    """
+    z = float(torch.distributions.Normal(0.0, 1.0)
+              .icdf(torch.tensor(0.95, dtype=torch.double)))
+    assert tau_max(0.95, 0.25) == round(1.0 - z * 0.25, 10)
+    assert tau_max(0.95, 0.10) == round(1.0 - z * 0.10, 10)
+
+
+def test_tau_max_exact_carries_the_additive_term():
+    """`mu_max - z*sqrt((sigma_rel*mu_max)^2 + sigma_add^2)`."""
+    from boec.designspace import tau_max_exact
+
+    z = float(torch.distributions.Normal(0.0, 1.0)
+              .icdf(torch.tensor(0.95, dtype=torch.double)))
+    want = 1.0 - z * math.sqrt(0.25 ** 2 + 0.01 ** 2)
+    assert tau_max_exact(0.95, 0.25, 0.01) == round(want, 10)
+
+
+def test_tau_max_exact_reproduces_the_registered_error_magnitudes():
+    """3.288e-04 at sigma_rel=0.25 and 8.204e-04 at 0.10, ratio 2.49 (NOT 10x).
+
+    The repo default is `sigma_add = 0.01` (`boec.torch_oracle`, both oracle classes).
+    An earlier audit quoted 7.4e-4 and "10x worse" using 0.015, which is not the default.
+    """
+    from boec.designspace import tau_max_exact
+
+    err_25 = tau_max(0.95, 0.25) - tau_max_exact(0.95, 0.25, 0.01)
+    err_10 = tau_max(0.95, 0.10) - tau_max_exact(0.95, 0.10, 0.01)
+    assert abs(err_25 - 3.288e-04) < 1e-7
+    assert abs(err_10 - 8.204e-04) < 1e-7
+    assert abs(err_10 / err_25 - 2.49) < 5e-3
+
+
+def test_tau_max_exact_is_never_above_tau_max():
+    """The omitted term can only make the ceiling lower; a fix that raised it is wrong."""
+    from boec.designspace import tau_max_exact
+
+    for gamma in (0.50, 0.70, 0.80, 0.90, 0.95, 0.99):
+        for sigma_rel in (0.25, 0.10):
+            assert tau_max_exact(gamma, sigma_rel, 0.01) <= tau_max(gamma, sigma_rel)
+
+
+def test_tau_max_exact_collapses_to_tau_max_with_no_additive_noise():
+    from boec.designspace import tau_max_exact
+
+    for gamma in (0.70, 0.95, 0.99):
+        assert tau_max_exact(gamma, 0.25, 0.0) == tau_max(gamma, 0.25)
