@@ -197,3 +197,108 @@ def test_coord_declares_every_axis_active(p4):
     assert rec.dropped_held_at is None
     assert int(rec.X.shape[0]) == 48
     assert int(rec.X.shape[1]) == DIM
+
+
+# --------------------------------------------------------------------------------------
+# AMENDMENT F2a / F2b — ERROR VOLUMES AND AUPRC
+# --------------------------------------------------------------------------------------
+#
+# The error volumes are recoverable from what the first P4 run already stored, because it
+# carried `true_frac_above_tau` on every row. **AUPRC is not.** It needs the full `p_pred`
+# vector against the truth labels over the 20k grid, and no stored row carries those --
+# the same omission that makes `versionb.json` unscoreable to this day. So `coord` is
+# re-scored, and the maps have to be rebuilt to do it.
+#
+# Rebuilding the maps is the risk. `run_k6_designspace.score_campaign` computes `p_pred`
+# and `p_lat` internally and throws them away, so P4 computes its own -- and a second
+# probability map is a second definition of every metric derived from it. The gate is
+# `test_the_auprc_maps_are_k6s_maps`: three of K6's own committed columns are recomputed
+# from P4's maps and required to match the row K6 produced, bitwise. If they do, the
+# AUPRC beside them was taken on K6's object; if they do not, it was taken on some other.
+
+@pytest.mark.slow
+def test_the_auprc_maps_are_k6s_maps(p4):
+    """P4's `p_pred`/`p_lat` must reproduce K6's own columns exactly, or AUPRC is not
+    scoring the same object the rest of the row scores."""
+    from boec.norms import sobol_grid
+    from boec.replay import instance_by_id, regenerate
+    from boec.torch_oracle import BiphasicOracle
+
+    ref = _committed("k6-designspace-spread.json", "lhs")
+    key = (ref[0]["instance"], ref[0]["seed"])
+    rec = regenerate(key[0], DIM, SIGMA, key[1], "lhs")
+    orc = BiphasicOracle(instance_by_id(key[0], DIM), sigma_rel=SIGMA, seed=key[1])
+    grid = sobol_grid(DIM, p4.GRID_N, seed=p4.GRID_SEED)
+    with torch.no_grad():
+        truth = orc.truth(grid).reshape(-1).double()
+
+    rows = p4.score_k6(rec, orc, grid, truth)
+    assert len(rows) == 24
+    for r in rows:
+        for col in ("vol_pred", "vol_latent", "brier_pred", "brier_latent",
+                    "auc_pred", "auc_latent", "iou_pred", "fi_pred"):
+            want = r[col]
+            got = r[f"_recomputed_{col}"]
+            if isinstance(want, float) and not np.isfinite(want):
+                assert not np.isfinite(got), (r["gamma"], r["tau_frac"], col)
+            else:
+                assert got == want, (r["gamma"], r["tau_frac"], col, got, want)
+
+
+def test_minority_auprc_scores_the_explicit_complement(p4):
+    """`truth < tau`, never `-truth >= -tau`.
+
+    A point whose truth is exactly `tau` satisfies `truth >= tau` AND `-truth >= -tau`,
+    so the negated form puts it in BOTH classes and the two AP values are then computed
+    against label vectors that overlap. The complement is exclusive by construction.
+    """
+    truth = torch.tensor([0.0, 0.5, 1.0, 0.5], dtype=torch.double)
+    tau = 0.5
+    pos = (truth >= tau)
+    neg_right = (truth < tau)
+    neg_wrong = (-truth >= -tau)
+    assert int((pos & neg_wrong).sum()) == 2, "the negated form double-counts ties"
+    assert int((pos & neg_right).sum()) == 0
+    assert int((pos | neg_right).sum()) == truth.numel()
+
+    p = torch.tensor([0.1, 0.6, 0.9, 0.4], dtype=torch.double)
+    out = p4.auprc_pair(p, truth, tau)
+    assert out["ap_baseline"] == pytest.approx(3 / 4)
+    assert out["ap_baseline_minority"] == pytest.approx(1 / 4)
+    assert 0.0 <= out["auprc"] <= 1.0
+    assert 0.0 <= out["auprc_minority"] <= 1.0
+
+
+def test_ap_baseline_travels_because_ap_is_not_comparable_without_it(p4):
+    """A no-skill ranker scores the prevalence, not 0.5, and prevalence runs 0.0012 to
+    0.999 across this grid -- so an AP without its baseline is not comparable across
+    cells. Both baselines are stored on every row."""
+    truth = torch.linspace(0.0, 1.0, 1000, dtype=torch.double)
+    p = torch.rand(1000, generator=torch.Generator().manual_seed(0), dtype=torch.double)
+    for tau in (0.1, 0.5, 0.9):
+        out = p4.auprc_pair(p, truth, tau)
+        prevalence = float((truth >= tau).double().mean())
+        assert out["ap_baseline"] == pytest.approx(prevalence)
+        assert out["ap_baseline_minority"] == pytest.approx(1 - prevalence)
+        # A random ranker sits near its baseline, not near 0.5.
+        assert abs(out["auprc"] - prevalence) < 0.15, (tau, out["auprc"], prevalence)
+
+
+def test_error_volumes_are_stored_and_reproduce_the_committed_iou(p4):
+    """F2a's three columns on every row, gated against `iou_pred` via `implied_iou`."""
+    from boec.calibration import error_volumes
+
+    ref = _committed("k6-designspace-spread.json", "lhs")
+    checked = 0
+    for r in ref:
+        if r["empty_pred"] or not np.isfinite(r["iou_pred"]):
+            continue
+        ev = error_volumes(r["vol_pred"], r["fi_pred"], r["true_frac_above_tau"])
+        assert abs(ev["implied_iou"] - r["iou_pred"]) < 1e-12
+        assert ev["type_I_vol"] == pytest.approx(r["vol_pred"] * r["fi_pred"])
+        checked += 1
+    # 456 of `lhs`'s 1,200 rows are non-empty with a finite IoU. The other 744 are the
+    # empty-region case, which is exactly what F2a exists to cover and what this
+    # particular gate cannot reach -- `implied_iou` needs a committed `iou_pred` to
+    # check against, and there is none where the union is empty.
+    assert checked > 400, checked

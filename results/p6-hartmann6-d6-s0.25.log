@@ -1,0 +1,26 @@
+P6 · hartmann6 d=6 sigma=0.25 · arms=('doe', 'qlogei', 'qlognei', 'lhs', 'sobol', 'random')
+  tau from results/p5-tau-quantile.json: p=0.75->0.00733  p=0.25->0.09706  p=0.1->0.21929  p=0.01->0.56612
+  gamma=(0.5, 0.7, 0.8, 0.9, 0.95, 0.99) (certification level ONLY; tau_q does not move with gamma)
+  grid: 20000 Sobol at seed 0 · threads=1 · OMP=1
+  ranking scalar: total_error_vol_pred (symmetric difference; NOT type I alone)
+  UNGATABLE lhs: no committed family column exists for 'lhs' on any family -- lhs/sobol/random are ungatable off hill (COVERAGE-MATRIX B4). Reproducibility is the RNG's: one static_design call and one evaluate call, both seeded.
+  UNGATABLE sobol: no committed family column exists for 'sobol' on any family -- lhs/sobol/random are ungatable off hill (COVERAGE-MATRIX B4). Reproducibility is the RNG's: one static_design call and one evaluate call, both seeded.
+  UNGATABLE random: no committed family column exists for 'random' on any family -- lhs/sobol/random are ungatable off hill (COVERAGE-MATRIX B4). Reproducibility is the RNG's: one static_design call and one evaluate call, both seeded.
+  doe gate distinguishes the pre-D20 column on 10/25 committed seeds -- over the whole column, not just the seeds run here
+  tau above the predictive ceiling in 1/24 (p, gamma) cells -- empty by the noise floor, flagged per row
+    p=0.01@g=0.99
+  checkpoint p6-hartmann6-d6-s0.25.ckpt.jsonl: 0 campaigns already done
+
+  [ 0] doe      regret=0.5867 gated=True (18.1s)
+  [ 0] qlogei   regret=0.2279 gated=True (51.3s)
+  [ 0] qlognei  regret=0.1700 gated=True (65.7s)
+  [ 0] lhs      regret=0.4116 gated=False (8.0s)
+  [ 0] sobol    regret=0.5458 gated=False (6.9s)
+  [ 0] random   regret=0.6496 gated=False (5.7s)
+  [ 1] doe      regret=0.6370 gated=True (6.5s)
+  [ 1] qlogei   regret=0.2857 gated=True (34.2s)
+  [ 1] qlognei  regret=0.2443 gated=True (48.4s)
+  [ 1] lhs      regret=0.5646 gated=False (6.8s)
+  [ 1] sobol    regret=0.2516 gated=False (6.5s)
+  [ 1] random   regret=0.7689 gated=False (5.9s)
+  [ 2] doe      regret=0.5503 gated=True (9.0s)

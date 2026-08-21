@@ -36,6 +36,7 @@ from __future__ import annotations
 import importlib.util
 import json
 import math
+import re
 import sys
 from pathlib import Path
 
@@ -340,9 +341,12 @@ def test_the_result_json_is_never_written_incrementally(p6):
     next starts, and `results/p6-families.json` is written once, whole, by `--merge`.
     """
     src = SCRIPT.read_text()
-    assert src.count("OUT.write_text(") == 1, "OUT is written in exactly one place"
+    # Match the bare `OUT`, not `CENSUS_OUT`, which is a different file.
+    writes = re.findall(r"(?<![A-Z_])OUT\.write_text\(", src)
+    assert len(writes) == 1, f"OUT is written in {len(writes)} places, expected 1"
     body = src[src.index("def main("):]
-    assert "OUT.write_text(" not in body, "main() must not write the result JSON"
+    assert not re.search(r"(?<![A-Z_])OUT\.write_text\(", body), (
+        "main() must not write the result JSON")
     assert "def merge(" in src and "ckpt.open(\"a\")" in src
 
 
@@ -398,3 +402,53 @@ def test_campaign_level_columns_are_declared_so_they_are_not_counted_row_wise(p6
     assert not set(p6.CAMPAIGN_LEVEL_COLUMNS) & set(p6.CELL_LEVEL_COLUMNS)
     for c in ("auc_pred", "iou_pred", "true_frac_above_tau", "vol_pred", "tau"):
         assert c in p6.CELL_LEVEL_COLUMNS
+
+
+# -- the ceiling census, promoted to a registered secondary result -----------------
+def test_gamma_half_is_clean_on_every_family_by_construction(p6):
+    """z(0.50) = 0, so tau_max(0.50, sigma) = mu_max = 1.0 exactly; UnitScaled puts every
+    family's optimum at 1; and the largest tau_q in the registered grid is 0.98631. So the
+    headline column can never cross the ceiling on any family, at any p, at any sigma.
+    """
+    doc = p6.ceiling_census()
+    at_half = [r for r in doc["rows"] if r["gamma"] == 0.50]
+    assert at_half, "no gamma=0.50 rows"
+    assert not any(r["above_ceiling"] for r in at_half)
+    assert not any(r["n_landscapes_above"] for r in at_half)
+    assert max(r["tau_q_max"] for r in doc["rows"]) < 1.0
+
+
+def test_the_census_counts_cells_not_rows(p6):
+    """Erratum 6a in a new place. Hill carries 25 landscapes per (d, p) and each external
+    family carries 1, so a raw row count weights hill 25x and makes it look like an
+    outlier. At the cell unit hill is THIRD of five, inside the range -- which is what
+    makes 'the asymmetry is not a property of external families' true.
+    """
+    doc = p6.ceiling_census()
+    per_cell = {r["family"]: r["n_landscapes"] for r in doc["rows"]}
+    assert per_cell["hill"] == 25
+    assert all(v == 1 for f, v in per_cell.items() if f != "hill")
+
+    def rate(family, gamma=0.70, sigma=0.25):
+        s = doc["summary"][f"{family}|sigma={sigma}|gamma={gamma}"]
+        return s["above"] / s["cells"]
+
+    assert rate("rosenbrock") > rate("levy") > rate("hill") > rate("hartmann6")
+    assert rate("hill") > 0.0, "hill is not clean either -- it is in the middle"
+    assert rate("ackley") == 0.0
+
+
+def test_hill_is_the_only_family_whose_landscapes_straddle_the_ceiling(p6):
+    """And where they do, 'above the ceiling' is a majority verdict, not a cell property.
+
+    Only hill has landscape-to-landscape variation, so only hill can straddle. One cell
+    lands at 13/25, which is a coin flip; those rows must carry the count, never a bare
+    boolean.
+    """
+    doc = p6.ceiling_census()
+    straddling = [r for r in doc["rows"] if not r["unanimous"]]
+    assert {r["family"] for r in straddling} == {"hill"}
+    assert any(8 <= r["n_landscapes_above"] <= 17 for r in straddling), (
+        "expected at least one near-tie cell; the count is what makes it visible")
+    for r in straddling:
+        assert 0 < r["n_landscapes_above"] < 25

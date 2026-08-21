@@ -490,6 +490,82 @@ def _provenance(argv, elapsed: float) -> dict:
     }
 
 
+CENSUS_OUT = ROOT / "results" / "p6-ceiling-census.json"
+
+
+def ceiling_census() -> dict:
+    """What fraction of each family's response range is certifiable at a given assurance.
+
+    **A registered secondary result, not an artefact to route around.** Under `tau_q` the
+    threshold is fixed by prevalence while `tau_max` still falls with gamma, so a cell can
+    sit above the predictive ceiling and be empty by algebra. Which cells, and how many,
+    is a design-space property of the family -- and this project has never reported it.
+
+    **Counted at the (d, p) cell, never at the row.** Hill carries 25 instances per
+    (d, p) and the four external families carry one landscape each, so a raw row count
+    gives hill 25x the weight and makes it look like an outlier when it is not. That is
+    Erratum 6a's failure mode -- counting a per-campaign property per row -- in a new
+    place. `hill_unanimous` records whether the 25 instances agree, which is what licenses
+    collapsing them to one cell.
+
+    gamma = 0.50 is clean everywhere BY CONSTRUCTION and the census shows it as such:
+    z(0.50) = 0, so `tau_max(0.50, sigma) = mu_max = 1.0` exactly, `UnitScaled` puts every
+    family's optimum at 1, and the largest `tau_q` in the registered grid is 0.98631.
+    """
+    table = json.loads(TAU_TABLE.read_text())["rows"]
+    cells: dict[tuple, list[float]] = {}
+    for r in table:
+        cells.setdefault((r["family"], r["dim"], r["p"]), []).append(r["tau_q"])
+
+    rows, summary = [], {}
+    for sigma in (0.25, 0.10):
+        for gamma in GAMMAS:
+            tmax = tau_max(gamma, sigma)
+            for (family, dim, p), taus in sorted(cells.items()):
+                n_above = sum(1 for t in taus if t > tmax)
+                above = n_above * 2 > len(taus)
+                rows.append({
+                    "family": family, "dim": dim, "p": p, "gamma": gamma,
+                    "sigma": sigma, "tau_max": tmax,
+                    "tau_q_min": min(taus), "tau_q_max": max(taus),
+                    "n_landscapes": len(taus), "n_landscapes_above": n_above,
+                    "unanimous": n_above in (0, len(taus)),
+                    "above_ceiling": above,
+                })
+                k = (family, sigma, gamma)
+                s_ = summary.setdefault(f"{family}|sigma={sigma}|gamma={gamma}",
+                                        {"cells": 0, "above": 0})
+                s_["cells"] += 1
+                s_["above"] += int(above)
+    for v in summary.values():
+        v["rate"] = v["above"] / v["cells"]
+    return {"rows": rows, "summary": summary}
+
+
+def write_census() -> None:
+    doc = ceiling_census()
+    doc["provenance"] = _provenance(sys.argv, 0.0)
+    doc["config"] = {
+        "unit": "(family, dim, p) cell -- NOT the row. Hill has 25 landscapes per cell "
+                "and each external family has 1, so a row count weights hill 25x.",
+        "tau_source": str(TAU_TABLE.relative_to(ROOT)),
+        "gammas": list(GAMMAS), "sigmas": [0.25, 0.10],
+    }
+    CENSUS_OUT.write_text(json.dumps(doc, indent=1))
+
+    n_dis = sum(1 for r in doc["rows"] if not r["unanimous"])
+    print(f"ceiling census -> {CENSUS_OUT.relative_to(ROOT)} · {len(doc['rows'])} cells · "
+          f"{n_dis} with landscapes disagreeing inside a cell")
+    for sigma in (0.25, 0.10):
+        print(f"\n  sigma={sigma}   " + "  ".join(f"g={g:<5}" for g in GAMMAS))
+        for family in ("rosenbrock", "levy", "hill", "hartmann6", "ackley"):
+            cells = [summ for g in GAMMAS
+                     for k, summ in doc["summary"].items()
+                     if k == f"{family}|sigma={sigma}|gamma={g}"]
+            print(f"  {family:11s} " + "  ".join(
+                f"{c['above']}/{c['cells']}    " for c in cells))
+
+
 def ckpt_path(family: str, dim: int, sigma: float) -> Path:
     """One append-only checkpoint per (family, dim, sigma). One JSON line per campaign.
 
@@ -566,9 +642,13 @@ def main() -> None:
     ap.add_argument("--limit", type=int, default=None, help="seeds to score; default 25")
     ap.add_argument("--merge", action="store_true",
                     help="assemble every checkpoint into results/p6-families.json")
+    ap.add_argument("--census", action="store_true",
+                    help="write the ceiling census; zero compute, reads the tau table")
     ap.add_argument("--ckpt", type=str, default=None, help="override checkpoint path")
     args = ap.parse_args()
 
+    if args.census:
+        return write_census()
     if args.merge:
         return merge()
     if not args.family:
