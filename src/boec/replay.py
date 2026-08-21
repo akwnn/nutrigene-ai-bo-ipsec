@@ -43,6 +43,49 @@ This matters beyond bookkeeping. ``_plug_in_yvar`` is a function of the **noisy 
 not of ``f``, so assumed precision is correlated with the residual: a well whose noise draw
 came out low is declared precise and trusted more. That coupling is what K1 tests, and
 regenerating it faithfully is a precondition for testing it at all.
+
+------------------------------------------------------------------------------
+FAMILIES (B4)
+------------------------------------------------------------------------------
+
+``family="hill"`` is the default and is bit-identical to what this module has always
+done. ``family`` in :data:`FAMILY_ORACLE` swaps the oracle for ``UnitScaled(FAMILY(d))``
+wrapped in a ``TorchEvaluator`` -- the construction ``scripts/run_q42_families.py:105/112``
+uses -- and reads ``optimum_value`` off the oracle (exactly 1.0) instead of off a
+``HillInstance``. Nothing else changes: the same arms, the same scoring rule, the same
+provenance.
+
+Family campaigns are keyed by ``(family, dim, sigma, seed)``. There is no ``instance_id``,
+so ``instance`` is the family label and a Hill id passed alongside a family is an error
+rather than something to ignore.
+
+**The evaluator is constructed fresh on every call, and that is load-bearing.** Q42 gives
+the campaign and the DoE arm each their OWN ``TorchEvaluator`` at the same seed
+(``run_q42_families.py:112`` and ``:125``), so both noise streams start at draw zero. One
+call here regenerates one arm, so one fresh evaluator per call is exactly that. A cached
+or shared evaluator would hand the second arm the continuation of the first arm's stream
+and every family gate would miss by an amount that reads as a scoring bug.
+
+The 20-ordering mean applied to the spread arms is ``run_e2.static_curve``'s arithmetic
+and it is left in place off Hill too, unbranched. It averages 20 curves whose final values
+are identical, so it moves the answer by a few ULP and no committed family column exists
+for those arms either way; a second scoring definition inside one function would be worse
+than 1e-16.
+
+------------------------------------------------------------------------------
+THE builder HOOK, AND WHAT THIS MODULE REFUSES TO LEARN
+------------------------------------------------------------------------------
+
+``versionb``/``versionb_random`` are two-plate campaigns: fit a GP, call ``batch_lse``,
+evaluate twice. This module's registered responsibility is "regenerate a committed
+campaign; return ``(X, Y, Yvar)`` + provenance. **Nothing else.**" Teaching it to fit GPs
+would create ``replay -> surrogate, designspace, lse`` dependencies inside the one module
+every gate imports, and a gate whose own module can fail to import for a reason unrelated
+to regeneration is not a gate.
+
+So ``builder`` inverts it. ``builder(orc, dim, seed) -> (X, Y, Yvar, kept, held)`` lives in
+the runner that owns the arm; ``replay`` keeps the oracle construction, the scoring rule
+and the provenance in one place, which is the property that makes the gate meaningful.
 """
 
 from __future__ import annotations
@@ -59,16 +102,19 @@ from boec.campaign import Campaign, CampaignConfig
 from boec.diagnostics import reported_best_curve
 from boec.doe import run_doe_arm
 from boec.optimizers import AcqConfig
-from boec.oracles import load_ensemble
+from boec.oracles import (Ackley, Embedded, Hartmann6, Levy, Rosenbrock, UnitScaled,
+                          load_ensemble)
 from boec.runner import PAIRING_EXEMPT, static_design
-from boec.torch_oracle import BiphasicOracle, _plug_in_yvar
+from boec.torch_oracle import BiphasicOracle, TorchEvaluator, _plug_in_yvar
 
 __all__ = [
     "CampaignRecord",
     "DETERMINISTIC_ARMS",
+    "FAMILY_ORACLE",
     "OPTIMISED_ARMS",
     "SPREAD_ARMS",
     "committed_rows",
+    "family_evaluator",
     "instance_by_id",
     "regenerate",
     "scored_curve",
@@ -96,6 +142,38 @@ KERNEL_ARMS = {"qlogei-add": "additive+interaction", "qlogei-addonly": "additive
 #: pinned by the screen. It answers "is screening fatal for a design space" (it is), not
 #: "does a one-shot spread design map better than adaptive search".
 SPREAD_ARMS = ("lhs", "sobol", "random")
+
+#: The four standard families, built EXACTLY as `scripts/run_q42_families.py:88-92` does.
+#: Copied rather than imported: a library module importing a script needs a `sys.path`
+#: hack that breaks under pytest's rootdir handling, and a factory that drifted from Q42's
+#: would miss the committed column -- which is what `tests/test_replay.py` checks.
+#:
+#: Hartmann6 is defined at d=6 only. `Embedded` gives it the structure the Hill oracle
+#: already has at d=8 -- a fixed active subspace plus inert nuisance axes -- so the
+#: dimension contrast is not confounded with a change in the active-factor count.
+FAMILY_ORACLE = {
+    "hartmann6": lambda d: (Hartmann6() if d == 6
+                            else Embedded(Hartmann6(), dim=d, seed=0)),
+    "ackley": lambda d: Ackley(dim=d),
+    "levy": lambda d: Levy(dim=d),
+    "rosenbrock": lambda d: Rosenbrock(dim=d),
+}
+
+
+def family_evaluator(family: str, dim: int, sigma: float, seed: int) -> TorchEvaluator:
+    """A FRESH evaluator over ``UnitScaled(family(dim))``. Never cached -- see the docstring.
+
+    ``UnitScaled`` is not cosmetic. Negated, ackley, levy and rosenbrock all have an
+    optimum VALUE of exactly 0, so under ``y = f(1 + eps) + eta`` the multiplicative term
+    vanishes at the optimum and the hardest region becomes the quietest. Rescaling to
+    ``optimum = 1`` puts every family on the Hill oracle's footing, which is what makes
+    ``sigma_rel`` mean the same thing in all five.
+    """
+    if family not in FAMILY_ORACLE:
+        raise KeyError(f"unknown family {family!r}; expected 'hill' or one of "
+                       f"{tuple(FAMILY_ORACLE)}")
+    return TorchEvaluator(UnitScaled(FAMILY_ORACLE[family](dim)),
+                          sigma_rel=sigma, seed=seed)
 
 
 @dataclass(frozen=True)
@@ -125,6 +203,10 @@ class CampaignRecord:
     #: for Amendment B3: an arm that never varied a factor may not certify a range for it,
     #: so its region is evaluated on a grid holding those factors at the pinned value.
     dropped_held_at: dict[int, float] | None = None
+    #: Which oracle produced this. ``"hill"`` for the Hill ensemble, otherwise a key of
+    #: :data:`FAMILY_ORACLE`. Off Hill ``instance`` repeats the family label, so a
+    #: consumer that read only ``instance`` could not tell a family from a landscape id.
+    family: str = "hill"
 
 
 def unit_bounds(d: int) -> Tensor:
@@ -151,26 +233,50 @@ def instance_by_id(instance: str, dim: int):
     raise KeyError(f"instance {instance!r} not in the d={dim} ensemble")
 
 
-def regenerate(instance: str, dim: int, sigma: float, seed: int,
-               arm: str) -> CampaignRecord:
+def regenerate(instance: str, dim: int, sigma: float, seed: int, arm: str, *,
+               family: str = "hill", builder=None) -> CampaignRecord:
     """Re-run one committed campaign and return what it measured.
 
     Args:
-        instance: ``instance_id`` from the committed row.
+        instance: ``instance_id`` from the committed row on Hill; the family label
+            otherwise, since family campaigns are keyed by ``(family, dim, sigma, seed)``
+            and carry no ``instance_id``. ``None`` is accepted off Hill.
         dim: 6 or 8.
         sigma: ``sigma_rel``; 0.25 primary, 0.10 the optimistic bound.
         seed: the committed row's seed. Seeds the oracle AND the campaign, as E2 did.
         arm: one of :data:`DETERMINISTIC_ARMS`, :data:`OPTIMISED_ARMS`, or a key of
-            :data:`KERNEL_ARMS`.
+            :data:`KERNEL_ARMS`. With ``builder`` it is a label only.
+        family: ``"hill"`` (default, unchanged behaviour) or a key of
+            :data:`FAMILY_ORACLE`.
+        builder: ``builder(orc, dim, seed) -> (X, Y, Yvar, kept, held)``, for arms this
+            module deliberately does not know how to build -- see the module docstring.
+            When given it replaces the arm dispatch entirely; the oracle, the scoring
+            rule and the provenance still come from here.
 
     Returns:
         A :class:`CampaignRecord`. Its ``regret`` is the quantity to gate on.
     """
-    inst = instance_by_id(instance, dim)
     bounds = unit_bounds(dim)
-    orc = BiphasicOracle(inst, sigma_rel=sigma, seed=seed)
+    if family == "hill":
+        inst = instance_by_id(instance, dim)
+        orc = BiphasicOracle(inst, sigma_rel=sigma, seed=seed)
+        optimum = float(inst.optimum_value)
+    else:
+        # Raises KeyError on an unknown family, which is the right failure: a typo'd
+        # family must not fall through to the Hill ensemble and regenerate the wrong
+        # campaign under the right-looking label.
+        orc = family_evaluator(family, dim, sigma, seed)
+        if instance is not None and instance != family:
+            raise ValueError(
+                f"family {family!r} campaigns are keyed by (family, dim, sigma, seed) "
+                f"and have no instance_id; instance={instance!r} is not the family "
+                "label. Pass the family label or None.")
+        instance = family
+        optimum = float(orc.oracle.optimum_value)
 
-    if arm in OPTIMISED_ARMS or arm in KERNEL_ARMS:
+    if builder is not None:
+        X, Y, Yvar, kept, held = builder(orc, dim, seed)
+    elif arm in OPTIMISED_ARMS or arm in KERNEL_ARMS:
         kind = arm if arm in OPTIMISED_ARMS else "qlogei"
         cfg = CampaignConfig(d=dim, budget=BUDGET, q=Q_BATCH, seed=seed,
                              acq=AcqConfig(kind=kind),
@@ -198,7 +304,7 @@ def regenerate(instance: str, dim: int, sigma: float, seed: int,
             f"unknown arm {arm!r}; expected one of "
             f"{DETERMINISTIC_ARMS + OPTIMISED_ARMS + SPREAD_ARMS + tuple(KERNEL_ARMS)}")
 
-    if arm in SPREAD_ARMS:
+    if builder is None and arm in SPREAD_ARMS:
         # Reproduce run_e2.static_curve's ARITHMETIC, not merely its result. It averages
         # `N_ORDERINGS` curves whose final values are all identical (the final value is
         # order-invariant), and the float64 mean of 20 copies of x is not bitwise x --
@@ -218,7 +324,7 @@ def regenerate(instance: str, dim: int, sigma: float, seed: int,
         curve = scored_curve(orc, X, Y)
     return CampaignRecord(
         X=X, Y=Y, Yvar=Yvar, instance=instance, dim=dim, sigma=sigma, seed=seed,
-        arm=arm, regret=float(inst.optimum_value - curve[-1]),
-        optimum_value=float(inst.optimum_value), kept_factors=kept,
-        dropped_held_at=held,
+        arm=arm, regret=float(optimum - curve[-1]),
+        optimum_value=optimum, kept_factors=kept,
+        dropped_held_at=held, family=family,
     )
