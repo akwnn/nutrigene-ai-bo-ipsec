@@ -1447,3 +1447,65 @@ live, reported as a magnitude.
 
 **If this holds, the D23 caveat that has qualified D20 since it was written is discharged** —
 `doe`'s collapse under a posterior-mean rule is the design, not a BoTorch default.
+
+## D60 ⭐⭐⭐ **D23 IS DONE. VERDICT: `D20_STANDS`. The caveat that has qualified the headline since it was written is DISCHARGED.**
+
+`results/d23-doe-subspace.json`, **n = 50**, `gate_failures: []`, and the full-space rule P
+reproducing `fix1-terminal-rule.json`'s committed `regret_p` bitwise before any subspace number
+was read.
+
+```
+rule A            0.0958
+rule P full       0.1993
+rule P subspace   0.1988
+
+distance to rule A anchor (0.0958):   0.1030      SESOI 0.02  ->  5x ABOVE
+distance to full-space anchor:        0.0005
+SHARE OF THE COLLAPSE REMOVED:        0.005       (0.5%)
+```
+
+Contrast `regret_p_subspace − regret_a`: **+0.1030**, CI [0.0718, 0.1363], Wilcoxon
+**p = 5.76e-08**, Holm **9.89e-08**, exceeds SESOI. Contrast `regret_p_subspace −
+regret_p_full`: **−0.000455**, CI [−0.00066, −0.00027].
+
+**Re-scoring `doe` on its own active subspace removes 0.5% of the collapse.** Under the
+registered decision rule this is unambiguously the **second branch**:
+
+> *The prior is NOT the mechanism. The response surface is (`grid_r2` = −6.19). **D20 stands as
+> written.***
+
+### Why this matters more than a confirmation
+
+**D23 was the strongest live threat to the session's headline.** Logged at D23 as *"⚠️ Material:
+part of `doe`'s collapse is a BoTorch prior, not the design"* — because `doe`'s posterior on its
+two screened-out axes is prior-driven, the lengthscale reverting to the prior mode 0.5016. If the
+subspace re-score had recovered `doe` toward rule A's 0.0958, then *"DoE's regret advantage
+depends on not using its own model"* would have been **partly a statement about a library
+default.**
+
+**It recovers 0.5%.** The unidentified posterior on unvaried axes is real and is **not** the
+mechanism.
+
+**Both registered thresholds were pre-committed and both are cleanly resolved** — within SESOI
+0.02 of 0.0958 would have meant *prior artefact*; near 0.1993 means *D20 stands*. The measured
+0.1988 sits **0.0005 from the full-space anchor and 0.1030 from the rule-A anchor**, i.e. **five
+times SESOI away from the branch that would have weakened the claim.** Nothing in between, no
+judgement call.
+
+**And it was called at 50, not at 7.** D59 recorded the live signal with campaign keys precisely
+so this could not be presented as obvious in hindsight — the prediction is on the record ahead of
+the result, and it was right.
+
+### What still qualifies D20, unchanged
+
+* **`plate1_only` is not independent evidence** — it is `lhs`, agreeing to 4.44e-16 (D23.1).
+* **The 20k grid screen never won** — `constrained_argmax` beat it 500/500 (D23.2). *Note the
+  grid variants do diverge here — `regret_p_full_grid` 0.2206 vs `regret_p_subspace_grid` 0.1934
+  — so the subspace restriction matters more to the grid screen than to the polish. Recorded; it
+  does not touch the primary.*
+* **`doe`'s rule A is model-informed once**, at its confirmation well, so *"model vs no model"*
+  always overstated the contrast.
+* **D37/E7:** the advantage is a **single-cell** result and **59% of it is identification, not
+  search.** D23 removes the *prior* explanation; it does not touch either of those.
+
+**Three qualifications survive, one is discharged, and the discharged one was the material one.**
