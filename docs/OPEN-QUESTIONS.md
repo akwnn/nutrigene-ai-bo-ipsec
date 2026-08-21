@@ -6172,3 +6172,80 @@ order would differ at one cell and not another, and every measurement points the
 
 **P1 volunteered this correction against its own earlier claim, unprompted, when nothing turned
 on it.** Recorded because that is the behaviour that makes the rest of its reporting credible.
+
+---
+
+## 📌 REGISTRATION DECISION 2 · **`tau_q` equalises prevalence but NOT certifiability. The P6 headline is the γ=0.50 column, and that column is clean BY CONSTRUCTION.**
+
+**Raised by the P6 worker before any compute, which is why it is a registration question and not a
+retraction.**
+
+**The mechanism.** Under `tau_frac`, `τ = tau_frac · tau_max(γ)` — so τ shrank *with* γ and could
+never exceed the predictive ceiling. Under `tau_q`, **τ is fixed by prevalence while `tau_max`
+still falls with γ.** So τ can now sit **above** the ceiling, and `D_γ` is empty for a reason that
+has nothing to do with the design. **This is §2.4's defect relocated from the threshold to the
+ceiling.**
+
+**Measured over the full registered P6 grid** (4 families × 2 d × 4 p × 6 γ × 2 σ = 384 cells):
+
+| family | cells above ceiling | | γ (σ=0.25) | cells above ceiling |
+|---|---|---|---|---|
+| ackley | **0 / 96 (0.0%)** | | **0.50** | **0 / 32** |
+| hartmann6 | 2 / 96 (2.1%) | | 0.70 | 9 / 32 |
+| levy | 48 / 96 (50.0%) | | 0.80 | 12 / 32 |
+| rosenbrock | **61 / 96 (63.5%)** | | 0.90 | 14 / 32 |
+| **total** | **111 / 384 (28.9%)** | | 0.95 | 16 / 32 |
+| | | | 0.99 | 18 / 32 |
+
+**The ordering — ackley 0% → hartmann6 2% → levy 50% → rosenbrock 64% — is the ordering of the
+families' grid ranges.**
+
+### The decision
+
+**1. The P6 HEADLINE is the γ = 0.50 column, at every p.** Verified structural rather than
+fortunate: `z_{0.50} = 0`, so `tau_max(0.50, σ) = mu_max = 1.0` **exactly**, and `tau_q ≤ 1.0`
+because `UnitScaled` puts every family's optimum at 1. **Max `tau_q` anywhere in the registered
+grid is 0.98631.** So **γ=0.50 can never cross the ceiling on any family, at any p, at any σ — by
+construction.** The clean cross-family column is *guaranteed*, not discovered.
+
+**2. Higher γ is reported PER FAMILY and NEVER POOLED**, with `tau_above_ceiling` and `tau_max` on
+every row. A cross-family table at fixed (p, γ) above γ=0.50 compares *"ackley, certifiable"*
+against *"rosenbrock, empty by noise floor"* — not a comparison.
+
+**3. 🔴 DO NOT re-register `p` per γ.** That was the alternative offered and it is **rejected**:
+choosing p as a function of γ to keep τ under the ceiling **re-introduces exactly the τ–γ coupling
+that `tau_q` exists to remove**, and destroys the equal-prevalence property that is its entire
+purpose. **The fix for §2.4 must not be undone to tidy its successor.**
+
+**4. ⭐ The ceiling-crossing census is promoted to a REGISTERED SECONDARY RESULT, not an artefact
+to route around.** It measures **what fraction of each family's response range is certifiable at a
+given assurance** — a genuine design-space property, ordered by grid range, and one this project
+has never reported. `tau_above_ceiling` is a finding in its own right and belongs in the write-up
+with the census table, not in a caveat.
+
+**5. Noted, and it bites the primary family hardest at the first rung:** at γ=0.70, σ=0.25, **hill
+has 50 cells above the ceiling** — more than any external family. **The asymmetry is not a
+property of "external families" and must not be described as one.**
+
+### Two approvals
+
+**The single `--limit 1 --arms doe,lhs` smoke to a scratch path, then deleted, was correct and
+inside the hold.** *"A binary that has never executed its main path is not ready"* is right, and it
+caught the Erratum 5a distinction on real data — `fi_pred` `nan`, `iou_pred` **`0.0` not `nan`**,
+`type_I_vol` 0.0, `type_II_vol` exactly the prevalence.
+
+**The per-family count floor on the `distinguishes` gate is a better design than the one
+registered.** Its reasoning — *3/25 on ackley against 19/25 on rosenbrock means a pooled floor is
+satisfied by rosenbrock alone and vacuous exactly where the risk is highest* — is the D50 lesson
+applied before being told. **Adopted as the standard for every count-floor gate in the programme.**
+
+### One more self-correction in the chain
+
+The P6 worker **withdrew its own timing paragraph** (`33bf44a`): its probe set `OMP_NUM_THREADS`
+via `os.environ` in-process — the pattern Erratum 5c identifies as **not capping BLAS** — so both
+its arms ran the same configuration, and its "no speedup" reading **contributed to my withdrawing
+a correct 4.6×.** Its exactness result is unaffected and stands.
+
+**That is the third worker to correct its own claim against its own interest in this thread**
+(P7 on the thread retraction, P1 on Erratum 7a, now this). **The record is being repaired faster
+than it is being damaged**, which is the property that makes any of it citable.
