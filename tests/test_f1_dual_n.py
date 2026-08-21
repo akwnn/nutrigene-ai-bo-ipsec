@@ -89,24 +89,37 @@ def test_n50_reproduces_the_committed_fix1_analysis(fix1):
                                              abs=TOL, rel=0), f"{entry['arm']} {key}"
 
 
-def test_the_conservative_unit_never_narrows_the_interval(k6_rows):
-    """Averaging seeds first cannot buy precision; it can only give some back.
+def test_the_interval_width_tracks_the_measured_seed_correlation(k6_rows):
+    """HOW anti-conservative n = 50 is — as a measured number, not an assumed sqrt(2).
 
-    Var(mean of 25 instance means) / Var(naive mean of 50) = 2(s_b^2 + s_w^2/2)/(s_b^2 +
-    s_w^2), which lies in [1, 2]. So the n = 25 half-width is between 1x and sqrt(2)x the
-    n = 50 half-width -- never below it. This is the mechanism F1 is about, asserted as a
-    property rather than as a number.
+    F1 states that n = 50 "narrows every bootstrap CI by roughly sqrt(2)". sqrt(2) is the
+    ICC = 1 corner: two seeds on one landscape agreeing perfectly. The exact sample
+    identity is
+
+        Var_boot(n=25) / Var_boot(n=50) = (n50/n25) * s25^2 / s50^2 = 1 + ICC
+
+    so the half-width ratio is sqrt(1 + ICC), which lies anywhere in [0, sqrt(2)] and is
+    **below 1** whenever two seeds on one landscape disagree more than two landscapes do.
+    The interval does not automatically widen, and this test asserts the identity rather
+    than the folklore.
     """
-    ratios = []
-    for gamma in (0.50, 0.90, 0.95, 0.99):
+    ratios, predicted = [], []
+    for gamma in (0.50, 0.70, 0.80, 0.90, 0.95, 0.99):
         for tf in (0.60, 0.75, 0.85, 0.95):
             d = dual_contrast(k6_rows, "lhs", "doe", "auc_pred", gamma=gamma, tau_frac=tf)
-            hw = {u: (d[u]["hi"] - d[u]["lo"]) / 2 for u in ("n50", "n25")}
-            ratios.append(hw["n25"] / hw["n50"])
-    ratios = np.array(ratios)
-    assert (ratios >= 0.98).all(), f"n=25 narrowed an interval: min ratio {ratios.min():.4f}"
-    assert (ratios <= 1.50).all(), f"ratio above sqrt(2)+slack: max {ratios.max():.4f}"
-    assert float(np.median(ratios)) > 1.05
+            ratios.append((d["n25"]["hi"] - d["n25"]["lo"])
+                          / (d["n50"]["hi"] - d["n50"]["lo"]))
+            predicted.append(d["ci_inflation"])
+    ratios, predicted = np.array(ratios), np.array(predicted)
+    assert len(ratios) == 24
+    assert np.allclose(ratios, predicted, rtol=0.05, atol=0), (
+        f"bootstrap width ratio departs from sqrt(1+ICC): worst rel err "
+        f"{np.max(np.abs(ratios / predicted - 1)):.4f}")
+    assert (predicted <= 2 ** 0.5 + 1e-9).all(), "inflation above the ICC=1 ceiling"
+    # And on the headline family it is nowhere near sqrt(2): measured median ~1.12.
+    assert float(np.median(predicted)) < 1.25, (
+        f"median inflation {np.median(predicted):.4f} — if this has moved to sqrt(2) the "
+        "seeds have become far more alike and F1's premise needs re-measuring")
 
 
 def test_holm_matches_the_committed_fix1_adjustment(fix1):

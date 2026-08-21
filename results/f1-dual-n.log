@@ -1,0 +1,335 @@
+======================================================================================================================
+AMENDMENT F1 — every reported contrast at n = 50 (instance, seed) AND n = 25 (instance, seeds averaged first)
+======================================================================================================================
+  bootstrap 4000 resamples at default_rng(0); Wilcoxon two-sided; Holm within each family; SESOI 0.02; alpha 0.05
+  Wilcoxon governs yes/no. The bootstrap reports magnitude. Disagreements between them are
+  reported, not resolved — and there are now four cells of them (2 statistics x 2 units).
+
+======================================================================================================================
+F4 — EMPIRICAL CONTAINMENT, PER CELL ONLY. The pooled figure is WITHDRAWN.
+======================================================================================================================
+  Four thresholds on the same campaign, the same posterior and the same 512 draws are not
+  four Bernoulli trials. Each row below states its own cell and its own n.
+
+  source    arm               tau_f  alpha      n=50    n      n=25    n  verdict
+  k6b       doe                0.60   0.50    0.0000   50    0.0000   25  FAIL/FAIL
+  k6b       doe                0.60   0.80    0.2400   50    0.2400   25  FAIL/FAIL
+  k6b       doe                0.60   0.95    0.5000   50    0.5000   25  FAIL/FAIL
+  k6b       doe                0.75   0.50    0.3191   47    0.3200   25  FAIL/FAIL
+  k6b       doe                0.75   0.80    0.8947   19    0.9000   15  ok/ok
+  k6b       doe                0.75   0.95    1.0000    1    1.0000    1  ok/ok
+  k6b       lhs                0.60   0.50    0.9400   50    0.9400   25  ok/ok
+  k6b       lhs                0.60   0.80    1.0000   47    1.0000   25  ok/ok
+  k6b       lhs                0.60   0.95    1.0000   16    1.0000   15  ok/ok
+  k6b       lhs                0.75   0.50    0.8684   38    0.8800   25  ok/ok
+  k6b       lhs                0.75   0.80    1.0000    5    1.0000    5  ok/ok
+  k6b       lhs                0.85   0.50    1.0000    3    1.0000    3  ok/ok
+  k6b       qlogei             0.60   0.50    0.8600   50    0.8600   25  ok/ok
+  k6b       qlogei             0.60   0.80    0.9796   49    0.9800   25  ok/ok
+  k6b       qlogei             0.60   0.95    1.0000   31    1.0000   21  ok/ok
+  k6b       qlogei             0.75   0.50    0.9000   30    0.9211   19  ok/ok
+  k6b       qlogei             0.75   0.80    1.0000   10    1.0000    9  ok/ok
+  k6b       qlogei             0.75   0.95    1.0000    1    1.0000    1  ok/ok
+  k6b       qlogei             0.85   0.50    1.0000    6    1.0000    6  ok/ok
+  k6b       qlogei-add         0.60   0.50    0.9000   50    0.9000   25  ok/ok
+  k6b       qlogei-add         0.60   0.80    1.0000   50    1.0000   25  ok/ok
+  k6b       qlogei-add         0.60   0.95    1.0000   32    1.0000   21  ok/ok
+  k6b       qlogei-add         0.75   0.50    0.8571   35    0.8043   23  ok/ok
+  k6b       qlogei-add         0.75   0.80    0.9167   12    0.9091   11  ok/ok
+  k6b       qlogei-add         0.75   0.95    1.0000    1    1.0000    1  ok/ok
+  k6b       qlogei-add         0.85   0.50    0.6667    3    0.6667    3  ok/ok
+  k6b       qlogei-addonly     0.60   0.50    0.8200   50    0.8200   25  ok/ok
+  k6b       qlogei-addonly     0.60   0.80    0.9792   48    0.9800   25  ok/ok
+  k6b       qlogei-addonly     0.60   0.95    1.0000   24    1.0000   19  ok/ok
+  k6b       qlogei-addonly     0.75   0.50    0.7419   31    0.7391   23  ok/ok
+  k6b       qlogei-addonly     0.75   0.80    1.0000   16    1.0000   15  ok/ok
+  k6b       qlogei-addonly     0.85   0.50    0.6364   11    0.6000   10  ok/ok
+  k6b       qlognei            0.60   0.50    0.9000   50    0.9000   25  ok/ok
+  k6b       qlognei            0.60   0.80    0.9792   48    0.9800   25  ok/ok
+  k6b       qlognei            0.60   0.95    0.9677   31    0.9737   19  ok/ok
+  k6b       qlognei            0.75   0.50    0.9429   35    0.9348   23  ok/ok
+  k6b       qlognei            0.75   0.80    0.9231   13    0.9167   12  ok/ok
+  k6b       qlognei            0.75   0.95    1.0000    2    1.0000    2  ok/ok
+  k6b       qlognei            0.85   0.50    1.0000    6    1.0000    6  ok/ok
+  k6b       qlognei            0.85   0.80    1.0000    1    1.0000    1  ok/ok
+  k6b       random             0.60   0.50    0.6000   50    0.6000   25  ok/ok
+  k6b       random             0.60   0.80    0.9167   48    0.9000   25  ok/ok
+  k6b       random             0.60   0.95    1.0000   18    1.0000   15  ok/ok
+  k6b       random             0.75   0.50    0.7949   39    0.7500   24  ok/ok
+  k6b       random             0.75   0.80    1.0000    9    1.0000    8  ok/ok
+  k6b       random             0.85   0.50    0.1429    7    0.1429    7  FAIL/FAIL
+  k6b       sobol              0.60   0.50    1.0000   50    1.0000   25  ok/ok
+  k6b       sobol              0.60   0.80    1.0000   42    1.0000   24  ok/ok
+  k6b       sobol              0.60   0.95    1.0000   13    1.0000   12  ok/ok
+  k6b       sobol              0.75   0.50    0.8696   23    0.8611   18  ok/ok
+  versionb  doe                0.60   0.50    0.0000   50    0.0000   25  FAIL/FAIL
+  versionb  doe                0.60   0.80    0.2400   50    0.2400   25  FAIL/FAIL
+  versionb  doe                0.60   0.95    0.5000   50    0.5000   25  FAIL/FAIL
+  versionb  doe                0.75   0.50    0.3191   47    0.3200   25  FAIL/FAIL
+  versionb  doe                0.75   0.80    0.8947   19    0.9000   15  ok/ok
+  versionb  doe                0.75   0.95    1.0000    1    1.0000    1  ok/ok
+  versionb  plate1_only        0.60   0.50    0.9400   50    0.9400   25  ok/ok
+  versionb  plate1_only        0.60   0.80    1.0000   47    1.0000   25  ok/ok
+  versionb  plate1_only        0.60   0.95    1.0000   16    1.0000   15  ok/ok
+  versionb  plate1_only        0.75   0.50    0.8684   38    0.8800   25  ok/ok
+  versionb  plate1_only        0.75   0.80    1.0000    5    1.0000    5  ok/ok
+  versionb  plate1_only        0.85   0.50    1.0000    3    1.0000    3  ok/ok
+  versionb  qlognei            0.60   0.50    0.9000   50    0.9000   25  ok/ok
+  versionb  qlognei            0.60   0.80    0.9792   48    0.9800   25  ok/ok
+  versionb  qlognei            0.60   0.95    0.9677   31    0.9737   19  ok/ok
+  versionb  qlognei            0.75   0.50    0.9429   35    0.9348   23  ok/ok
+  versionb  qlognei            0.75   0.80    0.9231   13    0.9167   12  ok/ok
+  versionb  qlognei            0.75   0.95    1.0000    2    1.0000    2  ok/ok
+  versionb  qlognei            0.85   0.50    1.0000    6    1.0000    6  ok/ok
+  versionb  qlognei            0.85   0.80    1.0000    1    1.0000    1  ok/ok
+  versionb  versionb           0.60   0.50    0.9400   50    0.9400   25  ok/ok
+  versionb  versionb           0.60   0.80    1.0000   50    1.0000   25  ok/ok
+  versionb  versionb           0.60   0.95    1.0000   22    1.0000   17  ok/ok
+  versionb  versionb           0.75   0.50    0.9302   43    0.9400   25  ok/ok
+  versionb  versionb           0.75   0.80    1.0000   14    1.0000   14  ok/ok
+  versionb  versionb           0.85   0.50    0.8750    8    0.8750    8  ok/ok
+  versionb  versionb_random    0.60   0.50    0.8163   49    0.8200   25  ok/ok
+  versionb  versionb_random    0.60   0.80    1.0000   43    1.0000   25  ok/ok
+  versionb  versionb_random    0.60   0.95    1.0000   18    1.0000   17  ok/ok
+  versionb  versionb_random    0.75   0.50    0.9310   29    0.9375   24  ok/ok
+  versionb  versionb_random    0.75   0.80    1.0000    9    1.0000    9  ok/ok
+  versionb  versionb_random    0.85   0.50    0.6667    6    0.6667    6  ok/ok
+
+======================================================================================================================
+§5.1 paired regret contrasts   [k6-designspace(+spread)]  Holm family of 7
+  positive = the first arm has WORSE regret
+======================================================================================================================
+  contrast                                      n50 mean     n50 p  n50 Holm  n25 mean     n25 p  n25 Holm  verdict
+  lhs - doe                                      +0.0312  2.80e-03  1.12e-02   +0.0312  8.07e-03  3.23e-02  holds at n=25
+  lhs - qlogei                                   -0.0282  1.33e-02  2.66e-02   -0.0282  1.47e-02  3.23e-02  holds at n=25
+  lhs - qlognei                                  -0.0262  1.66e-02  2.66e-02   -0.0262  3.42e-02  3.42e-02  holds at n=25
+  doe - qlogei                                   -0.0595  1.55e-06  7.74e-06   -0.0595  2.21e-05  1.11e-04  holds at n=25
+  doe - qlognei                                  -0.0574  9.75e-08  5.85e-07   -0.0574  8.17e-06  4.90e-05  holds at n=25
+  sobol - lhs                                    +0.0453  5.76e-03  1.73e-02   +0.0453  8.07e-03  3.23e-02  holds at n=25
+  random - lhs                                   +0.0946  1.35e-12  9.48e-12   +0.0946  1.79e-07  1.25e-06  holds at n=25
+
+======================================================================================================================
+§5.3 HEADLINE 1 — `lhs` - `doe` on AUC(predictive), 24 cells   [k6-designspace(+spread)]  Holm family of 24
+  significant in 24 of 24 as reported; positive favours the UNSCREENED arm
+======================================================================================================================
+  contrast                                      n50 mean     n50 p  n50 Holm  n25 mean     n25 p  n25 Holm  verdict
+  gamma=0.5 tau_frac=0.6                         +0.1116  3.86e-11  5.80e-10   +0.1116  1.19e-07  1.91e-06  holds at n=25
+  gamma=0.5 tau_frac=0.75                        +0.1429  1.61e-12  3.37e-11   +0.1429  5.96e-08  1.43e-06  holds at n=25
+  gamma=0.5 tau_frac=0.85                        +0.1922  3.00e-13  6.90e-12   +0.1922  5.96e-08  1.43e-06  holds at n=25
+  gamma=0.5 tau_frac=0.95                        +0.2214  9.77e-14  2.34e-12   +0.2214  1.19e-07  1.91e-06  holds at n=25
+  gamma=0.7 tau_frac=0.6                         +0.1104  5.32e-10  5.85e-09   +0.1104  8.34e-07  9.18e-06  holds at n=25
+  gamma=0.7 tau_frac=0.75                        +0.1177  6.62e-12  1.12e-10   +0.1177  5.96e-08  1.43e-06  holds at n=25
+  gamma=0.7 tau_frac=0.85                        +0.1385  1.61e-12  3.37e-11   +0.1385  5.96e-08  1.43e-06  holds at n=25
+  gamma=0.7 tau_frac=0.95                        +0.1785  3.68e-13  8.09e-12   +0.1785  5.96e-08  1.43e-06  holds at n=25
+  gamma=0.8 tau_frac=0.6                         +0.1125  3.38e-09  2.71e-08   +0.1125  1.49e-06  1.19e-05  holds at n=25
+  gamma=0.8 tau_frac=0.75                        +0.1109  4.96e-11  6.94e-10   +0.1109  1.19e-07  1.91e-06  holds at n=25
+  gamma=0.8 tau_frac=0.85                        +0.1209  4.22e-12  7.59e-11   +0.1209  5.96e-08  1.43e-06  holds at n=25
+  gamma=0.8 tau_frac=0.95                        +0.1430  1.61e-12  3.37e-11   +0.1430  5.96e-08  1.43e-06  holds at n=25
+  gamma=0.9 tau_frac=0.6                         +0.1126  5.76e-08  3.46e-07   +0.1126  8.17e-06  4.90e-05  holds at n=25
+  gamma=0.9 tau_frac=0.75                        +0.1110  8.01e-10  8.01e-09   +0.1110  8.34e-07  9.18e-06  holds at n=25
+  gamma=0.9 tau_frac=0.85                        +0.1104  7.15e-11  9.30e-10   +0.1104  1.79e-07  2.32e-06  holds at n=25
+  gamma=0.9 tau_frac=0.95                        +0.1169  6.62e-12  1.12e-10   +0.1169  5.96e-08  1.43e-06  holds at n=25
+  gamma=0.95 tau_frac=0.6                        +0.1127  2.84e-07  1.06e-06   +0.1127  3.19e-05  1.07e-04  holds at n=25
+  gamma=0.95 tau_frac=0.75                       +0.1136  2.64e-08  1.85e-07   +0.1136  5.25e-06  3.67e-05  holds at n=25
+  gamma=0.95 tau_frac=0.85                       +0.1123  8.86e-10  8.01e-09   +0.1123  1.13e-06  1.02e-05  holds at n=25
+  gamma=0.95 tau_frac=0.95                       +0.1106  1.29e-10  1.54e-09   +0.1106  2.98e-07  3.58e-06  holds at n=25
+  gamma=0.99 tau_frac=0.6                        +0.1050  3.63e-05  3.63e-05   +0.1050  2.03e-03  2.03e-03  holds at n=25
+  gamma=0.99 tau_frac=0.75                       +0.1139  3.73e-07  1.06e-06   +0.1139  5.39e-05  1.08e-04  holds at n=25
+  gamma=0.99 tau_frac=0.85                       +0.1129  2.65e-07  1.06e-06   +0.1129  2.66e-05  1.07e-04  holds at n=25
+  gamma=0.99 tau_frac=0.95                       +0.1138  8.40e-08  4.20e-07   +0.1138  8.17e-06  4.90e-05  holds at n=25
+
+======================================================================================================================
+§5.4 `doe` - `qlogei` on AUC(predictive), 24 cells   [k6-designspace(+spread)]  Holm family of 24
+  reproduces `results/k6-analysis.json` `spread_vs_clustered` at n = 50
+======================================================================================================================
+  contrast                                      n50 mean     n50 p  n50 Holm  n25 mean     n25 p  n25 Holm  verdict
+  gamma=0.5 tau_frac=0.6                         -0.0996  1.93e-09  3.16e-08   -0.0996  2.98e-07  5.66e-06  holds at n=25
+  gamma=0.5 tau_frac=0.75                        -0.0940  9.75e-08  6.82e-07   -0.0940  1.49e-06  1.04e-05  holds at n=25
+  gamma=0.5 tau_frac=0.85                        -0.1025  1.78e-05  5.34e-05   -0.1025  4.54e-05  1.36e-04  holds at n=25
+  gamma=0.5 tau_frac=0.95                        -0.0960  1.28e-03  1.28e-03   -0.0960  5.58e-03  5.58e-03  holds at n=25
+  gamma=0.7 tau_frac=0.6                         -0.1083  1.60e-09  3.04e-08   -0.1083  1.79e-07  4.29e-06  holds at n=25
+  gamma=0.7 tau_frac=0.75                        -0.0957  3.09e-09  4.32e-08   -0.0957  4.17e-07  6.26e-06  holds at n=25
+  gamma=0.7 tau_frac=0.85                        -0.0933  6.22e-08  4.98e-07   -0.0933  1.13e-06  9.06e-06  holds at n=25
+  gamma=0.7 tau_frac=0.95                        -0.0997  3.59e-06  1.43e-05   -0.0997  1.83e-05  7.32e-05  holds at n=25
+  gamma=0.8 tau_frac=0.6                         -0.1123  1.45e-09  3.04e-08   -0.1123  2.98e-07  5.66e-06  holds at n=25
+  gamma=0.8 tau_frac=0.75                        -0.1005  1.76e-09  3.16e-08   -0.1005  2.98e-07  5.66e-06  holds at n=25
+  gamma=0.8 tau_frac=0.85                        -0.0941  5.80e-09  6.38e-08   -0.0941  4.17e-07  6.26e-06  holds at n=25
+  gamma=0.8 tau_frac=0.95                        -0.0941  9.75e-08  6.82e-07   -0.0941  1.49e-06  1.04e-05  holds at n=25
+  gamma=0.9 tau_frac=0.6                         -0.1138  4.44e-09  5.33e-08   -0.1138  5.96e-07  7.75e-06  holds at n=25
+  gamma=0.9 tau_frac=0.75                        -0.1087  1.45e-09  3.04e-08   -0.1087  1.79e-07  4.29e-06  holds at n=25
+  gamma=0.9 tau_frac=0.85                        -0.1015  1.31e-09  3.02e-08   -0.1015  1.79e-07  4.29e-06  holds at n=25
+  gamma=0.9 tau_frac=0.95                        -0.0959  3.38e-09  4.40e-08   -0.0959  2.98e-07  5.66e-06  holds at n=25
+  gamma=0.95 tau_frac=0.6                        -0.1199  3.09e-08  2.78e-07   -0.1199  5.96e-07  7.75e-06  holds at n=25
+  gamma=0.95 tau_frac=0.75                       -0.1134  1.76e-09  3.16e-08   -0.1134  5.96e-07  7.75e-06  holds at n=25
+  gamma=0.95 tau_frac=0.85                       -0.1108  1.19e-09  2.86e-08   -0.1108  1.79e-07  4.29e-06  holds at n=25
+  gamma=0.95 tau_frac=0.95                       -0.1042  1.31e-09  3.02e-08   -0.1042  1.79e-07  4.29e-06  holds at n=25
+  gamma=0.99 tau_frac=0.6                        -0.1014  3.99e-04  7.97e-04   -0.1014  2.26e-03  4.51e-03  holds at n=25
+  gamma=0.99 tau_frac=0.75                       -0.1139  1.13e-06  5.66e-06   -0.1139  1.01e-05  5.04e-05  holds at n=25
+  gamma=0.99 tau_frac=0.85                       -0.1204  2.25e-08  2.25e-07   -0.1204  5.96e-07  7.75e-06  holds at n=25
+  gamma=0.99 tau_frac=0.95                       -0.1148  2.81e-09  4.22e-08   -0.1148  5.96e-07  7.75e-06  holds at n=25
+
+======================================================================================================================
+§5.5 Amendment A1 — the additive kernel, regret and map   [k6-designspace(+spread)]  Holm family of 4
+  Q30 measured dregret 0.0015, p = 0.71; A1 asks the same question on the map
+======================================================================================================================
+  contrast                                      n50 mean     n50 p  n50 Holm  n25 mean     n25 p  n25 Holm  verdict
+  qlogei-add - qlogei regret                     -0.0070  5.87e-01  1.00e+00   -0.0070  7.51e-01  1.00e+00  null in both
+  qlogei-add - qlogei AUC g=0.9 tf=0.75          +0.0143  5.21e-01  1.00e+00   +0.0143  3.96e-01  1.00e+00  null in both
+  qlogei-addonly - qlogei regret                 +0.0071  6.51e-01  1.00e+00   +0.0071  5.60e-01  1.00e+00  null in both
+  qlogei-addonly - qlogei AUC g=0.9 tf=0.75      +0.0235  1.26e-01  5.02e-01   +0.0235  1.34e-01  5.35e-01  null in both
+
+======================================================================================================================
+§5.5 Amendment A1 on `alpha*`, 8 contrasts   [k6b-conservative(+spread)]  Holm family of 8
+  the report's 'seven of eight have p >= 0.18; one at p = 0.0125, adjusted 0.100'
+======================================================================================================================
+  contrast                                      n50 mean     n50 p  n50 Holm  n25 mean     n25 p  n25 Holm  verdict
+  qlogei-add - qlogei alpha* tf=0.6              +0.0048  7.54e-01  1.00e+00   +0.0048  8.93e-01  1.00e+00  null in both
+  qlogei-add - qlogei alpha* tf=0.75             +0.0259  5.37e-01  1.00e+00   +0.0259  4.93e-01  1.00e+00  null in both
+  qlogei-add - qlogei alpha* tf=0.85             +0.0145  4.65e-01  1.00e+00   +0.0145  4.93e-01  1.00e+00  null in both
+  qlogei-add - qlogei alpha* tf=0.95             +0.0042  6.15e-01  1.00e+00   +0.0042  8.19e-01  1.00e+00  null in both
+  qlogei-addonly - qlogei alpha* tf=0.6          -0.0060  3.20e-01  1.00e+00   -0.0060  2.82e-01  1.00e+00  null in both
+  qlogei-addonly - qlogei alpha* tf=0.75         +0.0258  5.99e-01  1.00e+00   +0.0258  7.91e-01  1.00e+00  null in both
+  qlogei-addonly - qlogei alpha* tf=0.85         +0.0627  1.80e-01  1.00e+00   +0.0627  1.41e-01  9.86e-01  null in both
+  qlogei-addonly - qlogei alpha* tf=0.95         +0.0412  1.25e-02  1.00e-01   +0.0412  1.60e-02  1.28e-01  null in both
+
+======================================================================================================================
+§5.8 paired contrasts on `alpha*`, 7 pairs x 4 thresholds   [k6b-conservative(+spread)]  Holm family of 28
+  `alpha*` is quantised to multiples of 1/512 and heavily tied — the regime where bootstrap and Wilcoxon come apart (§6.7)
+======================================================================================================================
+  contrast                                      n50 mean     n50 p  n50 Holm  n25 mean     n25 p  n25 Holm  verdict
+  doe - qlogei tf=0.6                            +0.0241  1.09e-08  2.93e-07   +0.0241  1.22e-05  3.43e-04  holds at n=25
+  doe - qlogei tf=0.75                           +0.1906  3.28e-07  8.19e-06   +0.1906  1.77e-05  4.60e-04  holds at n=25
+  doe - qlogei tf=0.85                           +0.0091  4.99e-01  1.00e+00   +0.0091  4.43e-01  1.00e+00  null in both
+  doe - qlogei tf=0.95                           -0.0226  1.48e-01  1.00e+00   -0.0226  2.64e-02  3.70e-01  null in both
+  doe - qlognei tf=0.6                           +0.0298  5.16e-08  1.34e-06   +0.0298  2.69e-05  6.72e-04  holds at n=25
+  doe - qlognei tf=0.75                          +0.1820  1.77e-06  4.06e-05   +0.1820  6.08e-05  1.40e-03  holds at n=25
+  doe - qlognei tf=0.85                          -0.0014  6.99e-01  1.00e+00   -0.0014  7.98e-01  1.00e+00  null in both
+  doe - qlognei tf=0.95                          -0.0272  2.06e-01  1.00e+00   -0.0272  1.40e-02  2.38e-01  null in both
+  lhs - doe tf=0.6                               -0.0418  1.10e-09  3.08e-08   -0.0418  1.22e-05  3.43e-04  holds at n=25
+  lhs - doe tf=0.75                              -0.1583  7.71e-07  1.85e-05   -0.1583  9.03e-05  1.90e-03  holds at n=25
+  lhs - doe tf=0.85                              +0.0450  9.78e-02  1.00e+00   +0.0450  3.83e-02  4.98e-01  null in both
+  lhs - doe tf=0.95                              +0.0466  1.52e-05  3.35e-04   +0.0466  7.61e-05  1.68e-03  holds at n=25
+  lhs - qlognei tf=0.6                           -0.0120  1.19e-02  1.79e-01   -0.0120  6.93e-02  6.93e-01  null in both
+  lhs - qlognei tf=0.75                          +0.0237  8.62e-01  1.00e+00   +0.0237  6.00e-01  1.00e+00  null in both
+  lhs - qlognei tf=0.85                          +0.0435  6.36e-02  8.26e-01   +0.0435  1.39e-01  1.00e+00  null in both
+  lhs - qlognei tf=0.95                          +0.0193  5.80e-03  9.86e-02   +0.0193  3.95e-02  4.98e-01  null in both
+  sobol - qlognei tf=0.6                         -0.0221  2.46e-04  4.68e-03   -0.0221  1.19e-02  2.13e-01  *** DOWNGRADED ***
+  sobol - qlognei tf=0.75                        -0.0780  9.95e-03  1.59e-01   -0.0780  1.49e-02  2.38e-01  null in both
+  sobol - qlognei tf=0.85                        -0.0692  7.33e-02  8.80e-01   -0.0692  1.43e-02  2.38e-01  null in both
+  sobol - qlognei tf=0.95                        -0.0250  5.42e-01  1.00e+00   -0.0250  7.34e-02  6.93e-01  null in both
+  sobol - lhs tf=0.6                             -0.0102  4.71e-02  6.60e-01   -0.0102  1.66e-01  1.00e+00  null in both
+  sobol - lhs tf=0.75                            -0.1016  7.32e-04  1.32e-02   -0.1016  2.17e-04  4.12e-03  holds at n=25
+  sobol - lhs tf=0.85                            -0.1127  5.80e-05  1.16e-03   -0.1127  5.75e-05  1.38e-03  holds at n=25
+  sobol - lhs tf=0.95                            -0.0443  5.04e-05  1.06e-03   -0.0443  1.01e-04  2.02e-03  holds at n=25
+  random - lhs tf=0.6                            +0.0145  1.25e-01  1.00e+00   +0.0145  5.26e-02  5.79e-01  null in both
+  random - lhs tf=0.75                           +0.0230  5.82e-01  1.00e+00   +0.0230  5.45e-01  1.00e+00  null in both
+  random - lhs tf=0.85                           +0.0025  9.96e-01  1.00e+00   +0.0025  9.04e-01  1.00e+00  null in both
+  random - lhs tf=0.95                           -0.0002  7.80e-01  1.00e+00   -0.0002  8.19e-01  1.00e+00  null in both
+
+======================================================================================================================
+§5.11.3 KILL 1 — does plate 2 close the gap to qLogNEI?   [versionb]  Holm family of 8
+  positive favours versionb; family of 8 as reported
+======================================================================================================================
+  contrast                                      n50 mean     n50 p  n50 Holm  n25 mean     n25 p  n25 Holm  verdict
+  versionb - qlognei alpha_star tf=0.6           +0.0116  4.88e-01  8.09e-01   +0.0116  3.68e-01  7.36e-01  null in both
+  versionb - qlognei alpha_star tf=0.75          +0.0854  4.62e-02  1.39e-01   +0.0854  2.38e-02  7.42e-02  null in both
+  versionb - qlognei alpha_star tf=0.85          +0.0750  2.91e-02  1.17e-01   +0.0750  6.85e-03  3.42e-02  gained at n=25
+  versionb - qlognei alpha_star tf=0.95          +0.0264  1.64e-02  8.22e-02   +0.0264  1.85e-02  7.42e-02  null in both
+  versionb - qlognei auc tf=0.6                  +0.0087  4.04e-01  8.09e-01   +0.0087  4.11e-01  7.36e-01  null in both
+  versionb - qlognei auc tf=0.75                 +0.0440  1.09e-02  6.53e-02   +0.0440  3.42e-03  2.05e-02  gained at n=25
+  versionb - qlognei auc tf=0.85                 +0.0760  2.61e-03  2.02e-02   +0.0760  3.76e-04  3.01e-03  holds at n=25
+  versionb - qlognei auc tf=0.95                 +0.0980  2.53e-03  2.02e-02   +0.0980  1.15e-03  8.08e-03  holds at n=25
+
+======================================================================================================================
+§5.11.4 KILL 2 — does the LSE criterion beat 8 RANDOM wells?   [versionb]  Holm family of 8
+  the report's own Holm family of eight (smallest raw p = 0.0030 -> 0.024)
+======================================================================================================================
+  contrast                                      n50 mean     n50 p  n50 Holm  n25 mean     n25 p  n25 Holm  verdict
+  versionb - versionb_random alpha_star tf=0.6   +0.0261  3.78e-02  1.89e-01   +0.0261  3.50e-03  1.85e-02  gained at n=25
+  versionb - versionb_random alpha_star tf=0.75   +0.0854  5.27e-03  3.16e-02   +0.0854  6.31e-04  5.05e-03  holds at n=25
+  versionb - versionb_random alpha_star tf=0.85   +0.0445  4.07e-02  1.89e-01   +0.0445  2.30e-02  9.19e-02  null in both
+  versionb - versionb_random alpha_star tf=0.95   +0.0111  1.38e-01  3.84e-01   +0.0111  2.84e-01  3.60e-01  null in both
+  versionb - versionb_random auc tf=0.6          +0.0100  1.28e-01  3.84e-01   +0.0100  1.48e-01  3.60e-01  null in both
+  versionb - versionb_random auc tf=0.75         +0.0232  2.21e-04  1.77e-03   +0.0232  2.03e-03  1.42e-02  holds at n=25
+  versionb - versionb_random auc tf=0.85         +0.0312  2.36e-03  1.65e-02   +0.0312  3.09e-03  1.85e-02  holds at n=25
+  versionb - versionb_random auc tf=0.95         +0.0237  1.75e-01  3.84e-01   +0.0237  1.20e-01  3.60e-01  null in both
+
+======================================================================================================================
+§5.11.4 Vorob'ev deviation, reported beside KILL 2   [versionb]  Holm family of 4
+  MODEL-INTERNAL (§1.4) — lower means more certain, not more right
+======================================================================================================================
+  contrast                                      n50 mean     n50 p  n50 Holm  n25 mean     n25 p  n25 Holm  verdict
+  versionb - versionb_random vorobev_dev tf=0.6   +0.0258  3.13e-05  1.25e-04   +0.0258  1.01e-05  4.03e-05  holds at n=25
+  versionb - versionb_random vorobev_dev tf=0.75   +0.0125  4.91e-03  1.47e-02   +0.0125  1.40e-04  4.20e-04  holds at n=25
+  versionb - versionb_random vorobev_dev tf=0.85   +0.0036  2.22e-01  4.45e-01   +0.0036  1.48e-01  2.97e-01  null in both
+  versionb - versionb_random vorobev_dev tf=0.95   +0.0005  4.38e-01  4.45e-01   +0.0005  6.53e-01  6.53e-01  null in both
+
+======================================================================================================================
+§5.11.5 `versionb` - `plate1_only` — the second plate itself   [versionb]  Holm family of 8
+  the report: survives Holm across its own EIGHT tests at tau_frac=0.60 on both AUC (+0.0328, adj 0.0240) and alpha* (+0.0236, adj 0.0267)
+======================================================================================================================
+  contrast                                      n50 mean     n50 p  n50 Holm  n25 mean     n25 p  n25 Holm  verdict
+  versionb - plate1_only alpha_star tf=0.6       +0.0236  3.82e-03  2.67e-02   +0.0236  4.93e-04  3.94e-03  holds at n=25
+  versionb - plate1_only alpha_star tf=0.75      +0.0617  1.14e-01  5.69e-01   +0.0617  1.36e-02  8.13e-02  null in both
+  versionb - plate1_only alpha_star tf=0.85      +0.0315  3.54e-01  7.08e-01   +0.0315  1.10e-01  4.38e-01  null in both
+  versionb - plate1_only alpha_star tf=0.95      +0.0071  7.79e-01  7.79e-01   +0.0071  3.33e-01  8.26e-01  null in both
+  versionb - plate1_only auc tf=0.6              +0.0328  3.00e-03  2.40e-02   +0.0328  4.18e-03  2.92e-02  holds at n=25
+  versionb - plate1_only auc tf=0.75             +0.0259  2.83e-02  1.70e-01   +0.0259  4.22e-02  2.11e-01  null in both
+  versionb - plate1_only auc tf=0.85             +0.0200  1.52e-01  6.06e-01   +0.0200  2.75e-01  8.26e-01  null in both
+  versionb - plate1_only auc tf=0.95             +0.0148  2.19e-01  6.56e-01   +0.0148  4.42e-01  8.26e-01  null in both
+
+======================================================================================================================
+§5.11.2 Version B regret contrasts   [versionb]  Holm family of 2
+  positive = versionb WORSE; the report quotes +0.0276 p=0.0166 and +0.0014 p=0.86
+======================================================================================================================
+  contrast                                      n50 mean     n50 p  n50 Holm  n25 mean     n25 p  n25 Holm  verdict
+  versionb - plate1_only regret                  +0.0276  1.66e-02  3.33e-02   +0.0276  5.58e-03  1.12e-02  holds at n=25
+  versionb - qlognei regret                      +0.0014  8.63e-01  8.63e-01   +0.0014  9.37e-01  9.37e-01  null in both
+
+======================================================================================================================
+D20 HEADLINE 2 — the rule-P reversal, per arm   [fix1-terminal-rule]  Holm family of 10
+  NEGATIVE means the posterior-mean rule is BETTER; reproduces `results/fix1-analysis.json` at n = 50
+======================================================================================================================
+  contrast                                      n50 mean     n50 p  n50 Holm  n25 mean     n25 p  n25 Holm  verdict
+  doe: rule P - rule A                           +0.1035  4.95e-08  3.96e-07   +0.1035  1.97e-06  1.57e-05  holds at n=25
+  lhs: rule P - rule A                           -0.0136  6.35e-02  1.27e-01   -0.0136  2.52e-01  5.04e-01  null in both
+  sobol: rule P - rule A                         -0.0673  7.72e-07  5.41e-06   -0.0673  4.54e-05  2.73e-04  holds at n=25
+  random: rule P - rule A                        -0.0975  2.99e-11  2.99e-10   -0.0975  5.96e-08  5.96e-07  holds at n=25
+  qlogei: rule P - rule A                        -0.0320  1.11e-03  4.42e-03   -0.0320  2.51e-03  1.00e-02  holds at n=25
+  qlognei: rule P - rule A                       -0.0246  5.41e-03  1.62e-02   -0.0246  8.82e-03  2.65e-02  holds at n=25
+  qlogei-add: rule P - rule A                    -0.0400  1.14e-04  6.82e-04   -0.0400  1.88e-04  9.39e-04  holds at n=25
+  qlogei-addonly: rule P - rule A                -0.0473  3.83e-04  1.91e-03   -0.0473  2.56e-06  1.79e-05  holds at n=25
+  plate1_only: rule P - rule A                   -0.0136  6.35e-02  1.27e-01   -0.0136  2.52e-01  5.04e-01  null in both
+  versionb: rule P - rule A                      -0.0543  1.76e-09  1.58e-08   -0.0543  1.13e-06  1.02e-05  holds at n=25
+
+======================================================================================================================
+D20 HEADLINE 2 — the SIGN FLIP that is the reversal   [fix1-terminal-rule]  Holm family of 2
+  negative = `doe` ahead. Under rule A `doe` leads; under rule P `versionb` does. Both signs must be established, not one.
+======================================================================================================================
+  contrast                                      n50 mean     n50 p  n50 Holm  n25 mean     n25 p  n25 Holm  verdict
+  doe - versionb under rule A                    -0.0588  1.26e-08  2.52e-08   -0.0588  4.17e-07  8.34e-07  holds at n=25
+  doe - versionb under rule P                    +0.0990  1.13e-07  1.13e-07   +0.0990  1.49e-06  1.49e-06  holds at n=25
+
+======================================================================================================================
+  THE REGISTERED KILL (outside the Holm family)
+======================================================================================================================
+    n50: +0.1578 [+0.1245,+0.1944] p=2.434e-13 n=50  KILL DID NOT FIRE
+    n25: +0.1578 [+0.1221,+0.1942] p=1.192e-07 n=25  KILL DID NOT FIRE
+
+======================================================================================================================
+  HOW MANY REPORTED CONTRASTS CHANGE STATUS AT n = 25?
+======================================================================================================================
+    contrasts recomputed          : 137
+    CI inflation sqrt(1+ICC)      : median 0.9884  range [0.4922, 1.1763]  (73 below 1.0)
+      F1 assumed 'roughly sqrt(2)' = 1.4142. That is the ICC = 1 corner. MEASURED, it is not that.
+    status changes, raw Wilcoxon  : 7
+    status changes, Holm-adjusted : 4
+      of which DOWNGRADED (sig at n=50, not at n=25): 1
+        - §5.8 paired contrasts on `alpha*`, 7 pairs x 4 thresholds: sobol - qlognei tf=0.6  (n50 Holm 4.676e-03 -> n25 Holm 2.134e-01)
+      of which gained significance at n=25          : 3
+        + §5.11.3 KILL 1 — does plate 2 close the gap to qLogNEI?: versionb - qlognei alpha_star tf=0.85  (n50 Holm 1.165e-01 -> n25 Holm 3.423e-02)
+        + §5.11.3 KILL 1 — does plate 2 close the gap to qLogNEI?: versionb - qlognei auc tf=0.75  (n50 Holm 6.528e-02 -> n25 Holm 2.052e-02)
+        + §5.11.4 KILL 2 — does the LSE criterion beat 8 RANDOM wells?: versionb - versionb_random alpha_star tf=0.6  (n50 Holm 1.891e-01 -> n25 Holm 1.853e-02)
+    containment cells             : 156 · verdict changes: 0
+
+  written to results/f1-dual-n.json
