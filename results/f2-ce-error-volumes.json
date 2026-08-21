@@ -1,0 +1,1035 @@
+{
+ "provenance": {
+  "git_sha": "44fb8fa4881b77349e792178938df5ab1e3086ce",
+  "git_dirty": true,
+  "generated_at": "2026-08-21T13:40:22+08:00",
+  "argv": [
+   "scripts/analyse_f2_error_volumes.py"
+  ],
+  "python": "3.11.15",
+  "numpy": "2.4.6",
+  "scipy": "1.17.1",
+  "torch": "2.13.0",
+  "botorch": "0.18.1",
+  "gpytorch": "1.15.2",
+  "reads": "committed blobs via `git show HEAD:<path>`; no campaign is run"
+ },
+ "amendment": "F2a extended to CE_alpha; approved as a separate file, never an overwrite",
+ "source": [
+  "results/k6b-conservative.json",
+  "results/k6b-conservative-spread.json"
+ ],
+ "rows": 1600,
+ "gate": {
+  "committed_iou_column_for_CE": null,
+  "falsifiable_check": "ce_vol*(1-ce_false_in) <= prevalence, else type II goes negative",
+  "negative_type_II": 0
+ },
+ "like_for_like_across_arms": false,
+ "not_like_for_like_reason": "Amendment B3 evaluates `doe` on its 4-D active subspace (\u00a72.8), so the prevalence differs by arm in 198 of 200 cells and `doe`'s slice is easier. Contrast the K6 map, where all eight arms share the 6-D grid and the ranking IS like-for-like.",
+ "cells": [
+  {
+   "tau_frac": 0.6,
+   "alpha": 0.5,
+   "empty_frac": 0.0,
+   "prevalence_by_arm": {
+    "doe": 0.82509,
+    "lhs": 0.7354599999999999,
+    "qlogei": 0.7354599999999999,
+    "qlogei-add": 0.7354599999999999,
+    "qlogei-addonly": 0.7354599999999999,
+    "qlognei": 0.7354599999999999,
+    "random": 0.7354599999999999,
+    "sobol": 0.7354599999999999
+   },
+   "type_I_vol": {
+    "doe": 0.10025000000000002,
+    "lhs": 4e-05,
+    "qlogei": 0.00010000000000000002,
+    "qlogei-add": 5.9999999999999995e-05,
+    "qlogei-addonly": 0.00014000000000000001,
+    "qlognei": 8e-05,
+    "random": 0.00042,
+    "sobol": 0.0
+   },
+   "type_I_rank": [
+    "sobol",
+    "lhs",
+    "qlogei-add",
+    "qlognei",
+    "qlogei",
+    "qlogei-addonly",
+    "random",
+    "doe"
+   ],
+   "type_I_degenerate": false,
+   "type_II_vol": {
+    "doe": 0.16317,
+    "lhs": 0.71985,
+    "qlogei": 0.7234400000000001,
+    "qlogei-add": 0.7214800000000001,
+    "qlogei-addonly": 0.7179599999999999,
+    "qlognei": 0.7234200000000002,
+    "random": 0.71419,
+    "sobol": 0.7244299999999998
+   },
+   "type_II_rank": [
+    "doe",
+    "random",
+    "qlogei-addonly",
+    "lhs",
+    "qlogei-add",
+    "qlognei",
+    "qlogei",
+    "sobol"
+   ],
+   "type_II_degenerate": false,
+   "total_vol": {
+    "doe": 0.26342000000000004,
+    "lhs": 0.7198899999999999,
+    "qlogei": 0.7235400000000002,
+    "qlogei-add": 0.7215400000000001,
+    "qlogei-addonly": 0.7181000000000001,
+    "qlognei": 0.7235,
+    "random": 0.71461,
+    "sobol": 0.7244299999999998
+   },
+   "total_rank": [
+    "doe",
+    "random",
+    "qlogei-addonly",
+    "lhs",
+    "qlogei-add",
+    "qlognei",
+    "qlogei",
+    "sobol"
+   ],
+   "total_degenerate": false,
+   "separation_from_prevalence": 0.5616699999999999,
+   "ranking_is_prevalence_only": false
+  },
+  {
+   "tau_frac": 0.6,
+   "alpha": 0.8,
+   "empty_frac": 0.045,
+   "prevalence_by_arm": {
+    "doe": 0.82509,
+    "lhs": 0.7354599999999999,
+    "qlogei": 0.7354599999999999,
+    "qlogei-add": 0.7354599999999999,
+    "qlogei-addonly": 0.7354599999999999,
+    "qlognei": 0.7354599999999999,
+    "random": 0.7354599999999999,
+    "sobol": 0.7354599999999999
+   },
+   "type_I_vol": {
+    "doe": 0.03749,
+    "lhs": 0.0,
+    "qlogei": 1e-05,
+    "qlogei-add": 0.0,
+    "qlogei-addonly": 3e-05,
+    "qlognei": 1e-05,
+    "random": 4e-05,
+    "sobol": 0.0
+   },
+   "type_I_rank": [
+    "lhs",
+    "qlogei-add",
+    "sobol",
+    "qlogei",
+    "qlognei",
+    "qlogei-addonly",
+    "random",
+    "doe"
+   ],
+   "type_I_degenerate": false,
+   "type_II_vol": {
+    "doe": 0.40358000000000005,
+    "lhs": 0.7318399999999998,
+    "qlogei": 0.7311399999999999,
+    "qlogei-add": 0.73076,
+    "qlogei-addonly": 0.72931,
+    "qlognei": 0.73135,
+    "random": 0.7288100000000002,
+    "sobol": 0.73402
+   },
+   "type_II_rank": [
+    "doe",
+    "random",
+    "qlogei-addonly",
+    "qlogei-add",
+    "qlogei",
+    "qlognei",
+    "lhs",
+    "sobol"
+   ],
+   "type_II_degenerate": false,
+   "total_vol": {
+    "doe": 0.44107,
+    "lhs": 0.7318399999999998,
+    "qlogei": 0.73115,
+    "qlogei-add": 0.73076,
+    "qlogei-addonly": 0.72934,
+    "qlognei": 0.73136,
+    "random": 0.72885,
+    "sobol": 0.73402
+   },
+   "total_rank": [
+    "doe",
+    "random",
+    "qlogei-addonly",
+    "qlogei-add",
+    "qlogei",
+    "qlognei",
+    "lhs",
+    "sobol"
+   ],
+   "total_degenerate": false,
+   "separation_from_prevalence": 0.38402,
+   "ranking_is_prevalence_only": false
+  },
+  {
+   "tau_frac": 0.6,
+   "alpha": 0.95,
+   "empty_frac": 0.4625,
+   "prevalence_by_arm": {
+    "doe": 0.82509,
+    "lhs": 0.7354599999999999,
+    "qlogei": 0.7354599999999999,
+    "qlogei-add": 0.7354599999999999,
+    "qlogei-addonly": 0.7354599999999999,
+    "qlognei": 0.7354599999999999,
+    "random": 0.7354599999999999,
+    "sobol": 0.7354599999999999
+   },
+   "type_I_vol": {
+    "doe": 0.0037400000000000007,
+    "lhs": 0.0,
+    "qlogei": 0.0,
+    "qlogei-add": 0.0,
+    "qlogei-addonly": 0.0,
+    "qlognei": 1e-05,
+    "random": 0.0,
+    "sobol": 0.0
+   },
+   "type_I_rank": [
+    "lhs",
+    "qlogei",
+    "qlogei-add",
+    "qlogei-addonly",
+    "random",
+    "sobol",
+    "qlognei",
+    "doe"
+   ],
+   "type_I_degenerate": false,
+   "type_II_vol": {
+    "doe": 0.6061,
+    "lhs": 0.7350500000000001,
+    "qlogei": 0.7344600000000001,
+    "qlogei-add": 0.73461,
+    "qlogei-addonly": 0.73493,
+    "qlognei": 0.73473,
+    "random": 0.73502,
+    "sobol": 0.7352699999999999
+   },
+   "type_II_rank": [
+    "doe",
+    "qlogei",
+    "qlogei-add",
+    "qlognei",
+    "qlogei-addonly",
+    "random",
+    "lhs",
+    "sobol"
+   ],
+   "type_II_degenerate": false,
+   "total_vol": {
+    "doe": 0.60984,
+    "lhs": 0.7350500000000001,
+    "qlogei": 0.7344600000000001,
+    "qlogei-add": 0.73461,
+    "qlogei-addonly": 0.73493,
+    "qlognei": 0.7347400000000001,
+    "random": 0.73502,
+    "sobol": 0.7352699999999999
+   },
+   "total_rank": [
+    "doe",
+    "qlogei",
+    "qlogei-add",
+    "qlognei",
+    "qlogei-addonly",
+    "random",
+    "lhs",
+    "sobol"
+   ],
+   "total_degenerate": false,
+   "separation_from_prevalence": 0.21524999999999994,
+   "ranking_is_prevalence_only": false
+  },
+  {
+   "tau_frac": 0.75,
+   "alpha": 0.5,
+   "empty_frac": 0.305,
+   "prevalence_by_arm": {
+    "doe": 0.39415,
+    "lhs": 0.28798,
+    "qlogei": 0.28798,
+    "qlogei-add": 0.28798,
+    "qlogei-addonly": 0.28798,
+    "qlognei": 0.28798,
+    "random": 0.28798,
+    "sobol": 0.28798
+   },
+   "type_I_vol": {
+    "doe": 0.00728,
+    "lhs": 5e-05,
+    "qlogei": 3e-05,
+    "qlogei-add": 5.9999999999999995e-05,
+    "qlogei-addonly": 8.999999999999999e-05,
+    "qlognei": 2e-05,
+    "random": 9.999999999999999e-05,
+    "sobol": 4e-05
+   },
+   "type_I_rank": [
+    "qlognei",
+    "qlogei",
+    "sobol",
+    "lhs",
+    "qlogei-add",
+    "qlogei-addonly",
+    "random",
+    "doe"
+   ],
+   "type_I_degenerate": false,
+   "type_II_vol": {
+    "doe": 0.3590900000000001,
+    "lhs": 0.28702,
+    "qlogei": 0.28729999999999994,
+    "qlogei-add": 0.28705,
+    "qlogei-addonly": 0.28662000000000004,
+    "qlognei": 0.28712,
+    "random": 0.28679999999999994,
+    "sobol": 0.28774
+   },
+   "type_II_rank": [
+    "qlogei-addonly",
+    "random",
+    "lhs",
+    "qlogei-add",
+    "qlognei",
+    "qlogei",
+    "sobol",
+    "doe"
+   ],
+   "type_II_degenerate": false,
+   "total_vol": {
+    "doe": 0.36637000000000003,
+    "lhs": 0.28707,
+    "qlogei": 0.28733000000000003,
+    "qlogei-add": 0.28711000000000003,
+    "qlogei-addonly": 0.28671,
+    "qlognei": 0.28714,
+    "random": 0.2869,
+    "sobol": 0.28778
+   },
+   "total_rank": [
+    "qlogei-addonly",
+    "random",
+    "lhs",
+    "qlogei-add",
+    "qlognei",
+    "qlogei",
+    "sobol",
+    "doe"
+   ],
+   "total_degenerate": false,
+   "separation_from_prevalence": 0.02777999999999997,
+   "ranking_is_prevalence_only": false
+  },
+  {
+   "tau_frac": 0.75,
+   "alpha": 0.8,
+   "empty_frac": 0.79,
+   "prevalence_by_arm": {
+    "doe": 0.39415,
+    "lhs": 0.28798,
+    "qlogei": 0.28798,
+    "qlogei-add": 0.28798,
+    "qlogei-addonly": 0.28798,
+    "qlognei": 0.28798,
+    "random": 0.28798,
+    "sobol": 0.28798
+   },
+   "type_I_vol": {
+    "doe": 2e-05,
+    "lhs": 0.0,
+    "qlogei": 0.0,
+    "qlogei-add": 1e-05,
+    "qlogei-addonly": 0.0,
+    "qlognei": 1e-05,
+    "random": 0.0,
+    "sobol": 0.0
+   },
+   "type_I_rank": [
+    "lhs",
+    "qlogei",
+    "qlogei-addonly",
+    "random",
+    "sobol",
+    "qlogei-add",
+    "qlognei",
+    "doe"
+   ],
+   "type_I_degenerate": false,
+   "type_II_vol": {
+    "doe": 0.3922300000000001,
+    "lhs": 0.28793,
+    "qlogei": 0.28784,
+    "qlogei-add": 0.28781,
+    "qlogei-addonly": 0.28771,
+    "qlognei": 0.2878,
+    "random": 0.28784999999999994,
+    "sobol": 0.28798
+   },
+   "type_II_rank": [
+    "qlogei-addonly",
+    "qlognei",
+    "qlogei-add",
+    "qlogei",
+    "random",
+    "lhs",
+    "sobol",
+    "doe"
+   ],
+   "type_II_degenerate": false,
+   "total_vol": {
+    "doe": 0.39225,
+    "lhs": 0.28793,
+    "qlogei": 0.28784,
+    "qlogei-add": 0.28782,
+    "qlogei-addonly": 0.28771,
+    "qlognei": 0.28781,
+    "random": 0.28784999999999994,
+    "sobol": 0.28798
+   },
+   "total_rank": [
+    "qlogei-addonly",
+    "qlognei",
+    "qlogei-add",
+    "qlogei",
+    "random",
+    "lhs",
+    "sobol",
+    "doe"
+   ],
+   "total_degenerate": false,
+   "separation_from_prevalence": 0.0019000000000000128,
+   "ranking_is_prevalence_only": false
+  },
+  {
+   "tau_frac": 0.75,
+   "alpha": 0.95,
+   "empty_frac": 0.9875,
+   "prevalence_by_arm": {
+    "doe": 0.39415,
+    "lhs": 0.28798,
+    "qlogei": 0.28798,
+    "qlogei-add": 0.28798,
+    "qlogei-addonly": 0.28798,
+    "qlognei": 0.28798,
+    "random": 0.28798,
+    "sobol": 0.28798
+   },
+   "type_I_vol": {
+    "doe": 0.0,
+    "lhs": 0.0,
+    "qlogei": 0.0,
+    "qlogei-add": 0.0,
+    "qlogei-addonly": 0.0,
+    "qlognei": 0.0,
+    "random": 0.0,
+    "sobol": 0.0
+   },
+   "type_I_rank": [
+    "doe",
+    "lhs",
+    "qlogei",
+    "qlogei-add",
+    "qlogei-addonly",
+    "qlognei",
+    "random",
+    "sobol"
+   ],
+   "type_I_degenerate": true,
+   "type_II_vol": {
+    "doe": 0.39413,
+    "lhs": 0.28798,
+    "qlogei": 0.28796999999999995,
+    "qlogei-add": 0.28797,
+    "qlogei-addonly": 0.28798,
+    "qlognei": 0.28795000000000004,
+    "random": 0.28798,
+    "sobol": 0.28798
+   },
+   "type_II_rank": [
+    "qlognei",
+    "qlogei",
+    "qlogei-add",
+    "lhs",
+    "qlogei-addonly",
+    "random",
+    "sobol",
+    "doe"
+   ],
+   "type_II_degenerate": false,
+   "total_vol": {
+    "doe": 0.39413,
+    "lhs": 0.28798,
+    "qlogei": 0.28796999999999995,
+    "qlogei-add": 0.28797,
+    "qlogei-addonly": 0.28798,
+    "qlognei": 0.28795000000000004,
+    "random": 0.28798,
+    "sobol": 0.28798
+   },
+   "total_rank": [
+    "qlognei",
+    "qlogei",
+    "qlogei-add",
+    "lhs",
+    "qlogei-addonly",
+    "random",
+    "sobol",
+    "doe"
+   ],
+   "total_degenerate": false,
+   "separation_from_prevalence": 2.999999999997449e-05,
+   "ranking_is_prevalence_only": false
+  },
+  {
+   "tau_frac": 0.85,
+   "alpha": 0.5,
+   "empty_frac": 0.91,
+   "prevalence_by_arm": {
+    "doe": 0.10869,
+    "lhs": 0.06813999999999999,
+    "qlogei": 0.06813999999999999,
+    "qlogei-add": 0.06813999999999999,
+    "qlogei-addonly": 0.06813999999999999,
+    "qlognei": 0.06813999999999999,
+    "random": 0.06813999999999999,
+    "sobol": 0.06813999999999999
+   },
+   "type_I_vol": {
+    "doe": 0.0,
+    "lhs": 0.0,
+    "qlogei": 0.0,
+    "qlogei-add": 1e-05,
+    "qlogei-addonly": 5e-05,
+    "qlognei": 0.0,
+    "random": 7.000000000000001e-05,
+    "sobol": 0.0
+   },
+   "type_I_rank": [
+    "doe",
+    "lhs",
+    "qlogei",
+    "qlognei",
+    "sobol",
+    "qlogei-add",
+    "qlogei-addonly",
+    "random"
+   ],
+   "type_I_degenerate": false,
+   "type_II_vol": {
+    "doe": 0.10869,
+    "lhs": 0.06810999999999999,
+    "qlogei": 0.06806999999999999,
+    "qlogei-add": 0.06812,
+    "qlogei-addonly": 0.06803999999999999,
+    "qlognei": 0.06806,
+    "random": 0.06812999999999998,
+    "sobol": 0.06813999999999999
+   },
+   "type_II_rank": [
+    "qlogei-addonly",
+    "qlognei",
+    "qlogei",
+    "lhs",
+    "qlogei-add",
+    "random",
+    "sobol",
+    "doe"
+   ],
+   "type_II_degenerate": false,
+   "total_vol": {
+    "doe": 0.10869,
+    "lhs": 0.06810999999999999,
+    "qlogei": 0.06806999999999999,
+    "qlogei-add": 0.06812999999999998,
+    "qlogei-addonly": 0.06809,
+    "qlognei": 0.06806,
+    "random": 0.0682,
+    "sobol": 0.06813999999999999
+   },
+   "total_rank": [
+    "qlognei",
+    "qlogei",
+    "qlogei-addonly",
+    "lhs",
+    "qlogei-add",
+    "sobol",
+    "random",
+    "doe"
+   ],
+   "total_degenerate": false,
+   "separation_from_prevalence": 7.999999999999674e-05,
+   "ranking_is_prevalence_only": false
+  },
+  {
+   "tau_frac": 0.85,
+   "alpha": 0.8,
+   "empty_frac": 0.9975,
+   "prevalence_by_arm": {
+    "doe": 0.10869,
+    "lhs": 0.06813999999999999,
+    "qlogei": 0.06813999999999999,
+    "qlogei-add": 0.06813999999999999,
+    "qlogei-addonly": 0.06813999999999999,
+    "qlognei": 0.06813999999999999,
+    "random": 0.06813999999999999,
+    "sobol": 0.06813999999999999
+   },
+   "type_I_vol": {
+    "doe": 0.0,
+    "lhs": 0.0,
+    "qlogei": 0.0,
+    "qlogei-add": 0.0,
+    "qlogei-addonly": 0.0,
+    "qlognei": 0.0,
+    "random": 0.0,
+    "sobol": 0.0
+   },
+   "type_I_rank": [
+    "doe",
+    "lhs",
+    "qlogei",
+    "qlogei-add",
+    "qlogei-addonly",
+    "qlognei",
+    "random",
+    "sobol"
+   ],
+   "type_I_degenerate": true,
+   "type_II_vol": {
+    "doe": 0.10869,
+    "lhs": 0.06813999999999999,
+    "qlogei": 0.06813999999999999,
+    "qlogei-add": 0.06813999999999999,
+    "qlogei-addonly": 0.06813999999999999,
+    "qlognei": 0.06812999999999998,
+    "random": 0.06813999999999999,
+    "sobol": 0.06813999999999999
+   },
+   "type_II_rank": [
+    "qlognei",
+    "lhs",
+    "qlogei",
+    "qlogei-add",
+    "qlogei-addonly",
+    "random",
+    "sobol",
+    "doe"
+   ],
+   "type_II_degenerate": false,
+   "total_vol": {
+    "doe": 0.10869,
+    "lhs": 0.06813999999999999,
+    "qlogei": 0.06813999999999999,
+    "qlogei-add": 0.06813999999999999,
+    "qlogei-addonly": 0.06813999999999999,
+    "qlognei": 0.06812999999999998,
+    "random": 0.06813999999999999,
+    "sobol": 0.06813999999999999
+   },
+   "total_rank": [
+    "qlognei",
+    "lhs",
+    "qlogei",
+    "qlogei-add",
+    "qlogei-addonly",
+    "random",
+    "sobol",
+    "doe"
+   ],
+   "total_degenerate": false,
+   "separation_from_prevalence": 1.0000000000010001e-05,
+   "ranking_is_prevalence_only": false
+  },
+  {
+   "tau_frac": 0.85,
+   "alpha": 0.95,
+   "empty_frac": 1.0,
+   "prevalence_by_arm": {
+    "doe": 0.10869,
+    "lhs": 0.06813999999999999,
+    "qlogei": 0.06813999999999999,
+    "qlogei-add": 0.06813999999999999,
+    "qlogei-addonly": 0.06813999999999999,
+    "qlognei": 0.06813999999999999,
+    "random": 0.06813999999999999,
+    "sobol": 0.06813999999999999
+   },
+   "type_I_vol": {
+    "doe": 0.0,
+    "lhs": 0.0,
+    "qlogei": 0.0,
+    "qlogei-add": 0.0,
+    "qlogei-addonly": 0.0,
+    "qlognei": 0.0,
+    "random": 0.0,
+    "sobol": 0.0
+   },
+   "type_I_rank": [
+    "doe",
+    "lhs",
+    "qlogei",
+    "qlogei-add",
+    "qlogei-addonly",
+    "qlognei",
+    "random",
+    "sobol"
+   ],
+   "type_I_degenerate": true,
+   "type_II_vol": {
+    "doe": 0.10869,
+    "lhs": 0.06813999999999999,
+    "qlogei": 0.06813999999999999,
+    "qlogei-add": 0.06813999999999999,
+    "qlogei-addonly": 0.06813999999999999,
+    "qlognei": 0.06813999999999999,
+    "random": 0.06813999999999999,
+    "sobol": 0.06813999999999999
+   },
+   "type_II_rank": [
+    "lhs",
+    "qlogei",
+    "qlogei-add",
+    "qlogei-addonly",
+    "qlognei",
+    "random",
+    "sobol",
+    "doe"
+   ],
+   "type_II_degenerate": false,
+   "total_vol": {
+    "doe": 0.10869,
+    "lhs": 0.06813999999999999,
+    "qlogei": 0.06813999999999999,
+    "qlogei-add": 0.06813999999999999,
+    "qlogei-addonly": 0.06813999999999999,
+    "qlognei": 0.06813999999999999,
+    "random": 0.06813999999999999,
+    "sobol": 0.06813999999999999
+   },
+   "total_rank": [
+    "lhs",
+    "qlogei",
+    "qlogei-add",
+    "qlogei-addonly",
+    "qlognei",
+    "random",
+    "sobol",
+    "doe"
+   ],
+   "total_degenerate": false,
+   "separation_from_prevalence": 0.0,
+   "ranking_is_prevalence_only": true
+  },
+  {
+   "tau_frac": 0.95,
+   "alpha": 0.5,
+   "empty_frac": 1.0,
+   "prevalence_by_arm": {
+    "doe": 0.00458,
+    "lhs": 0.00292,
+    "qlogei": 0.00292,
+    "qlogei-add": 0.00292,
+    "qlogei-addonly": 0.00292,
+    "qlognei": 0.00292,
+    "random": 0.00292,
+    "sobol": 0.00292
+   },
+   "type_I_vol": {
+    "doe": 0.0,
+    "lhs": 0.0,
+    "qlogei": 0.0,
+    "qlogei-add": 0.0,
+    "qlogei-addonly": 0.0,
+    "qlognei": 0.0,
+    "random": 0.0,
+    "sobol": 0.0
+   },
+   "type_I_rank": [
+    "doe",
+    "lhs",
+    "qlogei",
+    "qlogei-add",
+    "qlogei-addonly",
+    "qlognei",
+    "random",
+    "sobol"
+   ],
+   "type_I_degenerate": true,
+   "type_II_vol": {
+    "doe": 0.00458,
+    "lhs": 0.00292,
+    "qlogei": 0.00292,
+    "qlogei-add": 0.00292,
+    "qlogei-addonly": 0.00292,
+    "qlognei": 0.00292,
+    "random": 0.00292,
+    "sobol": 0.00292
+   },
+   "type_II_rank": [
+    "lhs",
+    "qlogei",
+    "qlogei-add",
+    "qlogei-addonly",
+    "qlognei",
+    "random",
+    "sobol",
+    "doe"
+   ],
+   "type_II_degenerate": false,
+   "total_vol": {
+    "doe": 0.00458,
+    "lhs": 0.00292,
+    "qlogei": 0.00292,
+    "qlogei-add": 0.00292,
+    "qlogei-addonly": 0.00292,
+    "qlognei": 0.00292,
+    "random": 0.00292,
+    "sobol": 0.00292
+   },
+   "total_rank": [
+    "lhs",
+    "qlogei",
+    "qlogei-add",
+    "qlogei-addonly",
+    "qlognei",
+    "random",
+    "sobol",
+    "doe"
+   ],
+   "total_degenerate": false,
+   "separation_from_prevalence": 0.0,
+   "ranking_is_prevalence_only": true
+  },
+  {
+   "tau_frac": 0.95,
+   "alpha": 0.8,
+   "empty_frac": 1.0,
+   "prevalence_by_arm": {
+    "doe": 0.00458,
+    "lhs": 0.00292,
+    "qlogei": 0.00292,
+    "qlogei-add": 0.00292,
+    "qlogei-addonly": 0.00292,
+    "qlognei": 0.00292,
+    "random": 0.00292,
+    "sobol": 0.00292
+   },
+   "type_I_vol": {
+    "doe": 0.0,
+    "lhs": 0.0,
+    "qlogei": 0.0,
+    "qlogei-add": 0.0,
+    "qlogei-addonly": 0.0,
+    "qlognei": 0.0,
+    "random": 0.0,
+    "sobol": 0.0
+   },
+   "type_I_rank": [
+    "doe",
+    "lhs",
+    "qlogei",
+    "qlogei-add",
+    "qlogei-addonly",
+    "qlognei",
+    "random",
+    "sobol"
+   ],
+   "type_I_degenerate": true,
+   "type_II_vol": {
+    "doe": 0.00458,
+    "lhs": 0.00292,
+    "qlogei": 0.00292,
+    "qlogei-add": 0.00292,
+    "qlogei-addonly": 0.00292,
+    "qlognei": 0.00292,
+    "random": 0.00292,
+    "sobol": 0.00292
+   },
+   "type_II_rank": [
+    "lhs",
+    "qlogei",
+    "qlogei-add",
+    "qlogei-addonly",
+    "qlognei",
+    "random",
+    "sobol",
+    "doe"
+   ],
+   "type_II_degenerate": false,
+   "total_vol": {
+    "doe": 0.00458,
+    "lhs": 0.00292,
+    "qlogei": 0.00292,
+    "qlogei-add": 0.00292,
+    "qlogei-addonly": 0.00292,
+    "qlognei": 0.00292,
+    "random": 0.00292,
+    "sobol": 0.00292
+   },
+   "total_rank": [
+    "lhs",
+    "qlogei",
+    "qlogei-add",
+    "qlogei-addonly",
+    "qlognei",
+    "random",
+    "sobol",
+    "doe"
+   ],
+   "total_degenerate": false,
+   "separation_from_prevalence": 0.0,
+   "ranking_is_prevalence_only": true
+  },
+  {
+   "tau_frac": 0.95,
+   "alpha": 0.95,
+   "empty_frac": 1.0,
+   "prevalence_by_arm": {
+    "doe": 0.00458,
+    "lhs": 0.00292,
+    "qlogei": 0.00292,
+    "qlogei-add": 0.00292,
+    "qlogei-addonly": 0.00292,
+    "qlognei": 0.00292,
+    "random": 0.00292,
+    "sobol": 0.00292
+   },
+   "type_I_vol": {
+    "doe": 0.0,
+    "lhs": 0.0,
+    "qlogei": 0.0,
+    "qlogei-add": 0.0,
+    "qlogei-addonly": 0.0,
+    "qlognei": 0.0,
+    "random": 0.0,
+    "sobol": 0.0
+   },
+   "type_I_rank": [
+    "doe",
+    "lhs",
+    "qlogei",
+    "qlogei-add",
+    "qlogei-addonly",
+    "qlognei",
+    "random",
+    "sobol"
+   ],
+   "type_I_degenerate": true,
+   "type_II_vol": {
+    "doe": 0.00458,
+    "lhs": 0.00292,
+    "qlogei": 0.00292,
+    "qlogei-add": 0.00292,
+    "qlogei-addonly": 0.00292,
+    "qlognei": 0.00292,
+    "random": 0.00292,
+    "sobol": 0.00292
+   },
+   "type_II_rank": [
+    "lhs",
+    "qlogei",
+    "qlogei-add",
+    "qlogei-addonly",
+    "qlognei",
+    "random",
+    "sobol",
+    "doe"
+   ],
+   "type_II_degenerate": false,
+   "total_vol": {
+    "doe": 0.00458,
+    "lhs": 0.00292,
+    "qlogei": 0.00292,
+    "qlogei-add": 0.00292,
+    "qlogei-addonly": 0.00292,
+    "qlognei": 0.00292,
+    "random": 0.00292,
+    "sobol": 0.00292
+   },
+   "total_rank": [
+    "lhs",
+    "qlogei",
+    "qlogei-add",
+    "qlogei-addonly",
+    "qlognei",
+    "random",
+    "sobol",
+    "doe"
+   ],
+   "total_degenerate": false,
+   "separation_from_prevalence": 0.0,
+   "ranking_is_prevalence_only": true
+  }
+ ],
+ "informative_cells": 8,
+ "doe_rank_on_total_error_volume_informative_cells": [
+  [
+   0.6,
+   0.5,
+   1
+  ],
+  [
+   0.6,
+   0.8,
+   1
+  ],
+  [
+   0.6,
+   0.95,
+   1
+  ],
+  [
+   0.75,
+   0.5,
+   8
+  ],
+  [
+   0.75,
+   0.8,
+   8
+  ],
+  [
+   0.75,
+   0.95,
+   8
+  ],
+  [
+   0.85,
+   0.5,
+   8
+  ],
+  [
+   0.85,
+   0.8,
+   8
+  ]
+ ]
+}
