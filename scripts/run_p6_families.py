@@ -791,21 +791,62 @@ def versionb_builder(arm: str):
     return builder
 
 
+#: A tie is a TOLERANCE, not an equality. Two of the six degenerate K6 cells sit at
+#: 1.1e-16 rather than 0, so a literal `== 0` rule keeps them as rankable.
+TIE_TOL = 1e-15
+#: Degeneracy is reported PER METRIC because the denominators differ. In K6, type I is
+#: degenerate at 10 of 24 cells (denominator 14) while type II and the symmetric
+#: difference are degenerate at 6 (denominator 18): an all-empty region scores type I
+#: exactly 0 for every arm, so type I ties at four further high-gamma cells where type II
+#: still separates. Quoting one denominator for all three overstates the evidence for
+#: type I -- Erratum 6b reappearing as a denominator rather than as a ranking hazard.
+DEGENERACY_METRICS = ("type_I_vol_pred", "type_II_vol_pred", "total_error_vol_pred")
+
+
 def cell_separation(rows: list[dict]) -> dict:
-    """``max |total_error_vol - prevalence|`` over the arms of one cell, and rankability.
+    """Both degeneracy flags for one cell. **Neither subsumes the other.**
 
-    **When every arm certifies nothing, total error volume IS the prevalence**, so a
-    ranking over that cell ranks prevalences and says nothing about the arms -- the
-    higher-prevalence arm places last mechanically. Measured in 4 of 12 CE cells at 100%
-    emptiness. The census guarantees this occurs here rather than hypothetically:
-    rosenbrock is 8/8 above the ceiling at gamma >= 0.90 and levy 8/8 at gamma >= 0.95.
+    ``ranking_is_prevalence_only`` -- ``max |total_error_vol - prevalence|`` over the
+    arms. When every arm certifies nothing, total error volume IS the prevalence, so the
+    ranking ranks prevalences and says nothing about the arms; the higher-prevalence arm
+    places last mechanically. This is the flag that catches the CE-shaped case, where
+    arms differ in prevalence (B3 scores `doe` on its 4-D subspace) and therefore **do
+    not tie** -- a tie test stays silent there while the ranking is exactly as vacuous.
 
-    Same class as "type I alone ranks silence first": a scalar that looks like a
-    comparison and is not.
+    ``arms_tie`` -- ``max - min`` of the arm means. This is the flag that catches the
+    map-shaped case, where prevalence is arm-identical and every arm ties. It also
+    catches something the separation flag structurally cannot: arms that agree with each
+    other at a value far from the prevalence. That cell has a large separation and is
+    still unrankable.
+
+    P6 is map-shaped today -- ``true_frac_above_tau`` is a property of the grid and tau,
+    so it is arm-identical within a cell -- but both are carried because the shapes are
+    one B3-style subspace change apart, and because the tie case is real regardless.
     """
-    sep = max((abs(r["total_error_vol_pred"] - r["true_frac_above_tau"]) for r in rows),
-              default=0.0)
-    return {"separation_from_prevalence": sep, "rankable": sep > 0.0,
+    metrics = {}
+    for m in DEGENERACY_METRICS:
+        by_arm: dict[str, list[float]] = {}
+        for r in rows:
+            if m in r and r[m] is not None:
+                by_arm.setdefault(r["arm"], []).append(float(r[m]))
+        means = [sum(v) / len(v) for v in by_arm.values()]
+        spread = (max(means) - min(means)) if means else 0.0
+        metrics[m] = {"arm_spread": spread, "arms_tie": spread <= TIE_TOL,
+                      "n_arms": len(by_arm)}
+
+    sep = max((abs(r["total_error_vol_pred"] - r["true_frac_above_tau"])
+               for r in rows if r.get("total_error_vol_pred") is not None), default=0.0)
+    prevalence_only = sep <= TIE_TOL
+    for m, v in metrics.items():
+        v["rankable"] = not v["arms_tie"] and not prevalence_only
+
+    ranked = metrics[RANKING_SCALAR]
+    return {"separation_from_prevalence": sep,
+            "ranking_is_prevalence_only": prevalence_only,
+            "arms_tie": ranked["arms_tie"],
+            "arm_spread": ranked["arm_spread"],
+            "rankable": ranked["rankable"],
+            "per_metric": metrics,
             "n_arms": len({r["arm"] for r in rows})}
 
 
@@ -871,8 +912,12 @@ def merge() -> None:
         separation["|".join(str(x) for x in k)] = v
         for r in group:
             r["separation_from_prevalence"] = v["separation_from_prevalence"]
+            r["ranking_is_prevalence_only"] = v["ranking_is_prevalence_only"]
+            r["arms_tie"] = v["arms_tie"]
             r["rankable"] = v["rankable"]
     n_unrankable = sum(1 for v in separation.values() if not v["rankable"])
+    n_tie = sum(1 for v in separation.values() if v["arms_tie"])
+    n_prev = sum(1 for v in separation.values() if v["ranking_is_prevalence_only"])
 
     cells = sorted({(e["family"], e["dim"], e["sigma"]) for e in entries})
     OUT.write_text(json.dumps({
@@ -902,6 +947,15 @@ def merge() -> None:
                    "degenerate_note": "Rows with a non-empty `degenerate` list are "
                                       "FLAGGED, not ranked. Never average a nan; never "
                                       "rank a tie.",
+                   "tie_tol": TIE_TOL,
+                   "degeneracy_metrics": list(DEGENERACY_METRICS),
+                   "degeneracy_note": "BOTH flags travel and neither subsumes the "
+                                      "other: arms_tie catches arms agreeing with each "
+                                      "other (map-shaped), "
+                                      "ranking_is_prevalence_only catches a ranking that "
+                                      "is just the prevalence (CE-shaped, where arms "
+                                      "differ BY prevalence and do NOT tie). Denominators "
+                                      "differ per metric -- see per_metric.",
                    "separation_note": "a cell whose separation_from_prevalence is 0 has "
                                       "every arm certifying nothing, so total error "
                                       "volume IS the prevalence and a ranking over it "
@@ -913,8 +967,13 @@ def merge() -> None:
         "cell_separation": separation,
         "gate_failures": [g for e in entries for g in e.get("gate_failures", [])],
         "rows": rows}, indent=1))
-    print(f"  {n_unrankable}/{len(separation)} cells are NOT rankable "
-          f"(every arm certifies nothing; total error volume == prevalence)")
+    print(f"  {n_unrankable}/{len(separation)} cells NOT rankable on {RANKING_SCALAR} "
+          f"({n_tie} arms tie, {n_prev} ranking is prevalence only; neither flag "
+          f"subsumes the other)")
+    for m in DEGENERACY_METRICS:
+        deg = sum(1 for v in separation.values() if not v["per_metric"][m]["rankable"])
+        print(f"    {m:24s} degenerate {deg}/{len(separation)} -> denominator "
+              f"{len(separation) - deg}")
     print(f"merged {len(files)} checkpoints · {len(entries)} campaigns · {len(rows)} rows "
           f"· {len(cells)} cells -> {OUT.relative_to(ROOT)}")
 

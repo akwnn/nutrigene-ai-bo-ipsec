@@ -600,3 +600,70 @@ def test_a_cell_where_every_arm_certifies_nothing_is_not_rankable(p6):
     v2 = p6.cell_separation(real)
     assert v2["separation_from_prevalence"] == pytest.approx(0.55)
     assert v2["rankable"] is True
+
+
+# -- BOTH degeneracy flags, because neither subsumes the other --------------------
+def test_arms_that_tie_are_not_rankable_even_when_separation_is_large(p6):
+    """The gap a separation test alone cannot see.
+
+    `separation_from_prevalence` asks whether the ranking is just the prevalence. It says
+    nothing about whether the arms differ from EACH OTHER. Three arms with identical
+    total error volume are unrankable no matter how far that value sits from the
+    prevalence, and `separation > 0` would have called this cell rankable.
+    """
+    tied = [{"family": "levy", "dim": 6, "sigma": 0.25, "gamma": 0.50, "p": 0.75,
+             "arm": a, "total_error_vol_pred": 0.20, "type_I_vol_pred": 0.05,
+             "type_II_vol_pred": 0.15, "true_frac_above_tau": 0.75}
+            for a in ("doe", "qlogei", "lhs")]
+    v = p6.cell_separation(tied)
+    assert v["separation_from_prevalence"] == pytest.approx(0.55)
+    assert v["ranking_is_prevalence_only"] is False
+    assert v["arms_tie"] is True
+    assert v["rankable"] is False, "a tie is unrankable however far it sits from prevalence"
+
+
+def test_the_tie_test_is_a_tolerance_not_an_equality(p6):
+    """Two of the six degenerate K6 cells sit at 1.1e-16, not at 0.
+
+    A literal `== 0` rule keeps them as rankable, so the criterion is
+    `max - min <= 1e-15` on the arm means.
+    """
+    assert p6.TIE_TOL == 1e-15
+    near = [{"family": "levy", "dim": 6, "sigma": 0.25, "gamma": 0.99, "p": 0.10,
+             "arm": a, "total_error_vol_pred": 0.10 + d, "type_I_vol_pred": 0.0,
+             "type_II_vol_pred": 0.10 + d, "true_frac_above_tau": 0.10}
+            for a, d in (("doe", 0.0), ("qlogei", 1.1e-16), ("lhs", 0.0))]
+    v = p6.cell_separation(near)
+    assert 0 < v["separation_from_prevalence"] < 1e-15
+    assert v["ranking_is_prevalence_only"] is True
+    assert v["arms_tie"] is True
+    assert v["rankable"] is False
+
+
+def test_degeneracy_is_reported_per_metric_because_the_denominators_differ(p6):
+    """type I ties at cells where type II still separates, so one denominator for all
+    three overstates the evidence for type I. K6: type_I degenerate 10 of 24 (denominator
+    14), type_II and total 6 of 24 (denominator 18).
+
+    Mechanism: an all-empty region scores type I exactly 0 for every arm, so type I ties
+    wherever every region is empty, while type II still carries each arm's prevalence.
+    """
+    all_empty = [{"family": "rosenbrock", "dim": 6, "sigma": 0.25, "gamma": 0.90,
+                  "p": 0.25, "arm": a, "type_I_vol_pred": 0.0,
+                  "type_II_vol_pred": 0.25, "total_error_vol_pred": 0.25,
+                  "true_frac_above_tau": 0.25} for a in ("doe", "qlogei", "lhs")]
+    v = p6.cell_separation(all_empty)
+    assert v["per_metric"]["type_I_vol_pred"]["arms_tie"] is True
+    assert v["per_metric"]["type_II_vol_pred"]["arms_tie"] is True
+
+    partial = [{"family": "levy", "dim": 6, "sigma": 0.25, "gamma": 0.50, "p": 0.75,
+                "arm": a, "type_I_vol_pred": 0.0, "type_II_vol_pred": t,
+                "total_error_vol_pred": t, "true_frac_above_tau": 0.75}
+               for a, t in (("doe", 0.70), ("qlogei", 0.30), ("lhs", 0.50))]
+    v2 = p6.cell_separation(partial)
+    assert v2["per_metric"]["type_I_vol_pred"]["arms_tie"] is True, (
+        "every region empty of false inclusions -> type I ties")
+    assert v2["per_metric"]["type_II_vol_pred"]["arms_tie"] is False, (
+        "type II still separates the arms at the same cell")
+    assert v2["per_metric"]["type_I_vol_pred"]["rankable"] is False
+    assert v2["per_metric"]["type_II_vol_pred"]["rankable"] is True
