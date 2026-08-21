@@ -824,3 +824,39 @@ Registered in the Phase 2–4 block, **absent from this repository for eight mon
 cited.** The comparator now exists and the kernel arms are gateable — `results/p3-taumax-sensitivity.json`
 already gates `qlogei-add` and `qlogei-addonly` against it. **The 2,800-row re-score that decides
 whether the committed kernel rows are VALIDATED or WITHDRAWN has not run.**
+
+---
+
+## 17. Test inventory — what guards each result
+
+**Every runner in Phases 2–4 was written test-first**, and the first commit of each task is its
+failing test. Counts are of `def test_` in each file.
+
+| test file | tests | what it guards |
+|---|---|---|
+| `test_calibration.py` | **48** | the Murphy identity to 1e-10, equal-count binning, `average_precision` against `sklearn` to 1e-12, `error_volumes` gated against the committed `iou_pred` column |
+| `test_p2_versionb_gamma.py` | **47** | the `plate1_only` full-width gate, per-cell containment, the Vorob'ev cache proven inert at \|Δ\| = 0, partial-file guards |
+| `test_p3_cells.py` | **39** | `MissingGateTarget` raising rather than skipping, the d=8 kernel-arm exemption keyed on the arm, per-population ULP bounds, `promote()` re-reading what it publishes |
+| `test_p6_families.py` | **39** | family gates at \|Δ\| = 0, the both-halves + count-floor design, `auprc_minority` labels, both degeneracy flags, a constructed unrankable cell |
+| `test_p4b_alpha_anomaly.py` | **26** | benefit direction per metric, the bootstrap unit, leave-one-arm-out |
+| `test_p1_kernel_gate.py` | **23** | the re-score kill condition, the planted-wrong-comparator failure path |
+| `test_replay.py` | **18** | **backward compatibility after the `family=`/`builder=` change** — the 8 pre-existing tests pass byte-identical |
+| `test_f2_error_volumes.py` | **16** | the IoU-reproduction identity, per-metric degenerate denominators |
+| `test_f1_dual_n.py` | **14** | dual-unit contrasts, the `1 + ICC` identity, the seed-average policy |
+| `test_p4_coord.py` / `test_d23_doe_subspace.py` | 9 / 9 | bitwise gates against committed columns |
+| `test_p5_tau_quantile.py` | **8** | achieved prevalence to one grid cell, on five families × two dimensions |
+
+**~300 tests added across Phases 2–4**, on top of the 808 the project began with.
+
+**Three test-design lessons that cost something to learn**, all now enforced rather than intended:
+
+1. **A test that asserts only the positive half can pass against the wrong target.** The family
+   gate's wrong column agrees with the right one on **88% of ackley rows** — so the test asserts
+   the right column reproduces **and** that the wrong one differs, with a **count floor** so it
+   cannot decay into one that no longer distinguishes them.
+2. **Test the labels a function scores, not the arithmetic beside it.** The AUPRC boundary bug
+   (`-truth >= -tau` includes the boundary, putting a point at exactly τ in *both* classes) survived
+   a test that checked the tie arithmetic next to the function.
+3. **A check must be able to return "still there."** A survivor check on `ppid == parent` is
+   structurally blind to orphans, which reparent to PPID 1 — it reported success while three
+   processes were alive.
