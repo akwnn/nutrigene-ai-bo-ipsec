@@ -98,8 +98,17 @@ def test_build_gate_index_finds_doe_at_d8_in_the_right_file():
 
 
 def test_build_gate_index_covers_all_fifty_keys_for_every_gatable_arm():
-    """The seven arms that DO have a committed column must all be present, at every cell."""
-    gatable = tuple(a for a in ARMS if a not in KERNEL_ARMS)
+    """Every arm that HAS a committed column must be fully present, at every cell.
+
+    Seven of the twelve: `doe`, `qlogei`, `qlognei`, `lhs`, `sobol`, `random`, and
+    `plate1_only` whose column is filed under `lhs`. The two kernel arms wait on P1; the
+    three Version B arms are ungatable in principle.
+    """
+    from run_p3_cells import UNGATABLE_IN_PRINCIPLE
+
+    gatable = tuple(a for a in ARMS
+                    if a not in KERNEL_ARMS and a not in UNGATABLE_IN_PRINCIPLE)
+    assert len(gatable) == 7
     for dim, sigma in ((6, 0.10), (8, 0.25), (8, 0.10)):
         idx, _ = build_gate_index(dim, sigma, gatable)
         for arm in gatable:
@@ -139,9 +148,21 @@ def test_kernel_arms_are_ungated_only_while_q30_is_actually_absent():
         assert "qlogei-add" in ungated and "q30" in ungated["qlogei-add"]
 
 
-def test_all_eight_registered_arms_are_present():
+def test_all_twelve_registered_arms_are_present_and_correctly_classified():
+    """Eight from the P3 registration plus the four Version B arms (SPADE scope gap)."""
+    from run_p3_cells import UNGATABLE_IN_PRINCIPLE, VERSIONB_MODE
+
     assert set(ARMS) == {"doe", "qlogei", "qlognei", "qlogei-add", "qlogei-addonly",
-                         "lhs", "sobol", "random"}
+                         "lhs", "sobol", "random",
+                         "plate1_only", "versionb", "versionb_random",
+                         "versionb_predictive"}
+    # `versionb_predictive` LAST, as in run_versionb.py, so it cannot perturb the global
+    # torch RNG position the other Version B arms are built at.
+    assert ARMS[-1] == "versionb_predictive"
+    assert set(UNGATABLE_IN_PRINCIPLE) == set(VERSIONB_MODE) == {
+        "versionb", "versionb_random", "versionb_predictive"}
+    # plate1_only is NOT ungatable -- it is lhs, and it is gated.
+    assert "plate1_only" not in UNGATABLE_IN_PRINCIPLE
 
 
 # --- the re-expressed K6b scorer, pinned to committed rows ----------------------------
@@ -581,3 +602,167 @@ def test_a_smoke_run_writes_nothing_into_the_results_directory(tmp_path):
     d = json.loads(partials[0].read_text())
     assert d["status"] == "smoke"
     assert d["complete"] is False
+
+
+# --- SPADE: the four Version B arms, the method the project exists to evaluate --------
+
+VERSIONB_ARMS = ("versionb", "versionb_random", "versionb_predictive", "plate1_only")
+
+
+def test_the_version_b_arms_are_in_the_registered_arm_set():
+    """The scope gap: P3 would otherwise deliver every arm EXCEPT SPADE's own.
+
+    `COVERAGE-MATRIX` marks Version B "UNGATABLE — no committed comparator, and never
+    will be", and gating is the organising principle of Phases 2-4, so "cannot be gated"
+    silently became "do not run". A Version B campaign is seed-deterministic and fully
+    scoreable; it merely has no committed regret column to reproduce.
+    """
+    for a in VERSIONB_ARMS:
+        assert a in ARMS, a
+    assert len(ARMS) == 12
+
+
+def test_plate1_only_gates_against_the_committed_lhs_column():
+    """`plate1_only` IS `lhs` at 48 wells, so it is gateable and must be gated.
+
+    Against `results/e2-grid.json · lhs` rather than `k6-designspace-spread.json · lhs`:
+    the spread file covers d=6 sigma=0.25 ONLY and none of P3's three cells, while
+    `e2-grid.json` carries `lhs` at all three. It is also the stronger target under D12 —
+    the original E2 runner against this replay, rather than one replay against another.
+    """
+    from run_p3_cells import GATE_ARM_ALIAS
+
+    assert GATE_ARM_ALIAS["plate1_only"] == "lhs"
+    assert gate_target("plate1_only", 6) == ROOT / "results/e2-grid.json"
+    for dim, sigma in ((6, 0.10), (8, 0.25), (8, 0.10)):
+        idx, ungated = build_gate_index(dim, sigma, ("plate1_only",))
+        assert "plate1_only" not in ungated
+        assert len([k for k in idx if k[2] == "plate1_only"]) == 50, (dim, sigma)
+
+
+def test_the_other_three_version_b_arms_are_ungatable_in_principle():
+    """No comparator exists and none ever will. Seed determinism is the only guarantee."""
+    for dim, sigma in ((6, 0.10), (8, 0.25), (8, 0.10)):
+        _, ungated = build_gate_index(dim, sigma,
+                                      ("versionb", "versionb_random",
+                                       "versionb_predictive"))
+        assert set(ungated) == {"versionb", "versionb_random", "versionb_predictive"}
+        for reason in ungated.values():
+            assert "UNGATABLE" in reason.upper()
+
+
+def test_plate1_only_may_never_be_counted_as_a_separate_arm():
+    """D23.1. It is `lhs` to a worst |delta| of 4.44e-16; both are reported, neither
+    double-counted. The runner records the fact so no downstream table can lose it."""
+    from run_p3_cells import NOT_AN_INDEPENDENT_ARM
+
+    assert "plate1_only" in NOT_AN_INDEPENDENT_ARM
+    assert NOT_AN_INDEPENDENT_ARM["plate1_only"] == "lhs"
+
+
+# --- the AUPRC complement, checked on the LABELS rather than beside them ---------------
+
+def test_a_grid_point_exactly_at_tau_lands_in_exactly_one_class():
+    """The boundary bug, tested where it actually lives.
+
+    `-truth >= -tau` is `truth <= tau`, which INCLUDES the boundary, so a point at
+    exactly tau would be scored as positive by the main AP and positive again by the
+    complement — in both classes. The fix is an explicit strict complement label.
+
+    This asserts the LABELS the function scores, not the tie arithmetic beside it, which
+    is how the original test missed it.
+    """
+    truth = torch.tensor([0.4, 0.5, 0.6], dtype=torch.double)
+    tau = 0.5
+
+    positive = truth >= tau                       # what average_precision(p, truth, tau) uses
+    complement = truth < tau                      # what the P3 scorer passes, STRICT
+    wrong = -truth >= -tau                        # the buggy form, for contrast
+
+    assert bool((positive & complement).sum()) == 0, "a point is in BOTH classes"
+    assert bool((positive | complement).all()), "a point is in NEITHER class"
+    assert int(positive.sum()) + int(complement.sum()) == truth.numel()
+    # And demonstrate the bug the strict form avoids.
+    assert int((positive & wrong).sum()) == 1, "the negated form should double-count tau"
+
+
+@pytest.mark.slow
+def test_the_scorer_complement_label_excludes_the_boundary():
+    """End-to-end on a real campaign: no grid point is scored into both classes."""
+    from run_p3_cells import score_k6_dual_tau
+
+    rec = regenerate("033466197eba3ddb", 6, 0.10, 0, "doe")
+    inst = instance_by_id("033466197eba3ddb", 6)
+    orc = BiphasicOracle(inst, sigma_rel=0.10, seed=0)
+    grid = sobol_grid(6, 20_000, seed=0)
+    with torch.no_grad():
+        truth = orc.truth(grid).reshape(-1).double()
+    active = torch.zeros(6, dtype=torch.bool)
+    active[list(rec.kept_factors)] = True
+
+    std, _ = score_k6_dual_tau(rec, orc, grid, truth, active, dual=False)
+    for r in std:
+        pos = truth >= r["tau"]
+        comp = truth < r["tau"]
+        assert int((pos & comp).sum()) == 0
+        assert int(pos.sum()) + int(comp.sum()) == truth.numel()
+        assert r["auprc_baseline_pred"] == pytest.approx(
+            min(r["true_frac_above_tau"], 1 - r["true_frac_above_tau"]))
+
+
+@pytest.mark.slow
+def test_plate1_only_reproduces_the_committed_lhs_regret_exactly():
+    """The only gate Version B has, at a P3 cell, at |delta| = 0. No tolerance."""
+    from run_p3_cells import build_gate_index, check_gate, regenerate_arm
+
+    rows = json.loads((ROOT / "results/e2-grid.json").read_text())
+    ref = [r for r in rows if r["dim"] == 6 and r["sigma"] == 0.10
+           and r["arm"] == "lhs"][0]
+    rec = regenerate_arm(ref["instance"], 6, 0.10, ref["seed"], "plate1_only")
+    assert rec.arm == "plate1_only", "the row must be labelled as the arm it is"
+    assert rec.regret == ref["regret"], "plate1_only must BE lhs"
+
+    idx, ungated = build_gate_index(6, 0.10, ("plate1_only",))
+    v = check_gate(rec, idx, ungated)
+    assert v["gated"] is True and v["abs_delta"] == 0.0
+
+
+@pytest.mark.slow
+@pytest.mark.parametrize("arm", ["versionb", "versionb_random", "versionb_predictive"])
+def test_a_version_b_campaign_carries_every_column_the_error_volumes_need(arm):
+    """Their absence from `results/versionb.json` has blocked the error volumes twice.
+
+    F2a needs `vol_*`, `fi_*` and `true_frac_above_tau`; Erratum 3 makes the last
+    mandatory beside every containment number, because a containment figure read without
+    its prevalence inverts. Asserted on a REAL two-plate campaign, not a shape fixture.
+    """
+    from run_p3_cells import regenerate_arm, score_k6_dual_tau
+
+    rec = regenerate_arm("033466197eba3ddb", 6, 0.10, 0, arm)
+    assert rec.arm == arm
+    assert rec.X.shape[0] == 48, f"Version B is 48 wells, got {rec.X.shape[0]}"
+
+    inst = instance_by_id("033466197eba3ddb", 6)
+    orc = BiphasicOracle(inst, sigma_rel=0.10, seed=0)
+    grid = sobol_grid(6, 2_000, seed=0)
+    with torch.no_grad():
+        truth = orc.truth(grid).reshape(-1).double()
+    std, _ = score_k6_dual_tau(rec, orc, grid, truth,
+                               torch.ones(6, dtype=torch.bool), dual=False)
+    assert len(std) == 24
+    for r in std:
+        for k in ("vol_pred", "vol_latent", "fi_pred", "fi_latent",
+                  "true_frac_above_tau", "type_I_vol_pred", "type_II_vol_pred",
+                  "auprc_minority_pred", "auprc_baseline_pred"):
+            assert k in r, k
+
+
+@pytest.mark.slow
+def test_version_b_regeneration_is_seed_deterministic():
+    """Their ONLY guarantee, so it is the one thing that must be asserted."""
+    from run_p3_cells import regenerate_arm
+
+    a = regenerate_arm("033466197eba3ddb", 6, 0.10, 0, "versionb")
+    b = regenerate_arm("033466197eba3ddb", 6, 0.10, 0, "versionb")
+    assert a.regret == b.regret
+    assert torch.equal(a.X, b.X) and torch.equal(a.Y, b.Y)

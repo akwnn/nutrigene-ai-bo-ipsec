@@ -60,6 +60,8 @@ from __future__ import annotations
 
 import argparse
 import contextlib
+import dataclasses
+import importlib.util
 import gc
 import json
 import os
@@ -102,9 +104,48 @@ from boec.vorobev import (alpha_star, conservative_estimate,  # noqa: E402
 
 ROOT = Path(__file__).resolve().parents[1]
 
-#: All eight arms the registration names, in the order they are scored.
+
+def _load_versionb():
+    """`scripts/run_versionb.py` as a module. READ-ONLY: it is committed and not mine.
+
+    Version B's two-plate construction is imported rather than re-expressed for the same
+    reason the K6 scorer is pinned to `score_campaign` -- one definition of a committed
+    quantity. `_two_plate(orc, dim, seed, mu_max, mode)` is what produced every committed
+    Version B column.
+    """
+    spec = importlib.util.spec_from_file_location(
+        "_run_versionb", ROOT / "scripts" / "run_versionb.py")
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
+
+
+_VB = _load_versionb()
+
+#: Every arm scored, in order. `versionb_predictive` is LAST, as in `run_versionb.py`,
+#: so it cannot perturb the global torch RNG position the other Version B arms see.
+#:
+#: **The four Version B arms are here because "cannot be gated" is not "do not run".**
+#: COVERAGE-MATRIX marks them UNGATABLE and gating is the organising principle of Phases
+#: 2-4, which is how the method SPADE exists to evaluate came within one commit of being
+#: absent from the only cells that can test it at a second (d, sigma) point. A Version B
+#: campaign is seed-deterministic and fully scoreable; it merely has no committed regret
+#: column to reproduce.
 ARMS = ("doe", "qlogei", "qlognei", "qlogei-add", "qlogei-addonly",
-        "lhs", "sobol", "random")
+        "lhs", "sobol", "random",
+        "plate1_only", "versionb", "versionb_random", "versionb_predictive")
+
+#: Two-plate Version B arms and their plate-2 rule. Built by `run_versionb.py`'s own
+#: `_two_plate`, imported read-only -- never re-expressed here.
+VERSIONB_MODE = {"versionb": "lse", "versionb_random": "random",
+                 "versionb_predictive": "predictive"}
+#: No comparator exists for these and none ever will. Seed determinism is their ONLY
+#: guarantee and every table carrying them says so.
+UNGATABLE_IN_PRINCIPLE = tuple(VERSIONB_MODE)
+#: `plate1_only` IS `lhs` at 48 wells (worst |delta| 4.44e-16), so its gate looks up the
+#: committed `lhs` column. D23.1: it may never be counted as a separate arm in a ranking.
+GATE_ARM_ALIAS = {"plate1_only": "lhs"}
+NOT_AN_INDEPENDENT_ARM = {"plate1_only": "lhs"}
 #: Q30's post-hoc kernel arms. `results/q30-additive.json` is P1's output; until it lands
 #: these are CANNOT GATE (COVERAGE-MATRIX §3.6), and that is written into every row.
 KERNEL_ARMS = ("qlogei-add", "qlogei-addonly")
@@ -165,10 +206,44 @@ def _versions() -> dict[str, str]:
     return out
 
 
+def regenerate_arm(instance: str, dim: int, sigma: float, seed: int, arm: str):
+    """One campaign for any of the twelve arms, always through `replay.regenerate`.
+
+    The Version B arms go through `regenerate`'s **builder hook**, which exists precisely
+    so this module does not have to learn to fit GPs: the builder supplies `(X, Y, Yvar)`
+    and `replay` keeps the oracle construction, the scoring rule and the provenance, which
+    is the property that makes a gate mean anything.
+
+    `plate1_only` IS `lhs` and is regenerated as `lhs`, then relabelled -- so it is built
+    by the arithmetic its committed column was built by, including `run_e2.static_curve`'s
+    20-ordering mean. Building it as a fresh 48-well LHS instead would miss that column
+    by ~1e-16 and the gate would fire on an arithmetic artefact.
+    """
+    if arm == "plate1_only":
+        rec = regenerate(instance, dim, sigma, seed, "lhs")
+        return dataclasses.replace(rec, arm="plate1_only")
+    if arm in VERSIONB_MODE:
+        mu_max = float(instance_by_id(instance, dim).optimum_value)
+        mode = VERSIONB_MODE[arm]
+
+        def _builder(orc, d, sd):
+            X, Y, V, _diag = _VB._two_plate(orc, d, sd, mu_max, mode)
+            return X, Y, V, None, None
+
+        return regenerate(instance, dim, sigma, seed, arm, builder=_builder)
+    return regenerate(instance, dim, sigma, seed, arm)
+
+
 # --- the gate -------------------------------------------------------------------------
 
-def gate_target(arm: str, dim: int) -> Path:
-    """Which committed file carries this arm's regret column at this dimension."""
+def gate_target(arm: str, dim: int) -> Path | None:
+    """Which committed file carries this arm's regret column at this dimension.
+
+    ``None`` for the three Version B arms, which are ungatable in principle rather than
+    merely missing a file -- a distinction the row records.
+    """
+    if arm in UNGATABLE_IN_PRINCIPLE:
+        return None
     if arm in KERNEL_ARMS:
         return GATE_KERNEL
     if arm == "doe" and dim == 8:
@@ -195,8 +270,15 @@ def build_gate_index(dim: int, sigma: float, arms=ARMS,
     ungated: dict[str, str] = {}
 
     for arm in arms:
+        if arm in UNGATABLE_IN_PRINCIPLE:
+            ungated[arm] = ("UNGATABLE IN PRINCIPLE — no committed comparator exists for "
+                            "this arm and none ever will. Its only guarantee is seed "
+                            "determinism (COVERAGE-MATRIX §3.7, P2 registration).")
+            continue
         path = (targets or {}).get(arm) or gate_target(arm, dim)
         shown = path.relative_to(ROOT) if path.is_relative_to(ROOT) else path
+        # `plate1_only` is `lhs`; its committed column is filed under that name.
+        lookup = GATE_ARM_ALIAS.get(arm, arm)
         if not path.exists():
             if arm in KERNEL_ARMS:
                 ungated[arm] = (f"{shown} absent — CANNOT GATE "
@@ -208,7 +290,7 @@ def build_gate_index(dim: int, sigma: float, arms=ARMS,
         rows = json.loads(path.read_text())
         rows = rows.get("rows", rows) if isinstance(rows, dict) else rows
         hits = [r for r in rows if r["dim"] == dim and r["sigma"] == sigma
-                and r["arm"] == arm]
+                and r["arm"] == lookup]
         if not hits:
             # The ONE narrow exemption. `scripts/run_q30_additive.py` is committed at
             # DIM = 6 with two arms, so `results/q30-additive.json` carries d=6 only and
@@ -223,8 +305,8 @@ def build_gate_index(dim: int, sigma: float, arms=ARMS,
                                 f"coming (Amendment A1 / P1 erratum)")
                 continue
             raise MissingGateTarget(
-                f"no committed rows for arm {arm!r} at d={dim} sigma={sigma} in "
-                f"{shown} — a silent skip here is the §3.6 defect")
+                f"no committed rows for arm {arm!r} (column {lookup!r}) at d={dim} "
+                f"sigma={sigma} in {shown} — a silent skip here is the §3.6 defect")
         for r in hits:
             index[(r["instance"], r["seed"], arm)] = r["regret"]
 
@@ -504,8 +586,11 @@ def _write(path: Path, head: str, dirty: bool, cfg: dict, gate_fail: list,
                        "generated_at": started, "argv": sys.argv, **_versions()},
         "config": cfg,
         "gate_policy": {"tolerance": GATE_TOL,
-                        "targets": {a: str(gate_target(a, cfg["dim"])
-                                           .relative_to(ROOT)) for a in cfg["arms"]},
+                        "targets": {a: (str(gate_target(a, cfg["dim"]).relative_to(ROOT))
+                                        if gate_target(a, cfg["dim"]) else None)
+                                    for a in cfg["arms"]},
+                        "gate_arm_alias": GATE_ARM_ALIAS,
+                        "not_an_independent_arm": NOT_AN_INDEPENDENT_ARM,
                         "ungated_arms": ungated},
         "gate_failures": gate_fail, "rows": rows}, indent=2))
     os.replace(tmp, path)
@@ -552,7 +637,9 @@ def main() -> None:
     for arm in arms:
         tgt = gate_target(arm, args.dim)
         n = len([1 for k in index if k[2] == arm])
-        print(f"  gate {arm:15s} <- {tgt.name:20s} {n:3d} rows"
+        col = GATE_ARM_ALIAS.get(arm)
+        print(f"  gate {arm:20s} <- {(tgt.name if tgt else '(none)'):20s} {n:3d} rows"
+              + (f" [column {col!r}]" if col else "")
               + ("  ** UNGATED: " + ungated[arm] if arm in ungated else ""))
 
     keys = sorted({(r["instance"], r["seed"]) for r in committed_rows()
@@ -582,7 +669,7 @@ def main() -> None:
 
         for arm in arms:
             t = time.time()
-            rec = regenerate(inst_id, args.dim, args.sigma, seed, arm)
+            rec = regenerate_arm(inst_id, args.dim, args.sigma, seed, arm)
 
             verdict = check_gate(rec, index, ungated)
             if verdict["gated"] and verdict["abs_delta"] > GATE_TOL:
@@ -602,7 +689,11 @@ def main() -> None:
 
             stamp = {"gated": verdict["gated"], "gate_target": (
                 gate_target(arm, args.dim).name if verdict["gated"] else None),
-                "gate_reason": verdict["reason"]}
+                "gate_column": GATE_ARM_ALIAS.get(arm),
+                "gate_reason": verdict["reason"],
+                # D23.1: `plate1_only` IS `lhs`. Both are reported; neither is
+                # double-counted, and the row says so rather than a downstream note.
+                "duplicate_of": NOT_AN_INDEPENDENT_ARM.get(arm)}
 
             # ONE scoring path for every cell. Amendment F requires type I/II volumes
             # and AUPRC on every row, and AUPRC is NOT derivable after the fact -- it
