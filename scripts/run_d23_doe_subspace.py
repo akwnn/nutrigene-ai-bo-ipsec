@@ -70,6 +70,7 @@ import os
 import platform
 import subprocess
 import sys
+import tempfile
 import time
 import warnings
 from concurrent.futures import ProcessPoolExecutor
@@ -458,11 +459,35 @@ def _committed() -> tuple[dict, dict]:
     return e2, fix1
 
 
+def _load_checkpoint(path: Path) -> list[dict]:
+    """Campaigns already scored. Empty when there is no checkpoint or it is unreadable.
+
+    A corrupt checkpoint is discarded rather than repaired: the campaigns in it are
+    deterministic and cost ~2 minutes each to redo, which is cheaper than trusting a
+    truncated JSON.
+    """
+    if not path.exists():
+        return []
+    try:
+        return json.loads(path.read_text())
+    except json.JSONDecodeError:
+        print(f"  checkpoint {path} is not readable JSON; starting over")
+        return []
+
+
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__)
-    ap.add_argument("--workers", type=int, default=4)
+    ap.add_argument("--workers", type=int, default=1,
+                    help="1 runs serially in-process. Higher spawns a pool, which this "
+                         "machine kills under memory pressure -- two runs died at "
+                         "BrokenProcessPool before the checkpoint below existed.")
     ap.add_argument("--limit", type=int, default=None)
     ap.add_argument("--gate-only", action="store_true")
+    ap.add_argument("--checkpoint", type=str,
+                    default=str(Path(tempfile.gettempdir()) / "d23-doe-subspace-ckpt.json"),
+                    help="scratch file of scored campaigns, re-read on restart. NOT the "
+                         "result: results/d23-doe-subspace.json is written once, whole, "
+                         "at the end.")
     args = ap.parse_args()
 
     e2, fix1 = _committed()
@@ -480,40 +505,56 @@ def main() -> None:
     print(f"check: full-space rule P must reproduce results/fix1-terminal-rule.json\n",
           flush=True)
 
-    rows: list[dict] = []
-    gate_failures: list[dict] = []
-    fix1_deltas: list[dict] = []
+    ckpt = Path(args.checkpoint)
+    rows: list[dict] = [r for r in _load_checkpoint(ckpt)
+                        if (r["instance"], r["seed"]) in set(keys)]
+    have = {(r["instance"], r["seed"]) for r in rows}
+    todo = [k for k in keys if k not in have]
+    if rows:
+        print(f"  resuming — {len(rows)} campaigns already on the checkpoint, "
+              f"{len(todo)} to go\n", flush=True)
+
     t0 = time.time()
 
-    with ProcessPoolExecutor(max_workers=args.workers) as pool:
-        for k, r in enumerate(pool.map(_one, keys), 1):
-            key = (r["instance"], r["seed"])
-            delta = abs(r["regret_a"] - e2[key])
-            r["regret_a_committed"] = e2[key]
-            r["gate_abs_delta"] = delta
-            if delta > GATE_TOL:
-                gate_failures.append({"instance": key[0], "seed": key[1],
-                                      "regret_a": r["regret_a"],
-                                      "regret_a_committed": e2[key],
-                                      "gate_abs_delta": delta,
-                                      "gate_source": "results/e2-grid.json"})
-                print(f"  !! GATE {key} |delta|={delta:.3e}", flush=True)
+    def _record(r: dict, k: int) -> None:
+        key = (r["instance"], r["seed"])
+        r["regret_a_committed"] = e2[key]
+        r["gate_abs_delta"] = abs(r["regret_a"] - e2[key])
+        # NOT the registered gate. A separate, reported measurement: it says whether the
+        # full-space half of this pair is Fix 1's number or merely close to it.
+        ref = fix1.get(key)
+        if ref is not None:
+            r["regret_p_full_committed"] = ref["regret_p"]
+            r["fix1_abs_delta"] = abs(r["regret_p_full"] - ref["regret_p"])
+        if r["gate_abs_delta"] > GATE_TOL:
+            print(f"  !! GATE {key} |delta|={r['gate_abs_delta']:.3e}", flush=True)
+        rows.append(r)
+        ckpt.write_text(json.dumps(rows))
+        el = time.time() - t0
+        print(f"  [{k:3d}/{len(todo)}] {key[0]} seed={key[1]}  "
+              f"A={r['regret_a']:.4f} P_full={r['regret_p_full']:.4f} "
+              f"P_sub={r['regret_p_sub']:.4f}  kept={r['kept_factors']}  "
+              f"{el/60:4.1f} min elapsed"
+              + (f", ~{el/k*(len(todo)-k)/60:4.1f} min left" if k else ""), flush=True)
 
-            # NOT the registered gate. A separate, reported measurement: it says whether
-            # the full-space half of this pair is Fix 1's number or merely close to it.
-            ref = fix1.get(key)
-            if ref is not None:
-                r["regret_p_full_committed"] = ref["regret_p"]
-                r["fix1_abs_delta"] = abs(r["regret_p_full"] - ref["regret_p"])
-                fix1_deltas.append({"instance": key[0], "seed": key[1],
-                                    "abs_delta": r["fix1_abs_delta"]})
-            rows.append(r)
-            el = time.time() - t0
-            print(f"  [{k:3d}/{len(keys)}] {key[0]} seed={key[1]}  "
-                  f"A={r['regret_a']:.4f} P_full={r['regret_p_full']:.4f} "
-                  f"P_sub={r['regret_p_sub']:.4f}  kept={r['kept_factors']}  "
-                  f"{el/60:4.1f} min", flush=True)
+    if args.workers > 1:
+        with ProcessPoolExecutor(max_workers=args.workers) as pool:
+            for k, r in enumerate(pool.map(_one, todo), 1):
+                _record(r, k)
+    else:
+        # Serial, in-process. A pool worker killed by the OS takes every unwritten future
+        # with it; two runs died that way at 8/50 and 0/50 before the checkpoint existed.
+        for k, job in enumerate(todo, 1):
+            _record(_one(job), k)
 
+    rows.sort(key=lambda r: (r["instance"], r["seed"]))
+    gate_failures = [{key: r[key] for key in
+                      ("instance", "seed", "regret_a", "regret_a_committed",
+                       "gate_abs_delta")} | {"gate_source": "results/e2-grid.json"}
+                     for r in rows if r["gate_abs_delta"] > GATE_TOL]
+    fix1_deltas = [{"instance": r["instance"], "seed": r["seed"],
+                    "abs_delta": r["fix1_abs_delta"]}
+                   for r in rows if "fix1_abs_delta" in r]
     worst = max((r["gate_abs_delta"] for r in rows), default=0.0)
     worst_fix1 = max((d["abs_delta"] for d in fix1_deltas), default=float("nan"))
     print(f"\n  gate (rule A vs e2-grid.json): {len(rows)} rows, worst |delta| = "

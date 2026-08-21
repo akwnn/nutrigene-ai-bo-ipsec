@@ -64,6 +64,7 @@ import os
 import platform
 import subprocess
 import sys
+import tempfile
 import time
 import warnings
 from concurrent.futures import ProcessPoolExecutor
@@ -463,10 +464,33 @@ def _provenance(argv) -> dict:
             "numpy": np.__version__, "scipy": scipy.__version__}
 
 
+def _load_checkpoint(path: Path) -> list[dict]:
+    """Rows already scored. Empty when there is no checkpoint or it is unreadable.
+
+    Only units with a COMPLETE set of arms are kept: a half-written unit would leave the
+    ranking uneven across arms, which `spearman_across_arms` rejects outright rather than
+    silently averaging over different numbers of campaigns.
+    """
+    if not path.exists():
+        return []
+    try:
+        return json.loads(path.read_text())
+    except json.JSONDecodeError:
+        print(f"  checkpoint {path} is not readable JSON; starting over")
+        return []
+
+
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__)
-    ap.add_argument("--workers", type=int, default=2)
+    ap.add_argument("--workers", type=int, default=1,
+                   help="1 runs serially in-process. Higher spawns a pool, which this "
+                        "machine kills under memory pressure -- see the checkpoint below.")
     ap.add_argument("--limit", type=int, default=None)
+    ap.add_argument("--checkpoint", type=str,
+                   default=str(Path(tempfile.gettempdir()) / "p4b-alpha-ckpt.json"),
+                   help="scratch file of scored units, re-read on restart. NOT the "
+                        "result: results/p4b-alpha-star-anomaly.json is written once, "
+                        "whole, at the end.")
     args = ap.parse_args()
 
     if not P4_COORD.exists():
@@ -497,31 +521,50 @@ def main() -> None:
     print(f"gate: regenerated regret must reproduce its committed column at "
           f"|delta| = {GATE_TOL:g}\n", flush=True)
 
-    rows: list[dict] = []
-    gate_failures: list[dict] = []
+    ckpt = Path(args.checkpoint)
+    unit_set = set(units)
+    rows: list[dict] = [r for r in _load_checkpoint(ckpt)
+                        if (r["instance"], r["seed"]) in unit_set and r["arm"] in ARMS]
+    done = {(r["instance"], r["seed"]) for r in rows
+            if sum(1 for x in rows
+                   if (x["instance"], x["seed"]) == (r["instance"], r["seed"])) == len(ARMS)}
+    rows = [r for r in rows if (r["instance"], r["seed"]) in done]
+    jobs = [(u[0], u[1], ARMS) for u in units if u not in done]
+    if rows:
+        print(f"  resuming — {len(done)} units already on the checkpoint, "
+              f"{len(jobs)} to go\n", flush=True)
+
     t0 = time.time()
-    jobs = [(u[0], u[1], ARMS) for u in units]
 
-    with ProcessPoolExecutor(max_workers=args.workers) as pool:
-        for k, batch in enumerate(pool.map(_one, jobs), 1):
-            for r in batch:
-                key = (r["instance"], r["seed"], r["arm"])
-                ref, src = committed[key]
-                r["regret_committed"], r["gate_source"] = ref, src
-                r["gate_abs_delta"] = abs(r["regret"] - ref)
-                if r["gate_abs_delta"] > GATE_TOL:
-                    gate_failures.append({k_: r[k_] for k_ in
-                                          ("instance", "seed", "arm", "regret",
-                                           "regret_committed", "gate_abs_delta",
-                                           "gate_source")})
-                    print(f"  !! GATE {r['arm']} {r['instance']} seed={r['seed']} "
-                          f"|delta|={r['gate_abs_delta']:.3e}", flush=True)
-            rows.extend(batch)
-            el = time.time() - t0
-            print(f"  [{k:3d}/{len(jobs)}] {batch[0]['instance']} "
-                  f"seed={batch[0]['seed']}  {el/60:5.1f} min elapsed, "
-                  f"~{el/k*(len(jobs)-k)/60:5.1f} min left", flush=True)
+    def _record(batch: list[dict], k: int) -> None:
+        for r in batch:
+            ref, src = committed[(r["instance"], r["seed"], r["arm"])]
+            r["regret_committed"], r["gate_source"] = ref, src
+            r["gate_abs_delta"] = abs(r["regret"] - ref)
+            if r["gate_abs_delta"] > GATE_TOL:
+                print(f"  !! GATE {r['arm']} {r['instance']} seed={r['seed']} "
+                      f"|delta|={r['gate_abs_delta']:.3e}", flush=True)
+        rows.extend(batch)
+        ckpt.write_text(json.dumps(rows))
+        el = time.time() - t0
+        print(f"  [{k:3d}/{len(jobs)}] {batch[0]['instance']} "
+              f"seed={batch[0]['seed']}  {el/60:5.1f} min elapsed, "
+              f"~{el/k*(len(jobs)-k)/60:5.1f} min left", flush=True)
 
+    if args.workers > 1:
+        with ProcessPoolExecutor(max_workers=args.workers) as pool:
+            for k, batch in enumerate(pool.map(_one, jobs), 1):
+                _record(batch, k)
+    else:
+        # Serial, in-process. A pool worker killed by the OS takes every unwritten future
+        # with it, and this machine kills them.
+        for k, job in enumerate(jobs, 1):
+            _record(_one(job), k)
+
+    gate_failures = [{k_: r[k_] for k_ in
+                      ("instance", "seed", "arm", "regret", "regret_committed",
+                       "gate_abs_delta", "gate_source")}
+                     for r in rows if r["gate_abs_delta"] > GATE_TOL]
     worst = max((r["gate_abs_delta"] for r in rows), default=0.0)
     print(f"\n  gate: {len(rows)} rows checked, worst |delta| = {worst:.3e}, "
           f"{len(gate_failures)} failures")
