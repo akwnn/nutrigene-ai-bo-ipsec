@@ -6919,3 +6919,62 @@ and not where I would have put it.
 **~115 s per seed, not the ~8 s I estimated** — `versionb` alone is 47 s, because **plate 2's
 candidate grid and the 24-cell map scoring dominate, not the 1.9 s campaign build.** That is
 **+45% per seed**; a cell goes from ~65 min to **~95 min.** Still worth it.
+
+---
+
+## 📌 FINDING · **The Version B variants collapse on DIFFERENT landscapes. No single family reveals the variant structure.**
+
+**From the P6 worker's first two family smokes, verified from its committed logs.** Regret,
+seed 0:
+
+| family | coincident on regret | distinct |
+|---|---|---|
+| **ackley** | `versionb` = `versionb_random` = `versionb_predictive` = **0.7704** | `plate1_only` 0.8103 |
+| **hartmann6** | `versionb` = `versionb_predictive` = **0.6182** | **`versionb_random` 0.4824**, `plate1_only` 0.4116 |
+
+**On ackley all three two-plate variants coincide; on hartmann6 only two do, and the random
+control separates.** So **which variants a landscape can distinguish is itself landscape-dependent**
+— and **no single family reveals the structure.**
+
+**Why this matters beyond a curiosity.** Every Version B conclusion in this project — including
+KILL 1 and KILL 2 — rests on **hill alone.** Fix 5's null (`versionb_predictive` indistinguishable
+from `versionb`) was measured there. **Hartmann6 reproduces that null while separating
+`versionb_random`, and ackley collapses all three.** A method comparison run on one landscape can
+therefore report a null that is a property of the landscape rather than of the method — **and
+there is no way to detect that from inside the single family.**
+
+**This is a second, independent argument for the cross-family programme**, alongside the metric
+argument: not *"the map ranks differently from regret"*, but **"the arms that a landscape can
+separate at all vary by landscape."**
+
+**A free internal consistency check falls out.** `plate1_only` = **0.4116** on hartmann6 seed 0 is
+**bit-identical to that seed's `lhs` = 0.4116** — the two are the same 48-well design, and this is
+**the only check that arm can have off hill**, where `k6-designspace-spread.json` provides no
+comparator. **It was not designed as a gate and functions as one.**
+
+---
+
+## 📌 QUEUE HORIZON · measured, and it is a decision for Joseph, not for me
+
+The P6 worker's observed per-seed cost, **all ten arms**, d=6 σ=0.25:
+
+```
+doe 13   qlogei 51   qlognei 65   lhs 10   sobol 10   random 9
+versionb 37   versionb_random 15   versionb_predictive 26   plate1_only 18      = ~254 s/seed
+```
+
+| scope | wall-clock |
+|---|---|
+| one family | ~1.8 h |
+| **one cell (4 families)** | **~7 h** |
+| all four cells | **~28 h** nominal, **~20–24 h** realistic (d=8 and σ=0.10 are cheaper) |
+| **cells 1 + 2 only — the registered fallback** | **~14 h** |
+
+**The registered cell ordering is what makes an early stop publishable.** Cells 1 and 2 —
+(6, 0.25) and (6, 0.10) — give the cross-family headline **plus** its σ sensitivity on the axis
+D37 showed the sign flipping. **Stopping after cells 1 and 3 would not.** That ordering was chosen
+on P3's Kendall τ-b measurements before any of this cost was known, and it now pays for itself.
+
+**The worker is not pausing and did not ask for a decision** — it stated the horizon because *"run
+the full programme"* and *"the OOM killer will decide"* are both compatible with 28 hours.
+**Recorded here so the choice is explicit rather than discovered at hour 20.**
