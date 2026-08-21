@@ -1,0 +1,2002 @@
+[
+ {
+  "instance": "ce7334da318bc5e5",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 0,
+  "arm": "qlogei-add",
+  "kernel_structure": "additive+interaction",
+  "best": 0.8059195585968862,
+  "regret": 0.19408044140311376
+ },
+ {
+  "instance": "ce7334da318bc5e5",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 1,
+  "arm": "qlogei-add",
+  "kernel_structure": "additive+interaction",
+  "best": 0.885668835452055,
+  "regret": 0.11433116454794501
+ },
+ {
+  "instance": "c75f6d6f50fe2434",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 0,
+  "arm": "qlogei-add",
+  "kernel_structure": "additive+interaction",
+  "best": 0.891634472344383,
+  "regret": 0.10836552765561691
+ },
+ {
+  "instance": "c75f6d6f50fe2434",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 1,
+  "arm": "qlogei-add",
+  "kernel_structure": "additive+interaction",
+  "best": 0.8648296038798453,
+  "regret": 0.13517039612015458
+ },
+ {
+  "instance": "763e0f58925816ca",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 0,
+  "arm": "qlogei-add",
+  "kernel_structure": "additive+interaction",
+  "best": 0.8381386801057327,
+  "regret": 0.1618613198942671
+ },
+ {
+  "instance": "763e0f58925816ca",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 1,
+  "arm": "qlogei-add",
+  "kernel_structure": "additive+interaction",
+  "best": 0.6417268141309705,
+  "regret": 0.35827318586902923
+ },
+ {
+  "instance": "9414bc879284eef0",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 0,
+  "arm": "qlogei-add",
+  "kernel_structure": "additive+interaction",
+  "best": 0.9648607524795237,
+  "regret": 0.03513924752047648
+ },
+ {
+  "instance": "9414bc879284eef0",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 1,
+  "arm": "qlogei-add",
+  "kernel_structure": "additive+interaction",
+  "best": 0.9019879988673289,
+  "regret": 0.09801200113267128
+ },
+ {
+  "instance": "7b6071e568a98779",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 0,
+  "arm": "qlogei-add",
+  "kernel_structure": "additive+interaction",
+  "best": 0.8859814457709623,
+  "regret": 0.11401855422903773
+ },
+ {
+  "instance": "7b6071e568a98779",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 1,
+  "arm": "qlogei-add",
+  "kernel_structure": "additive+interaction",
+  "best": 0.8730469585735994,
+  "regret": 0.12695304142640063
+ },
+ {
+  "instance": "da5ec2fbb20c9f9b",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 0,
+  "arm": "qlogei-add",
+  "kernel_structure": "additive+interaction",
+  "best": 0.8965360263877518,
+  "regret": 0.10346397361224846
+ },
+ {
+  "instance": "da5ec2fbb20c9f9b",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 1,
+  "arm": "qlogei-add",
+  "kernel_structure": "additive+interaction",
+  "best": 0.8154887607770474,
+  "regret": 0.18451123922295287
+ },
+ {
+  "instance": "4d4f7158b65b52ba",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 0,
+  "arm": "qlogei-add",
+  "kernel_structure": "additive+interaction",
+  "best": 0.9545125314917491,
+  "regret": 0.045487468508250584
+ },
+ {
+  "instance": "4d4f7158b65b52ba",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 1,
+  "arm": "qlogei-add",
+  "kernel_structure": "additive+interaction",
+  "best": 0.7622676246564731,
+  "regret": 0.23773237534352654
+ },
+ {
+  "instance": "5b3926ef2c5fe4b6",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 0,
+  "arm": "qlogei-add",
+  "kernel_structure": "additive+interaction",
+  "best": 0.7895338113068718,
+  "regret": 0.21046618869312816
+ },
+ {
+  "instance": "5b3926ef2c5fe4b6",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 1,
+  "arm": "qlogei-add",
+  "kernel_structure": "additive+interaction",
+  "best": 0.8534483471565453,
+  "regret": 0.14655165284345473
+ },
+ {
+  "instance": "9f3cdb4d835c6909",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 0,
+  "arm": "qlogei-add",
+  "kernel_structure": "additive+interaction",
+  "best": 0.8623729771830957,
+  "regret": 0.1376270228169042
+ },
+ {
+  "instance": "9f3cdb4d835c6909",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 1,
+  "arm": "qlogei-add",
+  "kernel_structure": "additive+interaction",
+  "best": 0.8683336987461331,
+  "regret": 0.1316663012538668
+ },
+ {
+  "instance": "ef2815cdafff288c",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 0,
+  "arm": "qlogei-add",
+  "kernel_structure": "additive+interaction",
+  "best": 0.8442309672386187,
+  "regret": 0.15576903276138132
+ },
+ {
+  "instance": "ef2815cdafff288c",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 1,
+  "arm": "qlogei-add",
+  "kernel_structure": "additive+interaction",
+  "best": 0.8851260684075425,
+  "regret": 0.11487393159245751
+ },
+ {
+  "instance": "0ed87c75239d73f8",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 0,
+  "arm": "qlogei-add",
+  "kernel_structure": "additive+interaction",
+  "best": 0.876803927463969,
+  "regret": 0.12319607253603104
+ },
+ {
+  "instance": "0ed87c75239d73f8",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 1,
+  "arm": "qlogei-add",
+  "kernel_structure": "additive+interaction",
+  "best": 0.8828808413937361,
+  "regret": 0.11711915860626387
+ },
+ {
+  "instance": "51cf489c521a6911",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 0,
+  "arm": "qlogei-add",
+  "kernel_structure": "additive+interaction",
+  "best": 0.8170651990413063,
+  "regret": 0.1829348009586934
+ },
+ {
+  "instance": "51cf489c521a6911",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 1,
+  "arm": "qlogei-add",
+  "kernel_structure": "additive+interaction",
+  "best": 0.8715093695243695,
+  "regret": 0.12849063047563014
+ },
+ {
+  "instance": "48b1324dd0461cd9",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 0,
+  "arm": "qlogei-add",
+  "kernel_structure": "additive+interaction",
+  "best": 0.9060002675697496,
+  "regret": 0.09399973243025028
+ },
+ {
+  "instance": "48b1324dd0461cd9",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 1,
+  "arm": "qlogei-add",
+  "kernel_structure": "additive+interaction",
+  "best": 0.9446976342828557,
+  "regret": 0.0553023657171442
+ },
+ {
+  "instance": "0a6e0788538a7c52",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 0,
+  "arm": "qlogei-add",
+  "kernel_structure": "additive+interaction",
+  "best": 0.8222887369410642,
+  "regret": 0.1777112630589358
+ },
+ {
+  "instance": "0a6e0788538a7c52",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 1,
+  "arm": "qlogei-add",
+  "kernel_structure": "additive+interaction",
+  "best": 0.8702385800982555,
+  "regret": 0.1297614199017445
+ },
+ {
+  "instance": "7f5c7431c0530e74",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 0,
+  "arm": "qlogei-add",
+  "kernel_structure": "additive+interaction",
+  "best": 0.9677029361301539,
+  "regret": 0.03229706386984632
+ },
+ {
+  "instance": "7f5c7431c0530e74",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 1,
+  "arm": "qlogei-add",
+  "kernel_structure": "additive+interaction",
+  "best": 0.7992040628388344,
+  "regret": 0.20079593716116584
+ },
+ {
+  "instance": "f79c5cf175034acd",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 0,
+  "arm": "qlogei-add",
+  "kernel_structure": "additive+interaction",
+  "best": 0.9515430346349882,
+  "regret": 0.04845696536501176
+ },
+ {
+  "instance": "f79c5cf175034acd",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 1,
+  "arm": "qlogei-add",
+  "kernel_structure": "additive+interaction",
+  "best": 0.6376718237204032,
+  "regret": 0.3623281762795968
+ },
+ {
+  "instance": "e946207e9dfe1876",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 0,
+  "arm": "qlogei-add",
+  "kernel_structure": "additive+interaction",
+  "best": 0.902655904086,
+  "regret": 0.09734409591399995
+ },
+ {
+  "instance": "e946207e9dfe1876",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 1,
+  "arm": "qlogei-add",
+  "kernel_structure": "additive+interaction",
+  "best": 0.8772652058357249,
+  "regret": 0.12273479416427513
+ },
+ {
+  "instance": "32bb966a18f1d863",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 0,
+  "arm": "qlogei-add",
+  "kernel_structure": "additive+interaction",
+  "best": 0.8942885260864231,
+  "regret": 0.10571147391357716
+ },
+ {
+  "instance": "32bb966a18f1d863",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 1,
+  "arm": "qlogei-add",
+  "kernel_structure": "additive+interaction",
+  "best": 0.9434266917227154,
+  "regret": 0.056573308277284795
+ },
+ {
+  "instance": "443c180247c17191",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 0,
+  "arm": "qlogei-add",
+  "kernel_structure": "additive+interaction",
+  "best": 0.785836661557566,
+  "regret": 0.21416333844243418
+ },
+ {
+  "instance": "443c180247c17191",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 1,
+  "arm": "qlogei-add",
+  "kernel_structure": "additive+interaction",
+  "best": 0.7103361832301855,
+  "regret": 0.2896638167698147
+ },
+ {
+  "instance": "033466197eba3ddb",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 0,
+  "arm": "qlogei-add",
+  "kernel_structure": "additive+interaction",
+  "best": 0.8982068606046809,
+  "regret": 0.10179313939531909
+ },
+ {
+  "instance": "033466197eba3ddb",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 1,
+  "arm": "qlogei-add",
+  "kernel_structure": "additive+interaction",
+  "best": 0.8202700040966612,
+  "regret": 0.17972999590333882
+ },
+ {
+  "instance": "e402c32907f27534",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 0,
+  "arm": "qlogei-add",
+  "kernel_structure": "additive+interaction",
+  "best": 0.8255186528993118,
+  "regret": 0.17448134710068808
+ },
+ {
+  "instance": "e402c32907f27534",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 1,
+  "arm": "qlogei-add",
+  "kernel_structure": "additive+interaction",
+  "best": 0.8102471963983332,
+  "regret": 0.1897528036016667
+ },
+ {
+  "instance": "8abe35e93ddfcad1",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 0,
+  "arm": "qlogei-add",
+  "kernel_structure": "additive+interaction",
+  "best": 0.8707362454397732,
+  "regret": 0.12926375456022676
+ },
+ {
+  "instance": "8abe35e93ddfcad1",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 1,
+  "arm": "qlogei-add",
+  "kernel_structure": "additive+interaction",
+  "best": 0.8750048457558537,
+  "regret": 0.12499515424414631
+ },
+ {
+  "instance": "7ef3fc89acece49c",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 0,
+  "arm": "qlogei-add",
+  "kernel_structure": "additive+interaction",
+  "best": 0.8227288381618583,
+  "regret": 0.17727116183814173
+ },
+ {
+  "instance": "7ef3fc89acece49c",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 1,
+  "arm": "qlogei-add",
+  "kernel_structure": "additive+interaction",
+  "best": 0.7406259080756094,
+  "regret": 0.25937409192439065
+ },
+ {
+  "instance": "59e420274f4385d9",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 0,
+  "arm": "qlogei-add",
+  "kernel_structure": "additive+interaction",
+  "best": 0.9047506817975356,
+  "regret": 0.0952493182024644
+ },
+ {
+  "instance": "59e420274f4385d9",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 1,
+  "arm": "qlogei-add",
+  "kernel_structure": "additive+interaction",
+  "best": 0.6676508832035095,
+  "regret": 0.3323491167964905
+ },
+ {
+  "instance": "578e5d8768359f0f",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 0,
+  "arm": "qlogei-add",
+  "kernel_structure": "additive+interaction",
+  "best": 0.908267495123519,
+  "regret": 0.09173250487648099
+ },
+ {
+  "instance": "578e5d8768359f0f",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 1,
+  "arm": "qlogei-add",
+  "kernel_structure": "additive+interaction",
+  "best": 0.8962841441236727,
+  "regret": 0.10371585587632726
+ },
+ {
+  "instance": "ce7334da318bc5e5",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 0,
+  "arm": "qlogei-add",
+  "kernel_structure": "additive+interaction",
+  "best": 0.8915412831781796,
+  "regret": 0.1084587168218204
+ },
+ {
+  "instance": "ce7334da318bc5e5",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 1,
+  "arm": "qlogei-add",
+  "kernel_structure": "additive+interaction",
+  "best": 0.903787759801986,
+  "regret": 0.096212240198014
+ },
+ {
+  "instance": "c75f6d6f50fe2434",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 0,
+  "arm": "qlogei-add",
+  "kernel_structure": "additive+interaction",
+  "best": 0.8953254686492469,
+  "regret": 0.104674531350753
+ },
+ {
+  "instance": "c75f6d6f50fe2434",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 1,
+  "arm": "qlogei-add",
+  "kernel_structure": "additive+interaction",
+  "best": 0.9074122205446472,
+  "regret": 0.09258777945535268
+ },
+ {
+  "instance": "763e0f58925816ca",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 0,
+  "arm": "qlogei-add",
+  "kernel_structure": "additive+interaction",
+  "best": 0.8799041360675824,
+  "regret": 0.12009586393241733
+ },
+ {
+  "instance": "763e0f58925816ca",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 1,
+  "arm": "qlogei-add",
+  "kernel_structure": "additive+interaction",
+  "best": 0.9761494445300273,
+  "regret": 0.0238505554699725
+ },
+ {
+  "instance": "9414bc879284eef0",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 0,
+  "arm": "qlogei-add",
+  "kernel_structure": "additive+interaction",
+  "best": 0.968928465893576,
+  "regret": 0.03107153410642427
+ },
+ {
+  "instance": "9414bc879284eef0",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 1,
+  "arm": "qlogei-add",
+  "kernel_structure": "additive+interaction",
+  "best": 0.9019879988673289,
+  "regret": 0.09801200113267128
+ },
+ {
+  "instance": "7b6071e568a98779",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 0,
+  "arm": "qlogei-add",
+  "kernel_structure": "additive+interaction",
+  "best": 0.9412613945342891,
+  "regret": 0.05873860546571086
+ },
+ {
+  "instance": "7b6071e568a98779",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 1,
+  "arm": "qlogei-add",
+  "kernel_structure": "additive+interaction",
+  "best": 0.9258939084694061,
+  "regret": 0.07410609153059389
+ },
+ {
+  "instance": "da5ec2fbb20c9f9b",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 0,
+  "arm": "qlogei-add",
+  "kernel_structure": "additive+interaction",
+  "best": 0.9451533278684436,
+  "regret": 0.054846672131556584
+ },
+ {
+  "instance": "da5ec2fbb20c9f9b",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 1,
+  "arm": "qlogei-add",
+  "kernel_structure": "additive+interaction",
+  "best": 0.944855777864994,
+  "regret": 0.05514422213500625
+ },
+ {
+  "instance": "4d4f7158b65b52ba",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 0,
+  "arm": "qlogei-add",
+  "kernel_structure": "additive+interaction",
+  "best": 0.9668812895767631,
+  "regret": 0.03311871042323655
+ },
+ {
+  "instance": "4d4f7158b65b52ba",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 1,
+  "arm": "qlogei-add",
+  "kernel_structure": "additive+interaction",
+  "best": 0.9134323198422993,
+  "regret": 0.08656768015770033
+ },
+ {
+  "instance": "5b3926ef2c5fe4b6",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 0,
+  "arm": "qlogei-add",
+  "kernel_structure": "additive+interaction",
+  "best": 0.8176141198246543,
+  "regret": 0.18238588017534574
+ },
+ {
+  "instance": "5b3926ef2c5fe4b6",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 1,
+  "arm": "qlogei-add",
+  "kernel_structure": "additive+interaction",
+  "best": 0.9880685753794787,
+  "regret": 0.011931424620521325
+ },
+ {
+  "instance": "9f3cdb4d835c6909",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 0,
+  "arm": "qlogei-add",
+  "kernel_structure": "additive+interaction",
+  "best": 0.8669183803270597,
+  "regret": 0.1330816196729402
+ },
+ {
+  "instance": "9f3cdb4d835c6909",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 1,
+  "arm": "qlogei-add",
+  "kernel_structure": "additive+interaction",
+  "best": 0.92820691069571,
+  "regret": 0.07179308930428985
+ },
+ {
+  "instance": "ef2815cdafff288c",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 0,
+  "arm": "qlogei-add",
+  "kernel_structure": "additive+interaction",
+  "best": 0.9385412357151602,
+  "regret": 0.06145876428483976
+ },
+ {
+  "instance": "ef2815cdafff288c",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 1,
+  "arm": "qlogei-add",
+  "kernel_structure": "additive+interaction",
+  "best": 0.9202885723776786,
+  "regret": 0.07971142762232142
+ },
+ {
+  "instance": "0ed87c75239d73f8",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 0,
+  "arm": "qlogei-add",
+  "kernel_structure": "additive+interaction",
+  "best": 0.89732193798407,
+  "regret": 0.10267806201593
+ },
+ {
+  "instance": "0ed87c75239d73f8",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 1,
+  "arm": "qlogei-add",
+  "kernel_structure": "additive+interaction",
+  "best": 0.9421548114792362,
+  "regret": 0.05784518852076381
+ },
+ {
+  "instance": "51cf489c521a6911",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 0,
+  "arm": "qlogei-add",
+  "kernel_structure": "additive+interaction",
+  "best": 0.9493289215256904,
+  "regret": 0.050671078474309295
+ },
+ {
+  "instance": "51cf489c521a6911",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 1,
+  "arm": "qlogei-add",
+  "kernel_structure": "additive+interaction",
+  "best": 0.8432618588927057,
+  "regret": 0.156738141107294
+ },
+ {
+  "instance": "48b1324dd0461cd9",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 0,
+  "arm": "qlogei-add",
+  "kernel_structure": "additive+interaction",
+  "best": 0.9166946110311052,
+  "regret": 0.08330538896889472
+ },
+ {
+  "instance": "48b1324dd0461cd9",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 1,
+  "arm": "qlogei-add",
+  "kernel_structure": "additive+interaction",
+  "best": 0.9667840635774427,
+  "regret": 0.03321593642255716
+ },
+ {
+  "instance": "0a6e0788538a7c52",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 0,
+  "arm": "qlogei-add",
+  "kernel_structure": "additive+interaction",
+  "best": 0.9728592430839211,
+  "regret": 0.027140756916078868
+ },
+ {
+  "instance": "0a6e0788538a7c52",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 1,
+  "arm": "qlogei-add",
+  "kernel_structure": "additive+interaction",
+  "best": 0.8425740892982587,
+  "regret": 0.15742591070174128
+ },
+ {
+  "instance": "7f5c7431c0530e74",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 0,
+  "arm": "qlogei-add",
+  "kernel_structure": "additive+interaction",
+  "best": 0.9652396840836397,
+  "regret": 0.03476031591636053
+ },
+ {
+  "instance": "7f5c7431c0530e74",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 1,
+  "arm": "qlogei-add",
+  "kernel_structure": "additive+interaction",
+  "best": 0.9687324588492051,
+  "regret": 0.03126754115079511
+ },
+ {
+  "instance": "f79c5cf175034acd",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 0,
+  "arm": "qlogei-add",
+  "kernel_structure": "additive+interaction",
+  "best": 0.9186572415780263,
+  "regret": 0.0813427584219737
+ },
+ {
+  "instance": "f79c5cf175034acd",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 1,
+  "arm": "qlogei-add",
+  "kernel_structure": "additive+interaction",
+  "best": 0.9170921870612209,
+  "regret": 0.08290781293877914
+ },
+ {
+  "instance": "e946207e9dfe1876",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 0,
+  "arm": "qlogei-add",
+  "kernel_structure": "additive+interaction",
+  "best": 0.8557003137180788,
+  "regret": 0.14429968628192125
+ },
+ {
+  "instance": "e946207e9dfe1876",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 1,
+  "arm": "qlogei-add",
+  "kernel_structure": "additive+interaction",
+  "best": 0.9413602599415695,
+  "regret": 0.058639740058430534
+ },
+ {
+  "instance": "32bb966a18f1d863",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 0,
+  "arm": "qlogei-add",
+  "kernel_structure": "additive+interaction",
+  "best": 0.9151521052470393,
+  "regret": 0.08484789475296095
+ },
+ {
+  "instance": "32bb966a18f1d863",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 1,
+  "arm": "qlogei-add",
+  "kernel_structure": "additive+interaction",
+  "best": 0.9435999386556999,
+  "regret": 0.05640006134430031
+ },
+ {
+  "instance": "443c180247c17191",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 0,
+  "arm": "qlogei-add",
+  "kernel_structure": "additive+interaction",
+  "best": 0.9149247629408452,
+  "regret": 0.08507523705915498
+ },
+ {
+  "instance": "443c180247c17191",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 1,
+  "arm": "qlogei-add",
+  "kernel_structure": "additive+interaction",
+  "best": 0.9345863789390885,
+  "regret": 0.06541362106091175
+ },
+ {
+  "instance": "033466197eba3ddb",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 0,
+  "arm": "qlogei-add",
+  "kernel_structure": "additive+interaction",
+  "best": 0.9629817153698349,
+  "regret": 0.0370182846301651
+ },
+ {
+  "instance": "033466197eba3ddb",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 1,
+  "arm": "qlogei-add",
+  "kernel_structure": "additive+interaction",
+  "best": 0.9413558084468725,
+  "regret": 0.0586441915531275
+ },
+ {
+  "instance": "e402c32907f27534",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 0,
+  "arm": "qlogei-add",
+  "kernel_structure": "additive+interaction",
+  "best": 0.9300206504192375,
+  "regret": 0.06997934958076235
+ },
+ {
+  "instance": "e402c32907f27534",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 1,
+  "arm": "qlogei-add",
+  "kernel_structure": "additive+interaction",
+  "best": 0.9060811482624659,
+  "regret": 0.093918851737534
+ },
+ {
+  "instance": "8abe35e93ddfcad1",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 0,
+  "arm": "qlogei-add",
+  "kernel_structure": "additive+interaction",
+  "best": 0.9254549211815212,
+  "regret": 0.07454507881847883
+ },
+ {
+  "instance": "8abe35e93ddfcad1",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 1,
+  "arm": "qlogei-add",
+  "kernel_structure": "additive+interaction",
+  "best": 0.945377565283352,
+  "regret": 0.05462243471664796
+ },
+ {
+  "instance": "7ef3fc89acece49c",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 0,
+  "arm": "qlogei-add",
+  "kernel_structure": "additive+interaction",
+  "best": 0.9351777446545262,
+  "regret": 0.06482225534547381
+ },
+ {
+  "instance": "7ef3fc89acece49c",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 1,
+  "arm": "qlogei-add",
+  "kernel_structure": "additive+interaction",
+  "best": 0.8826194934962448,
+  "regret": 0.1173805065037552
+ },
+ {
+  "instance": "59e420274f4385d9",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 0,
+  "arm": "qlogei-add",
+  "kernel_structure": "additive+interaction",
+  "best": 0.9269321287617355,
+  "regret": 0.07306787123826453
+ },
+ {
+  "instance": "59e420274f4385d9",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 1,
+  "arm": "qlogei-add",
+  "kernel_structure": "additive+interaction",
+  "best": 0.8906954589050214,
+  "regret": 0.10930454109497856
+ },
+ {
+  "instance": "578e5d8768359f0f",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 0,
+  "arm": "qlogei-add",
+  "kernel_structure": "additive+interaction",
+  "best": 0.9099379499354847,
+  "regret": 0.09006205006451529
+ },
+ {
+  "instance": "578e5d8768359f0f",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 1,
+  "arm": "qlogei-add",
+  "kernel_structure": "additive+interaction",
+  "best": 0.8614693124888313,
+  "regret": 0.1385306875111687
+ },
+ {
+  "instance": "ce7334da318bc5e5",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 0,
+  "arm": "qlogei-addonly",
+  "kernel_structure": "additive",
+  "best": 0.9162438477328543,
+  "regret": 0.08375615226714572
+ },
+ {
+  "instance": "ce7334da318bc5e5",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 1,
+  "arm": "qlogei-addonly",
+  "kernel_structure": "additive",
+  "best": 0.8285516273089324,
+  "regret": 0.1714483726910676
+ },
+ {
+  "instance": "c75f6d6f50fe2434",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 0,
+  "arm": "qlogei-addonly",
+  "kernel_structure": "additive",
+  "best": 0.7742092006285135,
+  "regret": 0.22579079937148638
+ },
+ {
+  "instance": "c75f6d6f50fe2434",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 1,
+  "arm": "qlogei-addonly",
+  "kernel_structure": "additive",
+  "best": 0.7288301297163018,
+  "regret": 0.2711698702836981
+ },
+ {
+  "instance": "763e0f58925816ca",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 0,
+  "arm": "qlogei-addonly",
+  "kernel_structure": "additive",
+  "best": 0.7972543572953473,
+  "regret": 0.20274564270465245
+ },
+ {
+  "instance": "763e0f58925816ca",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 1,
+  "arm": "qlogei-addonly",
+  "kernel_structure": "additive",
+  "best": 0.8182915212859335,
+  "regret": 0.18170847871406626
+ },
+ {
+  "instance": "9414bc879284eef0",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 0,
+  "arm": "qlogei-addonly",
+  "kernel_structure": "additive",
+  "best": 0.8484810406285781,
+  "regret": 0.15151895937142212
+ },
+ {
+  "instance": "9414bc879284eef0",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 1,
+  "arm": "qlogei-addonly",
+  "kernel_structure": "additive",
+  "best": 0.9019879988673289,
+  "regret": 0.09801200113267128
+ },
+ {
+  "instance": "7b6071e568a98779",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 0,
+  "arm": "qlogei-addonly",
+  "kernel_structure": "additive",
+  "best": 0.8885921805723322,
+  "regret": 0.11140781942766775
+ },
+ {
+  "instance": "7b6071e568a98779",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 1,
+  "arm": "qlogei-addonly",
+  "kernel_structure": "additive",
+  "best": 0.8730467054942286,
+  "regret": 0.12695329450577142
+ },
+ {
+  "instance": "da5ec2fbb20c9f9b",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 0,
+  "arm": "qlogei-addonly",
+  "kernel_structure": "additive",
+  "best": 0.8198049382229388,
+  "regret": 0.18019506177706146
+ },
+ {
+  "instance": "da5ec2fbb20c9f9b",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 1,
+  "arm": "qlogei-addonly",
+  "kernel_structure": "additive",
+  "best": 0.7752657646728671,
+  "regret": 0.2247342353271331
+ },
+ {
+  "instance": "4d4f7158b65b52ba",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 0,
+  "arm": "qlogei-addonly",
+  "kernel_structure": "additive",
+  "best": 0.934465961337481,
+  "regret": 0.06553403866251861
+ },
+ {
+  "instance": "4d4f7158b65b52ba",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 1,
+  "arm": "qlogei-addonly",
+  "kernel_structure": "additive",
+  "best": 0.7622675223409567,
+  "regret": 0.23773247765904293
+ },
+ {
+  "instance": "5b3926ef2c5fe4b6",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 0,
+  "arm": "qlogei-addonly",
+  "kernel_structure": "additive",
+  "best": 0.807885135792311,
+  "regret": 0.19211486420768897
+ },
+ {
+  "instance": "5b3926ef2c5fe4b6",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 1,
+  "arm": "qlogei-addonly",
+  "kernel_structure": "additive",
+  "best": 0.8534483171642582,
+  "regret": 0.14655168283574183
+ },
+ {
+  "instance": "9f3cdb4d835c6909",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 0,
+  "arm": "qlogei-addonly",
+  "kernel_structure": "additive",
+  "best": 0.7689582507235413,
+  "regret": 0.2310417492764586
+ },
+ {
+  "instance": "9f3cdb4d835c6909",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 1,
+  "arm": "qlogei-addonly",
+  "kernel_structure": "additive",
+  "best": 0.8346456120881964,
+  "regret": 0.16535438791180346
+ },
+ {
+  "instance": "ef2815cdafff288c",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 0,
+  "arm": "qlogei-addonly",
+  "kernel_structure": "additive",
+  "best": 0.8007137647834209,
+  "regret": 0.19928623521657907
+ },
+ {
+  "instance": "ef2815cdafff288c",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 1,
+  "arm": "qlogei-addonly",
+  "kernel_structure": "additive",
+  "best": 0.8851260684075425,
+  "regret": 0.11487393159245751
+ },
+ {
+  "instance": "0ed87c75239d73f8",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 0,
+  "arm": "qlogei-addonly",
+  "kernel_structure": "additive",
+  "best": 0.8534635870581304,
+  "regret": 0.1465364129418696
+ },
+ {
+  "instance": "0ed87c75239d73f8",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 1,
+  "arm": "qlogei-addonly",
+  "kernel_structure": "additive",
+  "best": 0.6888127325647234,
+  "regret": 0.3111872674352766
+ },
+ {
+  "instance": "51cf489c521a6911",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 0,
+  "arm": "qlogei-addonly",
+  "kernel_structure": "additive",
+  "best": 0.8943196848380655,
+  "regret": 0.10568031516193421
+ },
+ {
+  "instance": "51cf489c521a6911",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 1,
+  "arm": "qlogei-addonly",
+  "kernel_structure": "additive",
+  "best": 0.8715070969769045,
+  "regret": 0.12849290302309513
+ },
+ {
+  "instance": "48b1324dd0461cd9",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 0,
+  "arm": "qlogei-addonly",
+  "kernel_structure": "additive",
+  "best": 0.8110607927352201,
+  "regret": 0.18893920726477975
+ },
+ {
+  "instance": "48b1324dd0461cd9",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 1,
+  "arm": "qlogei-addonly",
+  "kernel_structure": "additive",
+  "best": 0.8359353729187278,
+  "regret": 0.16406462708127212
+ },
+ {
+  "instance": "0a6e0788538a7c52",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 0,
+  "arm": "qlogei-addonly",
+  "kernel_structure": "additive",
+  "best": 0.8627059508610709,
+  "regret": 0.13729404913892906
+ },
+ {
+  "instance": "0a6e0788538a7c52",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 1,
+  "arm": "qlogei-addonly",
+  "kernel_structure": "additive",
+  "best": 0.7225169460922947,
+  "regret": 0.27748305390770533
+ },
+ {
+  "instance": "7f5c7431c0530e74",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 0,
+  "arm": "qlogei-addonly",
+  "kernel_structure": "additive",
+  "best": 0.7723285739588548,
+  "regret": 0.22767142604114543
+ },
+ {
+  "instance": "7f5c7431c0530e74",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 1,
+  "arm": "qlogei-addonly",
+  "kernel_structure": "additive",
+  "best": 0.943125655214662,
+  "regret": 0.05687434478533826
+ },
+ {
+  "instance": "f79c5cf175034acd",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 0,
+  "arm": "qlogei-addonly",
+  "kernel_structure": "additive",
+  "best": 0.9533626029489973,
+  "regret": 0.04663739705100267
+ },
+ {
+  "instance": "f79c5cf175034acd",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 1,
+  "arm": "qlogei-addonly",
+  "kernel_structure": "additive",
+  "best": 0.6376710528532563,
+  "regret": 0.3623289471467437
+ },
+ {
+  "instance": "e946207e9dfe1876",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 0,
+  "arm": "qlogei-addonly",
+  "kernel_structure": "additive",
+  "best": 0.7670994969736946,
+  "regret": 0.23290050302630538
+ },
+ {
+  "instance": "e946207e9dfe1876",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 1,
+  "arm": "qlogei-addonly",
+  "kernel_structure": "additive",
+  "best": 0.8772630578503282,
+  "regret": 0.12273694214967179
+ },
+ {
+  "instance": "32bb966a18f1d863",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 0,
+  "arm": "qlogei-addonly",
+  "kernel_structure": "additive",
+  "best": 0.8942885260864231,
+  "regret": 0.10571147391357716
+ },
+ {
+  "instance": "32bb966a18f1d863",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 1,
+  "arm": "qlogei-addonly",
+  "kernel_structure": "additive",
+  "best": 0.7954085704987456,
+  "regret": 0.20459142950125464
+ },
+ {
+  "instance": "443c180247c17191",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 0,
+  "arm": "qlogei-addonly",
+  "kernel_structure": "additive",
+  "best": 0.7689561364026849,
+  "regret": 0.23104386359731532
+ },
+ {
+  "instance": "443c180247c17191",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 1,
+  "arm": "qlogei-addonly",
+  "kernel_structure": "additive",
+  "best": 0.7103375951092523,
+  "regret": 0.2896624048907479
+ },
+ {
+  "instance": "033466197eba3ddb",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 0,
+  "arm": "qlogei-addonly",
+  "kernel_structure": "additive",
+  "best": 0.9447300045875253,
+  "regret": 0.05526999541247468
+ },
+ {
+  "instance": "033466197eba3ddb",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 1,
+  "arm": "qlogei-addonly",
+  "kernel_structure": "additive",
+  "best": 0.8202710824934522,
+  "regret": 0.17972891750654785
+ },
+ {
+  "instance": "e402c32907f27534",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 0,
+  "arm": "qlogei-addonly",
+  "kernel_structure": "additive",
+  "best": 0.8708515131866987,
+  "regret": 0.12914848681330116
+ },
+ {
+  "instance": "e402c32907f27534",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 1,
+  "arm": "qlogei-addonly",
+  "kernel_structure": "additive",
+  "best": 0.8303784381187452,
+  "regret": 0.16962156188125466
+ },
+ {
+  "instance": "8abe35e93ddfcad1",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 0,
+  "arm": "qlogei-addonly",
+  "kernel_structure": "additive",
+  "best": 0.8313708684284737,
+  "regret": 0.16862913157152626
+ },
+ {
+  "instance": "8abe35e93ddfcad1",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 1,
+  "arm": "qlogei-addonly",
+  "kernel_structure": "additive",
+  "best": 0.8878636723061037,
+  "regret": 0.11213632769389625
+ },
+ {
+  "instance": "7ef3fc89acece49c",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 0,
+  "arm": "qlogei-addonly",
+  "kernel_structure": "additive",
+  "best": 0.9399429224886374,
+  "regret": 0.06005707751136258
+ },
+ {
+  "instance": "7ef3fc89acece49c",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 1,
+  "arm": "qlogei-addonly",
+  "kernel_structure": "additive",
+  "best": 0.8722216405365436,
+  "regret": 0.1277783594634564
+ },
+ {
+  "instance": "59e420274f4385d9",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 0,
+  "arm": "qlogei-addonly",
+  "kernel_structure": "additive",
+  "best": 0.8721782165334744,
+  "regret": 0.12782178346652562
+ },
+ {
+  "instance": "59e420274f4385d9",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 1,
+  "arm": "qlogei-addonly",
+  "kernel_structure": "additive",
+  "best": 0.93350879922,
+  "regret": 0.06649120078000004
+ },
+ {
+  "instance": "578e5d8768359f0f",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 0,
+  "arm": "qlogei-addonly",
+  "kernel_structure": "additive",
+  "best": 0.8128556488247904,
+  "regret": 0.18714435117520956
+ },
+ {
+  "instance": "578e5d8768359f0f",
+  "dim": 6,
+  "sigma": 0.25,
+  "seed": 1,
+  "arm": "qlogei-addonly",
+  "kernel_structure": "additive",
+  "best": 0.9899395006822396,
+  "regret": 0.01006049931776043
+ },
+ {
+  "instance": "ce7334da318bc5e5",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 0,
+  "arm": "qlogei-addonly",
+  "kernel_structure": "additive",
+  "best": 0.9684676502115362,
+  "regret": 0.031532349788463754
+ },
+ {
+  "instance": "ce7334da318bc5e5",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 1,
+  "arm": "qlogei-addonly",
+  "kernel_structure": "additive",
+  "best": 0.9817825850501133,
+  "regret": 0.018217414949886712
+ },
+ {
+  "instance": "c75f6d6f50fe2434",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 0,
+  "arm": "qlogei-addonly",
+  "kernel_structure": "additive",
+  "best": 0.9196416613224492,
+  "regret": 0.08035833867755071
+ },
+ {
+  "instance": "c75f6d6f50fe2434",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 1,
+  "arm": "qlogei-addonly",
+  "kernel_structure": "additive",
+  "best": 0.9478295241044485,
+  "regret": 0.05217047589555135
+ },
+ {
+  "instance": "763e0f58925816ca",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 0,
+  "arm": "qlogei-addonly",
+  "kernel_structure": "additive",
+  "best": 0.9059862838610053,
+  "regret": 0.09401371613899445
+ },
+ {
+  "instance": "763e0f58925816ca",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 1,
+  "arm": "qlogei-addonly",
+  "kernel_structure": "additive",
+  "best": 0.9568441326591189,
+  "regret": 0.04315586734088084
+ },
+ {
+  "instance": "9414bc879284eef0",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 0,
+  "arm": "qlogei-addonly",
+  "kernel_structure": "additive",
+  "best": 0.9366523176875905,
+  "regret": 0.06334768231240973
+ },
+ {
+  "instance": "9414bc879284eef0",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 1,
+  "arm": "qlogei-addonly",
+  "kernel_structure": "additive",
+  "best": 0.9019879988673289,
+  "regret": 0.09801200113267128
+ },
+ {
+  "instance": "7b6071e568a98779",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 0,
+  "arm": "qlogei-addonly",
+  "kernel_structure": "additive",
+  "best": 0.9514753786955157,
+  "regret": 0.04852462130448432
+ },
+ {
+  "instance": "7b6071e568a98779",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 1,
+  "arm": "qlogei-addonly",
+  "kernel_structure": "additive",
+  "best": 0.960240531789835,
+  "regret": 0.03975946821016496
+ },
+ {
+  "instance": "da5ec2fbb20c9f9b",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 0,
+  "arm": "qlogei-addonly",
+  "kernel_structure": "additive",
+  "best": 0.9249113833175574,
+  "regret": 0.07508861668244282
+ },
+ {
+  "instance": "da5ec2fbb20c9f9b",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 1,
+  "arm": "qlogei-addonly",
+  "kernel_structure": "additive",
+  "best": 0.8504272646568564,
+  "regret": 0.14957273534314386
+ },
+ {
+  "instance": "4d4f7158b65b52ba",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 0,
+  "arm": "qlogei-addonly",
+  "kernel_structure": "additive",
+  "best": 0.9360206194170759,
+  "regret": 0.06397938058292374
+ },
+ {
+  "instance": "4d4f7158b65b52ba",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 1,
+  "arm": "qlogei-addonly",
+  "kernel_structure": "additive",
+  "best": 0.9860136011147993,
+  "regret": 0.013986398885200368
+ },
+ {
+  "instance": "5b3926ef2c5fe4b6",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 0,
+  "arm": "qlogei-addonly",
+  "kernel_structure": "additive",
+  "best": 0.8809483888341473,
+  "regret": 0.11905161116585272
+ },
+ {
+  "instance": "5b3926ef2c5fe4b6",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 1,
+  "arm": "qlogei-addonly",
+  "kernel_structure": "additive",
+  "best": 0.9427089069811669,
+  "regret": 0.05729109301883306
+ },
+ {
+  "instance": "9f3cdb4d835c6909",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 0,
+  "arm": "qlogei-addonly",
+  "kernel_structure": "additive",
+  "best": 0.9513751324801463,
+  "regret": 0.04862486751985362
+ },
+ {
+  "instance": "9f3cdb4d835c6909",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 1,
+  "arm": "qlogei-addonly",
+  "kernel_structure": "additive",
+  "best": 0.9368403030588868,
+  "regret": 0.06315969694111312
+ },
+ {
+  "instance": "ef2815cdafff288c",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 0,
+  "arm": "qlogei-addonly",
+  "kernel_structure": "additive",
+  "best": 0.9104878370691312,
+  "regret": 0.08951216293086883
+ },
+ {
+  "instance": "ef2815cdafff288c",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 1,
+  "arm": "qlogei-addonly",
+  "kernel_structure": "additive",
+  "best": 0.9556633747629688,
+  "regret": 0.04433662523703119
+ },
+ {
+  "instance": "0ed87c75239d73f8",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 0,
+  "arm": "qlogei-addonly",
+  "kernel_structure": "additive",
+  "best": 0.9522815839741784,
+  "regret": 0.04771841602582161
+ },
+ {
+  "instance": "0ed87c75239d73f8",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 1,
+  "arm": "qlogei-addonly",
+  "kernel_structure": "additive",
+  "best": 0.9858037769959236,
+  "regret": 0.014196223004076414
+ },
+ {
+  "instance": "51cf489c521a6911",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 0,
+  "arm": "qlogei-addonly",
+  "kernel_structure": "additive",
+  "best": 0.9673301940868986,
+  "regret": 0.03266980591310109
+ },
+ {
+  "instance": "51cf489c521a6911",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 1,
+  "arm": "qlogei-addonly",
+  "kernel_structure": "additive",
+  "best": 0.9335585006760059,
+  "regret": 0.06644149932399379
+ },
+ {
+  "instance": "48b1324dd0461cd9",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 0,
+  "arm": "qlogei-addonly",
+  "kernel_structure": "additive",
+  "best": 0.9422108484436332,
+  "regret": 0.05778915155636666
+ },
+ {
+  "instance": "48b1324dd0461cd9",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 1,
+  "arm": "qlogei-addonly",
+  "kernel_structure": "additive",
+  "best": 0.9168758010346059,
+  "regret": 0.08312419896539402
+ },
+ {
+  "instance": "0a6e0788538a7c52",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 0,
+  "arm": "qlogei-addonly",
+  "kernel_structure": "additive",
+  "best": 0.9539837593093338,
+  "regret": 0.04601624069066623
+ },
+ {
+  "instance": "0a6e0788538a7c52",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 1,
+  "arm": "qlogei-addonly",
+  "kernel_structure": "additive",
+  "best": 0.9595414092644869,
+  "regret": 0.040458590735513056
+ },
+ {
+  "instance": "7f5c7431c0530e74",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 0,
+  "arm": "qlogei-addonly",
+  "kernel_structure": "additive",
+  "best": 0.8701885919767399,
+  "regret": 0.1298114080232603
+ },
+ {
+  "instance": "7f5c7431c0530e74",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 1,
+  "arm": "qlogei-addonly",
+  "kernel_structure": "additive",
+  "best": 0.9802405490387777,
+  "regret": 0.019759450961222558
+ },
+ {
+  "instance": "f79c5cf175034acd",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 0,
+  "arm": "qlogei-addonly",
+  "kernel_structure": "additive",
+  "best": 0.9565531579302331,
+  "regret": 0.0434468420697669
+ },
+ {
+  "instance": "f79c5cf175034acd",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 1,
+  "arm": "qlogei-addonly",
+  "kernel_structure": "additive",
+  "best": 0.9545918820654454,
+  "regret": 0.04540811793455457
+ },
+ {
+  "instance": "e946207e9dfe1876",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 0,
+  "arm": "qlogei-addonly",
+  "kernel_structure": "additive",
+  "best": 0.9635835782191537,
+  "regret": 0.03641642178084625
+ },
+ {
+  "instance": "e946207e9dfe1876",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 1,
+  "arm": "qlogei-addonly",
+  "kernel_structure": "additive",
+  "best": 0.8973374572725139,
+  "regret": 0.1026625427274861
+ },
+ {
+  "instance": "32bb966a18f1d863",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 0,
+  "arm": "qlogei-addonly",
+  "kernel_structure": "additive",
+  "best": 0.9805839748267886,
+  "regret": 0.019416025173211615
+ },
+ {
+  "instance": "32bb966a18f1d863",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 1,
+  "arm": "qlogei-addonly",
+  "kernel_structure": "additive",
+  "best": 0.9240968145175494,
+  "regret": 0.07590318548245079
+ },
+ {
+  "instance": "443c180247c17191",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 0,
+  "arm": "qlogei-addonly",
+  "kernel_structure": "additive",
+  "best": 0.8510080176828576,
+  "regret": 0.1489919823171426
+ },
+ {
+  "instance": "443c180247c17191",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 1,
+  "arm": "qlogei-addonly",
+  "kernel_structure": "additive",
+  "best": 0.9135719431667638,
+  "regret": 0.0864280568332364
+ },
+ {
+  "instance": "033466197eba3ddb",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 0,
+  "arm": "qlogei-addonly",
+  "kernel_structure": "additive",
+  "best": 0.9722380278391295,
+  "regret": 0.027761972160870507
+ },
+ {
+  "instance": "033466197eba3ddb",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 1,
+  "arm": "qlogei-addonly",
+  "kernel_structure": "additive",
+  "best": 0.8968430727114437,
+  "regret": 0.1031569272885563
+ },
+ {
+  "instance": "e402c32907f27534",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 0,
+  "arm": "qlogei-addonly",
+  "kernel_structure": "additive",
+  "best": 0.9002311924002963,
+  "regret": 0.09976880759970363
+ },
+ {
+  "instance": "e402c32907f27534",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 1,
+  "arm": "qlogei-addonly",
+  "kernel_structure": "additive",
+  "best": 0.9587202486955338,
+  "regret": 0.04127975130446604
+ },
+ {
+  "instance": "8abe35e93ddfcad1",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 0,
+  "arm": "qlogei-addonly",
+  "kernel_structure": "additive",
+  "best": 0.948044449851897,
+  "regret": 0.05195555014810305
+ },
+ {
+  "instance": "8abe35e93ddfcad1",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 1,
+  "arm": "qlogei-addonly",
+  "kernel_structure": "additive",
+  "best": 0.9357438450247753,
+  "regret": 0.06425615497522474
+ },
+ {
+  "instance": "7ef3fc89acece49c",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 0,
+  "arm": "qlogei-addonly",
+  "kernel_structure": "additive",
+  "best": 0.901047066714702,
+  "regret": 0.09895293328529797
+ },
+ {
+  "instance": "7ef3fc89acece49c",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 1,
+  "arm": "qlogei-addonly",
+  "kernel_structure": "additive",
+  "best": 0.9619464051507489,
+  "regret": 0.03805359484925108
+ },
+ {
+  "instance": "59e420274f4385d9",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 0,
+  "arm": "qlogei-addonly",
+  "kernel_structure": "additive",
+  "best": 0.9398163157183316,
+  "regret": 0.060183684281668426
+ },
+ {
+  "instance": "59e420274f4385d9",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 1,
+  "arm": "qlogei-addonly",
+  "kernel_structure": "additive",
+  "best": 0.9637646909402642,
+  "regret": 0.03623530905973582
+ },
+ {
+  "instance": "578e5d8768359f0f",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 0,
+  "arm": "qlogei-addonly",
+  "kernel_structure": "additive",
+  "best": 0.9955997251891071,
+  "regret": 0.00440027481089289
+ },
+ {
+  "instance": "578e5d8768359f0f",
+  "dim": 6,
+  "sigma": 0.1,
+  "seed": 1,
+  "arm": "qlogei-addonly",
+  "kernel_structure": "additive",
+  "best": 0.8820369647555744,
+  "regret": 0.11796303524442564
+ }
+]
