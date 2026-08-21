@@ -57,12 +57,21 @@ leaving the `arm in KERNEL_ARMS` path byte-identical. `k6b-conservative.json` wa
 produced at `b3de1d2`, since which none of these files changed at all. A re-score at
 HEAD is therefore a comparison of the numbers, not of two code versions.
 
-K6 and K6b are re-scored in **separate passes**, each regenerating its own campaign,
-because that is the order the original runs used: K6 goes `regenerate` → `build_gp`
-inside `score_campaign`, K6b goes `regenerate` → `build_gp` → `joint_draws`. Sharing
-one regeneration across both would put `build_gp` at a different point in the global
-RNG stream than the committed run did. The duplicated regeneration costs ~20 min and
-removes a whole class of doubt about a verdict that withdraws 2,800 rows.
+K6 and K6b are scored from **one** regeneration per campaign. The worry that motivated
+two passes was that K6 reaches `build_gp` through `score_campaign` while K6b calls it
+directly, so a shared regeneration would put `build_gp` at a different point in the
+global RNG stream than the committed runs did. That was **measured rather than assumed**
+before the restructure: fitting the same `(X, Y, Yvar, bounds)` under two deliberately
+different global RNG states (`torch`/`numpy`/`random` seeded 1 vs 999, plus 5,000
+discarded normal draws) returns parameters identical at |Δ| = 0.000e+00. `build_gp` at
+`fit_restarts=1` takes the early-return `fit_gpytorch_mll` path, which never touches the
+global stream, and `joint_draws` carries its own `torch.Generator`. So the second
+regeneration bought nothing and cost ~2 CPU-h on a machine running at nine times its
+core count.
+
+What the second regeneration *did* provide — evidence that `regenerate` is deterministic
+campaign-to-campaign — is kept explicitly and cheaply by `--determinism-recheck`, which
+re-regenerates the first few kernel campaigns and gates them a second time.
 """
 
 from __future__ import annotations
@@ -301,6 +310,21 @@ def a1_contrasts(rows: list[dict]) -> list[dict]:
     return cells
 
 
+#: Every file the re-score's numbers pass through, fingerprinted in the provenance.
+SCORING_PATH = (
+    "scripts/run_k6_designspace.py", "scripts/run_k6b_conservative.py",
+    "scripts/analyse_f1_dual_n.py", "src/boec/replay.py", "src/boec/designspace.py",
+    "src/boec/surrogate.py", "src/boec/vorobev.py", "src/boec/norms.py",
+    "src/boec/campaign.py", "src/boec/torch_oracle.py", "src/boec/oracles.py",
+)
+
+
+def _blob(path: str) -> str:
+    """The git blob hash of the file as it is on disk — what was actually imported."""
+    return subprocess.run(["git", "hash-object", path],
+                          capture_output=True, text=True).stdout.strip()
+
+
 def provenance() -> dict:
     """Modelled on `results/q52-budget-to-target.json`, as registered."""
     import botorch
@@ -317,7 +341,12 @@ def provenance() -> dict:
             "torch": torch.__version__, "botorch": botorch.__version__,
             "gpytorch": gpytorch.__version__, "numpy": np.__version__,
             "scipy": scipy.__version__,
-            "torch_num_threads": torch.get_num_threads()}
+            "torch_num_threads": torch.get_num_threads(),
+            # `git_sha` pins the commit, not the working tree, and the scoring path runs
+            # through files other agents own and are editing right now —
+            # `analyse_f1_dual_n.py` gained `ci_inflation` mid-way through writing this.
+            # Blob hashes pin what was actually imported.
+            "imported_modules": {p: _blob(p) for p in SCORING_PATH}}
 
 
 # ------------------------------------------------------------------------ K6b scoring
@@ -402,6 +431,9 @@ def main() -> None:
     ap.add_argument("--qlogei-control", type=int, default=5,
                     help="qLogEI control campaigns; 0 disables. Mirrors "
                          "run_q30_additive.FIDELITY_SUBSAMPLE.")
+    ap.add_argument("--determinism-recheck", type=int, default=5,
+                    help="kernel campaigns regenerated a SECOND time and gated again, "
+                         "evidencing that regenerate() is deterministic; 0 disables.")
     args = ap.parse_args()
 
     prov = provenance()
@@ -451,6 +483,7 @@ def main() -> None:
     gate_rows: list[dict] = []
     rescore_failures: list[dict] = []
     control_failures: list[dict] = []
+    determinism: list[dict] = []
     n_k6 = n_k6b = n_ctrl_k6 = n_ctrl_k6b = 0
     t0 = time.time()
 
@@ -494,6 +527,12 @@ def main() -> None:
                         f"qlogei from {A1_COMPARATOR_SOURCE} at HEAD. Holm across the "
                         "four cells, separately at each unit.",
                 "cells": a1},
+            "determinism_recheck": {
+                "note": "kernel campaigns regenerated a second time and gated again; "
+                        "the gate means nothing if regenerate() is not reproducible",
+                "n": len(determinism),
+                "failures": [d for d in determinism if not d["passed"]],
+                "rows": determinism},
             "gate_failures": gate_failures,
             "rescore_failures": rescore_failures,
             "control_failures": control_failures,
@@ -501,13 +540,16 @@ def main() -> None:
             "elapsed_s": round(time.time() - t0, 1),
         }
 
-    # ---------------------------------------------------------------- PASS 1 · K6
-    # regenerate -> gate -> score_campaign, which is `run_k6_designspace.py`'s order.
-    print(f"\nPASS 1 — K6 re-score, {len(pairs)} pairs x "
+    # ------------------------------------------------------- PASS 1 · K6 and K6b
+    # regenerate -> gate -> score_campaign (K6) -> score_campaign_k6b (K6b), from one
+    # regeneration. `build_gp` is measured RNG-independent, so K6b's model is the same
+    # object it would have been at the head of its own pass. See the module docstring.
+    print(f"\nPASS 1 — K6 + K6b re-score, {len(pairs)} pairs x "
           f"{len(KERNEL_ARMS)} kernel arms (+ controls)")
     for i, (inst_id, seed) in enumerate(pairs, 1):
         inst = instance_by_id(inst_id, DIM)
         orc = BiphasicOracle(inst, sigma_rel=PRIMARY_SIGMA, seed=seed)
+        mu_max = float(inst.optimum_value)
         with torch.no_grad():
             truth = orc.truth(grid).reshape(-1).double()
 
@@ -549,44 +591,7 @@ def main() -> None:
                     n_k6 += 1
                 else:
                     n_ctrl_k6 += 1
-            tag = "CONTROL " if arm in CONTROL_ARMS else ""
-            print(f"[{i:3d}/{len(pairs)}] K6  {tag}{arm:14s} {inst_id} seed={seed} "
-                  f"regret={rec.regret:.4f} metric_fails={n_fail} "
-                  f"({time.time() - t:.1f}s)", flush=True)
-        _write(snapshot())
-        del truth
-        gc.collect()
-
-    # --------------------------------------------------------------- PASS 2 · K6b
-    # regenerate -> build_gp -> joint_draws, which is `run_k6b_conservative.py`'s order.
-    print(f"\nPASS 2 — K6b re-score, {len(pairs)} pairs")
-    for i, (inst_id, seed) in enumerate(pairs, 1):
-        inst = instance_by_id(inst_id, DIM)
-        orc = BiphasicOracle(inst, sigma_rel=PRIMARY_SIGMA, seed=seed)
-        mu_max = float(inst.optimum_value)
-
-        for arm in KERNEL_ARMS + CONTROL_ARMS:
-            if arm in CONTROL_ARMS and (inst_id, seed) not in control_plan[arm]:
-                continue
-            t = time.time()
-            rec = regenerate(inst_id, DIM, PRIMARY_SIGMA, seed, arm)
-
-            if arm in KERNEL_ARMS:
-                # A second, independent regeneration of the same campaign. Free here,
-                # and it turns pass 2 into a determinism check on pass 1 as well.
-                g = gate_regret(comparator, instance=inst_id, dim=DIM,
-                                sigma=PRIMARY_SIGMA, seed=seed, arm=arm,
-                                regenerated=rec.regret)
-                g["pass"] = "k6b"
-                gate_rows.append(g)
-                if not g["passed"]:
-                    gate_failures.append(g)
-                    print(f"  !! GATE {arm} {inst_id} seed={seed} "
-                          f"|d|={g['abs_delta']:.3e}")
-
             target = k6b_committed if arm in KERNEL_ARMS else ctrl_k6b
-            sink = rescore_failures if arm in KERNEL_ARMS else control_failures
-            n_fail = 0
             for row in score_campaign_k6b(rec, orc, X_sub, mu_max, DIM):
                 key = tuple(row[c] for c in K6B_KEYS)
                 if key not in target:
@@ -599,11 +604,38 @@ def main() -> None:
                     n_k6b += 1
                 else:
                     n_ctrl_k6b += 1
+
             tag = "CONTROL " if arm in CONTROL_ARMS else ""
-            print(f"[{i:3d}/{len(pairs)}] K6b {tag}{arm:14s} {inst_id} seed={seed} "
-                  f"metric_fails={n_fail} ({time.time() - t:.1f}s)", flush=True)
+            print(f"[{i:3d}/{len(pairs)}] {tag}{arm:14s} {inst_id} seed={seed} "
+                  f"regret={rec.regret:.4f} metric_fails={n_fail} "
+                  f"({time.time() - t:.1f}s)", flush=True)
         _write(snapshot())
+        del truth
         gc.collect()
+
+    # ------------------------------------------------ PASS 2 · determinism recheck
+    # What the old two-pass structure gave for free: evidence that `regenerate` returns
+    # the same campaign twice. Kept explicitly at ~3% of the cost, because the gate is
+    # only meaningful if the thing being gated is reproducible.
+    recheck = [(i, s, a) for (i, s) in pairs[:args.determinism_recheck]
+               for a in KERNEL_ARMS]
+    print(f"\nPASS 2 — determinism recheck, {len(recheck)} campaigns regenerated twice")
+    for j, (inst_id, seed, arm) in enumerate(recheck, 1):
+        t = time.time()
+        rec = regenerate(inst_id, DIM, PRIMARY_SIGMA, seed, arm)
+        first = next(g for g in gate_rows
+                     if (g["instance"], g["seed"], g["arm"]) == (inst_id, seed, arm))
+        d = abs_delta(first["regenerated"], rec.regret)
+        row = {"instance": inst_id, "dim": DIM, "sigma": PRIMARY_SIGMA, "seed": seed,
+               "arm": arm, "first": first["regenerated"], "second": float(rec.regret),
+               "abs_delta": d, "passed": d == 0.0}
+        determinism.append(row)
+        if d != 0.0:
+            print(f"  !! NONDETERMINISTIC {arm} {inst_id} seed={seed} |d|={d:.3e}")
+        print(f"[{j:3d}/{len(recheck)}] recheck {arm:14s} {inst_id} seed={seed} "
+              f"|d|={d:.3e} ({time.time() - t:.1f}s)", flush=True)
+        _write(snapshot())
+
 
     # ------------------------------------------------- PASS 3 · the gate-only cell
     # sigma_rel = 0.10 has no design-space rows anywhere, so it is gated and not scored.
@@ -637,6 +669,11 @@ def main() -> None:
         coverage_error = str(exc)
 
     v = verdict(gate_failures, rescore_failures)
+    nondet = [d for d in determinism if not d["passed"]]
+    if nondet:
+        # Not "the rows are withdrawn" — a different and prior finding. If regenerate()
+        # does not return the same campaign twice, the gate is not measuring the rows.
+        v = "GATE_INVALID_NONDETERMINISTIC_REPLAY"
     if coverage_error:
         v = "INCOMPLETE"
 
@@ -653,6 +690,8 @@ def main() -> None:
           f"metric failures: {len(rescore_failures)}  worst |d| = {worst_rescore:.3e}")
     print(f"control rows        : {n_ctrl_k6} K6 + {n_ctrl_k6b} K6b  "
           f"failures: {len(control_failures)}  worst |d| = {worst_control:.3e}")
+    print(f"determinism recheck : {len(determinism)} campaigns regenerated twice  "
+          f"failures: {len(nondet)}")
     if coverage_error:
         print(f"COVERAGE           : {coverage_error}")
     print(f"VERDICT             : {v}")

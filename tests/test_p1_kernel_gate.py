@@ -251,3 +251,17 @@ def test_provenance_block_matches_the_q52_model(mod):
                 ["provenance"]) - {"config"}
     prov = mod.provenance()
     assert model <= set(prov), f"provenance missing {sorted(model - set(prov))}"
+
+
+def test_provenance_fingerprints_the_scoring_code_it_imported(mod):
+    """The scoring path spans files other agents own and are actively editing.
+
+    `analyse_f1_dual_n.py` gained `ci_inflation` while this runner was being written.
+    A git sha of HEAD does not pin a working-tree file, so the blob hash of every
+    imported module is recorded and the result stays auditable against a moving
+    dependency.
+    """
+    mods = mod.provenance()["imported_modules"]
+    for p in ("scripts/analyse_f1_dual_n.py", "scripts/run_k6_designspace.py",
+              "scripts/run_k6b_conservative.py", "src/boec/replay.py"):
+        assert len(mods.get(p, "")) == 40, f"no blob hash recorded for {p}"
