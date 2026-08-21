@@ -565,3 +565,118 @@ doing its job.
 **Gate:** 500/500 at |Δ| = 0.000e+00, re-verified against `git show HEAD:` blobs rather than
 the working tree, because other agents were writing concurrently. That was the right
 paranoia — the working tree was not a safe reference last night.
+
+---
+
+# PHASES 2–4 — 2026-08-21
+
+## D25 🔴 **I made the three decisions you left open.** Each is reversible by reading one paragraph.
+
+You said "finish 2–4" without answering them. Stalling the whole programme on three scope
+calls would have been the wrong reading of that instruction, so I made them. **None of
+them modifies a committed quantity.** Two create *new, separately named* estimands that sit
+beside the old ones, so nothing already published moves.
+
+### 1. Amendment A1 / Q30 — **RE-RUN.**
+Phase 2's explicit task is *gate the kernel arms*, and that is impossible without
+`results/q30-additive.json`, which never existed. 2,800 committed rows currently rest on
+nothing. Cost ≈ 2.6 CPU-h. **Rejected alternative:** gate them against
+`k6-designspace.json`, which is circular under D12.
+
+**The part that makes this worth doing rather than a formality.** A fresh comparator only
+proves the *code* reproduces; it does not prove the *already-committed* kernel rows came
+from those campaigns. So the registered kill is a **re-score**: |Δ| = 0 on all 2,800 rows
+validates them retroactively, and **any Δ ≠ 0 withdraws them** and takes §5.5's "cleanest
+figure" with it. That is a real risk I have accepted, not a box to tick.
+
+### 2. Phase 3 τ — **re-registered as `tau_q`, a per-family prevalence quantile, under a NEW name.**
+`tau_frac` is untouched and not deprecated. The reason it cannot cross families is measured:
+at one `tau_frac` the true superlevel set covers **0.00000** of the box on ackley and
+**0.95550** on rosenbrock. That is not a comparison.
+
+`tau_q(F, d, p)` is the `(1−p)` quantile of the noiseless response on the registered 20k
+grid, so prevalence is `p` **by construction on every family**. Grid `p ∈ {0.75, 0.25, 0.10,
+0.01}`.
+
+**Why I trust these four and not some rounder set:** they reproduce hill's *already
+committed* prevalences — 0.73569 / 0.28944 / 0.06844 / 0.00294 — to within **0.0394**. So
+hill scores on both grids and the new estimand is **calibrated against the old one instead
+of replacing it blind**. The registered kill: if the two grids disagree on the *sign* of any
+contrast significant under both, they are reported as measuring different things and **no
+cross-family claim is made from either.**
+
+### 3. Ackley — **IN, as a declared sensitivity. Never a headline.**
+This one changed shape once I worked it through. Under `tau_q` ackley's superlevel set is
+non-empty **by construction** — so `CANNOT RUN` was a property of the *threshold*, not of
+the family, and my earlier recommendation to drop it was solving the wrong problem. It
+still stays out of every headline, for two reasons the fix does not touch: the CCD
+evaluates the box centre, which is ackley's exact optimum (blocker B3), and the DoE arm
+attains that optimum in 7 of 25 instances. Rows carry `sensitivity: true`.
+
+## D26 🟢 `tau_max` is deliberately NOT corrected, and that is the harder call.
+
+`tau_max` omits σ_add. The exact error is **3.288e-04** at σ_rel=0.25 and **8.204e-04** at
+σ_rel=0.10 — ratio **2.49**, the number re-derived in D19, not the "10×" the audit claimed
+from a σ_add that is not the repo default.
+
+The tempting move is to fix it before running the σ=0.10 cells. **That would be worse than
+the bug.** If the σ=0.10 cells used a corrected threshold and the σ=0.25 cells kept the
+current one, the σ axis — the whole point of P3 — would be confounded with a definition
+change. An 8e-4 bias that is *constant across the comparison* is harmless; a definition
+change that is *aligned with the comparison* is fatal.
+
+So `tau_max_exact` is added **beside** `tau_max` and used for nothing but a bounded
+sensitivity at the cell where the correction is largest, with a registered SESOI 0.02
+trigger to re-register the entire grid if it turns out to matter. **Consistency beat
+accuracy, on purpose.**
+
+## D27 🟢 Registered all eleven questions in ONE commit, before any runner existed.
+
+`5c44e6a`, and `git show --stat` confirms it touches exactly two files:
+`docs/OPEN-QUESTIONS.md` and `.gitignore`. **No script named in that block existed on disk
+when it landed.**
+
+Two things folded in deliberately rather than left to the runs:
+* **The `.gitignore` negations were written at registration time, not after the runs.**
+  `results/*` ignores everything by default, and this repo has been bitten three times by an
+  artefact that a log line claims exists and no clone can see (`aa0785d`, `e2-doe-d8.json`,
+  the Q50 shards). Adding sixteen `!results/…` lines before the files exist is the only
+  ordering that cannot fail that way.
+* **Output paths are part of the registration.** Every question names its file, so
+  "never overwrite a committed result" is enforceable by reading one document.
+
+## D28 🟢 Six agents, disjoint file ownership, and I kept three files to myself.
+
+Ownership assigned so that no two agents can touch one file:
+
+| agent | owns | the risk it isolates |
+|---|---|---|
+| P1 | `run_p1_kernel_gate.py` + Q30 comparator | — |
+| P2 | `run_p2_versionb_gamma.py` | — |
+| P7 | **`src/boec/calibration.py` (NEW)** | Murphy went in a new module *specifically* so it could not collide with P3 in `designspace.py` |
+| P3 | **`src/boec/designspace.py`**, append-only | sole owner |
+| P4/D23 | three runners, no `src/` files | **`coord` is not in `replay.py`'s arm lists and this agent is forbidden to add it** — it builds `coord` in its own script instead |
+| P5/B4 | **`src/boec/replay.py`**, sole owner | five agents import it; changes must be backward-compatible and are proved so by the untouched existing test file |
+
+**I kept `OPEN-QUESTIONS.md`, `.gitignore` and this log.** Registration is a serialisation
+point — if six agents append registrations concurrently the ordering guarantee that makes
+them meaningful is gone. So I wrote all eleven myself, first, in one commit.
+
+**Every brief carries the same five standing rules**, restated rather than referenced:
+`.venv/bin/python`; tests-first; gate against committed columns; never raise a tolerance;
+never overwrite a committed JSON. Plus the two traps that have already cost this project
+time — the `static_curve` 20-ordering float-mean artefact (two workers hit it hours apart)
+and the quadratic `model.posterior(X)` cost (0.06 s at N=2,000, **100.6 s** at N=20,000).
+Telling each agent about a trap that has already been hit twice is cheaper than watching a
+third one hit it.
+
+## D29 ⚠️ What P3 is actually testing, stated before its numbers exist.
+
+Every one of the **11,450** committed design-space rows in this project carries `dim: 6`
+and `sigma: 0.25`. The entire design-space finding stands on **one point** of the (d, σ_rel)
+plane.
+
+`tau_max` moves 0.589 → 0.836 at σ_rel = 0.10, so the emptiness structure — which is what
+the SPADE certificate is *about* — changes completely. **P3 can invalidate the project's
+design-space headline**, and that is why it is in Phase 4 rather than dropped as
+housekeeping. Recording the exposure now, before the result, so it cannot be reframed after.
