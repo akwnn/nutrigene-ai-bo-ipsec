@@ -5669,3 +5669,90 @@ decision rather than an oversight.
 label**, so a consumer reading only `instance` cannot distinguish a family from a landscape id
 — **read `rec.family`.** Passing a hill `instance_id` alongside `family=` raises `ValueError`
 rather than being silently ignored.
+
+---
+
+## 📌 ERRATUM 5 · **Amendment F2a's `nan` claim is wrong for IoU, which weakens my own justification. And thread-capping IS a lever — I retracted a correct result.**
+
+### 5a. The two `nan` conditions are different. F2a overstated its case.
+
+**Amendment F2a says:** *"when `D_est` is empty, `fi_pred` and `iou_pred` are `nan` (0/0) — but
+type I volume is **0** and type II volume is **the prevalence**, both exactly correct... the
+error volumes are **defined precisely where AUC and IoU break**."*
+
+**Wrong for IoU.** Found by the P7 worker, whose first test asserted `nan` there and failed:
+* `fi` is `nan` whenever **`D_est`** is empty.
+* `iou` is `nan` **only when the UNION is empty** — `D_est` *and* `D_true` both empty.
+  **An empty `D_est` against a non-empty true set gives IoU = 0, not `nan`.**
+
+**Consequence, stated against my own registration.** The error volumes are **still strictly
+more defined than IoU** — both are well-defined when the union is empty, where IoU is `nan` —
+but **the margin is much smaller than F2a claimed.** The "defined precisely where IoU breaks"
+half of the argument is **retracted**; the AUC half is unaffected and was always the stronger
+one (AUC is invariant to monotone transformation and cannot see that mean `grid_r2` is negative
+for all eight arms).
+
+**Required:** scorable-row counts must report **the two `nan` conditions separately**, never a
+single combined "IoU/fi break here" figure, and the IoU margin is reported at whatever it
+measures rather than at what I asserted.
+
+### 5b. AUPRC inverts at high γ — the minority class becomes the NEGATIVE one.
+
+Found by the P7 worker while implementing F2b. **At γ=0.99, τ_frac=0.60 about 16 of 20,000 grid
+points are NEGATIVE**, so a standard positive-class AUPRC is **trivially ≈1 exactly where F2b
+flags it as primary.**
+
+**Registered convention, adopted programme-wide:** compute **`auprc_minority`** by scoring the
+explicit complement, and carry the **AP baseline — the prevalence, not 0.5 —** on every row,
+because average precision is **not comparable across cells** whose prevalence runs 0.0012 to
+0.999.
+
+**This is the same inversion as Erratum 3** and has the same cause: γ enters τ *multiplicatively*
+through `tau_max`, which decreases in γ, so **high γ means a low absolute threshold and a huge
+positive class.** Two workers hit it from different directions within an hour. It is the
+strongest argument yet for the Erratum 3 rule that **`true_frac_above_tau` travels beside every
+prevalence-sensitive number.**
+
+### 5c. **Thread-capping IS a 3.6× lever. I retracted a correct measurement.**
+
+Erratum 2 recorded my thread benchmark as confounded and retracted its 4.6× figure. **The
+retraction was wrong.** Re-measured by P7, controlled, on the real workload:
+
+```
+qlogei, one campaign + 24-cell map re-score
+  torch default threads   133.7 s
+  threads capped to 1      37.2 s      -> 3.6x
+```
+
+**The mechanism, which is why three readings disagreed:** `torch.set_num_threads(1)` **in
+Python is not sufficient.** Setting the variables via `os.environ` *inside* the process before
+importing torch still gave **114 s** — BLAS reads `OMP_NUM_THREADS` **at library load**, so it
+must be in the **shell environment before the interpreter starts.**
+
+* My original benchmark used the shell prefix → 4.6×, **correct**.
+* P7's first probe set them in-process, while its own uncapped smoke ran in the same directory
+  → no gain, **confounded twice over**.
+* I accepted P7's over my own → **retracted a correct result.**
+
+**Registered form for every runner:**
+```
+OMP_NUM_THREADS=1 MKL_NUM_THREADS=1 VECLIB_MAXIMUM_THREADS=1 .venv/bin/python -u scripts/...
+```
+
+**Erratum 2's exactness conclusion is UNCHANGED and is now measured twice over**, at one thread
+against columns produced at the torch default: P7 **144 rows × 11 committed K6 columns** at
+worst |Δ| = 0.000e+00, and P2 **20 numeric columns × 24 cells**, all exactly 0.0. **Exactness is
+not thread-contingent for this workload.** Thread count is recorded in every `provenance` block
+as documentation, not as a control variable.
+
+### 5d. Consolidation: `src/boec/calibration.py` is the canonical home.
+
+`error_volumes` and `average_precision` were about to exist in **three** places — the F-analysis
+script, `run_p7_murphy.py`, and `run_p3_cells.py` (where they are currently **undefined names**,
+mid-edit). **`boec.calibration` is canonical**; the other two import it and the F-analysis copy
+is deleted. **The gate against the committed `iou_pred` column moves with the function** — it is
+what makes the derivation checkable rather than asserted, and it must not be lost in the move.
+
+**Fourth invocation tonight of the same principle by four workers on four unrelated problems:**
+*a second definition of a committed quantity is worse than a slow, slightly-off, or
+inconveniently-located one.*
