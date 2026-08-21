@@ -1,0 +1,21 @@
+P5 · tau_q · 232 rows · worst |achieved - p| = 0.000e+00 (one grid cell = 5.0e-05)
+
+  d=6   family      p=0.75    p=0.25    p=0.1     p=0.01  
+         hill        0.59439   0.76327   0.82871   0.92167   (mean of 25)
+         hartmann6   0.00733   0.09706   0.21929   0.56612 
+         ackley      0.03293   0.06302   0.08561   0.16159   (sensitivity)
+         levy        0.66477   0.84834   0.90346   0.95996 
+         rosenbrock  0.76533   0.91322   0.95171   0.98631 
+
+  d=8   family      p=0.75    p=0.25    p=0.1     p=0.01  
+         hill        0.59861   0.76397   0.82807   0.91975   (mean of 25)
+         hartmann6   0.00726   0.09716   0.21631   0.56299 
+         ackley      0.03259   0.05802   0.07500   0.12759   (sensitivity)
+         levy        0.62173   0.80253   0.86587   0.93562 
+         rosenbrock  0.71057   0.87243   0.91981   0.97057 
+
+  calibration d=6: hill tau_frac prevalence 0.73569 0.28944 0.06844 0.00294  worst |p - prevalence| = 0.03944
+
+  calibration d=8: hill tau_frac prevalence 0.74579 0.29247 0.06665 0.00236  worst |p - prevalence| = 0.04247
+
+  -> results/p5-tau-quantile.json  (55.4s)
