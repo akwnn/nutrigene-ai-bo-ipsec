@@ -5607,3 +5607,65 @@ with a single `scored_curve` call while `replay.regenerate` reproduces `static_c
 against the gateable one. This is the `static_curve` float-mean artefact for the **third**
 time; the rule of matching arithmetic rather than widening tolerance has now caught it in
 three independent places.
+
+---
+
+## 📌 ERRATUM 4 · **The audit's `doe` column shifts are ONE CELL, not pooled — and the wrong gate column is mostly right, which is what makes it dangerous.**
+
+**Found by the B4 worker while building the family gate. Verified independently; both number
+sets reproduce exactly from `results/d20-rescore.json` × `results/q42-families.json`, 400
+shared keys.**
+
+`docs/COVERAGE-MATRIX.md` §4 B4 warns that `q42-families.json · doe_a` is the **pre-D20**
+column and the wrong gate target, quoting *"ackley 0.0000 → 0.0123, hartmann6 0.5444 →
+0.5623, levy 0.0040 → 0.0392, rosenbrock 0.0003 → 0.0328"*. **Those are the d=6, σ=0.25 cell
+only.** Pooled over all four cells:
+
+| family | d=6 σ=0.25 (as quoted) | **POOLED, all cells** | equal rows (pooled) |
+|---|---|---|---|
+| ackley | 0.0000 → 0.0123 | **0.0000 → 0.0070** | **92/100** |
+| hartmann6 | 0.5444 → 0.5623 | **0.5917 → 0.5994** | **75/100** |
+| levy | 0.0040 → 0.0392 | **0.0040 → 0.0337** | 38/100 |
+| rosenbrock | 0.0003 → 0.0328 | **0.0004 → 0.0245** | 27/100 |
+
+**Consequence for the write-up:** *"the pre-D20 column flatters DoE"* is **much stronger on
+levy and rosenbrock than on hartmann6.** Only levy and rosenbrock clear SESOI 0.02 at every
+cell; hartmann6's shift is ~0.007 everywhere, well below it. The claim must be stated per
+family, not as a blanket.
+
+### The dangerous part: **the wrong column is mostly RIGHT**
+
+At d=6 σ=0.25 the two columns are **identical on 22 of 25 ackley rows** and **15 of 25
+hartmann6 rows**. **A spot-check on seeds 0–2 of either family would not notice the wrong gate
+target.** A gate that silently uses the pre-D20 column would pass on most rows and be wrong.
+
+**The B4 worker's test design is the correct response and is registered as the standard for
+this class of check:** assert **both halves** — the right column reproduces exactly, *and* the
+wrong one is **shown to differ on the rows where it differs** — with a **count floor** so the
+test cannot silently degrade into one that no longer distinguishes them. **A test that only
+asserts the positive half would pass against the wrong column on 88% of ackley rows.**
+
+### Ackley's 92/100 equality is B3's mechanism appearing in the gate data
+
+`doe`'s two columns coincide on ackley because **its optimum is the exact box centre and the
+CCD visits it**, so oracle-best and rule A are the same point. That is blocker B3's objection
+— the one that justified Decision 3's *"ackley is IN but as a declared sensitivity, never a
+headline"* — **showing up independently in data collected for an unrelated purpose.**
+Decision 3 is confirmed by evidence it was not derived from.
+
+### Decision on the 20-ordering mean off hill: **LEAVE IT UNBRANCHED.** Registered.
+
+`replay`'s `N_ORDERINGS = 20` mean reproduces `run_e2.static_curve`'s arithmetic. Off hill it
+moves a spread-arm regret by a few ULP, **and there is no committed family column for
+`lhs`/`sobol`/`random` at all** — they are ungatable off hill by §4 B4. So branching it would
+introduce **a second scoring definition inside one function to buy nothing measurable**. Under
+the standing rule — *a second definition of a committed quantity is worse than a slow or
+slightly-off one* — it stays unbranched, and this paragraph is the record of that being a
+decision rather than an oversight.
+
+### API note carried for P6
+
+`CampaignRecord` now carries `family: str = "hill"`. **Off hill, `instance` repeats the family
+label**, so a consumer reading only `instance` cannot distinguish a family from a landscape id
+— **read `rec.family`.** Passing a hill `instance_id` alongside `family=` raises `ValueError`
+rather than being silently ignored.
