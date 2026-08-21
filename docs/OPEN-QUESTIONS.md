@@ -7096,3 +7096,72 @@ than one replay against another. **Measured |Δ| = 0.0 exactly at (6, 0.10).**
 gate **on an artefact.** *(Fifth sighting of the `static_curve` artefact, and the second time it is
 latent in the obvious implementation.)* Every row carries `duplicate_of: "lhs"` so no downstream
 table can double-count it, per D23.1.
+
+---
+
+## 📌 ⚠️ ERRATUM 11 — **PROVISIONAL. The ρ figures are NINE-arm numbers and the run is now TWELVE arms.**
+
+**Flagged by the P4/D23 worker before publication, unprompted.** Erratum 11 records
+**ρ(α\*, regret) = −0.3667**, the leave-one-out drop to −0.0952, and the spread-arm-only +0.5000.
+**All of those were computed over nine arms.** Closing the SPADE scope gap adds `versionb`,
+`versionb_random` and `versionb_predictive` to the ranked set — **twelve ranked arms** — and
+**every coefficient will move**, the leave-one-out and spread-arm figures with them.
+
+> **🔴 DO NOT write −0.3667 as final.** I have already quoted it in Erratum 11 and reported it as a
+> finding. **It is provisional pending the twelve-arm top-up.**
+
+**What is expected to survive, and is structural rather than numeric:** the **one-arm leverage**
+(`doe` at the extreme of both axes), the **local three-arm inversion** among the spread arms, and
+the **regret / symmetric-difference disagreement**. **The coefficients will not be identical.**
+
+**And Erratum 13 compounds this:** the +0.4333 against the symmetric difference is *also* a
+nine-arm figure **and** a single-cell figure quoted without its cell. **Both errata are pending the
+same top-up.**
+
+**Note the ranking has now been silently too narrow twice, in opposite directions** — P4 existed
+because `coord` was missing (8 arms), and this omitted the arms that **own the statistic**.
+
+---
+
+## 📌 The memoisation is declined a SECOND time, on a sharper reason, and both declines are right
+
+**The P4/D23 worker measured its own profile as instructed** — and it favours the cache, contrary
+to P1's:
+
+```
+regenerate    13.21s  30.4%
+K6 (24 cell)  12.15s  27.9%
+K6b (alpha*)  17.27s  39.7%   <- what the memoisation targets
+```
+
+**A perfect 4× would save ~30% of a campaign against P1's 5.5%. It declined anyway, and the
+reason is better than the arithmetic:**
+
+> **Every α\* the memoised path would touch is UNGATED.** The nine gated arms' α\* is **read from
+> committed files, not recomputed** — so the cache would only ever affect the three Version B
+> arms, which are **ungatable in principle and have no comparator now or ever.** That is applying
+> an optimisation **precisely where the safety net is absent.**
+
+**P1's standard was *"the safety net would catch it is a reason the risk is survivable, not a
+reason to take it."* This is the mirror image — there is no net at all**, and 30% of a 20-minute
+top-up is six minutes.
+
+**Plus a concrete collision hazard neither I nor P2 had identified:** an **empty or all-true mask
+has identical bytes across campaigns**, so a cache keyed on `(theta, mask)` that **outlived one
+`draws` tensor** would return **another campaign's number.** P2's per-cell scoping handles it; a
+wider scope would not.
+
+**Registered: the memoisation is adopted where scoring dominates AND the result is gated
+(P2, P3's K6b half), and declined where either fails (P1 on cost, P4b on absence of a gate).**
+
+---
+
+## 📌 Erratum 14b, restated because I have now sent the wrong gate target TWICE
+
+`k6-designspace-spread.json` covers **d=6, σ=0.25 only.** It cannot gate `plate1_only` at **any
+other cell and nowhere off hill.** **Use `e2-grid.json · lhs`**, which carries `lhs` at all three
+P3 cells and is the stronger D12 target — original runner against replay, not replay against
+replay. **Measured |Δ| = 0.0 exactly at (6, 0.10).**
+
+*(The P6 worker independently marked `plate1_only` ungatable off hill, so it was never exposed —
+but it was exposed by luck rather than by my instruction being right.)*
