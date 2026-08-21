@@ -332,6 +332,48 @@ def _contrast(name: str, a: np.ndarray, b: np.ndarray) -> dict:
             "exceeds_sesoi": bool(abs(m) > SESOI)}
 
 
+def instance_level(values: dict[tuple[str, int], float]) -> dict[str, float]:
+    """``(instance, seed) -> value`` collapsed to ``instance -> mean over its seeds``.
+
+    **Amendment F1's n=25 unit.** Two seeds on one landscape share the landscape, so
+    ``(instance, seed)`` is not 50 independent units; averaging within instance first is
+    what makes the 25 differences exchangeable.
+
+    Seeds are averaged **before** differencing, which is the registered wording and not
+    the same estimator as averaging seed-level differences the moment the seed counts
+    differ between arms. On this design they cannot — `test_the_design_is_balanced...`
+    pins 25 x exactly 2 — but the function is written for the general case anyway.
+    """
+    by_inst: dict[str, list[float]] = {}
+    for (inst, _seed), v in values.items():
+        by_inst.setdefault(inst, []).append(float(v))
+    return {i: float(np.mean(v)) for i, v in by_inst.items()}
+
+
+def dual_contrast(name: str, a: dict[tuple[str, int], float],
+                  b: dict[tuple[str, int], float],
+                  keys: list[tuple[str, int]]) -> dict:
+    """The same paired contrast at both F1 units. **n=25 governs; n=50 sits beside it.**
+
+    On this balanced design the two ``mean_diff`` values are arithmetically identical --
+    averaging 25 two-element means is averaging 50 values -- so a difference between the
+    units can only ever appear in the interval and the p-value, never in the point
+    estimate. ``units_agree`` therefore compares the *verdicts*, not the magnitudes.
+    """
+    n50 = _contrast(name, np.array([a[k] for k in keys]),
+                    np.array([b[k] for k in keys]))
+    ai, bi = instance_level(a), instance_level(b)
+    insts = sorted(ai)
+    n25 = _contrast(name, np.array([ai[i] for i in insts]),
+                    np.array([bi[i] for i in insts]))
+    agree = (n50["bootstrap_excludes_zero"] == n25["bootstrap_excludes_zero"])
+    return {"contrast": name, "n50": n50, "n25": n25,
+            "governing_unit": "n25",
+            "n50_note": "anti-conservative unit: two seeds on one landscape are not two "
+                        "independent units",
+            "units_agree": bool(agree)}
+
+
 def _holm(contrasts: list[dict]) -> list[dict]:
     """Holm across the cells of this family. The family is these contrasts and no others."""
     order = sorted(range(len(contrasts)), key=lambda i: contrasts[i]["wilcoxon_p"])
@@ -343,6 +385,34 @@ def _holm(contrasts: list[dict]) -> list[dict]:
         contrasts[i]["holm_p"] = running
         contrasts[i]["holm_sig_at_0.05"] = bool(running < 0.05)
     return contrasts
+
+
+def _cell(values: np.ndarray) -> dict:
+    """One F1 unit's reading of the registered decision rule: a mean against two anchors."""
+    mean_sub, lo, hi = _boot(values)
+    d_a = abs(mean_sub - RULE_A_ANCHOR)
+    d_p = abs(mean_sub - RULE_P_FULL_ANCHOR)
+    recovers = d_a <= SESOI
+    stays = d_p <= SESOI
+    assert not (recovers and stays), (
+        "decision bands overlap; the registered anchors are "
+        f"{RULE_A_ANCHOR} and {RULE_P_FULL_ANCHOR}, {SESOI * 2} apart at most")
+    return {
+        "n": int(len(values)), "mean": mean_sub, "ci_lo": lo, "ci_hi": hi,
+        "rule_a_anchor": RULE_A_ANCHOR, "distance_to_rule_a": d_a,
+        "recovers_to_rule_a": bool(recovers),
+        "rule_p_full_anchor": RULE_P_FULL_ANCHOR, "distance_to_rule_p_full": d_p,
+        "stays_at_full_space": bool(stays),
+        # The stricter reading: not just the point estimate but the whole interval inside
+        # the SESOI band. Reported because a mean that sits inside a band with an interval
+        # straddling its edge is a weaker statement than one whose interval is contained.
+        "ci_within_sesoi_of_rule_a": bool(abs(lo - RULE_A_ANCHOR) <= SESOI
+                                          and abs(hi - RULE_A_ANCHOR) <= SESOI),
+        "ci_within_sesoi_of_rule_p_full": bool(abs(lo - RULE_P_FULL_ANCHOR) <= SESOI
+                                               and abs(hi - RULE_P_FULL_ANCHOR) <= SESOI),
+        "verdict": ("PRIOR_ARTEFACT" if recovers else
+                    "D20_STANDS" if stays else "BOTH_MECHANISMS_LIVE"),
+    }
 
 
 def _decide(mean_sub: float) -> dict:
@@ -382,15 +452,24 @@ def _decide(mean_sub: float) -> dict:
 def analyse(rows: list[dict]) -> dict:
     """Every registered contrast, plus the split as a magnitude."""
     rows = sorted(rows, key=lambda r: (r["instance"], r["seed"]))
+    keys = [(r["instance"], r["seed"]) for r in rows]
     a = np.array([r["regret_a"] for r in rows])
     pf = np.array([r["regret_p_full"] for r in rows])
     ps = np.array([r["regret_p_sub"] for r in rows])
+    A = {k: r["regret_a"] for k, r in zip(keys, rows, strict=True)}
+    PF = {k: r["regret_p_full"] for k, r in zip(keys, rows, strict=True)}
+    PS = {k: r["regret_p_sub"] for k, r in zip(keys, rows, strict=True)}
 
-    contrasts = _holm([
-        _contrast("regret_p_subspace - regret_a", ps, a),
-        _contrast("regret_p_subspace - regret_p_full", ps, pf),
-        _contrast("regret_p_full - regret_a  (D20's contrast, recomputed)", pf, a),
-    ])
+    # AMENDMENT F1: every contrast at both units. Holm runs within each unit separately,
+    # because a step-down mixing 50-unit and 25-unit p-values would correct across two
+    # different analyses rather than across the three cells of one family.
+    dual = [dual_contrast("regret_p_subspace - regret_a", PS, A, keys),
+            dual_contrast("regret_p_subspace - regret_p_full", PS, PF, keys),
+            dual_contrast("regret_p_full - regret_a  (D20's contrast, recomputed)",
+                          PF, A, keys)]
+    _holm([d["n50"] for d in dual])
+    _holm([d["n25"] for d in dual])
+    contrasts = [d["n50"] for d in dual]                       # kept for compatibility
 
     # Per-campaign share, bootstrapped. The mean of a ratio is not the ratio of means,
     # so both are reported rather than one standing in for the other.
@@ -399,7 +478,24 @@ def analyse(rows: list[dict]) -> dict:
                              where=np.abs(denom) > 1e-12)
     m, lo, hi = _boot(pf - ps)
 
-    decision = _decide(float(ps.mean()))
+    # AMENDMENT F1: the registered rule read at BOTH units, n=25 governing. The design is
+    # balanced 25 x 2, so the two means are arithmetically identical and the verdicts
+    # cannot differ; the intervals can, and that is the whole content of the dual read.
+    ps_inst = instance_level(PS)
+    cells = {"n50": _cell(ps), "n25": _cell(np.array([ps_inst[i] for i in sorted(ps_inst)]))}
+    decision = _decide(cells["n25"]["mean"])
+    decision["cells"] = cells
+    decision["governing_unit"] = "n25"
+    decision["verdict_n50"] = cells["n50"]["verdict"]
+    decision["verdict_n25"] = cells["n25"]["verdict"]
+    decision["units_agree"] = bool(cells["n50"]["verdict"] == cells["n25"]["verdict"])
+    decision["unit_note"] = (
+        "The design is balanced (25 instances x exactly 2 seeds), so the mean of the 25 "
+        "instance means IS the mean of the 50 campaigns -- the registered rule compares a "
+        "mean against two anchors, and that mean is unit-invariant here. The dual read "
+        "therefore cannot move the verdict; what it moves is the interval around it and "
+        "the Wilcoxon p on every paired contrast, which are reported at both units with "
+        "n=25 governing.")
     decision["collapse_removed_abs"] = {"mean": m, "ci_lo": lo, "ci_hi": hi}
     decision["share_per_campaign_median"] = float(np.nanmedian(per_campaign))
     decision["n_campaigns_with_defined_share"] = int(np.isfinite(per_campaign).sum())
@@ -417,6 +513,7 @@ def analyse(rows: list[dict]) -> dict:
                     "regret_p_full": float(np.median(pf)),
                     "regret_p_subspace": float(np.median(ps))},
         "contrasts": contrasts,
+        "contrasts_dual_n": dual,
         "decision": decision,
         "spearman_subspace_vs_rule_a": {"rho": float(rho), "p": float(rho_p)},
         "polish_beat_grid": {
@@ -483,6 +580,12 @@ def main() -> None:
                          "BrokenProcessPool before the checkpoint below existed.")
     ap.add_argument("--limit", type=int, default=None)
     ap.add_argument("--gate-only", action="store_true")
+    ap.add_argument("--analyse-only", action="store_true",
+                    help="re-run the analysis over a COMPLETE checkpoint and rewrite the "
+                         "result. Runs no campaign, so it cannot change a gated number; "
+                         "it exists because Amendment F1 landed while the campaigns were "
+                         "in flight and re-scoring 50 argmaxes to add a second unit of "
+                         "analysis would be 50 campaigns of compute for zero new data.")
     ap.add_argument("--checkpoint", type=str,
                     default=str(Path(tempfile.gettempdir()) / "d23-doe-subspace-ckpt.json"),
                     help="scratch file of scored campaigns, re-read on restart. NOT the "
@@ -537,7 +640,13 @@ def main() -> None:
               f"{el/60:4.1f} min elapsed"
               + (f", ~{el/k*(len(todo)-k)/60:4.1f} min left" if k else ""), flush=True)
 
-    if args.workers > 1:
+    if args.analyse_only:
+        if todo:
+            raise SystemExit(f"--analyse-only needs a COMPLETE checkpoint; {len(todo)} of "
+                             f"{len(keys)} campaigns are missing from {ckpt}")
+        print(f"  --analyse-only: {len(rows)} campaigns read from the checkpoint, "
+              f"none re-run\n", flush=True)
+    elif args.workers > 1:
         with ProcessPoolExecutor(max_workers=args.workers) as pool:
             for k, r in enumerate(pool.map(_one, todo), 1):
                 _record(r, k)
@@ -546,6 +655,17 @@ def main() -> None:
         # with it; two runs died that way at 8/50 and 0/50 before the checkpoint existed.
         for k, job in enumerate(todo, 1):
             _record(_one(job), k)
+
+    # The gate is re-derived from the checkpoint on every path, INCLUDING --analyse-only,
+    # so a re-analysis can never inherit a pass it did not itself compute.
+    for r in rows:
+        key = (r["instance"], r["seed"])
+        r["regret_a_committed"] = e2[key]
+        r["gate_abs_delta"] = abs(r["regret_a"] - e2[key])
+        ref = fix1.get(key)
+        if ref is not None:
+            r["regret_p_full_committed"] = ref["regret_p"]
+            r["fix1_abs_delta"] = abs(r["regret_p_full"] - ref["regret_p"])
 
     rows.sort(key=lambda r: (r["instance"], r["seed"]))
     gate_failures = [{key: r[key] for key in

@@ -186,3 +186,79 @@ def test_full_space_rule_p_reproduces_fix1(d23):
             f"{abs(out['regret_p_full'] - ref['regret_p']):.3e})")
         assert out["regret_p_full_grid"] == ref["regret_p_grid"]
         assert out["regret_a"] == ref["regret_a"]
+
+
+# --------------------------------------------------------------------------------------
+# 4 — AMENDMENT F1: EVERY CONTRAST AT BOTH UNITS, n=25 GOVERNING
+# --------------------------------------------------------------------------------------
+#
+# Two seeds on one landscape share the landscape, so `(instance, seed)` is not 50
+# independent units. F1 requires both: n=50 as briefed, and n=25 with seeds averaged
+# within instance FIRST and the paired test run on the 25 instance-level differences.
+# Where they disagree the n=25 answer is the verdict and n=50 is reported beside it,
+# labelled as the anti-conservative unit.
+#
+# The design here is balanced -- 25 instances x exactly 2 seeds, asserted below -- and
+# that has a consequence worth pinning rather than discovering later: the MEAN is
+# identical at both units, because averaging 25 two-element means is the same arithmetic
+# as averaging 50 values. So the registered decision rule, which compares a mean against
+# two anchors, cannot change between units. What changes is the interval around it and
+# the Wilcoxon p. A test that let those two facts drift apart would let someone read a
+# "unit disagreement" that is arithmetically impossible.
+
+def test_the_design_is_balanced_25_instances_by_2_seeds():
+    """F1's unit change assumes this. If it ever stops being true, the means diverge."""
+    import collections
+    counts = collections.Counter(i for (i, _s) in _e2_doe())
+    assert len(counts) == 25, counts
+    assert set(counts.values()) == {2}, counts
+
+
+def test_instance_level_averages_seeds_before_differencing(d23):
+    """Seeds averaged FIRST, then the difference. Not the mean of seed-level differences.
+
+    On a balanced design the two orders agree, which is exactly why the test uses an
+    UNBALANCED fixture: differencing first and averaging after is a different estimator
+    the moment the seed counts differ, and the registered wording says average first.
+    """
+    values = {("i0", 0): 1.0, ("i0", 1): 3.0, ("i1", 0): 10.0}
+    got = d23.instance_level(values)
+    assert sorted(got) == ["i0", "i1"]
+    assert got["i0"] == 2.0
+    assert got["i1"] == 10.0
+
+
+def test_dual_contrast_reports_both_units_with_n25_governing(d23):
+    keys = [(f"i{i:02d}", s) for i in range(25) for s in (0, 1)]
+    a = {k: 0.30 for k in keys}
+    b = {k: 0.10 for k in keys}
+    out = d23.dual_contrast("a - b", a, b, keys)
+
+    assert out["n50"]["n"] == 50
+    assert out["n25"]["n"] == 25
+    assert out["governing_unit"] == "n25"
+    # Balanced design: the mean is unit-invariant. The interval need not be.
+    assert out["n50"]["mean_diff"] == pytest.approx(out["n25"]["mean_diff"], abs=1e-12)
+    assert out["n50"]["mean_diff"] == pytest.approx(0.20, abs=1e-12)
+
+
+def test_the_decision_is_reported_at_both_units(d23):
+    """Four cells: {n=50, n=25} x {rule-A anchor 0.0958, full-space anchor 0.1993}."""
+    rows = [{"instance": f"i{i:02d}", "seed": s,
+             "regret_a": 0.0958, "regret_p_full": 0.1993, "regret_p_sub": 0.1990,
+             "regret_p_full_grid": 0.20, "regret_p_sub_grid": 0.20,
+             "from_grid_full": False, "from_grid_sub": False,
+             "gate_abs_delta": 0.0}
+            for i in range(25) for s in (0, 1)]
+    d = d23.analyse(rows)["decision"]
+
+    assert set(d["cells"]) == {"n50", "n25"}
+    for unit in ("n50", "n25"):
+        cell = d["cells"][unit]
+        assert cell["distance_to_rule_a"] == pytest.approx(0.1032, abs=1e-4)
+        assert cell["distance_to_rule_p_full"] == pytest.approx(0.0003, abs=1e-4)
+        assert cell["stays_at_full_space"] is True
+        assert cell["recovers_to_rule_a"] is False
+    assert d["verdict"] == "D20_STANDS"
+    assert d["governing_unit"] == "n25"
+    assert d["units_agree"] is True
