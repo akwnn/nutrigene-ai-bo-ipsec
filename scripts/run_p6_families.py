@@ -86,12 +86,15 @@ torch.set_num_threads(1)
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
+import importlib.util                                                # noqa: E402
+
 from boec.calibration import average_precision, error_volumes        # noqa: E402
 from boec.designspace import (brier_and_auc, false_inclusion_rate,   # noqa: E402
                               gp_adapter, inscribed_box_from_mask, iou,
                               predictive_probability_map, probability_map, tau_max)
 from boec.norms import grid_r2, sobol_grid, sup_err                  # noqa: E402
-from boec.replay import FAMILY_ORACLE, regenerate, unit_bounds       # noqa: E402
+from boec.replay import (FAMILY_ORACLE, family_evaluator,           # noqa: E402
+                         regenerate, unit_bounds)
 from boec.surrogate import build_gp                                  # noqa: E402
 
 OUT = ROOT / "results" / "p6-families.json"
@@ -101,7 +104,36 @@ GATE_D20 = ROOT / "results" / "d20-rescore.json"
 GATE_Q59 = ROOT / "results" / "q59-hartmann-no-screen.json"
 
 FAMILIES = tuple(FAMILY_ORACLE)
-ARMS = ("doe", "qlogei", "qlognei", "lhs", "sobol", "random")
+#: `versionb`/`versionb_random`/`versionb_predictive` are two-plate campaigns and
+#: `plate1_only` is `lhs` at 48 wells. They are UNGATABLE off hill -- no committed family
+#: column exists and none can -- but ungatable is not a reason not to run: a Version B
+#: campaign is seed-deterministic and fully scoreable. SPADE's certificate has been
+#: measured at ONE point in this project (hill, d=6, sigma=0.25), and the families are
+#: where it either generalises or does not.
+VERSIONB_ARMS = ("versionb", "versionb_random", "versionb_predictive", "plate1_only")
+ARMS = ("doe", "qlogei", "qlognei", "lhs", "sobol", "random") + VERSIONB_ARMS
+#: `plate1_only` IS `lhs` at 48 wells (D23.1). Both are reported; neither is
+#: double-counted, and the flag travels on the row so no ranking has to remember.
+NEVER_RANK_SEPARATELY = ("plate1_only",)
+
+#: `run_versionb.py`'s two-plate builder, IMPORTED rather than reimplemented, exactly as
+#: `run_p2_versionb_gamma.py:179-182` does. A second copy of plate 2's LSE selection
+#: would be a second campaign, and its columns could not be checked against the committed
+#: ones at all (D12). Read-only: this runner never modifies that file.
+_VB = importlib.util.module_from_spec(
+    importlib.util.spec_from_file_location("_run_versionb",
+                                           ROOT / "scripts" / "run_versionb.py"))
+_VB.__spec__.loader.exec_module(_VB)
+
+#: Plate 2's straddle targets `theta = DESIGN_TAU_FRAC * mu_max`. `UnitScaled` puts every
+#: family's optimum at exactly 1.0, so theta is **0.75 on every family** -- the same
+#: absolute number everywhere, which is COVERAGE-MATRIX §2.4's defect appearing inside the
+#: arm's own DESIGN rather than in the scoring. P6 scores at `tau_q`, so the Version B
+#: arms target one threshold and are scored at another. That is recorded per row rather
+#: than silently carried: see :func:`design_target`.
+DESIGN_TAU_FRAC = float(_VB.DESIGN_TAU_FRAC)
+_PLATE2_MODE = {"versionb": "lse", "versionb_random": "random",
+                "versionb_predictive": "predictive"}
 GAMMAS = (0.50, 0.70, 0.80, 0.90, 0.95, 0.99)
 #: The registered grid, identical to `run_k6_designspace.py:57-58` and to P5's.
 GRID_N, GRID_SEED = 20_000, 0
@@ -171,8 +203,13 @@ IOU_IDENTITY_BOUND = {
 }
 
 
-#: The arms whose bound came from `k6-designspace-spread.json`.
-SPREAD_POP = ("lhs", "sobol", "random")
+#: The arms whose bound came from `k6-designspace-spread.json`. The Version B arms are
+#: included as a PROXY and that is stated rather than hidden: their own population has
+#: never been measured, so the wider of the two measured bounds is used. If the identity
+#: ever fires on one of them, that is a finding about an unmeasured population, not a
+#: tolerance to widen -- the runner raises and stops.
+SPREAD_POP = ("lhs", "sobol", "random") + ("versionb", "versionb_random",
+                                           "versionb_predictive", "plate1_only")
 
 
 def iou_bound_for(arm: str) -> float:
@@ -204,6 +241,16 @@ _SPREAD_REASON = (
     "no committed family column exists for {arm!r} on any family -- lhs/sobol/random are "
     "ungatable off hill (COVERAGE-MATRIX B4). Reproducibility is the RNG's: one "
     "static_design call and one evaluate call, both seeded.")
+_VERSIONB_REASON = (
+    "{arm!r} has no committed family column and none can exist -- SPADE was never run "
+    "off hill, so there is nothing to reproduce. UNGATED. Its only guarantee is SEED "
+    "DETERMINISM: the same seed rebuilds the same two plates through the same imported "
+    "run_versionb._two_plate. Every table carrying this arm says so.")
+_PLATE1_REASON = (
+    "plate1_only's comparator is k6-designspace-spread.json lhs, which is HILL-ONLY, so "
+    "off hill it is UNGATED like the rest. Its only guarantee is SEED DETERMINISM. It is "
+    "`lhs` at 48 wells (D23.1) and carries never_rank_separately so it is never counted "
+    "as a second arm in any ranking.")
 _QLOGNEI_REASON = (
     "q59-hartmann-no-screen.json is the only committed qlognei family column and it is "
     "hartmann6 at d=6 only; {family} d={dim} has no comparator and none is coming, so "
@@ -310,6 +357,14 @@ def build_gate_index(family: str, dim: int, sigma: float, arms=ARMS):
             ungated[arm] = _SPREAD_REASON.format(arm=arm)
             continue
 
+        if arm == "plate1_only":
+            ungated[arm] = _PLATE1_REASON
+            continue
+
+        if arm in VERSIONB_ARMS:
+            ungated[arm] = _VERSIONB_REASON.format(arm=arm)
+            continue
+
         if arm == "qlognei":
             if family != "hartmann6" or dim != 6:
                 ungated[arm] = _QLOGNEI_REASON.format(family=family, dim=dim)
@@ -362,14 +417,21 @@ def count_distinguishing(family: str, dim: int, sigma: float, arm: str = "doe") 
                if k[0] == arm and index.get(k) != v)
 
 
-def check_gate(rec, index, superseded, ungated) -> dict:
-    """Compare one regenerated campaign to its committed column. Never skips."""
-    if rec.arm in ungated:
-        return {"gated": False, "reason": ungated[rec.arm], "committed": None,
+def check_gate(rec, index, superseded, ungated, arm=None) -> dict:
+    """Compare one regenerated campaign to its committed column. Never skips.
+
+    ``arm`` overrides ``rec.arm``. ``plate1_only`` is regenerated through the ``lhs``
+    path, so its record comes back labelled ``lhs``; gating on the record's label would
+    look up a different arm's comparator, which on a run that did not also request ``lhs``
+    raises instead of finding the plate1_only reason. Found by a one-campaign smoke.
+    """
+    arm = arm or rec.arm
+    if arm in ungated:
+        return {"gated": False, "reason": ungated[arm], "committed": None,
                 "abs_delta": None, "superseded_column": None,
                 "superseded_abs_delta": None, "distinguishes": None}
 
-    key = (rec.arm, rec.seed)
+    key = (arm, rec.seed)
     if key not in index:
         raise MissingGateTarget(
             f"no committed regret for {rec.family} d={rec.dim} sigma={rec.sigma} "
@@ -390,7 +452,8 @@ def check_gate(rec, index, superseded, ungated) -> dict:
 def row_identity(family: str, dim: int, sigma: float, seed: int, arm: str) -> dict:
     """The five keys a row is identified by, plus the sensitivity flag. No `instance`."""
     return {"family": family, "dim": dim, "sigma": sigma, "seed": seed, "arm": arm,
-            "sensitivity": family in SENSITIVITY_FAMILIES}
+            "sensitivity": family in SENSITIVITY_FAMILIES,
+            "never_rank_separately": arm in NEVER_RANK_SEPARATELY}
 
 
 def _ap_pair(p: torch.Tensor, truth: torch.Tensor, tau: float,
@@ -487,8 +550,14 @@ def map_row(m, grid: torch.Tensor, truth: torch.Tensor, *, tau: float, gamma: fl
     return row
 
 
-def score_campaign(rec, orc, grid, truth, active, taus) -> list[dict]:
-    """Every (gamma, p) row for one regenerated campaign."""
+def score_campaign(rec, orc, grid, truth, active, taus, arm_label=None) -> list[dict]:
+    """Every (gamma, p) row for one regenerated campaign.
+
+    ``arm_label`` overrides ``rec.arm``: ``plate1_only`` is regenerated through the
+    ``lhs`` path, which is the arithmetic its committed column was built by, so the record
+    comes back labelled ``lhs`` and the row must carry what the arm actually is.
+    """
+    arm = arm_label or rec.arm
     model = build_gp(rec.X, rec.Y, rec.Yvar, unit_bounds(rec.dim))
     # CHUNKED. model.posterior over the whole 20k grid builds the joint covariance and
     # costs 100.6s against 0.06s at 2k -- see boec.designspace.gp_adapter.
@@ -502,7 +571,7 @@ def score_campaign(rec, orc, grid, truth, active, taus) -> list[dict]:
     # A lab does not know f, so the predictive SD is a PLUG-IN from the posterior mean.
     sigma_pred = ((orc.sigma_rel * mean).abs() ** 2 + orc.sigma_add ** 2).sqrt()
 
-    base = {**row_identity(rec.family, rec.dim, rec.sigma, rec.seed, rec.arm),
+    base = {**row_identity(rec.family, rec.dim, rec.sigma, rec.seed, arm),
             "regret": rec.regret,
             "sup_err": sup_err(m, lambda X: truth, grid),
             "grid_r2": grid_r2(m, lambda X: truth, grid)}
@@ -516,15 +585,15 @@ def score_campaign(rec, orc, grid, truth, active, taus) -> list[dict]:
             # disagree the runner is not scoring the landscape P5 registered.
             # F2a's derivation is checkable, so it is checked rather than trusted, at the
             # bound measured on THIS arm's population.
-            bound = iou_bound_for(rec.arm)
+            bound = iou_bound_for(arm)
             for suffix in ("pred", "latent"):
                 got, ref = r[f"implied_iou_{suffix}"], r[f"iou_{suffix}"]
                 if got == got and ref == ref and abs(got - ref) > bound:
                     raise MissingGateTarget(
-                        f"{rec.family} {rec.arm} seed={rec.seed} p={t.p} gamma={gamma}: "
+                        f"{rec.family} {arm} seed={rec.seed} p={t.p} gamma={gamma}: "
                         f"error-volume identity misses iou_{suffix} by "
                         f"{abs(got - ref):.3e}, over the {bound:.3e} bound measured on "
-                        f"the {'spread' if rec.arm in SPREAD_POP else 'optimiser'} arms")
+                        f"the {'spread' if arm in SPREAD_POP else 'optimiser'} arms")
             if r["true_frac_above_tau"] != t.true_frac_above_tau:
                 raise MissingGateTarget(
                     f"{rec.family} d={rec.dim} p={t.p}: prevalence re-measures "
@@ -535,9 +604,13 @@ def score_campaign(rec, orc, grid, truth, active, taus) -> list[dict]:
                 # Structurally empty by algebra, not by the design. Ranking an arm on a
                 # cell it could not have won is not a comparison.
                 r["degenerate"] = r["degenerate"] + ["above_ceiling"]
-            rows.append({**base, "p": t.p, "tau_source": "results/p5-tau-quantile.json",
-                         "tau_max": tau_max(gamma, rec.sigma),
-                         "tau_above_ceiling": ceiling, **r})
+            row = {**base, "p": t.p, "tau_source": "results/p5-tau-quantile.json",
+                   "tau_max": tau_max(gamma, rec.sigma),
+                   "tau_above_ceiling": ceiling, **r}
+            if arm in VERSIONB_ARMS and arm != "plate1_only":
+                # The arm targets one threshold and is scored at another. Disclosed.
+                row.update(design_target(rec.family, rec.dim))
+            rows.append(row)
     del model, mean, sd
     gc.collect()
     return rows
@@ -643,6 +716,87 @@ def write_census() -> None:
                 f"{c['above']}/{c['cells']}    " for c in cells))
 
 
+def design_target(family: str, dim: int) -> dict:
+    """What plate 2 aims at, and whether that target exists on this family.
+
+    **The Version B arms target one threshold and P6 scores them at another.** Plate 2's
+    straddle criterion uses ``theta = DESIGN_TAU_FRAC * mu_max = 0.75`` on every family,
+    because ``UnitScaled`` normalises every optimum to 1.0. Scoring is at ``tau_q``. On
+    ackley 0.75 is above the ENTIRE grid range -- 0.410 at d=6, 0.337 at d=8 -- so the
+    straddle has nothing to straddle and plate 2 degenerates into "wherever the mean is
+    highest"; on hartmann6 the target set is 0.2% of the box.
+
+    **This is not a bug to fix here.** ``run_versionb._two_plate`` is imported verbatim so
+    the arm is the committed arm; changing theta would make it a different method and
+    nothing could be compared to anything. It is a disclosure: a Version B result on
+    ackley must not be read as "SPADE fails on ackley" when its plate-2 target was empty
+    by the threshold convention `tau_q` exists to replace.
+    """
+    prevalence = _design_prevalence(family, dim)
+    return {"design_tau_frac": DESIGN_TAU_FRAC,
+            "design_theta": DESIGN_TAU_FRAC * 1.0,       # mu_max is exactly 1.0
+            "design_target_prevalence": prevalence,
+            # Below 1% of the box the straddle has effectively nothing to bracket.
+            "design_target_degenerate": prevalence < 0.01}
+
+
+_DESIGN_PREV: dict[tuple[str, int], float] = {}
+
+
+def _design_prevalence(family: str, dim: int) -> float:
+    """Fraction of the registered grid above plate 2's design threshold."""
+    key = (family, dim)
+    if key not in _DESIGN_PREV:
+        orc = family_evaluator(family, dim, 0.25, 0)
+        with torch.no_grad():
+            t = orc.truth(sobol_grid(dim, GRID_N, seed=GRID_SEED)).reshape(-1)
+        _DESIGN_PREV[key] = float((t >= DESIGN_TAU_FRAC).double().mean())
+    return _DESIGN_PREV[key]
+
+
+def versionb_builder(arm: str):
+    """``builder(orc, dim, seed) -> (X, Y, Yvar, kept, held)`` for one Version B arm.
+
+    **The first real use of B4's `builder=` hook**, and what it was built for: the
+    two-plate LSE logic stays in the runner that owns it while ``replay`` keeps the oracle
+    construction, the scoring rule and the provenance in one place. No GP fit and no
+    ``batch_lse`` call enters ``replay``.
+
+    ``plate1_only`` needs no builder -- it is ``lhs`` at 48 wells and goes through
+    ``regenerate``'s own spread-arm path, which is the arithmetic its committed column was
+    built by.
+    """
+    if arm not in _PLATE2_MODE:
+        raise KeyError(f"{arm!r} is not a two-plate arm; expected one of "
+                       f"{tuple(_PLATE2_MODE)}")
+    mode = _PLATE2_MODE[arm]
+
+    def builder(orc, dim: int, seed: int):
+        # mu_max is exactly 1.0 on every UnitScaled family (COVERAGE-MATRIX B1).
+        X, Y, V, _diag = _VB._two_plate(orc, dim, seed, 1.0, mode)
+        return X, Y, V, None, None
+
+    return builder
+
+
+def cell_separation(rows: list[dict]) -> dict:
+    """``max |total_error_vol - prevalence|`` over the arms of one cell, and rankability.
+
+    **When every arm certifies nothing, total error volume IS the prevalence**, so a
+    ranking over that cell ranks prevalences and says nothing about the arms -- the
+    higher-prevalence arm places last mechanically. Measured in 4 of 12 CE cells at 100%
+    emptiness. The census guarantees this occurs here rather than hypothetically:
+    rosenbrock is 8/8 above the ceiling at gamma >= 0.90 and levy 8/8 at gamma >= 0.95.
+
+    Same class as "type I alone ranks silence first": a scalar that looks like a
+    comparison and is not.
+    """
+    sep = max((abs(r["total_error_vol_pred"] - r["true_frac_above_tau"]) for r in rows),
+              default=0.0)
+    return {"separation_from_prevalence": sep, "rankable": sep > 0.0,
+            "n_arms": len({r["arm"] for r in rows})}
+
+
 def ckpt_path(family: str, dim: int, sigma: float) -> Path:
     """One append-only checkpoint per (family, dim, sigma). One JSON line per campaign.
 
@@ -684,6 +838,30 @@ def merge() -> None:
             sys.exit(f"refusing to shrink {OUT.name}: {existing} committed rows, "
                      f"{len(rows)} in the checkpoints")
 
+    # `never_rank_separately` is a pure function of `arm`, and campaigns banked before
+    # the Version B arms existed predate the key. Backfilling it here reconstructs exactly
+    # what the current code would have written, so the merged artefact is uniform without
+    # recomputing 19 campaigns. Nothing else is ever backfilled: a derived flag can be
+    # rebuilt from a stored field, a measurement cannot.
+    for r in rows:
+        r.setdefault("never_rank_separately", r["arm"] in NEVER_RANK_SEPARATELY)
+
+    # Amendment F trap: a cell where every arm certifies nothing has total error volume
+    # equal to the prevalence, so ranking it ranks prevalences. Computed here because it
+    # is a property ACROSS arms and no single campaign can see it.
+    by_cell: dict[tuple, list[dict]] = {}
+    for r in rows:
+        by_cell.setdefault((r["family"], r["dim"], r["sigma"], r["gamma"], r["p"]),
+                           []).append(r)
+    separation = {}
+    for k, group in by_cell.items():
+        v = cell_separation(group)
+        separation["|".join(str(x) for x in k)] = v
+        for r in group:
+            r["separation_from_prevalence"] = v["separation_from_prevalence"]
+            r["rankable"] = v["rankable"]
+    n_unrankable = sum(1 for v in separation.values() if not v["rankable"])
+
     cells = sorted({(e["family"], e["dim"], e["sigma"]) for e in entries})
     OUT.write_text(json.dumps({
         "provenance": _provenance(sys.argv, 0.0),
@@ -712,10 +890,19 @@ def merge() -> None:
                    "degenerate_note": "Rows with a non-empty `degenerate` list are "
                                       "FLAGGED, not ranked. Never average a nan; never "
                                       "rank a tie.",
+                   "separation_note": "a cell whose separation_from_prevalence is 0 has "
+                                      "every arm certifying nothing, so total error "
+                                      "volume IS the prevalence and a ranking over it "
+                                      "ranks prevalences. Those cells are NOT ranked.",
+                   "never_rank_separately": list(NEVER_RANK_SEPARATELY),
+                   "versionb_arms": list(VERSIONB_ARMS),
                    "cells": [list(c) for c in cells],
                    "checkpoints": [f.name for f in files]},
+        "cell_separation": separation,
         "gate_failures": [g for e in entries for g in e.get("gate_failures", [])],
         "rows": rows}, indent=1))
+    print(f"  {n_unrankable}/{len(separation)} cells are NOT rankable "
+          f"(every arm certifies nothing; total error volume == prevalence)")
     print(f"merged {len(files)} checkpoints · {len(entries)} campaigns · {len(rows)} rows "
           f"· {len(cells)} cells -> {OUT.relative_to(ROOT)}")
 
@@ -760,7 +947,9 @@ def main() -> None:
     for arm, why in ungated.items():
         print(f"  UNGATABLE {arm}: {why}")
     n_dist = count_distinguishing(fam, dim, sigma)
-    n_committed = sum(1 for k in index if k[0] == "doe")
+    # From the FULL committed column, not from `index`, which only holds the arms this
+    # invocation requested -- a --arms subset without `doe` printed "3/0".
+    n_committed = sum(1 for k in build_gate_index(fam, dim, sigma)[1] if k[0] == "doe")
     print(f"  doe gate distinguishes the pre-D20 column on {n_dist}/{n_committed} "
           f"committed seeds -- over the whole column, not just the seeds run here")
     dead = [(t.p, g) for t in taus for g in GAMMAS if above_ceiling(t.tau, g, sigma)]
@@ -780,8 +969,13 @@ def main() -> None:
             if key in have:
                 continue
             t = time.time()
-            rec = regenerate(fam, dim, sigma, seed, arm, family=fam)
-            verdict = check_gate(rec, index, superseded, ungated)
+            builder = versionb_builder(arm) if arm in _PLATE2_MODE else None
+            # `plate1_only` IS `lhs` at 48 wells, regenerated by the arithmetic its
+            # committed column was built by; the row carries what the arm is.
+            replay_arm = "lhs" if arm == "plate1_only" else arm
+            rec = regenerate(fam, dim, sigma, seed, replay_arm, family=fam,
+                             builder=builder)
+            verdict = check_gate(rec, index, superseded, ungated, arm=arm)
             failures = []
             if verdict["gated"] and verdict["abs_delta"] != 0.0:
                 failures.append({**row_identity(fam, dim, sigma, seed, arm), **verdict})
@@ -797,7 +991,7 @@ def main() -> None:
             else:
                 active[list(rec.kept_factors)] = True
 
-            scored = score_campaign(rec, orc, grid, truth, active, taus)
+            scored = score_campaign(rec, orc, grid, truth, active, taus, arm_label=arm)
             for r in scored:
                 r["gate"] = verdict
             # ON DISK BEFORE THE NEXT CAMPAIGN STARTS. A SIGKILL here loses one campaign.
@@ -828,7 +1022,6 @@ def rec_oracle(rec, family: str, dim: int, sigma: float, seed: int):
     noise, so this cannot disturb the campaign's stream -- but it must be the same oracle,
     or the map is scored against a different landscape from the one that was searched.
     """
-    from boec.replay import family_evaluator
     return family_evaluator(family, dim, sigma, seed)
 
 
