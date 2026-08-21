@@ -6425,3 +6425,76 @@ partial is parked OUTSIDE `results/`.** Cost ~20 minutes.
 **That is §3.1's float offset landing precisely where the `exact_mu_max` split was built to catch
 it:** Brier is **continuous in the threshold** and sees a 2e-16 shift; AUC is **rank-based** and
 cannot. A design decision made earlier in the project, confirmed by a defect it was built for.
+
+---
+
+# 🔴🔴 SCOPE GAP 1 · **SPADE IS MISSING FROM SEVEN OF THE EIGHT PHASE 2–4 RUNS. Raised by Joseph. My error.**
+
+**The project is about SPADE. Version B appears in ONE of the eight Phase 2–4 runs.** Measured by
+scanning each runner's `ARMS` tuple:
+
+| run | what it delivers | Version B arms? |
+|---|---|---|
+| `run_p2_versionb_gamma` | the γ ladder | ✅ all four |
+| **`run_p7_murphy`** | **Murphy calibration — a PRIMARY Phase 2 deliverable (F2d)** | ❌ **none** |
+| **`run_p4b_alpha_anomaly`** | **the α\* anomaly — α\* IS SPADE's own statistic** | ❌ **none** |
+| **`run_p6_families`** | **the entire cross-family programme** | ❌ **none** |
+| **`run_p3_cells`** | **the three missing (d, σ_rel) cells** | ❌ **none** |
+| `run_p4_coord` | widening the ranking to 9 arms | ❌ none |
+| `run_p1_kernel_gate` | kernel-arm gate | n/a (kernel arms only) |
+| `run_d23_doe_subspace` | `doe` subspace re-score | n/a (`doe` only) |
+
+**Committed results carrying any SPADE arm: `versionb.json`, `versionb-predictive.json`,
+`fix1-terminal-rule.json`, `step0-oracle-best.json`. That is all.** Every K6, K6b, `p4-coord` and
+`p7-murphy` row has **none**.
+
+## How I caused it
+
+`COVERAGE-MATRIX.md` §2.2 marks Version B **"UNGATABLE — no committed comparator, and never will
+be"**, and §5 lists gating as the organising principle of Phases 2–4. **I let *cannot be gated*
+become *do not run*.** They are different: a Version B campaign is **seed-deterministic and fully
+scoreable**; what it lacks is a committed regret column to reproduce. **Everything downstream of
+regeneration — the maps, the error volumes, the calibration decomposition, α\* — is computable and
+comparable.**
+
+**The consequence, stated plainly:** as registered, Phases 2–4 would have delivered a new (d, σ)
+grid, a cross-family grid, a calibration decomposition and an α\* investigation **for every arm
+except the one the project exists to evaluate.**
+
+## The two worst cases
+
+**1. `run_p4b_alpha_anomaly` excludes SPADE, and α\* is SPADE's own metric.** The conservative
+estimate is the SPADE certificate. Testing *"does α\* reward not-knowing"* across nine arms while
+omitting `versionb`, `versionb_random` and `versionb_predictive` tests it **everywhere except
+where it decides something.** And F1's three Holm upgrades are **all on `alpha_star`, all on
+Version B contrasts** — so the arm whose upgrades are in question is absent from the test of the
+statistic that produced them.
+
+**2. `run_p7_murphy` excludes SPADE, and calibration is the metric Amendment F2 promoted to
+primary** precisely because AUC cannot see it. **SPADE's whole claim is a calibrated statement**
+— "this region holds at assurance γ" — so it is the arm for which calibration matters most.
+
+## Registered fix
+
+**Add the Version B arms — `versionb`, `versionb_random`, `versionb_predictive`, `plate1_only` —
+to `run_p7_murphy`, `run_p4b_alpha_anomaly`, `run_p3_cells` and `run_p6_families`.**
+
+* **They are UNGATED and every row must say so** — `gated: false` with a reason string, exactly as
+  the kernel arms at d=8 do. **Seed determinism is their only guarantee and every table states
+  it.** That is a caveat, not a reason for absence.
+* **`plate1_only` IS gateable** against `k6-designspace-spread.json · lhs` and must be. It is also
+  `lhs` (agreeing to 4.44e-16) and **may never be counted as a separate arm in a ranking.**
+* **Cost is low:** a Version B campaign is a two-plate build, not a 10-round BO regeneration —
+  measured at 1.9 s against `qlogei`'s 51 s. **Four extra arms cost less than one BO arm.**
+* **`versionb_predictive` is included.** Fix 5 was a null on the committed cell; a null at one cell
+  is not a null everywhere, and it is the arm that targets the predictive boundary the deliverable
+  is actually about.
+
+**Enabling defect, now blocking twice:** `results/versionb.json` carries **none** of `vol_pred`,
+`vol_latent`, `fi_pred`, `fi_latent`, `true_frac_above_tau` — so **error volumes are not
+computable for any Version B arm**, and the F-analysis worker could not check F1's AUC upgrade
+under the F2a framing. **Any new Version B rows must emit all five**, which `run_p2_versionb_gamma`
+already does.
+
+**This is registered as a gap, not a silent fix.** It was raised by Joseph, not found by the
+programme, and the runs were already under way when it was raised.
