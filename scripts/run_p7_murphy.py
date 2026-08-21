@@ -1,0 +1,508 @@
+"""P7 -- Murphy calibration-refinement decomposition at the primary cell.
+
+Registered in `docs/OPEN-QUESTIONS.md` at commit 5c44e6a, under Amendment A5, before
+this file existed. Amendment A5's argument is that the project has only ever reported
+the SUM: `Brier = calibration - refinement + uncertainty`, and refinement is the term
+that actually rewards a probability map for separating the superlevel set from its
+complement. This re-scores the one populated design-space cell and asks whether the two
+rank the arms differently.
+
+REGISTERED DECISION RULE, WINNER NOT PRE-WRITTEN
+------------------------------------------------
+Ranking by refinement differs from ranking by Brier at any cell -> the decomposition has
+found something, and that is the A5 result. Identical at every cell -> A5 is a NULL and
+is written up as one.
+
+The verdict is taken on the PREDICTIVE map. Peterson's `D_gamma` is the primary object
+throughout this project (`boec.designspace` module docstring); the latent map is scored
+alongside and reported, and disagreement between them is a reported result, not a
+tie-break.
+
+WHY THE CAMPAIGNS ARE REGENERATED
+---------------------------------
+No file in `results/` stores a probability map, so the maps must be recomputed, which
+means the campaigns must be regenerated (`boec.replay`). Two independent gates against
+COMMITTED columns hold that regeneration honest (D12 -- never gate a regeneration
+against a regeneration of itself):
+
+  1. REGRET, against `results/e2-grid.json`. The registered gate. Tolerance is read
+     from `results/k1-replay-gate.json`, which measured it; it is never a constant
+     chosen here, and it is never raised.
+  2. BRIER, against `k6-designspace.json` / `k6-designspace-spread.json`
+     `brier_pred` / `brier_latent`. Stronger than the regret gate for this question:
+     regret agreeing proves the campaign reproduced, but `brier_raw` agreeing proves
+     the same 20,000-point MAP was rebuilt, which is the object being decomposed.
+
+ARMS
+----
+The six arms with a committed regret column at this cell that `replay.regenerate`
+supports. `coord` has a committed column but no `regenerate` path (it is P4's task);
+`qlogei-add` / `qlogei-addonly` have a `regenerate` path but no committed column at this
+cell (CANNOT GATE, COVERAGE-MATRIX 3.6 -- P1 is building that comparator). Running an
+ungateable arm here would put an ungated number into a ranking, so neither is included.
+
+THE PERFORMANCE TRAP
+--------------------
+`model.posterior(X)` builds the JOINT covariance over all of X: 0.06 s at N=2,000 and
+100.6 s at N=20,000. `designspace.gp_adapter` chunks at POSTERIOR_CHUNK = 2048 and is
+the only path used here.
+"""
+
+from __future__ import annotations
+
+import argparse
+import gc
+import itertools
+import json
+import platform
+import subprocess
+import sys
+import time
+from pathlib import Path
+
+import numpy as np
+import torch
+
+from boec.calibration import N_BINS, murphy_decomposition
+from boec.designspace import (gp_adapter, predictive_probability_map, probability_map,
+                              tau_max)
+from boec.norms import sobol_grid
+from boec.replay import committed_rows, instance_by_id, regenerate, unit_bounds
+from boec.surrogate import build_gp
+from boec.torch_oracle import BiphasicOracle
+
+ROOT = Path(__file__).resolve().parents[1]
+OUT = ROOT / "results/p7-murphy.json"
+GATE = ROOT / "results/k1-replay-gate.json"
+#: Committed map columns. `brier_raw` must reproduce these, or the map is not the map.
+MAP_GATE = (ROOT / "results/k6-designspace.json",
+            ROOT / "results/k6-designspace-spread.json")
+
+#: The primary cell. Not parameters -- the only (family, d, sigma_rel) cell that carries
+#: any design-space metric at all (COVERAGE-MATRIX 2.1).
+DIM = 6
+SIGMA = 0.25
+ARMS = ("doe", "qlogei", "qlognei", "lhs", "sobol", "random")
+#: K6's grid, unchanged, so every row sits beside a committed Brier.
+GAMMAS = (0.50, 0.70, 0.80, 0.90, 0.95, 0.99)
+TAU_FRACS = (0.60, 0.75, 0.85, 0.95)
+GRID_N = 20_000
+GRID_SEED = 0
+
+#: Registered: the identity must hold to this, or the row is NOT written.
+IDENTITY_BAR = 1e-10
+#: Amendment E statistics, restated in the P7 registration block.
+N_BOOT = 4000
+BOOT_SEED = 0
+
+
+def _git(*a: str) -> str:
+    try:
+        return subprocess.check_output(["git", *a], cwd=ROOT, text=True,
+                                       stderr=subprocess.DEVNULL).strip()
+    except Exception:  # noqa: BLE001
+        return "unknown"
+
+
+def _provenance(argv: list[str]) -> dict:
+    import botorch
+    import gpytorch
+    import scipy
+    return dict(
+        git_sha=_git("rev-parse", "HEAD"), git_dirty=bool(_git("status", "--porcelain")),
+        generated_at=time.strftime("%Y-%m-%dT%H:%M:%S%z"), argv=argv,
+        python=platform.python_version(), torch=torch.__version__,
+        botorch=botorch.__version__, gpytorch=gpytorch.__version__,
+        numpy=np.__version__, scipy=scipy.__version__,
+        config=dict(family="hill", dim=DIM, sigma_rel=SIGMA, arms=list(ARMS),
+                    gammas=list(GAMMAS), tau_fracs=list(TAU_FRACS), grid_n=GRID_N,
+                    grid_seed=GRID_SEED, n_bins=N_BINS, identity_bar=IDENTITY_BAR,
+                    n_boot=N_BOOT, boot_seed=BOOT_SEED,
+                    primary_map="pred", verdict_source="pred"),
+    )
+
+
+def _gate_tol(arm: str) -> float:
+    """The tolerance K1-gate MEASURED. Never a constant chosen here, never raised."""
+    if not GATE.exists():
+        return 0.0
+    pol = json.loads(GATE.read_text()).get("policy", {})
+    return float(pol.get(arm, {}).get("worst_abs_delta", 0.0))
+
+
+def _committed_brier() -> dict:
+    """`(instance, seed, arm, gamma, tau_frac) -> (brier_pred, brier_latent)`."""
+    out = {}
+    for path in MAP_GATE:
+        if not path.exists():
+            continue
+        for r in json.loads(path.read_text())["rows"]:
+            out[(r["instance"], r["seed"], r["arm"], r["gamma"], r["tau_frac"])] = (
+                r["brier_pred"], r["brier_latent"])
+    return out
+
+
+def score_campaign(rec, orc, grid, truth) -> tuple[list[dict], list[dict], float]:
+    """Every (gamma, tau_frac) decomposition for one regenerated campaign.
+
+    Returns `(rows, identity_failures, worst_residual)`. A row whose identity residual
+    exceeds the registered bar is NOT written -- that is the registration's instruction,
+    not a judgement call made here.
+    """
+    model = build_gp(rec.X, rec.Y, rec.Yvar, unit_bounds(rec.dim))
+    # CHUNKED. See the module docstring: 100.6 s unchunked at this grid size.
+    mean, sd = gp_adapter(model).posterior_mean_and_sd(grid)
+
+    class _M:
+        def posterior_mean_and_sd(self, X):
+            return mean, sd
+
+    m = _M()
+    # A lab does not know f, so the predictive SD is a PLUG-IN from the posterior mean.
+    # Identical expression to run_k6_designspace.score_campaign, so the maps coincide.
+    sigma_pred = ((orc.sigma_rel * mean).abs() ** 2 + orc.sigma_add ** 2).sqrt()
+
+    rows, failures, worst = [], [], 0.0
+    base = {"instance": rec.instance, "dim": rec.dim, "sigma": rec.sigma,
+            "seed": rec.seed, "arm": rec.arm, "regret": rec.regret}
+
+    for gamma in GAMMAS:
+        tmax = tau_max(gamma, orc.sigma_rel)
+        for tf in TAU_FRACS:
+            tau = round(tf * tmax, 10)
+            maps = {"pred": predictive_probability_map(m, grid, tau, sigma_pred),
+                    "latent": probability_map(m, grid, tau)}
+            row = {**base, "gamma": gamma, "tau_frac": tf, "tau": tau, "tau_max": tmax,
+                   "true_frac_above_tau": float((truth >= tau).double().mean())}
+            ok = True
+            for name, p in maps.items():
+                d = murphy_decomposition(p, truth, tau, n_bins=N_BINS)
+                resid = abs(d["calibration"] - d["refinement"] + d["uncertainty"]
+                            - d["brier"])
+                worst = max(worst, resid)
+                if resid > IDENTITY_BAR:
+                    ok = False
+                    failures.append({**base, "gamma": gamma, "tau_frac": tf,
+                                     "map": name, "residual": resid})
+                    continue
+                row[f"{name}_brier"] = d["brier"]
+                row[f"{name}_calibration"] = d["calibration"]
+                row[f"{name}_refinement"] = d["refinement"]
+                row[f"{name}_uncertainty"] = d["uncertainty"]
+                row[f"{name}_bin_counts"] = d["bin_counts"]
+                row[f"{name}_brier_raw"] = d["brier_raw"]
+                row[f"{name}_within_bin"] = d["within_bin"]
+                row[f"{name}_identity_residual"] = resid
+                row[f"{name}_degenerate"] = d["degenerate"]
+            if ok:
+                rows.append(row)
+    del model, mean, sd
+    gc.collect()
+    return rows, failures, worst
+
+
+# --- the registered decision rule -------------------------------------------------
+
+def _order(arms: list[str], values: dict, higher_is_better: bool) -> list[str]:
+    """Arms best-first. Ties broken by name so the comparison is deterministic."""
+    return sorted(arms, key=lambda a: (-values[a] if higher_is_better else values[a], a))
+
+
+def _paired_stats(diff: np.ndarray) -> dict:
+    """Amendment E: 4,000-resample percentile bootstrap AND a two-sided Wilcoxon.
+
+    Wilcoxon governs yes/no, the bootstrap reports magnitude, and per Q20 2 a
+    disagreement between them is REPORTED, not resolved.
+    """
+    from scipy.stats import wilcoxon
+    rng = np.random.default_rng(BOOT_SEED)
+    boot = rng.choice(diff, size=(N_BOOT, diff.size), replace=True).mean(axis=1)
+    try:
+        p = float(wilcoxon(diff, zero_method="wilcox", alternative="two-sided").pvalue)
+    except ValueError:  # all differences zero
+        p = 1.0
+    return {"mean_diff": float(diff.mean()),
+            "ci95": [float(np.percentile(boot, 2.5)), float(np.percentile(boot, 97.5))],
+            "wilcoxon_p": p, "n": int(diff.size)}
+
+
+def _holm(pvals: list[float]) -> list[float]:
+    """Holm across the cells, as registered. Returns adjusted p in input order."""
+    order = np.argsort(pvals)
+    m = len(pvals)
+    adj = np.empty(m)
+    running = 0.0
+    for rank, i in enumerate(order):
+        running = max(running, (m - rank) * pvals[i])
+        adj[i] = min(1.0, running)
+    return [float(x) for x in adj]
+
+
+def summarise(rows: list[dict]) -> dict:
+    """Refinement ranking vs Brier ranking, per cell, for both maps.
+
+    Campaigns whose truth is single-class at this tau are DROPPED before either mean is
+    taken. Refinement is identically 0 there, for every arm alike, so keeping them would
+    manufacture a ranking difference out of a degeneracy. The drop is arm-symmetric --
+    the truth does not depend on the arm -- and both rankings see the same campaigns.
+    """
+    arms = sorted({r["arm"] for r in rows})
+    cells, tests = [], []
+
+    for gamma, tf in itertools.product(GAMMAS, TAU_FRACS):
+        at = [r for r in rows if r["gamma"] == gamma and r["tau_frac"] == tf]
+        if not at:
+            continue
+        # A campaign is keyed by (instance, seed); pairing is across arms at that key.
+        degenerate_keys = {(r["instance"], r["seed"]) for r in at
+                           if "single_class" in r["pred_degenerate"]}
+        keys = sorted({(r["instance"], r["seed"]) for r in at} - degenerate_keys)
+        cell = {"gamma": gamma, "tau_frac": tf, "n_used": len(keys),
+                "n_single_class_dropped": len(degenerate_keys),
+                "mean_prevalence": float(np.mean([r["true_frac_above_tau"] for r in at]))}
+        if not keys:
+            cell["verdict"] = "NO USABLE CAMPAIGN — every truth single-class at this tau"
+            cells.append(cell)
+            continue
+
+        by = {(r["arm"], r["instance"], r["seed"]): r for r in at}
+        present = [a for a in arms if all((a, *k) in by for k in keys)]
+        cell["arms"] = present
+
+        for mp in ("pred", "latent"):
+            vec = {q: {a: np.array([by[(a, *k)][f"{mp}_{q}"] for k in keys])
+                       for a in present}
+                   for q in ("brier_raw", "brier", "refinement", "calibration",
+                             "uncertainty")}
+            means = {q: {a: float(v.mean()) for a, v in vec[q].items()} for q in vec}
+            # Uncertainty is a function of (truth, tau) alone, so its across-arm spread
+            # must be exactly 0. A nonzero value means the arms were not scored against
+            # the same truth, which would invalidate every comparison below.
+            spread = {q: max(means[q].values()) - min(means[q].values()) for q in means}
+            rank_brier = _order(present, means["brier_raw"], higher_is_better=False)
+            rank_ref = _order(present, means["refinement"], higher_is_better=True)
+            inversions = [[a, b] for a, b in itertools.combinations(present, 2)
+                          if ((rank_brier.index(a) < rank_brier.index(b))
+                              != (rank_ref.index(a) < rank_ref.index(b)))]
+            cell[mp] = {"means": means, "across_arm_spread": spread,
+                        "mean_within_bin": {a: float(np.mean(
+                            [by[(a, *k)][f"{mp}_within_bin"] for k in keys]))
+                            for a in present},
+                        "rank_by_brier": rank_brier,
+                        "rank_by_refinement": rank_ref,
+                        "rankings_agree": rank_brier == rank_ref,
+                        "inversions": inversions}
+            for a, b in inversions:
+                tests.append({"gamma": gamma, "tau_frac": tf, "map": mp,
+                              "pair": [a, b],
+                              "refinement": _paired_stats(vec["refinement"][a]
+                                                          - vec["refinement"][b]),
+                              "brier_raw": _paired_stats(vec["brier_raw"][a]
+                                                         - vec["brier_raw"][b])})
+        cells.append(cell)
+
+    for mp in ("pred", "latent"):
+        idx = [i for i, t in enumerate(tests) if t["map"] == mp]
+        if idx:
+            adj = _holm([tests[i]["refinement"]["wilcoxon_p"] for i in idx])
+            for i, a in zip(idx, adj):
+                tests[i]["refinement"]["holm_p"] = a
+
+    scored = [c for c in cells if "pred" in c]
+    disagree = {mp: [[c["gamma"], c["tau_frac"]] for c in scored
+                     if not c[mp]["rankings_agree"]] for mp in ("pred", "latent")}
+    verdict = ("A5 IS A NULL — refinement ranks the arms exactly as Brier does at every "
+               "scored cell" if not disagree["pred"] else
+               f"A5 FOUND SOMETHING — the two rankings differ at "
+               f"{len(disagree['pred'])} of {len(scored)} predictive-map cells")
+    flags = {f: sum(1 for r in rows for mp in ("pred", "latent")
+                    if f in r[f"{mp}_degenerate"])
+             for f in ("single_class", "few_bins", "singleton_bin")}
+    worst_unc_spread = max((c[mp]["across_arm_spread"]["uncertainty"]
+                            for c in cells if "pred" in c for mp in ("pred", "latent")),
+                           default=0.0)
+    return {"cells": cells, "inversion_tests": tests,
+            "degenerate_flag_counts": flags,
+            "worst_uncertainty_across_arm_spread": worst_unc_spread,
+            "cells_where_rankings_differ": disagree,
+            "n_cells_scored": len(scored), "verdict": verdict,
+            "verdict_map": "pred (Peterson D_gamma, the primary object)"}
+
+
+def _print_summary(s: dict) -> None:
+    print(f"\n{'gamma':>6} {'tauf':>5} {'n':>4} {'drop':>4} {'prev':>8}  "
+          f"{'pred':>5}  rank_by_brier -> rank_by_refinement")
+    for c in s["cells"]:
+        if "pred" not in c:
+            print(f"{c['gamma']:6.2f} {c['tau_frac']:5.2f} {c['n_used']:4d} "
+                  f"{c['n_single_class_dropped']:4d}   {c.get('verdict', '')}")
+            continue
+        p = c["pred"]
+        flag = "SAME " if p["rankings_agree"] else "DIFF "
+        print(f"{c['gamma']:6.2f} {c['tau_frac']:5.2f} {c['n_used']:4d} "
+              f"{c['n_single_class_dropped']:4d} {c['mean_prevalence']:8.5f}  {flag}  "
+              f"{' '.join(p['rank_by_brier'])}  ->  {' '.join(p['rank_by_refinement'])}")
+    print(f"\nlatent-map cells differing: {len(s['cells_where_rankings_differ']['latent'])}"
+          f" of {s['n_cells_scored']}")
+    print(f"degenerate flags fired: {s['degenerate_flag_counts']}")
+    print("worst across-arm uncertainty spread (must be 0.0): "
+          f"{s['worst_uncertainty_across_arm_spread']:.3e}")
+    print(f"\n*** {s['verdict']} ***")
+
+
+def main() -> None:
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--limit", type=int, default=None,
+                    help="(instance, seed) pairs to score; default all 50")
+    ap.add_argument("--arms", type=str, default=None, help="comma-separated subset")
+    ap.add_argument("--out", type=str, default=None, help="default results/p7-murphy.json")
+    ap.add_argument("--summarise", type=str, default=None,
+                    help="recompute and PRINT the summary of an existing file; writes nothing")
+    ap.add_argument("--resume", action="store_true",
+                    help="continue an interrupted run; refuses on a git-tracked file")
+    args = ap.parse_args()
+
+    if args.summarise:
+        _print_summary(summarise(json.loads(Path(args.summarise).read_text())["rows"]))
+        return
+
+    global ARMS, OUT
+    if args.arms:
+        ARMS = tuple(a.strip() for a in args.arms.split(","))
+    if args.out:
+        OUT = Path(args.out)
+    prior = None
+    if OUT.exists():
+        if not args.resume:
+            sys.exit(f"{OUT} exists. A committed result is never overwritten; "
+                     f"pass --out for a smoke run or --resume to continue one.")
+        if _git("ls-files", "--error-unmatch", str(OUT)):
+            sys.exit(f"{OUT} is tracked by git. A committed result is never rewritten.")
+        prior = json.loads(OUT.read_text())
+
+    print(f"P7 · Murphy decomposition · HEAD={_git('rev-parse', 'HEAD')[:8]} · "
+          f"python={platform.python_version()}")
+    print(f"cell hill d={DIM} sigma_rel={SIGMA} · arms={ARMS}")
+    print(f"gamma={GAMMAS}\ntau_frac={TAU_FRACS} · {N_BINS} equal-count bins")
+    print(f"grid: {GRID_N} Sobol at seed {GRID_SEED}\n")
+
+    keys = sorted({(r["instance"], r["seed"]) for r in committed_rows()
+                   if r["dim"] == DIM and r["sigma"] == SIGMA and r["arm"] == "qlogei"})
+    if args.limit:
+        keys = keys[:args.limit]
+    print(f"{len(keys)} (instance, seed) pairs x {len(ARMS)} arms "
+          f"= {len(keys) * len(ARMS)} campaigns\n")
+
+    committed = {(r["instance"], r["seed"], r["arm"]): r["regret"] for r in committed_rows()
+                 if r["dim"] == DIM and r["sigma"] == SIGMA}
+    committed_b = _committed_brier()
+    grid = sobol_grid(DIM, GRID_N, seed=GRID_SEED)
+
+    rows: list[dict] = []
+    gate_fail: list[dict] = []
+    map_fail: list[dict] = []
+    identity_fail: list[dict] = []
+    worst_identity = 0.0
+    worst_map = {"pred": 0.0, "latent": 0.0}
+    n_map_checked = 0
+    done: set[tuple[str, int]] = set()
+    if prior is not None:
+        rows = prior["rows"]
+        gate_fail, map_fail = prior["gate_failures"], prior["map_gate"]["failures"]
+        identity_fail = prior["identity"]["failures"]
+        worst_identity = prior["identity"]["max_residual"]
+        worst_map = prior["map_gate"]["worst_abs_delta"]
+        n_map_checked = prior["map_gate"]["rows_checked"]
+        # A pair is resumable only if it carries a FULL set of rows: the file is written
+        # after every arm of a pair finishes, so a short pair means a truncated write.
+        seen: dict[tuple[str, int], int] = {}
+        for r in rows:
+            seen[(r["instance"], r["seed"])] = seen.get((r["instance"], r["seed"]), 0) + 1
+        full = len(ARMS) * len(GAMMAS) * len(TAU_FRACS)
+        done = {k for k, n in seen.items() if n == full}
+        rows = [r for r in rows if (r["instance"], r["seed"]) in done]
+        print(f"resuming: {len(done)} of {len(keys)} pairs already scored, "
+              f"{len(rows)} rows kept\n")
+    t0 = time.time()
+
+    for i, (inst_id, seed) in enumerate(keys, 1):
+        if (inst_id, seed) in done:
+            continue
+        inst = instance_by_id(inst_id, DIM)
+        orc = BiphasicOracle(inst, sigma_rel=SIGMA, seed=seed)
+        with torch.no_grad():
+            truth = orc.truth(grid).reshape(-1).double()
+
+        for arm in ARMS:
+            t = time.time()
+            rec = regenerate(inst_id, DIM, SIGMA, seed, arm)
+
+            ref = committed.get((inst_id, seed, arm))
+            if ref is None:
+                gate_fail.append({"instance": inst_id, "seed": seed, "arm": arm,
+                                  "reason": "no committed regret column"})
+                print(f"  !! UNGATED {arm} {inst_id} seed={seed}")
+            else:
+                delta = abs(rec.regret - ref)
+                if delta > _gate_tol(arm):
+                    gate_fail.append({"instance": inst_id, "seed": seed, "arm": arm,
+                                      "committed": ref, "regenerated": rec.regret,
+                                      "abs_delta": delta})
+                    print(f"  !! GATE {arm} {inst_id} seed={seed} delta={delta:.3e}")
+
+            new, fails, worst = score_campaign(rec, orc, grid, truth)
+            rows.extend(new)
+            identity_fail.extend(fails)
+            worst_identity = max(worst_identity, worst)
+
+            for r in new:
+                key = (inst_id, seed, arm, r["gamma"], r["tau_frac"])
+                if key not in committed_b:
+                    continue
+                n_map_checked += 1
+                for mp, cb in zip(("pred", "latent"), committed_b[key]):
+                    d = abs(r[f"{mp}_brier_raw"] - cb)
+                    worst_map[mp] = max(worst_map[mp], d)
+                    if d > 0.0:
+                        map_fail.append({"instance": inst_id, "seed": seed, "arm": arm,
+                                         "gamma": r["gamma"], "tau_frac": r["tau_frac"],
+                                         "map": mp, "committed": cb,
+                                         "regenerated": r[f"{mp}_brier_raw"],
+                                         "abs_delta": d})
+            print(f"[{i:3d}/{len(keys)}] {arm:8s} {inst_id} seed={seed} "
+                  f"regret={rec.regret:.4f} rows={len(new)} ({time.time() - t:.1f}s)",
+                  flush=True)
+
+        OUT.write_text(json.dumps({
+            "provenance": _provenance(sys.argv),
+            "gate_failures": gate_fail,
+            "map_gate": {"target": [str(p.relative_to(ROOT)) for p in MAP_GATE],
+                         "column": "brier_pred / brier_latent",
+                         "rows_checked": n_map_checked,
+                         "worst_abs_delta": worst_map, "failures": map_fail},
+            "identity": {"bar": IDENTITY_BAR, "max_residual": worst_identity,
+                         "failures": identity_fail},
+            "rows": rows}, indent=1))
+        del truth
+        gc.collect()
+
+    summary = summarise(rows)
+    payload = json.loads(OUT.read_text())
+    payload["summary"] = summary
+    OUT.write_text(json.dumps(payload, indent=1))
+
+    print(f"\n{len(rows)} scored rows in {time.time() - t0:.0f}s")
+    print(f"regret gate failures: {len(gate_fail)}")
+    print(f"map gate: {n_map_checked} rows checked, worst |delta| "
+          f"pred={worst_map['pred']:.3e} latent={worst_map['latent']:.3e}, "
+          f"{len(map_fail)} failures")
+    print(f"identity: max residual {worst_identity:.3e} against bar {IDENTITY_BAR:.0e}, "
+          f"{len(identity_fail)} rows withheld")
+    _print_summary(summary)
+    if gate_fail or map_fail or identity_fail:
+        print("\n*** A gate failed. Halt and report, do not repair (stop condition 1). ***")
+        sys.exit(1)
+
+
+if __name__ == "__main__":
+    main()
