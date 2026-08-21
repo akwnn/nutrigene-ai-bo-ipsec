@@ -416,3 +416,105 @@ def test_a_degenerate_correlation_reports_nan_not_significance(p4b):
     assert not np.isfinite(res["bootstrap_p"]), res["bootstrap_p"]
     assert res["ci_excludes_zero"] is False
     assert "undefined" in res["direction_in_words"].lower()
+
+
+# --------------------------------------------------------------------------------------
+# THE SPADE ARMS — alpha* IS SPADE's OWN STATISTIC
+# --------------------------------------------------------------------------------------
+#
+# `alpha*` is the largest confidence at which a non-empty conservative estimate exists,
+# and the conservative estimate IS the SPADE certificate. Testing "does alpha* reward
+# not-knowing?" while omitting every Version B arm asks the question everywhere except
+# where the answer decides something. The three Version B arms are UNGATABLE IN
+# PRINCIPLE -- no comparator exists and none ever will -- so they carry `gated: false`
+# and the reason on every row.
+#
+# `versionb_random` is the control the hypothesis actually wants: same 40-well plate 1,
+# same budget, 8 RANDOM plate-2 wells instead of LSE-chosen. If alpha* rewards posterior
+# width it should score HIGHER than `versionb` while being no better on the validated
+# metrics. That is a within-design comparison, and it is sharper than a rank correlation
+# over twelve arms.
+
+def test_plate1_only_is_scored_but_never_ranked(p4b):
+    """It is `lhs` to 4.44e-16 (D23.1). Ranking both double-weights one design.
+
+    A Spearman coefficient across arms treats every arm as one point, so including the
+    same 48 wells twice would give that design two votes out of thirteen.
+    """
+    assert "plate1_only" in p4b.SCORED_ARMS
+    assert "plate1_only" not in p4b.RANKING_ARMS
+    assert "lhs" in p4b.RANKING_ARMS
+    assert set(p4b.RANKING_ARMS).isdisjoint({"plate1_only"})
+    # And every ranking arm is scored, or the ranking would read a column that is absent.
+    assert set(p4b.RANKING_ARMS) <= set(p4b.SCORED_ARMS)
+
+
+def test_the_versionb_arms_declare_that_they_are_ungated(p4b):
+    """Seed determinism is their only guarantee, and every table must say so."""
+    assert set(p4b.UNGATABLE) == {"versionb", "versionb_random", "versionb_predictive"}
+    for arm in p4b.UNGATABLE:
+        assert arm in p4b.RANKING_ARMS
+        assert p4b.gate_status(arm)["gated"] is False
+        assert "no comparator" in p4b.gate_status(arm)["reason"].lower()
+    for arm in ("lhs", "doe", "coord", "plate1_only"):
+        assert p4b.gate_status(arm)["gated"] is True
+
+
+def test_every_metric_declares_its_benefit_direction(p4b):
+    """Raw signs are not comparable across metrics of opposite polarity.
+
+    `alpha*` and AUC are higher-is-better; regret, Brier and every error volume are
+    lower-is-better. Comparing `+0.0261 on alpha*` with `-0.0071 on Brier` as though
+    both signs meant the same thing inverted two of four readings in another worker's
+    audit. Every metric this runner reports carries its direction explicitly.
+    """
+    for metric in ("alpha_star", "auc_pred", "iou_pred"):
+        assert p4b.BENEFIT_DIRECTION[metric] == "higher"
+    for metric in ("regret", "brier_pred", "type_I_vol", "type_II_vol",
+                   "symmetric_difference"):
+        assert p4b.BENEFIT_DIRECTION[metric] == "lower"
+
+    # The helper that turns a signed difference into "which arm is better", so no caller
+    # has to remember the polarity.
+    assert p4b.favours("alpha_star", +0.03) == "a"
+    assert p4b.favours("alpha_star", -0.03) == "b"
+    assert p4b.favours("regret", +0.03) == "b"
+    assert p4b.favours("regret", -0.03) == "a"
+    assert p4b.favours("brier_pred", -0.01) == "a"
+
+
+def test_a_cross_metric_agreement_check_uses_direction_not_sign(p4b):
+    """The exact inversion that caught the F-analysis worker.
+
+    `+0.0261 on alpha*` and `-0.0071 on Brier` have opposite raw signs and BOTH favour
+    the same arm. A checker comparing signs calls that a disagreement.
+    """
+    assert p4b.metrics_agree([("alpha_star", +0.0261), ("brier_pred", -0.0071)]) is True
+    assert p4b.metrics_agree([("alpha_star", +0.0261), ("regret", +0.0071)]) is False
+    assert p4b.metrics_agree([("regret", -0.01), ("symmetric_difference", -0.02)]) is True
+
+
+def test_the_checkpoint_keeps_arms_it_already_has(p4b):
+    """Adding arms must not discard the arms already computed.
+
+    The Version B arms were added after 22 of 50 units had been scored on the original
+    nine. A loader that demanded a complete arm set would have thrown all of that away.
+    """
+    rows = [{"instance": "i00", "seed": 0, "arm": a, "regret": 0.1,
+             "mean_posterior_sd": 0.1} for a in ("lhs", "doe")]
+    kept, missing = p4b.checkpoint_split(rows, [("i00", 0)], ("lhs", "doe", "versionb"))
+    assert len(kept) == 2
+    assert missing == {("i00", 0): ("versionb",)}
+
+
+def test_the_output_declares_its_own_completeness(p4b):
+    """A promoted file must say whether it is finished, not leave it to be inferred."""
+    st = p4b.completeness([("i00", 0)], ("lhs", "doe"),
+                          [{"instance": "i00", "seed": 0, "arm": "lhs"}])
+    assert st["status"] == "PARTIAL"
+    assert st["keys_present"] == 1 and st["keys_expected"] == 2
+    full = p4b.completeness([("i00", 0)], ("lhs", "doe"),
+                            [{"instance": "i00", "seed": 0, "arm": a}
+                             for a in ("lhs", "doe")])
+    assert full["status"] == "COMPLETE"
+    assert full["keys_present"] == full["keys_expected"] == 2
