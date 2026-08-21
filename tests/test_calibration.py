@@ -606,7 +606,7 @@ def test_the_conservative_unit_does_not_report_a_narrower_interval():
 
 def test_a_partial_document_says_so_before_it_says_anything_else():
     p7 = _p7()
-    d = p7.payload("partial", 4, 50, ["x"], [], [], {}, 0, [], 0.0, [])
+    d = p7.result_document("partial", 4, 50, ["x"], [], [], {}, 0, [], 0.0, [])
     assert list(d)[:3] == ["status", "keys_present", "keys_expected"]
     assert d["status"] == "partial"
     assert (d["keys_present"], d["keys_expected"]) == (4, 50)
@@ -625,3 +625,47 @@ def test_the_checkpoint_path_is_not_the_final_path_and_cannot_be_staged():
                                cwd=root).returncode != 0
     assert ignored, f"{p7.CKPT} must be unstageable"
     assert stageable, "the final path is expected to be git-negated; that is the hazard"
+
+
+def test_the_document_builder_is_not_shadowed_by_a_local_in_main():
+    """The bug that killed a live run at 5 of 50 keys, pinned as a test.
+
+    `main` bound a local named `payload` in its `--summarise` branch. Python makes a
+    name local to the WHOLE function if it is assigned anywhere in it, so the checkpoint
+    write hundreds of lines earlier -- on a path `--summarise` never touches -- raised
+    `UnboundLocalError` on every run that got as far as its first checkpoint. Nothing
+    short of executing that line could catch it, which is why the integration test below
+    exists too; this one catches the whole CLASS instantly.
+    """
+    p7 = _p7()
+    shadowed = set(p7.main.__code__.co_varnames) & {"result_document", "summarise",
+                                                    "error_volumes", "_provenance"}
+    assert not shadowed, f"main() binds locals that shadow module functions: {shadowed}"
+
+
+def test_the_checkpoint_write_path_actually_runs(tmp_path):
+    """Exercise `CKPT.write_text` on a real payload, end to end, in a subprocess.
+
+    A checkpoint writer that raises is worse than no checkpoint writer: it kills a run
+    that would otherwise have survived. `doe` is the cheapest arm (~10 s) and one key is
+    enough -- the checkpoint is written after the pair and before promotion, so a clean
+    exit proves the write executed.
+    """
+    import os
+    import subprocess
+    root = Path(__file__).resolve().parents[1]
+    out = tmp_path / "p7-writepath.json"
+    env = {**os.environ, "OMP_NUM_THREADS": "1", "MKL_NUM_THREADS": "1"}
+    r = subprocess.run([str(root / ".venv/bin/python"), str(SCRIPT),
+                        "--limit", "1", "--arms", "doe", "--out", str(out)],
+                       cwd=root, env=env, capture_output=True, text=True, timeout=900)
+    assert r.returncode == 0, f"runner exited {r.returncode}\n{r.stdout[-3000:]}\n{r.stderr[-3000:]}"
+    assert "UnboundLocalError" not in r.stderr
+
+    doc = json.loads(out.read_text())
+    assert list(doc)[:3] == ["status", "keys_present", "keys_expected"]
+    assert doc["status"] == "complete"
+    assert doc["keys_present"] == doc["keys_expected"] == 1
+    assert doc["provenance"]["torch_threads"] == 1
+    # the checkpoint is removed on promotion, so only the final document survives
+    assert not out.with_suffix(".partial.json").exists()

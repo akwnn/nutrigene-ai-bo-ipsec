@@ -154,10 +154,17 @@ def _provenance(argv: list[str]) -> dict:
 
 
 
-def payload(status: str, keys_present: int, keys_expected: int, argv: list[str],
-            gate_fail: list, map_fail: list, worst_map: dict, n_map_checked: int,
-            identity_fail: list, worst_identity: float, rows: list) -> dict:
+def result_document(status: str, keys_present: int, keys_expected: int,
+                    argv: list[str], gate_fail: list, map_fail: list, worst_map: dict,
+                    n_map_checked: int, identity_fail: list, worst_identity: float,
+                    rows: list) -> dict:
     """The result document. `status` is FIRST because it is what a reader must see.
+
+    **Deliberately not named `payload`.** It was, and `main` also bound a local named
+    `payload` in its `--summarise` branch -- which makes `payload` local to the WHOLE
+    function under Python's scoping rules, so the checkpoint write hundreds of lines
+    earlier raised `UnboundLocalError` and killed a live run at 5 of 50 keys. The name
+    here is one no local in `main` uses, and a test asserts that stays true.
 
     A partial file that carries a full provenance block and a gate section is
     indistinguishable from a finished one unless it says so itself, and no downstream
@@ -593,14 +600,14 @@ def main() -> None:
 
     if args.summarise:
         path = Path(args.summarise)
-        payload = json.loads(path.read_text())
-        summary = summarise(payload["rows"])
+        doc = json.loads(path.read_text())
+        summary = summarise(doc["rows"])
         _print_summary(summary)
         if _is_tracked(path):
             print(f"\n{path} is tracked by git — printed only, nothing written.")
         else:
-            payload["summary"] = summary
-            path.write_text(json.dumps(payload, indent=1))
+            doc["summary"] = summary
+            path.write_text(json.dumps(doc, indent=1))
             print(f"\nsummary refreshed in {path}")
         return
 
@@ -715,7 +722,7 @@ def main() -> None:
                   f"regret={rec.regret:.4f} rows={len(new)} ({time.time() - t:.1f}s)",
                   flush=True)
 
-        CKPT.write_text(json.dumps(payload(
+        CKPT.write_text(json.dumps(result_document(
             "partial", len({(r["instance"], r["seed"]) for r in rows}), len(keys),
             sys.argv, gate_fail, map_fail, worst_map, n_map_checked, identity_fail,
             worst_identity, rows), indent=1))
@@ -725,7 +732,7 @@ def main() -> None:
     # Promote ONCE, whole, and only now. Everything above this line lived at CKPT.
     summary = summarise(rows)
     n_keys = len({(r["instance"], r["seed"]) for r in rows})
-    final = payload("complete", n_keys, len(keys), sys.argv, gate_fail, map_fail,
+    final = result_document("complete", n_keys, len(keys), sys.argv, gate_fail, map_fail,
                     worst_map, n_map_checked, identity_fail, worst_identity, rows)
     final["summary"] = summary
     if n_keys != len(keys):
