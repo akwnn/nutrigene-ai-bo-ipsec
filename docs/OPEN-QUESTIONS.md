@@ -7231,3 +7231,58 @@ threshold.**
 constant is undefined). Descriptive arm means remain over all 24 cells, legitimately: **the six
 degenerate cells contribute the same prevalence to every arm, shifting all eight equally without
 changing their order.**
+
+---
+
+## 📌 A THIRD DEGENERACY CASE · **`arms_tie` catches something `separation` cannot see IN PRINCIPLE.** And my reasoning about P6's shape was wrong.
+
+**Found by the P6 worker while implementing the two-flag requirement.**
+
+### The third case, which neither flag as I described them would catch
+
+I framed it as **map-shaped** (arms tie) versus **CE-shaped** (arms differ by prevalence). **There
+is a third:**
+
+> **Arms that agree with EACH OTHER at a value far from the prevalence.** Large separation,
+> complete tie, **utterly unrankable** — and `rankable = sep > 0` calls it **rankable.**
+
+Pinned by a constructed test: three arms at `total_error_vol = 0.20` against prevalence 0.75 —
+**separation 0.55, `rankable: False`.**
+
+**So the two flags are not merely non-interchangeable in the two directions I gave.
+`arms_tie` catches something `separation` cannot see IN PRINCIPLE, because separation never
+compares the arms to each other at all** — it compares each arm to the prevalence. **That is a
+stronger and more general argument for carrying both than the one I made**, and it holds
+regardless of which shape any given file turns out to be.
+
+### 🔴 And my census argument reached the right requirement by a route that does not apply
+
+I told the P6 worker its ceiling census — rosenbrock 8/8, levy 8/8 above the noise ceiling —
+**guaranteed it would hit the CE-shaped case.** **It is map-shaped.**
+
+`true_frac_above_tau` is a function of **the grid and τ only**, and P6 does **not** pin the grid to
+`doe`'s subspace when scoring — `active` is used solely for `inscribed_box_from_mask`. **So
+prevalence is arm-identical within every cell, and at full emptiness the arms TIE rather than
+differ.** The census does guarantee full-emptiness cells; **they will present as ties, not as
+prevalence differences.**
+
+**I reasoned from the wrong mechanism to the right conclusion.** The requirement stands — both
+flags are carried — but **on the third case's argument, not on mine**: the two shapes are one
+B3-style subspace change apart, and the third case is real either way.
+
+### Both corrections were live in the code I was reading
+
+`sep > 0.0` **would have kept the two 1.1e-16 cells as rankable** — the same defect I had just
+flagged, present in the runner at the moment I flagged it. Now `TIE_TOL = 1e-15` on
+`max − min` of the arm means.
+
+**Per-metric denominators are implemented and printed at merge** for `type_I_vol_pred`,
+`type_II_vol_pred` and `total_error_vol_pred`, with the mechanism in the docstring: **an all-empty
+region scores type I exactly 0 for every arm**, so type I ties wherever every region is empty
+while type II still carries the prevalence — which is why K6 splits **10/24 against 6/24.**
+**Third independent reason the symmetric difference is the right `RANKING_SCALAR`.**
+
+Every row now carries `separation_from_prevalence`, `ranking_is_prevalence_only`, `arms_tie` and
+`rankable`. **`cell_separation` is called only from `merge`**, so this changed no campaign row and
+could not disturb the run in flight or the banked checkpoints — the right place for a
+cross-arm property, and the reason a live correction cost nothing.
