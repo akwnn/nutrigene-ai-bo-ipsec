@@ -25,6 +25,9 @@ Hiding the gap inside a redefined "calibration" would make the identity hold by
 construction and test nothing.
 """
 
+import json
+import math
+
 import numpy as np
 import pytest
 import torch
@@ -389,3 +392,181 @@ def test_holm_agrees_with_the_implementation_already_in_the_repo():
     spec.loader.exec_module(q39)
     ps = [0.001, 0.04, 0.2, 0.5, 0.011, 0.9]
     assert p7._holm(ps) == pytest.approx(q39.holm(ps))
+
+
+# --- AMENDMENT F2b: AUPRC beside AUC ----------------------------------------------
+#
+# Registered at 07e98df. AUC is invariant to monotone transformation, so it scores
+# ranking and never calibration; and it misleads under heavy class imbalance (Davis &
+# Goadrich 2006). The imbalance here is severe -- at gamma=0.99, tau_frac=0.60 the
+# minority class is about 16 grid points of 20,000. AUPRC is primary wherever minority
+# prevalence < 0.01.
+#
+# The bar is sklearn's `average_precision_score`, not a re-derivation: a bespoke AP that
+# agrees with nothing is exactly the kind of number this project exists not to publish.
+
+from boec.calibration import average_precision
+
+
+def _sk_ap(p: torch.Tensor, label: torch.Tensor) -> float:
+    from sklearn.metrics import average_precision_score
+    return float(average_precision_score(label.numpy(), p.numpy()))
+
+
+def test_average_precision_matches_sklearn_on_a_random_map():
+    g = torch.Generator().manual_seed(20)
+    p = torch.rand(5000, generator=g, dtype=torch.double)
+    label = (torch.rand(5000, generator=g, dtype=torch.double) < p).double()
+    got = average_precision(p, _truth_for(label), tau=0.5)
+    assert got == pytest.approx(_sk_ap(p, label), abs=1e-12)
+
+
+def test_average_precision_matches_sklearn_at_the_prevalence_these_cells_carry():
+    """Prevalence 0.003 on 20,000 points -- the tau_frac=0.95, gamma=0.50 cell."""
+    g = torch.Generator().manual_seed(21)
+    label = (torch.rand(20_000, generator=g, dtype=torch.double) < 0.003).double()
+    p = (0.6 * label + torch.rand(20_000, generator=g, dtype=torch.double)).clamp(0, 1)
+    got = average_precision(p, _truth_for(label), tau=0.5)
+    assert 0.001 < float(label.mean()) < 0.01
+    assert got == pytest.approx(_sk_ap(p, label), abs=1e-12)
+
+
+def test_average_precision_matches_sklearn_with_heavy_ties():
+    """A saturated latent map is mostly exact 0.0 and exact 1.0."""
+    g = torch.Generator().manual_seed(22)
+    p = torch.cat([torch.zeros(4000, dtype=torch.double),
+                   torch.full((3000,), 0.5, dtype=torch.double),
+                   torch.ones(3000, dtype=torch.double)])
+    label = (torch.rand(10_000, generator=g, dtype=torch.double) < 0.2 + 0.6 * p).double()
+    got = average_precision(p, _truth_for(label), tau=0.5)
+    assert got == pytest.approx(_sk_ap(p, label), abs=1e-12)
+
+
+def test_average_precision_is_one_for_a_perfect_ranking():
+    label = torch.cat([torch.ones(50, dtype=torch.double),
+                       torch.zeros(950, dtype=torch.double)])
+    p = torch.cat([torch.full((50,), 0.9, dtype=torch.double),
+                   torch.full((950,), 0.1, dtype=torch.double)])
+    assert average_precision(p, _truth_for(label), tau=0.5) == pytest.approx(1.0)
+
+
+def test_average_precision_of_a_random_ranker_sits_near_the_prevalence():
+    """AP's no-skill baseline is the prevalence, which is why it must be reported."""
+    g = torch.Generator().manual_seed(23)
+    label = (torch.rand(20_000, generator=g, dtype=torch.double) < 0.05).double()
+    p = torch.rand(20_000, generator=g, dtype=torch.double)
+    assert average_precision(p, _truth_for(label), tau=0.5) == pytest.approx(0.05, abs=0.01)
+
+
+def test_average_precision_is_none_when_a_class_is_absent():
+    """`brier_and_auc` returns nan for AUC here; AP is likewise undefined, not 0 or 1."""
+    p = torch.rand(100, generator=torch.Generator().manual_seed(24), dtype=torch.double)
+    assert average_precision(p, _truth_for(torch.zeros(100)), tau=0.5) is None
+    assert average_precision(p, _truth_for(torch.ones(100)), tau=0.5) is None
+
+
+def test_auc_looks_respectable_where_average_precision_does_not():
+    """The registered motivation, constructed rather than hoped for.
+
+    24 positives in 20,000. A map that ranks them well but buries each under a hundred
+    false positives keeps a high AUC -- the false positives are still a tiny fraction of
+    the 19,976 negatives -- while precision, and therefore AP, collapses.
+    """
+    g = torch.Generator().manual_seed(25)
+    n, n_pos = 20_000, 24
+    label = torch.zeros(n, dtype=torch.double)
+    label[:n_pos] = 1.0
+    p = torch.rand(n, generator=g, dtype=torch.double) * 0.9
+    p[:n_pos] = 0.95                      # positives near the top
+    p[n_pos:n_pos + 2400] = 0.94          # but a hundred false positives each
+    truth = _truth_for(label)
+    _, auc = brier_and_auc(p, truth, 0.5)
+    ap = average_precision(p, truth, 0.5)
+    assert auc > 0.9, "AUC should still look good"
+    assert ap < 0.05, "AP should not"
+
+
+# --- AMENDMENT F2a: expected type I / type II error volumes ------------------------
+
+def test_error_volumes_reproduce_the_committed_iou_column():
+    """The registration's own validation, re-run here rather than taken on trust.
+
+    `intersect / (vol_pred + prevalence - intersect)` must reproduce the COMMITTED
+    `iou_pred` -- a gate against a committed column, not against a regeneration.
+    """
+    p7 = _p7()
+    rows = json.loads(Path("results/k6-designspace.json").read_text())["rows"]
+    worst, n = 0.0, 0
+    for r in rows:
+        ev = p7.error_volumes(r["vol_pred"], r["fi_pred"], r["true_frac_above_tau"])
+        if math.isnan(r["iou_pred"]):
+            continue
+        worst = max(worst, abs(ev["implied_iou"] - r["iou_pred"]))
+        n += 1
+    assert n > 2000, f"expected thousands of comparable rows, got {n}"
+    assert worst < 1e-15, f"worst |delta| {worst:.3e} over {n} committed rows"
+
+
+def test_error_volumes_are_defined_exactly_where_iou_and_fi_are_nan():
+    """An empty D_est gives type I = 0 and type II = the prevalence, both correct.
+
+    This is the reason F2a calls them better-defined than the metrics they replace:
+    54-69% of predictive regions are empty at some cells, and `nan` there is not a
+    small number, it is no number at all.
+    """
+    p7 = _p7()
+    ev = p7.error_volumes(vol=0.0, fi=float("nan"), prevalence=0.0294)
+    assert ev["type_I_vol"] == 0.0
+    assert ev["intersect"] == 0.0
+    assert ev["type_II_vol"] == pytest.approx(0.0294)
+    assert math.isnan(ev["implied_iou"]), "IoU is genuinely undefined when both are empty"
+
+
+def test_no_committed_row_produces_a_negative_type_ii_volume():
+    """An impossible volume would mean the algebra, not the data, is wrong."""
+    p7 = _p7()
+    rows = json.loads(Path("results/k6-designspace.json").read_text())["rows"]
+    worst = min(p7.error_volumes(r["vol_pred"], r["fi_pred"],
+                                 r["true_frac_above_tau"])["type_II_vol"] for r in rows)
+    assert worst >= -1e-15, f"most negative type II volume {worst:.3e}"
+
+
+def test_total_error_volume_is_the_symmetric_difference():
+    """type_I + type_II is |D_est delta D_true| / |grid|, which is what ranks the arms."""
+    p7 = _p7()
+    ev = p7.error_volumes(vol=0.30, fi=0.25, prevalence=0.40)
+    assert ev["type_I_vol"] == pytest.approx(0.075)
+    assert ev["intersect"] == pytest.approx(0.225)
+    assert ev["type_II_vol"] == pytest.approx(0.175)
+    assert ev["total_error_vol"] == pytest.approx(0.075 + 0.175)
+
+
+# --- AMENDMENT F1: every contrast runs at BOTH units --------------------------------
+
+def test_n25_averages_the_two_seeds_before_differencing():
+    """Two seeds on one landscape share the landscape and are not independent units."""
+    p7 = _p7()
+    keys = [(f"i{i}", s) for i in range(6) for s in (0, 1)]
+    a = np.array([1.0, 3.0] * 6)
+    b = np.zeros(12)
+    out = p7.dual_paired_stats(a, b, keys)
+    assert out["n50"]["n"] == 12
+    assert out["n25"]["n"] == 6
+    # every instance-level difference is (1+3)/2 = 2
+    assert out["n25"]["mean_diff"] == pytest.approx(2.0)
+    assert out["n50"]["mean_diff"] == pytest.approx(2.0)
+
+
+def test_the_conservative_unit_does_not_report_a_narrower_interval():
+    """n=50 narrows every CI by roughly sqrt(2). That is the whole point of F1."""
+    p7 = _p7()
+    g = np.random.default_rng(7)
+    keys = [(f"i{i}", s) for i in range(25) for s in (0, 1)]
+    inst = g.normal(0.2, 0.3, 25)                       # shared landscape effect
+    a = np.array([inst[i] + g.normal(0, 0.05) for i in range(25) for _ in (0, 1)])
+    b = np.zeros(50)
+    out = p7.dual_paired_stats(a, b, keys)
+    w50 = out["n50"]["ci95"][1] - out["n50"]["ci95"][0]
+    w25 = out["n25"]["ci95"][1] - out["n25"]["ci95"][0]
+    assert out["n25"]["mean_diff"] == pytest.approx(out["n50"]["mean_diff"], abs=1e-12)
+    assert w25 > w50, f"n=25 width {w25:.4f} should exceed n=50 width {w50:.4f}"
