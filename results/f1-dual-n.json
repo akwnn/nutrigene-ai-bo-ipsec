@@ -1,8 +1,8 @@
 {
  "provenance": {
-  "git_sha": "e19356ea87f9759cf089ea97224617e8b920a461",
+  "git_sha": "48820f524fe51a1bb19a28db98e516e2bf3226f4",
   "git_dirty": true,
-  "generated_at": "2026-08-21T12:25:46+08:00",
+  "generated_at": "2026-08-21T13:26:25+08:00",
   "argv": [
    "scripts/analyse_f1_dual_n.py"
   ],
@@ -49,7 +49,11 @@
    "\u00a75.11.4 KILL 2 \u2014 does the LSE criterion beat 8 RANDOM wells?: versionb - versionb_random alpha_star tf=0.6"
   ],
   "containment_cells": 156,
-  "containment_verdict_changed": 0
+  "containment_verdict_changed": 0,
+  "status_changes_by_metric_class": {
+   "validated": 1,
+   "model-internal": 3
+  }
  },
  "families": [
   {
@@ -90,13 +94,25 @@
      "bootstrap_wilcoxon_disagree_n25": false,
      "reported_unit": "instance",
      "n50_label": "anti-conservative unit",
+     "metric": "regret",
+     "metric_class": "validated",
+     "arms": [
+      "lhs",
+      "doe"
+     ],
+     "key_b": null,
+     "filters": {
+      "gamma": 0.5,
+      "tau_frac": 0.6
+     },
      "label": "lhs - doe",
      "p_holm_n50": 0.011197442999268503,
      "status_holm_n50": "significant",
      "p_holm_n25": 0.03227519989013672,
      "status_holm_n25": "significant",
      "status_holm_changed": false,
-     "family": "\u00a75.1 paired regret contrasts"
+     "family": "\u00a75.1 paired regret contrasts",
+     "source": "k6-designspace(+spread)"
     },
     {
      "n50": {
@@ -130,13 +146,25 @@
      "bootstrap_wilcoxon_disagree_n25": false,
      "reported_unit": "instance",
      "n50_label": "anti-conservative unit",
+     "metric": "regret",
+     "metric_class": "validated",
+     "arms": [
+      "lhs",
+      "qlogei"
+     ],
+     "key_b": null,
+     "filters": {
+      "gamma": 0.5,
+      "tau_frac": 0.6
+     },
      "label": "lhs - qlogei",
      "p_holm_n50": 0.02660960303347082,
      "status_holm_n50": "significant",
      "p_holm_n25": 0.03227519989013672,
      "status_holm_n25": "significant",
      "status_holm_changed": false,
-     "family": "\u00a75.1 paired regret contrasts"
+     "family": "\u00a75.1 paired regret contrasts",
+     "source": "k6-designspace(+spread)"
     },
     {
      "n50": {
@@ -170,13 +198,25 @@
      "bootstrap_wilcoxon_disagree_n25": false,
      "reported_unit": "instance",
      "n50_label": "anti-conservative unit",
+     "metric": "regret",
+     "metric_class": "validated",
+     "arms": [
+      "lhs",
+      "qlognei"
+     ],
+     "key_b": null,
+     "filters": {
+      "gamma": 0.5,
+      "tau_frac": 0.6
+     },
      "label": "lhs - qlognei",
      "p_holm_n50": 0.02660960303347082,
      "status_holm_n50": "significant",
      "p_holm_n25": 0.034173786640167236,
      "status_holm_n25": "significant",
      "status_holm_changed": false,
-     "family": "\u00a75.1 paired regret contrasts"
+     "family": "\u00a75.1 paired regret contrasts",
+     "source": "k6-designspace(+spread)"
     },
     {
      "n50": {
@@ -210,13 +250,25 @@
      "bootstrap_wilcoxon_disagree_n25": false,
      "reported_unit": "instance",
      "n50_label": "anti-conservative unit",
+     "metric": "regret",
+     "metric_class": "validated",
+     "arms": [
+      "doe",
+      "qlogei"
+     ],
+     "key_b": null,
+     "filters": {
+      "gamma": 0.5,
+      "tau_frac": 0.6
+     },
      "label": "doe - qlogei",
      "p_holm_n50": 7.735929923313734e-06,
      "status_holm_n50": "significant",
      "p_holm_n25": 0.00011056661605834961,
      "status_holm_n25": "significant",
      "status_holm_changed": false,
-     "family": "\u00a75.1 paired regret contrasts"
+     "family": "\u00a75.1 paired regret contrasts",
+     "source": "k6-designspace(+spread)"
     },
     {
      "n50": {
@@ -250,13 +302,25 @@
      "bootstrap_wilcoxon_disagree_n25": false,
      "reported_unit": "instance",
      "n50_label": "anti-conservative unit",
+     "metric": "regret",
+     "metric_class": "validated",
+     "arms": [
+      "doe",
+      "qlognei"
+     ],
+     "key_b": null,
+     "filters": {
+      "gamma": 0.5,
+      "tau_frac": 0.6
+     },
      "label": "doe - qlognei",
      "p_holm_n50": 5.847458517393989e-07,
      "status_holm_n50": "significant",
      "p_holm_n25": 4.8995018005371094e-05,
      "status_holm_n25": "significant",
      "status_holm_changed": false,
-     "family": "\u00a75.1 paired regret contrasts"
+     "family": "\u00a75.1 paired regret contrasts",
+     "source": "k6-designspace(+spread)"
     },
     {
      "n50": {
@@ -290,13 +354,25 @@
      "bootstrap_wilcoxon_disagree_n25": false,
      "reported_unit": "instance",
      "n50_label": "anti-conservative unit",
+     "metric": "regret",
+     "metric_class": "validated",
+     "arms": [
+      "sobol",
+      "lhs"
+     ],
+     "key_b": null,
+     "filters": {
+      "gamma": 0.5,
+      "tau_frac": 0.6
+     },
      "label": "sobol - lhs",
      "p_holm_n50": 0.01727490649881247,
      "status_holm_n50": "significant",
      "p_holm_n25": 0.03227519989013672,
      "status_holm_n25": "significant",
      "status_holm_changed": false,
-     "family": "\u00a75.1 paired regret contrasts"
+     "family": "\u00a75.1 paired regret contrasts",
+     "source": "k6-designspace(+spread)"
     },
     {
      "n50": {
@@ -330,13 +406,25 @@
      "bootstrap_wilcoxon_disagree_n25": false,
      "reported_unit": "instance",
      "n50_label": "anti-conservative unit",
+     "metric": "regret",
+     "metric_class": "validated",
+     "arms": [
+      "random",
+      "lhs"
+     ],
+     "key_b": null,
+     "filters": {
+      "gamma": 0.5,
+      "tau_frac": 0.6
+     },
      "label": "random - lhs",
      "p_holm_n50": 9.475087381360936e-12,
      "status_holm_n50": "significant",
      "p_holm_n25": 1.2516975402832031e-06,
      "status_holm_n25": "significant",
      "status_holm_changed": false,
-     "family": "\u00a75.1 paired regret contrasts"
+     "family": "\u00a75.1 paired regret contrasts",
+     "source": "k6-designspace(+spread)"
     }
    ]
   },
@@ -378,13 +466,25 @@
      "bootstrap_wilcoxon_disagree_n25": false,
      "reported_unit": "instance",
      "n50_label": "anti-conservative unit",
+     "metric": "auc_pred",
+     "metric_class": "validated",
+     "arms": [
+      "lhs",
+      "doe"
+     ],
+     "key_b": null,
+     "filters": {
+      "gamma": 0.5,
+      "tau_frac": 0.6
+     },
      "label": "gamma=0.5 tau_frac=0.6",
      "p_holm_n50": 5.795630642069227e-10,
      "status_holm_n50": "significant",
      "p_holm_n25": 1.9073486328125e-06,
      "status_holm_n25": "significant",
      "status_holm_changed": false,
-     "family": "\u00a75.3 HEADLINE 1 \u2014 `lhs` - `doe` on AUC(predictive), 24 cells"
+     "family": "\u00a75.3 HEADLINE 1 \u2014 `lhs` - `doe` on AUC(predictive), 24 cells",
+     "source": "k6-designspace(+spread)"
     },
     {
      "n50": {
@@ -418,13 +518,25 @@
      "bootstrap_wilcoxon_disagree_n25": false,
      "reported_unit": "instance",
      "n50_label": "anti-conservative unit",
+     "metric": "auc_pred",
+     "metric_class": "validated",
+     "arms": [
+      "lhs",
+      "doe"
+     ],
+     "key_b": null,
+     "filters": {
+      "gamma": 0.5,
+      "tau_frac": 0.75
+     },
      "label": "gamma=0.5 tau_frac=0.75",
      "p_holm_n50": 3.3722358239174355e-11,
      "status_holm_n50": "significant",
      "p_holm_n25": 1.430511474609375e-06,
      "status_holm_n25": "significant",
      "status_holm_changed": false,
-     "family": "\u00a75.3 HEADLINE 1 \u2014 `lhs` - `doe` on AUC(predictive), 24 cells"
+     "family": "\u00a75.3 HEADLINE 1 \u2014 `lhs` - `doe` on AUC(predictive), 24 cells",
+     "source": "k6-designspace(+spread)"
     },
     {
      "n50": {
@@ -458,13 +570,25 @@
      "bootstrap_wilcoxon_disagree_n25": false,
      "reported_unit": "instance",
      "n50_label": "anti-conservative unit",
+     "metric": "auc_pred",
+     "metric_class": "validated",
+     "arms": [
+      "lhs",
+      "doe"
+     ],
+     "key_b": null,
+     "filters": {
+      "gamma": 0.5,
+      "tau_frac": 0.85
+     },
      "label": "gamma=0.5 tau_frac=0.85",
      "p_holm_n50": 6.9046990347487736e-12,
      "status_holm_n50": "significant",
      "p_holm_n25": 1.430511474609375e-06,
      "status_holm_n25": "significant",
      "status_holm_changed": false,
-     "family": "\u00a75.3 HEADLINE 1 \u2014 `lhs` - `doe` on AUC(predictive), 24 cells"
+     "family": "\u00a75.3 HEADLINE 1 \u2014 `lhs` - `doe` on AUC(predictive), 24 cells",
+     "source": "k6-designspace(+spread)"
     },
     {
      "n50": {
@@ -498,13 +622,25 @@
      "bootstrap_wilcoxon_disagree_n25": false,
      "reported_unit": "instance",
      "n50_label": "anti-conservative unit",
+     "metric": "auc_pred",
+     "metric_class": "validated",
+     "arms": [
+      "lhs",
+      "doe"
+     ],
+     "key_b": null,
+     "filters": {
+      "gamma": 0.5,
+      "tau_frac": 0.95
+     },
      "label": "gamma=0.5 tau_frac=0.95",
      "p_holm_n50": 2.3447910280083306e-12,
      "status_holm_n50": "significant",
      "p_holm_n25": 1.9073486328125e-06,
      "status_holm_n25": "significant",
      "status_holm_changed": false,
-     "family": "\u00a75.3 HEADLINE 1 \u2014 `lhs` - `doe` on AUC(predictive), 24 cells"
+     "family": "\u00a75.3 HEADLINE 1 \u2014 `lhs` - `doe` on AUC(predictive), 24 cells",
+     "source": "k6-designspace(+spread)"
     },
     {
      "n50": {
@@ -538,13 +674,25 @@
      "bootstrap_wilcoxon_disagree_n25": false,
      "reported_unit": "instance",
      "n50_label": "anti-conservative unit",
+     "metric": "auc_pred",
+     "metric_class": "validated",
+     "arms": [
+      "lhs",
+      "doe"
+     ],
+     "key_b": null,
+     "filters": {
+      "gamma": 0.7,
+      "tau_frac": 0.6
+     },
      "label": "gamma=0.7 tau_frac=0.6",
      "p_holm_n50": 5.850292694731252e-09,
      "status_holm_n50": "significant",
      "p_holm_n25": 9.179115295410156e-06,
      "status_holm_n25": "significant",
      "status_holm_changed": false,
-     "family": "\u00a75.3 HEADLINE 1 \u2014 `lhs` - `doe` on AUC(predictive), 24 cells"
+     "family": "\u00a75.3 HEADLINE 1 \u2014 `lhs` - `doe` on AUC(predictive), 24 cells",
+     "source": "k6-designspace(+spread)"
     },
     {
      "n50": {
@@ -578,13 +726,25 @@
      "bootstrap_wilcoxon_disagree_n25": false,
      "reported_unit": "instance",
      "n50_label": "anti-conservative unit",
+     "metric": "auc_pred",
+     "metric_class": "validated",
+     "arms": [
+      "lhs",
+      "doe"
+     ],
+     "key_b": null,
+     "filters": {
+      "gamma": 0.7,
+      "tau_frac": 0.75
+     },
      "label": "gamma=0.7 tau_frac=0.75",
      "p_holm_n50": 1.1248779685502086e-10,
      "status_holm_n50": "significant",
      "p_holm_n25": 1.430511474609375e-06,
      "status_holm_n25": "significant",
      "status_holm_changed": false,
-     "family": "\u00a75.3 HEADLINE 1 \u2014 `lhs` - `doe` on AUC(predictive), 24 cells"
+     "family": "\u00a75.3 HEADLINE 1 \u2014 `lhs` - `doe` on AUC(predictive), 24 cells",
+     "source": "k6-designspace(+spread)"
     },
     {
      "n50": {
@@ -618,13 +778,25 @@
      "bootstrap_wilcoxon_disagree_n25": false,
      "reported_unit": "instance",
      "n50_label": "anti-conservative unit",
+     "metric": "auc_pred",
+     "metric_class": "validated",
+     "arms": [
+      "lhs",
+      "doe"
+     ],
+     "key_b": null,
+     "filters": {
+      "gamma": 0.7,
+      "tau_frac": 0.85
+     },
      "label": "gamma=0.7 tau_frac=0.85",
      "p_holm_n50": 3.3722358239174355e-11,
      "status_holm_n50": "significant",
      "p_holm_n25": 1.430511474609375e-06,
      "status_holm_n25": "significant",
      "status_holm_changed": false,
-     "family": "\u00a75.3 HEADLINE 1 \u2014 `lhs` - `doe` on AUC(predictive), 24 cells"
+     "family": "\u00a75.3 HEADLINE 1 \u2014 `lhs` - `doe` on AUC(predictive), 24 cells",
+     "source": "k6-designspace(+spread)"
     },
     {
      "n50": {
@@ -658,13 +830,25 @@
      "bootstrap_wilcoxon_disagree_n25": false,
      "reported_unit": "instance",
      "n50_label": "anti-conservative unit",
+     "metric": "auc_pred",
+     "metric_class": "validated",
+     "arms": [
+      "lhs",
+      "doe"
+     ],
+     "key_b": null,
+     "filters": {
+      "gamma": 0.7,
+      "tau_frac": 0.95
+     },
      "label": "gamma=0.7 tau_frac=0.95",
      "p_holm_n50": 8.08952904662874e-12,
      "status_holm_n50": "significant",
      "p_holm_n25": 1.430511474609375e-06,
      "status_holm_n25": "significant",
      "status_holm_changed": false,
-     "family": "\u00a75.3 HEADLINE 1 \u2014 `lhs` - `doe` on AUC(predictive), 24 cells"
+     "family": "\u00a75.3 HEADLINE 1 \u2014 `lhs` - `doe` on AUC(predictive), 24 cells",
+     "source": "k6-designspace(+spread)"
     },
     {
      "n50": {
@@ -698,13 +882,25 @@
      "bootstrap_wilcoxon_disagree_n25": false,
      "reported_unit": "instance",
      "n50_label": "anti-conservative unit",
+     "metric": "auc_pred",
+     "metric_class": "validated",
+     "arms": [
+      "lhs",
+      "doe"
+     ],
+     "key_b": null,
+     "filters": {
+      "gamma": 0.8,
+      "tau_frac": 0.6
+     },
      "label": "gamma=0.8 tau_frac=0.6",
      "p_holm_n50": 2.7057694751420058e-08,
      "status_holm_n50": "significant",
      "p_holm_n25": 1.1920928955078125e-05,
      "status_holm_n25": "significant",
      "status_holm_changed": false,
-     "family": "\u00a75.3 HEADLINE 1 \u2014 `lhs` - `doe` on AUC(predictive), 24 cells"
+     "family": "\u00a75.3 HEADLINE 1 \u2014 `lhs` - `doe` on AUC(predictive), 24 cells",
+     "source": "k6-designspace(+spread)"
     },
     {
      "n50": {
@@ -738,13 +934,25 @@
      "bootstrap_wilcoxon_disagree_n25": false,
      "reported_unit": "instance",
      "n50_label": "anti-conservative unit",
+     "metric": "auc_pred",
+     "metric_class": "validated",
+     "arms": [
+      "lhs",
+      "doe"
+     ],
+     "key_b": null,
+     "filters": {
+      "gamma": 0.8,
+      "tau_frac": 0.75
+     },
      "label": "gamma=0.8 tau_frac=0.75",
      "p_holm_n50": 6.944667063635279e-10,
      "status_holm_n50": "significant",
      "p_holm_n25": 1.9073486328125e-06,
      "status_holm_n25": "significant",
      "status_holm_changed": false,
-     "family": "\u00a75.3 HEADLINE 1 \u2014 `lhs` - `doe` on AUC(predictive), 24 cells"
+     "family": "\u00a75.3 HEADLINE 1 \u2014 `lhs` - `doe` on AUC(predictive), 24 cells",
+     "source": "k6-designspace(+spread)"
     },
     {
      "n50": {
@@ -778,13 +986,25 @@
      "bootstrap_wilcoxon_disagree_n25": false,
      "reported_unit": "instance",
      "n50_label": "anti-conservative unit",
+     "metric": "auc_pred",
+     "metric_class": "validated",
+     "arms": [
+      "lhs",
+      "doe"
+     ],
+     "key_b": null,
+     "filters": {
+      "gamma": 0.8,
+      "tau_frac": 0.85
+     },
      "label": "gamma=0.8 tau_frac=0.85",
      "p_holm_n50": 7.593925488436071e-11,
      "status_holm_n50": "significant",
      "p_holm_n25": 1.430511474609375e-06,
      "status_holm_n25": "significant",
      "status_holm_changed": false,
-     "family": "\u00a75.3 HEADLINE 1 \u2014 `lhs` - `doe` on AUC(predictive), 24 cells"
+     "family": "\u00a75.3 HEADLINE 1 \u2014 `lhs` - `doe` on AUC(predictive), 24 cells",
+     "source": "k6-designspace(+spread)"
     },
     {
      "n50": {
@@ -818,13 +1038,25 @@
      "bootstrap_wilcoxon_disagree_n25": false,
      "reported_unit": "instance",
      "n50_label": "anti-conservative unit",
+     "metric": "auc_pred",
+     "metric_class": "validated",
+     "arms": [
+      "lhs",
+      "doe"
+     ],
+     "key_b": null,
+     "filters": {
+      "gamma": 0.8,
+      "tau_frac": 0.95
+     },
      "label": "gamma=0.8 tau_frac=0.95",
      "p_holm_n50": 3.3722358239174355e-11,
      "status_holm_n50": "significant",
      "p_holm_n25": 1.430511474609375e-06,
      "status_holm_n25": "significant",
      "status_holm_changed": false,
-     "family": "\u00a75.3 HEADLINE 1 \u2014 `lhs` - `doe` on AUC(predictive), 24 cells"
+     "family": "\u00a75.3 HEADLINE 1 \u2014 `lhs` - `doe` on AUC(predictive), 24 cells",
+     "source": "k6-designspace(+spread)"
     },
     {
      "n50": {
@@ -858,13 +1090,25 @@
      "bootstrap_wilcoxon_disagree_n25": false,
      "reported_unit": "instance",
      "n50_label": "anti-conservative unit",
+     "metric": "auc_pred",
+     "metric_class": "validated",
+     "arms": [
+      "lhs",
+      "doe"
+     ],
+     "key_b": null,
+     "filters": {
+      "gamma": 0.9,
+      "tau_frac": 0.6
+     },
      "label": "gamma=0.9 tau_frac=0.6",
      "p_holm_n50": 3.4589778508120617e-07,
      "status_holm_n50": "significant",
      "p_holm_n25": 4.8995018005371094e-05,
      "status_holm_n25": "significant",
      "status_holm_changed": false,
-     "family": "\u00a75.3 HEADLINE 1 \u2014 `lhs` - `doe` on AUC(predictive), 24 cells"
+     "family": "\u00a75.3 HEADLINE 1 \u2014 `lhs` - `doe` on AUC(predictive), 24 cells",
+     "source": "k6-designspace(+spread)"
     },
     {
      "n50": {
@@ -898,13 +1142,25 @@
      "bootstrap_wilcoxon_disagree_n25": false,
      "reported_unit": "instance",
      "n50_label": "anti-conservative unit",
+     "metric": "auc_pred",
+     "metric_class": "validated",
+     "arms": [
+      "lhs",
+      "doe"
+     ],
+     "key_b": null,
+     "filters": {
+      "gamma": 0.9,
+      "tau_frac": 0.75
+     },
      "label": "gamma=0.9 tau_frac=0.75",
      "p_holm_n50": 8.008242957657785e-09,
      "status_holm_n50": "significant",
      "p_holm_n25": 9.179115295410156e-06,
      "status_holm_n25": "significant",
      "status_holm_changed": false,
-     "family": "\u00a75.3 HEADLINE 1 \u2014 `lhs` - `doe` on AUC(predictive), 24 cells"
+     "family": "\u00a75.3 HEADLINE 1 \u2014 `lhs` - `doe` on AUC(predictive), 24 cells",
+     "source": "k6-designspace(+spread)"
     },
     {
      "n50": {
@@ -938,13 +1194,25 @@
      "bootstrap_wilcoxon_disagree_n25": false,
      "reported_unit": "instance",
      "n50_label": "anti-conservative unit",
+     "metric": "auc_pred",
+     "metric_class": "validated",
+     "arms": [
+      "lhs",
+      "doe"
+     ],
+     "key_b": null,
+     "filters": {
+      "gamma": 0.9,
+      "tau_frac": 0.85
+     },
      "label": "gamma=0.9 tau_frac=0.85",
      "p_holm_n50": 9.296865499663909e-10,
      "status_holm_n50": "significant",
      "p_holm_n25": 2.3245811462402344e-06,
      "status_holm_n25": "significant",
      "status_holm_changed": false,
-     "family": "\u00a75.3 HEADLINE 1 \u2014 `lhs` - `doe` on AUC(predictive), 24 cells"
+     "family": "\u00a75.3 HEADLINE 1 \u2014 `lhs` - `doe` on AUC(predictive), 24 cells",
+     "source": "k6-designspace(+spread)"
     },
     {
      "n50": {
@@ -978,13 +1246,25 @@
      "bootstrap_wilcoxon_disagree_n25": false,
      "reported_unit": "instance",
      "n50_label": "anti-conservative unit",
+     "metric": "auc_pred",
+     "metric_class": "validated",
+     "arms": [
+      "lhs",
+      "doe"
+     ],
+     "key_b": null,
+     "filters": {
+      "gamma": 0.9,
+      "tau_frac": 0.95
+     },
      "label": "gamma=0.9 tau_frac=0.95",
      "p_holm_n50": 1.1248779685502086e-10,
      "status_holm_n50": "significant",
      "p_holm_n25": 1.430511474609375e-06,
      "status_holm_n25": "significant",
      "status_holm_changed": false,
-     "family": "\u00a75.3 HEADLINE 1 \u2014 `lhs` - `doe` on AUC(predictive), 24 cells"
+     "family": "\u00a75.3 HEADLINE 1 \u2014 `lhs` - `doe` on AUC(predictive), 24 cells",
+     "source": "k6-designspace(+spread)"
     },
     {
      "n50": {
@@ -1018,13 +1298,25 @@
      "bootstrap_wilcoxon_disagree_n25": false,
      "reported_unit": "instance",
      "n50_label": "anti-conservative unit",
+     "metric": "auc_pred",
+     "metric_class": "validated",
+     "arms": [
+      "lhs",
+      "doe"
+     ],
+     "key_b": null,
+     "filters": {
+      "gamma": 0.95,
+      "tau_frac": 0.6
+     },
      "label": "gamma=0.95 tau_frac=0.6",
      "p_holm_n50": 1.0598828623642476e-06,
      "status_holm_n50": "significant",
      "p_holm_n25": 0.00010657310485839844,
      "status_holm_n25": "significant",
      "status_holm_changed": false,
-     "family": "\u00a75.3 HEADLINE 1 \u2014 `lhs` - `doe` on AUC(predictive), 24 cells"
+     "family": "\u00a75.3 HEADLINE 1 \u2014 `lhs` - `doe` on AUC(predictive), 24 cells",
+     "source": "k6-designspace(+spread)"
     },
     {
      "n50": {
@@ -1058,13 +1350,25 @@
      "bootstrap_wilcoxon_disagree_n25": false,
      "reported_unit": "instance",
      "n50_label": "anti-conservative unit",
+     "metric": "auc_pred",
+     "metric_class": "validated",
+     "arms": [
+      "lhs",
+      "doe"
+     ],
+     "key_b": null,
+     "filters": {
+      "gamma": 0.95,
+      "tau_frac": 0.75
+     },
      "label": "gamma=0.95 tau_frac=0.75",
      "p_holm_n50": 1.8464637463466715e-07,
      "status_holm_n50": "significant",
      "p_holm_n25": 3.6716461181640625e-05,
      "status_holm_n25": "significant",
      "status_holm_changed": false,
-     "family": "\u00a75.3 HEADLINE 1 \u2014 `lhs` - `doe` on AUC(predictive), 24 cells"
+     "family": "\u00a75.3 HEADLINE 1 \u2014 `lhs` - `doe` on AUC(predictive), 24 cells",
+     "source": "k6-designspace(+spread)"
     },
     {
      "n50": {
@@ -1098,13 +1402,25 @@
      "bootstrap_wilcoxon_disagree_n25": false,
      "reported_unit": "instance",
      "n50_label": "anti-conservative unit",
+     "metric": "auc_pred",
+     "metric_class": "validated",
+     "arms": [
+      "lhs",
+      "doe"
+     ],
+     "key_b": null,
+     "filters": {
+      "gamma": 0.95,
+      "tau_frac": 0.85
+     },
      "label": "gamma=0.95 tau_frac=0.85",
      "p_holm_n50": 8.008242957657785e-09,
      "status_holm_n50": "significant",
      "p_holm_n25": 1.0192394256591797e-05,
      "status_holm_n25": "significant",
      "status_holm_changed": false,
-     "family": "\u00a75.3 HEADLINE 1 \u2014 `lhs` - `doe` on AUC(predictive), 24 cells"
+     "family": "\u00a75.3 HEADLINE 1 \u2014 `lhs` - `doe` on AUC(predictive), 24 cells",
+     "source": "k6-designspace(+spread)"
     },
     {
      "n50": {
@@ -1138,13 +1454,25 @@
      "bootstrap_wilcoxon_disagree_n25": false,
      "reported_unit": "instance",
      "n50_label": "anti-conservative unit",
+     "metric": "auc_pred",
+     "metric_class": "validated",
+     "arms": [
+      "lhs",
+      "doe"
+     ],
+     "key_b": null,
+     "filters": {
+      "gamma": 0.95,
+      "tau_frac": 0.95
+     },
      "label": "gamma=0.95 tau_frac=0.95",
      "p_holm_n50": 1.5445991152773786e-09,
      "status_holm_n50": "significant",
      "p_holm_n25": 3.5762786865234375e-06,
      "status_holm_n25": "significant",
      "status_holm_changed": false,
-     "family": "\u00a75.3 HEADLINE 1 \u2014 `lhs` - `doe` on AUC(predictive), 24 cells"
+     "family": "\u00a75.3 HEADLINE 1 \u2014 `lhs` - `doe` on AUC(predictive), 24 cells",
+     "source": "k6-designspace(+spread)"
     },
     {
      "n50": {
@@ -1178,13 +1506,25 @@
      "bootstrap_wilcoxon_disagree_n25": false,
      "reported_unit": "instance",
      "n50_label": "anti-conservative unit",
+     "metric": "auc_pred",
+     "metric_class": "validated",
+     "arms": [
+      "lhs",
+      "doe"
+     ],
+     "key_b": null,
+     "filters": {
+      "gamma": 0.99,
+      "tau_frac": 0.6
+     },
      "label": "gamma=0.99 tau_frac=0.6",
      "p_holm_n50": 3.633577416550793e-05,
      "status_holm_n50": "significant",
      "p_holm_n25": 0.002025127410888672,
      "status_holm_n25": "significant",
      "status_holm_changed": false,
-     "family": "\u00a75.3 HEADLINE 1 \u2014 `lhs` - `doe` on AUC(predictive), 24 cells"
+     "family": "\u00a75.3 HEADLINE 1 \u2014 `lhs` - `doe` on AUC(predictive), 24 cells",
+     "source": "k6-designspace(+spread)"
     },
     {
      "n50": {
@@ -1218,13 +1558,25 @@
      "bootstrap_wilcoxon_disagree_n25": false,
      "reported_unit": "instance",
      "n50_label": "anti-conservative unit",
+     "metric": "auc_pred",
+     "metric_class": "validated",
+     "arms": [
+      "lhs",
+      "doe"
+     ],
+     "key_b": null,
+     "filters": {
+      "gamma": 0.99,
+      "tau_frac": 0.75
+     },
      "label": "gamma=0.99 tau_frac=0.75",
      "p_holm_n50": 1.0598828623642476e-06,
      "status_holm_n50": "significant",
      "p_holm_n25": 0.00010776519775390625,
      "status_holm_n25": "significant",
      "status_holm_changed": false,
-     "family": "\u00a75.3 HEADLINE 1 \u2014 `lhs` - `doe` on AUC(predictive), 24 cells"
+     "family": "\u00a75.3 HEADLINE 1 \u2014 `lhs` - `doe` on AUC(predictive), 24 cells",
+     "source": "k6-designspace(+spread)"
     },
     {
      "n50": {
@@ -1258,13 +1610,25 @@
      "bootstrap_wilcoxon_disagree_n25": false,
      "reported_unit": "instance",
      "n50_label": "anti-conservative unit",
+     "metric": "auc_pred",
+     "metric_class": "validated",
+     "arms": [
+      "lhs",
+      "doe"
+     ],
+     "key_b": null,
+     "filters": {
+      "gamma": 0.99,
+      "tau_frac": 0.85
+     },
      "label": "gamma=0.99 tau_frac=0.85",
      "p_holm_n50": 1.0598828623642476e-06,
      "status_holm_n50": "significant",
      "p_holm_n25": 0.00010657310485839844,
      "status_holm_n25": "significant",
      "status_holm_changed": false,
-     "family": "\u00a75.3 HEADLINE 1 \u2014 `lhs` - `doe` on AUC(predictive), 24 cells"
+     "family": "\u00a75.3 HEADLINE 1 \u2014 `lhs` - `doe` on AUC(predictive), 24 cells",
+     "source": "k6-designspace(+spread)"
     },
     {
      "n50": {
@@ -1298,13 +1662,25 @@
      "bootstrap_wilcoxon_disagree_n25": false,
      "reported_unit": "instance",
      "n50_label": "anti-conservative unit",
+     "metric": "auc_pred",
+     "metric_class": "validated",
+     "arms": [
+      "lhs",
+      "doe"
+     ],
+     "key_b": null,
+     "filters": {
+      "gamma": 0.99,
+      "tau_frac": 0.95
+     },
      "label": "gamma=0.99 tau_frac=0.95",
      "p_holm_n50": 4.201559633543184e-07,
      "status_holm_n50": "significant",
      "p_holm_n25": 4.8995018005371094e-05,
      "status_holm_n25": "significant",
      "status_holm_changed": false,
-     "family": "\u00a75.3 HEADLINE 1 \u2014 `lhs` - `doe` on AUC(predictive), 24 cells"
+     "family": "\u00a75.3 HEADLINE 1 \u2014 `lhs` - `doe` on AUC(predictive), 24 cells",
+     "source": "k6-designspace(+spread)"
     }
    ]
   },
@@ -1346,13 +1722,25 @@
      "bootstrap_wilcoxon_disagree_n25": false,
      "reported_unit": "instance",
      "n50_label": "anti-conservative unit",
+     "metric": "auc_pred",
+     "metric_class": "validated",
+     "arms": [
+      "doe",
+      "qlogei"
+     ],
+     "key_b": null,
+     "filters": {
+      "gamma": 0.5,
+      "tau_frac": 0.6
+     },
      "label": "gamma=0.5 tau_frac=0.6",
      "p_holm_n50": 3.162414330404317e-08,
      "status_holm_n50": "significant",
      "p_holm_n25": 5.662441253662109e-06,
      "status_holm_n25": "significant",
      "status_holm_changed": false,
-     "family": "\u00a75.4 `doe` - `qlogei` on AUC(predictive), 24 cells"
+     "family": "\u00a75.4 `doe` - `qlogei` on AUC(predictive), 24 cells",
+     "source": "k6-designspace(+spread)"
     },
     {
      "n50": {
@@ -1386,13 +1774,25 @@
      "bootstrap_wilcoxon_disagree_n25": false,
      "reported_unit": "instance",
      "n50_label": "anti-conservative unit",
+     "metric": "auc_pred",
+     "metric_class": "validated",
+     "arms": [
+      "doe",
+      "qlogei"
+     ],
+     "key_b": null,
+     "filters": {
+      "gamma": 0.5,
+      "tau_frac": 0.75
+     },
      "label": "gamma=0.5 tau_frac=0.75",
      "p_holm_n50": 6.822034936959653e-07,
      "status_holm_n50": "significant",
      "p_holm_n25": 1.043081283569336e-05,
      "status_holm_n25": "significant",
      "status_holm_changed": false,
-     "family": "\u00a75.4 `doe` - `qlogei` on AUC(predictive), 24 cells"
+     "family": "\u00a75.4 `doe` - `qlogei` on AUC(predictive), 24 cells",
+     "source": "k6-designspace(+spread)"
     },
     {
      "n50": {
@@ -1426,13 +1826,25 @@
      "bootstrap_wilcoxon_disagree_n25": false,
      "reported_unit": "instance",
      "n50_label": "anti-conservative unit",
+     "metric": "auc_pred",
+     "metric_class": "validated",
+     "arms": [
+      "doe",
+      "qlogei"
+     ],
+     "key_b": null,
+     "filters": {
+      "gamma": 0.5,
+      "tau_frac": 0.85
+     },
      "label": "gamma=0.5 tau_frac=0.85",
      "p_holm_n50": 5.3415737934159324e-05,
      "status_holm_n50": "significant",
      "p_holm_n25": 0.00013625621795654297,
      "status_holm_n25": "significant",
      "status_holm_changed": false,
-     "family": "\u00a75.4 `doe` - `qlogei` on AUC(predictive), 24 cells"
+     "family": "\u00a75.4 `doe` - `qlogei` on AUC(predictive), 24 cells",
+     "source": "k6-designspace(+spread)"
     },
     {
      "n50": {
@@ -1466,13 +1878,25 @@
      "bootstrap_wilcoxon_disagree_n25": false,
      "reported_unit": "instance",
      "n50_label": "anti-conservative unit",
+     "metric": "auc_pred",
+     "metric_class": "validated",
+     "arms": [
+      "doe",
+      "qlogei"
+     ],
+     "key_b": null,
+     "filters": {
+      "gamma": 0.5,
+      "tau_frac": 0.95
+     },
      "label": "gamma=0.5 tau_frac=0.95",
      "p_holm_n50": 0.001282241835095732,
      "status_holm_n50": "significant",
      "p_holm_n25": 0.005578815937042236,
      "status_holm_n25": "significant",
      "status_holm_changed": false,
-     "family": "\u00a75.4 `doe` - `qlogei` on AUC(predictive), 24 cells"
+     "family": "\u00a75.4 `doe` - `qlogei` on AUC(predictive), 24 cells",
+     "source": "k6-designspace(+spread)"
     },
     {
      "n50": {
@@ -1506,13 +1930,25 @@
      "bootstrap_wilcoxon_disagree_n25": false,
      "reported_unit": "instance",
      "n50_label": "anti-conservative unit",
+     "metric": "auc_pred",
+     "metric_class": "validated",
+     "arms": [
+      "doe",
+      "qlogei"
+     ],
+     "key_b": null,
+     "filters": {
+      "gamma": 0.7,
+      "tau_frac": 0.6
+     },
      "label": "gamma=0.7 tau_frac=0.6",
      "p_holm_n50": 3.043349572351417e-08,
      "status_holm_n50": "significant",
      "p_holm_n25": 4.291534423828125e-06,
      "status_holm_n25": "significant",
      "status_holm_changed": false,
-     "family": "\u00a75.4 `doe` - `qlogei` on AUC(predictive), 24 cells"
+     "family": "\u00a75.4 `doe` - `qlogei` on AUC(predictive), 24 cells",
+     "source": "k6-designspace(+spread)"
     },
     {
      "n50": {
@@ -1546,13 +1982,25 @@
      "bootstrap_wilcoxon_disagree_n25": false,
      "reported_unit": "instance",
      "n50_label": "anti-conservative unit",
+     "metric": "auc_pred",
+     "metric_class": "validated",
+     "arms": [
+      "doe",
+      "qlogei"
+     ],
+     "key_b": null,
+     "filters": {
+      "gamma": 0.7,
+      "tau_frac": 0.75
+     },
      "label": "gamma=0.7 tau_frac=0.75",
      "p_holm_n50": 4.319585400480719e-08,
      "status_holm_n50": "significant",
      "p_holm_n25": 6.258487701416016e-06,
      "status_holm_n25": "significant",
      "status_holm_changed": false,
-     "family": "\u00a75.4 `doe` - `qlogei` on AUC(predictive), 24 cells"
+     "family": "\u00a75.4 `doe` - `qlogei` on AUC(predictive), 24 cells",
+     "source": "k6-designspace(+spread)"
     },
     {
      "n50": {
@@ -1586,13 +2034,25 @@
      "bootstrap_wilcoxon_disagree_n25": false,
      "reported_unit": "instance",
      "n50_label": "anti-conservative unit",
+     "metric": "auc_pred",
+     "metric_class": "validated",
+     "arms": [
+      "doe",
+      "qlogei"
+     ],
+     "key_b": null,
+     "filters": {
+      "gamma": 0.7,
+      "tau_frac": 0.85
+     },
      "label": "gamma=0.7 tau_frac=0.85",
      "p_holm_n50": 4.976574388138033e-07,
      "status_holm_n50": "significant",
      "p_holm_n25": 9.059906005859375e-06,
      "status_holm_n25": "significant",
      "status_holm_changed": false,
-     "family": "\u00a75.4 `doe` - `qlogei` on AUC(predictive), 24 cells"
+     "family": "\u00a75.4 `doe` - `qlogei` on AUC(predictive), 24 cells",
+     "source": "k6-designspace(+spread)"
     },
     {
      "n50": {
@@ -1626,13 +2086,25 @@
      "bootstrap_wilcoxon_disagree_n25": false,
      "reported_unit": "instance",
      "n50_label": "anti-conservative unit",
+     "metric": "auc_pred",
+     "metric_class": "validated",
+     "arms": [
+      "doe",
+      "qlogei"
+     ],
+     "key_b": null,
+     "filters": {
+      "gamma": 0.7,
+      "tau_frac": 0.95
+     },
      "label": "gamma=0.7 tau_frac=0.95",
      "p_holm_n50": 1.4344626443119068e-05,
      "status_holm_n50": "significant",
      "p_holm_n25": 7.319450378417969e-05,
      "status_holm_n25": "significant",
      "status_holm_changed": false,
-     "family": "\u00a75.4 `doe` - `qlogei` on AUC(predictive), 24 cells"
+     "family": "\u00a75.4 `doe` - `qlogei` on AUC(predictive), 24 cells",
+     "source": "k6-designspace(+spread)"
     },
     {
      "n50": {
@@ -1666,13 +2138,25 @@
      "bootstrap_wilcoxon_disagree_n25": false,
      "reported_unit": "instance",
      "n50_label": "anti-conservative unit",
+     "metric": "auc_pred",
+     "metric_class": "validated",
+     "arms": [
+      "doe",
+      "qlogei"
+     ],
+     "key_b": null,
+     "filters": {
+      "gamma": 0.8,
+      "tau_frac": 0.6
+     },
      "label": "gamma=0.8 tau_frac=0.6",
      "p_holm_n50": 3.043349572351417e-08,
      "status_holm_n50": "significant",
      "p_holm_n25": 5.662441253662109e-06,
      "status_holm_n25": "significant",
      "status_holm_changed": false,
-     "family": "\u00a75.4 `doe` - `qlogei` on AUC(predictive), 24 cells"
+     "family": "\u00a75.4 `doe` - `qlogei` on AUC(predictive), 24 cells",
+     "source": "k6-designspace(+spread)"
     },
     {
      "n50": {
@@ -1706,13 +2190,25 @@
      "bootstrap_wilcoxon_disagree_n25": false,
      "reported_unit": "instance",
      "n50_label": "anti-conservative unit",
+     "metric": "auc_pred",
+     "metric_class": "validated",
+     "arms": [
+      "doe",
+      "qlogei"
+     ],
+     "key_b": null,
+     "filters": {
+      "gamma": 0.8,
+      "tau_frac": 0.75
+     },
      "label": "gamma=0.8 tau_frac=0.75",
      "p_holm_n50": 3.162414330404317e-08,
      "status_holm_n50": "significant",
      "p_holm_n25": 5.662441253662109e-06,
      "status_holm_n25": "significant",
      "status_holm_changed": false,
-     "family": "\u00a75.4 `doe` - `qlogei` on AUC(predictive), 24 cells"
+     "family": "\u00a75.4 `doe` - `qlogei` on AUC(predictive), 24 cells",
+     "source": "k6-designspace(+spread)"
     },
     {
      "n50": {
@@ -1746,13 +2242,25 @@
      "bootstrap_wilcoxon_disagree_n25": false,
      "reported_unit": "instance",
      "n50_label": "anti-conservative unit",
+     "metric": "auc_pred",
+     "metric_class": "validated",
+     "arms": [
+      "doe",
+      "qlogei"
+     ],
+     "key_b": null,
+     "filters": {
+      "gamma": 0.8,
+      "tau_frac": 0.85
+     },
      "label": "gamma=0.8 tau_frac=0.85",
      "p_holm_n50": 6.382470374433069e-08,
      "status_holm_n50": "significant",
      "p_holm_n25": 6.258487701416016e-06,
      "status_holm_n25": "significant",
      "status_holm_changed": false,
-     "family": "\u00a75.4 `doe` - `qlogei` on AUC(predictive), 24 cells"
+     "family": "\u00a75.4 `doe` - `qlogei` on AUC(predictive), 24 cells",
+     "source": "k6-designspace(+spread)"
     },
     {
      "n50": {
@@ -1786,13 +2294,25 @@
      "bootstrap_wilcoxon_disagree_n25": false,
      "reported_unit": "instance",
      "n50_label": "anti-conservative unit",
+     "metric": "auc_pred",
+     "metric_class": "validated",
+     "arms": [
+      "doe",
+      "qlogei"
+     ],
+     "key_b": null,
+     "filters": {
+      "gamma": 0.8,
+      "tau_frac": 0.95
+     },
      "label": "gamma=0.8 tau_frac=0.95",
      "p_holm_n50": 6.822034936959653e-07,
      "status_holm_n50": "significant",
      "p_holm_n25": 1.043081283569336e-05,
      "status_holm_n25": "significant",
      "status_holm_changed": false,
-     "family": "\u00a75.4 `doe` - `qlogei` on AUC(predictive), 24 cells"
+     "family": "\u00a75.4 `doe` - `qlogei` on AUC(predictive), 24 cells",
+     "source": "k6-designspace(+spread)"
     },
     {
      "n50": {
@@ -1826,13 +2346,25 @@
      "bootstrap_wilcoxon_disagree_n25": false,
      "reported_unit": "instance",
      "n50_label": "anti-conservative unit",
+     "metric": "auc_pred",
+     "metric_class": "validated",
+     "arms": [
+      "doe",
+      "qlogei"
+     ],
+     "key_b": null,
+     "filters": {
+      "gamma": 0.9,
+      "tau_frac": 0.6
+     },
      "label": "gamma=0.9 tau_frac=0.6",
      "p_holm_n50": 5.3286377976746735e-08,
      "status_holm_n50": "significant",
      "p_holm_n25": 7.748603820800781e-06,
      "status_holm_n25": "significant",
      "status_holm_changed": false,
-     "family": "\u00a75.4 `doe` - `qlogei` on AUC(predictive), 24 cells"
+     "family": "\u00a75.4 `doe` - `qlogei` on AUC(predictive), 24 cells",
+     "source": "k6-designspace(+spread)"
     },
     {
      "n50": {
@@ -1866,13 +2398,25 @@
      "bootstrap_wilcoxon_disagree_n25": false,
      "reported_unit": "instance",
      "n50_label": "anti-conservative unit",
+     "metric": "auc_pred",
+     "metric_class": "validated",
+     "arms": [
+      "doe",
+      "qlogei"
+     ],
+     "key_b": null,
+     "filters": {
+      "gamma": 0.9,
+      "tau_frac": 0.75
+     },
      "label": "gamma=0.9 tau_frac=0.75",
      "p_holm_n50": 3.043349572351417e-08,
      "status_holm_n50": "significant",
      "p_holm_n25": 4.291534423828125e-06,
      "status_holm_n25": "significant",
      "status_holm_changed": false,
-     "family": "\u00a75.4 `doe` - `qlogei` on AUC(predictive), 24 cells"
+     "family": "\u00a75.4 `doe` - `qlogei` on AUC(predictive), 24 cells",
+     "source": "k6-designspace(+spread)"
     },
     {
      "n50": {
@@ -1906,13 +2450,25 @@
      "bootstrap_wilcoxon_disagree_n25": false,
      "reported_unit": "instance",
      "n50_label": "anti-conservative unit",
+     "metric": "auc_pred",
+     "metric_class": "validated",
+     "arms": [
+      "doe",
+      "qlogei"
+     ],
+     "key_b": null,
+     "filters": {
+      "gamma": 0.9,
+      "tau_frac": 0.85
+     },
      "label": "gamma=0.9 tau_frac=0.85",
      "p_holm_n50": 3.024429773290649e-08,
      "status_holm_n50": "significant",
      "p_holm_n25": 4.291534423828125e-06,
      "status_holm_n25": "significant",
      "status_holm_changed": false,
-     "family": "\u00a75.4 `doe` - `qlogei` on AUC(predictive), 24 cells"
+     "family": "\u00a75.4 `doe` - `qlogei` on AUC(predictive), 24 cells",
+     "source": "k6-designspace(+spread)"
     },
     {
      "n50": {
@@ -1946,13 +2502,25 @@
      "bootstrap_wilcoxon_disagree_n25": false,
      "reported_unit": "instance",
      "n50_label": "anti-conservative unit",
+     "metric": "auc_pred",
+     "metric_class": "validated",
+     "arms": [
+      "doe",
+      "qlogei"
+     ],
+     "key_b": null,
+     "filters": {
+      "gamma": 0.9,
+      "tau_frac": 0.95
+     },
      "label": "gamma=0.9 tau_frac=0.95",
      "p_holm_n50": 4.3968753971057595e-08,
      "status_holm_n50": "significant",
      "p_holm_n25": 5.662441253662109e-06,
      "status_holm_n25": "significant",
      "status_holm_changed": false,
-     "family": "\u00a75.4 `doe` - `qlogei` on AUC(predictive), 24 cells"
+     "family": "\u00a75.4 `doe` - `qlogei` on AUC(predictive), 24 cells",
+     "source": "k6-designspace(+spread)"
     },
     {
      "n50": {
@@ -1986,13 +2554,25 @@
      "bootstrap_wilcoxon_disagree_n25": false,
      "reported_unit": "instance",
      "n50_label": "anti-conservative unit",
+     "metric": "auc_pred",
+     "metric_class": "validated",
+     "arms": [
+      "doe",
+      "qlogei"
+     ],
+     "key_b": null,
+     "filters": {
+      "gamma": 0.95,
+      "tau_frac": 0.6
+     },
      "label": "gamma=0.95 tau_frac=0.6",
      "p_holm_n50": 2.7846021488642236e-07,
      "status_holm_n50": "significant",
      "p_holm_n25": 7.748603820800781e-06,
      "status_holm_n25": "significant",
      "status_holm_changed": false,
-     "family": "\u00a75.4 `doe` - `qlogei` on AUC(predictive), 24 cells"
+     "family": "\u00a75.4 `doe` - `qlogei` on AUC(predictive), 24 cells",
+     "source": "k6-designspace(+spread)"
     },
     {
      "n50": {
@@ -2026,13 +2606,25 @@
      "bootstrap_wilcoxon_disagree_n25": false,
      "reported_unit": "instance",
      "n50_label": "anti-conservative unit",
+     "metric": "auc_pred",
+     "metric_class": "validated",
+     "arms": [
+      "doe",
+      "qlogei"
+     ],
+     "key_b": null,
+     "filters": {
+      "gamma": 0.95,
+      "tau_frac": 0.75
+     },
      "label": "gamma=0.95 tau_frac=0.75",
      "p_holm_n50": 3.162414330404317e-08,
      "status_holm_n50": "significant",
      "p_holm_n25": 7.748603820800781e-06,
      "status_holm_n25": "significant",
      "status_holm_changed": false,
-     "family": "\u00a75.4 `doe` - `qlogei` on AUC(predictive), 24 cells"
+     "family": "\u00a75.4 `doe` - `qlogei` on AUC(predictive), 24 cells",
+     "source": "k6-designspace(+spread)"
     },
     {
      "n50": {
@@ -2066,13 +2658,25 @@
      "bootstrap_wilcoxon_disagree_n25": false,
      "reported_unit": "instance",
      "n50_label": "anti-conservative unit",
+     "metric": "auc_pred",
+     "metric_class": "validated",
+     "arms": [
+      "doe",
+      "qlogei"
+     ],
+     "key_b": null,
+     "filters": {
+      "gamma": 0.95,
+      "tau_frac": 0.85
+     },
      "label": "gamma=0.95 tau_frac=0.85",
      "p_holm_n50": 2.8617407110687054e-08,
      "status_holm_n50": "significant",
      "p_holm_n25": 4.291534423828125e-06,
      "status_holm_n25": "significant",
      "status_holm_changed": false,
-     "family": "\u00a75.4 `doe` - `qlogei` on AUC(predictive), 24 cells"
+     "family": "\u00a75.4 `doe` - `qlogei` on AUC(predictive), 24 cells",
+     "source": "k6-designspace(+spread)"
     },
     {
      "n50": {
@@ -2106,13 +2710,25 @@
      "bootstrap_wilcoxon_disagree_n25": false,
      "reported_unit": "instance",
      "n50_label": "anti-conservative unit",
+     "metric": "auc_pred",
+     "metric_class": "validated",
+     "arms": [
+      "doe",
+      "qlogei"
+     ],
+     "key_b": null,
+     "filters": {
+      "gamma": 0.95,
+      "tau_frac": 0.95
+     },
      "label": "gamma=0.95 tau_frac=0.95",
      "p_holm_n50": 3.024429773290649e-08,
      "status_holm_n50": "significant",
      "p_holm_n25": 4.291534423828125e-06,
      "status_holm_n25": "significant",
      "status_holm_changed": false,
-     "family": "\u00a75.4 `doe` - `qlogei` on AUC(predictive), 24 cells"
+     "family": "\u00a75.4 `doe` - `qlogei` on AUC(predictive), 24 cells",
+     "source": "k6-designspace(+spread)"
     },
     {
      "n50": {
@@ -2146,13 +2762,25 @@
      "bootstrap_wilcoxon_disagree_n25": false,
      "reported_unit": "instance",
      "n50_label": "anti-conservative unit",
+     "metric": "auc_pred",
+     "metric_class": "validated",
+     "arms": [
+      "doe",
+      "qlogei"
+     ],
+     "key_b": null,
+     "filters": {
+      "gamma": 0.99,
+      "tau_frac": 0.6
+     },
      "label": "gamma=0.99 tau_frac=0.6",
      "p_holm_n50": 0.00079729510077442,
      "status_holm_n50": "significant",
      "p_holm_n25": 0.00451052188873291,
      "status_holm_n25": "significant",
      "status_holm_changed": false,
-     "family": "\u00a75.4 `doe` - `qlogei` on AUC(predictive), 24 cells"
+     "family": "\u00a75.4 `doe` - `qlogei` on AUC(predictive), 24 cells",
+     "source": "k6-designspace(+spread)"
     },
     {
      "n50": {
@@ -2186,13 +2814,25 @@
      "bootstrap_wilcoxon_disagree_n25": false,
      "reported_unit": "instance",
      "n50_label": "anti-conservative unit",
+     "metric": "auc_pred",
+     "metric_class": "validated",
+     "arms": [
+      "doe",
+      "qlogei"
+     ],
+     "key_b": null,
+     "filters": {
+      "gamma": 0.99,
+      "tau_frac": 0.75
+     },
      "label": "gamma=0.99 tau_frac=0.75",
      "p_holm_n50": 5.663117050858091e-06,
      "status_holm_n50": "significant",
      "p_holm_n25": 5.036592483520508e-05,
      "status_holm_n25": "significant",
      "status_holm_changed": false,
-     "family": "\u00a75.4 `doe` - `qlogei` on AUC(predictive), 24 cells"
+     "family": "\u00a75.4 `doe` - `qlogei` on AUC(predictive), 24 cells",
+     "source": "k6-designspace(+spread)"
     },
     {
      "n50": {
@@ -2226,13 +2866,25 @@
      "bootstrap_wilcoxon_disagree_n25": false,
      "reported_unit": "instance",
      "n50_label": "anti-conservative unit",
+     "metric": "auc_pred",
+     "metric_class": "validated",
+     "arms": [
+      "doe",
+      "qlogei"
+     ],
+     "key_b": null,
+     "filters": {
+      "gamma": 0.99,
+      "tau_frac": 0.85
+     },
      "label": "gamma=0.99 tau_frac=0.85",
      "p_holm_n50": 2.2451841275028528e-07,
      "status_holm_n50": "significant",
      "p_holm_n25": 7.748603820800781e-06,
      "status_holm_n25": "significant",
      "status_holm_changed": false,
-     "family": "\u00a75.4 `doe` - `qlogei` on AUC(predictive), 24 cells"
+     "family": "\u00a75.4 `doe` - `qlogei` on AUC(predictive), 24 cells",
+     "source": "k6-designspace(+spread)"
     },
     {
      "n50": {
@@ -2266,13 +2918,25 @@
      "bootstrap_wilcoxon_disagree_n25": false,
      "reported_unit": "instance",
      "n50_label": "anti-conservative unit",
+     "metric": "auc_pred",
+     "metric_class": "validated",
+     "arms": [
+      "doe",
+      "qlogei"
+     ],
+     "key_b": null,
+     "filters": {
+      "gamma": 0.99,
+      "tau_frac": 0.95
+     },
      "label": "gamma=0.99 tau_frac=0.95",
      "p_holm_n50": 4.21963264329861e-08,
      "status_holm_n50": "significant",
      "p_holm_n25": 7.748603820800781e-06,
      "status_holm_n25": "significant",
      "status_holm_changed": false,
-     "family": "\u00a75.4 `doe` - `qlogei` on AUC(predictive), 24 cells"
+     "family": "\u00a75.4 `doe` - `qlogei` on AUC(predictive), 24 cells",
+     "source": "k6-designspace(+spread)"
     }
    ]
   },
@@ -2314,13 +2978,25 @@
      "bootstrap_wilcoxon_disagree_n25": false,
      "reported_unit": "instance",
      "n50_label": "anti-conservative unit",
+     "metric": "regret",
+     "metric_class": "validated",
+     "arms": [
+      "qlogei-add",
+      "qlogei"
+     ],
+     "key_b": null,
+     "filters": {
+      "gamma": 0.5,
+      "tau_frac": 0.6
+     },
      "label": "qlogei-add - qlogei regret",
      "p_holm_n50": 1.0,
      "status_holm_n50": "null",
      "p_holm_n25": 1.0,
      "status_holm_n25": "null",
      "status_holm_changed": false,
-     "family": "\u00a75.5 Amendment A1 \u2014 the additive kernel, regret and map"
+     "family": "\u00a75.5 Amendment A1 \u2014 the additive kernel, regret and map",
+     "source": "k6-designspace(+spread)"
     },
     {
      "n50": {
@@ -2354,13 +3030,25 @@
      "bootstrap_wilcoxon_disagree_n25": false,
      "reported_unit": "instance",
      "n50_label": "anti-conservative unit",
+     "metric": "auc_pred",
+     "metric_class": "validated",
+     "arms": [
+      "qlogei-add",
+      "qlogei"
+     ],
+     "key_b": null,
+     "filters": {
+      "gamma": 0.9,
+      "tau_frac": 0.75
+     },
      "label": "qlogei-add - qlogei AUC g=0.9 tf=0.75",
      "p_holm_n50": 1.0,
      "status_holm_n50": "null",
      "p_holm_n25": 1.0,
      "status_holm_n25": "null",
      "status_holm_changed": false,
-     "family": "\u00a75.5 Amendment A1 \u2014 the additive kernel, regret and map"
+     "family": "\u00a75.5 Amendment A1 \u2014 the additive kernel, regret and map",
+     "source": "k6-designspace(+spread)"
     },
     {
      "n50": {
@@ -2394,13 +3082,25 @@
      "bootstrap_wilcoxon_disagree_n25": false,
      "reported_unit": "instance",
      "n50_label": "anti-conservative unit",
+     "metric": "regret",
+     "metric_class": "validated",
+     "arms": [
+      "qlogei-addonly",
+      "qlogei"
+     ],
+     "key_b": null,
+     "filters": {
+      "gamma": 0.5,
+      "tau_frac": 0.6
+     },
      "label": "qlogei-addonly - qlogei regret",
      "p_holm_n50": 1.0,
      "status_holm_n50": "null",
      "p_holm_n25": 1.0,
      "status_holm_n25": "null",
      "status_holm_changed": false,
-     "family": "\u00a75.5 Amendment A1 \u2014 the additive kernel, regret and map"
+     "family": "\u00a75.5 Amendment A1 \u2014 the additive kernel, regret and map",
+     "source": "k6-designspace(+spread)"
     },
     {
      "n50": {
@@ -2434,13 +3134,25 @@
      "bootstrap_wilcoxon_disagree_n25": false,
      "reported_unit": "instance",
      "n50_label": "anti-conservative unit",
+     "metric": "auc_pred",
+     "metric_class": "validated",
+     "arms": [
+      "qlogei-addonly",
+      "qlogei"
+     ],
+     "key_b": null,
+     "filters": {
+      "gamma": 0.9,
+      "tau_frac": 0.75
+     },
      "label": "qlogei-addonly - qlogei AUC g=0.9 tf=0.75",
      "p_holm_n50": 0.5022538644253416,
      "status_holm_n50": "null",
      "p_holm_n25": 0.5345602035522461,
      "status_holm_n25": "null",
      "status_holm_changed": false,
-     "family": "\u00a75.5 Amendment A1 \u2014 the additive kernel, regret and map"
+     "family": "\u00a75.5 Amendment A1 \u2014 the additive kernel, regret and map",
+     "source": "k6-designspace(+spread)"
     }
    ]
   },
@@ -2482,13 +3194,24 @@
      "bootstrap_wilcoxon_disagree_n25": false,
      "reported_unit": "instance",
      "n50_label": "anti-conservative unit",
+     "metric": "alpha_star",
+     "metric_class": "model-internal",
+     "arms": [
+      "qlogei-add",
+      "qlogei"
+     ],
+     "key_b": null,
+     "filters": {
+      "tau_frac": 0.6
+     },
      "label": "qlogei-add - qlogei alpha* tf=0.6",
      "p_holm_n50": 1.0,
      "status_holm_n50": "null",
      "p_holm_n25": 1.0,
      "status_holm_n25": "null",
      "status_holm_changed": false,
-     "family": "\u00a75.5 Amendment A1 on `alpha*`, 8 contrasts"
+     "family": "\u00a75.5 Amendment A1 on `alpha*`, 8 contrasts",
+     "source": "k6b-conservative(+spread)"
     },
     {
      "n50": {
@@ -2522,13 +3245,24 @@
      "bootstrap_wilcoxon_disagree_n25": false,
      "reported_unit": "instance",
      "n50_label": "anti-conservative unit",
+     "metric": "alpha_star",
+     "metric_class": "model-internal",
+     "arms": [
+      "qlogei-add",
+      "qlogei"
+     ],
+     "key_b": null,
+     "filters": {
+      "tau_frac": 0.75
+     },
      "label": "qlogei-add - qlogei alpha* tf=0.75",
      "p_holm_n50": 1.0,
      "status_holm_n50": "null",
      "p_holm_n25": 1.0,
      "status_holm_n25": "null",
      "status_holm_changed": false,
-     "family": "\u00a75.5 Amendment A1 on `alpha*`, 8 contrasts"
+     "family": "\u00a75.5 Amendment A1 on `alpha*`, 8 contrasts",
+     "source": "k6b-conservative(+spread)"
     },
     {
      "n50": {
@@ -2562,13 +3296,24 @@
      "bootstrap_wilcoxon_disagree_n25": false,
      "reported_unit": "instance",
      "n50_label": "anti-conservative unit",
+     "metric": "alpha_star",
+     "metric_class": "model-internal",
+     "arms": [
+      "qlogei-add",
+      "qlogei"
+     ],
+     "key_b": null,
+     "filters": {
+      "tau_frac": 0.85
+     },
      "label": "qlogei-add - qlogei alpha* tf=0.85",
      "p_holm_n50": 1.0,
      "status_holm_n50": "null",
      "p_holm_n25": 1.0,
      "status_holm_n25": "null",
      "status_holm_changed": false,
-     "family": "\u00a75.5 Amendment A1 on `alpha*`, 8 contrasts"
+     "family": "\u00a75.5 Amendment A1 on `alpha*`, 8 contrasts",
+     "source": "k6b-conservative(+spread)"
     },
     {
      "n50": {
@@ -2602,13 +3347,24 @@
      "bootstrap_wilcoxon_disagree_n25": false,
      "reported_unit": "instance",
      "n50_label": "anti-conservative unit",
+     "metric": "alpha_star",
+     "metric_class": "model-internal",
+     "arms": [
+      "qlogei-add",
+      "qlogei"
+     ],
+     "key_b": null,
+     "filters": {
+      "tau_frac": 0.95
+     },
      "label": "qlogei-add - qlogei alpha* tf=0.95",
      "p_holm_n50": 1.0,
      "status_holm_n50": "null",
      "p_holm_n25": 1.0,
      "status_holm_n25": "null",
      "status_holm_changed": false,
-     "family": "\u00a75.5 Amendment A1 on `alpha*`, 8 contrasts"
+     "family": "\u00a75.5 Amendment A1 on `alpha*`, 8 contrasts",
+     "source": "k6b-conservative(+spread)"
     },
     {
      "n50": {
@@ -2642,13 +3398,24 @@
      "bootstrap_wilcoxon_disagree_n25": false,
      "reported_unit": "instance",
      "n50_label": "anti-conservative unit",
+     "metric": "alpha_star",
+     "metric_class": "model-internal",
+     "arms": [
+      "qlogei-addonly",
+      "qlogei"
+     ],
+     "key_b": null,
+     "filters": {
+      "tau_frac": 0.6
+     },
      "label": "qlogei-addonly - qlogei alpha* tf=0.6",
      "p_holm_n50": 1.0,
      "status_holm_n50": "null",
      "p_holm_n25": 1.0,
      "status_holm_n25": "null",
      "status_holm_changed": false,
-     "family": "\u00a75.5 Amendment A1 on `alpha*`, 8 contrasts"
+     "family": "\u00a75.5 Amendment A1 on `alpha*`, 8 contrasts",
+     "source": "k6b-conservative(+spread)"
     },
     {
      "n50": {
@@ -2682,13 +3449,24 @@
      "bootstrap_wilcoxon_disagree_n25": false,
      "reported_unit": "instance",
      "n50_label": "anti-conservative unit",
+     "metric": "alpha_star",
+     "metric_class": "model-internal",
+     "arms": [
+      "qlogei-addonly",
+      "qlogei"
+     ],
+     "key_b": null,
+     "filters": {
+      "tau_frac": 0.75
+     },
      "label": "qlogei-addonly - qlogei alpha* tf=0.75",
      "p_holm_n50": 1.0,
      "status_holm_n50": "null",
      "p_holm_n25": 1.0,
      "status_holm_n25": "null",
      "status_holm_changed": false,
-     "family": "\u00a75.5 Amendment A1 on `alpha*`, 8 contrasts"
+     "family": "\u00a75.5 Amendment A1 on `alpha*`, 8 contrasts",
+     "source": "k6b-conservative(+spread)"
     },
     {
      "n50": {
@@ -2722,13 +3500,24 @@
      "bootstrap_wilcoxon_disagree_n25": true,
      "reported_unit": "instance",
      "n50_label": "anti-conservative unit",
+     "metric": "alpha_star",
+     "metric_class": "model-internal",
+     "arms": [
+      "qlogei-addonly",
+      "qlogei"
+     ],
+     "key_b": null,
+     "filters": {
+      "tau_frac": 0.85
+     },
      "label": "qlogei-addonly - qlogei alpha* tf=0.85",
      "p_holm_n50": 1.0,
      "status_holm_n50": "null",
      "p_holm_n25": 0.9864065051078796,
      "status_holm_n25": "null",
      "status_holm_changed": false,
-     "family": "\u00a75.5 Amendment A1 on `alpha*`, 8 contrasts"
+     "family": "\u00a75.5 Amendment A1 on `alpha*`, 8 contrasts",
+     "source": "k6b-conservative(+spread)"
     },
     {
      "n50": {
@@ -2762,13 +3551,24 @@
      "bootstrap_wilcoxon_disagree_n25": false,
      "reported_unit": "instance",
      "n50_label": "anti-conservative unit",
+     "metric": "alpha_star",
+     "metric_class": "model-internal",
+     "arms": [
+      "qlogei-addonly",
+      "qlogei"
+     ],
+     "key_b": null,
+     "filters": {
+      "tau_frac": 0.95
+     },
      "label": "qlogei-addonly - qlogei alpha* tf=0.95",
      "p_holm_n50": 0.10006318483678678,
      "status_holm_n50": "null",
      "p_holm_n25": 0.12818563840916045,
      "status_holm_n25": "null",
      "status_holm_changed": false,
-     "family": "\u00a75.5 Amendment A1 on `alpha*`, 8 contrasts"
+     "family": "\u00a75.5 Amendment A1 on `alpha*`, 8 contrasts",
+     "source": "k6b-conservative(+spread)"
     }
    ]
   },
@@ -2810,13 +3610,24 @@
      "bootstrap_wilcoxon_disagree_n25": false,
      "reported_unit": "instance",
      "n50_label": "anti-conservative unit",
+     "metric": "alpha_star",
+     "metric_class": "model-internal",
+     "arms": [
+      "doe",
+      "qlogei"
+     ],
+     "key_b": null,
+     "filters": {
+      "tau_frac": 0.6
+     },
      "label": "doe - qlogei tf=0.6",
      "p_holm_n50": 2.9313553943588586e-07,
      "status_holm_n50": "significant",
      "p_holm_n25": 0.00034257213565707084,
      "status_holm_n25": "significant",
      "status_holm_changed": false,
-     "family": "\u00a75.8 paired contrasts on `alpha*`, 7 pairs x 4 thresholds"
+     "family": "\u00a75.8 paired contrasts on `alpha*`, 7 pairs x 4 thresholds",
+     "source": "k6b-conservative(+spread)"
     },
     {
      "n50": {
@@ -2850,13 +3661,24 @@
      "bootstrap_wilcoxon_disagree_n25": false,
      "reported_unit": "instance",
      "n50_label": "anti-conservative unit",
+     "metric": "alpha_star",
+     "metric_class": "model-internal",
+     "arms": [
+      "doe",
+      "qlogei"
+     ],
+     "key_b": null,
+     "filters": {
+      "tau_frac": 0.75
+     },
      "label": "doe - qlogei tf=0.75",
      "p_holm_n50": 8.194403721614626e-06,
      "status_holm_n50": "significant",
      "p_holm_n25": 0.0004598970954170361,
      "status_holm_n25": "significant",
      "status_holm_changed": false,
-     "family": "\u00a75.8 paired contrasts on `alpha*`, 7 pairs x 4 thresholds"
+     "family": "\u00a75.8 paired contrasts on `alpha*`, 7 pairs x 4 thresholds",
+     "source": "k6b-conservative(+spread)"
     },
     {
      "n50": {
@@ -2890,13 +3712,24 @@
      "bootstrap_wilcoxon_disagree_n25": false,
      "reported_unit": "instance",
      "n50_label": "anti-conservative unit",
+     "metric": "alpha_star",
+     "metric_class": "model-internal",
+     "arms": [
+      "doe",
+      "qlogei"
+     ],
+     "key_b": null,
+     "filters": {
+      "tau_frac": 0.85
+     },
      "label": "doe - qlogei tf=0.85",
      "p_holm_n50": 1.0,
      "status_holm_n50": "null",
      "p_holm_n25": 1.0,
      "status_holm_n25": "null",
      "status_holm_changed": false,
-     "family": "\u00a75.8 paired contrasts on `alpha*`, 7 pairs x 4 thresholds"
+     "family": "\u00a75.8 paired contrasts on `alpha*`, 7 pairs x 4 thresholds",
+     "source": "k6b-conservative(+spread)"
     },
     {
      "n50": {
@@ -2930,13 +3763,24 @@
      "bootstrap_wilcoxon_disagree_n25": false,
      "reported_unit": "instance",
      "n50_label": "anti-conservative unit",
+     "metric": "alpha_star",
+     "metric_class": "model-internal",
+     "arms": [
+      "doe",
+      "qlogei"
+     ],
+     "key_b": null,
+     "filters": {
+      "tau_frac": 0.95
+     },
      "label": "doe - qlogei tf=0.95",
      "p_holm_n50": 1.0,
      "status_holm_n50": "null",
      "p_holm_n25": 0.3696517214344276,
      "status_holm_n25": "null",
      "status_holm_changed": false,
-     "family": "\u00a75.8 paired contrasts on `alpha*`, 7 pairs x 4 thresholds"
+     "family": "\u00a75.8 paired contrasts on `alpha*`, 7 pairs x 4 thresholds",
+     "source": "k6b-conservative(+spread)"
     },
     {
      "n50": {
@@ -2970,13 +3814,24 @@
      "bootstrap_wilcoxon_disagree_n25": false,
      "reported_unit": "instance",
      "n50_label": "anti-conservative unit",
+     "metric": "alpha_star",
+     "metric_class": "model-internal",
+     "arms": [
+      "doe",
+      "qlognei"
+     ],
+     "key_b": null,
+     "filters": {
+      "tau_frac": 0.6
+     },
      "label": "doe - qlognei tf=0.6",
      "p_holm_n50": 1.3426694039926347e-06,
      "status_holm_n50": "significant",
      "p_holm_n25": 0.0006717890592977861,
      "status_holm_n25": "significant",
      "status_holm_changed": false,
-     "family": "\u00a75.8 paired contrasts on `alpha*`, 7 pairs x 4 thresholds"
+     "family": "\u00a75.8 paired contrasts on `alpha*`, 7 pairs x 4 thresholds",
+     "source": "k6b-conservative(+spread)"
     },
     {
      "n50": {
@@ -3010,13 +3865,24 @@
      "bootstrap_wilcoxon_disagree_n25": false,
      "reported_unit": "instance",
      "n50_label": "anti-conservative unit",
+     "metric": "alpha_star",
+     "metric_class": "model-internal",
+     "arms": [
+      "doe",
+      "qlognei"
+     ],
+     "key_b": null,
+     "filters": {
+      "tau_frac": 0.75
+     },
      "label": "doe - qlognei tf=0.75",
      "p_holm_n50": 4.060048086697024e-05,
      "status_holm_n50": "significant",
      "p_holm_n25": 0.0013995345732238894,
      "status_holm_n25": "significant",
      "status_holm_changed": false,
-     "family": "\u00a75.8 paired contrasts on `alpha*`, 7 pairs x 4 thresholds"
+     "family": "\u00a75.8 paired contrasts on `alpha*`, 7 pairs x 4 thresholds",
+     "source": "k6b-conservative(+spread)"
     },
     {
      "n50": {
@@ -3050,13 +3916,24 @@
      "bootstrap_wilcoxon_disagree_n25": false,
      "reported_unit": "instance",
      "n50_label": "anti-conservative unit",
+     "metric": "alpha_star",
+     "metric_class": "model-internal",
+     "arms": [
+      "doe",
+      "qlognei"
+     ],
+     "key_b": null,
+     "filters": {
+      "tau_frac": 0.85
+     },
      "label": "doe - qlognei tf=0.85",
      "p_holm_n50": 1.0,
      "status_holm_n50": "null",
      "p_holm_n25": 1.0,
      "status_holm_n25": "null",
      "status_holm_changed": false,
-     "family": "\u00a75.8 paired contrasts on `alpha*`, 7 pairs x 4 thresholds"
+     "family": "\u00a75.8 paired contrasts on `alpha*`, 7 pairs x 4 thresholds",
+     "source": "k6b-conservative(+spread)"
     },
     {
      "n50": {
@@ -3090,13 +3967,24 @@
      "bootstrap_wilcoxon_disagree_n25": false,
      "reported_unit": "instance",
      "n50_label": "anti-conservative unit",
+     "metric": "alpha_star",
+     "metric_class": "model-internal",
+     "arms": [
+      "doe",
+      "qlognei"
+     ],
+     "key_b": null,
+     "filters": {
+      "tau_frac": 0.95
+     },
      "label": "doe - qlognei tf=0.95",
      "p_holm_n50": 1.0,
      "status_holm_n50": "null",
      "p_holm_n25": 0.23758159000204895,
      "status_holm_n25": "null",
      "status_holm_changed": false,
-     "family": "\u00a75.8 paired contrasts on `alpha*`, 7 pairs x 4 thresholds"
+     "family": "\u00a75.8 paired contrasts on `alpha*`, 7 pairs x 4 thresholds",
+     "source": "k6b-conservative(+spread)"
     },
     {
      "n50": {
@@ -3130,13 +4018,24 @@
      "bootstrap_wilcoxon_disagree_n25": false,
      "reported_unit": "instance",
      "n50_label": "anti-conservative unit",
+     "metric": "alpha_star",
+     "metric_class": "model-internal",
+     "arms": [
+      "lhs",
+      "doe"
+     ],
+     "key_b": null,
+     "filters": {
+      "tau_frac": 0.6
+     },
      "label": "lhs - doe tf=0.6",
      "p_holm_n50": 3.0834729997110954e-08,
      "status_holm_n50": "significant",
      "p_holm_n25": 0.00034257213565707084,
      "status_holm_n25": "significant",
      "status_holm_changed": false,
-     "family": "\u00a75.8 paired contrasts on `alpha*`, 7 pairs x 4 thresholds"
+     "family": "\u00a75.8 paired contrasts on `alpha*`, 7 pairs x 4 thresholds",
+     "source": "k6b-conservative(+spread)"
     },
     {
      "n50": {
@@ -3170,13 +4069,24 @@
      "bootstrap_wilcoxon_disagree_n25": false,
      "reported_unit": "instance",
      "n50_label": "anti-conservative unit",
+     "metric": "alpha_star",
+     "metric_class": "model-internal",
+     "arms": [
+      "lhs",
+      "doe"
+     ],
+     "key_b": null,
+     "filters": {
+      "tau_frac": 0.75
+     },
      "label": "lhs - doe tf=0.75",
      "p_holm_n50": 1.849339902379981e-05,
      "status_holm_n50": "significant",
      "p_holm_n25": 0.0018960505643549428,
      "status_holm_n25": "significant",
      "status_holm_changed": false,
-     "family": "\u00a75.8 paired contrasts on `alpha*`, 7 pairs x 4 thresholds"
+     "family": "\u00a75.8 paired contrasts on `alpha*`, 7 pairs x 4 thresholds",
+     "source": "k6b-conservative(+spread)"
     },
     {
      "n50": {
@@ -3210,13 +4120,24 @@
      "bootstrap_wilcoxon_disagree_n25": false,
      "reported_unit": "instance",
      "n50_label": "anti-conservative unit",
+     "metric": "alpha_star",
+     "metric_class": "model-internal",
+     "arms": [
+      "lhs",
+      "doe"
+     ],
+     "key_b": null,
+     "filters": {
+      "tau_frac": 0.85
+     },
      "label": "lhs - doe tf=0.85",
      "p_holm_n50": 1.0,
      "status_holm_n50": "null",
      "p_holm_n25": 0.4975405053800775,
      "status_holm_n25": "null",
      "status_holm_changed": false,
-     "family": "\u00a75.8 paired contrasts on `alpha*`, 7 pairs x 4 thresholds"
+     "family": "\u00a75.8 paired contrasts on `alpha*`, 7 pairs x 4 thresholds",
+     "source": "k6b-conservative(+spread)"
     },
     {
      "n50": {
@@ -3250,13 +4171,24 @@
      "bootstrap_wilcoxon_disagree_n25": false,
      "reported_unit": "instance",
      "n50_label": "anti-conservative unit",
+     "metric": "alpha_star",
+     "metric_class": "model-internal",
+     "arms": [
+      "lhs",
+      "doe"
+     ],
+     "key_b": null,
+     "filters": {
+      "tau_frac": 0.95
+     },
      "label": "lhs - doe tf=0.95",
      "p_holm_n50": 0.00033465628803224385,
      "status_holm_n50": "significant",
      "p_holm_n25": 0.0016752525991618006,
      "status_holm_n25": "significant",
      "status_holm_changed": false,
-     "family": "\u00a75.8 paired contrasts on `alpha*`, 7 pairs x 4 thresholds"
+     "family": "\u00a75.8 paired contrasts on `alpha*`, 7 pairs x 4 thresholds",
+     "source": "k6b-conservative(+spread)"
     },
     {
      "n50": {
@@ -3290,13 +4222,24 @@
      "bootstrap_wilcoxon_disagree_n25": false,
      "reported_unit": "instance",
      "n50_label": "anti-conservative unit",
+     "metric": "alpha_star",
+     "metric_class": "model-internal",
+     "arms": [
+      "lhs",
+      "qlognei"
+     ],
+     "key_b": null,
+     "filters": {
+      "tau_frac": 0.6
+     },
      "label": "lhs - qlognei tf=0.6",
      "p_holm_n50": 0.17851078688871122,
      "status_holm_n50": "null",
      "p_holm_n25": 0.6931195849656631,
      "status_holm_n25": "null",
      "status_holm_changed": false,
-     "family": "\u00a75.8 paired contrasts on `alpha*`, 7 pairs x 4 thresholds"
+     "family": "\u00a75.8 paired contrasts on `alpha*`, 7 pairs x 4 thresholds",
+     "source": "k6b-conservative(+spread)"
     },
     {
      "n50": {
@@ -3330,13 +4273,24 @@
      "bootstrap_wilcoxon_disagree_n25": false,
      "reported_unit": "instance",
      "n50_label": "anti-conservative unit",
+     "metric": "alpha_star",
+     "metric_class": "model-internal",
+     "arms": [
+      "lhs",
+      "qlognei"
+     ],
+     "key_b": null,
+     "filters": {
+      "tau_frac": 0.75
+     },
      "label": "lhs - qlognei tf=0.75",
      "p_holm_n50": 1.0,
      "status_holm_n50": "null",
      "p_holm_n25": 1.0,
      "status_holm_n25": "null",
      "status_holm_changed": false,
-     "family": "\u00a75.8 paired contrasts on `alpha*`, 7 pairs x 4 thresholds"
+     "family": "\u00a75.8 paired contrasts on `alpha*`, 7 pairs x 4 thresholds",
+     "source": "k6b-conservative(+spread)"
     },
     {
      "n50": {
@@ -3370,13 +4324,24 @@
      "bootstrap_wilcoxon_disagree_n25": false,
      "reported_unit": "instance",
      "n50_label": "anti-conservative unit",
+     "metric": "alpha_star",
+     "metric_class": "model-internal",
+     "arms": [
+      "lhs",
+      "qlognei"
+     ],
+     "key_b": null,
+     "filters": {
+      "tau_frac": 0.85
+     },
      "label": "lhs - qlognei tf=0.85",
      "p_holm_n50": 0.8263281164031584,
      "status_holm_n50": "null",
      "p_holm_n25": 1.0,
      "status_holm_n25": "null",
      "status_holm_changed": false,
-     "family": "\u00a75.8 paired contrasts on `alpha*`, 7 pairs x 4 thresholds"
+     "family": "\u00a75.8 paired contrasts on `alpha*`, 7 pairs x 4 thresholds",
+     "source": "k6b-conservative(+spread)"
     },
     {
      "n50": {
@@ -3410,13 +4375,24 @@
      "bootstrap_wilcoxon_disagree_n25": true,
      "reported_unit": "instance",
      "n50_label": "anti-conservative unit",
+     "metric": "alpha_star",
+     "metric_class": "model-internal",
+     "arms": [
+      "lhs",
+      "qlognei"
+     ],
+     "key_b": null,
+     "filters": {
+      "tau_frac": 0.95
+     },
      "label": "lhs - qlognei tf=0.95",
      "p_holm_n50": 0.09858008916777022,
      "status_holm_n50": "null",
      "p_holm_n25": 0.4975405053800775,
      "status_holm_n25": "null",
      "status_holm_changed": false,
-     "family": "\u00a75.8 paired contrasts on `alpha*`, 7 pairs x 4 thresholds"
+     "family": "\u00a75.8 paired contrasts on `alpha*`, 7 pairs x 4 thresholds",
+     "source": "k6b-conservative(+spread)"
     },
     {
      "n50": {
@@ -3450,13 +4426,24 @@
      "bootstrap_wilcoxon_disagree_n25": false,
      "reported_unit": "instance",
      "n50_label": "anti-conservative unit",
+     "metric": "alpha_star",
+     "metric_class": "model-internal",
+     "arms": [
+      "sobol",
+      "qlognei"
+     ],
+     "key_b": null,
+     "filters": {
+      "tau_frac": 0.6
+     },
      "label": "sobol - qlognei tf=0.6",
      "p_holm_n50": 0.004676380676017928,
      "status_holm_n50": "significant",
      "p_holm_n25": 0.21342978813235194,
      "status_holm_n25": "null",
      "status_holm_changed": true,
-     "family": "\u00a75.8 paired contrasts on `alpha*`, 7 pairs x 4 thresholds"
+     "family": "\u00a75.8 paired contrasts on `alpha*`, 7 pairs x 4 thresholds",
+     "source": "k6b-conservative(+spread)"
     },
     {
      "n50": {
@@ -3490,13 +4477,24 @@
      "bootstrap_wilcoxon_disagree_n25": false,
      "reported_unit": "instance",
      "n50_label": "anti-conservative unit",
+     "metric": "alpha_star",
+     "metric_class": "model-internal",
+     "arms": [
+      "sobol",
+      "qlognei"
+     ],
+     "key_b": null,
+     "filters": {
+      "tau_frac": 0.75
+     },
      "label": "sobol - qlognei tf=0.75",
      "p_holm_n50": 0.1592145630437802,
      "status_holm_n50": "null",
      "p_holm_n25": 0.23758159000204895,
      "status_holm_n25": "null",
      "status_holm_changed": false,
-     "family": "\u00a75.8 paired contrasts on `alpha*`, 7 pairs x 4 thresholds"
+     "family": "\u00a75.8 paired contrasts on `alpha*`, 7 pairs x 4 thresholds",
+     "source": "k6b-conservative(+spread)"
     },
     {
      "n50": {
@@ -3530,13 +4528,24 @@
      "bootstrap_wilcoxon_disagree_n25": false,
      "reported_unit": "instance",
      "n50_label": "anti-conservative unit",
+     "metric": "alpha_star",
+     "metric_class": "model-internal",
+     "arms": [
+      "sobol",
+      "qlognei"
+     ],
+     "key_b": null,
+     "filters": {
+      "tau_frac": 0.85
+     },
      "label": "sobol - qlognei tf=0.85",
      "p_holm_n50": 0.8799489277319945,
      "status_holm_n50": "null",
      "p_holm_n25": 0.23758159000204895,
      "status_holm_n25": "null",
      "status_holm_changed": false,
-     "family": "\u00a75.8 paired contrasts on `alpha*`, 7 pairs x 4 thresholds"
+     "family": "\u00a75.8 paired contrasts on `alpha*`, 7 pairs x 4 thresholds",
+     "source": "k6b-conservative(+spread)"
     },
     {
      "n50": {
@@ -3570,13 +4579,24 @@
      "bootstrap_wilcoxon_disagree_n25": true,
      "reported_unit": "instance",
      "n50_label": "anti-conservative unit",
+     "metric": "alpha_star",
+     "metric_class": "model-internal",
+     "arms": [
+      "sobol",
+      "qlognei"
+     ],
+     "key_b": null,
+     "filters": {
+      "tau_frac": 0.95
+     },
      "label": "sobol - qlognei tf=0.95",
      "p_holm_n50": 1.0,
      "status_holm_n50": "null",
      "p_holm_n25": 0.6931195849656631,
      "status_holm_n25": "null",
      "status_holm_changed": false,
-     "family": "\u00a75.8 paired contrasts on `alpha*`, 7 pairs x 4 thresholds"
+     "family": "\u00a75.8 paired contrasts on `alpha*`, 7 pairs x 4 thresholds",
+     "source": "k6b-conservative(+spread)"
     },
     {
      "n50": {
@@ -3610,13 +4630,24 @@
      "bootstrap_wilcoxon_disagree_n25": false,
      "reported_unit": "instance",
      "n50_label": "anti-conservative unit",
+     "metric": "alpha_star",
+     "metric_class": "model-internal",
+     "arms": [
+      "sobol",
+      "lhs"
+     ],
+     "key_b": null,
+     "filters": {
+      "tau_frac": 0.6
+     },
      "label": "sobol - lhs tf=0.6",
      "p_holm_n50": 0.6598287705895794,
      "status_holm_n50": "null",
      "p_holm_n25": 1.0,
      "status_holm_n25": "null",
      "status_holm_changed": false,
-     "family": "\u00a75.8 paired contrasts on `alpha*`, 7 pairs x 4 thresholds"
+     "family": "\u00a75.8 paired contrasts on `alpha*`, 7 pairs x 4 thresholds",
+     "source": "k6b-conservative(+spread)"
     },
     {
      "n50": {
@@ -3650,13 +4681,24 @@
      "bootstrap_wilcoxon_disagree_n25": false,
      "reported_unit": "instance",
      "n50_label": "anti-conservative unit",
+     "metric": "alpha_star",
+     "metric_class": "model-internal",
+     "arms": [
+      "sobol",
+      "lhs"
+     ],
+     "key_b": null,
+     "filters": {
+      "tau_frac": 0.75
+     },
      "label": "sobol - lhs tf=0.75",
      "p_holm_n50": 0.013178474418178108,
      "status_holm_n50": "significant",
      "p_holm_n25": 0.004121124744415283,
      "status_holm_n25": "significant",
      "status_holm_changed": false,
-     "family": "\u00a75.8 paired contrasts on `alpha*`, 7 pairs x 4 thresholds"
+     "family": "\u00a75.8 paired contrasts on `alpha*`, 7 pairs x 4 thresholds",
+     "source": "k6b-conservative(+spread)"
     },
     {
      "n50": {
@@ -3690,13 +4732,24 @@
      "bootstrap_wilcoxon_disagree_n25": false,
      "reported_unit": "instance",
      "n50_label": "anti-conservative unit",
+     "metric": "alpha_star",
+     "metric_class": "model-internal",
+     "arms": [
+      "sobol",
+      "lhs"
+     ],
+     "key_b": null,
+     "filters": {
+      "tau_frac": 0.85
+     },
      "label": "sobol - lhs tf=0.85",
      "p_holm_n50": 0.0011604715244749265,
      "status_holm_n50": "significant",
      "p_holm_n25": 0.001380451139405609,
      "status_holm_n25": "significant",
      "status_holm_changed": false,
-     "family": "\u00a75.8 paired contrasts on `alpha*`, 7 pairs x 4 thresholds"
+     "family": "\u00a75.8 paired contrasts on `alpha*`, 7 pairs x 4 thresholds",
+     "source": "k6b-conservative(+spread)"
     },
     {
      "n50": {
@@ -3730,13 +4783,24 @@
      "bootstrap_wilcoxon_disagree_n25": false,
      "reported_unit": "instance",
      "n50_label": "anti-conservative unit",
+     "metric": "alpha_star",
+     "metric_class": "model-internal",
+     "arms": [
+      "sobol",
+      "lhs"
+     ],
+     "key_b": null,
+     "filters": {
+      "tau_frac": 0.95
+     },
      "label": "sobol - lhs tf=0.95",
      "p_holm_n50": 0.001057792038888451,
      "status_holm_n50": "significant",
      "p_holm_n25": 0.002019602496768319,
      "status_holm_n25": "significant",
      "status_holm_changed": false,
-     "family": "\u00a75.8 paired contrasts on `alpha*`, 7 pairs x 4 thresholds"
+     "family": "\u00a75.8 paired contrasts on `alpha*`, 7 pairs x 4 thresholds",
+     "source": "k6b-conservative(+spread)"
     },
     {
      "n50": {
@@ -3770,13 +4834,24 @@
      "bootstrap_wilcoxon_disagree_n25": true,
      "reported_unit": "instance",
      "n50_label": "anti-conservative unit",
+     "metric": "alpha_star",
+     "metric_class": "model-internal",
+     "arms": [
+      "random",
+      "lhs"
+     ],
+     "key_b": null,
+     "filters": {
+      "tau_frac": 0.6
+     },
      "label": "random - lhs tf=0.6",
      "p_holm_n50": 1.0,
      "status_holm_n50": "null",
      "p_holm_n25": 0.5788563713583562,
      "status_holm_n25": "null",
      "status_holm_changed": false,
-     "family": "\u00a75.8 paired contrasts on `alpha*`, 7 pairs x 4 thresholds"
+     "family": "\u00a75.8 paired contrasts on `alpha*`, 7 pairs x 4 thresholds",
+     "source": "k6b-conservative(+spread)"
     },
     {
      "n50": {
@@ -3810,13 +4885,24 @@
      "bootstrap_wilcoxon_disagree_n25": false,
      "reported_unit": "instance",
      "n50_label": "anti-conservative unit",
+     "metric": "alpha_star",
+     "metric_class": "model-internal",
+     "arms": [
+      "random",
+      "lhs"
+     ],
+     "key_b": null,
+     "filters": {
+      "tau_frac": 0.75
+     },
      "label": "random - lhs tf=0.75",
      "p_holm_n50": 1.0,
      "status_holm_n50": "null",
      "p_holm_n25": 1.0,
      "status_holm_n25": "null",
      "status_holm_changed": false,
-     "family": "\u00a75.8 paired contrasts on `alpha*`, 7 pairs x 4 thresholds"
+     "family": "\u00a75.8 paired contrasts on `alpha*`, 7 pairs x 4 thresholds",
+     "source": "k6b-conservative(+spread)"
     },
     {
      "n50": {
@@ -3850,13 +4936,24 @@
      "bootstrap_wilcoxon_disagree_n25": false,
      "reported_unit": "instance",
      "n50_label": "anti-conservative unit",
+     "metric": "alpha_star",
+     "metric_class": "model-internal",
+     "arms": [
+      "random",
+      "lhs"
+     ],
+     "key_b": null,
+     "filters": {
+      "tau_frac": 0.85
+     },
      "label": "random - lhs tf=0.85",
      "p_holm_n50": 1.0,
      "status_holm_n50": "null",
      "p_holm_n25": 1.0,
      "status_holm_n25": "null",
      "status_holm_changed": false,
-     "family": "\u00a75.8 paired contrasts on `alpha*`, 7 pairs x 4 thresholds"
+     "family": "\u00a75.8 paired contrasts on `alpha*`, 7 pairs x 4 thresholds",
+     "source": "k6b-conservative(+spread)"
     },
     {
      "n50": {
@@ -3890,13 +4987,24 @@
      "bootstrap_wilcoxon_disagree_n25": false,
      "reported_unit": "instance",
      "n50_label": "anti-conservative unit",
+     "metric": "alpha_star",
+     "metric_class": "model-internal",
+     "arms": [
+      "random",
+      "lhs"
+     ],
+     "key_b": null,
+     "filters": {
+      "tau_frac": 0.95
+     },
      "label": "random - lhs tf=0.95",
      "p_holm_n50": 1.0,
      "status_holm_n50": "null",
      "p_holm_n25": 1.0,
      "status_holm_n25": "null",
      "status_holm_changed": false,
-     "family": "\u00a75.8 paired contrasts on `alpha*`, 7 pairs x 4 thresholds"
+     "family": "\u00a75.8 paired contrasts on `alpha*`, 7 pairs x 4 thresholds",
+     "source": "k6b-conservative(+spread)"
     }
    ]
   },
@@ -3938,13 +5046,22 @@
      "bootstrap_wilcoxon_disagree_n25": false,
      "reported_unit": "instance",
      "n50_label": "anti-conservative unit",
+     "metric": "alpha_star_0.6",
+     "metric_class": "model-internal",
+     "arms": [
+      "versionb",
+      "qlognei"
+     ],
+     "key_b": null,
+     "filters": {},
      "label": "versionb - qlognei alpha_star tf=0.6",
      "p_holm_n50": 0.8085155151626005,
      "status_holm_n50": "null",
      "p_holm_n25": 0.7360938584061627,
      "status_holm_n25": "null",
      "status_holm_changed": false,
-     "family": "\u00a75.11.3 KILL 1 \u2014 does plate 2 close the gap to qLogNEI?"
+     "family": "\u00a75.11.3 KILL 1 \u2014 does plate 2 close the gap to qLogNEI?",
+     "source": "versionb"
     },
     {
      "n50": {
@@ -3978,13 +5095,22 @@
      "bootstrap_wilcoxon_disagree_n25": false,
      "reported_unit": "instance",
      "n50_label": "anti-conservative unit",
+     "metric": "alpha_star_0.75",
+     "metric_class": "model-internal",
+     "arms": [
+      "versionb",
+      "qlognei"
+     ],
+     "key_b": null,
+     "filters": {},
      "label": "versionb - qlognei alpha_star tf=0.75",
      "p_holm_n50": 0.13862945545394637,
      "status_holm_n50": "null",
      "p_holm_n25": 0.07419829690283453,
      "status_holm_n25": "null",
      "status_holm_changed": false,
-     "family": "\u00a75.11.3 KILL 1 \u2014 does plate 2 close the gap to qLogNEI?"
+     "family": "\u00a75.11.3 KILL 1 \u2014 does plate 2 close the gap to qLogNEI?",
+     "source": "versionb"
     },
     {
      "n50": {
@@ -4018,13 +5144,22 @@
      "bootstrap_wilcoxon_disagree_n25": false,
      "reported_unit": "instance",
      "n50_label": "anti-conservative unit",
+     "metric": "alpha_star_0.85",
+     "metric_class": "model-internal",
+     "arms": [
+      "versionb",
+      "qlognei"
+     ],
+     "key_b": null,
+     "filters": {},
      "label": "versionb - qlognei alpha_star tf=0.85",
      "p_holm_n50": 0.11653665177293308,
      "status_holm_n50": "null",
      "p_holm_n25": 0.03422762975566636,
      "status_holm_n25": "significant",
      "status_holm_changed": true,
-     "family": "\u00a75.11.3 KILL 1 \u2014 does plate 2 close the gap to qLogNEI?"
+     "family": "\u00a75.11.3 KILL 1 \u2014 does plate 2 close the gap to qLogNEI?",
+     "source": "versionb"
     },
     {
      "n50": {
@@ -4058,13 +5193,22 @@
      "bootstrap_wilcoxon_disagree_n25": false,
      "reported_unit": "instance",
      "n50_label": "anti-conservative unit",
+     "metric": "alpha_star_0.95",
+     "metric_class": "model-internal",
+     "arms": [
+      "versionb",
+      "qlognei"
+     ],
+     "key_b": null,
+     "filters": {},
      "label": "versionb - qlognei alpha_star tf=0.95",
      "p_holm_n50": 0.08216340480210589,
      "status_holm_n50": "null",
      "p_holm_n25": 0.07419829690283453,
      "status_holm_n25": "null",
      "status_holm_changed": false,
-     "family": "\u00a75.11.3 KILL 1 \u2014 does plate 2 close the gap to qLogNEI?"
+     "family": "\u00a75.11.3 KILL 1 \u2014 does plate 2 close the gap to qLogNEI?",
+     "source": "versionb"
     },
     {
      "n50": {
@@ -4098,13 +5242,22 @@
      "bootstrap_wilcoxon_disagree_n25": false,
      "reported_unit": "instance",
      "n50_label": "anti-conservative unit",
+     "metric": "auc_0.6",
+     "metric_class": "validated",
+     "arms": [
+      "versionb",
+      "qlognei"
+     ],
+     "key_b": null,
+     "filters": {},
      "label": "versionb - qlognei auc tf=0.6",
      "p_holm_n50": 0.8085155151626005,
      "status_holm_n50": "null",
      "p_holm_n25": 0.7360938584061627,
      "status_holm_n25": "null",
      "status_holm_changed": false,
-     "family": "\u00a75.11.3 KILL 1 \u2014 does plate 2 close the gap to qLogNEI?"
+     "family": "\u00a75.11.3 KILL 1 \u2014 does plate 2 close the gap to qLogNEI?",
+     "source": "versionb"
     },
     {
      "n50": {
@@ -4138,13 +5291,22 @@
      "bootstrap_wilcoxon_disagree_n25": false,
      "reported_unit": "instance",
      "n50_label": "anti-conservative unit",
+     "metric": "auc_0.75",
+     "metric_class": "validated",
+     "arms": [
+      "versionb",
+      "qlognei"
+     ],
+     "key_b": null,
+     "filters": {},
      "label": "versionb - qlognei auc tf=0.75",
      "p_holm_n50": 0.06527737684615786,
      "status_holm_n50": "null",
      "p_holm_n25": 0.0205153226852417,
      "status_holm_n25": "significant",
      "status_holm_changed": true,
-     "family": "\u00a75.11.3 KILL 1 \u2014 does plate 2 close the gap to qLogNEI?"
+     "family": "\u00a75.11.3 KILL 1 \u2014 does plate 2 close the gap to qLogNEI?",
+     "source": "versionb"
     },
     {
      "n50": {
@@ -4178,13 +5340,22 @@
      "bootstrap_wilcoxon_disagree_n25": false,
      "reported_unit": "instance",
      "n50_label": "anti-conservative unit",
+     "metric": "auc_0.85",
+     "metric_class": "validated",
+     "arms": [
+      "versionb",
+      "qlognei"
+     ],
+     "key_b": null,
+     "filters": {},
      "label": "versionb - qlognei auc tf=0.85",
      "p_holm_n50": 0.02020548835010061,
      "status_holm_n50": "significant",
      "p_holm_n25": 0.0030112266540527344,
      "status_holm_n25": "significant",
      "status_holm_changed": false,
-     "family": "\u00a75.11.3 KILL 1 \u2014 does plate 2 close the gap to qLogNEI?"
+     "family": "\u00a75.11.3 KILL 1 \u2014 does plate 2 close the gap to qLogNEI?",
+     "source": "versionb"
     },
     {
      "n50": {
@@ -4218,13 +5389,22 @@
      "bootstrap_wilcoxon_disagree_n25": false,
      "reported_unit": "instance",
      "n50_label": "anti-conservative unit",
+     "metric": "auc_0.95",
+     "metric_class": "validated",
+     "arms": [
+      "versionb",
+      "qlognei"
+     ],
+     "key_b": null,
+     "filters": {},
      "label": "versionb - qlognei auc tf=0.95",
      "p_holm_n50": 0.02020548835010061,
      "status_holm_n50": "significant",
      "p_holm_n25": 0.008083879947662354,
      "status_holm_n25": "significant",
      "status_holm_changed": false,
-     "family": "\u00a75.11.3 KILL 1 \u2014 does plate 2 close the gap to qLogNEI?"
+     "family": "\u00a75.11.3 KILL 1 \u2014 does plate 2 close the gap to qLogNEI?",
+     "source": "versionb"
     }
    ]
   },
@@ -4266,13 +5446,22 @@
      "bootstrap_wilcoxon_disagree_n25": false,
      "reported_unit": "instance",
      "n50_label": "anti-conservative unit",
+     "metric": "alpha_star_0.6",
+     "metric_class": "model-internal",
+     "arms": [
+      "versionb",
+      "versionb_random"
+     ],
+     "key_b": null,
+     "filters": {},
      "label": "versionb - versionb_random alpha_star tf=0.6",
      "p_holm_n50": 0.1891013479132356,
      "status_holm_n50": "null",
      "p_holm_n25": 0.01852726936340332,
      "status_holm_n25": "significant",
      "status_holm_changed": true,
-     "family": "\u00a75.11.4 KILL 2 \u2014 does the LSE criterion beat 8 RANDOM wells?"
+     "family": "\u00a75.11.4 KILL 2 \u2014 does the LSE criterion beat 8 RANDOM wells?",
+     "source": "versionb"
     },
     {
      "n50": {
@@ -4306,13 +5495,22 @@
      "bootstrap_wilcoxon_disagree_n25": false,
      "reported_unit": "instance",
      "n50_label": "anti-conservative unit",
+     "metric": "alpha_star_0.75",
+     "metric_class": "model-internal",
+     "arms": [
+      "versionb",
+      "versionb_random"
+     ],
+     "key_b": null,
+     "filters": {},
      "label": "versionb - versionb_random alpha_star tf=0.75",
      "p_holm_n50": 0.03163507960790643,
      "status_holm_n50": "significant",
      "p_holm_n25": 0.0050475539823053315,
      "status_holm_n25": "significant",
      "status_holm_changed": false,
-     "family": "\u00a75.11.4 KILL 2 \u2014 does the LSE criterion beat 8 RANDOM wells?"
+     "family": "\u00a75.11.4 KILL 2 \u2014 does the LSE criterion beat 8 RANDOM wells?",
+     "source": "versionb"
     },
     {
      "n50": {
@@ -4346,13 +5544,22 @@
      "bootstrap_wilcoxon_disagree_n25": false,
      "reported_unit": "instance",
      "n50_label": "anti-conservative unit",
+     "metric": "alpha_star_0.85",
+     "metric_class": "model-internal",
+     "arms": [
+      "versionb",
+      "versionb_random"
+     ],
+     "key_b": null,
+     "filters": {},
      "label": "versionb - versionb_random alpha_star tf=0.85",
      "p_holm_n50": 0.1891013479132356,
      "status_holm_n50": "null",
      "p_holm_n25": 0.09190247391221179,
      "status_holm_n25": "null",
      "status_holm_changed": false,
-     "family": "\u00a75.11.4 KILL 2 \u2014 does the LSE criterion beat 8 RANDOM wells?"
+     "family": "\u00a75.11.4 KILL 2 \u2014 does the LSE criterion beat 8 RANDOM wells?",
+     "source": "versionb"
     },
     {
      "n50": {
@@ -4386,13 +5593,22 @@
      "bootstrap_wilcoxon_disagree_n25": false,
      "reported_unit": "instance",
      "n50_label": "anti-conservative unit",
+     "metric": "alpha_star_0.95",
+     "metric_class": "model-internal",
+     "arms": [
+      "versionb",
+      "versionb_random"
+     ],
+     "key_b": null,
+     "filters": {},
      "label": "versionb - versionb_random alpha_star tf=0.95",
      "p_holm_n50": 0.3839800301623555,
      "status_holm_n50": "null",
      "p_holm_n25": 0.35980135202407837,
      "status_holm_n25": "null",
      "status_holm_changed": false,
-     "family": "\u00a75.11.4 KILL 2 \u2014 does the LSE criterion beat 8 RANDOM wells?"
+     "family": "\u00a75.11.4 KILL 2 \u2014 does the LSE criterion beat 8 RANDOM wells?",
+     "source": "versionb"
     },
     {
      "n50": {
@@ -4426,13 +5642,22 @@
      "bootstrap_wilcoxon_disagree_n25": false,
      "reported_unit": "instance",
      "n50_label": "anti-conservative unit",
+     "metric": "auc_0.6",
+     "metric_class": "validated",
+     "arms": [
+      "versionb",
+      "versionb_random"
+     ],
+     "key_b": null,
+     "filters": {},
      "label": "versionb - versionb_random auc tf=0.6",
      "p_holm_n50": 0.3839800301623555,
      "status_holm_n50": "null",
      "p_holm_n25": 0.35980135202407837,
      "status_holm_n25": "null",
      "status_holm_changed": false,
-     "family": "\u00a75.11.4 KILL 2 \u2014 does the LSE criterion beat 8 RANDOM wells?"
+     "family": "\u00a75.11.4 KILL 2 \u2014 does the LSE criterion beat 8 RANDOM wells?",
+     "source": "versionb"
     },
     {
      "n50": {
@@ -4466,13 +5691,22 @@
      "bootstrap_wilcoxon_disagree_n25": false,
      "reported_unit": "instance",
      "n50_label": "anti-conservative unit",
+     "metric": "auc_0.75",
+     "metric_class": "validated",
+     "arms": [
+      "versionb",
+      "versionb_random"
+     ],
+     "key_b": null,
+     "filters": {},
      "label": "versionb - versionb_random auc tf=0.75",
      "p_holm_n50": 0.001769137881495908,
      "status_holm_n50": "significant",
      "p_holm_n25": 0.014175891876220703,
      "status_holm_n25": "significant",
      "status_holm_changed": false,
-     "family": "\u00a75.11.4 KILL 2 \u2014 does the LSE criterion beat 8 RANDOM wells?"
+     "family": "\u00a75.11.4 KILL 2 \u2014 does the LSE criterion beat 8 RANDOM wells?",
+     "source": "versionb"
     },
     {
      "n50": {
@@ -4506,13 +5740,22 @@
      "bootstrap_wilcoxon_disagree_n25": false,
      "reported_unit": "instance",
      "n50_label": "anti-conservative unit",
+     "metric": "auc_0.85",
+     "metric_class": "validated",
+     "arms": [
+      "versionb",
+      "versionb_random"
+     ],
+     "key_b": null,
+     "filters": {},
      "label": "versionb - versionb_random auc tf=0.85",
      "p_holm_n50": 0.016497650009743126,
      "status_holm_n50": "significant",
      "p_holm_n25": 0.01852726936340332,
      "status_holm_n25": "significant",
      "status_holm_changed": false,
-     "family": "\u00a75.11.4 KILL 2 \u2014 does the LSE criterion beat 8 RANDOM wells?"
+     "family": "\u00a75.11.4 KILL 2 \u2014 does the LSE criterion beat 8 RANDOM wells?",
+     "source": "versionb"
     },
     {
      "n50": {
@@ -4546,13 +5789,22 @@
      "bootstrap_wilcoxon_disagree_n25": false,
      "reported_unit": "instance",
      "n50_label": "anti-conservative unit",
+     "metric": "auc_0.95",
+     "metric_class": "validated",
+     "arms": [
+      "versionb",
+      "versionb_random"
+     ],
+     "key_b": null,
+     "filters": {},
      "label": "versionb - versionb_random auc tf=0.95",
      "p_holm_n50": 0.3839800301623555,
      "status_holm_n50": "null",
      "p_holm_n25": 0.35980135202407837,
      "status_holm_n25": "null",
      "status_holm_changed": false,
-     "family": "\u00a75.11.4 KILL 2 \u2014 does the LSE criterion beat 8 RANDOM wells?"
+     "family": "\u00a75.11.4 KILL 2 \u2014 does the LSE criterion beat 8 RANDOM wells?",
+     "source": "versionb"
     }
    ]
   },
@@ -4594,13 +5846,22 @@
      "bootstrap_wilcoxon_disagree_n25": false,
      "reported_unit": "instance",
      "n50_label": "anti-conservative unit",
+     "metric": "vorobev_dev_0.6",
+     "metric_class": "model-internal",
+     "arms": [
+      "versionb",
+      "versionb_random"
+     ],
+     "key_b": null,
+     "filters": {},
      "label": "versionb - versionb_random vorobev_dev tf=0.6",
      "p_holm_n50": 0.00012512652876495167,
      "status_holm_n50": "significant",
      "p_holm_n25": 4.029273986816406e-05,
      "status_holm_n25": "significant",
      "status_holm_changed": false,
-     "family": "\u00a75.11.4 Vorob'ev deviation, reported beside KILL 2"
+     "family": "\u00a75.11.4 Vorob'ev deviation, reported beside KILL 2",
+     "source": "versionb"
     },
     {
      "n50": {
@@ -4634,13 +5895,22 @@
      "bootstrap_wilcoxon_disagree_n25": false,
      "reported_unit": "instance",
      "n50_label": "anti-conservative unit",
+     "metric": "vorobev_dev_0.75",
+     "metric_class": "model-internal",
+     "arms": [
+      "versionb",
+      "versionb_random"
+     ],
+     "key_b": null,
+     "filters": {},
      "label": "versionb - versionb_random vorobev_dev tf=0.75",
      "p_holm_n50": 0.014737081542602226,
      "status_holm_n50": "significant",
      "p_holm_n25": 0.0004196763038635254,
      "status_holm_n25": "significant",
      "status_holm_changed": false,
-     "family": "\u00a75.11.4 Vorob'ev deviation, reported beside KILL 2"
+     "family": "\u00a75.11.4 Vorob'ev deviation, reported beside KILL 2",
+     "source": "versionb"
     },
     {
      "n50": {
@@ -4674,13 +5944,22 @@
      "bootstrap_wilcoxon_disagree_n25": false,
      "reported_unit": "instance",
      "n50_label": "anti-conservative unit",
+     "metric": "vorobev_dev_0.85",
+     "metric_class": "model-internal",
+     "arms": [
+      "versionb",
+      "versionb_random"
+     ],
+     "key_b": null,
+     "filters": {},
      "label": "versionb - versionb_random vorobev_dev tf=0.85",
      "p_holm_n50": 0.44462975230658586,
      "status_holm_n50": "null",
      "p_holm_n25": 0.29695916175842285,
      "status_holm_n25": "null",
      "status_holm_changed": false,
-     "family": "\u00a75.11.4 Vorob'ev deviation, reported beside KILL 2"
+     "family": "\u00a75.11.4 Vorob'ev deviation, reported beside KILL 2",
+     "source": "versionb"
     },
     {
      "n50": {
@@ -4714,13 +5993,22 @@
      "bootstrap_wilcoxon_disagree_n25": false,
      "reported_unit": "instance",
      "n50_label": "anti-conservative unit",
+     "metric": "vorobev_dev_0.95",
+     "metric_class": "model-internal",
+     "arms": [
+      "versionb",
+      "versionb_random"
+     ],
+     "key_b": null,
+     "filters": {},
      "label": "versionb - versionb_random vorobev_dev tf=0.95",
      "p_holm_n50": 0.44462975230658586,
      "status_holm_n50": "null",
      "p_holm_n25": 0.6528410911560059,
      "status_holm_n25": "null",
      "status_holm_changed": false,
-     "family": "\u00a75.11.4 Vorob'ev deviation, reported beside KILL 2"
+     "family": "\u00a75.11.4 Vorob'ev deviation, reported beside KILL 2",
+     "source": "versionb"
     }
    ]
   },
@@ -4762,13 +6050,22 @@
      "bootstrap_wilcoxon_disagree_n25": false,
      "reported_unit": "instance",
      "n50_label": "anti-conservative unit",
+     "metric": "alpha_star_0.6",
+     "metric_class": "model-internal",
+     "arms": [
+      "versionb",
+      "plate1_only"
+     ],
+     "key_b": null,
+     "filters": {},
      "label": "versionb - plate1_only alpha_star tf=0.6",
      "p_holm_n50": 0.026729133317081766,
      "status_holm_n50": "significant",
      "p_holm_n25": 0.003942945466801907,
      "status_holm_n25": "significant",
      "status_holm_changed": false,
-     "family": "\u00a75.11.5 `versionb` - `plate1_only` \u2014 the second plate itself"
+     "family": "\u00a75.11.5 `versionb` - `plate1_only` \u2014 the second plate itself",
+     "source": "versionb"
     },
     {
      "n50": {
@@ -4802,13 +6099,22 @@
      "bootstrap_wilcoxon_disagree_n25": false,
      "reported_unit": "instance",
      "n50_label": "anti-conservative unit",
+     "metric": "alpha_star_0.75",
+     "metric_class": "model-internal",
+     "arms": [
+      "versionb",
+      "plate1_only"
+     ],
+     "key_b": null,
+     "filters": {},
      "label": "versionb - plate1_only alpha_star tf=0.75",
      "p_holm_n50": 0.5686372183373931,
      "status_holm_n50": "null",
      "p_holm_n25": 0.08132815361022949,
      "status_holm_n25": "null",
      "status_holm_changed": false,
-     "family": "\u00a75.11.5 `versionb` - `plate1_only` \u2014 the second plate itself"
+     "family": "\u00a75.11.5 `versionb` - `plate1_only` \u2014 the second plate itself",
+     "source": "versionb"
     },
     {
      "n50": {
@@ -4842,13 +6148,22 @@
      "bootstrap_wilcoxon_disagree_n25": false,
      "reported_unit": "instance",
      "n50_label": "anti-conservative unit",
+     "metric": "alpha_star_0.85",
+     "metric_class": "model-internal",
+     "arms": [
+      "versionb",
+      "plate1_only"
+     ],
+     "key_b": null,
+     "filters": {},
      "label": "versionb - plate1_only alpha_star tf=0.85",
      "p_holm_n50": 0.7081212802078058,
      "status_holm_n50": "null",
      "p_holm_n25": 0.4383943335964638,
      "status_holm_n25": "null",
      "status_holm_changed": false,
-     "family": "\u00a75.11.5 `versionb` - `plate1_only` \u2014 the second plate itself"
+     "family": "\u00a75.11.5 `versionb` - `plate1_only` \u2014 the second plate itself",
+     "source": "versionb"
     },
     {
      "n50": {
@@ -4882,13 +6197,22 @@
      "bootstrap_wilcoxon_disagree_n25": false,
      "reported_unit": "instance",
      "n50_label": "anti-conservative unit",
+     "metric": "alpha_star_0.95",
+     "metric_class": "model-internal",
+     "arms": [
+      "versionb",
+      "plate1_only"
+     ],
+     "key_b": null,
+     "filters": {},
      "label": "versionb - plate1_only alpha_star tf=0.95",
      "p_holm_n50": 0.779498370839442,
      "status_holm_n50": "null",
      "p_holm_n25": 0.8255528211593628,
      "status_holm_n25": "null",
      "status_holm_changed": false,
-     "family": "\u00a75.11.5 `versionb` - `plate1_only` \u2014 the second plate itself"
+     "family": "\u00a75.11.5 `versionb` - `plate1_only` \u2014 the second plate itself",
+     "source": "versionb"
     },
     {
      "n50": {
@@ -4922,13 +6246,22 @@
      "bootstrap_wilcoxon_disagree_n25": false,
      "reported_unit": "instance",
      "n50_label": "anti-conservative unit",
+     "metric": "auc_0.6",
+     "metric_class": "validated",
+     "arms": [
+      "versionb",
+      "plate1_only"
+     ],
+     "key_b": null,
+     "filters": {},
      "label": "versionb - plate1_only auc tf=0.6",
      "p_holm_n50": 0.0239700014600146,
      "status_holm_n50": "significant",
      "p_holm_n25": 0.029226303100585938,
      "status_holm_n25": "significant",
      "status_holm_changed": false,
-     "family": "\u00a75.11.5 `versionb` - `plate1_only` \u2014 the second plate itself"
+     "family": "\u00a75.11.5 `versionb` - `plate1_only` \u2014 the second plate itself",
+     "source": "versionb"
     },
     {
      "n50": {
@@ -4962,13 +6295,22 @@
      "bootstrap_wilcoxon_disagree_n25": false,
      "reported_unit": "instance",
      "n50_label": "anti-conservative unit",
+     "metric": "auc_0.75",
+     "metric_class": "validated",
+     "arms": [
+      "versionb",
+      "plate1_only"
+     ],
+     "key_b": null,
+     "filters": {},
      "label": "versionb - plate1_only auc tf=0.75",
      "p_holm_n50": 0.16954187131744192,
      "status_holm_n50": "null",
      "p_holm_n25": 0.2107509970664978,
      "status_holm_n25": "null",
      "status_holm_changed": false,
-     "family": "\u00a75.11.5 `versionb` - `plate1_only` \u2014 the second plate itself"
+     "family": "\u00a75.11.5 `versionb` - `plate1_only` \u2014 the second plate itself",
+     "source": "versionb"
     },
     {
      "n50": {
@@ -5002,13 +6344,22 @@
      "bootstrap_wilcoxon_disagree_n25": false,
      "reported_unit": "instance",
      "n50_label": "anti-conservative unit",
+     "metric": "auc_0.85",
+     "metric_class": "validated",
+     "arms": [
+      "versionb",
+      "plate1_only"
+     ],
+     "key_b": null,
+     "filters": {},
      "label": "versionb - plate1_only auc tf=0.85",
      "p_holm_n50": 0.6060122283311884,
      "status_holm_n50": "null",
      "p_holm_n25": 0.8255528211593628,
      "status_holm_n25": "null",
      "status_holm_changed": false,
-     "family": "\u00a75.11.5 `versionb` - `plate1_only` \u2014 the second plate itself"
+     "family": "\u00a75.11.5 `versionb` - `plate1_only` \u2014 the second plate itself",
+     "source": "versionb"
     },
     {
      "n50": {
@@ -5042,13 +6393,22 @@
      "bootstrap_wilcoxon_disagree_n25": false,
      "reported_unit": "instance",
      "n50_label": "anti-conservative unit",
+     "metric": "auc_0.95",
+     "metric_class": "validated",
+     "arms": [
+      "versionb",
+      "plate1_only"
+     ],
+     "key_b": null,
+     "filters": {},
      "label": "versionb - plate1_only auc tf=0.95",
      "p_holm_n50": 0.6559872052757836,
      "status_holm_n50": "null",
      "p_holm_n25": 0.8255528211593628,
      "status_holm_n25": "null",
      "status_holm_changed": false,
-     "family": "\u00a75.11.5 `versionb` - `plate1_only` \u2014 the second plate itself"
+     "family": "\u00a75.11.5 `versionb` - `plate1_only` \u2014 the second plate itself",
+     "source": "versionb"
     }
    ]
   },
@@ -5090,13 +6450,22 @@
      "bootstrap_wilcoxon_disagree_n25": false,
      "reported_unit": "instance",
      "n50_label": "anti-conservative unit",
+     "metric": "regret",
+     "metric_class": "validated",
+     "arms": [
+      "versionb",
+      "plate1_only"
+     ],
+     "key_b": null,
+     "filters": {},
      "label": "versionb - plate1_only regret",
      "p_holm_n50": 0.03327549116252371,
      "status_holm_n50": "significant",
      "p_holm_n25": 0.011157631874084473,
      "status_holm_n25": "significant",
      "status_holm_changed": false,
-     "family": "\u00a75.11.2 Version B regret contrasts"
+     "family": "\u00a75.11.2 Version B regret contrasts",
+     "source": "versionb"
     },
     {
      "n50": {
@@ -5130,13 +6499,22 @@
      "bootstrap_wilcoxon_disagree_n25": false,
      "reported_unit": "instance",
      "n50_label": "anti-conservative unit",
+     "metric": "regret",
+     "metric_class": "validated",
+     "arms": [
+      "versionb",
+      "qlognei"
+     ],
+     "key_b": null,
+     "filters": {},
      "label": "versionb - qlognei regret",
      "p_holm_n50": 0.8632650227005474,
      "status_holm_n50": "null",
      "p_holm_n25": 0.936802864074707,
      "status_holm_n25": "null",
      "status_holm_changed": false,
-     "family": "\u00a75.11.2 Version B regret contrasts"
+     "family": "\u00a75.11.2 Version B regret contrasts",
+     "source": "versionb"
     }
    ]
   },
@@ -5178,13 +6556,22 @@
      "bootstrap_wilcoxon_disagree_n25": false,
      "reported_unit": "instance",
      "n50_label": "anti-conservative unit",
+     "metric": "regret_p",
+     "metric_class": "validated",
+     "arms": [
+      "doe",
+      "doe"
+     ],
+     "key_b": "regret_a",
+     "filters": {},
      "label": "doe: rule P - rule A",
      "p_holm_n50": 3.956533163318454e-07,
      "status_holm_n50": "significant",
      "p_holm_n25": 1.5735626220703125e-05,
      "status_holm_n25": "significant",
      "status_holm_changed": false,
-     "family": "D20 HEADLINE 2 \u2014 the rule-P reversal, per arm"
+     "family": "D20 HEADLINE 2 \u2014 the rule-P reversal, per arm",
+     "source": "fix1-terminal-rule"
     },
     {
      "n50": {
@@ -5218,13 +6605,22 @@
      "bootstrap_wilcoxon_disagree_n25": false,
      "reported_unit": "instance",
      "n50_label": "anti-conservative unit",
+     "metric": "regret_p",
+     "metric_class": "validated",
+     "arms": [
+      "lhs",
+      "lhs"
+     ],
+     "key_b": "regret_a",
+     "filters": {},
      "label": "lhs: rule P - rule A",
      "p_holm_n50": 0.12693219055721983,
      "status_holm_n50": "null",
      "p_holm_n25": 0.5042078495025635,
      "status_holm_n25": "null",
      "status_holm_changed": false,
-     "family": "D20 HEADLINE 2 \u2014 the rule-P reversal, per arm"
+     "family": "D20 HEADLINE 2 \u2014 the rule-P reversal, per arm",
+     "source": "fix1-terminal-rule"
     },
     {
      "n50": {
@@ -5258,13 +6654,22 @@
      "bootstrap_wilcoxon_disagree_n25": false,
      "reported_unit": "instance",
      "n50_label": "anti-conservative unit",
+     "metric": "regret_p",
+     "metric_class": "validated",
+     "arms": [
+      "sobol",
+      "sobol"
+     ],
+     "key_b": "regret_a",
+     "filters": {},
      "label": "sobol: rule P - rule A",
      "p_holm_n50": 5.406428568832666e-06,
      "status_holm_n50": "significant",
      "p_holm_n25": 0.00027251243591308594,
      "status_holm_n25": "significant",
      "status_holm_changed": false,
-     "family": "D20 HEADLINE 2 \u2014 the rule-P reversal, per arm"
+     "family": "D20 HEADLINE 2 \u2014 the rule-P reversal, per arm",
+     "source": "fix1-terminal-rule"
     },
     {
      "n50": {
@@ -5298,13 +6703,22 @@
      "bootstrap_wilcoxon_disagree_n25": false,
      "reported_unit": "instance",
      "n50_label": "anti-conservative unit",
+     "metric": "regret_p",
+     "metric_class": "validated",
+     "arms": [
+      "random",
+      "random"
+     ],
+     "key_b": "regret_a",
+     "filters": {},
      "label": "random: rule P - rule A",
      "p_holm_n50": 2.994404724177002e-10,
      "status_holm_n50": "significant",
      "p_holm_n25": 5.960464477539062e-07,
      "status_holm_n25": "significant",
      "status_holm_changed": false,
-     "family": "D20 HEADLINE 2 \u2014 the rule-P reversal, per arm"
+     "family": "D20 HEADLINE 2 \u2014 the rule-P reversal, per arm",
+     "source": "fix1-terminal-rule"
     },
     {
      "n50": {
@@ -5338,13 +6752,22 @@
      "bootstrap_wilcoxon_disagree_n25": false,
      "reported_unit": "instance",
      "n50_label": "anti-conservative unit",
+     "metric": "regret_p",
+     "metric_class": "validated",
+     "arms": [
+      "qlogei",
+      "qlogei"
+     ],
+     "key_b": "regret_a",
+     "filters": {},
      "label": "qlogei: rule P - rule A",
      "p_holm_n50": 0.004420413410009871,
      "status_holm_n50": "significant",
      "p_holm_n25": 0.010031700134277344,
      "status_holm_n25": "significant",
      "status_holm_changed": false,
-     "family": "D20 HEADLINE 2 \u2014 the rule-P reversal, per arm"
+     "family": "D20 HEADLINE 2 \u2014 the rule-P reversal, per arm",
+     "source": "fix1-terminal-rule"
     },
     {
      "n50": {
@@ -5378,13 +6801,22 @@
      "bootstrap_wilcoxon_disagree_n25": false,
      "reported_unit": "instance",
      "n50_label": "anti-conservative unit",
+     "metric": "regret_p",
+     "metric_class": "validated",
+     "arms": [
+      "qlognei",
+      "qlognei"
+     ],
+     "key_b": "regret_a",
+     "filters": {},
      "label": "qlognei: rule P - rule A",
      "p_holm_n50": 0.0162168107366103,
      "status_holm_n50": "significant",
      "p_holm_n25": 0.026466965675354004,
      "status_holm_n25": "significant",
      "status_holm_changed": false,
-     "family": "D20 HEADLINE 2 \u2014 the rule-P reversal, per arm"
+     "family": "D20 HEADLINE 2 \u2014 the rule-P reversal, per arm",
+     "source": "fix1-terminal-rule"
     },
     {
      "n50": {
@@ -5418,13 +6850,22 @@
      "bootstrap_wilcoxon_disagree_n25": false,
      "reported_unit": "instance",
      "n50_label": "anti-conservative unit",
+     "metric": "regret_p",
+     "metric_class": "validated",
+     "arms": [
+      "qlogei-add",
+      "qlogei-add"
+     ],
+     "key_b": "regret_a",
+     "filters": {},
      "label": "qlogei-add: rule P - rule A",
      "p_holm_n50": 0.0006824808082619427,
      "status_holm_n50": "significant",
      "p_holm_n25": 0.0009393692016601562,
      "status_holm_n25": "significant",
      "status_holm_changed": false,
-     "family": "D20 HEADLINE 2 \u2014 the rule-P reversal, per arm"
+     "family": "D20 HEADLINE 2 \u2014 the rule-P reversal, per arm",
+     "source": "fix1-terminal-rule"
     },
     {
      "n50": {
@@ -5458,13 +6899,22 @@
      "bootstrap_wilcoxon_disagree_n25": false,
      "reported_unit": "instance",
      "n50_label": "anti-conservative unit",
+     "metric": "regret_p",
+     "metric_class": "validated",
+     "arms": [
+      "qlogei-addonly",
+      "qlogei-addonly"
+     ],
+     "key_b": "regret_a",
+     "filters": {},
      "label": "qlogei-addonly: rule P - rule A",
      "p_holm_n50": 0.0019129265478401436,
      "status_holm_n50": "significant",
      "p_holm_n25": 1.7940998077392578e-05,
      "status_holm_n25": "significant",
      "status_holm_changed": false,
-     "family": "D20 HEADLINE 2 \u2014 the rule-P reversal, per arm"
+     "family": "D20 HEADLINE 2 \u2014 the rule-P reversal, per arm",
+     "source": "fix1-terminal-rule"
     },
     {
      "n50": {
@@ -5498,13 +6948,22 @@
      "bootstrap_wilcoxon_disagree_n25": false,
      "reported_unit": "instance",
      "n50_label": "anti-conservative unit",
+     "metric": "regret_p",
+     "metric_class": "validated",
+     "arms": [
+      "plate1_only",
+      "plate1_only"
+     ],
+     "key_b": "regret_a",
+     "filters": {},
      "label": "plate1_only: rule P - rule A",
      "p_holm_n50": 0.12693219055721983,
      "status_holm_n50": "null",
      "p_holm_n25": 0.5042078495025635,
      "status_holm_n25": "null",
      "status_holm_changed": false,
-     "family": "D20 HEADLINE 2 \u2014 the rule-P reversal, per arm"
+     "family": "D20 HEADLINE 2 \u2014 the rule-P reversal, per arm",
+     "source": "fix1-terminal-rule"
     },
     {
      "n50": {
@@ -5538,13 +6997,22 @@
      "bootstrap_wilcoxon_disagree_n25": false,
      "reported_unit": "instance",
      "n50_label": "anti-conservative unit",
+     "metric": "regret_p",
+     "metric_class": "validated",
+     "arms": [
+      "versionb",
+      "versionb"
+     ],
+     "key_b": "regret_a",
+     "filters": {},
      "label": "versionb: rule P - rule A",
      "p_holm_n50": 1.5812071652021586e-08,
      "status_holm_n50": "significant",
      "p_holm_n25": 1.0192394256591797e-05,
      "status_holm_n25": "significant",
      "status_holm_changed": false,
-     "family": "D20 HEADLINE 2 \u2014 the rule-P reversal, per arm"
+     "family": "D20 HEADLINE 2 \u2014 the rule-P reversal, per arm",
+     "source": "fix1-terminal-rule"
     }
    ]
   },
@@ -5586,13 +7054,22 @@
      "bootstrap_wilcoxon_disagree_n25": false,
      "reported_unit": "instance",
      "n50_label": "anti-conservative unit",
+     "metric": "regret_a",
+     "metric_class": "validated",
+     "arms": [
+      "doe",
+      "versionb"
+     ],
+     "key_b": null,
+     "filters": {},
      "label": "doe - versionb under rule A",
      "p_holm_n50": 2.520364006386444e-08,
      "status_holm_n50": "significant",
      "p_holm_n25": 8.344650268554688e-07,
      "status_holm_n25": "significant",
      "status_holm_changed": false,
-     "family": "D20 HEADLINE 2 \u2014 the SIGN FLIP that is the reversal"
+     "family": "D20 HEADLINE 2 \u2014 the SIGN FLIP that is the reversal",
+     "source": "fix1-terminal-rule"
     },
     {
      "n50": {
@@ -5626,15 +7103,370 @@
      "bootstrap_wilcoxon_disagree_n25": false,
      "reported_unit": "instance",
      "n50_label": "anti-conservative unit",
+     "metric": "regret_p",
+     "metric_class": "validated",
+     "arms": [
+      "doe",
+      "versionb"
+     ],
+     "key_b": null,
+     "filters": {},
      "label": "doe - versionb under rule P",
      "p_holm_n50": 1.1287300338835848e-07,
      "status_holm_n50": "significant",
      "p_holm_n25": 1.4901161193847656e-06,
      "status_holm_n25": "significant",
      "status_holm_changed": false,
-     "family": "D20 HEADLINE 2 \u2014 the SIGN FLIP that is the reversal"
+     "family": "D20 HEADLINE 2 \u2014 the SIGN FLIP that is the reversal",
+     "source": "fix1-terminal-rule"
     }
    ]
+  }
+ ],
+ "status_change_audit": [
+  {
+   "family": "\u00a75.8 paired contrasts on `alpha*`, 7 pairs x 4 thresholds",
+   "label": "sobol - qlognei tf=0.6",
+   "metric": "alpha_star",
+   "metric_class": "model-internal",
+   "direction": "downgraded",
+   "mean": -0.0221484375,
+   "above_sesoi": true,
+   "p_holm_n50": 0.004676380676017928,
+   "p_holm_n25": 0.21342978813235194,
+   "ci_inflation": 1.0849980296584893,
+   "quotable_as": "a stronger reading of a MODEL-INTERNAL statistic; NOT evidence that the arm certifies better (\u00a71.4 consequence 1)",
+   "corroboration": [
+    {
+     "metric": "iou_vorobev_expectation",
+     "metric_class": "validated",
+     "n50": {
+      "n": 50,
+      "mean": 0.0723254138312213,
+      "lo": 0.0473694316247947,
+      "hi": 0.09646413865974203,
+      "wilcoxon_p": 9.979758868183808e-07,
+      "ci_excludes_zero": true,
+      "above_sesoi": true,
+      "status": "significant",
+      "dropped_nan": 0
+     },
+     "n25": {
+      "n": 25,
+      "mean": 0.07232541383122129,
+      "lo": 0.04882248307998948,
+      "hi": 0.09650862521913185,
+      "wilcoxon_p": 8.165836334228516e-06,
+      "ci_excludes_zero": true,
+      "above_sesoi": true,
+      "status": "significant",
+      "dropped_nan": 0
+     },
+     "agrees_in_benefit_direction": false,
+     "significant_n25_raw": true
+    },
+    {
+     "metric": "regret",
+     "metric_class": "validated",
+     "n50": {
+      "n": 50,
+      "mean": 0.019144010986959843,
+      "lo": -0.00869844092348234,
+      "hi": 0.0486268446951928,
+      "wilcoxon_p": 0.26901828704931896,
+      "ci_excludes_zero": false,
+      "above_sesoi": false,
+      "status": "null",
+      "dropped_nan": 0
+     },
+     "n25": {
+      "n": 25,
+      "mean": 0.01914401098695984,
+      "lo": -0.009764864188207234,
+      "hi": 0.048217899134604295,
+      "wilcoxon_p": 0.14847958087921143,
+      "ci_excludes_zero": false,
+      "above_sesoi": false,
+      "status": "null",
+      "dropped_nan": 0
+     },
+     "agrees_in_benefit_direction": true,
+     "significant_n25_raw": false
+    }
+   ],
+   "corroborated": false
+  },
+  {
+   "family": "\u00a75.11.3 KILL 1 \u2014 does plate 2 close the gap to qLogNEI?",
+   "label": "versionb - qlognei alpha_star tf=0.85",
+   "metric": "alpha_star_0.85",
+   "metric_class": "model-internal",
+   "direction": "upgraded",
+   "mean": 0.0750390625,
+   "above_sesoi": true,
+   "p_holm_n50": 0.11653665177293308,
+   "p_holm_n25": 0.03422762975566636,
+   "ci_inflation": 0.621071106053314,
+   "quotable_as": "a stronger reading of a MODEL-INTERNAL statistic; NOT evidence that the arm certifies better (\u00a71.4 consequence 1)",
+   "corroboration": [
+    {
+     "metric": "auc_0.85",
+     "metric_class": "validated",
+     "n50": {
+      "n": 50,
+      "mean": 0.07602081438099642,
+      "lo": 0.031918022777736796,
+      "hi": 0.12069244692251353,
+      "wilcoxon_p": 0.002614123910062105,
+      "ci_excludes_zero": true,
+      "above_sesoi": true,
+      "status": "significant",
+      "dropped_nan": 0
+     },
+     "n25": {
+      "n": 25,
+      "mean": 0.07602081438099641,
+      "lo": 0.04281120605974184,
+      "hi": 0.10989627472820766,
+      "wilcoxon_p": 0.0003764033317565918,
+      "ci_excludes_zero": true,
+      "above_sesoi": true,
+      "status": "significant",
+      "dropped_nan": 0
+     },
+     "agrees_in_benefit_direction": true,
+     "significant_n25_raw": true
+    },
+    {
+     "metric": "brier_0.85",
+     "metric_class": "validated",
+     "n50": {
+      "n": 50,
+      "mean": -0.0005236362281737589,
+      "lo": -0.0024077979875355184,
+      "hi": 0.0013597406435388812,
+      "wilcoxon_p": 0.2373529877703877,
+      "ci_excludes_zero": false,
+      "above_sesoi": false,
+      "status": "null",
+      "dropped_nan": 0
+     },
+     "n25": {
+      "n": 25,
+      "mean": -0.0005236362281737583,
+      "lo": -0.0017489848366714462,
+      "hi": 0.0007452897329044715,
+      "wilcoxon_p": 0.2634761333465576,
+      "ci_excludes_zero": false,
+      "above_sesoi": false,
+      "status": "null",
+      "dropped_nan": 0
+     },
+     "agrees_in_benefit_direction": true,
+     "significant_n25_raw": false
+    },
+    {
+     "metric": "regret",
+     "metric_class": "validated",
+     "n50": {
+      "n": 50,
+      "mean": 0.001428989156649596,
+      "lo": -0.023247038224404347,
+      "hi": 0.02493002647420211,
+      "wilcoxon_p": 0.8632650227005474,
+      "ci_excludes_zero": false,
+      "above_sesoi": false,
+      "status": "null",
+      "dropped_nan": 0
+     },
+     "n25": {
+      "n": 25,
+      "mean": 0.001428989156649596,
+      "lo": -0.021135679228298,
+      "hi": 0.024835153468238346,
+      "wilcoxon_p": 0.936802864074707,
+      "ci_excludes_zero": false,
+      "above_sesoi": false,
+      "status": "null",
+      "dropped_nan": 0
+     },
+     "agrees_in_benefit_direction": false,
+     "significant_n25_raw": false
+    }
+   ],
+   "corroborated": true
+  },
+  {
+   "family": "\u00a75.11.3 KILL 1 \u2014 does plate 2 close the gap to qLogNEI?",
+   "label": "versionb - qlognei auc tf=0.75",
+   "metric": "auc_0.75",
+   "metric_class": "validated",
+   "direction": "upgraded",
+   "mean": 0.04403268732203241,
+   "above_sesoi": true,
+   "p_holm_n50": 0.06527737684615786,
+   "p_holm_n25": 0.0205153226852417,
+   "ci_inflation": 0.7913206084938149,
+   "quotable_as": "evidence about the map",
+   "corroboration": [
+    {
+     "metric": "brier_0.75",
+     "metric_class": "validated",
+     "n50": {
+      "n": 50,
+      "mean": -0.01542391642524398,
+      "lo": -0.02174351447352991,
+      "hi": -0.009164021740197896,
+      "wilcoxon_p": 3.457260659445183e-05,
+      "ci_excludes_zero": true,
+      "above_sesoi": false,
+      "status": "significant",
+      "dropped_nan": 0
+     },
+     "n25": {
+      "n": 25,
+      "mean": -0.015423916425243982,
+      "lo": -0.020082547174663956,
+      "hi": -0.01078079332830302,
+      "wilcoxon_p": 8.165836334228516e-06,
+      "ci_excludes_zero": true,
+      "above_sesoi": false,
+      "status": "significant",
+      "dropped_nan": 0
+     },
+     "agrees_in_benefit_direction": true,
+     "significant_n25_raw": true
+    },
+    {
+     "metric": "regret",
+     "metric_class": "validated",
+     "n50": {
+      "n": 50,
+      "mean": 0.001428989156649596,
+      "lo": -0.023247038224404347,
+      "hi": 0.02493002647420211,
+      "wilcoxon_p": 0.8632650227005474,
+      "ci_excludes_zero": false,
+      "above_sesoi": false,
+      "status": "null",
+      "dropped_nan": 0
+     },
+     "n25": {
+      "n": 25,
+      "mean": 0.001428989156649596,
+      "lo": -0.021135679228298,
+      "hi": 0.024835153468238346,
+      "wilcoxon_p": 0.936802864074707,
+      "ci_excludes_zero": false,
+      "above_sesoi": false,
+      "status": "null",
+      "dropped_nan": 0
+     },
+     "agrees_in_benefit_direction": false,
+     "significant_n25_raw": false
+    }
+   ],
+   "corroborated": true
+  },
+  {
+   "family": "\u00a75.11.4 KILL 2 \u2014 does the LSE criterion beat 8 RANDOM wells?",
+   "label": "versionb - versionb_random alpha_star tf=0.6",
+   "metric": "alpha_star_0.6",
+   "metric_class": "model-internal",
+   "direction": "upgraded",
+   "mean": 0.0261328125,
+   "above_sesoi": true,
+   "p_holm_n50": 0.1891013479132356,
+   "p_holm_n25": 0.01852726936340332,
+   "ci_inflation": 0.8890283330161923,
+   "quotable_as": "a stronger reading of a MODEL-INTERNAL statistic; NOT evidence that the arm certifies better (\u00a71.4 consequence 1)",
+   "corroboration": [
+    {
+     "metric": "auc_0.6",
+     "metric_class": "validated",
+     "n50": {
+      "n": 50,
+      "mean": 0.009992895411120029,
+      "lo": -0.004568624782378304,
+      "hi": 0.0233909578127841,
+      "wilcoxon_p": 0.12799334338745183,
+      "ci_excludes_zero": false,
+      "above_sesoi": false,
+      "status": "null",
+      "dropped_nan": 0
+     },
+     "n25": {
+      "n": 25,
+      "mean": 0.00999289541112002,
+      "lo": -0.003438786482834375,
+      "hi": 0.02251369692187879,
+      "wilcoxon_p": 0.14847958087921143,
+      "ci_excludes_zero": false,
+      "above_sesoi": false,
+      "status": "null",
+      "dropped_nan": 0
+     },
+     "agrees_in_benefit_direction": true,
+     "significant_n25_raw": false
+    },
+    {
+     "metric": "brier_0.6",
+     "metric_class": "validated",
+     "n50": {
+      "n": 50,
+      "mean": -0.0071307779878481015,
+      "lo": -0.011053469038117035,
+      "hi": -0.003080231799308815,
+      "wilcoxon_p": 0.0007847371187263974,
+      "ci_excludes_zero": true,
+      "above_sesoi": false,
+      "status": "significant",
+      "dropped_nan": 0
+     },
+     "n25": {
+      "n": 25,
+      "mean": -0.007130777987848099,
+      "lo": -0.010962514857062124,
+      "hi": -0.003425276170178586,
+      "wilcoxon_p": 0.0011548399925231934,
+      "ci_excludes_zero": true,
+      "above_sesoi": false,
+      "status": "significant",
+      "dropped_nan": 0
+     },
+     "agrees_in_benefit_direction": true,
+     "significant_n25_raw": true
+    },
+    {
+     "metric": "regret",
+     "metric_class": "validated",
+     "n50": {
+      "n": 50,
+      "mean": -0.009143994223410487,
+      "lo": -0.019705414524010506,
+      "hi": -0.0017304526194136206,
+      "wilcoxon_p": 0.011718685599768632,
+      "ci_excludes_zero": true,
+      "above_sesoi": false,
+      "status": "significant",
+      "dropped_nan": 0
+     },
+     "n25": {
+      "n": 25,
+      "mean": -0.009143994223410487,
+      "lo": -0.018735719445177098,
+      "hi": -0.0019766615022501622,
+      "wilcoxon_p": 0.011718685599768632,
+      "ci_excludes_zero": true,
+      "above_sesoi": false,
+      "status": "significant",
+      "dropped_nan": 0
+     },
+     "agrees_in_benefit_direction": true,
+     "significant_n25_raw": true
+    }
+   ],
+   "corroborated": true
   }
  ],
  "registered_kill": {

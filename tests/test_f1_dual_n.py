@@ -29,10 +29,15 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
 from analyse_f1_dual_n import (  # noqa: E402
     INSTANCE,
     INSTANCE_SEED,
+    METRIC_PREFIXES,
+    MODEL_INTERNAL,
+    VALIDATED,
+    benefit_sign,
     committed,
     containment,
     dual_contrast,
     holm,
+    metric_class,
     paired,
 )
 
@@ -154,3 +159,55 @@ def test_containment_at_n25_averages_the_seeds_of_an_instance():
     assert containment(rows, "hit", INSTANCE) == {"value": pytest.approx(0.75), "n": 2}
     assert containment([r for r in rows if r["instance"] == "c"], "hit", INSTANCE) == {
         "value": None, "n": 0}
+
+
+def test_metric_class_follows_section_1_4():
+    """§1.4's table is the authority, and a contrast must know which side it is on.
+
+    A status change on `alpha*` and one on AUC are not the same evidence. `alpha*` and
+    Vorob'ev deviation are functionals of the fitted posterior and nothing else, so a
+    stronger reading of one under the conservative unit is a stronger reading of a
+    statistic that a confidently-wrong model also scores well on (§1.4 consequence 1).
+    """
+    assert metric_class("alpha_star") == MODEL_INTERNAL
+    assert metric_class("alpha_star_0.6") == MODEL_INTERNAL
+    assert metric_class("vorobev_dev_0.85") == MODEL_INTERNAL
+    for key in ("regret", "regret_p", "regret_a", "auc_pred", "auc_latent", "auc_0.75",
+                "brier_pred", "brier_0.6", "iou_pred", "ce_empirical_0.5"):
+        assert metric_class(key) == VALIDATED, key
+
+
+def test_an_unclassified_metric_is_a_hard_error():
+    """The grid is about to triple across five families. A new column must be classified
+    deliberately rather than defaulting to whichever side is convenient."""
+    with pytest.raises(ValueError, match="not classified"):
+        metric_class("some_new_metric_0.6")
+
+
+def test_every_contrast_carries_its_metric_class(k6_rows):
+    d = dual_contrast(k6_rows, "lhs", "doe", "auc_pred", gamma=0.50, tau_frac=0.60)
+    assert d["metric"] == "auc_pred"
+    assert d["metric_class"] == VALIDATED
+
+
+def test_benefit_direction_accounts_for_lower_is_better_metrics():
+    """Corroboration must compare BENEFIT, not raw sign.
+
+    `versionb - versionb_random` is +0.0261 on `alpha*` (higher is better) and -0.0071 on
+    Brier (LOWER is better). Both favour `versionb`. A naive sign comparison calls that a
+    disagreement and inverts the conclusion, which is what a first cut of this audit did.
+    """
+    assert benefit_sign("auc_0.6", +0.01) == 1
+    assert benefit_sign("alpha_star", +0.01) == 1
+    assert benefit_sign("iou_pred", +0.01) == 1
+    assert benefit_sign("ce_empirical_0.5", +0.01) == 1
+    assert benefit_sign("brier_0.6", -0.01) == 1          # lower Brier is better
+    assert benefit_sign("regret", -0.01) == 1             # lower regret is better
+    assert benefit_sign("vorobev_dev_0.6", +0.01) == -1   # lower deviation is better
+    assert benefit_sign("auc_0.6", 0.0) == 0
+
+
+def test_every_metric_in_the_class_table_has_a_direction():
+    """A column that is classified but has no direction would silently score as a tie."""
+    for prefix, _kind, _higher in METRIC_PREFIXES:
+        assert benefit_sign(prefix, 1.0) in (1, -1), prefix

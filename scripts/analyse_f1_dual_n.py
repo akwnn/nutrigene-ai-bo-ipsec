@@ -74,6 +74,59 @@ ALPHA = 0.05
 #: The A1 map cell `analyse_k6.py` names explicitly.
 A1_GAMMA, A1_TAU_FRAC = 0.90, 0.75
 
+#: §1.4 of the technical report, which is the authority. A **validated** metric is scored
+#: against the noiseless oracle; a **model-internal** one is a functional of the fitted
+#: posterior and nothing else, so a model that is confidently wrong scores well on it.
+#: This matters to F1 specifically: a contrast that gains significance at the conservative
+#: unit gains it as *whatever kind of evidence its metric was already*. A stronger reading
+#: of `alpha*` is a stronger reading of a statistic under suspicion (§1.4 consequence 1),
+#: not evidence that an arm certifies better.
+VALIDATED = "validated"
+MODEL_INTERNAL = "model-internal"
+#: (prefix, class, higher_is_better). The direction is not decoration: `alpha*` is
+#: higher-is-better and Brier is lower-is-better, so `versionb - versionb_random` reading
+#: +0.0261 on one and -0.0071 on the other means BOTH favour `versionb`. Comparing raw
+#: signs calls that a disagreement and inverts the conclusion, which is exactly what the
+#: first cut of the corroboration audit below did.
+METRIC_PREFIXES = (
+    ("alpha_star", MODEL_INTERNAL, True),
+    ("vorobev_deviation", MODEL_INTERNAL, False),
+    ("vorobev_dev", MODEL_INTERNAL, False),
+    ("regret", VALIDATED, False),
+    ("auc", VALIDATED, True),
+    ("brier", VALIDATED, False),
+    ("iou", VALIDATED, True),
+    ("ce_empirical", VALIDATED, True),
+)
+
+
+def _lookup(key: str):
+    for prefix, kind, higher in METRIC_PREFIXES:
+        if key == prefix or key.startswith(prefix + "_"):
+            return prefix, kind, higher
+    raise ValueError(f"metric {key!r} is not classified in §1.4 — classify it in "
+                     "METRIC_PREFIXES before using it in a contrast")
+
+
+def metric_class(key: str) -> str:
+    """`VALIDATED` or `MODEL_INTERNAL` for a committed column name.
+
+    Unclassified columns raise. The grid is about to triple across five families and two
+    noise levels; a new column must be placed on one side of §1.4's table deliberately,
+    not default to whichever side happens to be convenient.
+    """
+    return _lookup(key)[1]
+
+
+def benefit_sign(key: str, mean: float) -> int:
+    """+1 if a paired difference of `mean` on `key` favours the FIRST arm, -1 if the
+    second, 0 for an exact tie. Direction-aware, so lower-is-better metrics compare
+    correctly against higher-is-better ones."""
+    if mean == 0 or not np.isfinite(mean):
+        return 0
+    higher = _lookup(key)[2]
+    return int(np.sign(mean)) if higher else -int(np.sign(mean))
+
 # Every other grid coordinate is READ FROM THE COMMITTED CONFIG, never hardcoded. A
 # hardcoded `gammas` here silently dropped 0.70 and 0.80 and turned the 24-cell headline
 # into a 16-cell one; the grid is about to triple across five families and two noise
@@ -203,6 +256,35 @@ def dual_contrast(rows, arm_a, arm_b, key, key_b=None, **filters) -> dict:
             out[tag]["ci_excludes_zero"] != (out[tag]["status"] == "significant"))
     out["reported_unit"] = INSTANCE
     out["n50_label"] = "anti-conservative unit"
+    out["metric"] = key
+    out["metric_class"] = metric_class(key)
+    out["arms"] = [arm_a, arm_b]
+    out["key_b"] = key_b
+    out["filters"] = dict(filters)
+    return out
+
+
+#: Validated columns to look for at the same cell when a model-internal contrast moves.
+_COMPANION_STEMS = ("auc", "brier", "iou", "iou_vorobev_expectation", "regret")
+
+
+def validated_companions(rows, key) -> list[str]:
+    """Other validated columns available at the same cell as `key`, excluding `key`.
+
+    `alpha_star_0.85` -> `auc_0.85`, `brier_0.85` in the Version B file. Used to ask
+    whether a status change is corroborated by something else that consults the truth —
+    for a model-internal metric that is the whole question, and for a validated one it is
+    still worth knowing whether it stands alone.
+    """
+    if not rows:
+        return []
+    prefix = _lookup(key)[0]
+    suffix = key[len(prefix):]
+    have, seen, out = set(rows[0]), set(), []
+    for cand in [st + suffix for st in _COMPANION_STEMS] + list(_COMPANION_STEMS):
+        if cand in have and cand not in seen and cand != key:
+            seen.add(cand)
+            out.append(cand)
     return out
 
 
@@ -254,6 +336,7 @@ def family(name, source, note, contrasts) -> dict:
     for c in contrasts:
         c["status_holm_changed"] = c["status_holm_n50"] != c["status_holm_n25"]
         c["family"] = name
+        c["source"] = source
     return {"name": name, "source": source, "note": note,
             "holm_family_size": len(contrasts), "contrasts": contrasts}
 
@@ -573,8 +656,76 @@ def main() -> None:
               f"p={c['wilcoxon_p']:.3e} n={c['n']}  "
               f"KILL {'FIRED' if c['fired'] else 'DID NOT FIRE'}")
 
-    # -- the count the registration asks for ------------------------------------------
+    # -- the audit the review asked for: WHAT KIND of evidence changed? ----------------
+    # A status change on `alpha*` and one on AUC are not the same finding. `alpha*` and
+    # Vorob'ev deviation are functionals of the fitted posterior and nothing else (§1.4),
+    # and this project's own worked example is `doe`: `grid_r2` = -6.19 and it still
+    # scores the `alpha*` ceiling of 1.0000. So a contrast that gains significance at the
+    # conservative unit gains it as whatever kind of evidence its metric already was, and
+    # a model-internal gain is a stronger reading of a statistic under suspicion.
+    ROWSETS = {"k6-designspace(+spread)": k6_rows,
+               "k6b-conservative(+spread)": k6b_rows,
+               "versionb": vb_rows,
+               "fix1-terminal-rule": fix1_rows}
     all_cs = [c for f in fams for c in f["contrasts"]]
+    audit = []
+    for c in all_cs:
+        if not c["status_holm_changed"]:
+            continue
+        direction = ("upgraded" if c["status_holm_n25"] == "significant"
+                     else "downgraded")
+        rec = {"family": c["family"], "label": c["label"], "metric": c["metric"],
+               "metric_class": c["metric_class"], "direction": direction,
+               "mean": c["n25"]["mean"], "above_sesoi": c["n25"]["above_sesoi"],
+               "p_holm_n50": c["p_holm_n50"], "p_holm_n25": c["p_holm_n25"],
+               "ci_inflation": c["ci_inflation"],
+               "quotable_as": ("evidence about the map" if c["metric_class"] == VALIDATED
+                               else "a stronger reading of a MODEL-INTERNAL statistic; "
+                                    "NOT evidence that the arm certifies better (§1.4 "
+                                    "consequence 1)"),
+               "corroboration": []}
+        rows = ROWSETS[c["source"]]
+        for comp in validated_companions(rows, c["metric"]):
+            cc = dual_contrast(rows, c["arms"][0], c["arms"][1], comp,
+                               key_b=c["key_b"], **c["filters"])
+            rec["corroboration"].append({
+                "metric": comp, "metric_class": cc["metric_class"],
+                "n50": cc["n50"], "n25": cc["n25"],
+                "agrees_in_benefit_direction": bool(
+                    benefit_sign(comp, cc["n25"]["mean"])
+                    == benefit_sign(c["metric"], c["n25"]["mean"])),
+                "significant_n25_raw": cc["status_n25"] == "significant"})
+        agree = [x for x in rec["corroboration"] if x["agrees_in_benefit_direction"]]
+        rec["corroborated"] = bool(agree) and any(
+            x["significant_n25_raw"] for x in agree) and not any(
+            x["significant_n25_raw"] and not x["agrees_in_benefit_direction"]
+            for x in rec["corroboration"])
+        audit.append(rec)
+
+    print(f"\n{'=' * 118}\n  WHAT KIND OF EVIDENCE MOVED? Every Holm status change, "
+          f"classified by §1.4\n{'=' * 118}")
+    print("  A gain on `alpha*` is a stronger reading of a posterior functional, not of "
+          "the map. Where a\n  model-internal contrast moved, the same arm pair is "
+          "re-run at the same cell on every\n  VALIDATED column the file carries.\n")
+    for r in audit:
+        print(f"  [{r['direction'].upper()}] {r['label']}  ({r['metric']} — "
+              f"{r['metric_class']})")
+        print(f"      Holm {r['p_holm_n50']:.3e} -> {r['p_holm_n25']:.3e};  "
+              f"mean {r['mean']:+.4f}; SESOI {'cleared' if r['above_sesoi'] else 'NOT met'}"
+              f"; inflation {r['ci_inflation']:.3f}")
+        if r["metric_class"] != VALIDATED:
+            print(f"      >>> {r['quotable_as']}")
+        for x in r["corroboration"]:
+            print(f"      corroborate on {x['metric']:<24} n25 "
+                  f"{x['n25']['mean']:+.4f} p={x['n25']['wilcoxon_p']:.4f}  "
+                  f"agrees={x['agrees_in_benefit_direction']!s:<5} "
+                  f"sig(raw)={x['significant_n25_raw']}")
+        if not r["corroboration"] and r["metric_class"] != VALIDATED:
+            print("      corroborate: NO validated column at this cell in this file")
+        elif r["corroboration"]:
+            print(f"      => CORROBORATED BY A VALIDATED METRIC: {r['corroborated']}")
+
+    # -- the count the registration asks for ------------------------------------------
     raw_changed = [c for c in all_cs if c["status_changed"]]
     holm_changed = [c for c in all_cs if c["status_holm_changed"]]
     downgraded = [c for c in all_cs
@@ -607,6 +758,9 @@ def main() -> None:
         "upgraded_holm": [f"{c['family']}: {c['label']}" for c in upgraded],
         "containment_cells": sum(len(v) for v in contain.values()),
         "containment_verdict_changed": len(contain_changed),
+        "status_changes_by_metric_class": {
+            k: sum(1 for r in audit if r["metric_class"] == k)
+            for k in (VALIDATED, MODEL_INTERNAL)},
     }
     print(f"\n{'=' * 118}\n  HOW MANY REPORTED CONTRASTS CHANGE STATUS AT n = 25?"
           f"\n{'=' * 118}")
@@ -648,6 +802,7 @@ def main() -> None:
                            "alone.")},
         "summary": summary,
         "families": fams,
+        "status_change_audit": audit,
         "registered_kill": kill,
         "containment_per_cell": contain,
         "pooled_containment": ("WITHDRAWN per F4 — four thresholds on one campaign, one "

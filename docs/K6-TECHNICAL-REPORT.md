@@ -969,14 +969,21 @@ scripts:
 - **How anti-conservative n = 50 actually is, measured rather than assumed.** The
   amendment predicted "roughly sqrt(2)". The exact identity is
   `Var_boot(n=25)/Var_boot(n=50) = 1 + ICC`, so the interval ratio is `sqrt(1 + ICC)`, and
-  sqrt(2) is the ICC = 1 corner. **Measured over all 137 recomputed contrasts the median
-  ratio is 0.9884, range [0.4922, 1.1763], with 73 of 137 below 1.0** — on this data two
-  seeds of one landscape typically disagree about as much as two landscapes do, and n = 50
-  was not materially anti-conservative. That is why **only 1 of 137 contrasts is
-  downgraded** (§5.8, `sobol - qlognei` on `alpha*` at `tau_frac = 0.60`) while **3 gain
-  significance at n = 25**, which the amendment did not anticipate: averaging seeds first
-  lowers the Wilcoxon p whenever within-landscape noise dominates. The point estimate is
-  identical at both units to `5.6e-17`; only its uncertainty and its p move.
+  sqrt(2) is the ICC = 1 corner and an a-priori bound, not an estimate. **Measured over
+  all 137 recomputed contrasts the median ratio is 0.9884, range [0.4922, 1.1763], with 73
+  of 137 below 1.0.** Pairing has already removed the landscape — the shared landscape
+  effect largely cancels in the *difference*, which is the quantity being tested — so
+  little correlation is left for the unit to double-count. **The direction is
+  family-dependent and the pooled median hides that** (§5.13): on the §5.3 headline AUC
+  family the ICC is **+0.247**, so n = 50's intervals really were about **12% too narrow**;
+  on every `alpha*` and Version B family the sign reverses to as low as **−0.468**, where
+  n = 50's intervals were too *wide* and the conservative unit is the more powerful one.
+  That is why **only 1 of 137 contrasts is downgraded** (§5.8, `sobol - qlognei` on
+  `alpha*` at `tau_frac = 0.60`) while **3 gain significance at n = 25**, which the
+  amendment did not anticipate. The point estimate is identical at both units to
+  `5.6e-17`; only its uncertainty and its p move, so **no ranking in this document depends
+  on the choice.** §5.13 is the full result and §5.13.1 classifies each of the four changes
+  by §1.4 — three of them are on `alpha*` and none may be read as "certifies better".
 - **Magnitude:** mean paired difference with a **percentile bootstrap CI**, 4,000
   resamples of the paired differences (50 or 25 of them), `numpy.random.default_rng(0)`,
   2.5/97.5 percentiles.
@@ -2599,6 +2606,130 @@ is a regret-class quantity only, and no design-space metric exists for it. Nothi
 only its plate-1 ceiling.
 
 ---
+
+### 5.13 Amendment F1 — the unit-of-analysis inconsistency was real, and its measured effect is close to zero
+
+This section exists because the amendment that ordered it (F1, `docs/OPEN-QUESTIONS.md`,
+commit `07e98df`) asserted a number it had not measured, and the measurement is the
+finding. All figures from `scripts/analyse_f1_dual_n.py` → `results/f1-dual-n.json`.
+
+**The inconsistency was real.** §3.8 of this document fixed the unit at the
+`(instance, seed)` pair, n = 50. `docs/RESEARCH-SUMMARY.md` fixes it at the instance with
+seeds averaged first, n = 25. Nothing in the repository recorded the switch, and the two
+give different intervals and different p-values for the same data.
+
+**The predicted size of the effect was wrong.** F1 states that n = 50 *"narrows every
+bootstrap CI by roughly sqrt(2)"*. The exact sample identity is
+
+    Var_boot(n=25) / Var_boot(n=50) = (n50/n25) * s25^2 / s50^2 = 1 + ICC
+
+where `s25` is the variance of the 25 instance-mean differences and `s50` that of the 50
+campaign differences, so the interval ratio is **sqrt(1 + ICC)**. **sqrt(2) is the ICC = 1
+corner** — two seeds on a landscape agreeing perfectly — and it is an a-priori upper bound,
+not an estimate. Measured over all 137 recomputed contrasts:
+
+| quantity | median | min | max | below the neutral value |
+|---|---|---|---|---|
+| CI inflation `sqrt(1 + ICC)` | **0.9884** | 0.4922 | 1.1763 | **73 of 137** below 1.0 |
+| ICC of the paired differences | **−0.0231** | −0.7577 | +0.3836 | **73 of 137** negative |
+
+**The median ICC is slightly negative**, so on the median contrast n = 50 was not
+anti-conservative at all. The mechanism is that **pairing has already removed the
+landscape**: the shared landscape effect largely cancels in the difference, and the
+difference is the quantity being tested. What is left is seed-level noise, and averaging
+two seeds of it *reduces* the per-unit variance about as fast as halving `n` inflates it.
+
+**But the direction is family-dependent, and a single median hides that.** Per Holm family:
+
+| family | contrasts | median ICC | median inflation | range |
+|---|---|---|---|---|
+| §5.3 HEADLINE 1, `lhs` − `doe` on AUC | 24 | **+0.247** | **1.117** | 1.006–1.176 |
+| §5.1 paired regret contrasts | 7 | +0.165 | 1.079 | 0.988–1.127 |
+| §5.4 `doe` − `qlogei` on AUC | 24 | +0.058 | 1.029 | 0.958–1.101 |
+| §5.5 A1, regret and map | 4 | +0.007 | 1.003 | 0.966–1.129 |
+| D20 HEADLINE 2, rule P − rule A | 10 | −0.008 | 0.996 | 0.800–1.089 |
+| §5.11.4 KILL 2 | 8 | −0.175 | 0.908 | 0.750–0.987 |
+| §5.8 `alpha*`, 7 pairs x 4 thresholds | 28 | −0.200 | 0.894 | 0.728–1.085 |
+| §5.5 A1 on `alpha*` | 8 | −0.226 | 0.880 | 0.738–1.084 |
+| §5.11.3 KILL 1 | 8 | **−0.339** | **0.813** | 0.586–1.056 |
+| §5.11.5 `versionb` − `plate1_only` | 8 | −0.404 | 0.772 | 0.492–1.054 |
+| §5.11.4 Vorob'ev deviation | 4 | −0.468 | 0.728 | 0.669–0.927 |
+
+**On the K6 AUC and regret contrasts n = 50 was mildly anti-conservative** — the headline
+screening family's intervals were about **12% too narrow**, which is real but is a long way
+from 41%. **On every `alpha*` and Version B family the sign reverses**: the n = 50 interval
+was too *wide*, not too narrow, and the conservative unit is the *more* powerful one there.
+That is not a paradox — it is what a negative ICC means, and `alpha*` is quantised to
+multiples of `1/512` and heavily tied (§6.7), which is exactly the regime in which
+between-landscape variance collapses relative to seed-level noise.
+
+**What actually moved.** 137 contrasts, both units, Holm within each family:
+
+- **The point estimate does not move at all** — worst `|mean(n50) − mean(n25)|` across all
+  137 is **5.6e-17**. The design is balanced and no row drops, so only the uncertainty and
+  the p-value change. **Every arm ranking in this document is therefore identical at both
+  units**, including §5.2, §5.9 and §6.10.1.
+- **4 of 137 contrasts change Holm status**: 1 downgrade, 3 upgrades.
+- **7 of 137 change raw-Wilcoxon status**, in both directions — 36 of 137 have a *lower*
+  p at n = 25. F1's claim that n = 50 "lowers every Wilcoxon p-value" does not hold.
+- **156 containment cells, 0 verdict changes** (§5.10.2, §5.11.7).
+- Bootstrap-vs-Wilcoxon disagreements now form a 2x2 and all four cells are reported: 126
+  agree at both units, 7 disagree at n = 50 only, 1 at n = 25 only, 3 at both.
+
+**Both headline results survive, and that is now measured rather than assumed.** The 24/24
+screening contrast is Holm-significant in **24 of 24 cells at n = 25**, worst cell
+`gamma = 0.99, tau_frac = 0.60` at **p = 2.03e-03**. D20's rule-P reversal survives on all
+four of its components, including both signs of the `doe`/`versionb` flip, at
+p <= 1.5e-06; the registered kill does not fire at either unit.
+
+#### 5.13.1 What kind of evidence moved — the four status changes, classified by §1.4
+
+A status change on `alpha*` and one on AUC are not the same finding. `alpha*` and Vorob'ev
+deviation are functionals of the fitted posterior and nothing else (§1.4), and this
+project's own worked example is `doe`: `grid_r2` = −6.19 and it still scores the `alpha*`
+ceiling of 1.0000. **A contrast that gains significance at the conservative unit gains it
+as whatever kind of evidence its metric already was.** So each change is re-run at the same
+cell on every validated column the source file carries, comparing *benefit direction* —
+Brier and regret are lower-is-better, `alpha*` and AUC higher-is-better, and comparing raw
+signs inverts two of these four readings.
+
+| change | metric | class | n=25 mean | Holm n=50 → n=25 | corroborated by a validated metric? |
+|---|---|---|---|---|---|
+| **↓** `sobol` − `qlognei` @ tf=0.60 | `alpha_star` | **model-internal** | −0.0221 | 4.68e-03 → 2.13e-01 | **No** — `iou_vorobev_expectation` is +0.0723 (p<1e-4) in the *opposite* benefit direction |
+| **↑** `versionb` − `qlognei` @ tf=0.85 | `alpha_star` | **model-internal** | +0.0750 | 1.17e-01 → 3.42e-02 | **Yes** — `auc_0.85` +0.0760, p = 3.8e-04 |
+| **↑** `versionb` − `qlognei` @ tf=0.75 | `auc` | **validated** | +0.0440 | 6.53e-02 → 2.05e-02 | **Yes** — `brier_0.75` −0.0154, p < 1e-4 |
+| **↑** `versionb` − `versionb_random` @ tf=0.60 | `alpha_star` | **model-internal** | +0.0261 | 1.89e-01 → 1.85e-02 | **Yes** — `brier_0.6` −0.0071 (p = 0.0012) and `regret` −0.0091 (p = 0.0117) |
+
+**Three of the four changes are on `alpha*`, and none of them may be quoted as evidence
+that an arm certifies better** (§1.4 consequence 1) — that restriction is unchanged by the
+unit. What the corroboration column adds is that **two of the three model-internal moves
+are backed by a metric that consults the truth**, and the one that is not — the downgrade —
+was actively *contradicted* by one, so removing it costs nothing. All four clear the SESOI
+of 0.02.
+
+**The downgraded contrast is reported at its n = 25 verdict: null.** Its n = 50 figure
+(−0.0221 [−0.0374, −0.0043], p = 2.46e-04, Holm 4.68e-03) is recorded here beside it and
+labelled **the anti-conservative unit**; it is not quoted alone anywhere.
+
+**Two limits on the upgrades.** (i) They arise in families with strongly negative ICC —
+KILL 1 at −0.339, KILL 2 at −0.175 — i.e. precisely where the conservative unit is the
+*more* powerful one, so they are a power effect of averaging seeds and not new data.
+(ii) F2a's error volumes, which supersede AUC where the two disagree (§6.10.1), **cannot be
+computed for Version B at all**: `results/versionb.json` carries none of `vol_*`, `fi_*` or
+`true_frac_above_tau`. The AUC upgrade is therefore corroborated on **Brier**, the other
+validated map metric the file does carry, and not on the error volumes. Settling that would
+need the Version B runner to emit the three columns.
+
+#### 5.13.2 The honest summary
+
+**The convention genuinely contradicted itself, and the size of the discrepancy is now
+measured rather than assumed.** That is the defence the exercise was for, and it was bought
+at the cost of no new campaigns. But the correction changes **4 of 137 contrasts**, **0 of
+156 containment cells**, and **none of this document's rankings** — so the accurate
+headline is neither *"the earlier analysis was wrong"* nor *"the concern was unfounded"*,
+but: **the inconsistency was real, n = 25 is the defensible unit and is now quoted, and on
+this data the two units agree almost everywhere.** The `sqrt(2)` in the amendment was an
+upper bound quoted as an estimate, and the measured value is 0.99.
 
 ## 6. Threats to validity
 

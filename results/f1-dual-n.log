@@ -317,6 +317,39 @@ D20 HEADLINE 2 — the SIGN FLIP that is the reversal   [fix1-terminal-rule]  Ho
     n25: +0.1578 [+0.1221,+0.1942] p=1.192e-07 n=25  KILL DID NOT FIRE
 
 ======================================================================================================================
+  WHAT KIND OF EVIDENCE MOVED? Every Holm status change, classified by §1.4
+======================================================================================================================
+  A gain on `alpha*` is a stronger reading of a posterior functional, not of the map. Where a
+  model-internal contrast moved, the same arm pair is re-run at the same cell on every
+  VALIDATED column the file carries.
+
+  [DOWNGRADED] sobol - qlognei tf=0.6  (alpha_star — model-internal)
+      Holm 4.676e-03 -> 2.134e-01;  mean -0.0221; SESOI cleared; inflation 1.085
+      >>> a stronger reading of a MODEL-INTERNAL statistic; NOT evidence that the arm certifies better (§1.4 consequence 1)
+      corroborate on iou_vorobev_expectation  n25 +0.0723 p=0.0000  agrees=False sig(raw)=True
+      corroborate on regret                   n25 +0.0191 p=0.1485  agrees=True  sig(raw)=False
+      => CORROBORATED BY A VALIDATED METRIC: False
+  [UPGRADED] versionb - qlognei alpha_star tf=0.85  (alpha_star_0.85 — model-internal)
+      Holm 1.165e-01 -> 3.423e-02;  mean +0.0750; SESOI cleared; inflation 0.621
+      >>> a stronger reading of a MODEL-INTERNAL statistic; NOT evidence that the arm certifies better (§1.4 consequence 1)
+      corroborate on auc_0.85                 n25 +0.0760 p=0.0004  agrees=True  sig(raw)=True
+      corroborate on brier_0.85               n25 -0.0005 p=0.2635  agrees=True  sig(raw)=False
+      corroborate on regret                   n25 +0.0014 p=0.9368  agrees=False sig(raw)=False
+      => CORROBORATED BY A VALIDATED METRIC: True
+  [UPGRADED] versionb - qlognei auc tf=0.75  (auc_0.75 — validated)
+      Holm 6.528e-02 -> 2.052e-02;  mean +0.0440; SESOI cleared; inflation 0.791
+      corroborate on brier_0.75               n25 -0.0154 p=0.0000  agrees=True  sig(raw)=True
+      corroborate on regret                   n25 +0.0014 p=0.9368  agrees=False sig(raw)=False
+      => CORROBORATED BY A VALIDATED METRIC: True
+  [UPGRADED] versionb - versionb_random alpha_star tf=0.6  (alpha_star_0.6 — model-internal)
+      Holm 1.891e-01 -> 1.853e-02;  mean +0.0261; SESOI cleared; inflation 0.889
+      >>> a stronger reading of a MODEL-INTERNAL statistic; NOT evidence that the arm certifies better (§1.4 consequence 1)
+      corroborate on auc_0.6                  n25 +0.0100 p=0.1485  agrees=True  sig(raw)=False
+      corroborate on brier_0.6                n25 -0.0071 p=0.0012  agrees=True  sig(raw)=True
+      corroborate on regret                   n25 -0.0091 p=0.0117  agrees=True  sig(raw)=True
+      => CORROBORATED BY A VALIDATED METRIC: True
+
+======================================================================================================================
   HOW MANY REPORTED CONTRASTS CHANGE STATUS AT n = 25?
 ======================================================================================================================
     contrasts recomputed          : 137
