@@ -259,3 +259,208 @@ def test_dual_tau_scorer_under_the_standard_definition_equals_the_committed_scor
     # And the exact half must actually differ, or the sensitivity measures nothing.
     assert all(e["tau_max"] < s["tau_max"] or s["gamma"] == 0.50
                for s, e in zip(std, exact))
+
+
+# --- Amendment F (commit 07e98df), which supersedes the brief's Statistics section -----
+
+def test_error_volumes_reproduce_the_committed_iou_column():
+    """F2a's registered validation, re-run here rather than taken on trust.
+
+    `intersect / (vol_pred + true_frac_above_tau - intersect)` must reproduce the
+    committed `iou_pred`, with ZERO impossible negative type-II volumes. This is the
+    D12-clean bar: a committed column, not a regeneration of the same arithmetic.
+
+    **The bar is one machine epsilon and that is not a widening.** Measured here at
+    2.220446049250313e-16, which IS `numpy.finfo(float).eps` exactly; the registration's
+    "2.220e-16" is that same number at four significant figures. Asserting the literal
+    2.220e-16 fails by one ULP, so the constant is written as `eps` rather than as a
+    decimal that only looks like the registered one.
+
+    **6,000 rows are scorable, not the registered 2,553.** `iou_pred` is committed as
+    `0.0` on the 3,447 empty rows rather than `nan` -- the F2a worker's erratum -- so
+    every row has a finite `iou_pred`. 2,553 + 3,447 = 6,000. The count is asserted
+    exactly so a future change to that convention breaks this test loudly.
+    """
+    import numpy as np
+
+    from boec.designspace import error_volumes
+
+    rows = json.loads((ROOT / "results/k6-designspace.json").read_text())["rows"]
+    worst, scorable, negative = 0.0, 0, 0
+    for r in rows:
+        ev = error_volumes(r["vol_pred"], r["fi_pred"], r["true_frac_above_tau"])
+        if ev["type_II_vol"] < -1e-12:
+            negative += 1
+        iou = r["iou_pred"]
+        if isinstance(iou, float) and iou == iou and ev["implied_iou"] == ev["implied_iou"]:
+            scorable += 1
+            worst = max(worst, abs(ev["implied_iou"] - iou))
+    assert negative == 0, f"{negative} impossible negative type-II volumes"
+    assert scorable == 6000, scorable
+    assert worst <= float(np.finfo(float).eps), f"worst |delta| {worst:.17e}"
+
+
+def test_error_volumes_are_exact_where_fi_and_iou_are_nan():
+    """The part of F2a that was not obvious: empty D_est is the common case, not a corner.
+
+    An empty region certifies nothing, so it makes no type I error and its type II error
+    is the whole true set. `fi` and `iou` are 0/0 there; both volumes are exact.
+    """
+    from boec.designspace import error_volumes
+
+    ev = error_volumes(vol=0.0, fi=float("nan"), prevalence=0.0625)
+    assert ev["type_I_vol"] == 0.0
+    assert ev["intersect"] == 0.0
+    assert ev["type_II_vol"] == 0.0625
+    assert ev["total_error_vol"] == 0.0625
+
+
+def test_error_volumes_recover_a_perfect_region():
+    from boec.designspace import error_volumes
+
+    ev = error_volumes(vol=0.25, fi=0.0, prevalence=0.25)
+    assert ev["type_I_vol"] == 0.0
+    assert ev["type_II_vol"] == 0.0
+    assert ev["implied_iou"] == 1.0
+
+
+# --- the kernel arms at d=8 have no comparator and never will -------------------------
+
+def _fake_q30(tmp_path, dims=(6,)):
+    p = tmp_path / "q30-additive.json"
+    p.write_text(json.dumps([
+        {"instance": i, "dim": d, "sigma": s, "seed": seed, "arm": arm, "regret": 0.1}
+        for d in dims for s in (0.25, 0.10) for arm in KERNEL_ARMS
+        for i in ("033466197eba3ddb",) for seed in (0, 1)]))
+    return p
+
+
+def test_kernel_arms_at_d8_are_recorded_ungated_not_an_abort(tmp_path):
+    """`run_q30_additive.py` is committed at DIM = 6, so d=8 has no column and none is
+    coming. That absence is a registered fact, so the correct behaviour is an explicit
+    `gated: false` with a reason -- NOT the hard error every other missing target gets.
+    """
+    q30 = _fake_q30(tmp_path, dims=(6,))
+    _, ungated = build_gate_index(8, 0.25, KERNEL_ARMS,
+                                  targets={a: q30 for a in KERNEL_ARMS})
+    assert set(ungated) == set(KERNEL_ARMS)
+    for arm in KERNEL_ARMS:
+        assert "d=8" in ungated[arm] or "dim" in ungated[arm]
+
+
+def test_kernel_arms_at_d6_ARE_gated_once_q30_covers_the_cell(tmp_path):
+    """The exemption is narrow: where the column exists, the gate runs."""
+    q30 = _fake_q30(tmp_path, dims=(6,))
+    idx, ungated = build_gate_index(6, 0.10, KERNEL_ARMS,
+                                    targets={a: q30 for a in KERNEL_ARMS})
+    assert ungated == {}
+    assert ("033466197eba3ddb", 0, "qlogei-add") in idx
+
+
+def test_the_kernel_exemption_does_not_weaken_any_other_arm(tmp_path):
+    """A gatable arm with a target that exists but has no rows is still a hard error."""
+    q30 = _fake_q30(tmp_path, dims=(6,))
+    with pytest.raises(MissingGateTarget):
+        build_gate_index(8, 0.25, ("qlogei",), targets={"qlogei": q30})
+
+
+def test_provenance_records_the_thread_count():
+    """Erratum 2's registered remedy: thread count in every provenance block.
+
+    The gates are now known NOT to be thread-contingent -- P2 re-measured all 20 numeric
+    K6 columns at all 24 cells at exactly 0.0 under `set_num_threads(1)`. This is
+    recorded because nothing in the repository recorded it before, not because it varies.
+    """
+    from run_p3_cells import _versions
+
+    v = _versions()
+    assert v["torch_num_threads"].isdigit()
+    assert "omp_num_threads" in v
+
+
+@pytest.mark.slow
+def test_auprc_column_matches_sklearn_on_a_real_campaign():
+    """F2b, cross-checked against the reference implementation rather than against us.
+
+    `boec.calibration.average_precision` is another worker's module; this asserts the
+    column my rows carry equals `sklearn.metrics.average_precision_score` on the same
+    (map, truth, tau), so a divergence in either surfaces here.
+    """
+    from sklearn.metrics import average_precision_score
+
+    from run_p3_cells import score_k6_dual_tau
+
+    instance, seed, arm = "033466197eba3ddb", 0, "doe"
+    rec = regenerate(instance, 6, 0.10, seed, arm)
+    inst = instance_by_id(instance, 6)
+    orc = BiphasicOracle(inst, sigma_rel=0.10, seed=seed)
+    grid = sobol_grid(6, 20_000, seed=0)
+    with torch.no_grad():
+        truth = orc.truth(grid).reshape(-1).double()
+    active = torch.zeros(6, dtype=torch.bool)
+    active[list(rec.kept_factors)] = True
+
+    std, _ = score_k6_dual_tau(rec, orc, grid, truth, active, dual=False)
+    assert len(std) == 24
+
+    checked = 0
+    for r in std:
+        assert "auprc_pred" in r and "auprc_latent" in r
+        assert "type_I_vol_pred" in r and "type_II_vol_pred" in r
+        assert "type_I_vol_latent" in r and "type_II_vol_latent" in r
+        label = (truth >= r["tau"]).double().numpy()
+        if label.sum() in (0, label.size):
+            assert r["auprc_pred"] is None
+            continue
+        # Recompute the map the row was scored from, then compare to sklearn.
+        from boec.designspace import gp_adapter, predictive_probability_map
+        from boec.surrogate import build_gp
+        from boec.replay import unit_bounds
+        model = build_gp(rec.X, rec.Y, rec.Yvar, unit_bounds(6))
+        mean, sd = gp_adapter(model).posterior_mean_and_sd(grid)
+
+        class _M:
+            def posterior_mean_and_sd(self, X):
+                return mean, sd
+
+        sigma_pred = ((orc.sigma_rel * mean).abs() ** 2 + orc.sigma_add ** 2).sqrt()
+        p = predictive_probability_map(_M(), grid, r["tau"], sigma_pred)
+        want = float(average_precision_score(label, p.numpy()))
+        assert abs(r["auprc_pred"] - want) < 1e-12, (r["gamma"], r["tau_frac"],
+                                                     r["auprc_pred"], want)
+        checked += 1
+        if checked >= 3:
+            break
+    assert checked >= 3
+
+
+@pytest.mark.slow
+def test_amendment_f_columns_do_not_disturb_the_committed_ones():
+    """The F columns are added BESIDE the committed K6 columns, never in place of them.
+
+    Every field `run_k6_designspace.score_campaign` emits must still be bit-identical
+    after F2a and F2b were wired in -- that is the whole reason `score_campaign` is still
+    imported.
+    """
+    from run_k6_designspace import score_campaign
+    from run_p3_cells import score_k6_dual_tau
+
+    instance, seed, arm = "033466197eba3ddb", 0, "lhs"
+    rec = regenerate(instance, 6, 0.10, seed, arm)
+    inst = instance_by_id(instance, 6)
+    orc = BiphasicOracle(inst, sigma_rel=0.10, seed=seed)
+    grid = sobol_grid(6, 20_000, seed=0)
+    with torch.no_grad():
+        truth = orc.truth(grid).reshape(-1).double()
+    active = torch.ones(6, dtype=torch.bool)
+
+    want = score_campaign(rec, orc, grid, truth, active)
+    got, _ = score_k6_dual_tau(rec, orc, grid, truth, active, dual=False)
+    assert len(got) == len(want) == 24
+    for g, w in zip(got, want):
+        for key, wv in w.items():
+            gv = g[key]
+            if isinstance(wv, float) and wv != wv:
+                assert gv != gv, key
+            else:
+                assert gv == wv, f"{key}: {gv!r} != {wv!r}"

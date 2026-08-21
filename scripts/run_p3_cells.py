@@ -23,10 +23,27 @@ are NOT modified. Two things stop them being simply re-invoked at the new cells:
    `(instance, dim, sigma, seed, arm)` — K1 measured 500/500 rows at |Δ| = 0 — so one
    record and two records are the same input.
 
-K6's scoring is IMPORTED from `run_k6_designspace.score_campaign`, so it is the committed
-code path, not a copy. K6b's is inline in that script's `main()` and had to be
-re-expressed as :func:`score_k6b`; `tests/test_p3_cells.py` pins the re-expression to the
-**committed** `results/k6b-conservative.json` rows (D12) rather than to itself.
+Both scorers here are re-expressions, and both are pinned to a **committed** artefact
+rather than to themselves (D12). `score_k6b` reproduces `results/k6b-conservative.json`
+and `k6b-conservative-spread.json` field by field; `score_k6_dual_tau`'s committed columns
+are asserted bit-identical to `run_k6_designspace.score_campaign`, which is imported for
+exactly that comparison and for nothing else.
+
+AMENDMENT F (commit 07e98df) SUPERSEDES THIS FILE'S ORIGINAL STATISTICS
+-----------------------------------------------------------------------
+K6's scoring could not simply be imported once F landed. F2a makes the expected type I /
+type II error volumes the PRIMARY design-space metric over AUC -- AUC is invariant to
+monotone transformation, so it scores ranking and never calibration, and mean `grid_r2`
+is negative for all eight arms, which AUC cannot see. Those volumes ARE derivable from
+committed columns. **AUPRC (F2b) is not**: it needs `p_pred` and `truth`, and no stored
+row carries either, which is why the registration folds F2b into a re-score rather than
+an analysis. So the maps are built once here and every F column is written at source.
+
+Erratum 3 matters more here than anywhere: `tau = tau_frac * tau_max(gamma, sigma_rel)`
+and `tau_max` DECREASES in gamma, so higher gamma buys a LOWER absolute tau and an EASIER
+certificate. AUC degrades at both ends of that ladder -- ~17 negative grid points of
+20,000 at gamma=0.99/tau_frac=0.60, ~59 positive at gamma=0.50/tau_frac=0.95 -- while the
+error volumes stay defined across all of it, including where `D_est` is empty.
 
 P3-B2 — THE tau_max SENSITIVITY, WHICH IS NOT A FIX
 ----------------------------------------------------
@@ -63,8 +80,10 @@ from run_k6_designspace import GAMMAS, GRID_N, GRID_SEED, TAU_FRACS, score_campa
 from run_k6b_conservative import (ALPHAS, JITTER, N_DRAWS, SUBSET_N,  # noqa: E402
                                   TAU_FRACS as K6B_TAU_FRACS, joint_draws)
 
-from boec.designspace import (brier_and_auc, false_inclusion_rate,  # noqa: E402
-                              gp_adapter, inscribed_box_from_mask, iou,
+from boec.calibration import average_precision  # noqa: E402
+from boec.designspace import (brier_and_auc, error_volumes,  # noqa: E402
+                              false_inclusion_rate, gp_adapter,
+                              inscribed_box_from_mask, iou,
                               predictive_probability_map, probability_map, tau_max,
                               tau_max_exact)
 from boec.norms import grid_r2, sobol_grid, sup_err  # noqa: E402
@@ -120,6 +139,13 @@ def _versions() -> dict[str, str]:
             out[pkg] = md.version(pkg)
         except Exception:                                    # pragma: no cover
             out[pkg] = "unknown"
+    # Erratum 2's registered remedy. The |delta| = 0 gates are now KNOWN not to be
+    # thread-contingent -- P2 re-measured all 20 numeric K6 columns at all 24 cells at
+    # exactly 0.0 under set_num_threads(1) and after deliberately burning the global torch
+    # RNG -- so this is documentation, not a control variable. It is recorded because
+    # nothing in the repository recorded it before, not because it is expected to matter.
+    out["torch_num_threads"] = str(torch.get_num_threads())
+    out["omp_num_threads"] = os.environ.get("OMP_NUM_THREADS", "unset")
     return out
 
 
@@ -154,9 +180,10 @@ def build_gate_index(dim: int, sigma: float, arms=ARMS,
 
     for arm in arms:
         path = (targets or {}).get(arm) or gate_target(arm, dim)
+        shown = path.relative_to(ROOT) if path.is_relative_to(ROOT) else path
         if not path.exists():
             if arm in KERNEL_ARMS:
-                ungated[arm] = (f"{path.relative_to(ROOT)} absent — CANNOT GATE "
+                ungated[arm] = (f"{shown} absent — CANNOT GATE "
                                 f"(Amendment A1 / P1; COVERAGE-MATRIX §3.6)")
                 continue
             raise MissingGateTarget(
@@ -167,9 +194,21 @@ def build_gate_index(dim: int, sigma: float, arms=ARMS,
         hits = [r for r in rows if r["dim"] == dim and r["sigma"] == sigma
                 and r["arm"] == arm]
         if not hits:
+            # The ONE narrow exemption. `scripts/run_q30_additive.py` is committed at
+            # DIM = 6 with two arms, so `results/q30-additive.json` carries d=6 only and
+            # no d=8 kernel-arm column exists or is coming. That absence is a registered
+            # fact, so it is recorded as an explicit `gated: false` rather than aborting
+            # the cell. Every other missing target stays a hard error -- the exemption is
+            # keyed on the arm, never on "the file happened to be short".
+            if arm in KERNEL_ARMS:
+                ungated[arm] = (f"{shown} carries no d={dim} sigma={sigma} rows — "
+                                f"CANNOT GATE. run_q30_additive.py is committed at "
+                                f"DIM = 6, so no d=8 kernel-arm column exists or is "
+                                f"coming (Amendment A1 / P1 erratum)")
+                continue
             raise MissingGateTarget(
                 f"no committed rows for arm {arm!r} at d={dim} sigma={sigma} in "
-                f"{path.relative_to(ROOT)} — a silent skip here is the §3.6 defect")
+                f"{shown} — a silent skip here is the §3.6 defect")
         for r in hits:
             index[(r["instance"], r["seed"], arm)] = r["regret"]
 
@@ -258,7 +297,8 @@ def score_k6b(rec, orc, X_sub: torch.Tensor, mu_max: float) -> list[dict]:
 # --- P3-B2: the same campaign under both tau definitions -------------------------------
 
 def score_k6_dual_tau(rec, orc, grid: torch.Tensor, truth: torch.Tensor,
-                      active: torch.Tensor) -> tuple[list[dict], list[dict]]:
+                      active: torch.Tensor,
+                      dual: bool = True) -> tuple[list[dict], list[dict]]:
     """K6 rows under ``tau_max`` and under ``tau_max_exact``, from one posterior pass.
 
     The first list is bit-identical to ``run_k6_designspace.score_campaign`` — the
@@ -291,20 +331,42 @@ def score_k6_dual_tau(rec, orc, grid: torch.Tensor, truth: torch.Tensor,
         b_lat, a_lat = brier_and_auc(p_lat, truth, tau)
         _, box_vol = inscribed_box_from_mask(grid, d_gamma, active=active,
                                              seed_score=p_pred)
-        return {**base, "gamma": gamma, "tau_frac": tf, "tau": tau, "tau_max": tmax,
-                "true_frac_above_tau": float(true_set.double().mean()),
-                "vol_pred": float(d_gamma.double().mean()),
-                "vol_latent": float(latent.double().mean()),
-                "empty_pred": int(d_gamma.sum()) == 0,
-                "empty_latent": int(latent.sum()) == 0,
-                "iou_pred": iou(d_gamma, truth, tau),
-                "iou_latent": iou(latent, truth, tau),
-                "fi_pred": false_inclusion_rate(d_gamma, truth, tau),
-                "fi_latent": false_inclusion_rate(latent, truth, tau),
-                "brier_pred": b_pred, "auc_pred": a_pred,
-                "brier_latent": b_lat, "auc_latent": a_lat,
-                "box_vol_pred": box_vol,
-                "n_active": int(active.sum())}
+        # --- the committed K6 columns. Bit-identical to run_k6_designspace.score_campaign,
+        # --- asserted field by field in tests/test_p3_cells.py. Nothing below may edit it.
+        row = {**base, "gamma": gamma, "tau_frac": tf, "tau": tau, "tau_max": tmax,
+               "true_frac_above_tau": float(true_set.double().mean()),
+               "vol_pred": float(d_gamma.double().mean()),
+               "vol_latent": float(latent.double().mean()),
+               "empty_pred": int(d_gamma.sum()) == 0,
+               "empty_latent": int(latent.sum()) == 0,
+               "iou_pred": iou(d_gamma, truth, tau),
+               "iou_latent": iou(latent, truth, tau),
+               "fi_pred": false_inclusion_rate(d_gamma, truth, tau),
+               "fi_latent": false_inclusion_rate(latent, truth, tau),
+               "brier_pred": b_pred, "auc_pred": a_pred,
+               "brier_latent": b_lat, "auc_latent": a_lat,
+               "box_vol_pred": box_vol,
+               "n_active": int(active.sum())}
+
+        # --- AMENDMENT F, added beside them, never in place of them -------------------
+        # F2a: the PRIMARY metric. Derived, so it cannot disagree with the columns above,
+        # and defined on the 54-69% of cells where an empty D_est makes fi and iou nan.
+        prevalence = row["true_frac_above_tau"]
+        for suffix, vol_key, fi_key in (("pred", "vol_pred", "fi_pred"),
+                                        ("latent", "vol_latent", "fi_latent")):
+            for k, v in error_volumes(row[vol_key], row[fi_key], prevalence).items():
+                row[f"{k}_{suffix}"] = v
+        # F2b: AUPRC beside AUC, primary wherever minority prevalence < 0.01. Needs the
+        # raw maps, which exist only here -- no stored row carries them, which is why the
+        # registration folds F2b into a re-score rather than an analysis. `None` when a
+        # class is absent; 1.0 would average in as if it were skill.
+        row["auprc_pred"] = average_precision(p_pred, truth, tau)
+        row["auprc_latent"] = average_precision(p_lat, truth, tau)
+        # Erratum 3: the baseline AP a no-skill ranker scores IS the prevalence, so the
+        # two are never read apart. `minority_prevalence` is the class AUC degrades on,
+        # and it degrades at BOTH ends of the gamma ladder, not just the rare-positive end.
+        row["minority_prevalence"] = min(prevalence, 1.0 - prevalence)
+        return row
 
     std, exact = [], []
     for gamma in GAMMAS:
@@ -312,7 +374,8 @@ def score_k6_dual_tau(rec, orc, grid: torch.Tensor, truth: torch.Tensor,
         t_exa = tau_max_exact(gamma, orc.sigma_rel, orc.sigma_add)
         for tf in TAU_FRACS:
             std.append(_rows_at(t_std, gamma, tf))
-            exact.append(_rows_at(t_exa, gamma, tf))
+            if dual:
+                exact.append(_rows_at(t_exa, gamma, tf))
 
     del model, mean, sd
     gc.collect()
@@ -415,16 +478,19 @@ def main() -> None:
                 gate_target(arm, args.dim).name if verdict["gated"] else None),
                 "gate_reason": verdict["reason"]}
 
+            # ONE scoring path for every cell. Amendment F requires type I/II volumes
+            # and AUPRC on every row, and AUPRC is NOT derivable after the fact -- it
+            # needs p_pred and truth, which no stored row carries. So the P3 scorer is
+            # used everywhere and `run_k6_designspace.score_campaign` is kept as the
+            # thing it is pinned to, field by field, in tests/test_p3_cells.py.
+            std, exact = score_k6_dual_tau(rec, orc, grid, truth, active,
+                                           dual=sens_out is not None)
+            k6_rows.extend({**r, **stamp} for r in std)
             if sens_out is not None:
-                std, exact = score_k6_dual_tau(rec, orc, grid, truth, active)
-                k6_rows.extend({**r, **stamp} for r in std)
                 sens_rows.extend([{**r, **stamp, "tau_definition": "tau_max"}
                                   for r in std]
                                  + [{**r, **stamp, "tau_definition": "tau_max_exact"}
                                     for r in exact])
-            else:
-                k6_rows.extend({**r, **stamp}
-                               for r in score_campaign(rec, orc, grid, truth, active))
 
             k6b_rows.extend({**r, **stamp} for r in score_k6b(rec, orc, X_sub, mu_max))
 

@@ -57,7 +57,7 @@ from torch.distributions import Normal
 __all__ = ["POSTERIOR_CHUNK", "brier_and_auc", "certified_mask", "certified_volume_curve",
            "false_inclusion_rate", "gp_adapter", "inscribed_box",
            "inscribed_box_from_mask", "iou", "predictive_probability_map",
-           "probability_map", "tau_max", "tau_max_exact"]
+           "error_volumes", "probability_map", "tau_max", "tau_max_exact"]
 
 _STD_NORMAL = Normal(0.0, 1.0)
 
@@ -287,3 +287,48 @@ def tau_max_exact(gamma: float, sigma_rel: float, sigma_add: float,
     z = _z_for(gamma)
     total = ((sigma_rel * mu_max) ** 2 + sigma_add ** 2) ** 0.5
     return round(mu_max - z * total, 10)
+
+
+def error_volumes(vol: float, fi: float, prevalence: float) -> dict[str, float]:
+    """Expected type I / type II error volumes. **Amendment F2a**, the PRIMARY metric.
+
+    Azzimonti & Ginsbourger (2018) Table 1 -- what the excursion-set community actually
+    reports, against this project's AUC, which is invariant to monotone transformation and
+    therefore scores *ranking* and never *calibration*. A design space is a calibrated
+    absolute statement, so the invariance is disqualifying rather than convenient: mean
+    ``grid_r2`` is negative for all eight arms -- the posterior mean is a worse point
+    predictor than the constant grid mean -- and **AUC cannot see that at all**.
+
+        type_I_vol  = vol * fi                       |D_est \\ D_true| / |grid|
+        intersect   = vol * (1 - fi)
+        type_II_vol = prevalence - intersect         |D_true \\ D_est| / |grid|
+
+    Args:
+        vol: ``vol_pred`` or ``vol_latent`` -- the certified fraction of the grid.
+        fi: the matching ``fi_*`` false-inclusion rate. May be ``nan``; see below.
+        prevalence: ``true_frac_above_tau``. Amendment F / Erratum 3 make this mandatory
+            on every row precisely so this call is always possible -- a containment number
+            read without its prevalence **inverts**, since 0.99 where the true set covers
+            99.9% of the box is vacuous and 0.94 where it covers 0.29% is strong.
+
+    **Defined exactly where ``fi`` and ``iou`` are not, which is the common case rather
+    than the corner.** An empty ``D_est`` certifies nothing, so it commits no type I error
+    and its type II error is the whole true set; ``fi`` is 0/0 there and ``iou`` is 0/0,
+    but both volumes are exact. 54%-69% of predictive regions are empty at some committed
+    cells, and Erratum 3 shows AUC degrading at *both* ends of the gamma ladder -- the
+    negative class is ~17 grid points of 20,000 at gamma=0.99/tau_frac=0.60 and the
+    positive class is ~59 at gamma=0.50/tau_frac=0.95. These volumes hold across all of it.
+
+    ``implied_iou`` is carried **only** so the arithmetic can be gated against the
+    committed ``iou_pred`` column -- it reproduces it to a worst ``|delta|`` of 2.220e-16
+    over 2,553 rows. It is not a new estimand and nothing should rank on it.
+    """
+    if vol == 0.0:
+        type_i, inter = 0.0, 0.0
+    else:
+        type_i, inter = vol * fi, vol * (1.0 - fi)
+    type_ii = prevalence - inter
+    union = vol + prevalence - inter
+    return {"type_I_vol": type_i, "intersect": inter, "type_II_vol": type_ii,
+            "total_error_vol": type_i + type_ii,
+            "implied_iou": inter / union if union > 0 else float("nan")}
