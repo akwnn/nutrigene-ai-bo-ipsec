@@ -6100,3 +6100,75 @@ screen through `model.posterior` in **one call** — the 100.6 s / 3.2 GB joint-
 `designspace.gp_adapter` exists to prevent. **Under memory pressure it does not fail, it
 starves:** 35 minutes of uninterruptible wait for 1:47 of CPU. **Any new grid variant must route
 through the chunked adapter**, not just the grid copied from an existing runner.
+
+---
+
+## 📌 ERRATUM 8 · **I relayed a 4× saving without checking whose cost profile it fitted. And COVERAGE-MATRIX §5's scoring costs are understated by 10–30×.**
+
+### 8a. The Vorob'ev memoisation is profile-dependent. I propagated it as if it were not.
+
+P2 measured the memoisation at **108.9 s → 30.4 s per campaign** and I relayed it to P1, P3 and
+P4-D23 as a saving they were "paying". **P1 measured its own profile instead of taking mine:**
+
+```
+doe regenerate     0.68 s
+K6  score         19.91 s
+K6b score         25.40 s     <- the only part memoisation touches
+                              -> 5.2% of a 488.5 s kernel campaign
+```
+
+**P1's campaigns are regeneration-dominated (~464 s of 488.5 s); P2's are scoring-dominated.**
+A perfect 4× on K6b returns **~49 min of ~53,700 s — about 5.5% of Step B**, not 4×. **I was
+reasoning from P2's cost profile and generalising it to three workers whose profiles I had not
+checked.**
+
+**P1's decline is ACCEPTED, and its three reasons are the right ones**, in its own priority order:
+1. Catching the calls that matter would require **patching `boec.vorobev.containment_probability`
+   from a runner** — a shared module — and every mechanism in that runner has had to pay for
+   itself against the risk of manufacturing a **false WITHDRAWN**, which the registration says is
+   *not repaired by re-running*. **5.5% does not clear that bar.**
+2. **P4b is in flight on `alpha_star` specifically.** Patching underneath it is a collision.
+3. *"My controls would catch a broken memoisation, but 'the safety net would catch it' is a
+   reason the risk is survivable, not a reason to take it."* — **that sentence is the standard
+   and is registered as such.**
+
+**Correction issued to P3 and P4-D23: measure your own profile before adopting.** The saving is
+real where scoring dominates and near-irrelevant where regeneration does.
+
+### 8b. `COVERAGE-MATRIX.md` §5's per-campaign scoring costs are a FLOOR, not an estimate.
+
+| operation | §5 says | measured under contention | ratio |
+|---|---|---|---|
+| K6 scoring, 24 cells on the 20k grid | **2.0 s** | **19.91 s** | ~10× |
+| K6b scoring, 2k × 512 draws × 4 τ | **0.8 s** | **25.40 s** | **~30×** |
+
+**K6b is more expensive than K6, not a third of it.** The likely cause is that `joint_draws`'
+2000×2000 Cholesky is **memory-bandwidth-bound**, which is the worst thing to be at 59 MB free
+RAM. §5's figures were taken on an uncontended machine.
+
+**Registered:** every cost in `COVERAGE-MATRIX.md` §5 is an **uncontended floor**. Any plan
+priced from it on a loaded machine is optimistic by up to 30×, and the P1/P3/P6 wall-clock
+projections that overran were overrunning this, not a mis-estimate of the work.
+
+### 8c. 🔴 **Erratum 7a's closure was over-credited. P1 corrected its own evidence downward.**
+
+I recorded P1's thread test as covering the `BiphasicOracle` path and closed Erratum 7a partly on
+it. **P1 has corrected me: it set the env vars via `os.environ` INSIDE the process before
+importing torch** — which, by the mechanism in my own un-retraction (Erratum 5c), is **too late
+for BLAS.** So it varied **torch's intra-op pool** (`torch.get_num_threads()` did report 1 vs 4)
+but **probably not the BLAS thread count.**
+
+**Revised weighting, stated accurately:**
+* **Load-bearing: P7's measurement** — recomputing at shell-capped threads against columns
+  produced **uncapped**. That is a genuine BLAS thread variation. 144 rows × 11 committed K6
+  columns at |Δ| = 0.000e+00.
+* **Corroborating, not independent:** P1's (intra-op pool only), P2's and B4's (whose `1` was the
+  control, since the committed columns were themselves produced at one thread).
+
+**Status: 🟡 7a closes on ONE strong measurement plus corroboration, not on "four workers, four
+paths" as I wrote.** That is still enough to proceed — no mechanism is known by which reduction
+order would differ at one cell and not another, and every measurement points the same way — but
+**the record now says one, not four.**
+
+**P1 volunteered this correction against its own earlier claim, unprompted, when nothing turned
+on it.** Recorded because that is the behaviour that makes the rest of its reporting credible.
