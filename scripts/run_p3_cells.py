@@ -437,10 +437,12 @@ def main() -> None:
                "grid_n": GRID_N, "grid_seed": GRID_SEED,
                "smoke_limit": args.limit}
         _write(k6_out, head, dirty, cfg, gate_fail, ungated, k6_rows, started)
+        # K6b is gamma-free by construction -- theta = tau_frac * mu_max absorbs margin 1
+        # exactly -- so `gammas` and `grid_n` are dropped rather than carried as null.
+        k6b_cfg = {k: v for k, v in cfg.items() if k not in ("gammas", "grid_n")}
         _write(k6b_out, head, dirty,
-               {**cfg, "tau_fracs": list(K6B_TAU_FRACS), "alphas": list(ALPHAS),
-                "subset_n": SUBSET_N, "n_draws": N_DRAWS, "jitter": JITTER,
-                "gammas": None, "grid_n": None},
+               {**k6b_cfg, "tau_fracs": list(K6B_TAU_FRACS), "alphas": list(ALPHAS),
+                "subset_n": SUBSET_N, "n_draws": N_DRAWS, "jitter": JITTER},
                gate_fail, ungated, k6b_rows, started)
         if sens_out is not None:
             _write(sens_out, head, dirty,

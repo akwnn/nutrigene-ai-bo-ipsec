@@ -1,0 +1,18 @@
+
+=== d=6 sigma=0.1 · 50 keys ===
+  doe       50/50 gated · worst |delta| = 0.000e+00 · EXACT (48s)
+  lhs       50/50 gated · worst |delta| = 0.000e+00 · EXACT (14s)
+  sobol     50/50 gated · worst |delta| = 0.000e+00 · EXACT (12s)
+  random    50/50 gated · worst |delta| = 0.000e+00 · EXACT (8s)
+
+=== d=8 sigma=0.25 · 50 keys ===
+  doe       50/50 gated · worst |delta| = 0.000e+00 · EXACT (38s)
+  lhs       50/50 gated · worst |delta| = 0.000e+00 · EXACT (9s)
+  sobol     50/50 gated · worst |delta| = 0.000e+00 · EXACT (9s)
+  random    50/50 gated · worst |delta| = 0.000e+00 · EXACT (8s)
+
+=== d=8 sigma=0.1 · 50 keys ===
+  doe       50/50 gated · worst |delta| = 0.000e+00 · EXACT (24s)
+  lhs       50/50 gated · worst |delta| = 0.000e+00 · EXACT (8s)
+  sobol     50/50 gated · worst |delta| = 0.000e+00 · EXACT (9s)
+  random    50/50 gated · worst |delta| = 0.000e+00 · EXACT (15s)
