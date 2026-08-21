@@ -189,8 +189,12 @@ K6b (§5.8, §5.10.2) the screened classical arm has:
   at `0.75` (0.7875, +0.19 over qLogEI, p < 1e-4);
 - the **lowest Vorob'ev deviation** of all eight arms at `tau_frac = 0.60` (0.0755 against
   0.288–0.356 for the rest);
-- and **empirical containment of 0.155 / 0.420 / 0.510 against nominal 0.50 / 0.80 / 0.95**
-  — the only arm of eight that fails, and it fails at all three levels.
+- and **empirical containment at `tau_frac = 0.60` of 0.000 (0/50) / 0.240 (12/50) /
+  0.500 (25/50) against nominal 0.50 / 0.80 / 0.95** — it fails at all three levels, and
+  again at `0.75, alpha = 0.50` (15/47). *A `tau_frac`-pooled `0.155 / 0.420 / 0.510` stood
+  here and is withdrawn under Amendment F4 (§3.7, §5.10.2); the per-cell figures that
+  replace it are worse for the arm, not better. The clause "the only arm of eight that
+  fails" is also withdrawn: per-cell, `random` fails one thin cell too.*
 
 At `tau_frac = 0.60, alpha = 0.50` its certified set is contained in the truth in **0 of
 50 campaigns**. The two model-internal metrics rank it first; the validated one says its
@@ -590,10 +594,13 @@ itself calls *"not defensible in a batch record"*. That run's numbers are void.
    6D grid for the other seven. The screen pins two axes near where the response is high,
    so `doe`'s slice is an **easier** slice. Cross-arm `alpha*` and volume comparisons are
    therefore not like-for-like, and the direction of the bias favours `doe`.
-2. **B3 did not rescue the arm — it made the `alpha = 0.50` failure worse.** Empirical
-   containment for `doe` at `alpha = 0.50` is **0.155 with B3 applied** against **0.250
-   without** it in the void run. The arm is *more* miscalibrated on the very subspace it
-   claims to operate in (§5.10.2).
+2. **B3 did not rescue the arm.** With B3 applied, empirical containment for `doe` at
+   `tau_frac = 0.60, alpha = 0.50` is **0.000 — 0 of 50 campaigns** (§5.10.2). The arm is
+   miscalibrated on the very subspace it claims to operate in. *An earlier revision read
+   "0.155 with B3 applied against 0.250 without", and the comparison is **withdrawn under
+   Amendment F4**: both figures are `tau_frac`-pooled, and the void run's were never broken
+   out per cell, so "made it worse" cannot be established from committed files. What is
+   established is the within-arm failure at the cell above.*
 3. **RESOLVED — Version B's `doe` arm now has B3 applied, and the two files agree
    bitwise.** *The revision at `0e3ea3a` recorded here that "Version B's `doe` arm does not
    have B3 applied … the two files disagree by up to +0.062 on the same arm, the same
@@ -908,8 +915,26 @@ Three properties make it the right test and each is load-bearing:
    set either is or is not wholly inside `Gamma`. The joint guarantee
    `P(CE_alpha subset of Gamma) >= alpha` is a statement about the **distribution over
    campaigns**, so it is estimated by the **fraction of campaigns contained** — 50
-   Bernoulli trials per (arm, `tau_frac`, `alpha`) cell, pooled over `tau_frac` to at most
-   200 per (arm, `alpha`).
+   Bernoulli trials per (arm, `tau_frac`, `alpha`) cell at the `(instance, seed)` unit, or
+   25 at the instance unit with seeds averaged first (Amendment F1).
+
+   **AMENDMENT F4 — an earlier revision of this line continued *"pooled over `tau_frac` to
+   at most 200 per (arm, `alpha`)"*, and every pooled figure computed under it is
+   WITHDRAWN.** The four thresholds are evaluated on **the same campaign, the same
+   posterior and the same 512 draws**; they are four readings of one experiment, not four
+   Bernoulli trials, and pooling them inflates `n` by up to 4x while an interval computed
+   on that `n` is correspondingly too narrow. **Per-cell containment, each row stating its
+   own cell and its own `n`, is now the only reported form.** Any cross-`tau_frac` summary
+   would require a mixed-effects model with campaign as a random effect; none exists, so
+   no pooled containment number appears in this document. The withdrawal is of the
+   *pooled expression only* — every per-cell number is unaffected, and §5.10.2 shows the
+   `doe` failure is **worse** per-cell than it was pooled.
+
+   *Two neighbouring tables are pooled over `tau_frac` in the same way and are **not**
+   containment: the emptiness table and the mean-`|CE|` table of §5.10, both at 200 rows
+   per (arm, `alpha`). They are descriptive averages with no interval and no Bernoulli
+   claim attached, so F4 does not withdraw them — but their 200 rows are 50 campaigns read
+   four times, and they must not have an `n` used inferentially either.*
 3. **It returns `None`, not `True`, for an empty set.** An empty set is vacuously contained.
    Counting it as a success would let an arm that certifies nothing report perfect
    containment, and since 52%–94% of `CE_alpha` are empty (§5.10) that would have dominated
@@ -921,12 +946,40 @@ Three properties make it the right test and each is load-bearing:
 Fixed by the registration and by Q20 §2, and implemented identically in both analysis
 scripts:
 
-- **Unit of analysis:** the `(instance, seed)` pair. 25 instances x 2 seeds = **n = 50**
-  for every contrast. Pairs with `nan` on either side drop, and the dropped count is
-  printed; for every AUC contrast reported here, `dropped = 0`.
+- **Unit of analysis — AMENDMENT F1, and this line previously named only one unit.** It
+  read *"the `(instance, seed)` pair. 25 instances x 2 seeds = **n = 50** for every
+  contrast."* `docs/RESEARCH-SUMMARY.md` states the opposite convention for the same
+  design — *"The two random seeds per landscape are averaged first; the test then uses the
+  n = 25 paired differences"* — and **nothing in this repository recorded the switch.**
+  Two seeds on one landscape share the landscape, so they are not independent units.
+  **Every contrast is therefore now computed both ways** (`scripts/analyse_f1_dual_n.py`,
+  `results/f1-dual-n.json`):
+    - **n = 50**, unit `(instance, seed)` — as the two committed analysis scripts compute
+      it, and reproduced by the F1 script to `1e-12` on all 24 K6 cells and all 10 Fix 1
+      arms;
+    - **n = 25**, unit `instance`, seeds averaged first — the conservative unit, and the
+      one the earlier paper committed to.
+
+  Pairs with `nan` on either side drop at the campaign level *before* the seeds are
+  averaged, so the n = 25 analysis runs on a strict subset of what n = 50 admits and the
+  two differ only in aggregation. For every AUC contrast reported here, `dropped = 0`.
+  **Where they agree the n = 25 figure is the one quoted; where a result is significant at
+  n = 50 and not at n = 25 it is downgraded to the n = 25 verdict, and the n = 50 figure
+  is printed beside it labelled the anti-conservative unit and never quoted alone.**
+- **How anti-conservative n = 50 actually is, measured rather than assumed.** The
+  amendment predicted "roughly sqrt(2)". The exact identity is
+  `Var_boot(n=25)/Var_boot(n=50) = 1 + ICC`, so the interval ratio is `sqrt(1 + ICC)`, and
+  sqrt(2) is the ICC = 1 corner. **Measured over all 137 recomputed contrasts the median
+  ratio is 0.9884, range [0.4922, 1.1763], with 73 of 137 below 1.0** — on this data two
+  seeds of one landscape typically disagree about as much as two landscapes do, and n = 50
+  was not materially anti-conservative. That is why **only 1 of 137 contrasts is
+  downgraded** (§5.8, `sobol - qlognei` on `alpha*` at `tau_frac = 0.60`) while **3 gain
+  significance at n = 25**, which the amendment did not anticipate: averaging seeds first
+  lowers the Wilcoxon p whenever within-landscape noise dominates. The point estimate is
+  identical at both units to `5.6e-17`; only its uncertainty and its p move.
 - **Magnitude:** mean paired difference with a **percentile bootstrap CI**, 4,000
-  resamples of the 50 paired differences, `numpy.random.default_rng(0)`, 2.5/97.5
-  percentiles.
+  resamples of the paired differences (50 or 25 of them), `numpy.random.default_rng(0)`,
+  2.5/97.5 percentiles.
 - **Yes/no:** two-sided **Wilcoxon signed-rank** (`scipy.stats.wilcoxon`, default settings;
   `ValueError` on all-zero differences is mapped to `p = 1.0`).
 - **Disagreements between the two are reported, not resolved** (Q20 §2). Several occur; see
@@ -1172,6 +1225,14 @@ values (-0.0595 and -0.0574) exactly, which is an independent consistency check 
 regeneration.
 
 ### 5.2 K6 primary — the map ranking matches regret in 0 of 24 cells
+
+> **AMENDMENT F2a.** The AUC ranking below is **superseded** as the primary design-space
+> figure and is retained here as the record of what was registered and computed. The
+> reported ranking is now the expected type I / type II error volumes, which disagree with
+> AUC in **24 of 24 cells** at a Spearman rho of +0.071 — see §6.10.1 and
+> `results/f2-error-volumes.json`. The §5.2 verdict itself is unaffected: the map ranking
+> matches the regret ranking in 0 of 24 cells on AUC **and** on every error-volume
+> ranking.
 
 Per-cell AUC-of-predictive-map ranking, from `results/k6-analysis.json` `cells`
 (regenerated identically by `scripts/analyse_k6.py`). `empty` is the fraction of the 400
@@ -1607,7 +1668,11 @@ opposite error, entirely from the evaluation subspace.
 **Consequence for the registered decision rule, unchanged in force.** The four K6b
 deliverables disagree **with one another**: at `tau_frac = 0.75` `doe` is simultaneously
 **best on `alpha*`** (0.7875), **worst on Vorob'ev deviation** (0.2783), **best on IoU**
-(0.3499) — and **fails empirical containment at 0.420 against nominal 0.80** (§5.10.2). A
+(0.3499) — and **fails empirical containment in its own `tau_frac = 0.60` cells at every
+alpha** (§5.10.2). *This clause previously read "fails empirical containment at 0.420
+against nominal 0.80"; 0.420 was `tau_frac`-pooled and is withdrawn under F4. At
+`tau_frac = 0.75` itself the arm passes `alpha = 0.80` (0.8947, n = 19) and fails
+`alpha = 0.50` (0.3191, n = 47), which is the sharper statement.* A
 decision rule phrased as *"if the ranking on the primary metric matches the regret
 ranking"* is well-defined only because `alpha*` was named the primary; had
 `vorobev_deviation` or IoU been named instead, the same data would tell a different story,
@@ -1645,6 +1710,12 @@ defined in 1,600/1,600 rows while `CE_0.95` is defined in 220/1,600.
 | `lhs` | 91 / 18.3 | 52 / 7.1 | 16 / 2.6 |
 | `sobol` | 73 / 15.5 | 42 / 3.4 | 13 / 1.5 |
 | `random` | 96 / 24.0 | 57 / 12.0 | 18 / 2.4 |
+
+*The `n` column above is `tau_frac`-pooled — 97 is 50 campaigns at `tau_frac = 0.60` plus
+47 at `0.75`. Under Amendment F4 (§3.7) that is not withdrawn here, because a mean set size
+is a descriptive average over distinct (campaign, threshold) readings and carries no
+interval and no Bernoulli claim; but **it is not a sample size and must not be used as
+one**, and the same counts are withdrawn wherever they carried a containment rate (§5.10.2).*
 
 **`doe` certifies 30x to 190x more points than any other arm, at every level.** At
 `alpha = 0.95` it claims a mean of **437 of 2,000 points** where the next-largest arm claims
@@ -1697,7 +1768,9 @@ in both the runner and the analysis script, so the tautology is visible in the d
 than silently deleted.
 
 Note the ordering: **`doe` has the *highest* circular containment at `alpha = 0.95`
-(0.9997) and the *lowest* empirical containment (0.5098).** The in-sample statistic ranks
+(0.9997) and the *lowest* empirical containment — 0.500, 25 of 50, at `tau_frac = 0.60`
+(the `0.5098` previously quoted here was `tau_frac`-pooled and is withdrawn under F4).**
+The in-sample statistic ranks
 the failing arm first. It is the same pathology as `alpha*` (§1.4, §5.8) — a metric that
 consults only the model inherits the model's errors as facts.
 
@@ -1709,47 +1782,102 @@ boolean, so the guarantee `P(CE_alpha subset of Gamma) >= alpha` is estimated by
 **fraction of campaigns contained**, and that fraction must be at least `alpha`. Empty sets
 return `None` and are dropped, never counted as successes.
 
-Regenerated by `scripts/analyse_k6b.py`. `n` is the number of non-empty, i.e. scorable,
-campaigns:
+**AMENDMENT F4 — THE `tau_frac`-POOLED TABLE THAT STOOD HERE IS WITHDRAWN.** An earlier
+revision reported one row per arm at `n = 73` to `n = 97`, plus a *"pooled, all 8 arms"*
+row at `n = 714 / 467 / 220`. Every one of those `n` counts **one campaign up to four
+times** — the four `tau_frac` thresholds are evaluated on the same campaign, the same
+posterior and the same 512 draws, so they are four readings of one experiment and not four
+Bernoulli trials. The withdrawn figures were `doe` **0.1546 / 0.4203 / 0.5098** and the
+all-arm pool **0.7535 / 0.8951 / 0.8818**; they are recorded here so that the withdrawal is
+auditable, and **they are not to be quoted — including the `0.155 / 0.420 / 0.510` triple
+that several other sections of this report previously carried.** The per-cell tables below
+replace them, at both units of Amendment F1, and they are not a weakening: `doe`'s failure
+is **worse** per-cell than it was pooled.
 
-| arm | n_active | alpha=0.50 | alpha=0.80 | alpha=0.95 |
+Regenerated by `scripts/analyse_f1_dual_n.py` from `results/k6b-conservative.json` and
+`results/k6b-conservative-spread.json`, written to `results/f1-dual-n.json` under
+`containment_per_cell.k6b`. `n` is the number of **scorable** — non-empty — campaigns
+**in that cell**; empty sets return `None` and are dropped, never counted as successes.
+`n = 50` is the `(instance, seed)` unit; `n = 25` is the instance unit with the two seeds
+averaged first, so an instance contributes 0, 0.5 or 1. `—` means no scorable campaign.
+Cells at `n <= 16` are marked *(thin)* by italicised `n`, on the §5.11.7 convention.
+
+**`alpha = 0.50`** — must be >= 0.50:
+
+| arm | tau_f=0.60, n=50 | 0.60, n=25 | 0.75, n=50 | 0.75, n=25 | 0.85, n=50 | 0.85, n=25 |
+|---|---|---|---|---|---|---|
+| **`doe`** | **0.0000 FAIL (n=50)** | **0.0000 FAIL (n=25)** | **0.3191 FAIL (n=47)** | **0.3200 FAIL (n=25)** | — (n=0) | — (n=0) |
+| `qlogei` | 0.8600 ok (n=50) | 0.8600 ok (n=25) | 0.9000 ok (n=30) | 0.9211 ok (n=19) | 1.0000 ok *(n=6)* | 1.0000 ok *(n=6)* |
+| `qlognei` | 0.9000 ok (n=50) | 0.9000 ok (n=25) | 0.9429 ok (n=35) | 0.9348 ok (n=23) | 1.0000 ok *(n=6)* | 1.0000 ok *(n=6)* |
+| `qlogei-add` | 0.9000 ok (n=50) | 0.9000 ok (n=25) | 0.8571 ok (n=35) | 0.8043 ok (n=23) | 0.6667 ok *(n=3)* | 0.6667 ok *(n=3)* |
+| `qlogei-addonly` | 0.8200 ok (n=50) | 0.8200 ok (n=25) | 0.7419 ok (n=31) | 0.7391 ok (n=23) | 0.6364 ok *(n=11)* | 0.6000 ok *(n=10)* |
+| `lhs` | 0.9400 ok (n=50) | 0.9400 ok (n=25) | 0.8684 ok (n=38) | 0.8800 ok (n=25) | 1.0000 ok *(n=3)* | 1.0000 ok *(n=3)* |
+| `sobol` | 1.0000 ok (n=50) | 1.0000 ok (n=25) | 0.8696 ok (n=23) | 0.8611 ok (n=18) | — (n=0) | — (n=0) |
+| **`random`** | 0.6000 ok (n=50) | 0.6000 ok (n=25) | 0.7949 ok (n=39) | 0.7500 ok (n=24) | **0.1429 FAIL *(n=7)*** | **0.1429 FAIL *(n=7)*** |
+
+**`alpha = 0.80`** — must be >= 0.80:
+
+| arm | tau_f=0.60, n=50 | 0.60, n=25 | 0.75, n=50 | 0.75, n=25 |
 |---|---|---|---|---|
-| **`doe`** | **4** | **0.1546** FAIL (n=97) | **0.4203** FAIL (n=69) | **0.5098** FAIL (n=51) |
-| `qlogei` | 6 | 0.8837 ok (n=86) | 0.9831 ok (n=59) | 1.0000 ok (n=32) |
-| `qlognei` | 6 | 0.9231 ok (n=91) | 0.9677 ok (n=62) | 0.9697 ok (n=33) |
-| `qlogei-add` | 6 | 0.8750 ok (n=88) | 0.9839 ok (n=62) | 1.0000 ok (n=33) |
-| `qlogei-addonly` | 6 | 0.7717 ok (n=92) | 0.9844 ok (n=64) | 1.0000 ok (n=24) |
-| `lhs` | 6 | 0.9121 ok (n=91) | 1.0000 ok (n=52) | 1.0000 ok (n=16) |
-| `sobol` | 6 | 0.9589 ok (n=73) | 1.0000 ok (n=42) | 1.0000 ok (n=13) |
-| `random` | 6 | 0.6458 ok (n=96) | 0.9298 ok (n=57) | 1.0000 ok (n=18) |
-| *pooled, all 8 arms* | — | 0.7535 (n=714) | 0.8951 (n=467) | **0.8818 (n=220) — below nominal** |
+| **`doe`** | **0.2400 FAIL (n=50)** | **0.2400 FAIL (n=25)** | 0.8947 ok (n=19) | 0.9000 ok *(n=15)* |
+| `qlogei` | 0.9796 ok (n=49) | 0.9800 ok (n=25) | 1.0000 ok *(n=10)* | 1.0000 ok *(n=9)* |
+| `qlognei` | 0.9792 ok (n=48) | 0.9800 ok (n=25) | 0.9231 ok *(n=13)* | 0.9167 ok *(n=12)* |
+| `qlogei-add` | 1.0000 ok (n=50) | 1.0000 ok (n=25) | 0.9167 ok *(n=12)* | 0.9091 ok *(n=11)* |
+| `qlogei-addonly` | 0.9792 ok (n=48) | 0.9800 ok (n=25) | 1.0000 ok *(n=16)* | 1.0000 ok *(n=15)* |
+| `lhs` | 1.0000 ok (n=47) | 1.0000 ok (n=25) | 1.0000 ok *(n=5)* | 1.0000 ok *(n=5)* |
+| `sobol` | 1.0000 ok (n=42) | 1.0000 ok (n=24) | — (n=0) | — (n=0) |
+| `random` | 0.9167 ok (n=48) | 0.9000 ok (n=25) | 1.0000 ok *(n=9)* | 1.0000 ok *(n=8)* |
 
-**Seven of eight arms meet or exceed their nominal joint level at all three alphas. The
-`doe` arm fails at all three: 0.155 against 0.50, 0.420 against 0.80, 0.510 against 0.95 —
-short by factors of 3.2, 1.9 and 1.9.** Pooled across arms the achieved level is
-0.754 / 0.895 / **0.882**; the pooled figure at `alpha = 0.95` is itself **below nominal**,
-because `doe` supplies 51 of the 220 scorable cases and is wrong in half of them.
+**`alpha = 0.95`** — must be >= 0.95. Only `tau_frac = 0.60` carries usable `n`; every
+`0.75` cell is `n <= 2` and carries nothing:
 
-**The failure is not a fringe effect at a hard threshold — it is worst at the easy one.**
-`doe`'s empirical containment broken out by threshold:
+| arm | tau_f=0.60, n=50 | 0.60, n=25 |
+|---|---|---|
+| **`doe`** | **0.5000 FAIL (n=50)** | **0.5000 FAIL (n=25)** |
+| `qlogei` | 1.0000 ok (n=31) | 1.0000 ok (n=21) |
+| `qlognei` | 0.9677 ok (n=31) | 0.9737 ok (n=19) |
+| `qlogei-add` | 1.0000 ok (n=32) | 1.0000 ok (n=21) |
+| `qlogei-addonly` | 1.0000 ok (n=24) | 1.0000 ok *(n=19)* |
+| `lhs` | 1.0000 ok *(n=16)* | 1.0000 ok *(n=15)* |
+| `sobol` | 1.0000 ok *(n=13)* | 1.0000 ok *(n=12)* |
+| `random` | 1.0000 ok *(n=18)* | 1.0000 ok *(n=15)* |
 
-| alpha | tau_frac = 0.60 | 0.75 | 0.85 | 0.95 |
-|---|---|---|---|---|
-| 0.50 | **0.000 (n=50)** | 0.319 (n=47) | — (n=0) | — (n=0) |
-| 0.80 | 0.240 (n=50) | 0.895 (n=19) | — (n=0) | — (n=0) |
-| 0.95 | 0.500 (n=50) | 1.000 (n=1) | — (n=0) | — (n=0) |
+**Every `tau_frac = 0.95` cell is empty in 50 of 50 campaigns for every arm at every alpha**
+and is omitted rather than shown as a row of dashes. Of the 96 (arm, `tau_frac`, `alpha`)
+cells, **50 are scorable at all**, and **no cell's verdict differs between the two units**.
 
-**At `tau_frac = 0.60, alpha = 0.50`, the certified set is contained in 0 of 50 campaigns.**
-Not a low rate — zero. The arm asserts a set of ~829 points at 50% joint confidence and
-every single one of those 50 assertions contains at least one point where the truth is
-below `theta`.
+**The `doe` arm fails four cells, and by more than the withdrawn pooled figures said.** At
+`tau_frac = 0.60` it is contained in **0 of 50** campaigns at `alpha = 0.50`, 12 of 50 at
+`0.80` and 25 of 50 at `0.95`; and at `0.75, alpha = 0.50` it is 15 of 47. **At
+`tau_frac = 0.60, alpha = 0.50` the certified set is contained in 0 of 50 campaigns** — not
+a low rate, zero. The arm asserts a set of ~829 points at 50% joint confidence and every
+single one of those 50 assertions contains at least one point where the truth is below
+`theta`. It passes only at `0.75, alpha = 0.80` (0.8947, n = 19). **The failure is not a
+fringe effect at a hard threshold — it is worst at the easy one**, which the pooled figure
+of 0.1546 obscured by averaging the zero against the 15-of-47.
 
-**This is B3 *applied*, and B3 made it worse.** The void policy-(c) run measured
-0.250 / 0.333 / 0.787. With the active-subspace evaluation the `alpha = 0.50` figure fell
-to **0.155** and `alpha = 0.80` rose to 0.420, `alpha = 0.95` fell to 0.510. Restricting
-the arm to the four axes it actually varied — the registration's **primary**, most
-defensible policy — did not rescue the guarantee. **The arm is miscalibrated on the very
-slice it operates in**, which forecloses the obvious repair.
+**Un-pooling also costs this report a claim it used to make.** The withdrawn table
+supported *"seven of eight arms meet or exceed their nominal joint level at all three
+alphas."* Per-cell that is **six of eight**: `random` is contained in **1 of 7** scorable
+campaigns at `tau_frac = 0.85, alpha = 0.50`, against a nominal 0.50, at both units.
+Pooling averaged that cell against `random`'s 30 of 50 at `0.60` and 31 of 39 at `0.75` and
+reported the arm as `0.6458 ok`. The cell is thin — `n = 7`, with 86% of `CE_0.50` empty
+there — so on the same standard §5.11.7 applies to thin cells it is a failure that is *not
+demonstrated* rather than one that is, and it must never be carried without its `n`.
+**The "only one arm fails" headline was a pooling artefact. The `doe` result is not**: it
+rests on four cells of which three have `n = 50` and one `n = 47`, and it is unchanged at
+`n = 25`.
+
+**This is B3 *applied*, and B3 made it worse.** *An earlier revision compared the void
+policy-(c) run's 0.250 / 0.333 / 0.787 against the pooled 0.155 / 0.420 / 0.510. Both sides
+of that comparison are `tau_frac`-pooled and it is **withdrawn under F4** — the void run's
+own figures were never broken out per cell, so the like-for-like comparison cannot be made
+from committed files.* What survives is the within-arm statement at the cell where the
+evidence is strongest: with the active-subspace evaluation the arm is contained in **0 of
+50** campaigns at `tau_frac = 0.60, alpha = 0.50`. Restricting the arm to the four axes it
+actually varied — the registration's **primary**, most defensible policy — did not rescue
+the guarantee. **The arm is miscalibrated on the very slice it operates in**, which
+forecloses the obvious repair.
 
 **The mechanism.** The `doe` GP is fitted on data whose two screened axes have no stage-2
 variation, so along those axes the likelihood is flat, the ARD lengthscale reverts toward
@@ -1766,12 +1894,20 @@ consult `f` — IoU and empirical containment — see it.
 **Therefore the correct statement of the K6b safety result is:**
 
 > With plug-in hyperparameters and 48 wells, the conservative excursion estimate achieves
-> at or above its nominal joint confidence for every arm that varies all six factors, at
-> `alpha in {0.50, 0.80, 0.95}`. It **fails at all three levels for the screened classical
-> arm — by a factor of 3.2 at alpha = 0.50 — and it fails with Amendment B3's primary
-> screened-axis policy applied**, on the arm's own 4-dimensional active subspace. The
-> `ce_contain` statistic in the same JSON is computed in-sample and cannot detect this; the
-> failure is visible only against ground truth.
+> at or above its nominal joint confidence in **45 of the 50 scorable (arm, `tau_frac`,
+> `alpha`) cells**, at both units. It **fails at all three levels for the screened
+> classical arm at `tau_frac = 0.60` — contained in 0 of 50 campaigns at `alpha = 0.50`,
+> 12 of 50 at 0.80, 25 of 50 at 0.95 — and again at `0.75, alpha = 0.50` (15 of 47), and
+> it fails with Amendment B3's primary screened-axis policy applied**, on the arm's own
+> 4-dimensional active subspace. The one remaining failing cell is `random` at
+> `tau_frac = 0.85, alpha = 0.50`, 1 of 7, which is thin. The `ce_contain` statistic in
+> the same JSON is computed in-sample and cannot detect any of this; the failure is
+> visible only against ground truth.
+>
+> *Revised under Amendment F4. This paragraph previously read "for every arm that varies
+> all six factors" and "by a factor of 3.2 at alpha = 0.50". Both were statements about
+> `tau_frac`-pooled numbers: the first is contradicted per-cell by `random`, and the second
+> was computed from the withdrawn pooled 0.155.*
 
 This both strengthens and qualifies the screening finding of §5.3: screening does not merely
 cost map quality, it **breaks the joint certification guarantee** for the region the
@@ -1780,10 +1916,13 @@ screened arm certifies, and refusing to certify the screened axes does not fix i
 **Two limits on this result, stated because they bound it.** (i) `doe`'s figures are
 computed on a different evaluation set from the other seven arms (§2.8), so the *cross-arm*
 comparison is not like-for-like — but the *within-arm* comparison against its own nominal
-level, which is what "fails" means here, needs no cross-arm pairing. (ii) `n` ranges from
-13 to 97 per cell; a 0.9697 at n=33 is 32/33 and its Wilson 95% interval reaches below 0.95,
-so "ok" for the individual passing arms at `alpha = 0.95` means "not contradicted", not
-"demonstrated". The `doe` failures at n=97/69/51 are far outside sampling noise.
+level, which is what "fails" means here, needs no cross-arm pairing. (ii) Per-cell `n`
+ranges from 3 to 50, and 46 of the 96 cells cannot be scored at all; a 0.9677 at n=31 is
+30/31 and its Wilson 95% interval reaches below 0.95, so "ok" for the individual passing
+arms at `alpha = 0.95` means "not contradicted", not "demonstrated", and every cell marked
+*(thin)* means still less. The `doe` failures rest on n = 50 / 50 / 50 / 47 and are far
+outside sampling noise. *This limit previously read "n ranges from 13 to 97 per cell"; 97
+was a `tau_frac`-pooled count and is withdrawn under F4.*
 
 ### 5.11 Version B — the two-plate arm. Both registered kills passed, and its certificate now holds against truth.
 
@@ -2211,10 +2350,19 @@ arm.
 `versionb` is at or above nominal in all six scorable cells:
 0.9400 (47/50, Wilson [0.838, 0.979]) and 1.0000 (50/50, [0.929, 1.000]) and 1.0000 (22/22,
 [0.851, 1.000]) at `tau_frac = 0.60`; 0.9302 (40/43) and 1.0000 (14/14) at `0.75`; 0.8750
-(7/8, and this one is thin) at `0.85`. Pooled across the four thresholds it is
-**0.9307 (94/101) / 1.0000 (64/64) / 1.0000 (22/22)** against nominal 0.50 / 0.80 / 0.95.
+(7/8, and this one is thin) at `0.85`. At the conservative unit of Amendment F1 the same
+six cells read 0.9400 (n=25), 1.0000 (n=25), 1.0000 (n=17) at `tau_frac = 0.60`; 0.9400
+(n=25) and 1.0000 (n=14) at `0.75`; 0.8750 (n=8) at `0.85` — **no cell changes verdict.**
 **This is what §1.4 point 2 previously could not say, and it is a measurement, not an
 inference from plate 1.**
+
+> **AMENDMENT F4.** A sentence here previously read *"Pooled across the four thresholds it
+> is **0.9307 (94/101) / 1.0000 (64/64) / 1.0000 (22/22)** against nominal 0.50 / 0.80 /
+> 0.95."* It is **WITHDRAWN, not recomputed with a wider interval.** The four thresholds
+> are computed on the same campaign, the same posterior and the same 512 draws; `94/101`
+> counts up to four readings of one experiment as four Bernoulli trials. **The six per-cell
+> numbers above are the only reported form and they are unchanged** — the withdrawal costs
+> this finding nothing, because the per-cell numbers were always the load-bearing ones.
 
 **2. The `doe` arm fails, and the failure reproduces K6b bitwise.** Four cells with usable
 n, four verdicts, all against it: at `tau_frac = 0.60` it is contained in **0 of 50**
@@ -2318,8 +2466,11 @@ certified set is actually right half the time. Reporting that column as evidence
   contrasts because it forgoes a shared prefix (Amendment E4, §6.15).
 - **That `versionb`'s certified region meets its nominal joint confidence against ground
   truth** at every `(tau_frac, alpha)` cell with enough non-empty campaigns to test — 0.940
-  and 1.000 and 1.000 at `tau_frac = 0.60` on n = 50 / 50 / 22, pooled 0.9307 / 1.000 /
-  1.000 (§5.11.7). **This replaces the previous revision's largest stated gap.**
+  and 1.000 and 1.000 at `tau_frac = 0.60` on n = 50 / 50 / 22, and on n = 25 / 25 / 17 at
+  the conservative unit, with no cell changing verdict (§5.11.7). **This replaces the
+  previous revision's largest stated gap.** *A pooled `0.9307 / 1.000 / 1.000` stood in
+  this line and is withdrawn under Amendment F4; the per-cell figures beside it are
+  unchanged.*
 - **That the screened classical arm's certified region does not**, on this file as well as
   on K6b's — 0 of 50 at `tau_frac = 0.60, alpha = 0.50`, reproduced bitwise across two
   runners (§5.11.7, §9.3).
@@ -2524,8 +2675,11 @@ stated limit and Azzimonti et al. flag it themselves.
 
 The out-of-sample check in §5.10.2 quantifies the cost and it is **not uniform**: for the
 seven arms that vary all six factors the plug-in approximation is adequate at this budget
-(0.65–0.96 / 0.93–1.00 / 0.97–1.00 against nominal 0.50 / 0.80 / 0.95); for the screened arm
-it is not, and the failure is severe (0.155 / 0.420 / 0.510). The correct reading is not
+(per-cell at `tau_frac = 0.60`: 0.60–1.00 / 0.92–1.00 / 0.97–1.00 against nominal 0.50 /
+0.80 / 0.95); for the screened arm it is not, and the failure is severe — 0 of 50, 12 of 50
+and 25 of 50 in the same cell. *The ranges and the `0.155 / 0.420 / 0.510` triple that stood
+here were `tau_frac`-pooled and are withdrawn under F4; `random` additionally falls below
+nominal in one thin cell at `0.85` (1 of 7).* The correct reading is not
 *"plug-in hyperparameters are fine"* but *"plug-in hyperparameters are fine where the design
 informs every lengthscale, and are not where one does not"*.
 
@@ -2733,7 +2887,7 @@ pre-registered contrast. The K6b `doe` containment failure (§5.10.2) is **not**
 category: `doe` is a registered arm and `CE_alpha` is a registered deliverable, though its
 validation check is not (§2.5).
 
-### 6.10 The primary metric is ambiguous between AUC and Brier
+### 6.10 The primary metric is ambiguous between AUC and Brier — and AUC is now SUPERSEDED
 
 The registration names *"Brier score and AUC of the probability map ... plus IoU of
 `D_gamma`"* — three quantities. **`scripts/analyse_k6.py` ranks on AUC alone and reports
@@ -2745,6 +2899,87 @@ registered quantities is consulted changes the answer. Amendment A5 further regi
 Murphy calibration–refinement decomposition of Brier with 10 equal-count bins; **no
 committed file contains it.** Since calibration is the component E3's result bears on, the
 missing decomposition is the missing half of the registered primary.
+
+#### 6.10.1 AMENDMENT F2 — the registered decision fired, and the error-volume ranking is now the reported one
+
+**AUC is invariant to any monotone transformation of the score**, so it measures ranking
+and can never measure calibration — and a design space is a calibrated absolute statement,
+not a ranking of grid points. The evidence is already in this file's own columns: mean
+`grid_r2` is **negative for all eight arms** — `doe` −6.1883, `qlognei` −0.4526, `qlogei`
+−0.2939, `random` −0.2924, `qlogei-add` −0.2818, `qlogei-addonly` −0.2229, `sobol` −0.1762,
+`lhs` −0.1756 — i.e. the posterior mean is a worse point predictor than the constant grid
+mean, for every arm. *Stated at the level the data supports, because the arm mean is not
+the row:* `doe` is negative in **50 of 50 campaigns**, while the BO and spread arms are
+negative in only 76%–96% of theirs (`random` 38/50, `qlogei-addonly` 41/50, `qlogei` and
+`sobol` 42/50, `qlogei-add` and `lhs` 45/50, `qlognei` 48/50). **The arm-level claim holds;
+the row-level one does not, and only the arm-level claim is used.** *A second correction to
+the amendment's wording, and it is the same error F4 is about: F2 states `doe` is negative
+in "1200/1200 campaigns". There are **50** campaigns per arm, not 1200. `grid_r2` is a
+property of the campaign and is repeated verbatim across the 24 (gamma, tau_frac) cells, so
+1200 counts each campaign 24 times. The direction of the finding is unaffected — 50/50 is
+still every campaign — but the denominator is not a sample size.* AUC cannot see any of
+this. §6.6 adds the second defect: at `gamma = 0.99, tau_frac = 0.60` the minority class is
+about 16 grid points in 20,000.
+
+F2a therefore makes **expected type I and type II error volumes the primary design-space
+metric** (Azzimonti & Ginsbourger 2018, Table 1 — what the cited community actually
+reports). They need no new campaign; they are derived from committed columns as
+`type_I = vol * fi`, `intersect = vol * (1 - fi)`, `type_II = true_frac_above_tau -
+intersect`. **The derivation is validated, not asserted:** `intersect / (vol + prevalence -
+intersect)` reproduces the committed `iou_pred` at a worst `|delta|` of **2.220e-16 over
+2,553 rows**, with **zero** impossible negative type-II volumes
+(`tests/test_f2_error_volumes.py`, `results/f2-error-volumes.json`).
+
+**They are also better defined than the metric they replace.** Where `D_est` is empty,
+`fi` is 0/0 and unusable — but nothing was claimed, so type I is exactly 0 and the whole
+true set was missed, so type II is exactly the prevalence. **Scorable rows rise from the
+2,553 that `fi_pred` admits to all 6,000.** *One correction to the amendment's own wording:
+it states that `iou_pred` is `nan` on empty rows too. It is not — it is committed as
+**0.0** on all 3,447 of them, which is the correct value. The "defined where the others
+break" claim holds for the false-inclusion rate and not for IoU.*
+
+**The registered decision rule fires.** The error-volume ranking differs from the AUC
+ranking in **24 of 24 cells**, and the disagreement is not a near-miss: Spearman rho
+between the AUC ordering and the symmetric-difference ordering is **+0.071** overall
+(type I +0.214, type II +0.071) and the per-cell median is **+0.048** — the two orderings
+are close to unrelated. **The error-volume ranking is therefore the reported one and the
+AUC ranking is retained beside it as superseded**, with the prevalence attached: it spans
+**0.0029 to 0.9992** across the 24 cells.
+
+Descriptive arm means over all 24 cells, `pred` labelling (no `n`, no `p` — a ranking is
+not an inferential summary, cf. F4):
+
+| metric | direction | ranking, best first | rho vs AUC |
+|---|---|---|---|
+| AUC(pred) *(superseded)* | higher | qlognei > qlogei-addonly > sobol > lhs > qlogei-add > qlogei > random > **doe** | — |
+| **type II volume** | lower | random < sobol < lhs < qlogei-addonly < qlogei-add < qlogei < qlognei < **doe** | +0.071 |
+| **total (symmetric difference)** | lower | random < sobol < lhs < qlogei-addonly < qlogei-add < qlogei < qlognei < **doe** | +0.071 |
+| type I volume | lower | qlognei < **doe** < qlogei-add < qlogei-addonly < qlogei < lhs < sobol < random | +0.214 |
+| IoU(pred) *(F2c)* | higher | random > sobol > lhs > qlogei-addonly > qlogei-add > qlogei > qlognei > **doe** | — |
+| Brier(pred) *(F2c)* | lower | sobol > lhs > qlogei-addonly > random > qlogei-add > qlogei > qlognei > **doe** | — |
+
+**Read type I alone and you rank silence first.** An arm that certifies the empty set has
+type I volume exactly 0, which is why `doe` places **2nd on type I** while placing **last
+on type II and on the symmetric difference**, with its predictive region empty in a
+majority of campaigns. Azzimonti & Ginsbourger report both components; so must this. **On
+every metric that consults the truth — type II, symmetric difference, IoU and Brier —
+`doe` is last of eight**, which is the same direction as §5.3's screening result and the
+opposite of the regret ranking of §5.1.
+
+**Two limits travel with this.** (i) At high `tau_frac` the ranking is degenerate rather
+than merely different: every predictive region is empty in 100% of campaigns at
+`tau_frac = 0.95`, so every arm scores type I 0 and type II the prevalence and there is no
+ordering to compare. **6 of the 24 cells are exact ties on type II and the symmetric
+difference, and 10 on type I**; they are flagged, not ranked, in
+`results/f2-error-volumes.json`. (ii) The arm means are bitwise identical at both units of
+F1 — the design is balanced and no row drops — so **the rankings above cannot differ
+between n = 50 and n = 25**; only the contrasts move (§3.8).
+
+**And two committed files cannot carry this at all.** `results/versionb.json` and
+`results/versionb-predictive.json` hold **none** of the three required columns — not only
+`true_frac_above_tau` but `vol_*` and `fi_*` as well — so **error volumes are not
+computable for Version B**. Reported as a finding; the prevalence is *not* imputed from
+another file, because it is a property of the campaign's own evaluation grid.
 
 ### 6.11 Two arms CANNOT be gated — retracted upward from "ungated"
 
@@ -3109,9 +3344,11 @@ retraction.
    budget."** ❌ **VOID.** Every number in that passage is `ce_contain`, which is measured
    on the same 512 draws `conservative_estimate` selected on and **cannot fall below
    nominal** (§5.10.1). Against ground truth the guarantee **fails for the `doe` arm at all
-   three alphas — 0.155 / 0.420 / 0.510 against 0.50 / 0.80 / 0.95** (§5.10.2), and it fails
-   with Amendment B3 applied. The claim holds for the seven arms that vary all six factors
-   and for no others. The failure mode Azzimonti et al. flag **does** bite, on exactly the
+   three alphas at `tau_frac = 0.60` — 0 of 50, 12 of 50, 25 of 50 against 0.50 / 0.80 /
+   0.95** (§5.10.2), and it fails with Amendment B3 applied. *The `0.155 / 0.420 / 0.510`
+   triple previously quoted here was `tau_frac`-pooled and is withdrawn under F4.* The
+   claim holds in 45 of the 50 scorable per-cell tests; the five failures are `doe`'s four
+   and one thin `random` cell. The failure mode Azzimonti et al. flag **does** bite, on exactly the
    arm whose design invites it.
 2. **§4.8, achieved containment tables "0.560–0.592 / 0.864–0.872 / 0.972–0.998".** ❌ Void
    with item 1, twice over: they are the circular statistic, and they are five-arm ranges
@@ -3211,13 +3448,29 @@ The `provenance.argv` array in each result JSON records the command that produce
 .venv/bin/python scripts/analyse_k6b.py       # writes results/k6b-analysis.json
 .venv/bin/python scripts/analyse_versionb.py  # prints only; writes no file
 
+# Amendment F. Pure analysis over the committed blobs -- reads them via
+# `git show HEAD:<path>`, runs no campaign, and takes a couple of minutes.
+.venv/bin/python scripts/analyse_f1_dual_n.py \
+  > results/f1-dual-n.log 2>&1          # writes results/f1-dual-n.json
+.venv/bin/python scripts/analyse_f2_error_volumes.py \
+  > results/f2-error-volumes.log 2>&1   # writes results/f2-error-volumes.json
+
 # Unit tests for the five modules (56 tests)
 .venv/bin/python -m pytest tests/test_designspace.py tests/test_vorobev.py \
   tests/test_replay.py tests/test_norms.py tests/test_lse.py -q
+
+# Amendment F's own tests. test_f2_error_volumes.py asserts the registered
+# IoU reproduction (2.220e-16 over 2,553 rows); test_f1_dual_n.py asserts that
+# the n=50 column reproduces analyse_k6.py and analyse_fix1.py to 1e-12.
+.venv/bin/python -m pytest tests/test_f1_dual_n.py tests/test_f2_error_volumes.py -q
 ```
 
-**Every table in §5 of this document was regenerated by running the three analysis scripts
-at HEAD before it was written.** Quantities the scripts do not compute — the 24-cell
+**Every table in §5 of this document was regenerated by running the analysis scripts at
+HEAD before it was written**, and the per-cell containment tables of §5.10.2 come from
+`scripts/analyse_f1_dual_n.py` rather than from `analyse_k6b.py`, whose printed containment
+figures are `tau_frac`-pooled and withdrawn under Amendment F4 (§3.7). *`analyse_k6b.py` is
+owned by the K6b workstream and has not been modified; its pooled output is simply no
+longer quoted.* Quantities the scripts do not compute — the 24-cell
 Holm-corrected contrast counts (§5.3–§5.5), the K6b paired-contrast table (§5.8), the
 Vorob'ev/IoU rankings (§5.9), the `CE` size table (§5.10) and the Version B decomposition
 and Holm columns (§5.11) — are recomputed from the same committed JSONs with the scripts'
@@ -3349,15 +3602,19 @@ open. The retraction block at the top of this document is the index.
 **May be written.**
 
 - **The safety result, and it is the headline.** Against ground truth, the conservative
-  excursion estimate meets its nominal joint confidence at `alpha in {0.50, 0.80, 0.95}` for
-  every arm that varies all six factors, and **fails at all three levels for the screened
-  classical arm — 0.155 / 0.420 / 0.510 against 0.50 / 0.80 / 0.95, short by a factor of
-  3.2 at the lowest level.** It fails **with** Amendment B3's primary screened-axis policy
-  applied, on the arm's own 4-dimensional active subspace, and at `tau_frac = 0.60,
-  alpha = 0.50` its certified set is contained in **0 of 50 campaigns**.
+  excursion estimate meets its nominal joint confidence at `alpha in {0.50, 0.80, 0.95}` in
+  **45 of the 50 scorable (arm, `tau_frac`, `alpha`) cells, at both units of Amendment
+  F1**, and **fails at all three levels for the screened classical arm at
+  `tau_frac = 0.60` — 0 of 50, 12 of 50 and 25 of 50 against 0.50 / 0.80 / 0.95 — and
+  again at `0.75, alpha = 0.50` (15 of 47).** It fails **with** Amendment B3's primary
+  screened-axis policy applied, on the arm's own 4-dimensional active subspace. The fifth
+  failing cell is `random` at `0.85, alpha = 0.50` (1 of 7, thin). *Quoted as
+  `0.155 / 0.420 / 0.510` "short by a factor of 3.2" in an earlier revision; those were
+  `tau_frac`-pooled and are withdrawn under Amendment F4.*
 - **That the in-sample containment statistic cannot see this**, because it re-reports the
   criterion `conservative_estimate` selected on; it reads 0.9997 for that same arm at
-  nominal 0.95 where the empirical figure is 0.5098.
+  nominal 0.95 where the empirical figure at `tau_frac = 0.60` is 0.500, 25 of 50. *The
+  `0.5098` previously quoted was `tau_frac`-pooled and is withdrawn under F4.*
 - **That `alpha*` and Vorob'ev deviation are model-internal and can flatter a broken
   posterior**, with the `doe` arm as the worked example: highest `alpha*` of eight arms at
   both easy thresholds, lowest Vorob'ev deviation at `tau_frac = 0.60`, worst empirical
