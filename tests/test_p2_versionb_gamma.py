@@ -611,16 +611,22 @@ def test_incremental_writes_go_to_a_path_git_cannot_stage(mod):
         "path must differ")
 
 
+def _row(inst, seed):
+    """A row shaped like a row. `_sorted` sorts on all five keys, deliberately."""
+    return {"instance": inst, "seed": seed, "arm": "versionb", "gamma": 0.5,
+            "tau_frac": 0.6}
+
+
 def test_every_payload_states_whether_it_is_complete(mod):
     """`status`, `keys_present`, `keys_expected` at top level, on partial and final."""
-    part = mod.payload(rows=[{"instance": "i0", "seed": 0}], gate_failures=[],
+    part = mod.payload(rows=[_row("i0", 0)], gate_failures=[],
                        determinism=[], n_gated=0, dim=6, sigma=0.25, limit=None,
                        prov={}, keys_expected=50)
     assert part["status"] == "partial"
     assert part["keys_present"] == 1 and part["keys_expected"] == 50
     assert part["complete"] is False
 
-    rows = [{"instance": f"i{i:02d}", "seed": s} for i in range(25) for s in (0, 1)]
+    rows = [_row(f"i{i:02d}", s) for i in range(25) for s in (0, 1)]
     done = mod.payload(rows=rows, gate_failures=[], determinism=[], n_gated=1200,
                        dim=6, sigma=0.25, limit=None, prov={}, keys_expected=50)
     assert done["status"] == "complete"
@@ -628,7 +634,7 @@ def test_every_payload_states_whether_it_is_complete(mod):
 
 
 def test_a_gate_failure_is_never_labelled_complete(mod):
-    rows = [{"instance": f"i{i:02d}", "seed": s} for i in range(25) for s in (0, 1)]
+    rows = [_row(f"i{i:02d}", s) for i in range(25) for s in (0, 1)]
     bad = mod.payload(rows=rows, gate_failures=[{"instance": "i00"}], determinism=[],
                       n_gated=1200, dim=6, sigma=0.25, limit=None, prov={},
                       keys_expected=50)
@@ -641,11 +647,14 @@ def test_a_limited_run_is_partial_even_at_full_coverage_of_its_own_limit(mod):
     `keys_expected` is the registered 50 regardless of `--limit`, so `--limit 3` reads
     as 3/50 -- which is what it is.
     """
-    rows = [{"instance": f"i{i:02d}", "seed": s} for i in range(2) for s in (0, 1)]
-    p = mod.payload(rows=rows, gate_failures=[], determinism=[], n_gated=96, dim=6,
+    # `--limit 2` takes the first two (instance, seed) PAIRS off the sorted key list,
+    # which is one instance's two seeds -- not two instances.
+    rows = [_row("i00", 0), _row("i00", 1)]
+    p = mod.payload(rows=rows, gate_failures=[], determinism=[], n_gated=48, dim=6,
                     sigma=0.25, limit=2, prov={}, keys_expected=50)
     assert p["status"] == "partial"
     assert p["keys_present"] == 2 and p["keys_expected"] == 50
+    assert p["config"]["limit"] == 2, "the limit is recorded, not just its effect"
 
 
 def test_promote_refuses_to_write_the_deliverable_from_a_partial(mod, tmp_path):

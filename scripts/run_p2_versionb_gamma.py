@@ -155,6 +155,11 @@ _PLATE2_MODE = {"versionb": "lse", "versionb_random": "random",
 DIM, SIGMA, BUDGET = 6, 0.25, 48
 GRID_N, SUBSET_N, N_DRAWS, GRID_SEED = 20_000, 2_000, 512, 0
 
+#: Fewer processes is what survives a contended machine, and the per-cell containment
+#: cache already took this job from ~17 CPU-h to ~1.7, so width is no longer what makes
+#: it finish.
+DEFAULT_WORKERS = 2
+
 #: The registration's stop condition 4 is "wanting to raise a tolerance". There is none.
 GATE_TOL = 0.0
 GATED_ARM = "plate1_only"
@@ -192,6 +197,71 @@ SCHEMA_REQUIRED = ("type_I_vol", "intersect", "type_II_vol", "total_error_vol",
                    "implied_iou", "type_I_vol_latent", "intersect_latent",
                    "type_II_vol_latent", "auprc_pred", "auprc_latent",
                    "true_frac_above_tau")
+
+
+def work_path_for(out: Path) -> Path:
+    """Where incremental writes go. **Never the deliverable path.**
+
+    `.gitignore:199` carries ``!results/p2-versionb-gamma.json``, so the deliverable
+    path is explicitly *stageable*. A ``git add -A`` while a run is in flight would
+    commit a file with full provenance, an empty ``gate_failures`` list and a fraction
+    of the rows, and nothing in it would say so. `<out>.partial` is not allowlisted, so
+    git cannot stage it; a test asserts that with ``git check-ignore`` rather than
+    trusting the reasoning.
+    """
+    return out.with_name(out.name + ".partial")
+
+
+def payload(*, rows, gate_failures, determinism, n_gated, dim, sigma, limit, prov,
+            keys_expected) -> dict:
+    """The file, with its own completeness stated at the top level.
+
+    ``keys_expected`` is the **registered** key count for the cell and is NOT reduced by
+    ``--limit``: a three-key smoke run reads as ``3/50 partial``, which is what it is,
+    rather than ``3/3 complete``. A run carrying any gate failure is never ``complete``
+    either -- stop condition 1 makes its rows non-comparable, so "finished" would be the
+    wrong word for it even at 50 keys.
+    """
+    present = len({(r["instance"], r["seed"]) for r in rows})
+    complete = present == keys_expected and not gate_failures
+    return {
+        "status": "complete" if complete else "partial",
+        "complete": bool(complete),
+        "keys_present": present,
+        "keys_expected": keys_expected,
+        "provenance": prov,
+        "config": _config(dim, sigma, limit),
+        "gate": {"arm": GATED_ARM, "tol": GATE_TOL, "rows_checked": n_gated,
+                 "columns": list(GATED_COLUMNS), "note": gate_note()},
+        "gate_failures": gate_failures,
+        "determinism": {
+            "what_it_is": ("reproduction of the committed Version B columns by the same "
+                           "code path. Seed determinism only -- NOT independent "
+                           "validation, and not a gate."),
+            "sources": [_rel(VERSIONB), _rel(VERSIONB_PRED)],
+            "checks": determinism},
+        "rows": _sorted(rows),
+    }
+
+
+def promote(work: Path, out: Path) -> bool:
+    """Copy the work file to the deliverable path, **only if it says it is complete**.
+
+    One write, whole, at the end. Returns whether it happened, and says why if not.
+    """
+    d = json.loads(work.read_text())
+    if d.get("status") != "complete":
+        print(f"NOT promoting to {_rel(out)} -- the run is "
+              f"{d.get('status')} ({d.get('keys_present')}/{d.get('keys_expected')} "
+              f"keys, {len(d.get('gate_failures', []))} gate failures). "
+              f"The partial stays at {_rel(work)}, where git cannot stage it.")
+        return False
+    if out.exists() and json.loads(out.read_text()).get("status") == "complete":
+        print(f"NOT promoting -- {_rel(out)} already holds a complete run. "
+              f"Pass a different --out rather than overwriting a finished result.")
+        return False
+    out.write_text(json.dumps(d, indent=2))
+    return True
 
 
 def is_git_tracked(path: Path) -> bool:
@@ -662,7 +732,7 @@ def main() -> None:
                     help="(instance, seed) pairs to score; default all 50")
     ap.add_argument("--arms", type=str, default=None,
                     help="comma-separated subset; default all four")
-    ap.add_argument("--workers", type=int, default=4,
+    ap.add_argument("--workers", type=int, default=DEFAULT_WORKERS,
                     help="worker processes; each pinned to one BLAS thread")
     ap.add_argument("--out", type=Path, default=OUT_DEFAULT)
     ap.add_argument("--no-resume", action="store_true",
@@ -682,6 +752,7 @@ def main() -> None:
     if unknown:
         raise SystemExit(f"unknown arms {sorted(unknown)}")
 
+    work = work_path_for(out)
     prov = _provenance(sys.argv)
     # Loaded BEFORE any campaign runs: an absent comparator must stop the run, not be
     # discovered as a `None` two hours in (§3.6).
@@ -693,20 +764,25 @@ def main() -> None:
     print(f"gamma={GAMMAS}\ntau_frac={TAU_FRACS} (of tau_max, never absolute) "
           f"· alpha={ALPHAS}")
     print(f"grid: {GRID_N} Sobol at seed {GRID_SEED} · draws: {N_DRAWS} on {SUBSET_N}")
-    print(f"out={_rel(out)} · workers={args.workers}")
+    print(f"out={_rel(out)} (written ONCE, at the end, only if complete)")
+    print(f"work={_rel(work)} (incremental; git cannot stage it) · "
+          f"workers={args.workers}")
     print(f"GATE: {gate_note()}\n")
 
     keys = sorted({(r["instance"], r["seed"]) for r in committed_rows()
                    if r["dim"] == args.dim and r["sigma"] == args.sigma
                    and r["arm"] == "qlogei"})
+    # The REGISTERED key count, taken before --limit, so a smoke run reports itself as
+    # a fraction of the registered n rather than as complete for its own smaller n.
+    keys_expected = len(keys)
     if args.limit:
         keys = keys[:args.limit]
 
     rows: list[dict] = []
     if not args.no_resume:
-        rows = resumable_rows(out)
+        rows = resumable_rows(work)
         if rows:
-            print(f"  resuming — {len(rows)} rows already on disk")
+            print(f"  resuming — {len(rows)} rows already on disk at {_rel(work)}")
     have = {(r["instance"], r["seed"], r["arm"]) for r in rows}
     jobs = [(i, s, tuple(a for a in arms if (i, s, a) not in have), args.dim, args.sigma)
             for (i, s) in keys]
@@ -720,19 +796,10 @@ def main() -> None:
     n_gated = 0
 
     def _write() -> None:
-        out.write_text(json.dumps({
-            "provenance": prov,
-            "config": _config(args.dim, args.sigma, args.limit),
-            "gate": {"arm": GATED_ARM, "tol": GATE_TOL, "rows_checked": n_gated,
-                     "columns": list(GATED_COLUMNS), "note": gate_note()},
-            "gate_failures": gate_failures,
-            "determinism": {
-                "what_it_is": ("reproduction of the committed Version B columns by the "
-                               "same code path. Seed determinism only -- NOT independent "
-                               "validation, and not a gate."),
-                "sources": [_rel(VERSIONB), _rel(VERSIONB_PRED)],
-                "checks": determinism},
-            "rows": _sorted(rows)}, indent=2))
+        work.write_text(json.dumps(
+            payload(rows=rows, gate_failures=gate_failures, determinism=determinism,
+                    n_gated=n_gated, dim=args.dim, sigma=args.sigma, limit=args.limit,
+                    prov=prov, keys_expected=keys_expected), indent=2))
 
     t0 = time.time()
     with ProcessPoolExecutor(max_workers=args.workers) as pool:
@@ -776,6 +843,9 @@ def main() -> None:
 
     _write()
     print(f"\n{len(rows)} scored rows in {(time.time() - t0)/60:.1f} min")
+    if promote(work, out):
+        print(f"promoted to {_rel(out)} — complete, "
+              f"{keys_expected}/{keys_expected} keys, 0 gate failures")
     print(f"{GATED_ARM} gate: {n_gated} rows x {len(GATED_COLUMNS)} columns = "
           f"{n_gated * len(GATED_COLUMNS)} comparisons at |delta| = {GATE_TOL}, "
           f"{len(gate_failures)} failures")

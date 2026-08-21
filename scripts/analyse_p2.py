@@ -469,8 +469,31 @@ def _print_plate1_is_lhs(rows) -> None:
           "any ranking above.")
 
 
+def load_complete(path: Path) -> dict:
+    """The results file, **only if it says it is complete**.
+
+    The consumer half of the partial-file hazard. `.gitignore` allowlists the
+    deliverable path, so a run interrupted mid-flight can leave a file there with full
+    provenance and a clean gate carrying a fraction of the rows. A file with no
+    ``status`` field at all is refused too: it was written before this guard existed and
+    cannot assert its own completeness, so consuming it would be a guess.
+    """
+    d = json.loads(path.read_text())
+    if "status" not in d:
+        raise SystemExit(
+            f"{path} carries no `status` field, so it cannot state whether it is a "
+            f"complete run. Refusing to analyse it. Re-run the producer.")
+    if d["status"] != "complete":
+        raise SystemExit(
+            f"{path} is {d['status']} — {d.get('keys_present')}/"
+            f"{d.get('keys_expected')} keys, "
+            f"{len(d.get('gate_failures', []))} gate failures. Refusing to analyse a "
+            f"partial run as though it were the finished gamma ladder.")
+    return d
+
+
 def main() -> None:
-    data = json.loads(IN.read_text())
+    data = load_complete(IN)
     rows, cfg = data["rows"], data["config"]
     n_keys = len({(r["instance"], r["seed"]) for r in rows})
     print(f"P2 · Version B on the gamma ladder · {len(rows)} rows · "
