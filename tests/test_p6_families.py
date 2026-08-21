@@ -177,7 +177,40 @@ def test_error_volume_identity_reproduces_iou(p6):
     r = _row(p6, mean=[0.2, 0.6, 0.9, 0.95], sd=[0.02] * 4,
              truth=[0.1, 0.4, 0.95, 0.99], tau=0.5, gamma=0.50)
     assert not r["empty_pred"]
-    assert abs(r["implied_iou_pred"] - r["iou_pred"]) <= 2.3e-16
+    assert abs(r["implied_iou_pred"] - r["iou_pred"]) <= p6.iou_bound_for("qlogei")
+
+
+def test_the_iou_identity_bound_is_per_population_and_both_are_named(p6):
+    """The registered bound was measured on the OPTIMISER arms only, and P6 runs spread.
+
+        k6-designspace.json         worst 2.220446049250313e-16 = 1.00 ULP
+        k6-designspace-spread.json  worst 3.3306690738754696e-16 = 1.50 ULP
+
+    A gate asserting the 1-ULP bound would fail on three of P6's six arms for a reason
+    that is not an error. Neither is widened into a single global bar -- the identity is
+    exact in real arithmetic and only the measured population differs.
+    """
+    assert p6.IOU_IDENTITY_BOUND == {"optimiser": 2.220446049250313e-16,
+                                     "spread": 3.3306690738754696e-16}
+    for arm in ("lhs", "sobol", "random"):
+        assert p6.iou_bound_for(arm) == 3.3306690738754696e-16, arm
+    for arm in ("doe", "qlogei", "qlognei"):
+        assert p6.iou_bound_for(arm) == 2.220446049250313e-16, arm
+    assert p6.iou_bound_for("spread") != p6.iou_bound_for("lhs"), (
+        "the split must key on the arm, not on a name that merely looks like one")
+
+
+def test_every_metric_declares_whether_lower_or_higher_is_better(p6):
+    """Comparing raw signs across metrics inverted two of four readings in the F audit."""
+    d = p6.METRIC_DIRECTION
+    assert d["brier_pred"] == "lower" and d["total_error_vol_pred"] == "lower"
+    assert d["auc_pred"] == "higher" and d["iou_pred"] == "higher"
+    assert d[p6.RANKING_SCALAR] == "lower"
+    assert set(d.values()) == {"lower", "higher"}
+    # Every cell-level column that a ranking could touch must declare a direction.
+    for c in ("auc_pred", "auprc_pred", "iou_pred", "fi_pred", "brier_pred",
+              "type_I_vol_pred", "type_II_vol_pred", "total_error_vol_pred"):
+        assert c in d, c
 
 
 # -- 5b. AUPRC inverts at high gamma -----------------------------------------------

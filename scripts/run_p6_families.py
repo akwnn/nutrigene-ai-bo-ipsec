@@ -154,6 +154,52 @@ CELL_LEVEL_COLUMNS = ("tau", "tau_max", "tau_above_ceiling", "true_frac_above_ta
 #: |D_est \ D_true| + |D_true \ D_est|.
 RANKING_SCALAR = "total_error_vol_pred"
 
+#: **The F2a identity bound, PER POPULATION, both values named.** F2a's derivation
+#: ``intersect / (vol + prevalence - intersect) == iou`` is exact in real arithmetic; what
+#: differs is the float error measured on each committed population, and the registered
+#: bound was measured on the optimiser arms only:
+#:
+#:   ``results/k6-designspace.json``         worst 2.220446049250313e-16 = 1.00 ULP
+#:   ``results/k6-designspace-spread.json``  worst 3.3306690738754696e-16 = 1.50 ULP
+#:
+#: **P6 runs lhs, sobol and random**, so a gate asserting the 1-ULP bound would fail on
+#: three of its six arms for a reason that is not an error. Neither value is widened into
+#: a single global bar: each names the population it was measured on.
+IOU_IDENTITY_BOUND = {
+    "optimiser": 2.220446049250313e-16,   # k6-designspace.json: doe, qlogei, qlognei
+    "spread": 3.3306690738754696e-16,     # k6-designspace-spread.json: lhs, sobol, random
+}
+
+
+#: The arms whose bound came from `k6-designspace-spread.json`.
+SPREAD_POP = ("lhs", "sobol", "random")
+
+
+def iou_bound_for(arm: str) -> float:
+    """Which measured population this arm belongs to. Never a global bar."""
+    return IOU_IDENTITY_BOUND["spread" if arm in ("lhs", "sobol", "random")
+                              else "optimiser"]
+
+
+#: **Lower-is-better or higher-is-better, per metric.** No cross-metric agreement check
+#: may compare raw signs: Brier and regret and the error volumes are lower-is-better while
+#: AUC, AUPRC, IoU and alpha* are higher-is-better, and comparing them unadjusted inverted
+#: two of four readings in the F-analysis audit. Carried in the config so any table built
+#: on these rows has it without having to know.
+METRIC_DIRECTION = {
+    "regret": "lower", "brier_pred": "lower", "brier_latent": "lower",
+    "fi_pred": "lower", "fi_latent": "lower",
+    "type_I_vol_pred": "lower", "type_II_vol_pred": "lower",
+    "total_error_vol_pred": "lower", "sup_err": "lower",
+    "type_I_vol_latent": "lower", "type_II_vol_latent": "lower",
+    "total_error_vol_latent": "lower",
+    "auc_pred": "higher", "auc_latent": "higher",
+    "auprc_pred": "higher", "auprc_latent": "higher",
+    "auprc_minority_pred": "higher", "auprc_minority_latent": "higher",
+    "iou_pred": "higher", "iou_latent": "higher",
+    "grid_r2": "higher", "box_vol_pred": "higher",
+}
+
 _SPREAD_REASON = (
     "no committed family column exists for {arm!r} on any family -- lhs/sobol/random are "
     "ungatable off hill (COVERAGE-MATRIX B4). Reproducibility is the RNG's: one "
@@ -468,6 +514,17 @@ def score_campaign(rec, orc, grid, truth, active, taus) -> list[dict]:
                         sigma_pred=sigma_pred, active=active)
             # P5 measured this on the same grid and the same noiseless oracle. If the two
             # disagree the runner is not scoring the landscape P5 registered.
+            # F2a's derivation is checkable, so it is checked rather than trusted, at the
+            # bound measured on THIS arm's population.
+            bound = iou_bound_for(rec.arm)
+            for suffix in ("pred", "latent"):
+                got, ref = r[f"implied_iou_{suffix}"], r[f"iou_{suffix}"]
+                if got == got and ref == ref and abs(got - ref) > bound:
+                    raise MissingGateTarget(
+                        f"{rec.family} {rec.arm} seed={rec.seed} p={t.p} gamma={gamma}: "
+                        f"error-volume identity misses iou_{suffix} by "
+                        f"{abs(got - ref):.3e}, over the {bound:.3e} bound measured on "
+                        f"the {'spread' if rec.arm in SPREAD_POP else 'optimiser'} arms")
             if r["true_frac_above_tau"] != t.true_frac_above_tau:
                 raise MissingGateTarget(
                     f"{rec.family} d={rec.dim} p={t.p}: prevalence re-measures "
@@ -637,6 +694,16 @@ def merge() -> None:
                    "ranking_note": "type_I_vol read alone ranks SILENCE first -- an arm "
                                    "certifying the empty set scores exactly 0. Rank on "
                                    "the symmetric difference; report both components.",
+                   "iou_identity_bound": IOU_IDENTITY_BOUND,
+                   "iou_identity_note": "measured per population: 1.00 ULP on the "
+                                        "optimiser arms (k6-designspace.json), 1.50 ULP "
+                                        "on the spread arms "
+                                        "(k6-designspace-spread.json). Never widened "
+                                        "into one global bar.",
+                   "metric_direction": METRIC_DIRECTION,
+                   "direction_note": "no cross-metric agreement check may compare raw "
+                                     "signs; Brier and the error volumes are "
+                                     "lower-is-better, AUC and IoU are higher-is-better.",
                    "campaign_level_columns": list(CAMPAIGN_LEVEL_COLUMNS),
                    "cell_level_columns": list(CELL_LEVEL_COLUMNS),
                    "counting_note": "Erratum 6a: campaign_level_columns repeat across "
