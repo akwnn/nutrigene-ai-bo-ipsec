@@ -212,10 +212,22 @@ SPREAD_POP = ("lhs", "sobol", "random") + ("versionb", "versionb_random",
                                            "versionb_predictive", "plate1_only")
 
 
+def iou_population(arm: str) -> str:
+    """Which measured population this arm's float error belongs to."""
+    return "spread" if arm in SPREAD_POP else "optimiser"
+
+
 def iou_bound_for(arm: str) -> float:
-    """Which measured population this arm belongs to. Never a global bar."""
-    return IOU_IDENTITY_BOUND["spread" if arm in ("lhs", "sobol", "random")
-                              else "optimiser"]
+    """Which measured population this arm belongs to. Never a global bar.
+
+    Reads :data:`SPREAD_POP` rather than repeating its membership. The first version
+    repeated the literal ``("lhs", "sobol", "random")`` here while ``SPREAD_POP`` had
+    grown to include the Version B arms, so ``versionb_random`` was checked against the
+    OPTIMISER bound while the failure message named the spread population -- a constant
+    and its consumer disagreeing, which is the "constant with no named population" defect
+    one level further down. Caught by the gate itself on the first real run.
+    """
+    return IOU_IDENTITY_BOUND[iou_population(arm)]
 
 
 #: **Lower-is-better or higher-is-better, per metric.** No cross-metric agreement check
@@ -593,7 +605,7 @@ def score_campaign(rec, orc, grid, truth, active, taus, arm_label=None) -> list[
                         f"{rec.family} {arm} seed={rec.seed} p={t.p} gamma={gamma}: "
                         f"error-volume identity misses iou_{suffix} by "
                         f"{abs(got - ref):.3e}, over the {bound:.3e} bound measured on "
-                        f"the {'spread' if arm in SPREAD_POP else 'optimiser'} arms")
+                        f"the {iou_population(arm)} arms")
             if r["true_frac_above_tau"] != t.true_frac_above_tau:
                 raise MissingGateTarget(
                     f"{rec.family} d={rec.dim} p={t.p}: prevalence re-measures "

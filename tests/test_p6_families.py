@@ -196,6 +196,17 @@ def test_the_iou_identity_bound_is_per_population_and_both_are_named(p6):
         assert p6.iou_bound_for(arm) == 3.3306690738754696e-16, arm
     for arm in ("doe", "qlogei", "qlognei"):
         assert p6.iou_bound_for(arm) == 2.220446049250313e-16, arm
+    # The Version B arms are in the spread population as a STATED PROXY -- their own
+    # population has never been measured. The first version of this test omitted them,
+    # `SPREAD_POP` was updated and `iou_bound_for` was not, and versionb_random was
+    # checked against the optimiser bound on the first real run. It missed by exactly
+    # 3.331e-16, the spread worst case, which is also evidence the proxy is right.
+    for arm in ("versionb", "versionb_random", "versionb_predictive", "plate1_only"):
+        assert p6.iou_bound_for(arm) == 3.3306690738754696e-16, arm
+        assert p6.iou_population(arm) == "spread", arm
+    # The bound and the name the failure message uses must come from ONE decision.
+    for arm in p6.ARMS:
+        assert p6.iou_bound_for(arm) == p6.IOU_IDENTITY_BOUND[p6.iou_population(arm)]
     assert p6.iou_bound_for("spread") != p6.iou_bound_for("lhs"), (
         "the split must key on the arm, not on a name that merely looks like one")
 
