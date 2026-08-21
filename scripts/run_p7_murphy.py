@@ -104,6 +104,17 @@ def _git(*a: str) -> str:
         return "unknown"
 
 
+def _is_tracked(path: Path) -> bool:
+    """Is this file committed to git? The guard on every write-back path.
+
+    `_git` swallows failures and returns "unknown", which is TRUTHY, so it must never be
+    used for a boolean question -- an untracked file would read as tracked and a tracked
+    one as tracked too. This asks the exit status instead.
+    """
+    return subprocess.run(["git", "ls-files", "--error-unmatch", str(path)], cwd=ROOT,
+                          capture_output=True).returncode == 0
+
+
 def _provenance(argv: list[str]) -> dict:
     import botorch
     import gpytorch
@@ -284,7 +295,19 @@ def summarise(rows: list[dict]) -> dict:
             inversions = [[a, b] for a, b in itertools.combinations(present, 2)
                           if ((rank_brier.index(a) < rank_brier.index(b))
                               != (rank_ref.index(a) < rank_ref.index(b)))]
+            # The registered rule is a boolean, and with 6 arms x 15 pairs x 24 cells a
+            # bare boolean will find SOME inversion by chance. The rank correlation and
+            # the paired tests below are what say whether it is real. Reported beside
+            # the registered verdict, never instead of it.
+            from scipy.stats import kendalltau, spearmanr
+            ref_v = [means["refinement"][a] for a in present]
+            neg_b = [-means["brier_raw"][a] for a in present]
+            agreement = {"spearman_rho": float(spearmanr(ref_v, neg_b).statistic),
+                         "kendall_tau": float(kendalltau(ref_v, neg_b).statistic),
+                         "n_pair_inversions": len(inversions),
+                         "n_pairs": len(present) * (len(present) - 1) // 2}
             cell[mp] = {"means": means, "across_arm_spread": spread,
+                        "agreement": agreement,
                         "mean_within_bin": {a: float(np.mean(
                             [by[(a, *k)][f"{mp}_within_bin"] for k in keys]))
                             for a in present},
@@ -342,7 +365,15 @@ def _print_summary(s: dict) -> None:
         print(f"{c['gamma']:6.2f} {c['tau_frac']:5.2f} {c['n_used']:4d} "
               f"{c['n_single_class_dropped']:4d} {c['mean_prevalence']:8.5f}  {flag}  "
               f"{' '.join(p['rank_by_brier'])}  ->  {' '.join(p['rank_by_refinement'])}")
-    print(f"\nlatent-map cells differing: {len(s['cells_where_rankings_differ']['latent'])}"
+    scored = [c for c in s["cells"] if "pred" in c]
+    if scored:
+        rho = [c["pred"]["agreement"]["spearman_rho"] for c in scored]
+        inv = [c["pred"]["agreement"]["n_pair_inversions"] for c in scored]
+        print(f"\npredictive map, refinement vs Brier across the {len(scored)} cells: "
+              f"Spearman rho min {min(rho):+.3f} median {float(np.median(rho)):+.3f} "
+              f"max {max(rho):+.3f}; pair inversions {sum(inv)} of "
+              f"{sum(c['pred']['agreement']['n_pairs'] for c in scored)}")
+    print(f"latent-map cells differing: {len(s['cells_where_rankings_differ']['latent'])}"
           f" of {s['n_cells_scored']}")
     print(f"degenerate flags fired: {s['degenerate_flag_counts']}")
     print("worst across-arm uncertainty spread (must be 0.0): "
@@ -357,13 +388,23 @@ def main() -> None:
     ap.add_argument("--arms", type=str, default=None, help="comma-separated subset")
     ap.add_argument("--out", type=str, default=None, help="default results/p7-murphy.json")
     ap.add_argument("--summarise", type=str, default=None,
-                    help="recompute and PRINT the summary of an existing file; writes nothing")
+                    help="recompute the summary of an existing file and write it back; "
+                         "refuses on a git-tracked file, and never touches `rows`")
     ap.add_argument("--resume", action="store_true",
                     help="continue an interrupted run; refuses on a git-tracked file")
     args = ap.parse_args()
 
     if args.summarise:
-        _print_summary(summarise(json.loads(Path(args.summarise).read_text())["rows"]))
+        path = Path(args.summarise)
+        payload = json.loads(path.read_text())
+        summary = summarise(payload["rows"])
+        _print_summary(summary)
+        if _is_tracked(path):
+            print(f"\n{path} is tracked by git — printed only, nothing written.")
+        else:
+            payload["summary"] = summary
+            path.write_text(json.dumps(payload, indent=1))
+            print(f"\nsummary refreshed in {path}")
         return
 
     global ARMS, OUT
@@ -376,7 +417,7 @@ def main() -> None:
         if not args.resume:
             sys.exit(f"{OUT} exists. A committed result is never overwritten; "
                      f"pass --out for a smoke run or --resume to continue one.")
-        if _git("ls-files", "--error-unmatch", str(OUT)):
+        if _is_tracked(OUT):
             sys.exit(f"{OUT} is tracked by git. A committed result is never rewritten.")
         prior = json.loads(OUT.read_text())
 
