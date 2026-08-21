@@ -91,9 +91,19 @@ def test_build_gate_index_raises_when_a_gatable_arm_has_no_committed_rows():
 
 
 def test_build_gate_index_finds_doe_at_d8_in_the_right_file():
-    idx = build_gate_index(dim=8, sigma=0.25, arms=("doe",))
+    idx, ungated = build_gate_index(dim=8, sigma=0.25, arms=("doe",))
     assert len({k[0:2] for k in idx}) == 50
     assert all(k[2] == "doe" for k in idx)
+    assert ungated == {}
+
+
+def test_build_gate_index_covers_all_fifty_keys_for_every_gatable_arm():
+    """The seven arms that DO have a committed column must all be present, at every cell."""
+    gatable = tuple(a for a in ARMS if a not in KERNEL_ARMS)
+    for dim, sigma in ((6, 0.10), (8, 0.25), (8, 0.10)):
+        idx, _ = build_gate_index(dim, sigma, gatable)
+        for arm in gatable:
+            assert len([k for k in idx if k[2] == arm]) == 50, (arm, dim, sigma)
 
 
 def test_check_gate_raises_on_a_missing_key_for_a_gatable_arm():
@@ -112,10 +122,21 @@ def test_check_gate_marks_kernel_arms_ungated_explicitly_when_q30_is_absent():
     class _Rec:
         instance, seed, arm, dim, regret = "033466197eba3ddb", 0, "qlogei-add", 6, 0.1
 
-    verdict = check_gate(_Rec(), {})
+    reason = "results/q30-additive.json absent - CANNOT GATE"
+    verdict = check_gate(_Rec(), {}, {"qlogei-add": reason})
     assert verdict["gated"] is False
     assert "q30" in verdict["reason"]
     assert verdict["abs_delta"] is None
+
+
+def test_kernel_arms_are_ungated_only_while_q30_is_actually_absent():
+    """`gated: false` must be a measured fact about the disk, not a hardcoded label."""
+    q30 = ROOT / "results/q30-additive.json"
+    _, ungated = build_gate_index(6, 0.10, ("qlogei-add",))
+    if q30.exists():
+        assert ungated == {}
+    else:
+        assert "qlogei-add" in ungated and "q30" in ungated["qlogei-add"]
 
 
 def test_all_eight_registered_arms_are_present():

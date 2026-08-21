@@ -57,7 +57,7 @@ from torch.distributions import Normal
 __all__ = ["POSTERIOR_CHUNK", "brier_and_auc", "certified_mask", "certified_volume_curve",
            "false_inclusion_rate", "gp_adapter", "inscribed_box",
            "inscribed_box_from_mask", "iou", "predictive_probability_map",
-           "probability_map", "tau_max"]
+           "probability_map", "tau_max", "tau_max_exact"]
 
 _STD_NORMAL = Normal(0.0, 1.0)
 
@@ -262,3 +262,28 @@ def inscribed_box_from_mask(X_grid: Tensor, mask: Tensor, n_steps: int = 20,
 
     widths = (hi - lo)[active]
     return torch.stack([lo, hi]), float(torch.prod(widths)) if widths.numel() else 0.0
+
+
+def tau_max_exact(gamma: float, sigma_rel: float, sigma_add: float,
+                  mu_max: float = 1.0) -> float:
+    """:func:`tau_max` with the additive noise term it drops. **Sensitivity only.**
+
+    ``mu_max - z * sqrt((sigma_rel*mu_max)**2 + sigma_add**2)``. The observation model is
+    ``y = f*(1 + eps) + eta`` with ``eta ~ N(0, sigma_add**2)``
+    (``boec.torch_oracle``:135-137, 239-241), so the predictive SD at ``mu_max`` is the
+    quadrature sum, not ``sigma_rel*mu_max``. At the repo default ``sigma_add = 0.01`` and
+    ``gamma = 0.95`` :func:`tau_max` is optimistic by **3.288e-04** at ``sigma_rel = 0.25``
+    and **8.204e-04** at ``sigma_rel = 0.10`` -- a ratio of 2.49, because ``sigma_add`` is
+    4% of ``sigma_rel`` at one and 10% at the other.
+
+    **This is not a fix and nothing in the registered grid uses it.** P3-B2
+    (``docs/OPEN-QUESTIONS.md``, commit 5c44e6a) decides that :func:`tau_max` is *not*
+    changed: correcting the ``sigma_rel = 0.10`` cells while the committed
+    ``sigma_rel = 0.25`` cells keep the old definition would confound the sigma axis with
+    a definition change, which is a far worse defect than 8e-4. This function exists so
+    that the size of the omission can be **measured** on the cell where it is largest
+    (``results/p3-taumax-sensitivity.json``) rather than asserted.
+    """
+    z = _z_for(gamma)
+    total = ((sigma_rel * mu_max) ** 2 + sigma_add ** 2) ** 0.5
+    return round(mu_max - z * total, 10)
