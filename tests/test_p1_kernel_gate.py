@@ -186,6 +186,65 @@ def test_the_payload_survives_a_nan_mismatch(mod):
     assert "Infinity" not in written and "inf" in written
 
 
+# ------------------------------------------------------ Amendment F1, dual unit
+
+
+def _balanced_rows(add_regret, qlogei_regret, n_inst=25, sigma=0.25):
+    """25 instances x 2 seeds for two arms, nothing missing.
+
+    The two arms carry DIFFERENT slopes in instance and seed on purpose. Equal slopes
+    make every paired difference identical, both bootstrap intervals zero-width, and
+    the n=25-vs-n=50 width comparison vacuously true.
+    """
+    rows = []
+    for i in range(n_inst):
+        for s in (0, 1):
+            for arm, base, ki, ks in (
+                    ("qlogei-add", add_regret, 0.0013, 0.0009),
+                    ("qlogei", qlogei_regret, 0.0010, 0.0005)):
+                rows.append({"instance": f"i{i:02d}", "dim": 6, "sigma": sigma,
+                             "seed": s, "arm": arm, "regret": base + ki * i + ks * s})
+    return rows
+
+
+def test_a1_contrast_reports_both_units_under_distinct_keys(mod):
+    """F1: neither unit may be mistakable for the other."""
+    c = mod.dual_contrast(_balanced_rows(0.14, 0.155), "qlogei-add", "qlogei",
+                          "regret", dim=6, sigma=0.25)
+    assert c["n50"]["n"] == 50 and c["n25"]["n"] == 25
+    assert c["reported_unit"] == "instance"
+    assert c["n50_label"] == "anti-conservative unit"
+
+
+def test_the_two_units_agree_on_magnitude_and_differ_on_the_interval(mod):
+    """Averaging is linear, so a wrong aggregation shows up as a moved point estimate."""
+    c = mod.dual_contrast(_balanced_rows(0.14, 0.155), "qlogei-add", "qlogei",
+                          "regret", dim=6, sigma=0.25)
+    assert c["n50"]["mean"] == pytest.approx(c["n25"]["mean"], abs=1e-12)
+    w50 = c["n50"]["hi"] - c["n50"]["lo"]
+    w25 = c["n25"]["hi"] - c["n25"]["lo"]
+    assert w25 > w50, "n=25 must not be narrower than the anti-conservative unit"
+
+
+def test_a1_contrasts_cover_the_four_registered_cells_and_are_holm_adjusted(mod):
+    rows = (_balanced_rows(0.14, 0.155, sigma=0.25)
+            + _balanced_rows(0.08, 0.085, sigma=0.10))
+    cells = mod.a1_contrasts(rows)
+    assert {(c["arm"], c["sigma"]) for c in cells} == {
+        ("qlogei-add", 0.25), ("qlogei-addonly", 0.25),
+        ("qlogei-add", 0.10), ("qlogei-addonly", 0.10)}
+    scored = [c for c in cells if c["n25"]["n"]]
+    for c in scored:
+        for tag in ("n50", "n25"):
+            assert c[f"p_holm_{tag}"] >= c[tag]["wilcoxon_p"] - 1e-12, \
+                "Holm must never lower a p-value"
+
+
+def test_a1_contrast_takes_qlogei_from_the_committed_grid_not_a_regeneration(mod):
+    """D12: the comparator column is read as stored, never re-derived."""
+    assert mod.A1_COMPARATOR_SOURCE == "results/e2-grid.json"
+
+
 def test_provenance_block_matches_the_q52_model(mod):
     """`results/q52-budget-to-target.json` is the registered model for this block."""
     model = set(json.loads(Path("results/q52-budget-to-target.json").read_text())
