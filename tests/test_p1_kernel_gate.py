@@ -253,6 +253,30 @@ def test_provenance_block_matches_the_q52_model(mod):
     assert model <= set(prov), f"provenance missing {sorted(model - set(prov))}"
 
 
+def test_the_output_carries_the_rng_facts_that_justify_one_regeneration(mod):
+    """A fact that lives only in a chat log is a fact this project has already lost.
+
+    Scoring K6 and K6b from one regeneration is sound only because `build_gp` at
+    `fit_restarts=1` never touches the global stream and `joint_draws` carries its own
+    generator. Anyone auditing the merge later must find that in the committed file.
+    """
+    joined = " ".join(mod.RNG_NOTES)
+    assert "fit_restarts" in joined and "joint_draws" in joined
+    assert "0.000e+00" in joined, "the measurement, not just the claim"
+    assert "seed_everything" in joined, "order-independence is load-bearing too"
+
+
+def test_provenance_records_the_thread_environment(mod):
+    """Registered remedy for Erratum 2: nothing in this repo recorded the thread count
+    any |Δ| = 0 gate was measured under. BLAS reads these at library load, so the
+    in-process value alone would not describe the run."""
+    prov = mod.provenance()
+    assert "torch_num_threads" in prov
+    assert set(prov["thread_env"]) == {
+        "OMP_NUM_THREADS", "MKL_NUM_THREADS", "VECLIB_MAXIMUM_THREADS",
+        "OPENBLAS_NUM_THREADS"}
+
+
 def test_provenance_fingerprints_the_scoring_code_it_imported(mod):
     """The scoring path spans files other agents own and are actively editing.
 

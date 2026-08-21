@@ -80,6 +80,7 @@ import argparse
 import gc
 import json
 import math
+import os
 import platform
 import subprocess
 import sys
@@ -319,6 +320,30 @@ SCORING_PATH = (
 )
 
 
+#: Why K6 and K6b may be scored from ONE regeneration. Written into the output rather
+#: than left in a chat log, because the next person to touch this will reasonably ask
+#: whether sharing a regeneration across two scorers moved `build_gp` in the RNG stream,
+#: and a fact that lives only in a transcript is a fact this project has already lost.
+RNG_NOTES = [
+    "build_gp at the default fit_restarts=1 takes the early-return fit_gpytorch_mll "
+    "path in src/boec/surrogate.py:559 and never touches the global RNG. The "
+    "torch.randn_like perturbation that would touch it is inside the fit_restarts > 1 "
+    "branch, which neither run_k6_designspace.py nor run_k6b_conservative.py enters. "
+    "Measured: the same (X, Y, Yvar, bounds) fitted under two deliberately different "
+    "global RNG states (torch/numpy/random seeded 1 vs 999, plus 5,000 discarded "
+    "normal draws) returns parameters identical at |delta| = 0.000e+00.",
+    "joint_draws in run_k6b_conservative.py carries its own torch.Generator seeded "
+    "from the campaign seed, so K6b's 512 posterior draws do not consume or depend on "
+    "the global stream either.",
+    "Consequence: scoring K6 and K6b from one regeneration is equivalent to the two "
+    "separate passes the committed runners used, and the control arms re-scored here "
+    "test that equivalence against columns those runners actually produced.",
+    "Campaign.__init__ calls seed_everything(config.seed) (src/boec/campaign.py:245), "
+    "so regenerate() is order-independent: re-scoring only the kernel arms cannot "
+    "differ from the committed runs, which interleaved five arms per (instance, seed).",
+]
+
+
 def _blob(path: str) -> str:
     """The git blob hash of the file as it is on disk — what was actually imported."""
     return subprocess.run(["git", "hash-object", path],
@@ -342,6 +367,13 @@ def provenance() -> dict:
             "gpytorch": gpytorch.__version__, "numpy": np.__version__,
             "scipy": scipy.__version__,
             "torch_num_threads": torch.get_num_threads(),
+            # BLAS reads these at LIBRARY LOAD, so they are only effective when set in
+            # the shell before the interpreter starts. Setting them via os.environ
+            # inside the process is what made two earlier thread benchmarks in this
+            # programme measure no effect.
+            "thread_env": {v: os.environ.get(v) for v in (
+                "OMP_NUM_THREADS", "MKL_NUM_THREADS", "VECLIB_MAXIMUM_THREADS",
+                "OPENBLAS_NUM_THREADS")},
             # `git_sha` pins the commit, not the working tree, and the scoring path runs
             # through files other agents own and are editing right now —
             # `analyse_f1_dual_n.py` gained `ci_inflation` mid-way through writing this.
@@ -495,6 +527,7 @@ def main() -> None:
             "question": "P1 — gate the A1 kernel arms and re-score the 2,800 committed "
                         "design-space rows that rest on them",
             "verdict": v,
+            "notes_rng_and_scoring_equivalence": RNG_NOTES,
             "registered_kill_condition": (
                 "|delta| = 0 on all 2800 re-scored rows -> the committed kernel-arm "
                 "rows are validated retroactively and Amendment A1 becomes citable. "
