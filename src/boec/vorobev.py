@@ -71,8 +71,8 @@ from __future__ import annotations
 import torch
 from torch import Tensor
 
-__all__ = ["alpha_star", "conservative_estimate", "containment_probability",
-           "empirical_containment",
+__all__ = ["alpha_star", "conservative_estimate", "conservative_estimate_split",
+           "containment_probability", "empirical_containment",
            "excursion_probability", "vorobev_deviation", "vorobev_expectation",
            "vorobev_quantile"]
 
@@ -155,6 +155,82 @@ def conservative_estimate(draws: Tensor, theta: float, alpha: float,
             if int(mask.sum()) > int(best.sum()):
                 best = mask
     return best
+
+
+def conservative_estimate_split(draws: Tensor, theta: float, alpha: float,
+                                n_rho: int = 64) -> tuple[Tensor, float]:
+    """``CE_alpha`` **cross-fit**: selected on the first half of the draws, scored on the
+    second. Returns ``(mask, containment on the held-out half)``.
+
+    ------------------------------------------------------------------------------
+    THE DEFECT THIS REMOVES, STATED EXACTLY
+    ------------------------------------------------------------------------------
+
+    :func:`conservative_estimate` scans ``n_rho`` Vorob'ev quantiles and keeps the
+    largest whose containment -- **measured on the draws** -- reaches ``alpha``. That is a
+    **maximum over 64 noisy estimates**, and it is then evaluated on *the same draws it
+    was selected on*. The reported containment therefore cannot fall below ``alpha``
+    (:func:`containment_probability` says so in its own docstring), and the number is
+    biased upward by the winner's curse of the scan rather than merely circular.
+
+    **The bias peaks when the candidates are near-tied**, because a maximum over 64
+    estimates of one quantity is pure noise. That is the high-``gamma`` corner: at
+    ``gamma = 0.99, tau_frac = 0.60`` the true set covers 0.99916 of the box, the
+    quantiles collapse onto each other, and it is exactly where this repository's four
+    sub-nominal containment cells sit.
+
+    ------------------------------------------------------------------------------
+    WHY A SPLIT RATHER THAN A CORRECTION
+    ------------------------------------------------------------------------------
+
+    Selection bias is removed **exactly** by never scoring on the draws that selected, not
+    bounded by an analytic correction that would carry its own assumptions. The cost is
+    2x draws and seconds of wall clock.
+
+    The split is **the first half selects**, so at 1,024 draws the selection is
+    bit-identical to :func:`conservative_estimate` on the committed 512 -- asserted in
+    ``tests/test_vorobev.py``. The cross-fit changes what is *reported*, never what is
+    *selected*, so a difference between this and the committed column is attributable to
+    the estimator and to nothing else.
+
+    ------------------------------------------------------------------------------
+    WHAT THE RETURNED FLOAT IS, AND IS NOT
+    ------------------------------------------------------------------------------
+
+    It is an honest estimate of ``P(CE_alpha subset of Gamma)`` **under the model**. It is
+    still conservative-given-the-model: hyperparameters are plug-in and their uncertainty
+    sits outside the guarantee, exactly as for :func:`conservative_estimate`.
+    :func:`empirical_containment` against known truth remains the only non-circular test
+    of the guarantee itself, and this function does not replace it.
+
+    ``nan`` for an empty selection. :func:`containment_probability` returns ``1.0`` there
+    -- the empty set is vacuously contained -- and reporting that would put a perfect
+    score in the column for a campaign that certified nothing, which is the inflation
+    :func:`empirical_containment` already refuses to commit.
+
+    Args:
+        draws: ``(n_draws, n)`` joint posterior samples, ``n_draws`` **even** and at least
+            2. An odd count raises rather than dropping a draw: a silently discarded draw
+            makes the selection half differ from the committed estimator's by one sample,
+            which is precisely the kind of unlogged arithmetic difference this project has
+            had to catch five times.
+
+    Raises:
+        ValueError: on an odd or smaller-than-2 draw count.
+    """
+    n_draws = int(draws.shape[0])
+    if n_draws < 2:
+        raise ValueError(f"a cross-fit needs at least 2 draws to split, got {n_draws}")
+    if n_draws % 2:
+        raise ValueError(
+            f"the draw count must be even so the halves are equal, got {n_draws}; "
+            "dropping one would make the selection half differ from the committed "
+            "estimator's by a sample")
+    half = n_draws // 2
+    mask = conservative_estimate(draws[:half], theta, alpha, n_rho=n_rho)
+    if int(mask.sum()) == 0:
+        return mask, float("nan")
+    return mask, containment_probability(draws[half:], mask, theta)
 
 
 def empirical_containment(mask: Tensor, truth: Tensor, theta: float) -> bool | None:

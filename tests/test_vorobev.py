@@ -8,7 +8,8 @@ import math
 
 import torch
 
-from boec.vorobev import (alpha_star, conservative_estimate, containment_probability,
+from boec.vorobev import (alpha_star, conservative_estimate,
+                          conservative_estimate_split, containment_probability,
                           excursion_probability, vorobev_deviation, vorobev_expectation,
                           vorobev_quantile)
 
@@ -141,3 +142,130 @@ def test_empirical_containment_of_an_empty_set_is_none_not_true():
     from boec.vorobev import empirical_containment
     truth = torch.tensor([0.9, 0.2], dtype=torch.double)
     assert empirical_containment(torch.zeros(2, dtype=torch.bool), truth, 0.5) is None
+
+
+# ---------------------------------------------------------------------------
+# Version C section 1.2 -- the split-sample conservative estimate.
+#
+# `conservative_estimate` takes a MAXIMUM over 64 noisy containment estimates and is
+# then evaluated on the same draws it selected on. That is anti-conservative by
+# construction. These tests pin the cross-fit that removes it.
+# ---------------------------------------------------------------------------
+
+
+def _tied_draws(n_pts=120, n_draws=1024, seed=0):
+    """Draws whose exceedance probabilities are NEARLY TIED, and **jointly correlated**.
+
+    Two properties, both load-bearing:
+
+    * **Near-tied.** The selection bias peaks when candidate quantiles are near-tied,
+      because a maximum over 64 of them is then a maximum over 64 estimates of one
+      quantity. That is the high-``gamma`` corner where section 14's four failures sit --
+      at ``gamma = 0.99, tau_frac = 0.60`` the true set covers 0.99916 of the box.
+    * **Correlated.** A per-draw common shift, which is what a GP's joint draw supplies
+      and what makes joint containment reachable at all. An earlier version of this
+      fixture drew every point independently; joint containment was then the product of
+      120 marginals, nothing certified at ``alpha = 0.95``, and the fixture could not
+      measure what it exists to measure. Independent draws are not a harder test case,
+      they are a degenerate one.
+    """
+    g = torch.Generator().manual_seed(seed)
+    base = torch.linspace(0.55, 0.75, n_pts, dtype=torch.double)
+    common = 0.12 * torch.randn(n_draws, 1, generator=g, dtype=torch.double)
+    independent = 0.02 * torch.randn(n_draws, n_pts, generator=g, dtype=torch.double)
+    return base.unsqueeze(0) + common + independent
+
+
+def test_split_selects_on_the_first_half_alone():
+    """The returned set is exactly what the committed estimator gives the first half.
+
+    Load-bearing: it makes the selection bit-identical to `conservative_estimate` at the
+    committed 512 draws, so the cross-fit changes what is REPORTED without changing what
+    is SELECTED. A different selection would confound the bias removal with a new set.
+    """
+    d = _tied_draws()
+    mask, _ = conservative_estimate_split(d, theta=0.5, alpha=0.95)
+    assert torch.equal(mask, conservative_estimate(d[:512], theta=0.5, alpha=0.95))
+
+
+def test_split_reports_containment_on_the_second_half_alone():
+    d = _tied_draws()
+    mask, reported = conservative_estimate_split(d, theta=0.5, alpha=0.95)
+    assert reported == containment_probability(d[512:], mask, theta=0.5)
+
+
+def test_perturbing_the_validation_half_cannot_move_the_selected_set():
+    """The half-way property. If it fails, the split leaks and the bias is still in."""
+    d = _tied_draws()
+    mask_a, _ = conservative_estimate_split(d, theta=0.5, alpha=0.95)
+    perturbed = d.clone()
+    perturbed[512:] += 1.0
+    mask_b, _ = conservative_estimate_split(perturbed, theta=0.5, alpha=0.95)
+    assert torch.equal(mask_a, mask_b)
+
+
+def test_perturbing_the_selection_half_cannot_be_absorbed_by_the_report():
+    """And the other half-way property: the report is measured, not re-selected."""
+    d = _tied_draws()
+    perturbed = d.clone()
+    perturbed[:512] += 1.0
+    mask, reported = conservative_estimate_split(perturbed, theta=0.5, alpha=0.95)
+    assert reported == containment_probability(d[512:], mask, theta=0.5)
+
+
+def test_an_empty_selection_reports_nan_rather_than_one():
+    """`containment_probability` returns 1.0 for the empty set -- vacuously contained.
+
+    Reporting that would put a 1.0 in the column for a campaign that certified NOTHING,
+    which is the inflation `empirical_containment` already refuses to commit.
+    """
+    g = torch.Generator().manual_seed(1)
+    d = torch.randn(1024, 40, generator=g, dtype=torch.double)
+    mask, reported = conservative_estimate_split(d, theta=50.0, alpha=0.95)
+    assert int(mask.sum()) == 0
+    assert math.isnan(reported)
+
+
+def test_an_odd_number_of_draws_raises_rather_than_dropping_one():
+    d = _tied_draws(n_draws=1023)
+    try:
+        conservative_estimate_split(d, theta=0.5, alpha=0.95)
+    except ValueError as e:
+        assert "even" in str(e).lower()
+    else:
+        raise AssertionError("an odd draw count must raise, not silently drop a draw")
+
+
+def test_two_draws_is_the_floor_and_one_raises():
+    d = _tied_draws(n_draws=1)
+    try:
+        conservative_estimate_split(d, theta=0.5, alpha=0.95)
+    except ValueError:
+        pass
+    else:
+        raise AssertionError("a single draw cannot be split into two halves")
+
+
+def test_in_sample_containment_exceeds_out_of_sample_at_high_alpha():
+    """**The measurement this function exists for.**
+
+    In-sample containment cannot fall below alpha -- `conservative_estimate` selects on
+    it. Out-of-sample can, and on near-tied candidates it does. The gap is the selection
+    bias, and it is what section 14's four sub-nominal cells are being re-read against.
+    """
+    in_sample, out_of_sample = [], []
+    for seed in range(40):
+        d = _tied_draws(seed=seed)
+        mask, reported = conservative_estimate_split(d, theta=0.5, alpha=0.95)
+        if int(mask.sum()) == 0:
+            continue
+        in_sample.append(containment_probability(d[:512], mask, theta=0.5))
+        out_of_sample.append(reported)
+
+    assert len(in_sample) >= 30, "fixture certified nothing; it cannot measure the bias"
+    assert min(in_sample) >= 0.95, "selection is not meeting alpha in-sample"
+    mean_in = sum(in_sample) / len(in_sample)
+    mean_out = sum(out_of_sample) / len(out_of_sample)
+    assert mean_out < mean_in, (
+        f"no measurable selection bias on this fixture: in={mean_in:.4f} "
+        f"out={mean_out:.4f} -- either the fixture is not near-tied or the split leaks")
