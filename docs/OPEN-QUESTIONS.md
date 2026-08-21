@@ -5756,3 +5756,84 @@ what makes the derivation checkable rather than asserted, and it must not be los
 **Fourth invocation tonight of the same principle by four workers on four unrelated problems:**
 *a second definition of a committed quantity is worse than a slow, slightly-off, or
 inconveniently-located one.*
+
+---
+
+## 📌 ERRATUM 6 · **I committed the F4 defect inside the argument FOR F2. And F2a's decision rule FIRED.**
+
+### 6a. 🔴 **"`grid_r2` is negative in 1200/1200 campaigns" — WRONG. It is 50 of 50, and the error is pseudo-replication.**
+
+Amendment F2 argued for replacing AUC partly on this: *"`doe` is negative in **1200/1200**
+campaigns, while the BO and spread arms are positive in 4%–24% of theirs."*
+
+**`grid_r2` is a CAMPAIGN property.** Verified: every `doe` campaign has **exactly one
+distinct `grid_r2` value** across its 24 (γ, τ_frac) rows. So 1,200 rows count **each of 50
+campaigns 24 times.** The true figure is **50 of 50 campaigns.**
+
+**This is precisely the defect Amendment F4 exists to fix** — treating repeated measurements
+of one campaign as independent replicates — **committed by me, in the same document, inside
+the supporting statistic for a different correction.** F4 withdrew a containment figure for
+counting one campaign four times; F2 quoted a count that did it twenty-four times.
+
+**Direction unaffected** — 50/50 is still *every* campaign, and the BO/spread arms are
+negative in 76%–96% of theirs, consistent with the registered 4%–24% positive. **The
+argument survives; the number was inflated 24×.** Corrected wherever quoted.
+
+**Carrying the general rule:** any count over `k6-designspace.json` rows is a count over
+**cells**, not campaigns, for every campaign-level column — `grid_r2`, `sup_err`, `regret`,
+`n_active`. Only cell-level columns (`auc_*`, `brier_*`, `iou_*`, `fi_*`, `vol_*`,
+`empty_*`, `tau`, `true_frac_above_tau`) may be counted row-wise.
+
+### 6b. ✅ **F2a's registered decision rule FIRED. The error-volume ranking is now the reported one.**
+
+Registered rule: *"if the arm ranking under type I / type II error volumes differs from the
+ranking under AUC, the error-volume ranking is the reported one."*
+
+**It is not a near-miss.** Spearman ρ against the AUC ordering: **+0.071** for type II and the
+symmetric difference, **+0.214** for type I; per-cell median **+0.048**. **The two orderings
+are close to unrelated.** Differ in **24 of 24** cells.
+
+**Coverage, which is the other half of the case:** **6,000 of 6,000 rows scorable under error
+volumes against 2,553 under `fi_pred`** — 57.5% of predictive regions are empty (63.4% on the
+spread file). *(Per Erratum 5a this margin is against `fi_pred`, **not** IoU, which is 0 rather
+than `nan` on those rows. The surviving half of the argument is the one used.)*
+
+**`doe` is LAST of eight** on type II, symmetric difference, IoU and Brier.
+
+**⚠️ Registered for the cross-family grid: type I volume read ALONE ranks silence first.** An
+arm certifying the empty set scores **exactly 0** on type I. `doe` is 2nd on type I for that
+reason and no other. **Azzimonti & Ginsbourger report both components; the symmetric difference
+is the honest single scalar** and is what any single-number ranking must use.
+
+**Degenerate cells are flagged, not ranked:** 6 of 24 (10 for type I) are ties because at
+`tau_frac = 0.95` every region is empty in 100% of campaigns. There is no ordering to compare.
+
+### 6c. Two corrections to what F2/F1 assumed
+
+**`versionb.json` is worse off than recorded.** It lacks **all three** of `vol_pred`/`vol_latent`,
+`fi_pred`/`fi_latent` **and** `true_frac_above_tau` — so its error volumes are **not** computable,
+not merely awkward. Reported as a finding; **nothing imputed.**
+
+**`n = 50` does NOT uniformly lower the Wilcoxon p.** **36 of 137** contrasts have a *lower* p at
+**n = 25** — averaging seeds first removes within-landscape noise, which can make a signed-rank
+test *more* powerful. The bootstrap and the Wilcoxon move independently; the registered 2×2 of
+disagreements is populated (126 agree at both units, 7 disagree at n=50 only, 1 at n=25 only,
+3 at both). **My F1 text asserted a one-directional effect and that is wrong too.**
+
+**One caveat REMOVED, in our favour:** `doe` is scored on the **full 6-D grid** in K6 — prevalence
+is identical across all eight arms in all 1,200 cells — so **the K6 error-volume ranking is
+like-for-like.** B3's subspace evaluation is K6b-only. The §6.12 mixed-dimension caveat applies
+only to `box_vol_pred`, which no ranking uses.
+
+### 6d. Two judgement calls, both APPROVED
+
+**`seed_average_policy`** — drop the `(instance, seed)` pair if either arm is `nan`, *exactly as
+n=50 does*, **then** average surviving seeds, **then** pair instances. So n=25 runs on a strict
+subset of what n=50 admits and **the units differ only in aggregation.** Correct, and recorded in
+the output rather than left implicit. **Approved.**
+
+**CE-set error volumes** — `k6b-conservative.json` carries `ce_false_in_*`, `ce_vol_*` and
+`true_frac_above`, so the error volumes are derivable for the **conservative-estimate sets** too,
+at zero compute. Outside F2a's registered file list, correctly not computed unasked.
+**APPROVED as an addition** — it extends the primary metric to the object the SPADE certificate
+is actually about. New file, not an overwrite.

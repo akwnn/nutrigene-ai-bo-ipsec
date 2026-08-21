@@ -275,23 +275,53 @@ Both were fixed and **K6b was re-run**. The non-circular test is
 `empirical_containment` — against one realisation a set is wholly contained or it is not,
 so the guarantee is the **fraction of campaigns contained**, which must be at least α.
 
+> 🔴 **THE TABLE THAT STOOD HERE IS WITHDRAWN (Amendment F4).** Every figure in it was
+> **pooled across `tau_frac`** — four thresholds computed on *the same campaign, the same
+> posterior and the same 512 draws*, counted as four independent trials. They are not four
+> Bernoulli trials, and the pooled `n` (97 / 69 / 51 for `doe`) is fabricated. The withdrawn
+> values are printed below **as withdrawals**, so the correction is auditable rather than
+> silent, and are replaced by **per-cell** figures.
+>
+> | arm | α=0.50 | α=0.80 | α=0.95 | |
+> |---|---|---|---|---|
+> | ~~**doe** (active=4)~~ | ~~0.155~~ | ~~0.420~~ | ~~0.510~~ | withdrawn, pooled |
+> | ~~lhs~~ | ~~0.912~~ | ~~1.000~~ | ~~1.000~~ | withdrawn, pooled |
+> | ~~sobol~~ | ~~0.959~~ | ~~1.000~~ | ~~1.000~~ | withdrawn, pooled |
+> | ~~qlogei~~ | ~~0.884~~ | ~~0.983~~ | ~~1.000~~ | withdrawn, pooled |
+> | ~~qlognei~~ | ~~0.923~~ | ~~0.968~~ | ~~0.970~~ | withdrawn, pooled |
+> | ~~random~~ | ~~0.646~~ | ~~0.930~~ | ~~1.000~~ | withdrawn, pooled |
+
+**Per-cell, at `tau_frac = 0.60`, containment as a fraction of NON-EMPTY certified sets,
+`n` stated because it is not 50 everywhere:**
+
 | arm | α=0.50 | α=0.80 | α=0.95 |
 |---|---|---|---|
-| **doe** (active=4) | **0.155** | **0.420** | **0.510** |
-| lhs | 0.912 | 1.000 | 1.000 |
-| sobol | 0.959 | 1.000 | 1.000 |
-| qlogei | 0.884 | 0.983 | 1.000 |
-| qlognei | 0.923 | 0.968 | 0.970 |
-| random | 0.646 | 0.930 | 1.000 |
+| **doe** (active=4) | **0 / 50 = 0.000** | **12 / 50 = 0.240** | **25 / 50 = 0.500** |
 
-**Seven of eight arms hold at every level. The screened classical arm fails at every
-level**, and it fails *with* B3 applied — at α=0.50 the subspace restriction makes it
-**worse** (0.155 against 0.250 unrestricted), so the arm is miscalibrated on the very
-slice it operates in.
+`doe` reads **worse** per-cell than pooled, not better — the pooling was flattering it.
+Identical at n=25.
 
-The starkest evidence for why the circular metric had to go: at nominal 0.95 the `doe`
-arm's circular figure reads **0.9997** while its empirical containment is **0.5098**. The
-in-sample statistic ranks the failing arm first.
+🔴 **TWO CLAIMS DID NOT SURVIVE UN-POOLING.**
+
+1. **"Seven of eight arms hold at every level" → SIX of eight.** `random` is contained in
+   **1 of 7** non-empty sets at `tau_frac = 0.85`, α=0.50, against a nominal 0.50 — at both
+   units. Pooling averaged that against 30/50 and 31/39 and reported **`0.646 ok`**. The
+   cell is thin (n=7, 86% of regions empty), so this is a failure that is **not
+   demonstrated** rather than a demonstrated failure — but *"only one arm fails"* was a
+   **pooling artefact**, and the corrected statement is that a second arm's calibration is
+   unestablished where its sets are almost all empty.
+2. **The B3 "made it worse" comparison is WITHDRAWN ENTIRELY.** *"at α=0.50 the subspace
+   restriction makes it worse (0.155 against 0.250 unrestricted)"* — **both sides were
+   pooled**, and the unrestricted run was never broken out per cell, so **the comparison
+   cannot be made from committed files at all.** It is not corrected here; it is removed.
+   Whether B3's subspace restriction helps or hurts `doe`'s calibration is now an **open
+   question with no committed evidence either way.**
+
+The starkest evidence for why the circular metric had to go, restated per-cell: at nominal
+0.95 the `doe` arm's circular figure reads **0.9997** while its empirical containment at
+`tau_frac = 0.60` is **25/50 = 0.500**. The in-sample statistic ranks the failing arm
+first. *(The previously quoted 0.5098 was the pooled figure and is withdrawn with the
+rest.)*
 
 **Version B measured it too** (`tau_frac=0.60`, the only threshold where all three α
 levels are testable):
