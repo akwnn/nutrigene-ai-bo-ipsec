@@ -263,34 +263,43 @@ def test_dual_tau_scorer_under_the_standard_definition_equals_the_committed_scor
 
 # --- Amendment F (commit 07e98df), which supersedes the brief's Statistics section -----
 
-def test_error_volumes_reproduce_the_committed_iou_column():
-    """F2a's registered validation, re-run here rather than taken on trust.
+#: The F2a identity is exact in real arithmetic; what differs is the float population it
+#: is measured on. Recorded PER FILE with both values named, never widened to one global
+#: bar -- the registration quoted the optimiser-arm figure alone, and a test asserting it
+#: over the spread arms fails by half a ULP.
+IOU_BOUND_ULP = {"results/k6-designspace.json": 1.0,          # doe/qlogei/qlognei/kernel
+                 "results/k6-designspace-spread.json": 1.5}   # lhs/sobol/random
+
+
+@pytest.mark.parametrize("rel_path,ulp", sorted(IOU_BOUND_ULP.items()))
+def test_error_volumes_reproduce_the_committed_iou_column(rel_path, ulp):
+    """F2a's registered validation, re-run per population rather than taken on trust.
 
     `intersect / (vol_pred + true_frac_above_tau - intersect)` must reproduce the
-    committed `iou_pred`, with ZERO impossible negative type-II volumes. This is the
-    D12-clean bar: a committed column, not a regeneration of the same arithmetic.
+    committed `iou_pred`, with ZERO impossible negative type-II volumes. D12-clean: a
+    committed column, not a regeneration of the same arithmetic.
 
-    **This test now guards the canonical `boec.calibration.error_volumes`.** It was
-    written against a second copy in `designspace.py`, which is deleted; gating against
-    the committed `iou_pred` column is a stronger bar than comparing two implementations
-    to each other, so the test moved rather than being dropped with the copy.
+    **Two populations, two bounds, both measured here.** The registration quotes
+    2.220e-16, which is `numpy.finfo(float).eps` exactly -- 1.00 ULP -- and that is the
+    bound on the OPTIMISER arms. The SPREAD arms reach 3.3306690738754696e-16, **1.50
+    ULP**. Asserting the optimiser bound over the spread file fails by half a ULP, so the
+    bound travels with the file rather than being raised to cover both.
 
-    **The bar is one machine epsilon and that is not a widening.** Measured here at
-    2.220446049250313e-16, which IS `numpy.finfo(float).eps` exactly; the registration's
-    "2.220e-16" is that same number at four significant figures. Asserting the literal
-    2.220e-16 fails by one ULP, so the constant is written as `eps` rather than as a
-    decimal that only looks like the registered one.
+    **This matters for P3's own six outputs**, which carry all eight arms in ONE file and
+    therefore mix both populations: their bound is the 1.50-ULP one, not the registered
+    1.00.
 
-    **6,000 rows are scorable, not the registered 2,553.** `iou_pred` is committed as
-    `0.0` on the 3,447 empty rows rather than `nan` -- the F2a worker's erratum -- so
-    every row has a finite `iou_pred`. 2,553 + 3,447 = 6,000. The count is asserted
-    exactly so a future change to that convention breaks this test loudly.
+    6,000 and 3,600 rows are scorable -- every row, not the registered 2,553 -- because
+    `iou_pred` is committed as `0.0` on empty rows rather than `nan`. Erratum 5a: `fi` is
+    `nan` whenever `D_est` is empty, but `iou` is `nan` only when the UNION is empty, so
+    the two do NOT go `nan` together.
     """
     import numpy as np
 
     from boec.calibration import error_volumes
 
-    rows = json.loads((ROOT / "results/k6-designspace.json").read_text())["rows"]
+    eps = float(np.finfo(float).eps)
+    rows = json.loads((ROOT / rel_path).read_text())["rows"]
     worst, scorable, negative = 0.0, 0, 0
     for r in rows:
         ev = error_volumes(r["vol_pred"], r["fi_pred"], r["true_frac_above_tau"])
@@ -301,8 +310,11 @@ def test_error_volumes_reproduce_the_committed_iou_column():
             scorable += 1
             worst = max(worst, abs(ev["implied_iou"] - iou))
     assert negative == 0, f"{negative} impossible negative type-II volumes"
-    assert scorable == 6000, scorable
-    assert worst <= float(np.finfo(float).eps), f"worst |delta| {worst:.17e}"
+    assert scorable == len(rows), f"{scorable} of {len(rows)} scorable"
+    assert worst <= ulp * eps, f"{rel_path}: worst {worst!r} = {worst/eps:.2f} ULP > {ulp}"
+    # Pin the bound from BELOW too, so a tightening is noticed rather than silently
+    # absorbed -- the point is the measured value, not merely "small enough".
+    assert worst > (ulp - 0.5) * eps, f"{rel_path} tightened to {worst/eps:.2f} ULP"
 
 
 def test_error_volumes_are_exact_where_fi_and_iou_are_nan():
