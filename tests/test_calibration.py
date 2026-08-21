@@ -419,7 +419,7 @@ def test_holm_agrees_with_the_implementation_already_in_the_repo():
 # The bar is sklearn's `average_precision_score`, not a re-derivation: a bespoke AP that
 # agrees with nothing is exactly the kind of number this project exists not to publish.
 
-from boec.calibration import average_precision
+from boec.calibration import average_precision, error_volumes
 
 
 def _sk_ap(p: torch.Tensor, label: torch.Tensor) -> float:
@@ -512,11 +512,10 @@ def test_error_volumes_reproduce_the_committed_iou_column():
     `intersect / (vol_pred + prevalence - intersect)` must reproduce the COMMITTED
     `iou_pred` -- a gate against a committed column, not against a regeneration.
     """
-    p7 = _p7()
     rows = json.loads(Path("results/k6-designspace.json").read_text())["rows"]
     worst, n = 0.0, 0
     for r in rows:
-        ev = p7.error_volumes(r["vol_pred"], r["fi_pred"], r["true_frac_above_tau"])
+        ev = error_volumes(r["vol_pred"], r["fi_pred"], r["true_frac_above_tau"])
         if math.isnan(r["iou_pred"]):
             continue
         worst = max(worst, abs(ev["implied_iou"] - r["iou_pred"]))
@@ -532,9 +531,8 @@ def test_error_volumes_are_defined_exactly_where_iou_and_fi_are_nan():
     54-69% of predictive regions are empty at some cells, and `nan` there is not a
     small number, it is no number at all.
     """
-    p7 = _p7()
     # D_est empty, true set NOT empty: fi is 0/0 and nan, but every volume is exact.
-    ev = p7.error_volumes(vol=0.0, fi=float("nan"), prevalence=0.0294)
+    ev = error_volumes(vol=0.0, fi=float("nan"), prevalence=0.0294)
     assert ev["type_I_vol"] == 0.0
     assert ev["intersect"] == 0.0
     assert ev["type_II_vol"] == pytest.approx(0.0294)
@@ -545,24 +543,22 @@ def test_error_volumes_are_defined_exactly_where_iou_and_fi_are_nan():
     assert ev["implied_iou"] == 0.0
 
     # Both empty is the only genuinely undefined case, and `designspace.iou` agrees.
-    both = p7.error_volumes(vol=0.0, fi=float("nan"), prevalence=0.0)
+    both = error_volumes(vol=0.0, fi=float("nan"), prevalence=0.0)
     assert both["type_I_vol"] == 0.0 and both["type_II_vol"] == 0.0
     assert math.isnan(both["implied_iou"])
 
 
 def test_no_committed_row_produces_a_negative_type_ii_volume():
     """An impossible volume would mean the algebra, not the data, is wrong."""
-    p7 = _p7()
     rows = json.loads(Path("results/k6-designspace.json").read_text())["rows"]
-    worst = min(p7.error_volumes(r["vol_pred"], r["fi_pred"],
-                                 r["true_frac_above_tau"])["type_II_vol"] for r in rows)
+    worst = min(error_volumes(r["vol_pred"], r["fi_pred"],
+                              r["true_frac_above_tau"])["type_II_vol"] for r in rows)
     assert worst >= -1e-15, f"most negative type II volume {worst:.3e}"
 
 
 def test_total_error_volume_is_the_symmetric_difference():
     """type_I + type_II is |D_est delta D_true| / |grid|, which is what ranks the arms."""
-    p7 = _p7()
-    ev = p7.error_volumes(vol=0.30, fi=0.25, prevalence=0.40)
+    ev = error_volumes(vol=0.30, fi=0.25, prevalence=0.40)
     assert ev["type_I_vol"] == pytest.approx(0.075)
     assert ev["intersect"] == pytest.approx(0.225)
     assert ev["type_II_vol"] == pytest.approx(0.175)

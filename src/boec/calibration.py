@@ -85,7 +85,7 @@ import torch
 from torch import Tensor
 
 __all__ = ["N_BINS", "average_precision", "equal_count_bins",
-           "murphy_decomposition"]
+           "error_volumes", "murphy_decomposition"]
 
 #: Registered bin count. Not a parameter of the study -- a different value answers a
 #: different question, because both terms move monotonically with resolution.
@@ -235,3 +235,30 @@ def average_precision(p: Tensor, truth: Tensor, tau: float) -> float | None:
     recall = tps / float(n_pos)
     prev_recall = torch.cat([torch.zeros(1, dtype=torch.double), recall[:-1]])
     return float(((recall - prev_recall) * precision).sum())
+
+
+def error_volumes(vol: float, fi: float, prevalence: float) -> dict:
+    """Expected type I / type II error volumes. **Amendment F2a**, Azzimonti &
+    Ginsbourger 2018 Table 1 -- what the cited community actually reports.
+
+        type_I_vol  = vol * fi                       |D_est \\ D_true| / |grid|
+        intersect   = vol * (1 - fi)
+        type_II_vol = prevalence - intersect         |D_true \\ D_est| / |grid|
+
+    **Defined exactly where `fi` and `iou` are nan.** An empty `D_est` certifies nothing,
+    so it makes no type I error and its type II error is the whole true set. `fi` is 0/0
+    there and `iou` is 0/0, but both volumes are exact -- and 54-69% of predictive
+    regions are empty at some cells, so this is the common case, not the corner.
+
+    `implied_iou` is carried only so the arithmetic can be gated against the committed
+    `iou_pred` column; it is not a new estimand.
+    """
+    if vol == 0.0:
+        type_i, inter = 0.0, 0.0
+    else:
+        type_i, inter = vol * fi, vol * (1.0 - fi)
+    type_ii = prevalence - inter
+    union = vol + prevalence - inter
+    return {"type_I_vol": type_i, "intersect": inter, "type_II_vol": type_ii,
+            "total_error_vol": type_i + type_ii,
+            "implied_iou": inter / union if union > 0 else float("nan")}

@@ -72,7 +72,8 @@ import torch
 # a measurement.
 torch.set_num_threads(1)
 
-from boec.calibration import N_BINS, average_precision, murphy_decomposition  # noqa: E402
+from boec.calibration import (N_BINS, average_precision, error_volumes,  # noqa: E402
+                              murphy_decomposition)
 from boec.designspace import (brier_and_auc, false_inclusion_rate, gp_adapter,  # noqa: E402
                               iou, predictive_probability_map, probability_map, tau_max)
 from boec.norms import sobol_grid
@@ -144,32 +145,6 @@ def _provenance(argv: list[str]) -> dict:
                     primary_map="pred", verdict_source="pred"),
     )
 
-
-def error_volumes(vol: float, fi: float, prevalence: float) -> dict:
-    """Expected type I / type II error volumes. **Amendment F2a**, Azzimonti &
-    Ginsbourger 2018 Table 1 -- what the cited community actually reports.
-
-        type_I_vol  = vol * fi                       |D_est \\ D_true| / |grid|
-        intersect   = vol * (1 - fi)
-        type_II_vol = prevalence - intersect         |D_true \\ D_est| / |grid|
-
-    **Defined exactly where `fi` and `iou` are nan.** An empty `D_est` certifies nothing,
-    so it makes no type I error and its type II error is the whole true set. `fi` is 0/0
-    there and `iou` is 0/0, but both volumes are exact -- and 54-69% of predictive
-    regions are empty at some cells, so this is the common case, not the corner.
-
-    `implied_iou` is carried only so the arithmetic can be gated against the committed
-    `iou_pred` column; it is not a new estimand.
-    """
-    if vol == 0.0:
-        type_i, inter = 0.0, 0.0
-    else:
-        type_i, inter = vol * fi, vol * (1.0 - fi)
-    type_ii = prevalence - inter
-    union = vol + prevalence - inter
-    return {"type_I_vol": type_i, "intersect": inter, "type_II_vol": type_ii,
-            "total_error_vol": type_i + type_ii,
-            "implied_iou": inter / union if union > 0 else float("nan")}
 
 
 def _gate_tol(arm: str) -> float:
