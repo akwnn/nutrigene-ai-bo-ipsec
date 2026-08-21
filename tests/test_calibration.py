@@ -26,6 +26,7 @@ construction and test nothing.
 """
 
 import numpy as np
+import pytest
 import torch
 
 from boec.calibration import equal_count_bins, murphy_decomposition
@@ -284,3 +285,107 @@ def test_bin_counts_are_reported_in_ascending_forecast_order():
     label = (torch.rand(1000, generator=g, dtype=torch.double) < p).double()
     d = murphy_decomposition(p, _truth_for(label), tau=0.5, n_bins=N_BINS)
     assert d["bin_counts"] == [300, 600, 100]
+
+
+# --- the registered decision rule, tested on synthetic rows ------------------------
+#
+# P7's deliverable is a VERDICT, and a bug in the ranking comparison would produce a
+# wrong one silently -- the numbers would all be right and the conclusion wrong. The
+# rule is therefore exercised directly, on rows built so the answer is known by
+# construction rather than measured.
+
+import importlib.util
+from pathlib import Path
+
+SCRIPT = Path(__file__).resolve().parents[1] / "scripts/run_p7_murphy.py"
+
+
+def _p7():
+    spec = importlib.util.spec_from_file_location("p7_murphy", SCRIPT)
+    m = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(m)
+    return m
+
+
+def _rows(refinement_by_arm: dict, n: int = 12, gamma: float = 0.50,
+          tau_frac: float = 0.60, flag_on: tuple | None = None) -> list[dict]:
+    """Rows whose Brier ordering is fixed and whose refinement ordering is chosen.
+
+    `brier_raw` is set so the arms rank a-b-c-... by Brier; `refinement` is whatever the
+    caller passes. Uncertainty is constant across arms, as it is in the real data --
+    it is a function of the truth and tau alone.
+    """
+    out = []
+    for i in range(n):
+        for a, ref in refinement_by_arm.items():
+            cal = 0.4 + 0.01 * sorted(refinement_by_arm).index(a)
+            out.append({
+                "instance": f"i{i}", "seed": 0, "arm": a, "gamma": gamma,
+                "tau_frac": tau_frac, "true_frac_above_tau": 0.3, "regret": 0.1,
+                **{f"{mp}_{k}": v for mp in ("pred", "latent") for k, v in {
+                    "brier_raw": cal + 0.001 * i, "brier": cal + 0.001 * i,
+                    "refinement": ref + 0.0001 * i, "calibration": cal,
+                    "uncertainty": 0.21, "within_bin": 0.0,
+                    "degenerate": (["single_class"]
+                                   if flag_on == (f"i{i}", a) else []),
+                }.items()},
+            })
+    return out
+
+
+def test_the_rule_returns_a_null_when_refinement_orders_the_arms_as_brier_does():
+    """Refinement decreasing exactly as Brier increases: the orderings coincide."""
+    p7 = _p7()
+    s = p7.summarise(_rows({"a": 0.30, "b": 0.20, "c": 0.10}))
+    cell = s["cells"][0]
+    assert cell["pred"]["rank_by_brier"] == ["a", "b", "c"]
+    assert cell["pred"]["rank_by_refinement"] == ["a", "b", "c"]
+    assert cell["pred"]["rankings_agree"]
+    assert cell["pred"]["agreement"]["n_pair_inversions"] == 0
+    assert cell["pred"]["agreement"]["spearman_rho"] == 1.0
+    assert s["verdict"].startswith("A5 IS A NULL")
+
+
+def test_the_rule_fires_when_a_single_pair_is_inverted():
+    p7 = _p7()
+    s = p7.summarise(_rows({"a": 0.20, "b": 0.30, "c": 0.10}))
+    cell = s["cells"][0]
+    assert cell["pred"]["rank_by_brier"] == ["a", "b", "c"]
+    assert cell["pred"]["rank_by_refinement"] == ["b", "a", "c"]
+    assert not cell["pred"]["rankings_agree"]
+    assert cell["pred"]["inversions"] == [["a", "b"]]
+    assert s["verdict"].startswith("A5 FOUND SOMETHING")
+    assert [t["pair"] for t in s["inversion_tests"] if t["map"] == "pred"] == [["a", "b"]]
+    assert "holm_p" in s["inversion_tests"][0]["refinement"]
+
+
+def test_uncertainty_carries_no_across_arm_spread():
+    """The pipeline self-check: a nonzero spread means the arms saw different truths."""
+    p7 = _p7()
+    s = p7.summarise(_rows({"a": 0.30, "b": 0.20, "c": 0.10}))
+    assert s["worst_uncertainty_across_arm_spread"] == 0.0
+
+
+def test_a_single_class_campaign_is_dropped_for_EVERY_arm_not_just_the_flagged_one():
+    """Refinement is 0 by construction there, so the cell can rank nothing.
+
+    Dropping must be arm-symmetric or the drop itself becomes a contrast: the truth does
+    not depend on the arm, so a campaign degenerate for one arm is degenerate for all.
+    """
+    p7 = _p7()
+    s = p7.summarise(_rows({"a": 0.30, "b": 0.20, "c": 0.10}, flag_on=("i3", "a")))
+    cell = s["cells"][0]
+    assert cell["n_single_class_dropped"] == 1
+    assert cell["n_used"] == 11
+    for t in s["inversion_tests"]:
+        assert t["refinement"]["n"] == 11
+
+
+def test_holm_agrees_with_the_implementation_already_in_the_repo():
+    p7 = _p7()
+    spec = importlib.util.spec_from_file_location(
+        "q39", Path(__file__).resolve().parents[1] / "scripts/run_q39_multiplicity.py")
+    q39 = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(q39)
+    ps = [0.001, 0.04, 0.2, 0.5, 0.011, 0.9]
+    assert p7._holm(ps) == pytest.approx(q39.holm(ps))

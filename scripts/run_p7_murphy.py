@@ -292,6 +292,12 @@ def summarise(rows: list[dict]) -> dict:
             spread = {q: max(means[q].values()) - min(means[q].values()) for q in means}
             rank_brier = _order(present, means["brier_raw"], higher_is_better=False)
             rank_ref = _order(present, means["refinement"], higher_is_better=True)
+            # The registered question is about the sum the project has PUBLISHED, which
+            # is the raw Brier, so that is what `rank_brier` uses. The binned Brier is
+            # what the identity actually decomposes, so its ranking is carried too: if
+            # the two Brier rankings coincide, the binned/raw distinction is immaterial
+            # to the verdict and can be said to be, rather than assumed.
+            rank_binned = _order(present, means["brier"], higher_is_better=False)
             inversions = [[a, b] for a, b in itertools.combinations(present, 2)
                           if ((rank_brier.index(a) < rank_brier.index(b))
                               != (rank_ref.index(a) < rank_ref.index(b)))]
@@ -312,6 +318,8 @@ def summarise(rows: list[dict]) -> dict:
                             [by[(a, *k)][f"{mp}_within_bin"] for k in keys]))
                             for a in present},
                         "rank_by_brier": rank_brier,
+                        "rank_by_brier_binned": rank_binned,
+                        "binned_brier_ranks_as_raw": rank_binned == rank_brier,
                         "rank_by_refinement": rank_ref,
                         "rankings_agree": rank_brier == rank_ref,
                         "inversions": inversions}
@@ -375,6 +383,10 @@ def _print_summary(s: dict) -> None:
               f"{sum(c['pred']['agreement']['n_pairs'] for c in scored)}")
     print(f"latent-map cells differing: {len(s['cells_where_rankings_differ']['latent'])}"
           f" of {s['n_cells_scored']}")
+    if scored:
+        n_same = sum(1 for c in scored if c["pred"]["binned_brier_ranks_as_raw"])
+        print(f"binned Brier ranks the arms as the raw Brier does at {n_same} of "
+              f"{len(scored)} cells")
     print(f"degenerate flags fired: {s['degenerate_flag_counts']}")
     print("worst across-arm uncertainty spread (must be 0.0): "
           f"{s['worst_uncertainty_across_arm_spread']:.3e}")
