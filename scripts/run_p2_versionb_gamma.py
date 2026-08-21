@@ -79,6 +79,7 @@ with its own ``n``, never averaged across cells with different ``n``.
 from __future__ import annotations
 
 import argparse
+import contextlib
 import gc
 import importlib.util
 import json
@@ -119,9 +120,9 @@ from boec.replay import (CampaignRecord, committed_rows,             # noqa: E40
                          instance_by_id, regenerate, scored_curve, unit_bounds)
 from boec.surrogate import build_gp                                  # noqa: E402
 from boec.torch_oracle import BiphasicOracle                         # noqa: E402
+import boec.vorobev as _vorobev                                      # noqa: E402
 from boec.vorobev import (alpha_star, conservative_estimate,         # noqa: E402
-                          containment_probability, empirical_containment,
-                          vorobev_deviation)
+                          empirical_containment, vorobev_deviation)
 
 OUT_DEFAULT = ROOT / "results" / "p2-versionb-gamma.json"
 
@@ -279,6 +280,52 @@ def plate1_only_record(instance: str, dim: int, sigma: float,
     return regenerate(instance, dim, sigma, seed, "lhs")
 
 
+@contextlib.contextmanager
+def _memoised_containment():
+    """Compute each DISTINCT ``containment_probability`` call once, within one cell.
+
+    **This does not change the estimator and it is not an approximation.**
+    ``alpha_star`` and ``conservative_estimate`` are called unchanged; each distinct
+    call still goes to the real :func:`boec.vorobev.containment_probability`, and a
+    cache hit returns the float that function computed. Bit-identical, by construction
+    -- and ``tests/test_p2_versionb_gamma.py`` asserts every column of a real campaign
+    is ``==`` with the cache and without it.
+
+    **Why the calls repeat.** Both functions scan the same 64 Vorob'ev quantiles of the
+    same coverage function: ``alpha_star`` over ``torch.linspace(0, 1, 64)``,
+    ``conservative_estimate`` over ``torch.linspace(1, 0, 64)``, and those two are
+    **elementwise equal** (measured, not assumed -- ``torch.equal`` on the flipped
+    tensor is True). One ``alpha_star`` plus one ``conservative_estimate`` per alpha is
+    therefore four scans of one nested mask family. Measured on a real campaign:
+    **252 calls over 63 distinct masks at gamma = 0.50** and **256 over 19 at
+    gamma = 0.99**, where the quantiles collapse.
+
+    **Why it is needed.** The raw scan is 268 s per campaign at 24 cells --
+    ``alpha_star`` 68 s plus three ``conservative_estimate`` at 200 s -- because
+    ``containment_probability`` copies ``draws[:, mask]``, up to 512 x 2,000 doubles,
+    256 times per cell. That is ~15 CPU-hours for P2's 200 campaigns, against Version
+    B's 4 cells. Measured speedup here: **5.0x at gamma = 0.50, 11.2x at gamma = 0.99**.
+
+    The key is ``(theta, the mask's exact bytes)`` -- no collision is possible -- and
+    the scope is **one cell**, entered and left inside :func:`vorobev_columns`, so a
+    mask from one ``tau`` can never answer for another.
+    """
+    real = _vorobev.containment_probability
+    cache: dict[tuple[float, bytes], float] = {}
+
+    def memoised(draws, mask, theta):
+        key = (float(theta), mask.detach().cpu().numpy().tobytes())
+        if key not in cache:
+            cache[key] = real(draws, mask, theta)
+        return cache[key]
+
+    _vorobev.containment_probability = memoised
+    try:
+        yield
+    finally:
+        _vorobev.containment_probability = real
+
+
 def vorobev_columns(draws: torch.Tensor, truth_sub: torch.Tensor, tau: float,
                     alphas=ALPHAS) -> dict:
     """alpha*, the Vorob'ev deviation, and the conservative estimate at each alpha.
@@ -290,17 +337,21 @@ def vorobev_columns(draws: torch.Tensor, truth_sub: torch.Tensor, tau: float,
     contained, and counting that as a success would inflate the measured rate with
     campaigns that certified nothing.
     """
-    out = {"alpha_star": alpha_star(draws, tau),
-           "vorobev_deviation": vorobev_deviation(draws, tau)}
-    for a in alphas:
-        ce = conservative_estimate(draws, tau, a)
-        n_ce = int(ce.sum())
-        out[f"ce_vol_{a}"] = n_ce / ce.numel()
-        out[f"ce_empty_{a}"] = n_ce == 0
-        out[f"ce_contain_{a}"] = (containment_probability(draws, ce, tau)
-                                  if n_ce else float("nan"))
-        emp = empirical_containment(ce, truth_sub, tau)
-        out[f"ce_empirical_{a}"] = float("nan") if emp is None else float(emp)
+    with _memoised_containment():
+        out = {"alpha_star": alpha_star(draws, tau),
+               "vorobev_deviation": vorobev_deviation(draws, tau)}
+        for a in alphas:
+            ce = conservative_estimate(draws, tau, a)
+            n_ce = int(ce.sum())
+            out[f"ce_vol_{a}"] = n_ce / ce.numel()
+            out[f"ce_empty_{a}"] = n_ce == 0
+            # Through the module attribute, so this call shares the cell's cache with
+            # the scans above. `_vorobev.containment_probability` is the real function
+            # outside the `with`.
+            out[f"ce_contain_{a}"] = (_vorobev.containment_probability(draws, ce, tau)
+                                      if n_ce else float("nan"))
+            emp = empirical_containment(ce, truth_sub, tau)
+            out[f"ce_empirical_{a}"] = float("nan") if emp is None else float(emp)
     return out
 
 

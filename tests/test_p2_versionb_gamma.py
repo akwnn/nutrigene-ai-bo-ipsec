@@ -233,6 +233,59 @@ def test_ce_empirical_is_nan_not_zero_when_nothing_was_certified(mod):
     assert math.isnan(row["ce_empirical_0.95"])
 
 
+# ---------------------------------------------------- the containment cache is inert
+
+
+def test_the_two_rho_grids_are_elementwise_equal(mod):
+    """The premise of the cache: both scans visit the SAME 64 Vorob'ev quantiles.
+
+    `alpha_star` walks `linspace(0, 1, 64)` and `conservative_estimate` walks
+    `linspace(1, 0, 64)`. If those differed by even a ULP the repeated calls would not
+    be repeats, and the cache would be answering a question nobody asked.
+    """
+    up = torch.linspace(0.0, 1.0, 64, dtype=torch.double)
+    down = torch.linspace(1.0, 0.0, 64, dtype=torch.double)
+    assert torch.equal(up, down.flip(0))
+
+
+def test_the_containment_cache_returns_bit_identical_columns(mod):
+    """Not "close". `==`, on every Vorob'ev column, at both ends of the ladder.
+
+    A cache hit must return the float the real function computed. If this ever fails,
+    the cache is producing numbers and must be deleted -- not tolerated.
+    """
+    import contextlib as _c
+
+    # Centred so that most of the field clears tau: an all-empty CE would compare two
+    # tables of `nan` and prove nothing about the cache.
+    g = torch.Generator().manual_seed(7)
+    draws = torch.randn(128, 300, generator=g, dtype=torch.double) * 0.4 + 1.0
+    truth = (torch.randn(300, generator=torch.Generator().manual_seed(8),
+                         dtype=torch.double) * 0.4 + 1.0)
+
+    non_empty = 0
+    for tau in (mod.tau_for(0.50, 0.60, 0.25)[0], mod.tau_for(0.99, 0.60, 0.25)[0]):
+        with_cache = mod.vorobev_columns(draws, truth, tau)
+        assert mod._vorobev.containment_probability.__module__ == "boec.vorobev", (
+            "the cache leaked out of its `with` block")
+
+        saved, mod._memoised_containment = mod._memoised_containment, _c.nullcontext
+        try:
+            without = mod.vorobev_columns(draws, truth, tau)
+        finally:
+            mod._memoised_containment = saved
+
+        assert set(with_cache) == set(without)
+        for k in with_cache:
+            # `_delta` is the project's comparison: nan == nan, bools as bools, and the
+            # bar is exactly 0.0 -- the same bar the gate uses.
+            assert mod._delta(with_cache[k], without[k]) == 0.0, (
+                f"tau={tau} column {k}: {with_cache[k]!r} != {without[k]!r}")
+        non_empty += sum(not with_cache[f"ce_empty_{a}"] for a in ALPHAS)
+
+    assert non_empty >= 1, "every CE was empty; the comparison exercised nothing"
+
+
 # ------------------------------------------------------------- the performance trap
 
 
