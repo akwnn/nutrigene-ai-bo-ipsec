@@ -528,3 +528,42 @@ def test_the_output_declares_its_own_completeness(p4b):
                              for a in ("lhs", "doe")])
     assert full["status"] == "COMPLETE"
     assert full["keys_present"] == full["keys_expected"] == 2
+
+
+def test_the_dual_read_reports_which_unit_is_actually_more_powerful(p4b):
+    """Measured, never assumed — and the assumption would have been wrong here.
+
+    F1 was registered on the premise that n=50 inflates the effective sample size and
+    n=25 is the conservative direction. Measured per family that is false on exactly the
+    families this task lives in: ICC -0.200 on the `alpha_star` family, inflation 0.894,
+    so **n=25 is the MORE powerful unit there**. A landscape effect cancels in a paired
+    difference, and when the seeds disagree more than the instances do, collapsing them
+    tightens the interval rather than widening it.
+
+    So the runner reports the measured CI-width ratio and names the narrower unit,
+    instead of labelling n=25 "conservative" by assumption.
+    """
+    # `_synthetic(-1)` is rho = -1 with a zero-width interval at BOTH units, so its
+    # width ratio is 0/0. That is the honest answer there, and "tie" is what it must
+    # report rather than a number invented from a degenerate denominator.
+    degenerate = p4b.dual_spearman(_synthetic(-1))
+    assert degenerate["more_powerful_unit"] == "tie"
+    assert not np.isfinite(degenerate["ci_width_ratio_n25_over_n50"])
+    assert "measured" in degenerate["power_note"].lower()
+
+    rng = np.random.default_rng(5)
+    noisy = {arm: {(f"i{u:02d}", s): (float(rng.standard_normal()),
+                                      float(rng.standard_normal()))
+                   for u in range(25) for s in (0, 1)} for arm in NINE}
+    res = p4b.dual_spearman(noisy)
+    assert res["more_powerful_unit"] in ("n25", "n50", "tie")
+    assert res["ci_width_ratio_n25_over_n50"] > 0
+    assert np.isfinite(res["ci_width_ratio_n25_over_n50"])
+
+    # Redundant seeds: n=50 counts 50 units where 25 exist, so it is the narrower one.
+    rng = np.random.default_rng(11)
+    shared = {arm: {u: (float(rng.standard_normal()), float(rng.standard_normal()))
+                    for u in range(25)} for arm in NINE}
+    clustered = {arm: {(f"i{u:02d}", s): shared[arm][u]
+                       for u in range(25) for s in (0, 1)} for arm in NINE}
+    assert p4b.dual_spearman(clustered)["more_powerful_unit"] == "n50"

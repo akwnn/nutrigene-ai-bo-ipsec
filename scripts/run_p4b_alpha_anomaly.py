@@ -636,9 +636,38 @@ def dual_spearman(data: dict[str, dict[tuple[str, int], tuple[float, float]]]) -
         for arm, vals in data.items()}
     n50 = spearman_across_arms(data)
     n25 = spearman_across_arms(collapsed)
+
+    # WHICH UNIT IS MORE POWERFUL IS MEASURED, NOT ASSUMED -- and the assumption would
+    # have been wrong on exactly this family. F1 was registered on the premise that
+    # n=50 inflates the effective sample size and n=25 is the conservative direction.
+    # Measured per family: ICC -0.200 on the `alpha_star` family, inflation 0.894, so
+    # n=25 is the MORE powerful unit there. A landscape effect cancels in a paired
+    # difference, and when seeds disagree more than instances do, collapsing them
+    # tightens the interval instead of widening it. `n25` still GOVERNS the registered
+    # decision; that is a rule about which reading is authoritative, not a claim about
+    # which is wider.
+    w50 = n50["ci_hi"] - n50["ci_lo"]
+    w25 = n25["ci_hi"] - n25["ci_lo"]
+    ratio = (w25 / w50) if np.isfinite(w50) and w50 > 0 else float("nan")
+    if not np.isfinite(ratio):
+        which = "tie"
+    elif ratio < 0.999:
+        which = "n25"
+    elif ratio > 1.001:
+        which = "n50"
+    else:
+        which = "tie"
     return {"governing_unit": "n25", "n50": n50, "n25": n25,
-            "n50_note": "anti-conservative unit: two seeds on one landscape are not two "
-                        "independent units",
+            "ci_width_n50": w50, "ci_width_n25": w25,
+            "ci_width_ratio_n25_over_n50": ratio,
+            "more_powerful_unit": which,
+            "power_note": (
+                "Measured from the two bootstrap intervals, not assumed. F1's premise "
+                "that n=25 is the conservative direction does not hold on the alpha* "
+                "families (ICC -0.200, inflation 0.894); n=25 governs the registered "
+                "decision regardless, which is a rule about authority and not about "
+                "width."),
+            "n50_note": "counts two seeds on one landscape as two independent units",
             "units_agree": bool((n50["rho"] <= RHO_THRESHOLD
                                  and n50["ci_excludes_zero"])
                                 == (n25["rho"] <= RHO_THRESHOLD
