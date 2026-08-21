@@ -1196,3 +1196,53 @@ other means — which it does, by re-scoring already-gated arms. P3 *does* have 
 **Two workers, opposite decisions, each correct for its own constraint, each stated with its
 reason.** Recorded because a reader comparing the two runners will otherwise see an
 inconsistency where there is a considered difference.
+
+## D47 🟢 **The pause was free, and Amendment F would have obsoleted those rows anyway.**
+
+P3 paused at **0 keys complete in all three cells** — its runner checkpoints only after a key's
+full 8 arms, so no JSON exists and **nothing was lost.**
+
+**But the better finding is P3's:** resuming the old binary would have produced three cells that
+Amendment F immediately sends back for a re-score. F2a's error volumes *are* derivable after the
+fact — they are pure functions of `vol_pred`, `fi_pred` and `true_frac_above_tau`. **F2b's AUPRC
+is not.** It needs the full `p_pred` vector and truth labels over the 20,000-point grid, and no
+stored row carries either.
+
+**So the pause did not cost three cells; it saved running them twice.** And it vindicates the
+call to interrupt six agents mid-run rather than correct afterwards — *the one column whose
+omission is unrecoverable is the one that must be right at write time.*
+
+## D48 🔴 **My omission: I specified AUPRC to three workers and not the fourth. `p4-coord.json` is committed without it.**
+
+Checking P3's observation against outputs that had **already landed**:
+
+```
+results/p4-coord.json   k6_rows 1200, k6b_rows 200
+  true_frac_above_tau  YES    vol_pred YES    fi_pred YES    iou YES    brier YES
+  auprc                ** MISSING **
+```
+
+I sent Amendment F2b explicitly to P2, P3 and P7 and **left it out of the P4/D23 brief.** That
+worker did exactly what it was told; the gap is mine.
+
+**Only AUPRC is actually lost** — the error volumes are recoverable because that worker stored
+`true_frac_above_tau` on every row **without being asked**, which is precisely the omission that
+makes `versionb.json` unscoreable to this day. Queued as a cheap `coord` re-score (coordinate
+descent is deterministic and already gates at |Δ| = 0), **third**, behind D23 and P4b. Written to
+a new path, or re-issued with the gate re-run rather than inherited.
+
+**Also worth recording: that worker stored `mean_posterior_sd` on every `k6b_row`** — the exact
+regressor P4b's registered "α\* rewards posterior width" test needs. **It stored the explanatory
+variable before the analysis asked for it.**
+
+**The pattern across D47 and D48 is the useful part.** A mid-run amendment reaches the runs that
+have not written yet and misses the ones that have. P3 (0 rows) absorbs it for free; P4 (1,400
+rows committed) needs a re-score. **The cost of a late correction is not uniform across a team —
+it is a step function at each worker's first committed row.** That is the scheduling fact worth
+carrying into the next phase, not a general preference for early or late.
+
+## D49 🟢 B4 landed. Phase 3's engineering blocker is cleared.
+
+`replay.regenerate` now takes `family=` and `builder=`, backward-compatibly. With P5's `tau_q`
+(D36) that clears **both** Phase 3 blockers — the estimand and the engineering. **P6 remains
+blocked only on Amendment F's analysis half (F1 ✅, F2a, F2c, F4)**, per D31.
