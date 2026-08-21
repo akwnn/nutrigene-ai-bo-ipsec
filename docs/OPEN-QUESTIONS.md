@@ -6249,3 +6249,104 @@ a correct 4.6×.** Its exactness result is unaffected and stands.
 **That is the third worker to correct its own claim against its own interest in this thread**
 (P7 on the thread retraction, P1 on Erratum 7a, now this). **The record is being repaired faster
 than it is being damaged**, which is the property that makes any of it citable.
+
+---
+
+## 📌 ERRATUM 9 · **I relayed working-tree linter output as "genuine NameErrors". They do not exist at HEAD. And the near-zero ICC does NOT generalise.**
+
+### 9a. 🔴 The NameError alarms were false. I raised them to two workers as verified.
+
+I told the F-analysis worker that `PRIMARY_GAMMA`, `PRIMARY_TAU_FRAC`, `GAMMAS`, `TAU_FRACS` and
+`spearmanr` were *"genuine NameErrors, not linter noise"*, and told the P4/D23 worker the same
+about `K6_SPREAD`, `MATCHED_GAMMA` and `error_volumes`. **An AST undefined-name check over
+`git show HEAD:` for both files returns `NONE`.** The F-analysis worker verified it four
+independent ways — grep, AST, live-run of both `main()` functions with output redirected to
+scratch, and a bit-for-bit diff against the committed JSONs — before reporting it.
+
+**The cause:** the diagnostics fire on **working trees**, and **seven agents are editing
+concurrently**. The flagged code was real and really was broken — the F-analysis worker's first
+draft hardcoded `GAMMAS = (0.50, 0.90, 0.95, 0.99)` and silently produced a **16-cell** headline
+family instead of 24 — but it **never reached a commit.** I read a mid-edit snapshot as the state
+of the repository.
+
+**Registered rule: verify any static-analysis finding against `git show HEAD:<path>` before
+relaying it.** In a seven-agent tree, a working-tree diagnostic is a **question**, not a finding.
+The cost here was two workers' verification time, and one of them spent four passes on it.
+
+*(Type-stub complaints like `Cannot access attribute "pvalue"` on `scipy.stats.wilcoxon` are
+noise in both trees — the committed `analyse_k6.py` and `analyse_fix1.py` make the identical
+call.)*
+
+### 9b. 🔴 **"n=50 was not meaningfully anti-conservative" is TOO STRONG as a blanket. It is family-dependent, and the sign REVERSES.**
+
+My D40 write-up quoted the **pooled** median (inflation 0.9884, ICC −0.0231) and concluded n=50
+was not meaningfully anti-conservative. **Per family it splits, and the split is the mechanism
+behind the three upgrades:**
+
+| family | median ICC | median inflation | reading |
+|---|---|---|---|
+| **§5.3 HEADLINE 1 `lhs`−`doe` on AUC** | **+0.247** | **1.117** | **n=50 intervals ~12% TOO NARROW — genuinely anti-conservative** |
+| §5.1 paired regret | +0.165 | 1.079 | n=50 slightly anti-conservative |
+| §5.4 `doe`−`qlogei` on AUC | +0.058 | 1.029 | ~neutral |
+| D20 rule-P reversal | −0.008 | 0.996 | neutral |
+| §5.8 `alpha*` | −0.200 | 0.894 | **reversed** |
+| §5.11.3 KILL 1 | −0.339 | 0.813 | **reversed** |
+| §5.11.5 `versionb`−`plate1_only` | −0.404 | 0.772 | **reversed** |
+| §5.11.4 Vorob'ev deviation | −0.468 | 0.728 | **reversed** |
+
+**On the K6 AUC and regret contrasts n=50 genuinely WAS anti-conservative** — the headline
+family's intervals were about **12% too narrow.** Real, and far short of 41%.
+
+**On every `alpha*` and Version B family the sign REVERSES:** n=50's intervals were too *wide*,
+and **n=25 is the MORE powerful unit there.**
+
+**⚠️ That is the mechanism behind all three Holm upgrades — they sit in the two most negative
+families.** So the upgrades are **a power effect of averaging seeds, not new evidence.** That
+must travel with them.
+
+### 9c. ⭐ **The near-zero ICC is a property of PAIRING and does not generalise to unpaired quantities.**
+
+Why ICC is near zero at all: **pairing has already removed the landscape.** The shared landscape
+effect largely cancels in the *difference*, which is the quantity being tested.
+
+**So it does not transfer.** Measured ICC of **raw per-arm `auc_pred`**: **−0.226 (`doe`) to
++0.581 (`lhs`).** For anything **unpaired** in the cross-family grid — arm means with intervals,
+containment proportions, prevalence figures — **the unit choice can still matter a great deal,
+and n=25 stays the default there.** It may not be waved through on the strength of the
+paired-difference median. **Registered for P6.**
+
+### 9d. **A polarity bug worth generalising: raw sign comparison across metrics with opposite direction.**
+
+The F-analysis worker's first corroboration check compared **raw signs** across metrics. **Brier
+and regret are lower-is-better; `alpha*` and AUC are higher-is-better.** So
+`versionb − versionb_random` reading **+0.0261 on `alpha*` and −0.0071 on Brier** was scored as a
+*disagreement* when **both favour `versionb`.** It inverted **two of four** readings, including
+turning a fully-corroborated upgrade into an apparently contradicted one. Fixed with an explicit
+per-metric direction and `benefit_sign()`, with tests.
+
+**Registered programme-wide: no cross-metric agreement check may compare raw signs.** Every
+metric carries its benefit direction. This is the same class as the type-I-alone trap (Erratum
+6b) — a statistic read without knowing what "good" means for it.
+
+**Result of the corrected audit:** the **downgrade is the one that is NOT corroborated** — and is
+actively **contradicted** by `iou_vorobev_expectation` (+0.0723, p<1e-4) pointing the other way,
+so removing it costs nothing. And **two of the three model-internal upgrades DO have validated
+backing** (AUC +0.0760 p=3.8e-04; Brier −0.0071 p=0.0012 with regret −0.0091 p=0.0117), so they
+are **not bare `alpha*` gains** — though 9b's power explanation still applies to all three.
+
+**The AUC upgrade cannot be checked under the error-volume framing:** `results/versionb.json`
+carries none of `vol_*`, `fi_*` or `true_frac_above_tau`. Corroborated on **Brier** instead
+(−0.0154, p<1e-4, same benefit direction). Settling it properly needs `run_versionb.py` to emit
+the three columns.
+
+### 9e. **Additive regeneration of one's own committed output: APPROVED, with the standard stated.**
+
+`results/f1-dual-n.json` was regenerated to add `metric`, `metric_class`, `arms`, `key_b`,
+`filters`, `source` and `status_change_audit`. The worker verified **programmatically** that all
+137 contrasts' pre-existing fields, `containment_per_cell`, `registered_kill` and every prior
+`summary` key are **byte-identical to `HEAD`.**
+
+**Approved, and preferable to a second file.** Standard, matching the P5 `tau_q` rename
+(Erratum 7e): **an additive regeneration of one's own output is permitted when byte-identity of
+every pre-existing field is proved programmatically and stated in the report.** Trust is not
+sufficient; the proof is what makes it an exception rather than a breach.
