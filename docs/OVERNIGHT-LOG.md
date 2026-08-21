@@ -1246,3 +1246,73 @@ carrying into the next phase, not a general preference for early or late.
 `replay.regenerate` now takes `family=` and `builder=`, backward-compatibly. With P5's `tau_q`
 (D36) that clears **both** Phase 3 blockers — the estimand and the engineering. **P6 remains
 blocked only on Amendment F's analysis half (F1 ✅, F2a, F2c, F4)**, per D31.
+
+## D50 ⭐ **A gate pointed at the WRONG column would have passed on 88% of rows. The B4 worker's test design is now the standard.**
+
+`COVERAGE-MATRIX.md` §4 B4 already warned that `q42-families.json · doe_a` is the **pre-D20**
+column and the wrong family gate target. What nobody had measured is **how nearly right the
+wrong answer is.** Verified independently on 400 shared keys:
+
+| | agree at d=6 σ=0.25 | agree pooled |
+|---|---|---|
+| **ackley** | **22/25** | **92/100** |
+| hartmann6 | 15/25 | 75/100 |
+| levy | 8/25 | 38/100 |
+| rosenbrock | 6/25 | 27/100 |
+
+**A spot-check on seeds 0–2 of ackley or hartmann6 would not have noticed a gate aimed at the
+wrong column.** The gate would pass, the number would be wrong, and nothing would say so.
+
+**The response is the registered standard now:** assert **both halves** — the right column
+reproduces exactly **and** the wrong one is *shown to differ on the rows where it differs* —
+**with a count floor** so the test cannot silently degrade into one that no longer
+distinguishes them. **A positive-only assertion passes against the wrong column on 88% of
+ackley rows.** This generalises well beyond B4: every gate in this project asserts a positive,
+and none of the others asserts that the wrong target *fails*.
+
+## D51 🔴 Erratum 4 — **the audit's `doe` shifts are one cell, quoted as if general.**
+
+The §4 B4 figures (*ackley 0.0000 → 0.0123, hartmann6 0.5444 → 0.5623, …*) are the **d=6
+σ=0.25** cell. Pooled over all four: **0.0000 → 0.0070, 0.5917 → 0.5994, 0.0040 → 0.0337,
+0.0004 → 0.0245.**
+
+**So "the pre-D20 column flatters DoE" must be stated per family.** Only **levy and rosenbrock**
+clear SESOI 0.02 at every cell; **hartmann6's shift is ~0.007 everywhere — below it.** A blanket
+statement would be wrong on half the families.
+
+## D52 ✅ **Decision 3 confirmed by evidence it was not derived from.**
+
+Ackley's two `doe` columns coincide on **92 of 100** rows because **its optimum is the exact box
+centre and the CCD visits it**, so oracle-best and rule A are the same point.
+
+That is **blocker B3's objection** — the reason Decision 3 put ackley in as *a declared
+sensitivity, never a headline* — **appearing in data gathered to check a gate.** The decision was
+made on B3's reasoning hours before this evidence existed. **A prediction confirmed by data it
+was not derived from is worth more than the argument that produced it**, and this is the second
+time tonight that has happened (the first: E7's mechanism arriving from three independent
+routes).
+
+## D53 🟢 Registered "leave it unbranched" as a decision, so it is not later read as an oversight.
+
+`replay`'s `N_ORDERINGS = 20` mean reproduces `run_e2.static_curve`'s arithmetic and is left
+**unbranched off hill**. It moves a family spread-arm regret by a few ULP — and there is **no
+committed family column for `lhs`/`sobol`/`random` at all**, so branching buys nothing
+measurable while adding a second scoring definition inside one function.
+
+**Same rule, third invocation tonight:** P2 declined to reimplement `containment_probability`
+to make it faster (*"a second definition of a committed quantity is worse than a slow one"*),
+P3 declined to share a GP fit to preserve the committed code path, and now this. **Three workers
+independently reached for the same principle on three unrelated problems.**
+
+## D54 🟡 P6 is engineering-ready and still deliberately held.
+
+**Both Phase 3 blockers are cleared** — P5's `tau_q` (D36) and B4's `family=`/`builder=` (D49),
+with every family gate at |Δ| = 0 and `tests/test_replay.py` **19 passed** on the untouched file.
+
+**P6 still does not start.** It is gated on Amendment F's analysis half: F1 ✅, **F2a / F2c / F4
+outstanding**. The worker is instead building the P6 runner **with F's columns designed in** —
+because **AUPRC is not recoverable after the fact**, and this has already cost us once
+(`p4-coord.json`, D48). Same posture as P3.
+
+**Release queue for compute: P7 → P3 → P2**, and nothing new starts until something finishes.
+The box is at **59 MB free RAM** with Adobe holding 82% of a core.
