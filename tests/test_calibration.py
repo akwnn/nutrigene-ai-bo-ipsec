@@ -25,8 +25,6 @@ Hiding the gap inside a redefined "calibration" would make the identity hold by
 construction and test nothing.
 """
 
-import math
-
 import numpy as np
 import torch
 
@@ -89,13 +87,19 @@ def test_bins_are_equal_count_when_the_forecast_has_no_ties():
 
 
 def test_equal_count_populates_the_tail_where_equal_width_would_not():
-    """The measured reason the registration says equal-count and not equal-width."""
+    """The registered reason for equal-count, on the shape these maps actually have.
+
+    A probability map at tau_frac=0.95 is a mass of near-zero probabilities with a thin
+    high tail and almost nothing between: prevalence is 0.00294. Equal-width bins are
+    then empty across the whole middle, and an empty bin contributes to neither term.
+    """
     g = torch.Generator().manual_seed(5)
-    p = torch.rand(1000, generator=g, dtype=torch.double) ** 8
+    p = torch.cat([0.02 + 0.06 * torch.rand(990, generator=g, dtype=torch.double),
+                   torch.full((10,), 0.97, dtype=torch.double)])
     d = murphy_decomposition(p, _truth_for((p > 0.5).double()), tau=0.5, n_bins=N_BINS)
-    assert min(d["bin_counts"]) == 100
+    assert d["bin_counts"] == [100] * N_BINS
     width_counts, _ = np.histogram(p.numpy(), bins=N_BINS, range=(0.0, 1.0))
-    assert (width_counts == 0).any(), "equal-width should starve the tail here"
+    assert (width_counts == 0).sum() >= 8, "equal-width should starve the middle here"
 
 
 def test_ties_are_never_split_across_bins():
@@ -230,13 +234,36 @@ def test_brier_raw_is_bitwise_the_published_brier():
     assert d["brier_raw"] == published
 
 
-def test_within_bin_is_exactly_the_gap_the_binning_costs():
+def test_binning_a_calibrated_informative_forecast_makes_it_score_worse():
+    """`within_bin = brier_raw - brier` is NEGATIVE here, and that is the right sign.
+
+    The gap is `mean_k n_k [var_k(p) - 2 cov_k(p, o)]`. A calibrated forecast has
+    `cov_k(p, o) ~ var_k(p)` inside a bin, so the gap goes to `-var_k(p)`: replacing the
+    forecast by its bin mean throws away resolution the raw forecast really had, and the
+    binned score is the worse one. An earlier version of this test asserted the opposite
+    sign from the phrase "binning costs something"; the test was wrong, not the code.
+    """
     g = torch.Generator().manual_seed(13)
     p = torch.rand(4000, generator=g, dtype=torch.double)
     label = (torch.rand(4000, generator=g, dtype=torch.double) < p).double()
     d = murphy_decomposition(p, _truth_for(label), tau=0.5, n_bins=N_BINS)
     assert abs(d["within_bin"] - (d["brier_raw"] - d["brier"])) <= 1e-12
-    assert d["within_bin"] > 0, "a continuous forecast must lose something to binning"
+    assert d["within_bin"] < 0
+    assert d["brier"] > d["brier_raw"]
+
+
+def test_binning_away_pointless_scatter_makes_the_score_better():
+    """The other sign, pinned so neither is mistaken for a bug.
+
+    Forecast noise uncorrelated with the outcome inside a bin gives `cov_k = 0`, so the
+    gap is `+var_k(p)`: the bin mean is the better forecast and `within_bin` is positive.
+    """
+    g = torch.Generator().manual_seed(16)
+    label = (torch.rand(4000, generator=g, dtype=torch.double) < 0.4).double()
+    p = (0.4 + 0.15 * torch.randn(4000, generator=g, dtype=torch.double)).clamp(0.01, 0.99)
+    d = murphy_decomposition(p, _truth_for(label), tau=0.5, n_bins=N_BINS)
+    assert d["within_bin"] > 0
+    assert d["brier"] < d["brier_raw"]
 
 
 def test_within_bin_vanishes_when_the_forecast_is_already_discrete():
