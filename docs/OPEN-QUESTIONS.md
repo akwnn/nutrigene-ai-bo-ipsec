@@ -6846,3 +6846,76 @@ sharper form: a correlation quoted without its cell is a pooled statistic, and t
 already withdrawn one of those.** Instances to date, all mine: `0.0394` (d=6 only), the audit's
 `doe` shifts (one cell), the F2a IoU bound (optimiser rows only), and now **ρ = +0.4333 (one
 τ_frac, sign-inverted elsewhere).**
+
+---
+
+## 📌 FINDING · **SPADE's plate-2 design threshold is a fixed fraction of `mu_max`, so it inherits §2.4's defect BY CONSTRUCTION. Empty on ackley.**
+
+**Found by the P6 worker before any family campaign scored. This is a property of the METHOD, not
+of the scoring.**
+
+`run_versionb._two_plate` selects plate 2 by straddling
+`theta = DESIGN_TAU_FRAC · mu_max = 0.75`, and **`UnitScaled` normalises every family's optimum
+to 1.0 — so θ = 0.75 on every family.** Measured prevalence of that design target:
+
+| family | design target covers | |
+|---|---|---|
+| **ackley** | **0.0000** | **0.75 exceeds its grid max of 0.410 — nothing to straddle** |
+| hartmann6 | 0.0020 | near-empty |
+| levy | 0.5417 | |
+| rosenbrock | 0.7825 | |
+
+**On ackley the straddle degenerates into "wherever the posterior mean is highest."** And since P6
+scores at `tau_q`, **the arm targets one threshold and is scored at another.**
+
+**This is exactly §2.4** — a threshold fixed as a fraction of `mu_max`, which selects wildly
+different sets across families — **appearing inside SPADE's own design, in the same project that
+registered `tau_q` to eliminate it from the scoring.**
+
+### Registration decision: **DO NOT RETARGET. Record the mismatch on every row.**
+
+The worker asked and did not act, which was right. **My answer: `_two_plate` stays imported
+verbatim.**
+
+* **Retargeting makes it a different method.** Nothing would be comparable to the committed hill
+  results, and the arm would no longer be the arm this project has been evaluating for two phases.
+* **The mismatch IS a finding about SPADE as published**, not an obstacle to measuring it. A
+  method whose acquisition targets a fixed fraction of the optimum inherits the defect that
+  fraction carries. **Reporting that is more valuable than quietly fixing it.**
+* **Every `versionb*` row carries `design_theta`, `design_target_prevalence` and
+  `design_target_degenerate`**, so an ackley result **cannot be read as "SPADE fails on ackley"**
+  when its plate-2 target was empty by the very convention `tau_q` replaces.
+
+**Registered as a follow-up, NOT run:** a `versionb_tauq` arm whose plate-2 straddle targets
+`tau_q` instead of `0.75·mu_max` would test whether the mismatch is what hurts SPADE off hill.
+**That is a NEW arm and needs registering as one** — with its own gate status (ungatable, like the
+rest) and its own kill condition — before it exists.
+
+### ⭐ And the smoke produced an argument for the design-space programme from an unexpected direction
+
+Ackley, seed 0, all four arms:
+```
+versionb  0.7704   versionb_random  0.7704   versionb_predictive  0.7704   plate1_only  0.8103
+```
+
+**Regret is IDENTICAL across all three two-plate variants — and that is correct, not a bug.**
+Plate 1's 40 shared LHS wells hold the best observed point, and plate 2's 8 never beat it on
+ackley's needle optimum. **But `vol_pred`, `iou`, `brier` and `auprc` all differ between them.**
+
+> **On ackley, regret cannot separate the Version B variants at all. Only the map metrics can.**
+
+**That is the argument for this entire programme, arriving from a direction nobody set up** — and
+it is the strongest form of it yet, because it is not "the map ranks differently from regret" but
+"**regret has no resolving power here and the map does.**"
+
+### The unrankable-cell trap fired live on real data
+
+Ackley, γ=0.90, p=0.25: **`separation_from_prevalence = 0.00000`, `rankable = False`**, all four
+arms at `vol_pred = 0` and `total_error_vol = 0.25 = prevalence` exactly. **Computed at MERGE,
+because it is a property across arms that no single campaign can see** — which is the right place
+and not where I would have put it.
+
+**Cost correction, so the queue is planned on the real number:** the four Version B arms add
+**~115 s per seed, not the ~8 s I estimated** — `versionb` alone is 47 s, because **plate 2's
+candidate grid and the 24-cell map scoring dominate, not the 1.9 s campaign build.** That is
+**+45% per seed**; a cell goes from ~65 min to **~95 min.** Still worth it.
