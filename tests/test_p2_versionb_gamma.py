@@ -233,6 +233,170 @@ def test_ce_empirical_is_nan_not_zero_when_nothing_was_certified(mod):
     assert math.isnan(row["ce_empirical_0.95"])
 
 
+# ------------------------------------------- Amendment F2a — the error volumes
+#
+# Registered at `07e98df`. Expected type I / type II error volumes replace AUC as the
+# PRIMARY design-space metric (Azzimonti & Ginsbourger 2018, Table 1). AUC is invariant
+# to monotone transformation, so it scores ranking and never calibration -- and mean
+# `grid_r2` is negative for all eight arms, i.e. the posterior mean is a worse point
+# predictor than the constant grid mean, which AUC cannot see.
+#
+# The reason they matter most HERE: at both ends of this gamma ladder `D_est` is empty
+# or the classes are wildly imbalanced, and `iou`/`false_inclusion_rate` return `nan`
+# there by design (`designspace.py`: "EMPTY IS NOT ZERO"). The error volumes stay
+# defined exactly where IoU and AUC break.
+
+
+def test_error_volumes_reproduce_the_committed_iou(mod, spread_rows):
+    """Registered validation, re-measured against the COMMITTED column, not a rerun.
+
+    `intersect / (vol_pred + true_frac - intersect)` is IoU by construction. If this
+    identity does not hold on the committed rows then the decomposition is not the one
+    `designspace.iou` computes, and the volumes are describing a different region.
+    """
+    worst = 0.0
+    checked = negatives = 0
+    for r in spread_rows:
+        t1, inter, t2 = mod.error_volumes(r["vol_pred"], r["fi_pred"],
+                                          r["true_frac_above_tau"])
+        union = r["vol_pred"] + r["true_frac_above_tau"] - inter
+        if union <= 0:                        # both sets empty: iou is nan by design
+            assert math.isnan(r["iou_pred"])
+            continue
+        worst = max(worst, abs(inter / union - r["iou_pred"]))
+        negatives += int(t1 < 0 or t2 < -1e-12 or inter < 0)
+        checked += 1
+    assert checked > 2000, f"only {checked} committed rows exercised"
+    assert negatives == 0, f"{negatives} impossible negative volumes"
+    assert worst <= 2.220446049250313e-16, f"worst |delta| vs committed iou_pred {worst:.3e}"
+
+
+def test_error_volumes_are_defined_where_iou_and_fi_are_nan(mod):
+    """The whole point at gamma = 0.99. Empty region: 0 false positives, all misses."""
+    t1, inter, t2 = mod.error_volumes(0.0, float("nan"), 0.42)
+    assert t1 == 0.0, "an empty region certifies nothing, so it cannot be wrong"
+    assert inter == 0.0
+    assert t2 == 0.42, "every truly-good point was missed, which is the prevalence"
+
+    # And the complementary degenerate case: a region covering everything.
+    t1, inter, t2 = mod.error_volumes(1.0, 0.58, 0.42)
+    assert t1 == pytest.approx(0.58)
+    assert inter == pytest.approx(0.42)
+    assert t2 == pytest.approx(0.0)
+
+
+def test_the_row_carries_the_amendment_f_columns(scored):
+    """F2a's volumes, F2b's AUPRC, and the prevalence F4 requires beside containment."""
+    needed = {"type_I_vol", "intersect", "type_II_vol",
+              "type_I_vol_latent", "intersect_latent", "type_II_vol_latent",
+              "auprc_pred", "auprc_latent", "true_frac_above_tau"}
+    for row in scored:
+        assert needed <= set(row), needed - set(row)
+
+
+def test_type_ii_volume_is_never_negative_on_a_real_campaign(scored):
+    for row in scored:
+        assert row["type_I_vol"] >= 0.0
+        assert row["intersect"] >= 0.0
+        assert row["type_II_vol"] >= -1e-12, row
+
+
+# ------------------------------------------------- Amendment F2b — AUPRC beside AUC
+
+
+def test_auprc_matches_sklearn_average_precision(mod):
+    """Not hand-rolled. `average_precision_score` is the reference implementation."""
+    from sklearn.metrics import average_precision_score
+
+    g = torch.Generator().manual_seed(3)
+    p = torch.rand(500, generator=g, dtype=torch.double)
+    truth = torch.rand(500, generator=torch.Generator().manual_seed(4),
+                       dtype=torch.double)
+    for tau in (0.2, 0.5, 0.9):
+        label = (truth >= tau).double().numpy()
+        assert mod.auprc(p, truth, tau) == pytest.approx(
+            float(average_precision_score(label, p.numpy())), abs=1e-12)
+
+
+def test_auprc_is_nan_when_one_class_is_absent(mod):
+    """Same convention as `brier_and_auc`: 'undefined', never a number that averages."""
+    p = torch.rand(64, generator=torch.Generator().manual_seed(5), dtype=torch.double)
+    truth = torch.zeros(64, dtype=torch.double)
+    assert math.isnan(mod.auprc(p, truth, 0.5)), "no positives -> undefined"
+    assert math.isnan(mod.auprc(p, truth, -1.0)), "no negatives -> undefined"
+
+
+def test_auprc_is_primary_under_heavy_imbalance_at_both_ends(ana):
+    """Davis & Goadrich cuts both ways, and this ladder is imbalanced at both ends.
+
+    gamma=0.99 tau_frac=0.60 leaves ~17 NEGATIVE points of 20,000; gamma=0.50
+    tau_frac=0.95 leaves ~59 POSITIVE. Both are below the 1% floor.
+    """
+    assert ana.MINORITY_PREVALENCE_FLOOR == 0.01
+    assert ana.primary_ranking_metric(0.99916) == "auprc_pred"
+    assert ana.primary_ranking_metric(0.00294) == "auprc_pred"
+    assert ana.primary_ranking_metric(0.73569) == "auc_pred"
+    assert ana.minority_prevalence(0.99916) == pytest.approx(0.00084)
+    assert ana.minority_prevalence(0.00294) == pytest.approx(0.00294)
+
+
+# ------------------------------------------------------ Amendment F1 — dual-n, both
+
+
+def test_pairing_at_instance_level_averages_seeds_first(ana):
+    """n=25, unit `instance`. Two seeds on one landscape share the landscape."""
+    rows = []
+    for i in range(3):
+        for seed, v in ((0, 0.2), (1, 0.4)):
+            rows.append({"instance": f"i{i}", "seed": seed, "arm": "a",
+                         "gamma": 0.5, "tau_frac": 0.6, "m": v + i})
+            rows.append({"instance": f"i{i}", "seed": seed, "arm": "b",
+                         "gamma": 0.5, "tau_frac": 0.6, "m": v})
+    pa50, pb50, _ = ana.paired(rows, "a", "b", "m", 0.5, 0.6, unit="instance_seed")
+    pa25, pb25, _ = ana.paired(rows, "a", "b", "m", 0.5, 0.6, unit="instance")
+    assert len(pa50) == 6 and len(pa25) == 3
+    # seeds averaged FIRST, then paired
+    assert list(pa25) == pytest.approx([0.3, 1.3, 2.3])
+    assert list(pb25) == pytest.approx([0.3, 0.3, 0.3])
+
+
+def test_both_n_are_reported_and_n25_governs(ana):
+    """Where they disagree n=25 governs; n=50 is reported beside it, labelled."""
+    rows = []
+    for i in range(25):
+        for seed in (0, 1):
+            rows.append({"instance": f"i{i:02d}", "seed": seed, "arm": "a",
+                         "gamma": 0.5, "tau_frac": 0.6, "m": 0.03 + 0.001 * seed})
+            rows.append({"instance": f"i{i:02d}", "seed": seed, "arm": "b",
+                         "gamma": 0.5, "tau_frac": 0.6, "m": 0.0})
+    d = ana.dual_contrast(rows, "a", "b", "m", 0.5, 0.6)
+    assert d["n50"]["n"] == 50
+    assert d["n25"]["n"] == 25
+    assert d["governs"] == "n25"
+    assert "anti-conservative" in d["n50_label"]
+    assert isinstance(d["disagree"], bool)
+
+
+# --------------------------------------- Amendment F4 — containment is NEVER pooled
+
+
+def test_containment_is_never_pooled_across_tau_frac(ana):
+    """Hard prohibition. Four thresholds on ONE posterior and ONE set of 512 draws are
+    not four Bernoulli trials, so §3.7's pooled figure is WITHDRAWN, not widened."""
+    rows = []
+    for tf in (0.60, 0.75, 0.85, 0.95):
+        for i in range(5):
+            rows.append({"arm": "versionb", "gamma": 0.99, "tau_frac": tf,
+                         "instance": f"i{i}", "seed": 0, "true_frac_above_tau": 0.9,
+                         "ce_empty_0.5": False, "ce_empirical_0.5": 1.0,
+                         "ce_vol_0.5": 0.1})
+    table = ana.containment_table(rows, alphas=(0.50,))
+    assert len(table) == 4, "one cell per tau_frac, never a pooled row"
+    assert sorted(c["tau_frac"] for c in table) == [0.60, 0.75, 0.85, 0.95]
+    assert all(c["n"] == 5 for c in table), "n is per cell, never 20"
+    assert not hasattr(ana, "pooled_containment")
+
+
 # ---------------------------------------------------- the containment cache is inert
 
 
