@@ -131,6 +131,15 @@ def containment_table(rows, alphas=ALPHAS, arm=None) -> list[dict]:
     ``below_nominal`` is ``None`` when ``n == 0``. Nothing was certified, so the
     certificate made no claim that could fail -- which is not the same as a claim that
     held, and must not be reported as one.
+
+    ``true_frac`` travels with every cell because **containment is not equally hard
+    along the ladder, and it gets EASIER as gamma rises, not harder.** gamma enters tau
+    through ``tau_max`` multiplicatively, so gamma = 0.99 gives ``tau_max = 0.4184`` and
+    an absolute threshold of 0.251 at ``tau_frac = 0.60`` -- at which the true superlevel
+    set covers **0.99916** of the box (measured on the committed `lhs` rows). A set
+    certified there is contained almost whatever it is. The hard corner is gamma = 0.50,
+    ``tau_frac`` 0.85-0.95, where the true set covers 0.06844 and 0.00294. A containment
+    fraction read without ``true_frac`` beside it says nothing about the certificate.
     """
     cells: dict[tuple, dict] = {}
     for r in rows:
@@ -141,8 +150,10 @@ def containment_table(rows, alphas=ALPHAS, arm=None) -> list[dict]:
             c = cells.setdefault(key, {"arm": r["arm"], "gamma": r["gamma"],
                                        "tau_frac": r["tau_frac"], "alpha": a,
                                        "n": 0, "contained": 0, "n_empty": 0,
-                                       "n_campaigns": 0})
+                                       "n_campaigns": 0, "_true": [], "_vol": []})
             c["n_campaigns"] += 1
+            if "true_frac_above_tau" in r:
+                c["_true"].append(float(r["true_frac_above_tau"]))
             if r[f"ce_empty_{a}"]:
                 c["n_empty"] += 1
                 continue
@@ -152,11 +163,15 @@ def containment_table(rows, alphas=ALPHAS, arm=None) -> list[dict]:
                 continue
             c["n"] += 1
             c["contained"] += int(bool(v))
+            c["_vol"].append(float(r.get(f"ce_vol_{a}", float("nan"))))
     out = []
     for key in sorted(cells):
         c = cells[key]
         c["fraction"] = c["contained"] / c["n"] if c["n"] else float("nan")
         c["below_nominal"] = None if c["n"] == 0 else bool(c["fraction"] < c["alpha"])
+        c["true_frac"] = float(np.mean(c.pop("_true"))) if c["_true"] else float("nan")
+        vol = c.pop("_vol")
+        c["ce_vol"] = float(np.mean(vol)) if vol else float("nan")
         out.append(c)
     return out
 
@@ -253,7 +268,11 @@ def _print_containment(rows, cfg) -> None:
     print("=" * 78)
     print("A fraction of NON-EMPTY certified sets, with its own n at every cell.")
     print("n = 0 means nothing was certified: no claim was made, so none failed.")
-    print("`below` = the certificate FAILED at that cell and is reported as a failure.\n")
+    print("`X` = the certificate FAILED at that cell and is reported as a failure.")
+    print("`true` = the fraction of the box genuinely above tau. It is NOT a constant")
+    print("along the ladder: gamma enters tau through tau_max multiplicatively, so a")
+    print("HIGHER gamma buys a LOWER absolute tau and an EASIER containment test. Read")
+    print("any containment fraction against the `true` column beside it.\n")
     table = containment_table(rows)
     failures = [c for c in table if c["below_nominal"]]
     for arm in REPORTED_ARMS:
@@ -261,11 +280,13 @@ def _print_containment(rows, cfg) -> None:
         if not cells:
             continue
         print(f"--- {arm}")
-        print(f"  {'gamma':>5} {'tauF':>5} | " + " | ".join(
-            f"a={a:<4} {'n':>3} {'frac':>6} {'v':>1}" for a in ALPHAS))
+        print(f"  {'gamma':>5} {'tauF':>5} {'true':>7} | " + " | ".join(
+            f"a={a:<4} {'n':>3} {'frac':>6} {'v':>2}" for a in ALPHAS))
         for g in cfg["gammas"]:
             for tf in cfg["tau_fracs"]:
                 parts = []
+                tfrac = next((c["true_frac"] for c in cells if c["gamma"] == g
+                              and c["tau_frac"] == tf), float("nan"))
                 for a in ALPHAS:
                     c = next((c for c in cells if c["gamma"] == g
                               and c["tau_frac"] == tf and c["alpha"] == a), None)
@@ -276,14 +297,15 @@ def _print_containment(rows, cfg) -> None:
                                else ("X" if c["below_nominal"] else "ok"))
                     frac = "nan" if c["n"] == 0 else format(c["fraction"], ".3f")
                     parts.append(f"{'':<6} {c['n']:>3} {frac:>6} {verdict:>2}")
-                print(f"  {g:>5.2f} {tf:>5.2f} | " + " | ".join(parts))
+                print(f"  {g:>5.2f} {tf:>5.2f} {tfrac:>7.5f} | " + " | ".join(parts))
         print()
     print(f"CELLS BELOW NOMINAL: {len(failures)}")
     for c in failures:
         print(f"  !! {c['arm']} gamma={c['gamma']:.2f} tau_frac={c['tau_frac']:.2f} "
               f"alpha={c['alpha']:.2f}: {c['contained']}/{c['n']} = "
               f"{c['fraction']:.4f} < {c['alpha']:.2f}  "
-              f"({c['n_empty']} of {c['n_campaigns']} certified nothing)")
+              f"(true_frac={c['true_frac']:.5f}, mean ce_vol={c['ce_vol']:.5f}, "
+              f"{c['n_empty']} of {c['n_campaigns']} certified nothing)")
     if not failures:
         print("  none. The certificate held at every cell where it made a claim.")
 
