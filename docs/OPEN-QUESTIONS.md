@@ -5930,3 +5930,74 @@ bit-identical** on every other field, `true_frac_above_tau` bit-identical to the
 `achieved_prevalence`, calibration block unchanged, only the key name and a config note differing.
 **That is what a justified exception to a standing rule has to look like**, and it is recorded
 here so the exception does not become a precedent for unproven ones.
+
+---
+
+## 📌 DECLARED SCOPE REDUCTION 1 · **P1 PASS 3 is DEFERRED.** Registered with its reason, per the standing rule.
+
+**The standing rule:** a scope reduction is **declared, registered and logged with its reason —
+never absorbed into a smaller run that reads like the full one.** This is the first reduction
+taken in Phases 2–4 and it is recorded in that form.
+
+**What is deferred.** P1's PASS 3 gates the **100 σ_rel = 0.10 kernel campaigns** against
+`results/q30-additive.json`. Cost ~0.5–2 CPU-h.
+
+**What is NOT deferred, and must not be:** **Step A stays whole**, all four arm × σ blocks. Its
+σ=0.10 half produces the comparator column that **P3's (6, 0.10) cell is currently blocked on** —
+those `qlogei-add`/`qlogei-addonly` rows carry `gated: false` precisely because
+`q30-additive.json` does not exist yet. Trimming Step A would silently strand a second worker.
+
+**Why the deferral is sound, in two parts:**
+1. **The σ=0.10 campaigns carry no design-space rows anywhere**, so they are **outside the
+   registered kill condition**, which rests on the **2,800 re-scored rows** at d=6, σ=0.25. The
+   kill condition is untouched.
+2. **P3's (6, 0.10) cell performs the equivalent comparison against the same committed column,
+   through an independent code path** — `replay.regenerate` against `run_q30_additive.py`. That
+   is **stronger** evidence than P1 gating its own regeneration against a column P1 produced.
+   **The deferral relocates the check to a better place rather than losing it.**
+
+**Raised by the P1 worker, which flagged it and explicitly declined to cut it unilaterally.**
+That was the correct escalation; the decision is mine.
+
+**Reinstatement condition:** if P3's (6, 0.10) cell fails or is abandoned, PASS 3 comes back —
+because then nothing gates those campaigns.
+
+---
+
+## 📌 ERRATUM 7a — UPDATE · **Effectively closed. The residual is named and narrow.**
+
+Erratum 7a re-opened the thread-exactness question for `results/k1-replay-gate.json`'s 500 rows,
+because they were measured at an **unrecorded** thread count and route through **`BiphasicOracle`**
+— a path the family evidence did not cover.
+
+**The P1 worker's measurement covers that path.** The kernel arms are **hill**, so
+`replay.regenerate` routes them through `instance_by_id` → `BiphasicOracle`, **the same oracle
+K1 uses**. At 1 vs 4 torch threads it measured `qlogei-add` regret and **all 24 K6 rows × 20
+metric columns identical**, on **both** the deterministic `doe` path **and** the multi-start
+L-BFGS-B path the kernel arms use — which is exactly where it could have broken.
+
+**Residual, stated narrowly rather than waved away:** K1's specific **d=8** and **σ=0.10** rows
+were not themselves re-run. **No mechanism is known by which thread count would break at one
+(d, σ) cell and not another**, and **four workers have now measured exactness across a thread
+change on four different code paths** — family gates at both settings, the K6 scoring path
+(11 columns × 144 rows), the full K6 column set (20 columns × 24 cells), and now
+hill + `BiphasicOracle` + multi-start L-BFGS-B.
+
+**Status: ✅ effectively closed.** Thread count is recorded in every `provenance` block as
+documentation. **This erratum has now had three positions and this is the last one** — the
+earlier flips were: closed on partial evidence, re-opened on a correct objection, and now closed
+on evidence that meets the objection.
+
+---
+
+## 📌 FIRST DIRECT EVIDENCE ON P1's KILL CONDITION — recorded before the verdict exists
+
+Regenerating `qlogei-add` on instance `033466197eba3ddb`, seed 0, gives regret
+**`0.10179313939531909`** — **bit-identical to the committed `k6-designspace.json` row.**
+
+**This is the first direct evidence that the committed kernel-arm rows reproduce**, and it is
+recorded here *with its campaign key* so it is citable independently of P1's full verdict. It is
+**one campaign of fifty per arm** and does **not** discharge the kill condition, which requires
+|Δ| = 0 on all 2,800 re-scored rows. Recorded now precisely so that a later VALIDATED verdict
+cannot be mistaken for having been foreseen, and a later WITHDRAWN cannot be said to have had no
+warning either way.
