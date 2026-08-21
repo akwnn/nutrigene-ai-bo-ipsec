@@ -6788,3 +6788,61 @@ I argued for inclusion on coverage grounds. **The sharper argument:**
 **Measured cost of closing it: ~17 s/key for four arms** (`versionb` 12.1 s, `versionb_random`
 1.0 s, `versionb_predictive` 3.4 s, `plate1_only` 0.1 s) against **~126 s/key for the original
 six.** Four extra arms cost less than one BO arm.
+
+---
+
+## 📌 ERRATUM 13 · **The ρ = +0.4333 I registered in Erratum 11 INVERTS at most cells. This is F4's defect in a correlation, in a finding of mine.**
+
+**Found by the F-analysis worker; verified independently here at 6 of 17 scorable cells positive
+(it reports 6 of 18; one cell differs on a tie threshold).** Erratum 11 recorded
+**ρ(α\*, symmetric difference) = +0.4333, CI excluding 0** as a headline — *higher α\* ↔ more
+total error.* **Recomputed per (γ, τ_frac):**
+
+```
+tf\gamma    0.50     0.70     0.80     0.90     0.95     0.99
+0.60      +0.690   +0.619   +0.619   +0.524   +0.476   -0.119
+0.75      +0.095   -0.429   -0.595   -0.476   -0.714   -0.071
+0.85      -0.464   -0.571   -0.257   -1.000   -0.500       —
+0.95           —        —        —        —        —       —   (every arm ties)
+```
+
+**The two consequences point in opposite directions and BOTH must be reported:**
+
+1. **The concern is live exactly where it matters most.** τ_frac = 0.60 is the primary cell, and
+   there the association is **stronger than the number I quoted** — **+0.476 to +0.690 at five of
+   six γ.**
+2. **But quoted as ONE number without its cell, it inverts the reading at 11 of 17 cells**,
+   reaching **−1.000** at (γ=0.90, τ_frac=0.85). **That is precisely the defect Amendment F4
+   withdrew the pooled containment figure for** — one summary standing in for cells that disagree
+   **in sign**, not merely in magnitude — **reappearing in a correlation, in a correction I wrote
+   to catch exactly that class of error.**
+
+**And what the statistic can bear, which I did not state:** **n = 8 arms per cell**, one rank swap
+moves ρ by **~0.1**, and no interval is attached. **If P4b's +0.4333 carries a CI, what is it an
+interval over?** With 8 arms in one cell there is little to resample; **if it is bootstrapped over
+campaigns within a fixed arm ordering it answers a different question than the rank association
+does.** To be resolved when `results/p4b-alpha-star-anomaly.json` lands — **and if its ρ is pooled
+across cells, it needs the same treatment F4 gave containment.**
+
+### The distinction that stops either half swallowing the other
+
+**ρ is an arm-level RANK ASSOCIATION across eight arms.** F1's Holm upgrades are **PAIRED
+CONTRASTS between two specific arms within one cell.** **Different objects — ρ does not govern
+them.**
+
+**So both of these are true and neither cancels the other:**
+> **The α\* ranking is not trustworthy at the primary cell** — and **these particular paired
+> contrasts are corroborated anyway.** KILL 2's upgrade sits at τ_frac = 0.60, the most damaging
+> region, and is corroborated by **Brier** and **regret**, both validated, both agreeing in
+> benefit direction.
+
+**The ranking problem is real and does not transfer to a corroborated pairwise result; the
+corroboration does not rehabilitate the ranking.**
+
+### Standing check, now earned four times over
+
+*Every constant in a registration names the population it was measured on* — and **this adds the
+sharper form: a correlation quoted without its cell is a pooled statistic, and this project has
+already withdrawn one of those.** Instances to date, all mine: `0.0394` (d=6 only), the audit's
+`doe` shifts (one cell), the F2a IoU bound (optimiser rows only), and now **ρ = +0.4333 (one
+τ_frac, sign-inverted elsewhere).**

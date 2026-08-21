@@ -1594,3 +1594,38 @@ sitting in a limits paragraph:
 **And Erratum 11 adds the second half:** they cannot be called clean either, because ρ(α\*,
 symmetric difference) = **+0.4333** with a CI excluding zero — higher α\* ↔ **more total error** —
 while ρ(α\*, regret) = −0.3667 points the other way. **Both facts travel with any α\* table.**
+
+## D65 🔴 **A finding I registered as a headline was itself a pooled statistic. Erratum 13.**
+
+Erratum 11 recorded **ρ(α\*, symmetric difference) = +0.4333** — *higher α\* ↔ more total error* —
+as one of the session's sharper results. **Recomputed per cell, it is positive in 6 of 17 and
+reaches −1.000 elsewhere.**
+
+**It is live where it matters** — τ_frac = 0.60 is the primary cell and the association there is
+**+0.476 to +0.690**, stronger than the figure I quoted. **And it is invalid as a single number**,
+inverting the reading at 11 of 17 cells.
+
+**That is Amendment F4's own defect** — a summary standing in for cells that disagree **in sign** —
+**appearing inside a correction I wrote to catch that class of error.** Fourth instance today of a
+number of mine that was right for one population and registered as general.
+
+**The distinction that keeps both halves alive** is the F-analysis worker's, and it is the part
+worth carrying: **ρ is an arm-level rank association across eight arms; F1's Holm upgrades are
+paired contrasts between two arms within one cell.** Different objects. So *the α\* ranking is not
+trustworthy at the primary cell* **and** *those particular paired contrasts are corroborated
+anyway* — **neither statement cancels the other, and letting one swallow the other would have been
+the easy write-up.**
+
+## D66 ✅ Run state at close of this stretch
+
+**Four real runners** (measured with the corrected pattern — my session-long one counted `zsh`
+wrappers): `run_q30_additive` (P1, PPID 1, 55 min), `run_p4b_alpha_anomaly` (**22/50, ~28 min
+left**), `run_p2_versionb_gamma` (PPID 1, restarted clean under a standing order),
+`run_p6_families` (PPID 1). **P7 is restarting at 10 arms; P3 holds two cells and runs (6, 0.10).**
+
+**Version B is now in P7 (`ARMS` 6 → 10) and specified for P3, P6 and P4b** — the scope gap Joseph
+raised. **Measured cost: ~17 s/key for four arms against ~126 s/key for the original six.**
+
+**Totals for the stretch:** 110+ commits, **66 logged decisions**, **19 registered errata, scope
+corrections and hazards**, 6 result files committed, the findings record extended with Part II
+(§8–12).
