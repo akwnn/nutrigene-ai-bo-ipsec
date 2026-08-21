@@ -95,6 +95,9 @@ DIM, SIGMA = 6, 0.25
 #: K6b's subset and seed. `alpha_star` was computed on draws over exactly these points,
 #: so the width regressed against it is measured on exactly these points.
 SUBSET_N, GRID_SEED = 2_000, 0
+#: K6's grid, needed only for the arms whose design-space columns are computed here --
+#: the Version B arms have no committed K6 row anywhere. Same constant K6 registered.
+GRID_N = 20_000
 TAU_FRACS = (0.60, 0.75, 0.85, 0.95)
 #: Declared before the coefficients were seen. See the module docstring.
 PRIMARY_TAU_FRAC = 0.75

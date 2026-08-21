@@ -1,0 +1,67 @@
+P2 · Version B on the gamma ladder · HEAD=04f803c62d7d252e8b13d9f68821daaadcabb548
+cell d=6 sigma=0.25 · arms=('versionb', 'versionb_random', 'plate1_only', 'versionb_predictive')
+gamma=(0.5, 0.7, 0.8, 0.9, 0.95, 0.99)
+tau_frac=(0.6, 0.75, 0.85, 0.95) (of tau_max, never absolute) · alpha=(0.5, 0.8, 0.95)
+grid: 20000 Sobol at seed 0 · draws: 512 on 2000
+out=results/p2-versionb-gamma.json (written ONCE, at the end, only if complete)
+work=results/p2-versionb-gamma.json.partial (incremental; git cannot stage it) · workers=2
+GATE: plate1_only IS `lhs` at 48 wells and is gated full-width against results/k6-designspace-spread.json at |delta| = 0.0; it may never be counted as a separate arm in a ranking (D23.1). versionb, versionb_random, versionb_predictive are UNGATABLE IN PRINCIPLE -- no comparator exists and none ever will -- and their only guarantee is seed determinism.
+
+50 (instance, seed) pairs x 4 arms · 200 campaigns still to score x 24 cells
+
+  [  1/50] 033466197eba3ddb seed=0  plate1_only=0.1993  versionb=0.1182  versionb_predictive=0.0551  versionb_random=0.1182 |   5.4 min elapsed, ~266.7 min left
+  [  2/50] 033466197eba3ddb seed=1  plate1_only=0.1878  versionb=0.1123  versionb_predictive=0.1123  versionb_random=0.1123 |   5.9 min elapsed, ~140.9 min left
+  [  3/50] 0a6e0788538a7c52 seed=0  plate1_only=0.1084  versionb=0.0926  versionb_predictive=0.0926  versionb_random=0.0926 |   9.7 min elapsed, ~151.3 min left
+  [  4/50] 0a6e0788538a7c52 seed=1  plate1_only=0.1569  versionb=0.2334  versionb_predictive=0.2334  versionb_random=0.2334 |  10.2 min elapsed, ~117.2 min left
+  [  5/50] 0ed87c75239d73f8 seed=0  plate1_only=0.0669  versionb=0.1690  versionb_predictive=0.0764  versionb_random=0.1690 |  13.6 min elapsed, ~122.4 min left
+  [  6/50] 0ed87c75239d73f8 seed=1  plate1_only=0.1046  versionb=0.1549  versionb_predictive=0.1549  versionb_random=0.1549 |  14.6 min elapsed, ~106.9 min left
+  [  7/50] 32bb966a18f1d863 seed=0  plate1_only=0.0709  versionb=0.1175  versionb_predictive=0.1175  versionb_random=0.1175 |  16.8 min elapsed, ~103.1 min left
+  [  8/50] 32bb966a18f1d863 seed=1  plate1_only=0.0512  versionb=0.2324  versionb_predictive=0.2324  versionb_random=0.2324 |  18.0 min elapsed, ~ 94.3 min left
+  [  9/50] 443c180247c17191 seed=0  plate1_only=0.1934  versionb=0.0678  versionb_predictive=0.0678  versionb_random=0.0678 |  20.0 min elapsed, ~ 91.0 min left
+  [ 10/50] 443c180247c17191 seed=1  plate1_only=0.1269  versionb=0.2313  versionb_predictive=0.2313  versionb_random=0.2313 |  21.2 min elapsed, ~ 85.0 min left
+  [ 11/50] 48b1324dd0461cd9 seed=0  plate1_only=0.1158  versionb=0.1766  versionb_predictive=0.1592  versionb_random=0.1766 |  22.5 min elapsed, ~ 79.6 min left
+  [ 12/50] 48b1324dd0461cd9 seed=1  plate1_only=0.0555  versionb=0.1782  versionb_predictive=0.1782  versionb_random=0.1782 |  24.7 min elapsed, ~ 78.1 min left
+  [ 13/50] 4d4f7158b65b52ba seed=0  plate1_only=0.2527  versionb=0.0698  versionb_predictive=0.0494  versionb_random=0.0698 |  26.0 min elapsed, ~ 73.9 min left
+  [ 14/50] 4d4f7158b65b52ba seed=1  plate1_only=0.1621  versionb=0.2082  versionb_predictive=0.2082  versionb_random=0.2082 |  28.9 min elapsed, ~ 74.4 min left
+  [ 15/50] 51cf489c521a6911 seed=0  plate1_only=0.1923  versionb=0.1908  versionb_predictive=0.1908  versionb_random=0.1908 |  30.3 min elapsed, ~ 70.8 min left
+  [ 16/50] 51cf489c521a6911 seed=1  plate1_only=0.2282  versionb=0.2204  versionb_predictive=0.2204  versionb_random=0.2204 |  33.5 min elapsed, ~ 71.2 min left
+  [ 17/50] 578e5d8768359f0f seed=0  plate1_only=0.0725  versionb=0.1000  versionb_predictive=0.0859  versionb_random=0.1865 |  33.7 min elapsed, ~ 65.5 min left
+  [ 18/50] 578e5d8768359f0f seed=1  plate1_only=0.0194  versionb=0.1365  versionb_predictive=0.1365  versionb_random=0.1365 |  35.8 min elapsed, ~ 63.7 min left
+  [ 19/50] 59e420274f4385d9 seed=0  plate1_only=0.0734  versionb=0.1327  versionb_predictive=0.1327  versionb_random=0.1327 |  35.9 min elapsed, ~ 58.5 min left
+  [ 20/50] 59e420274f4385d9 seed=1  plate1_only=0.1493  versionb=0.1908  versionb_predictive=0.1908  versionb_random=0.1908 |  37.0 min elapsed, ~ 55.6 min left
+  [ 21/50] 5b3926ef2c5fe4b6 seed=0  plate1_only=0.2072  versionb=0.1072  versionb_predictive=0.1072  versionb_random=0.1072 |  37.1 min elapsed, ~ 51.3 min left
+  [ 22/50] 5b3926ef2c5fe4b6 seed=1  plate1_only=0.1333  versionb=0.2170  versionb_predictive=0.2170  versionb_random=0.2170 |  39.9 min elapsed, ~ 50.8 min left
+  [ 23/50] 763e0f58925816ca seed=0  plate1_only=0.1848  versionb=0.1668  versionb_predictive=0.1668  versionb_random=0.1668 |  39.9 min elapsed, ~ 46.9 min left
+  [ 24/50] 763e0f58925816ca seed=1  plate1_only=0.1617  versionb=0.2492  versionb_predictive=0.2492  versionb_random=0.2492 |  42.8 min elapsed, ~ 46.4 min left
+  [ 25/50] 7b6071e568a98779 seed=0  plate1_only=0.1528  versionb=0.1143  versionb_predictive=0.0792  versionb_random=0.1143 |  42.8 min elapsed, ~ 42.8 min left
+  [ 26/50] 7b6071e568a98779 seed=1  plate1_only=0.1065  versionb=0.2285  versionb_predictive=0.2285  versionb_random=0.2285 |  45.5 min elapsed, ~ 42.0 min left
+  [ 27/50] 7ef3fc89acece49c seed=0  plate1_only=0.1102  versionb=0.1631  versionb_predictive=0.1631  versionb_random=0.1631 |  45.5 min elapsed, ~ 38.8 min left
+  [ 28/50] 7ef3fc89acece49c seed=1  plate1_only=0.1411  versionb=0.0958  versionb_predictive=0.0958  versionb_random=0.0958 |  47.8 min elapsed, ~ 37.6 min left
+  [ 29/50] 7f5c7431c0530e74 seed=0  plate1_only=0.1736  versionb=0.1654  versionb_predictive=0.1654  versionb_random=0.1654 |  47.9 min elapsed, ~ 34.7 min left
+  [ 30/50] 7f5c7431c0530e74 seed=1  plate1_only=0.0770  versionb=0.1732  versionb_predictive=0.1732  versionb_random=0.1732 |  50.0 min elapsed, ~ 33.3 min left
+  [ 31/50] 8abe35e93ddfcad1 seed=0  plate1_only=0.1436  versionb=0.1783  versionb_predictive=0.1820  versionb_random=0.1820 |  50.0 min elapsed, ~ 30.6 min left
+  [ 32/50] 8abe35e93ddfcad1 seed=1  plate1_only=0.0626  versionb=0.1830  versionb_predictive=0.1830  versionb_random=0.1830 |  52.2 min elapsed, ~ 29.3 min left
+  [ 33/50] 9414bc879284eef0 seed=0  plate1_only=0.0721  versionb=0.0551  versionb_predictive=0.0141  versionb_random=0.1206 |  52.2 min elapsed, ~ 26.9 min left
+  [ 34/50] 9414bc879284eef0 seed=1  plate1_only=0.0199  versionb=0.2317  versionb_predictive=0.2317  versionb_random=0.2317 |  53.8 min elapsed, ~ 25.3 min left
+  [ 35/50] 9f3cdb4d835c6909 seed=0  plate1_only=0.1740  versionb=0.1215  versionb_predictive=0.0490  versionb_random=0.1513 |  53.9 min elapsed, ~ 23.1 min left
+  [ 36/50] 9f3cdb4d835c6909 seed=1  plate1_only=0.0834  versionb=0.1972  versionb_predictive=0.1972  versionb_random=0.1972 |  55.4 min elapsed, ~ 21.6 min left
+  [ 37/50] c75f6d6f50fe2434 seed=0  plate1_only=0.1175  versionb=0.1080  versionb_predictive=0.1080  versionb_random=0.1080 |  55.5 min elapsed, ~ 19.5 min left
+  [ 38/50] c75f6d6f50fe2434 seed=1  plate1_only=0.1543  versionb=0.1526  versionb_predictive=0.1526  versionb_random=0.1526 |  57.2 min elapsed, ~ 18.1 min left
+  [ 39/50] ce7334da318bc5e5 seed=0  plate1_only=0.1471  versionb=0.1799  versionb_predictive=0.1799  versionb_random=0.1799 |  57.2 min elapsed, ~ 16.1 min left
+  [ 40/50] ce7334da318bc5e5 seed=1  plate1_only=0.1080  versionb=0.1066  versionb_predictive=0.1066  versionb_random=0.1066 |  58.4 min elapsed, ~ 14.6 min left
+  [ 41/50] da5ec2fbb20c9f9b seed=0  plate1_only=0.1657  versionb=0.1212  versionb_predictive=0.1212  versionb_random=0.1212 |  58.4 min elapsed, ~ 12.8 min left
+  [ 42/50] da5ec2fbb20c9f9b seed=1  plate1_only=0.0737  versionb=0.1765  versionb_predictive=0.1765  versionb_random=0.1765 |  59.9 min elapsed, ~ 11.4 min left
+  [ 43/50] e402c32907f27534 seed=0  plate1_only=0.1957  versionb=0.0958  versionb_predictive=0.1089  versionb_random=0.1089 |  59.9 min elapsed, ~  9.7 min left
+  [ 44/50] e402c32907f27534 seed=1  plate1_only=0.1179  versionb=0.1736  versionb_predictive=0.1736  versionb_random=0.1736 |  60.8 min elapsed, ~  8.3 min left
+  [ 45/50] e946207e9dfe1876 seed=0  plate1_only=0.1273  versionb=0.1628  versionb_predictive=0.2104  versionb_random=0.2104 |  60.8 min elapsed, ~  6.8 min left
+  [ 46/50] e946207e9dfe1876 seed=1  plate1_only=0.1851  versionb=0.1895  versionb_predictive=0.1895  versionb_random=0.1895 |  61.8 min elapsed, ~  5.4 min left
+  [ 47/50] ef2815cdafff288c seed=0  plate1_only=0.0816  versionb=0.0358  versionb_predictive=0.1393  versionb_random=0.2405 |  61.8 min elapsed, ~  3.9 min left
+  [ 48/50] ef2815cdafff288c seed=1  plate1_only=0.0361  versionb=0.1348  versionb_predictive=0.1348  versionb_random=0.1348 |  62.8 min elapsed, ~  2.6 min left
+  [ 49/50] f79c5cf175034acd seed=0  plate1_only=0.0648  versionb=0.1326  versionb_predictive=0.1388  versionb_random=0.1388 |  62.8 min elapsed, ~  1.3 min left
+  [ 50/50] f79c5cf175034acd seed=1  plate1_only=0.1848  versionb=0.1819  versionb_predictive=0.1819  versionb_random=0.1819 |  63.7 min elapsed, ~  0.0 min left
+
+4800 scored rows in 63.7 min
+promoted to results/p2-versionb-gamma.json — complete, 50/50 keys, 0 gate failures
+plate1_only gate: 1200 rows x 24 columns = 28800 comparisons at |delta| = 0.0, 0 failures
+determinism (NOT a gate): 150 campaigns vs the committed Version B columns, worst |delta| = 2.776e-16
+  of those, 78 with optimum_value exactly 1.0: worst |delta| = 0.000e+00

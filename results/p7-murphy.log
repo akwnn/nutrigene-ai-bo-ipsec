@@ -1,0 +1,89 @@
+P7 · Murphy decomposition · HEAD=8c45e31e · python=3.11.15
+cell hill d=6 sigma_rel=0.25 · arms=('doe', 'qlogei', 'qlognei', 'lhs', 'sobol', 'random')
+gamma=(0.5, 0.7, 0.8, 0.9, 0.95, 0.99)
+tau_frac=(0.6, 0.75, 0.85, 0.95) · 10 equal-count bins
+grid: 20000 Sobol at seed 0
+
+50 (instance, seed) pairs x 6 arms = 300 campaigns
+
+[  1/50] doe      033466197eba3ddb seed=0 regret=0.0440 rows=24 (31.7s)
+[  1/50] qlogei   033466197eba3ddb seed=0 regret=0.1323 rows=24 (154.5s)
+[  1/50] qlognei  033466197eba3ddb seed=0 regret=0.0750 rows=24 (134.5s)
+[  1/50] lhs      033466197eba3ddb seed=0 regret=0.1993 rows=24 (20.9s)
+[  1/50] sobol    033466197eba3ddb seed=0 regret=0.0740 rows=24 (22.1s)
+[  1/50] random   033466197eba3ddb seed=0 regret=0.1440 rows=24 (20.1s)
+[  2/50] doe      033466197eba3ddb seed=1 regret=0.1114 rows=24 (19.2s)
+[  2/50] qlogei   033466197eba3ddb seed=1 regret=0.2785 rows=24 (44.0s)
+[  2/50] qlognei  033466197eba3ddb seed=1 regret=0.2170 rows=24 (99.3s)
+[  2/50] lhs      033466197eba3ddb seed=1 regret=0.1878 rows=24 (34.3s)
+[  2/50] sobol    033466197eba3ddb seed=1 regret=0.0887 rows=24 (31.3s)
+[  2/50] random   033466197eba3ddb seed=1 regret=0.2524 rows=24 (27.6s)
+[  3/50] doe      0a6e0788538a7c52 seed=0 regret=0.0376 rows=24 (45.7s)
+[  3/50] qlogei   0a6e0788538a7c52 seed=0 regret=0.1384 rows=24 (267.5s)
+[  3/50] qlognei  0a6e0788538a7c52 seed=0 regret=0.1157 rows=24 (255.2s)
+[  3/50] lhs      0a6e0788538a7c52 seed=0 regret=0.1084 rows=24 (52.9s)
+[  3/50] sobol    0a6e0788538a7c52 seed=0 regret=0.2753 rows=24 (47.9s)
+[  3/50] random   0a6e0788538a7c52 seed=0 regret=0.1773 rows=24 (58.4s)
+[  4/50] doe      0a6e0788538a7c52 seed=1 regret=0.0789 rows=24 (78.7s)
+[  4/50] qlogei   0a6e0788538a7c52 seed=1 regret=0.1299 rows=24 (63.1s)
+[  4/50] qlognei  0a6e0788538a7c52 seed=1 regret=0.1176 rows=24 (90.5s)
+[  4/50] lhs      0a6e0788538a7c52 seed=1 regret=0.1569 rows=24 (13.3s)
+[  4/50] sobol    0a6e0788538a7c52 seed=1 regret=0.2126 rows=24 (34.0s)
+[  4/50] random   0a6e0788538a7c52 seed=1 regret=0.1843 rows=24 (18.7s)
+[  5/50] doe      0ed87c75239d73f8 seed=0 regret=0.0871 rows=24 (10.2s)
+/Users/jy/BO/nutrigene-ai-bo-ipsec/.venv/lib/python3.11/site-packages/botorch/optim/optimize.py:844: RuntimeWarning: Optimization failed in `gen_candidates_scipy` with the following warning(s):
+[OptimizationWarning('Optimization failed within `scipy.optimize.minimize` with status 2 and message ABNORMAL: .')]
+Trying again with a new set of initial conditions.
+  return _optimize_acqf_batch(opt_inputs=opt_inputs)
+[  5/50] qlogei   0ed87c75239d73f8 seed=0 regret=0.1668 rows=24 (89.3s)
+[  5/50] qlognei  0ed87c75239d73f8 seed=0 regret=0.1465 rows=24 (49.5s)
+[  5/50] lhs      0ed87c75239d73f8 seed=0 regret=0.0669 rows=24 (18.1s)
+[  5/50] sobol    0ed87c75239d73f8 seed=0 regret=0.1380 rows=24 (16.4s)
+[  5/50] random   0ed87c75239d73f8 seed=0 regret=0.1465 rows=24 (5.9s)
+P7 · Murphy decomposition · HEAD=1038a5bb · python=3.11.15
+cell hill d=6 sigma_rel=0.25 · arms=('doe', 'qlogei', 'qlognei', 'lhs', 'sobol', 'random')
+gamma=(0.5, 0.7, 0.8, 0.9, 0.95, 0.99)
+tau_frac=(0.6, 0.75, 0.85, 0.95) · 10 equal-count bins
+grid: 20000 Sobol at seed 0
+
+50 (instance, seed) pairs x 6 arms = 300 campaigns
+
+resuming: 5 of 50 pairs already scored, 720 rows kept
+
+[  6/50] doe      0ed87c75239d73f8 seed=1 regret=0.0844 rows=24 (12.4s)
+[  6/50] qlogei   0ed87c75239d73f8 seed=1 regret=0.0404 rows=24 (42.3s)
+[  6/50] qlognei  0ed87c75239d73f8 seed=1 regret=0.0394 rows=24 (33.4s)
+[  6/50] lhs      0ed87c75239d73f8 seed=1 regret=0.1046 rows=24 (3.9s)
+[  6/50] sobol    0ed87c75239d73f8 seed=1 regret=0.3168 rows=24 (4.3s)
+[  6/50] random   0ed87c75239d73f8 seed=1 regret=0.2382 rows=24 (5.3s)
+Traceback (most recent call last):
+  File "/Users/jy/BO/nutrigene-ai-bo-ipsec/scripts/run_p7_murphy.py", line 752, in <module>
+    main()
+  File "/Users/jy/BO/nutrigene-ai-bo-ipsec/scripts/run_p7_murphy.py", line 718, in main
+    CKPT.write_text(json.dumps(payload(
+                               ^^^^^^^
+UnboundLocalError: cannot access local variable 'payload' where it is not associated with a value
+P7 · Murphy decomposition · HEAD=ee90fc10 · python=3.11.15
+cell hill d=6 sigma_rel=0.25 · arms=('doe', 'qlogei', 'qlognei', 'lhs', 'sobol', 'random')
+gamma=(0.5, 0.7, 0.8, 0.9, 0.95, 0.99)
+tau_frac=(0.6, 0.75, 0.85, 0.95) · 10 equal-count bins
+grid: 20000 Sobol at seed 0
+
+50 (instance, seed) pairs x 6 arms = 300 campaigns
+
+resuming: 5 of 50 pairs already scored, 720 rows kept
+
+[  6/50] doe      0ed87c75239d73f8 seed=1 regret=0.0844 rows=24 (13.9s)
+[  6/50] qlogei   0ed87c75239d73f8 seed=1 regret=0.0404 rows=24 (78.7s)
+[  6/50] qlognei  0ed87c75239d73f8 seed=1 regret=0.0394 rows=24 (45.0s)
+[  6/50] lhs      0ed87c75239d73f8 seed=1 regret=0.1046 rows=24 (9.7s)
+[  6/50] sobol    0ed87c75239d73f8 seed=1 regret=0.3168 rows=24 (10.3s)
+[  6/50] random   0ed87c75239d73f8 seed=1 regret=0.2382 rows=24 (13.5s)
+[  7/50] doe      32bb966a18f1d863 seed=0 regret=0.1224 rows=24 (23.5s)
+[  7/50] qlogei   32bb966a18f1d863 seed=0 regret=0.0943 rows=24 (116.6s)
+[  7/50] qlognei  32bb966a18f1d863 seed=0 regret=0.1212 rows=24 (62.4s)
+[  7/50] lhs      32bb966a18f1d863 seed=0 regret=0.0709 rows=24 (16.1s)
+[  7/50] sobol    32bb966a18f1d863 seed=0 regret=0.2467 rows=24 (23.7s)
+[  7/50] random   32bb966a18f1d863 seed=0 regret=0.2431 rows=24 (17.7s)
+[  8/50] doe      32bb966a18f1d863 seed=1 regret=0.1131 rows=24 (13.8s)
+[  8/50] qlogei   32bb966a18f1d863 seed=1 regret=0.1552 rows=24 (42.6s)

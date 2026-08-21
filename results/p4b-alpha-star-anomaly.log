@@ -1,0 +1,144 @@
+P4b · alpha* vs regret · HEAD=9b187d37afede52bba1a82350310a81c3840df63
+cell d=6 sigma=0.25 · 50 units x 9 arms
+alpha* read from the committed K6b files; posterior sd measured on the same 2000-pt subset (seed 0)
+primary tau_frac = 0.75, declared before the coefficients were seen; all four reported with Holm
+gate: regenerated regret must reproduce its committed column at |delta| = 0
+
+/Users/jy/.local/share/uv/python/cpython-3.11.15-macos-aarch64-none/lib/python3.11/multiprocessing/resource_tracker.py:254: UserWarning: resource_tracker: There appear to be 5 leaked semaphore objects to clean up at shutdown
+  warnings.warn('resource_tracker: There appear to be %d '
+P4b · alpha* vs regret · HEAD=2a79438e2d6c4f3a473cbca08f531881e4b875cd
+cell d=6 sigma=0.25 · 50 units x 9 arms
+alpha* read from the committed K6b files; posterior sd measured on the same 2000-pt subset (seed 0)
+primary tau_frac = 0.75, declared before the coefficients were seen; all four reported with Holm
+gate: regenerated regret must reproduce its committed column at |delta| = 0
+
+  [  1/50] 033466197eba3ddb seed=0    4.1 min elapsed, ~202.7 min left
+  [  2/50] 033466197eba3ddb seed=1    4.1 min elapsed, ~ 99.3 min left
+  [  3/50] 0a6e0788538a7c52 seed=0    4.7 min elapsed, ~ 73.5 min left
+  [  4/50] 0a6e0788538a7c52 seed=1    4.7 min elapsed, ~ 54.0 min left
+  [  5/50] 0ed87c75239d73f8 seed=0    6.9 min elapsed, ~ 62.3 min left
+  [  6/50] 0ed87c75239d73f8 seed=1    6.9 min elapsed, ~ 50.7 min left
+  [  7/50] 32bb966a18f1d863 seed=0    8.4 min elapsed, ~ 51.4 min left
+  [  8/50] 32bb966a18f1d863 seed=1    8.4 min elapsed, ~ 43.9 min left
+  [  9/50] 443c180247c17191 seed=0    9.4 min elapsed, ~ 43.0 min left
+  [ 10/50] 443c180247c17191 seed=1    9.4 min elapsed, ~ 37.7 min left
+  [ 11/50] 48b1324dd0461cd9 seed=0   10.1 min elapsed, ~ 35.7 min left
+  [ 12/50] 48b1324dd0461cd9 seed=1   11.2 min elapsed, ~ 35.6 min left
+  [ 13/50] 4d4f7158b65b52ba seed=0   13.5 min elapsed, ~ 38.3 min left
+  [ 14/50] 4d4f7158b65b52ba seed=1   13.5 min elapsed, ~ 34.6 min left
+  [ 15/50] 51cf489c521a6911 seed=0   14.6 min elapsed, ~ 34.1 min left
+  [ 16/50] 51cf489c521a6911 seed=1   14.6 min elapsed, ~ 31.1 min left
+  [ 17/50] 578e5d8768359f0f seed=0   15.9 min elapsed, ~ 30.8 min left
+  [ 18/50] 578e5d8768359f0f seed=1   16.5 min elapsed, ~ 29.4 min left
+  [ 19/50] 59e420274f4385d9 seed=0   20.6 min elapsed, ~ 33.6 min left
+  [ 20/50] 59e420274f4385d9 seed=1   20.9 min elapsed, ~ 31.3 min left
+  [ 21/50] 5b3926ef2c5fe4b6 seed=0   21.9 min elapsed, ~ 30.3 min left
+  [ 22/50] 5b3926ef2c5fe4b6 seed=1   21.9 min elapsed, ~ 27.9 min left
+  [ 23/50] 763e0f58925816ca seed=0   27.6 min elapsed, ~ 32.4 min left
+  [ 24/50] 763e0f58925816ca seed=1   27.6 min elapsed, ~ 29.9 min left
+  [ 25/50] 7b6071e568a98779 seed=0   27.6 min elapsed, ~ 27.6 min left
+  [ 26/50] 7b6071e568a98779 seed=1   27.6 min elapsed, ~ 25.5 min left
+  [ 27/50] 7ef3fc89acece49c seed=0   36.3 min elapsed, ~ 30.9 min left
+  [ 28/50] 7ef3fc89acece49c seed=1   36.3 min elapsed, ~ 28.5 min left
+  [ 29/50] 7f5c7431c0530e74 seed=0   36.3 min elapsed, ~ 26.3 min left
+  [ 30/50] 7f5c7431c0530e74 seed=1   36.3 min elapsed, ~ 24.2 min left
+  [ 31/50] 8abe35e93ddfcad1 seed=0   38.6 min elapsed, ~ 23.6 min left
+  [ 32/50] 8abe35e93ddfcad1 seed=1   38.6 min elapsed, ~ 21.7 min left
+  [ 33/50] 9414bc879284eef0 seed=0   44.3 min elapsed, ~ 22.8 min left
+  [ 34/50] 9414bc879284eef0 seed=1   44.3 min elapsed, ~ 20.9 min left
+  [ 35/50] 9f3cdb4d835c6909 seed=0   45.9 min elapsed, ~ 19.7 min left
+  [ 36/50] 9f3cdb4d835c6909 seed=1   45.9 min elapsed, ~ 17.9 min left
+  [ 37/50] c75f6d6f50fe2434 seed=0   46.9 min elapsed, ~ 16.5 min left
+  [ 38/50] c75f6d6f50fe2434 seed=1   48.6 min elapsed, ~ 15.4 min left
+  [ 39/50] ce7334da318bc5e5 seed=0   52.5 min elapsed, ~ 14.8 min left
+  [ 40/50] ce7334da318bc5e5 seed=1   52.5 min elapsed, ~ 13.1 min left
+  [ 41/50] da5ec2fbb20c9f9b seed=0   54.6 min elapsed, ~ 12.0 min left
+  [ 42/50] da5ec2fbb20c9f9b seed=1   54.6 min elapsed, ~ 10.4 min left
+  [ 43/50] e402c32907f27534 seed=0   58.1 min elapsed, ~  9.5 min left
+  [ 44/50] e402c32907f27534 seed=1   58.1 min elapsed, ~  7.9 min left
+/Users/jy/.local/share/uv/python/cpython-3.11.15-macos-aarch64-none/lib/python3.11/multiprocessing/resource_tracker.py:254: UserWarning: resource_tracker: There appear to be 5 leaked semaphore objects to clean up at shutdown
+  warnings.warn('resource_tracker: There appear to be %d '
+nohup: setsid: No such file or directory
+P4b · alpha* vs regret · HEAD=d88be6bd1ce87ad58eff9ee7db16ced5eedfaaab
+cell d=6 sigma=0.25 · 50 units x 13 arms
+alpha* read from the committed K6b files; posterior sd measured on the same 2000-pt subset (seed 0)
+primary tau_frac = 0.75, declared before the coefficients were seen; all four reported with Holm
+gate: regenerated regret must reproduce its committed column at |delta| = 0
+
+  resuming — 396 campaigns on the checkpoint (0 units complete), 254 campaigns across 50 units still to run
+
+  [  1/50] 033466197eba3ddb seed=0    2.1 min elapsed, ~101.5 min left
+  [  2/50] 033466197eba3ddb seed=1    2.1 min elapsed, ~ 50.8 min left
+  [  3/50] 0a6e0788538a7c52 seed=0    2.1 min elapsed, ~ 33.2 min left
+  [  4/50] 0a6e0788538a7c52 seed=1    2.2 min elapsed, ~ 24.8 min left
+  [  5/50] 0ed87c75239d73f8 seed=0    4.0 min elapsed, ~ 35.9 min left
+  [  6/50] 0ed87c75239d73f8 seed=1    4.0 min elapsed, ~ 29.3 min left
+  [  7/50] 32bb966a18f1d863 seed=0    4.0 min elapsed, ~ 24.6 min left
+  [  8/50] 32bb966a18f1d863 seed=1    4.0 min elapsed, ~ 21.0 min left
+  [  9/50] 443c180247c17191 seed=0    5.6 min elapsed, ~ 25.3 min left
+  [ 10/50] 443c180247c17191 seed=1    5.6 min elapsed, ~ 22.2 min left
+  [ 11/50] 48b1324dd0461cd9 seed=0    5.6 min elapsed, ~ 19.8 min left
+  [ 12/50] 48b1324dd0461cd9 seed=1    5.8 min elapsed, ~ 18.3 min left
+  [ 13/50] 4d4f7158b65b52ba seed=0    7.1 min elapsed, ~ 20.2 min left
+  [ 14/50] 4d4f7158b65b52ba seed=1    7.2 min elapsed, ~ 18.4 min left
+  [ 15/50] 51cf489c521a6911 seed=0    7.2 min elapsed, ~ 16.7 min left
+  [ 16/50] 51cf489c521a6911 seed=1    7.4 min elapsed, ~ 15.7 min left
+  [ 17/50] 578e5d8768359f0f seed=0    8.7 min elapsed, ~ 16.8 min left
+  [ 18/50] 578e5d8768359f0f seed=1    8.7 min elapsed, ~ 15.5 min left
+  [ 19/50] 59e420274f4385d9 seed=0    8.7 min elapsed, ~ 14.2 min left
+  [ 20/50] 59e420274f4385d9 seed=1    8.8 min elapsed, ~ 13.2 min left
+  [ 21/50] 5b3926ef2c5fe4b6 seed=0   10.1 min elapsed, ~ 14.0 min left
+  [ 22/50] 5b3926ef2c5fe4b6 seed=1   10.1 min elapsed, ~ 12.9 min left
+  [ 23/50] 763e0f58925816ca seed=0   10.1 min elapsed, ~ 11.9 min left
+  [ 24/50] 763e0f58925816ca seed=1   10.2 min elapsed, ~ 11.0 min left
+  [ 25/50] 7b6071e568a98779 seed=0   11.3 min elapsed, ~ 11.3 min left
+  [ 26/50] 7b6071e568a98779 seed=1   11.3 min elapsed, ~ 10.4 min left
+  [ 27/50] 7ef3fc89acece49c seed=0   11.3 min elapsed, ~  9.6 min left
+  [ 28/50] 7ef3fc89acece49c seed=1   11.3 min elapsed, ~  8.9 min left
+  [ 29/50] 7f5c7431c0530e74 seed=0   12.3 min elapsed, ~  8.9 min left
+  [ 30/50] 7f5c7431c0530e74 seed=1   12.4 min elapsed, ~  8.3 min left
+  [ 31/50] 8abe35e93ddfcad1 seed=0   12.5 min elapsed, ~  7.7 min left
+  [ 32/50] 8abe35e93ddfcad1 seed=1   12.5 min elapsed, ~  7.1 min left
+  [ 33/50] 9414bc879284eef0 seed=0   13.5 min elapsed, ~  7.0 min left
+  [ 34/50] 9414bc879284eef0 seed=1   13.5 min elapsed, ~  6.4 min left
+  [ 35/50] 9f3cdb4d835c6909 seed=0   13.7 min elapsed, ~  5.9 min left
+  [ 36/50] 9f3cdb4d835c6909 seed=1   13.7 min elapsed, ~  5.3 min left
+  [ 37/50] c75f6d6f50fe2434 seed=0   14.6 min elapsed, ~  5.1 min left
+  [ 38/50] c75f6d6f50fe2434 seed=1   14.8 min elapsed, ~  4.7 min left
+  [ 39/50] ce7334da318bc5e5 seed=0   14.8 min elapsed, ~  4.2 min left
+  [ 40/50] ce7334da318bc5e5 seed=1   14.9 min elapsed, ~  3.7 min left
+  [ 41/50] da5ec2fbb20c9f9b seed=0   15.8 min elapsed, ~  3.5 min left
+  [ 42/50] da5ec2fbb20c9f9b seed=1   16.0 min elapsed, ~  3.1 min left
+  [ 43/50] e402c32907f27534 seed=0   16.0 min elapsed, ~  2.6 min left
+  [ 44/50] e402c32907f27534 seed=1   16.0 min elapsed, ~  2.2 min left
+  [ 45/50] e946207e9dfe1876 seed=0   20.1 min elapsed, ~  2.2 min left
+  [ 46/50] e946207e9dfe1876 seed=1   20.1 min elapsed, ~  1.7 min left
+  [ 47/50] ef2815cdafff288c seed=0   20.1 min elapsed, ~  1.3 min left
+  [ 48/50] ef2815cdafff288c seed=1   20.1 min elapsed, ~  0.8 min left
+  [ 49/50] f79c5cf175034acd seed=0   22.5 min elapsed, ~  0.5 min left
+  [ 50/50] f79c5cf175034acd seed=1   22.5 min elapsed, ~  0.0 min left
+
+  gate: 450 of 650 rows have a committed column, worst |delta| = 0.000e+00, 0 failures
+        200 rows are UNGATABLE IN PRINCIPLE (Version B): no comparator exists, seed determinism only
+
+====================================================================================
+  tau_frac = 0.75 (primary), 12 arms
+               coord  alpha*=0.6040  regret=0.1420
+                 doe  alpha*=0.7875  regret=0.0958
+                 lhs  alpha*=0.6291  regret=0.1270
+              qlogei  alpha*=0.5968  regret=0.1553
+          qlogei-add  alpha*=0.6227  regret=0.1483
+      qlogei-addonly  alpha*=0.6227  regret=0.1623
+             qlognei  alpha*=0.6055  regret=0.1532
+              random  alpha*=0.6521  regret=0.2216
+               sobol  alpha*=0.5275  regret=0.1724
+            versionb  alpha*=0.6908  regret=0.1546
+    versionb_predictive  alpha*=0.6861  regret=0.1510
+     versionb_random  alpha*=0.6054  regret=0.1638
+
+  Spearman rho(alpha*, regret) = -0.3916 [-0.6643, -0.0839]
+
+  VERDICT: NEGATIVE_BUT_ABOVE_THRESHOLD
+  rho = -0.3916 [-0.6643, -0.0839]: the CI excludes 0 but rho does not reach the registered -0.5. Neither registered branch fires exactly; reported as measured, with the direction stated and the strength not overclaimed.
+====================================================================================
+  written to results/p4b-alpha-star-anomaly.json  (23.0 min)

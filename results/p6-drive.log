@@ -1,0 +1,6 @@
+nohup: setsid: No such file or directory
+=== hartmann6 d=6 sigma=0.25  start 13:48:19
+=== hartmann6 d=6 sigma=0.25  start 14:06:58
+HALT at hartmann6 d=6 sigma=0.25 (exit 1) -- registered kill or crash; see results/p6-hartmann6-d6-s0.25.log
+=== hartmann6 d=6 sigma=0.25  start 14:12:22
+HALT at hartmann6 d=6 sigma=0.25 (exit 1) -- registered kill or crash; see results/p6-hartmann6-d6-s0.25.log

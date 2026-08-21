@@ -1,0 +1,18 @@
+P3 · cell d=8 sigma=0.25 · HEAD=f92e4dd88a202611f3b10c4e9fed3078790a464f
+arms=('doe', 'qlogei', 'qlognei', 'qlogei-add', 'qlogei-addonly', 'lhs', 'sobol', 'random')
+gamma=(0.5, 0.7, 0.8, 0.9, 0.95, 0.99) tau_frac=(0.6, 0.75, 0.85, 0.95) grid=20000@0
+K6b: subset=2000 draws=512 alphas=(0.5, 0.8, 0.95) jitter=1e-08
+  gate doe             <- e2-doe-d8.json        50 rows
+  gate qlogei          <- e2-grid.json          50 rows
+  gate qlognei         <- e2-grid.json          50 rows
+  gate qlogei-add      <- q30-additive.json      0 rows  ** UNGATED: results/q30-additive.json absent — CANNOT GATE (Amendment A1 / P1; COVERAGE-MATRIX §3.6)
+  gate qlogei-addonly  <- q30-additive.json      0 rows  ** UNGATED: results/q30-additive.json absent — CANNOT GATE (Amendment A1 / P1; COVERAGE-MATRIX §3.6)
+  gate lhs             <- e2-grid.json          50 rows
+  gate sobol           <- e2-grid.json          50 rows
+  gate random          <- e2-grid.json          50 rows
+
+50 (instance, seed) pairs x 8 arms = 400 campaigns
+
+[  1/50] doe            02c7368c30c8c231 seed=0 regret=0.1040 active=4 gated=True (17.0s)
+[  1/50] qlogei         02c7368c30c8c231 seed=0 regret=0.1279 active=8 gated=True (45.7s)
+[  1/50] qlognei        02c7368c30c8c231 seed=0 regret=0.1177 active=8 gated=True (53.8s)

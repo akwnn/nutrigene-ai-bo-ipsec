@@ -1,0 +1,147 @@
+Q30 · additive-kernel BO · POST-HOC model development · HEAD=9bd06b7
+d=6, budget 48, 25 instances x 2 seeds, arms: qlogei-add, qlogei-addonly
+
+FIDELITY — the comparator this arm is measured against:
+/Users/jy/BO/nutrigene-ai-bo-ipsec/.venv/lib/python3.11/site-packages/botorch/optim/optimize.py:844: RuntimeWarning: Optimization failed in `gen_candidates_scipy` with the following warning(s):
+[NumericalWarning('A not p.d., added jitter of 1.0e-08 to the diagonal'), OptimizationWarning('Optimization failed within `scipy.optimize.minimize` with status 2 and message ABNORMAL: .')]
+Trying again with a new set of initial conditions.
+  return _optimize_acqf_batch(opt_inputs=opt_inputs)
+/Users/jy/BO/nutrigene-ai-bo-ipsec/.venv/lib/python3.11/site-packages/botorch/optim/optimize.py:844: RuntimeWarning: Optimization failed in `gen_candidates_scipy` with the following warning(s):
+[OptimizationWarning('Optimization failed within `scipy.optimize.minimize` with status 2 and message ABNORMAL: .')]
+Trying again with a new set of initial conditions.
+  return _optimize_acqf_batch(opt_inputs=opt_inputs)
+/Users/jy/BO/nutrigene-ai-bo-ipsec/.venv/lib/python3.11/site-packages/botorch/optim/optimize.py:844: RuntimeWarning: Optimization failed in `gen_candidates_scipy` with the following warning(s):
+[OptimizationWarning('Optimization failed within `scipy.optimize.minimize` with status 2 and message ABNORMAL: .')]
+Trying again with a new set of initial conditions.
+  return _optimize_acqf_batch(opt_inputs=opt_inputs)
+  stored qLogEI regenerates: 20 campaigns (5 instances), max |delta| = 0.000e+00
+
+RUNNING:
+/Users/jy/BO/nutrigene-ai-bo-ipsec/.venv/lib/python3.11/site-packages/botorch/optim/optimize.py:844: RuntimeWarning: Optimization failed in `gen_candidates_scipy` with the following warning(s):
+[OptimizationWarning('Optimization failed within `scipy.optimize.minimize` with status 2 and message ABNORMAL: .')]
+Trying again with a new set of initial conditions.
+  return _optimize_acqf_batch(opt_inputs=opt_inputs)
+/Users/jy/BO/nutrigene-ai-bo-ipsec/.venv/lib/python3.11/site-packages/botorch/optim/optimize.py:844: RuntimeWarning: Optimization failed in `gen_candidates_scipy` with the following warning(s):
+[NumericalWarning('A not p.d., added jitter of 1.0e-08 to the diagonal'), OptimizationWarning('Optimization failed within `scipy.optimize.minimize` with status 2 and message ABNORMAL: .')]
+Trying again with a new set of initial conditions.
+  return _optimize_acqf_batch(opt_inputs=opt_inputs)
+/Users/jy/BO/nutrigene-ai-bo-ipsec/.venv/lib/python3.11/site-packages/botorch/optim/optimize.py:844: RuntimeWarning: Optimization failed in `gen_candidates_scipy` with the following warning(s):
+[OptimizationWarning('Optimization failed within `scipy.optimize.minimize` with status 2 and message ABNORMAL: .')]
+Trying again with a new set of initial conditions.
+  return _optimize_acqf_batch(opt_inputs=opt_inputs)
+/Users/jy/BO/nutrigene-ai-bo-ipsec/.venv/lib/python3.11/site-packages/botorch/optim/optimize.py:844: RuntimeWarning: Optimization failed in `gen_candidates_scipy` with the following warning(s):
+[OptimizationWarning('Optimization failed within `scipy.optimize.minimize` with status 2 and message ABNORMAL: .')]
+Trying again with a new set of initial conditions.
+  return _optimize_acqf_batch(opt_inputs=opt_inputs)
+/Users/jy/BO/nutrigene-ai-bo-ipsec/.venv/lib/python3.11/site-packages/botorch/optim/optimize.py:844: RuntimeWarning: Optimization failed in `gen_candidates_scipy` with the following warning(s):
+[OptimizationWarning('Optimization failed within `scipy.optimize.minimize` with status 2 and message ABNORMAL: .'), OptimizationWarning('Optimization failed within `scipy.optimize.minimize` with status 2 and message ABNORMAL: .')]
+Trying again with a new set of initial conditions.
+  return _optimize_acqf_batch(opt_inputs=opt_inputs)
+/Users/jy/BO/nutrigene-ai-bo-ipsec/.venv/lib/python3.11/site-packages/botorch/optim/optimize.py:844: RuntimeWarning: Optimization failed in `gen_candidates_scipy` with the following warning(s):
+[OptimizationWarning('Optimization failed within `scipy.optimize.minimize` with status 2 and message ABNORMAL: .')]
+Trying again with a new set of initial conditions.
+  return _optimize_acqf_batch(opt_inputs=opt_inputs)
+/Users/jy/BO/nutrigene-ai-bo-ipsec/.venv/lib/python3.11/site-packages/botorch/optim/optimize.py:844: RuntimeWarning: Optimization failed in `gen_candidates_scipy` with the following warning(s):
+[OptimizationWarning('Optimization failed within `scipy.optimize.minimize` with status 2 and message ABNORMAL: .')]
+Trying again with a new set of initial conditions.
+  return _optimize_acqf_batch(opt_inputs=opt_inputs)
+/Users/jy/BO/nutrigene-ai-bo-ipsec/.venv/lib/python3.11/site-packages/botorch/optim/optimize.py:844: RuntimeWarning: Optimization failed on the second try, after generating a new set of initial conditions.
+  return _optimize_acqf_batch(opt_inputs=opt_inputs)
+/Users/jy/BO/nutrigene-ai-bo-ipsec/.venv/lib/python3.11/site-packages/botorch/optim/optimize.py:844: RuntimeWarning: Optimization failed in `gen_candidates_scipy` with the following warning(s):
+[OptimizationWarning('Optimization failed within `scipy.optimize.minimize` with status 2 and message ABNORMAL: .'), OptimizationWarning('Optimization failed within `scipy.optimize.minimize` with status 2 and message ABNORMAL: .'), OptimizationWarning('Optimization failed within `scipy.optimize.minimize` with status 2 and message ABNORMAL: .')]
+Trying again with a new set of initial conditions.
+  return _optimize_acqf_batch(opt_inputs=opt_inputs)
+/Users/jy/BO/nutrigene-ai-bo-ipsec/.venv/lib/python3.11/site-packages/botorch/optim/optimize.py:844: RuntimeWarning: Optimization failed on the second try, after generating a new set of initial conditions.
+  return _optimize_acqf_batch(opt_inputs=opt_inputs)
+/Users/jy/BO/nutrigene-ai-bo-ipsec/.venv/lib/python3.11/site-packages/botorch/optim/optimize.py:844: RuntimeWarning: Optimization failed in `gen_candidates_scipy` with the following warning(s):
+[OptimizationWarning('Optimization failed within `scipy.optimize.minimize` with status 2 and message ABNORMAL: .')]
+Trying again with a new set of initial conditions.
+  return _optimize_acqf_batch(opt_inputs=opt_inputs)
+/Users/jy/BO/nutrigene-ai-bo-ipsec/.venv/lib/python3.11/site-packages/botorch/optim/optimize.py:844: RuntimeWarning: Optimization failed in `gen_candidates_scipy` with the following warning(s):
+[OptimizationWarning('Optimization failed within `scipy.optimize.minimize` with status 2 and message ABNORMAL: .')]
+Trying again with a new set of initial conditions.
+  return _optimize_acqf_batch(opt_inputs=opt_inputs)
+/Users/jy/BO/nutrigene-ai-bo-ipsec/.venv/lib/python3.11/site-packages/botorch/optim/optimize.py:844: RuntimeWarning: Optimization failed in `gen_candidates_scipy` with the following warning(s):
+[NumericalWarning('A not p.d., added jitter of 1.0e-08 to the diagonal'), OptimizationWarning('Optimization failed within `scipy.optimize.minimize` with status 2 and message ABNORMAL: .')]
+Trying again with a new set of initial conditions.
+  return _optimize_acqf_batch(opt_inputs=opt_inputs)
+/Users/jy/BO/nutrigene-ai-bo-ipsec/.venv/lib/python3.11/site-packages/botorch/optim/optimize.py:844: RuntimeWarning: Optimization failed on the second try, after generating a new set of initial conditions.
+  return _optimize_acqf_batch(opt_inputs=opt_inputs)
+  qlogei-add sigma=0.25 done (50 rows)
+/Users/jy/BO/nutrigene-ai-bo-ipsec/.venv/lib/python3.11/site-packages/botorch/optim/optimize.py:844: RuntimeWarning: Optimization failed in `gen_candidates_scipy` with the following warning(s):
+[OptimizationWarning('Optimization failed within `scipy.optimize.minimize` with status 2 and message ABNORMAL: .')]
+Trying again with a new set of initial conditions.
+  return _optimize_acqf_batch(opt_inputs=opt_inputs)
+/Users/jy/BO/nutrigene-ai-bo-ipsec/.venv/lib/python3.11/site-packages/botorch/optim/optimize.py:844: RuntimeWarning: Optimization failed in `gen_candidates_scipy` with the following warning(s):
+[OptimizationWarning('Optimization failed within `scipy.optimize.minimize` with status 2 and message ABNORMAL: .')]
+Trying again with a new set of initial conditions.
+  return _optimize_acqf_batch(opt_inputs=opt_inputs)
+/Users/jy/BO/nutrigene-ai-bo-ipsec/.venv/lib/python3.11/site-packages/botorch/optim/optimize.py:844: RuntimeWarning: Optimization failed in `gen_candidates_scipy` with the following warning(s):
+[OptimizationWarning('Optimization failed within `scipy.optimize.minimize` with status 2 and message ABNORMAL: .')]
+Trying again with a new set of initial conditions.
+  return _optimize_acqf_batch(opt_inputs=opt_inputs)
+  qlogei-add sigma=0.1 done (100 rows)
+  qlogei-addonly sigma=0.25 done (150 rows)
+  qlogei-addonly sigma=0.1 done (200 rows)
+
+====================================================================================
+Q30 · d=6 · sigma_rel=0.25 · 25 instances x 2 seeds <-- E2 primary cell; no improvement predicted
+====================================================================================
+             arm  mean regret    median
+      qlogei-add       0.1483    0.1408  <-- new
+  qlogei-addonly       0.1623    0.1552  <-- new
+          qlogei       0.1553    0.1569
+             doe       0.0958    0.0934
+         qlognei       0.1532    0.1469
+             lhs       0.1270    0.1276
+           sobol       0.1724    0.1713
+          random       0.2216    0.2141
+           coord       0.1420    0.1400
+
+  paired on instance, new arm minus comparator (negative = new arm has LESS regret), n=25:
+        qlogei-add vs   qlogei:  -0.0070  [ -0.0322,  +0.0199]  p=0.7510  <-- THE Q30 PRIMARY
+        qlogei-add vs      doe:  +0.0525  [ +0.0316,  +0.0738]  p=0.0002  <-- vs current practice
+        qlogei-add vs  qlognei:  -0.0050  [ -0.0262,  +0.0173]  p=0.7510
+        qlogei-add vs      lhs:  +0.0212  [ +0.0030,  +0.0394]  p=0.0422
+        qlogei-add vs    sobol:  -0.0241  [ -0.0471,  -0.0001]  p=0.0626
+        qlogei-add vs   random:  -0.0734  [ -0.0961,  -0.0487]  p=0.0000
+        qlogei-add vs    coord:  +0.0063  [ -0.0242,  +0.0380]  p=0.6150
+    qlogei-addonly vs   qlogei:  +0.0071  [ -0.0195,  +0.0336]  p=0.5602
+    qlogei-addonly vs      doe:  +0.0665  [ +0.0463,  +0.0866]  p=0.0000
+    qlogei-addonly vs  qlognei:  +0.0091  [ -0.0170,  +0.0361]  p=0.5782
+    qlogei-addonly vs      lhs:  +0.0353  [ +0.0096,  +0.0589]  p=0.0115
+    qlogei-addonly vs    sobol:  -0.0100  [ -0.0370,  +0.0156]  p=0.4908
+    qlogei-addonly vs   random:  -0.0593  [ -0.0804,  -0.0378]  p=0.0000
+    qlogei-addonly vs    coord:  +0.0204  [ -0.0010,  +0.0434]  p=0.1645
+
+====================================================================================
+Q30 · d=6 · sigma_rel=0.1 · 25 instances x 2 seeds <-- where the mechanism predicts the effect
+====================================================================================
+             arm  mean regret    median
+      qlogei-add       0.0791    0.0803  <-- new
+  qlogei-addonly       0.0627    0.0655  <-- new
+          qlogei       0.0874    0.0842
+             doe       0.0892    0.0908
+         qlognei       0.0808    0.0784
+             lhs       0.1027    0.0973
+           sobol       0.1210    0.1225
+          random       0.1693    0.1724
+           coord       0.0880    0.0815
+
+  paired on instance, new arm minus comparator (negative = new arm has LESS regret), n=25:
+        qlogei-add vs   qlogei:  -0.0083  [ -0.0202,  +0.0036]  p=0.2635  <-- THE Q30 PRIMARY
+        qlogei-add vs      doe:  -0.0102  [ -0.0216,  +0.0020]  p=0.0903  <-- vs current practice
+        qlogei-add vs  qlognei:  -0.0017  [ -0.0150,  +0.0106]  p=0.8532
+        qlogei-add vs      lhs:  -0.0236  [ -0.0385,  -0.0087]  p=0.0081
+        qlogei-add vs    sobol:  -0.0419  [ -0.0574,  -0.0290]  p=0.0000
+        qlogei-add vs   random:  -0.0902  [ -0.1048,  -0.0749]  p=0.0000
+        qlogei-add vs    coord:  -0.0090  [ -0.0218,  +0.0033]  p=0.4261
+    qlogei-addonly vs   qlogei:  -0.0247  [ -0.0357,  -0.0132]  p=0.0002
+    qlogei-addonly vs      doe:  -0.0265  [ -0.0379,  -0.0142]  p=0.0005
+    qlogei-addonly vs  qlognei:  -0.0181  [ -0.0325,  -0.0038]  p=0.0342
+    qlogei-addonly vs      lhs:  -0.0400  [ -0.0593,  -0.0225]  p=0.0004
+    qlogei-addonly vs    sobol:  -0.0583  [ -0.0718,  -0.0448]  p=0.0000
+    qlogei-addonly vs   random:  -0.1066  [ -0.1237,  -0.0883]  p=0.0000
+    qlogei-addonly vs    coord:  -0.0253  [ -0.0366,  -0.0138]  p=0.0003
+
+rows written to results/q30-additive.json
