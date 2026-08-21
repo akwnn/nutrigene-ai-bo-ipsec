@@ -6498,3 +6498,149 @@ already does.
 
 **This is registered as a gap, not a silent fix.** It was raised by Joseph, not found by the
 programme, and the runs were already under way when it was raised.
+
+---
+
+## 📌 ERRATUM 10 · **The "turn-tied death" diagnosis was WRONG. Two of the three runs were killed by my own hold order.**
+
+I concluded from three simultaneous stops that *"a run tied to a turn does not outlive the turn"*
+and issued relaunch instructions on that basis. **Both premises were wrong:**
+
+* **P3 killed its own cells** with `pkill -f run_p3_cells.py` **on my explicit hold instruction**,
+  seconds after reading it, and reported *"Stopped. Zero P3 processes."* The clean logs with no
+  error are `pkill`, not a crash.
+* **P6 did the same** — *"Your hold crossed my launch — I had started hartmann6 before it arrived
+  and killed it on receipt."*
+* **P7 alone actually died**, on a genuine `UnboundLocalError`.
+
+**So "we have lost three runs that way in ten minutes" is ZERO.** One crash from a real bug, two
+clean stops on my own order, and a timing coincidence I read as a pattern. **I built a systemic
+diagnosis out of my own instructions and then issued corrective action for it.**
+
+**P3's response is the standard here.** It declined to execute the relaunch, wrote *"I think you
+would not have sent the relaunch had you known I stopped them on your order"*, and held. **A
+worker refusing an instruction because it identified the false premise behind it is worth more
+than one that complies.**
+
+### 10a. 🔴 `setsid` does not exist on macOS. My relaunch recipe fails at the first word.
+
+```
+$ which setsid
+setsid not found
+```
+
+Anyone pasting it gets `env: setsid: No such file or directory` and **no run at all** — which
+would look exactly like another silent death and could have manufactured evidence for the very
+diagnosis that was already wrong.
+
+**Two verified portable forms.** P3's, using subshell orphaning:
+```
+( nohup env OMP_NUM_THREADS=1 ... .venv/bin/python -u scripts/<runner>.py <flags> \
+    > results/<log> 2>&1 < /dev/null & )
+```
+P7's, using Python's own `setsid(2)` binding — this is the one it actually launched under, verified
+at **PID 42939, PPID 1, PGID 42939**:
+```
+subprocess.Popen([...], stdin=subprocess.DEVNULL, start_new_session=True)
+```
+
+---
+
+## 📌 ERRATUM 11 · **P4b's registered decision rule has its SIGN INVERTED relative to its own prose.**
+
+**Found by the P4/D23 worker. This is a defect in my registration, not in the analysis.**
+
+The registration says: *"**ρ ≤ −0.5** with a CI excluding 0 → α\* is confirmed **anti-correlated**
+with the validated metric"*, under the hypothesis that *"α\* rewards not knowing"*.
+
+**Regret is a LOSS.** So **ρ(α\*, regret) < 0 means arms with higher α\* have LOWER regret — α\*
+AGREEING with the validated metric.** The registered threshold `ρ ≤ −0.5` is therefore the
+**agreement** case, and the evidence for "α\* rewards not knowing" would be **ρ ≥ +0.5.**
+**My threshold and my interpretation point in opposite directions.** The worker did not touch the
+threshold and reported the contradiction — correct.
+
+### What was actually measured
+
+**ρ(α\*, regret) over 9 arms at τ_frac = 0.75, n=25: −0.3667, CI [−0.7167, −0.0667].** **Neither
+registered branch fires** — the CI excludes 0 so it is not "an unexplained anomaly", and it does
+not reach ±0.5 so it is not "confirmed". n=50 agrees at all four τ_fracs.
+
+**Three findings that decide how it may be cited:**
+
+1. **The 9-arm ρ is essentially one arm.** Leave-one-out: drop `doe` and ρ goes **−0.3667 →
+   −0.0952** (τ_frac 0.75) and **−0.2500 → +0.0714** (0.60). `doe` sits at the extreme of both
+   axes — highest α\*, lowest regret — in a **9-point** rank correlation.
+2. **The registered anomaly IS real, but local.** Over the **three spread arms alone, ρ = +0.5000**
+   at both τ_fracs — exactly the inversion as described, in the direction that says α\* rewards
+   worse designs. **It does not survive adding `doe`.**
+3. **⭐ The two validated metrics DISAGREE about α\*.** Against F2a's symmetric difference, at the
+   one γ where the two thresholds coincide (γ=0.50, where `z = 0` makes K6's τ equal K6b's γ-free
+   θ — measured worst |τ−θ| **3.331e-16 at γ=0.50 against ≥0.124 at every other γ**):
+   **ρ(α\*, symmetric difference) = +0.4333, CI [+0.1167, +0.6445], excluding 0, at τ_frac 0.60.**
+   **Positive on an error volume means higher α\* ↔ MORE total error.**
+
+> **α\* tracks quality against regret and tracks badness against the symmetric difference.**
+> **Reported, not resolved** — per Q20 §2, which governs exactly this.
+
+**Consequence for F1's two `alpha_star` Holm upgrades — the honest wording, replacing mine:** they
+**cannot** be called *"strengthened readings of a statistic that rewards not knowing"*, and they
+**cannot** be called clean. **Any table carrying α\* must carry both facts.**
+
+---
+
+## 📌 ERRATUM 12 · Three further corrections, all from workers, all narrowing my claims
+
+**12a. My F2a coverage claim is worth SIX ROWS, not thousands.** The gain of error volumes over
+**IoU** is **exactly 0 rows on the K6 map** — committed `iou_*` is finite on all 9,600 rows,
+because the true excursion set is never empty (minimum prevalence 0.0012), so the union is never
+empty. **The union-empty case occurs exactly 6 times in `k6b-conservative.json`.** Erratum 5a
+already narrowed this; it is narrower still. **The gain over `fi` is real and large** (+3,447 rows
+pred, +1,073 latent on K6; +2,282 / +773 on spread) — **and the AUC half of the argument was
+always the stronger one and is untouched.**
+
+**12b. ⚠️ NEW TRAP, and it will bite P6 harder than it bit here.** **When every arm certifies
+nothing, total error volume IS the prevalence** — so the "ranking" ranks prevalences and says
+nothing about the arms. Measured in **4 of 12** CE cells, all at 100% emptiness. Under B3 `doe`
+has the higher prevalence (0.0046 vs 0.0029 at τ_frac 0.95) and therefore places **last
+mechanically.** Flagged `ranking_is_prevalence_only`, excluded, with
+`separation_from_prevalence = max |total − prevalence|` carried per cell. **Same class as "type I
+alone ranks silence first".** **Registered convention: a cell at full emptiness has no ranking;
+check the separation before quoting one.**
+
+*Also recorded:* K6b scores `doe` on its **4-D active subspace** (B3), so **prevalence differs by
+arm in 198 of 200 cells** and the CE cross-arm ranking is **not like-for-like** — the opposite of
+the K6 map, where all eight arms share the grid. `doe`'s slice is easier, so **the bias runs in
+its favour.**
+
+**12c. 🔴 A real boundary bug in the AUPRC complement, and three runners are adding AUPRC.**
+Scoring the minority class as `-truth >= -tau` is `truth <= tau` — it **includes** the boundary, so
+a point at exactly τ lands in **both** classes. **It needs `nextafter(-tau, +inf)`**, or the
+explicit relabelling both other workers used. The finder's own test missed it because **it checked
+the tie arithmetic beside the function instead of the labels the function actually scored.**
+
+**12d. My "hill has 50 cells above the ceiling, more than any external family" is a UNIT
+ARTEFACT — Erratum 6a in a new place.** Hill has **200 rows** in the τ table because it carries 25
+landscapes per (d, p); each external family carries **1**. Counting rows weights hill **25×**. At
+the **(d, p) cell** unit, γ=0.70 σ=0.25: **rosenbrock 6/8, levy 3/8, hill 2/8, hartmann6 0/8,
+ackley 0/8.** **Hill is third of five, inside the range — not above it.** The conclusion survives
+(*the asymmetry is not a property of "external families"*) but **the reason is that hill sits in
+the middle, not that it leads.**
+
+*And one thing no row-count could show:* **hill is the only family whose landscapes STRADDLE the
+ceiling** — 9 of its 240 cells, one at **13/25**, a coin flip. There *"above the ceiling"* is a
+**majority verdict, not a cell property**, so hill rows carry `n_landscapes_above` and never a bare
+boolean.
+
+---
+
+## 📌 PROVENANCE HAZARD · **A worker's commits were swept into another worker's `git add -A`.**
+
+The P6 census work — the `--census` flag, `ceiling_census()` and three tests — landed inside
+**`49fe0e1` "Register the coord re-score's F2a/F2b gates as failing tests"**, a commit about
+something else entirely, via another agent's broad `git add`. **Content verified intact** (HEAD
+diffed against the working tree, identical, 27 tests pass) — but it is **filed under a title that
+has nothing to do with it.**
+
+**Not rewritten** — rewriting another agent's commit in a live shared tree is worse than the
+mislabelling. **Recorded here so the provenance is recoverable**, and as the concrete cost of a
+broad `git add` in a seven-agent tree. **Every agent uses path-scoped `git add` from here.**
