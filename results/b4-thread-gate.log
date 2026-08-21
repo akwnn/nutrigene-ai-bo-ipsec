@@ -52,9 +52,35 @@ UnitScaled). The committed family columns were themselves produced at one thread
 torch.set_num_threads(1) -- so threads=1 is the control here and torch's default is
 the treatment, not the other way round.
 
-TIMING, REPORTED AS OBSERVED AND CONFOUNDED. qlogei 39.7s at 1 thread vs 41.3s at 4;
-qlognei 81.8s vs 126.5s. The two arms ran sequentially under a changing machine load
-(other agents' campaigns), so this is not a controlled comparison and the 1.0x-1.55x
-spread should not be quoted against the 4.6x measured on the isolated
-fit-plus-posterior microbenchmark. Capping threads is still right; the campaign-level
-gain was not measured cleanly here.
+TIMING -- RETRACTED BY ME, 2026-08-21, AFTER ERRATUM 5c. WITHDRAWN, NOT REVISED.
+
+This log originally reported qlogei 39.7s at "1 thread" vs 41.3s at 4, and qlognei 81.8s
+vs 126.5s, and said the resulting 1.0x-1.55x spread should not be quoted against the
+lead's 4.6x. **That conclusion was wrong and the measurement behind it was invalid.**
+
+The defect is in the probe, not the load. It set OMP_NUM_THREADS and friends via
+`os.environ[...]` INSIDE the process before importing torch. Erratum 5c establishes that
+this does not cap BLAS: the library reads OMP_NUM_THREADS at LOAD time, so the variables
+must be in the shell environment before the interpreter starts. The in-process form
+measured 114s against 37.2s for the shell-prefix form on P7's controlled re-run. So my
+"threads=1" arm was never BLAS-capped, both arms ran with essentially the same BLAS
+threading, and a comparison that finds no difference between two identical configurations
+is not evidence that capping does not help. It is evidence that the probe did not cap.
+
+The correct figure is P7's controlled 3.6x (133.7s -> 37.2s, qlogei campaign plus a
+24-cell map re-score), consistent with the lead's original 4.6x microbenchmark. My
+retraction of that 4.6x contributed to it being withdrawn, and the withdrawal was wrong.
+No timing number from this file should be cited.
+
+THE EXACTNESS RESULT IS UNAFFECTED, and this is not a rescue -- it is a different
+measurement. What varied between the two arms above is `torch.get_num_threads()`, 1
+against 4, recorded in the header of each run. That is torch's intra-op pool and it does
+change reduction order in torch's own reductions, so the two arms were genuinely different
+numerical configurations and both hit |delta| = 0. Erratum 5c reports the same conclusion
+from two further directions -- P7 at 144 rows x 11 committed K6 columns and P2 at 20
+numeric columns x 24 cells, all at worst |delta| = 0.000e+00. Exactness is not
+thread-contingent for this workload.
+
+Correct invocation form for every runner, per Erratum 5c:
+
+  OMP_NUM_THREADS=1 MKL_NUM_THREADS=1 VECLIB_MAXIMUM_THREADS=1 .venv/bin/python -u scripts/...
