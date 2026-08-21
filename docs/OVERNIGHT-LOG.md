@@ -906,3 +906,102 @@ designed to.
 `designspace.py` and `tests/test_designspace.py` belong to P3 this session. The registered
 assertion is unchanged. **Follow-up owed:** move `tau_q` beside `tau_max` once P3 releases the
 file — the committed JSON is the registered artefact either way.
+
+## D37 ⭐⭐ **`doe`'s regret advantage is a property of ONE CELL. Combined with D20, the headline now needs two conditions to hold at once.**
+
+P3's second result, on committed data, no new compute — `e2-grid.json` + `e2-doe-d8.json`,
+paired on `(instance, seed)`, n=50, 4,000-resample bootstrap `rng(0)`, two-sided Wilcoxon,
+Holm across the four cells, SESOI 0.02. **`doe − qlognei` on regret; negative favours `doe`:**
+
+| cell | mean | 95% CI | Holm p | verdict |
+|---|---|---|---|---|
+| **(6, 0.25)** | **−0.0574** | [−0.0766, −0.0387] | **3.9e-07** | **SIG, ≥ SESOI — `doe` better** |
+| (6, 0.10) | **+0.0084** | [−0.0048, +0.0204] | 0.217 | ns, < SESOI — **sign flipped** |
+| (8, 0.25) | −0.0142 | [−0.0296, +0.0008] | 0.217 | ns, < SESOI |
+| (8, 0.10) | **+0.0100** | [−0.0017, +0.0217] | 0.217 | ns, < SESOI — **sign flipped** |
+
+Full rankings, with Kendall τ-b against the baseline cell:
+
+```
+(6, 0.25)  doe < lhs < qlognei < qlogei < sobol < random     (baseline)
+(6, 0.10)  qlognei < qlogei < doe < lhs < sobol < random     tau-b +0.47
+(8, 0.25)  doe < qlognei < qlogei < lhs < random < sobol     tau-b +0.60
+(8, 0.10)  qlognei < doe < sobol < qlogei < lhs < random     tau-b +0.33
+```
+
+**Why this is a headline-level finding and not housekeeping.** K6's central claim is that the
+**map** ranks the arms differently from **regret** — `doe` first on regret, last on
+`auc_pred` in **24/24** cells. *That contrast is anchored on `doe` being the regret winner.*
+**It is the regret winner at one cell out of four.** At both σ=0.10 cells the sign flips to
+`qlognei`, and nowhere outside (6, 0.25) does the contrast clear SESOI or survive Holm.
+
+So some of what K6 reads as *"the design-space object disagrees with regret"* may be
+**"regret at (6, 0.25) disagrees with regret everywhere else."** Those are very different
+papers.
+
+### The synthesis, which neither result states alone
+
+**`doe`'s regret advantage now requires TWO conditions simultaneously**, established by
+independent routes on different evidence:
+
+1. **A specific terminal rule.** D20: under a posterior-mean rule `doe` goes 0.0958 → 0.1993,
+   **first of ten to last**, gate clean at 500/500.
+2. **A specific cell.** D37: significant and beyond SESOI at **(6, 0.25) only**, sign flipping
+   at both σ=0.10 cells.
+
+Neither was designed to test the other. **This is what D29 registered as P3's exposure —
+"P3 can invalidate the project's design-space headline" — arriving from the regret side
+before the map side has even finished.**
+
+**P3 correctly refused to write it up as the P3 conclusion.** The registered question is
+whether the **map** ranking survives, and the map half is still running. The regret half is
+answered, and it answers *against* the single-cell reading. **Holding the conclusion until
+the registered question can actually be answered is the right call and it is the second time
+tonight a worker has declined to over-claim a partial result.**
+
+### One thing I asked P3 to add before this travels
+
+**It is reported at n=50 only, and P3 flagged the reason itself** — it pairs on
+`(instance, seed)` per K6's convention while Q57 clusters on landscapes at n=25, and the two
+are not interchangeable. **Amendment F1 requires both.** Requested, at no compute cost.
+
+The direction of the check matters: **(6, 0.25) at Holm p = 3.9e-07 will survive anything;
+the three non-significant cells are the load-bearing half**, and "not significant at n=50" is
+strictly weaker than "not significant at n=25". The conclusion should get **stronger** at the
+conservative unit. That has to be confirmed, not assumed.
+
+## D38 🟢 **The `doe` d=8 gate — the trap that started §3.6 — is closed. 600/600 exact.**
+
+`results/p3-preflight-gate.log`, `9720d3b`:
+
+```
+d=6 sigma=0.10   doe lhs sobol random   50/50 each, worst |delta| = 0.000e+00
+d=8 sigma=0.25   doe lhs sobol random   50/50 each, worst |delta| = 0.000e+00
+d=8 sigma=0.10   doe lhs sobol random   50/50 each, worst |delta| = 0.000e+00
+```
+
+Three details make this the version that could actually have failed, and all three were the
+worker's own:
+* **Run before the scoring, not alongside it** — so a missing target is found in seconds
+  rather than after hours of compute.
+* **Aimed at exactly the arms K1 does not cover.** `k1-replay-gate.json` measured
+  doe/qlogei/qlognei, and `doe` only at d=6. This covers the complement.
+* **Verified `e2-doe-d8.json` carries the same 50 `(instance, seed)` keys** as `e2-grid.json`'s
+  qlogei column at that cell — the join was checked, not assumed. That is precisely the defect
+  found in `step0-oracle-best.json`, where an `arm == "versionb"` join silently compared two
+  different campaigns.
+
+Tolerance 0.0 throughout, none introduced. And `MissingGateTarget` now **raises** where
+`committed.get(...)` + `if ref is not None` used to swallow — the §3.6 defect fixed at the
+root rather than worked around.
+
+## D39 🟡 I reversed the P3 pause on new evidence, and said so rather than dropping it quietly.
+
+I paused P3 on the theory that serialising our jobs would relieve contention. Then I measured
+RSS: our six workers sum to **under 1 GB**, top-12 max 300 MB, against **16.1 GB wired** and
+24.4 GB of swap consumed. **The pause was premised on us being the load, and we measurably are
+not.** Stopping and restarting checkpointed cells to relieve a problem we are not causing
+costs more than it saves. **Released.** P2 stays paused on work-lost grounds only.
+
+Recording the reversal because a silently-dropped instruction is indistinguishable from a
+forgotten one, and this team is running on written instructions.
