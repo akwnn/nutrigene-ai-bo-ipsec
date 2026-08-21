@@ -729,15 +729,34 @@ def test_the_version_b_builder_produces_a_scoreable_48_well_campaign():
     key = sorted({(r["instance"], r["seed"]) for r in committed_rows()
                   if r["dim"] == 6 and r["sigma"] == 0.25 and r["arm"] == "qlogei"})[0]
     inst_id, seed = key
-    rec = regenerate(inst_id, 6, 0.25, seed, "versionb_random",
-                     builder=p7.versionb_builder("versionb_random", inst_id, 0.25))
+    rec = p7.build_record("versionb_random", inst_id, seed)
     assert tuple(rec.X.shape) == (48, 6)
     assert rec.Y.shape[0] == 48 and rec.Yvar.shape[0] == 48
     assert 0.0 <= rec.regret < 1.0
+    assert rec.arm == "versionb_random"
 
-    # plate1_only IS lhs: same design, same data, same regret, to the bit.
-    p1 = regenerate(inst_id, 6, 0.25, seed, "plate1_only",
-                    builder=p7.versionb_builder("plate1_only", inst_id, 0.25))
+
+def test_plate1_only_reproduces_the_lhs_column_bitwise_and_the_hook_does_not():
+    """The only gate Version B has, and it is lost by building it the obvious way.
+
+    `replay.regenerate` reproduces `run_e2.static_curve`'s 20-ordering mean only on its
+    own spread-arm path; with a `builder` supplied it takes a single `scored_curve`
+    call. Measured here: the hook misses the committed `lhs` regret by ~3e-16, which
+    fails an exact gate. So `plate1_only` is built as `lhs` and relabelled.
+    """
+    p7 = _p7()
+    from boec.replay import committed_rows, regenerate
+    inst_id, seed = sorted({(r["instance"], r["seed"]) for r in committed_rows()
+                            if r["dim"] == 6 and r["sigma"] == 0.25
+                            and r["arm"] == "qlogei"})[0]
     lhs = regenerate(inst_id, 6, 0.25, seed, "lhs")
-    assert p1.regret == lhs.regret
-    assert torch.equal(p1.X, lhs.X) and torch.equal(p1.Y, lhs.Y)
+
+    good = p7.build_record("plate1_only", inst_id, seed)
+    assert good.arm == "plate1_only"
+    assert good.regret == lhs.regret
+    assert torch.equal(good.X, lhs.X) and torch.equal(good.Y, lhs.Y)
+
+    viahook = regenerate(inst_id, 6, 0.25, seed, "plate1_only",
+                         builder=p7.versionb_builder("plate1_only", inst_id, 0.25))
+    assert viahook.regret != lhs.regret, "the hook is expected to lose the averaging"
+    assert abs(viahook.regret - lhs.regret) < 1e-14

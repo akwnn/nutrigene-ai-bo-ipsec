@@ -51,7 +51,9 @@ the only path used here.
 from __future__ import annotations
 
 import argparse
+import dataclasses
 import gc
+import importlib.util
 import itertools
 import json
 import os
@@ -82,6 +84,11 @@ from boec.surrogate import build_gp
 from boec.torch_oracle import BiphasicOracle
 
 ROOT = Path(__file__).resolve().parents[1]
+
+#: P2's Version B construction, imported rather than reimplemented (see VERSIONB_ARMS).
+_P2 = importlib.util.module_from_spec(importlib.util.spec_from_file_location(
+    "_run_p2_versionb_gamma", Path(__file__).resolve().parent / "run_p2_versionb_gamma.py"))
+_P2.__spec__.loader.exec_module(_P2)
 OUT = ROOT / "results/p7-murphy.json"
 #: In-progress checkpoints go HERE, never to OUT. `.gitignore:20` ignores `results/*`
 #: while line 211 NEGATES `results/p7-murphy.json` -- so the final path is stageable and
@@ -99,7 +106,26 @@ MAP_GATE = (ROOT / "results/k6-designspace.json",
 #: any design-space metric at all (COVERAGE-MATRIX 2.1).
 DIM = 6
 SIGMA = 0.25
-ARMS = ("doe", "qlogei", "qlognei", "lhs", "sobol", "random")
+#: The six arms with both a committed regret column at this cell and a replay path.
+GATED_ARMS = ("doe", "qlogei", "qlognei", "lhs", "sobol", "random")
+#: Version B. **UNGATABLE is not the same as unrunnable**, and letting the first become
+#: the second is why these were absent: a Version B campaign is seed-deterministic and
+#: fully scoreable, it simply has no committed regret column to reproduce. They belong
+#: here more than any other arm -- F2 promoted calibration to primary precisely because
+#: AUC cannot see it, and SPADE's claim ("this region holds at assurance gamma") IS a
+#: calibrated statement. Built through `run_p2_versionb_gamma.build_campaign`, imported
+#: rather than reimplemented: a second copy of plate 2's LSE selection would be a second
+#: campaign, and its columns could not be checked against the committed ones at all.
+VERSIONB_ARMS = ("versionb", "versionb_random", "versionb_predictive", "plate1_only")
+ARMS = GATED_ARMS + VERSIONB_ARMS
+#: `plate1_only` IS `lhs` at 48 wells, so it is gated against the committed `lhs`
+#: column -- and, per D23.1, **never counted as a separate arm in any ranking**. Both
+#: are reported; neither is double-counted.
+GATE_AS = {"plate1_only": "lhs"}
+RANKING_EXCLUDED = ("plate1_only",)
+_UNGATABLE_REASON = (
+    "UNGATABLE IN PRINCIPLE — no committed comparator exists for this arm and none "
+    "ever will (COVERAGE-MATRIX §3.7). Seed determinism is the only guarantee.")
 #: K6's grid, unchanged, so every row sits beside a committed Brier.
 GAMMAS = (0.50, 0.70, 0.80, 0.90, 0.95, 0.99)
 TAU_FRACS = (0.60, 0.75, 0.85, 0.95)
@@ -111,6 +137,52 @@ IDENTITY_BAR = 1e-10
 #: Amendment E statistics, restated in the P7 registration block.
 N_BOOT = 4000
 BOOT_SEED = 0
+
+
+def gate_status(arm: str) -> dict:
+    """Whether this arm's regret can be checked against a COMMITTED column, and why not.
+
+    An ungated number is publishable with its caveat attached; an absent number is not
+    publishable at all. Every row carries this so no table can lose the distinction.
+    """
+    if arm in VERSIONB_ARMS and arm not in GATE_AS:
+        return {"gated": False, "gate_reason": _UNGATABLE_REASON}
+    return {"gated": True, "gate_reason": None}
+
+
+def build_record(arm: str, instance: str, seed: int):
+    """One campaign, by the arithmetic its committed column was built by.
+
+    **`plate1_only` must NOT go through the builder hook, and this is the only gate
+    Version B has.** It IS `lhs` at 48 wells, and `replay.regenerate` reproduces
+    `run_e2.static_curve`'s 20-ordering mean only on its own spread-arm path -- with a
+    `builder` supplied it takes a single `scored_curve` call instead. Measured: routing
+    it through the hook misses the committed `lhs` regret by **3.3e-16**, which fails
+    an exact gate. Built as `lhs` and relabelled, it reproduces bitwise.
+    """
+    if arm == "plate1_only":
+        return dataclasses.replace(
+            regenerate(instance, DIM, SIGMA, seed, "lhs"), arm="plate1_only")
+    builder = versionb_builder(arm, instance, SIGMA) if arm in VERSIONB_ARMS else None
+    return regenerate(instance, DIM, SIGMA, seed, arm, builder=builder)
+
+
+def versionb_builder(arm: str, instance: str, sigma: float):
+    """`replay.regenerate`'s builder hook, delegating to P2's construction.
+
+    `replay` deliberately refuses to learn how to build a two-plate campaign -- doing so
+    would put `replay -> surrogate, designspace, lse` inside the one module every gate
+    imports. The hook inverts that: the construction lives in the runner that owns the
+    arm, and `replay` keeps the oracle, the scoring rule and the provenance.
+
+    P2 builds its own oracle inside `build_campaign`, so the oracle `regenerate` passes
+    here stays unevaluated and its noise stream is pristine for scoring -- which is what
+    makes the regret computed downstream the same number P2 computes.
+    """
+    def build(orc, dim, seed):
+        X, Y, V, _regret = _P2.build_campaign(arm, instance, dim, sigma, seed, orc)
+        return X, Y, V, None, None
+    return build
 
 
 def _git(*a: str) -> str:
@@ -415,7 +487,10 @@ def summarise(rows: list[dict]) -> dict:
             continue
 
         by = {(r["arm"], r["instance"], r["seed"]): r for r in at}
-        present = [a for a in arms if all((a, *k) in by for k in keys)]
+        # D23.1: `plate1_only` IS `lhs`, so ranking it beside `lhs` would double-count
+        # one design. Its rows are written and gated; they simply never enter an order.
+        present = [a for a in arms if a not in RANKING_EXCLUDED
+                   and all((a, *k) in by for k in keys)]
         cell["arms"] = present
 
         for mp in ("pred", "latent"):
@@ -683,28 +758,34 @@ def main() -> None:
 
         for arm in ARMS:
             t = time.time()
-            rec = regenerate(inst_id, DIM, SIGMA, seed, arm)
+            rec = build_record(arm, inst_id, seed)
 
-            ref = committed.get((inst_id, seed, arm))
-            if ref is None:
+            ref = committed.get((inst_id, seed, GATE_AS.get(arm, arm)))
+            status = gate_status(arm)
+            if not status["gated"]:
+                pass          # registered as ungatable; the reason rides on every row
+            elif ref is None:
                 gate_fail.append({"instance": inst_id, "seed": seed, "arm": arm,
                                   "reason": "no committed regret column"})
                 print(f"  !! UNGATED {arm} {inst_id} seed={seed}")
             else:
                 delta = abs(rec.regret - ref)
-                if delta > _gate_tol(arm):
+                if delta > _gate_tol(GATE_AS.get(arm, arm)):
                     gate_fail.append({"instance": inst_id, "seed": seed, "arm": arm,
                                       "committed": ref, "regenerated": rec.regret,
                                       "abs_delta": delta})
                     print(f"  !! GATE {arm} {inst_id} seed={seed} delta={delta:.3e}")
 
             new, fails, worst = score_campaign(rec, orc, grid, truth)
+            for r in new:
+                r.update(status)
             rows.extend(new)
             identity_fail.extend(fails)
             worst_identity = max(worst_identity, worst)
 
             for r in new:
-                key = (inst_id, seed, arm, r["gamma"], r["tau_frac"])
+                key = (inst_id, seed, GATE_AS.get(arm, arm), r["gamma"],
+                       r["tau_frac"])
                 if key not in committed_b:
                     continue
                 n_map_checked += 1
