@@ -347,6 +347,29 @@ def spearman_across_arms(data: dict[str, dict[tuple[str, int], tuple[float, floa
     # 1/N_BOOT. Spearman's asymptotic p is not available — the coefficient is taken over
     # nine arm MEANS, not over independent observations — and a CI-derived indicator would
     # collapse the Holm step-down to two values.
+    #
+    # **Guarded, and the guard is load-bearing.** A constant input makes Spearman
+    # undefined, which happens for real at tau_frac = 0.95 where every arm certifies
+    # nothing and the symmetric difference is identical across all nine. The resamples are
+    # then nan, `nan >= 0` is False, both tail masses come out 0, and the expression above
+    # returns 0 -- floored to 1/N_BOOT. An undefined coefficient would arrive in the
+    # output file wearing a significant p-value.
+    if not np.isfinite(rho) or not np.isfinite(boots).any():
+        return {"rho": rho, "ci_lo": float("nan"), "ci_hi": float("nan"),
+                "bootstrap_p": float("nan"), "ci_excludes_zero": False,
+                "direction_in_words": (
+                    "undefined: the coefficient is not defined here, because at least "
+                    "one of the two arm-mean vectors is constant across the nine arms"),
+                "sign_convention": ("regret is a LOSS: lower is better. rho < 0 therefore "
+                                    "means alpha* and quality AGREE."),
+                "rho_leave_one_arm_out": loo,
+                "rho_spread_arms_only": {"rho": spread_rho,
+                                         "arms": [arms[i] for i in spread]},
+                "n_arms": len(arms), "n_units": len(units), "n_boot": N_BOOT,
+                "n_arms_per_resample": len(arms), "arms": arms,
+                "mean_alpha_star": {a: float(alpha[i].mean())
+                                    for i, a in enumerate(arms)},
+                "mean_regret": {a: float(regret[i].mean()) for i, a in enumerate(arms)}}
     p = min(1.0, 2 * min(float(np.mean(boots >= 0)), float(np.mean(boots <= 0))))
     return {"rho": rho, "ci_lo": lo, "ci_hi": hi,
             "bootstrap_p": max(p, 1.0 / N_BOOT),

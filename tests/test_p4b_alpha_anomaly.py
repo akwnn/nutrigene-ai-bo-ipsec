@@ -397,3 +397,22 @@ def test_the_spread_arm_subset_is_reported_beside_the_nine(p4b):
     res = p4b.spearman_across_arms(_synthetic(+1))
     assert res["rho_spread_arms_only"]["arms"] == ["lhs", "random", "sobol"]
     assert -1.0 <= res["rho_spread_arms_only"]["rho"] <= 1.0
+
+
+def test_a_degenerate_correlation_reports_nan_not_significance(p4b):
+    """A constant input makes Spearman undefined. The p-value must follow it to nan.
+
+    This is not hypothetical: at tau_frac = 0.95 every arm certifies nothing, so the
+    symmetric difference is identical across all nine and rho is nan. The bootstrap
+    resamples are then nan too -- and `nan >= 0` is False, so a tail-mass p computed
+    without a guard returns 0 and floors to 1/N_BOOT. An undefined coefficient would
+    arrive in the output file wearing a significant p-value.
+    """
+    data = {arm: {(f"i{u:02d}", s): (1.0, float(u))
+                  for u in range(25) for s in (0, 1)} for arm in NINE}
+    res = p4b.spearman_across_arms(data)
+
+    assert not np.isfinite(res["rho"])
+    assert not np.isfinite(res["bootstrap_p"]), res["bootstrap_p"]
+    assert res["ci_excludes_zero"] is False
+    assert "undefined" in res["direction_in_words"].lower()
