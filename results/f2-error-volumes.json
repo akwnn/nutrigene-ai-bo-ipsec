@@ -1,8 +1,8 @@
 {
  "provenance": {
-  "git_sha": "44fb8fa4881b77349e792178938df5ab1e3086ce",
+  "git_sha": "7223d78b240afe8e5850b0ed661ac51bdd0e18c3",
   "git_dirty": true,
-  "generated_at": "2026-08-21T13:40:12+08:00",
+  "generated_at": "2026-08-21T13:56:11+08:00",
   "argv": [
    "scripts/analyse_f2_error_volumes.py"
   ],
@@ -2517,6 +2517,657 @@
   ],
   "reported_ranking": "error volumes"
  },
+ "alpha_star_vs_error_volume": [
+  {
+   "gamma": 0.5,
+   "tau_frac": 0.6,
+   "n_arms": 8,
+   "rho": 0.6904761904761906,
+   "alpha_star_by_arm": {
+    "doe": 1.0,
+    "lhs": 0.958203125,
+    "qlogei": 0.975859375,
+    "qlogei-add": 0.980625,
+    "qlogei-addonly": 0.9698828125,
+    "qlognei": 0.97015625,
+    "random": 0.972734375,
+    "sobol": 0.9480078125
+   },
+   "total_error_vol_by_arm": {
+    "doe": 0.6149640000000001,
+    "lhs": 0.370323,
+    "qlogei": 0.405406,
+    "qlogei-add": 0.389017,
+    "qlogei-addonly": 0.36793400000000004,
+    "qlognei": 0.4485910000000001,
+    "random": 0.34624399999999994,
+    "sobol": 0.33783499999999994
+   },
+   "reading": "higher alpha* goes with MORE total error"
+  },
+  {
+   "gamma": 0.7,
+   "tau_frac": 0.6,
+   "n_arms": 8,
+   "rho": 0.6190476190476191,
+   "alpha_star_by_arm": {
+    "doe": 1.0,
+    "lhs": 0.958203125,
+    "qlogei": 0.975859375,
+    "qlogei-add": 0.980625,
+    "qlogei-addonly": 0.9698828125,
+    "qlognei": 0.97015625,
+    "random": 0.972734375,
+    "sobol": 0.9480078125
+   },
+   "total_error_vol_by_arm": {
+    "doe": 0.7425200000000001,
+    "lhs": 0.483564,
+    "qlogei": 0.557599,
+    "qlogei-add": 0.540713,
+    "qlogei-addonly": 0.49178,
+    "qlognei": 0.645776,
+    "random": 0.41404099999999994,
+    "sobol": 0.42235999999999996
+   },
+   "reading": "higher alpha* goes with MORE total error"
+  },
+  {
+   "gamma": 0.8,
+   "tau_frac": 0.6,
+   "n_arms": 8,
+   "rho": 0.6190476190476191,
+   "alpha_star_by_arm": {
+    "doe": 1.0,
+    "lhs": 0.958203125,
+    "qlogei": 0.975859375,
+    "qlogei-add": 0.980625,
+    "qlogei-addonly": 0.9698828125,
+    "qlognei": 0.97015625,
+    "random": 0.972734375,
+    "sobol": 0.9480078125
+   },
+   "total_error_vol_by_arm": {
+    "doe": 0.7993389999999998,
+    "lhs": 0.587643,
+    "qlogei": 0.6693859999999999,
+    "qlogei-add": 0.6532399999999998,
+    "qlogei-addonly": 0.5970160000000001,
+    "qlognei": 0.7542279999999999,
+    "random": 0.5022,
+    "sobol": 0.5190009999999999
+   },
+   "reading": "higher alpha* goes with MORE total error"
+  },
+  {
+   "gamma": 0.9,
+   "tau_frac": 0.6,
+   "n_arms": 8,
+   "rho": 0.523809523809524,
+   "alpha_star_by_arm": {
+    "doe": 1.0,
+    "lhs": 0.958203125,
+    "qlogei": 0.975859375,
+    "qlogei-add": 0.980625,
+    "qlogei-addonly": 0.9698828125,
+    "qlognei": 0.97015625,
+    "random": 0.972734375,
+    "sobol": 0.9480078125
+   },
+   "total_error_vol_by_arm": {
+    "doe": 0.8548309999999999,
+    "lhs": 0.7319149999999999,
+    "qlogei": 0.815293,
+    "qlogei-add": 0.788914,
+    "qlogei-addonly": 0.7413379999999999,
+    "qlognei": 0.8624719999999999,
+    "random": 0.648077,
+    "sobol": 0.670852
+   },
+   "reading": "higher alpha* goes with MORE total error"
+  },
+  {
+   "gamma": 0.95,
+   "tau_frac": 0.6,
+   "n_arms": 8,
+   "rho": 0.4761904761904762,
+   "alpha_star_by_arm": {
+    "doe": 1.0,
+    "lhs": 0.958203125,
+    "qlogei": 0.975859375,
+    "qlogei-add": 0.980625,
+    "qlogei-addonly": 0.9698828125,
+    "qlognei": 0.97015625,
+    "random": 0.972734375,
+    "sobol": 0.9480078125
+   },
+   "total_error_vol_by_arm": {
+    "doe": 0.8865700000000001,
+    "lhs": 0.8358630000000001,
+    "qlogei": 0.8994589999999999,
+    "qlogei-add": 0.872376,
+    "qlogei-addonly": 0.8403839999999999,
+    "qlognei": 0.9207589999999999,
+    "random": 0.769515,
+    "sobol": 0.792889
+   },
+   "reading": "higher alpha* goes with MORE total error"
+  },
+  {
+   "gamma": 0.99,
+   "tau_frac": 0.6,
+   "n_arms": 8,
+   "rho": -0.11904761904761905,
+   "alpha_star_by_arm": {
+    "doe": 1.0,
+    "lhs": 0.958203125,
+    "qlogei": 0.975859375,
+    "qlogei-add": 0.980625,
+    "qlogei-addonly": 0.9698828125,
+    "qlognei": 0.97015625,
+    "random": 0.972734375,
+    "sobol": 0.9480078125
+   },
+   "total_error_vol_by_arm": {
+    "doe": 0.932414,
+    "lhs": 0.96902,
+    "qlogei": 0.9773080000000001,
+    "qlogei-add": 0.9707400000000002,
+    "qlogei-addonly": 0.9623729999999999,
+    "qlognei": 0.9808579999999999,
+    "random": 0.9468730000000001,
+    "sobol": 0.968562
+   },
+   "reading": "higher alpha* goes with LESS total error"
+  },
+  {
+   "gamma": 0.5,
+   "tau_frac": 0.75,
+   "n_arms": 8,
+   "rho": -0.1666666666666667,
+   "alpha_star_by_arm": {
+    "doe": 0.7874609375,
+    "lhs": 0.629140625,
+    "qlogei": 0.5968359375,
+    "qlogei-add": 0.622734375,
+    "qlogei-addonly": 0.62265625,
+    "qlognei": 0.60546875,
+    "random": 0.6521484375,
+    "sobol": 0.5275
+   },
+   "total_error_vol_by_arm": {
+    "doe": 0.291783,
+    "lhs": 0.27357699999999996,
+    "qlogei": 0.2817,
+    "qlogei-add": 0.279439,
+    "qlogei-addonly": 0.27396899999999996,
+    "qlognei": 0.28163499999999997,
+    "random": 0.27976799999999996,
+    "sobol": 0.282858
+   },
+   "reading": "higher alpha* goes with LESS total error"
+  },
+  {
+   "gamma": 0.7,
+   "tau_frac": 0.75,
+   "n_arms": 8,
+   "rho": -0.7380952380952381,
+   "alpha_star_by_arm": {
+    "doe": 0.7874609375,
+    "lhs": 0.629140625,
+    "qlogei": 0.5968359375,
+    "qlogei-add": 0.622734375,
+    "qlogei-addonly": 0.62265625,
+    "qlognei": 0.60546875,
+    "random": 0.6521484375,
+    "sobol": 0.5275
+   },
+   "total_error_vol_by_arm": {
+    "doe": 0.584709,
+    "lhs": 0.57819,
+    "qlogei": 0.5892580000000001,
+    "qlogei-add": 0.5870879999999999,
+    "qlogei-addonly": 0.577213,
+    "qlognei": 0.589673,
+    "random": 0.573352,
+    "sobol": 0.592641
+   },
+   "reading": "higher alpha* goes with LESS total error"
+  },
+  {
+   "gamma": 0.8,
+   "tau_frac": 0.75,
+   "n_arms": 8,
+   "rho": -0.7857142857142858,
+   "alpha_star_by_arm": {
+    "doe": 0.7874609375,
+    "lhs": 0.629140625,
+    "qlogei": 0.5968359375,
+    "qlogei-add": 0.622734375,
+    "qlogei-addonly": 0.62265625,
+    "qlognei": 0.60546875,
+    "random": 0.6521484375,
+    "sobol": 0.5275
+   },
+   "total_error_vol_by_arm": {
+    "doe": 0.740603,
+    "lhs": 0.7421520000000001,
+    "qlogei": 0.7491939999999999,
+    "qlogei-add": 0.747648,
+    "qlogei-addonly": 0.739606,
+    "qlognei": 0.7495040000000001,
+    "random": 0.736189,
+    "sobol": 0.7526079999999999
+   },
+   "reading": "higher alpha* goes with LESS total error"
+  },
+  {
+   "gamma": 0.9,
+   "tau_frac": 0.75,
+   "n_arms": 8,
+   "rho": -0.9047619047619048,
+   "alpha_star_by_arm": {
+    "doe": 0.7874609375,
+    "lhs": 0.629140625,
+    "qlogei": 0.5968359375,
+    "qlogei-add": 0.622734375,
+    "qlogei-addonly": 0.62265625,
+    "qlognei": 0.60546875,
+    "random": 0.6521484375,
+    "sobol": 0.5275
+   },
+   "total_error_vol_by_arm": {
+    "doe": 0.889252,
+    "lhs": 0.8956780000000001,
+    "qlogei": 0.8976649999999999,
+    "qlogei-add": 0.8967269999999999,
+    "qlogei-addonly": 0.891978,
+    "qlognei": 0.897737,
+    "random": 0.891438,
+    "sobol": 0.8999530000000001
+   },
+   "reading": "higher alpha* goes with LESS total error"
+  },
+  {
+   "gamma": 0.95,
+   "tau_frac": 0.75,
+   "n_arms": 8,
+   "rho": -0.7619047619047621,
+   "alpha_star_by_arm": {
+    "doe": 0.7874609375,
+    "lhs": 0.629140625,
+    "qlogei": 0.5968359375,
+    "qlogei-add": 0.622734375,
+    "qlogei-addonly": 0.62265625,
+    "qlognei": 0.60546875,
+    "random": 0.6521484375,
+    "sobol": 0.5275
+   },
+   "total_error_vol_by_arm": {
+    "doe": 0.953866,
+    "lhs": 0.959733,
+    "qlogei": 0.9597520000000002,
+    "qlogei-add": 0.959185,
+    "qlogei-addonly": 0.9568439999999998,
+    "qlognei": 0.9597049999999999,
+    "random": 0.9575049999999998,
+    "sobol": 0.960885
+   },
+   "reading": "higher alpha* goes with LESS total error"
+  },
+  {
+   "gamma": 0.99,
+   "tau_frac": 0.75,
+   "n_arms": 8,
+   "rho": -0.4047619047619048,
+   "alpha_star_by_arm": {
+    "doe": 0.7874609375,
+    "lhs": 0.629140625,
+    "qlogei": 0.5968359375,
+    "qlogei-add": 0.622734375,
+    "qlogei-addonly": 0.62265625,
+    "qlognei": 0.60546875,
+    "random": 0.6521484375,
+    "sobol": 0.5275
+   },
+   "total_error_vol_by_arm": {
+    "doe": 0.9946570000000001,
+    "lhs": 0.9961530000000002,
+    "qlogei": 0.996056,
+    "qlogei-add": 0.995917,
+    "qlogei-addonly": 0.9958319999999999,
+    "qlognei": 0.996028,
+    "random": 0.9961289999999999,
+    "sobol": 0.9961540000000001
+   },
+   "reading": "higher alpha* goes with LESS total error"
+  },
+  {
+   "gamma": 0.5,
+   "tau_frac": 0.85,
+   "n_arms": 8,
+   "rho": -0.19047619047619052,
+   "alpha_star_by_arm": {
+    "doe": 0.242421875,
+    "lhs": 0.2873828125,
+    "qlogei": 0.23328125,
+    "qlogei-add": 0.2477734375,
+    "qlogei-addonly": 0.2959375,
+    "qlognei": 0.2438671875,
+    "random": 0.28984375,
+    "sobol": 0.1746484375
+   },
+   "total_error_vol_by_arm": {
+    "doe": 0.06848500000000002,
+    "lhs": 0.06837500000000002,
+    "qlogei": 0.06835100000000001,
+    "qlogei-add": 0.06843100000000002,
+    "qlogei-addonly": 0.06817200000000001,
+    "qlognei": 0.068317,
+    "random": 0.06872400000000001,
+    "sobol": 0.06844000000000001
+   },
+   "reading": "higher alpha* goes with LESS total error"
+  },
+  {
+   "gamma": 0.7,
+   "tau_frac": 0.85,
+   "n_arms": 8,
+   "rho": -0.6190476190476191,
+   "alpha_star_by_arm": {
+    "doe": 0.242421875,
+    "lhs": 0.2873828125,
+    "qlogei": 0.23328125,
+    "qlogei-add": 0.2477734375,
+    "qlogei-addonly": 0.2959375,
+    "qlognei": 0.2438671875,
+    "random": 0.28984375,
+    "sobol": 0.1746484375
+   },
+   "total_error_vol_by_arm": {
+    "doe": 0.32358899999999996,
+    "lhs": 0.323612,
+    "qlogei": 0.323545,
+    "qlogei-add": 0.323499,
+    "qlogei-addonly": 0.323129,
+    "qlognei": 0.32351199999999997,
+    "random": 0.32353699999999996,
+    "sobol": 0.32362
+   },
+   "reading": "higher alpha* goes with LESS total error"
+  },
+  {
+   "gamma": 0.8,
+   "tau_frac": 0.85,
+   "n_arms": 8,
+   "rho": -0.34731161595484505,
+   "alpha_star_by_arm": {
+    "doe": 0.242421875,
+    "lhs": 0.2873828125,
+    "qlogei": 0.23328125,
+    "qlogei-add": 0.2477734375,
+    "qlogei-addonly": 0.2959375,
+    "qlognei": 0.2438671875,
+    "random": 0.28984375,
+    "sobol": 0.1746484375
+   },
+   "total_error_vol_by_arm": {
+    "doe": 0.536803,
+    "lhs": 0.5368179999999999,
+    "qlogei": 0.536775,
+    "qlogei-add": 0.536737,
+    "qlogei-addonly": 0.536566,
+    "qlognei": 0.5367440000000001,
+    "random": 0.536805,
+    "sobol": 0.5368179999999999
+   },
+   "reading": "higher alpha* goes with LESS total error"
+  },
+  {
+   "gamma": 0.9,
+   "tau_frac": 0.85,
+   "n_arms": 8,
+   "rho": -0.31709143089490066,
+   "alpha_star_by_arm": {
+    "doe": 0.242421875,
+    "lhs": 0.2873828125,
+    "qlogei": 0.23328125,
+    "qlogei-add": 0.2477734375,
+    "qlogei-addonly": 0.2959375,
+    "qlognei": 0.2438671875,
+    "random": 0.28984375,
+    "sobol": 0.1746484375
+   },
+   "total_error_vol_by_arm": {
+    "doe": 0.786336,
+    "lhs": 0.786336,
+    "qlogei": 0.786328,
+    "qlogei-add": 0.7863130000000002,
+    "qlogei-addonly": 0.786276,
+    "qlognei": 0.7862990000000001,
+    "random": 0.786336,
+    "sobol": 0.786336
+   },
+   "reading": "higher alpha* goes with LESS total error"
+  },
+  {
+   "gamma": 0.95,
+   "tau_frac": 0.85,
+   "n_arms": 8,
+   "rho": -0.3546040716334876,
+   "alpha_star_by_arm": {
+    "doe": 0.242421875,
+    "lhs": 0.2873828125,
+    "qlogei": 0.23328125,
+    "qlogei-add": 0.2477734375,
+    "qlogei-addonly": 0.2959375,
+    "qlognei": 0.2438671875,
+    "random": 0.28984375,
+    "sobol": 0.1746484375
+   },
+   "total_error_vol_by_arm": {
+    "doe": 0.9112499999999999,
+    "lhs": 0.9112499999999999,
+    "qlogei": 0.9112499999999999,
+    "qlogei-add": 0.911242,
+    "qlogei-addonly": 0.9112389999999999,
+    "qlognei": 0.9112299999999999,
+    "random": 0.9112499999999999,
+    "sobol": 0.9112499999999999
+   },
+   "reading": "higher alpha* goes with LESS total error"
+  },
+  {
+   "gamma": 0.99,
+   "tau_frac": 0.85,
+   "n_arms": 8,
+   "rho": 0.08247860988423225,
+   "alpha_star_by_arm": {
+    "doe": 0.242421875,
+    "lhs": 0.2873828125,
+    "qlogei": 0.23328125,
+    "qlogei-add": 0.2477734375,
+    "qlogei-addonly": 0.2959375,
+    "qlognei": 0.2438671875,
+    "random": 0.28984375,
+    "sobol": 0.1746484375
+   },
+   "total_error_vol_by_arm": {
+    "doe": 0.9909180000000001,
+    "lhs": 0.9909180000000001,
+    "qlogei": 0.9909180000000001,
+    "qlogei-add": 0.9909180000000001,
+    "qlogei-addonly": 0.9909180000000001,
+    "qlognei": 0.9909160000000001,
+    "random": 0.9909180000000001,
+    "sobol": 0.9909180000000001
+   },
+   "reading": "higher alpha* goes with MORE total error"
+  },
+  {
+   "gamma": 0.5,
+   "tau_frac": 0.95,
+   "n_arms": 8,
+   "rho": NaN,
+   "alpha_star_by_arm": {
+    "doe": 0.0332421875,
+    "lhs": 0.0798046875,
+    "qlogei": 0.055859375,
+    "qlogei-add": 0.0600390625,
+    "qlogei-addonly": 0.09703125,
+    "qlognei": 0.06046875,
+    "random": 0.0795703125,
+    "sobol": 0.03546875
+   },
+   "total_error_vol_by_arm": {
+    "doe": 0.0029379999999999996,
+    "lhs": 0.0029379999999999996,
+    "qlogei": 0.0029379999999999996,
+    "qlogei-add": 0.0029379999999999996,
+    "qlogei-addonly": 0.0029379999999999996,
+    "qlognei": 0.0029379999999999996,
+    "random": 0.0029379999999999996,
+    "sobol": 0.0029379999999999996
+   },
+   "reading": "higher alpha* goes with LESS total error"
+  },
+  {
+   "gamma": 0.7,
+   "tau_frac": 0.95,
+   "n_arms": 8,
+   "rho": NaN,
+   "alpha_star_by_arm": {
+    "doe": 0.0332421875,
+    "lhs": 0.0798046875,
+    "qlogei": 0.055859375,
+    "qlogei-add": 0.0600390625,
+    "qlogei-addonly": 0.09703125,
+    "qlognei": 0.06046875,
+    "random": 0.0795703125,
+    "sobol": 0.03546875
+   },
+   "total_error_vol_by_arm": {
+    "doe": 0.10748799999999999,
+    "lhs": 0.10748799999999999,
+    "qlogei": 0.10748799999999999,
+    "qlogei-add": 0.10748799999999999,
+    "qlogei-addonly": 0.10748799999999999,
+    "qlognei": 0.10748799999999999,
+    "random": 0.10748799999999999,
+    "sobol": 0.10748799999999999
+   },
+   "reading": "higher alpha* goes with LESS total error"
+  },
+  {
+   "gamma": 0.8,
+   "tau_frac": 0.95,
+   "n_arms": 8,
+   "rho": NaN,
+   "alpha_star_by_arm": {
+    "doe": 0.0332421875,
+    "lhs": 0.0798046875,
+    "qlogei": 0.055859375,
+    "qlogei-add": 0.0600390625,
+    "qlogei-addonly": 0.09703125,
+    "qlognei": 0.06046875,
+    "random": 0.0795703125,
+    "sobol": 0.03546875
+   },
+   "total_error_vol_by_arm": {
+    "doe": 0.289128,
+    "lhs": 0.289128,
+    "qlogei": 0.289128,
+    "qlogei-add": 0.289128,
+    "qlogei-addonly": 0.289128,
+    "qlognei": 0.289128,
+    "random": 0.289128,
+    "sobol": 0.289128
+   },
+   "reading": "higher alpha* goes with LESS total error"
+  },
+  {
+   "gamma": 0.9,
+   "tau_frac": 0.95,
+   "n_arms": 8,
+   "rho": NaN,
+   "alpha_star_by_arm": {
+    "doe": 0.0332421875,
+    "lhs": 0.0798046875,
+    "qlogei": 0.055859375,
+    "qlogei-add": 0.0600390625,
+    "qlogei-addonly": 0.09703125,
+    "qlognei": 0.06046875,
+    "random": 0.0795703125,
+    "sobol": 0.03546875
+   },
+   "total_error_vol_by_arm": {
+    "doe": 0.6137360000000001,
+    "lhs": 0.6137360000000001,
+    "qlogei": 0.6137360000000001,
+    "qlogei-add": 0.6137360000000001,
+    "qlogei-addonly": 0.6137360000000001,
+    "qlognei": 0.6137360000000001,
+    "random": 0.6137360000000001,
+    "sobol": 0.6137360000000001
+   },
+   "reading": "higher alpha* goes with LESS total error"
+  },
+  {
+   "gamma": 0.95,
+   "tau_frac": 0.95,
+   "n_arms": 8,
+   "rho": NaN,
+   "alpha_star_by_arm": {
+    "doe": 0.0332421875,
+    "lhs": 0.0798046875,
+    "qlogei": 0.055859375,
+    "qlogei-add": 0.0600390625,
+    "qlogei-addonly": 0.09703125,
+    "qlognei": 0.06046875,
+    "random": 0.0795703125,
+    "sobol": 0.03546875
+   },
+   "total_error_vol_by_arm": {
+    "doe": 0.823356,
+    "lhs": 0.823356,
+    "qlogei": 0.823356,
+    "qlogei-add": 0.823356,
+    "qlogei-addonly": 0.823356,
+    "qlognei": 0.823356,
+    "random": 0.823356,
+    "sobol": 0.823356
+   },
+   "reading": "higher alpha* goes with LESS total error"
+  },
+  {
+   "gamma": 0.99,
+   "tau_frac": 0.95,
+   "n_arms": 8,
+   "rho": NaN,
+   "alpha_star_by_arm": {
+    "doe": 0.0332421875,
+    "lhs": 0.0798046875,
+    "qlogei": 0.055859375,
+    "qlogei-add": 0.0600390625,
+    "qlogei-addonly": 0.09703125,
+    "qlognei": 0.06046875,
+    "random": 0.0795703125,
+    "sobol": 0.03546875
+   },
+   "total_error_vol_by_arm": {
+    "doe": 0.9809019999999998,
+    "lhs": 0.9809019999999998,
+    "qlogei": 0.9809019999999998,
+    "qlogei-add": 0.9809019999999998,
+    "qlogei-addonly": 0.9809019999999998,
+    "qlognei": 0.9809019999999998,
+    "random": 0.9809019999999998,
+    "sobol": 0.9809019999999998
+   },
+   "reading": "higher alpha* goes with LESS total error"
+  }
+ ],
+ "alpha_star_vs_error_volume_note": "The sign is NOT constant: 6 of 18 scorable cells are positive. It is strongly positive at tau_frac=0.60 (higher alpha* <-> MORE total error, the damaging reading) and negative at 0.75 and 0.85. A single pooled rho quoted without its cell is the defect F4 withdrew the pooled containment figure for. n = 8 arms per cell; one rank swap moves rho by about 0.1 and no interval is attached.",
  "f2c": {
   "per_cell": [
    {

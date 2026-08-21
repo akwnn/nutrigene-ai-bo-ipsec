@@ -84,6 +84,16 @@ AMENDMENT F2a — EXPECTED TYPE I / TYPE II ERROR VOLUMES AS THE PRIMARY DESIGN-
    REGISTERED DECISION: error-volume and AUC rankings DIFFER on type_I, type_II, total.
    -> reported ranking: error volumes   (prevalence spans 0.0029-0.9992)
 
+   Does `alpha*` agree with the metric that supersedes AUC? Arm-level Spearman, n = 8 arms,
+   no interval attached. rho > 0 means higher `alpha*` goes with MORE total error.
+    tau_f  g=0.50   g=0.70   g=0.80   g=0.90   g=0.95   g=0.99 
+     0.60    +0.690    +0.619    +0.619    +0.524    +0.476    -0.119
+     0.75    -0.167    -0.738    -0.786    -0.905    -0.762    -0.405
+     0.85    -0.190    -0.619    -0.347    -0.317    -0.355    +0.082
+     0.95      --         --         --         --         --         --   
+
+   6 of 18 scorable cells positive — THE SIGN IS NOT CONSTANT, so this rho must carry its cell.
+
 ================================================================================================================
 5. AMENDMENT F2c — IoU AND BRIER, COMMITTED PER ROW AND RANKED BY NOTHING
 ================================================================================================================

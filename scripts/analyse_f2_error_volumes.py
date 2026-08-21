@@ -229,6 +229,35 @@ def _concordance(auc: dict, vol: dict) -> float:
     return float(spearmanr(x, y).statistic)
 
 
+def alpha_star_vs_error_volume(k6_rows, k6b_rows, gamma, tau_frac) -> dict:
+    """Does `alpha*` agree with the metric that supersedes AUC? **It depends on the cell.**
+
+    `alpha*` is model-internal (§1.4); the symmetric-difference error volume is validated
+    (F2a). A positive rho means **higher `alpha*` goes with MORE total error** — the
+    damaging reading, since `alpha*` is "higher is better".
+
+    Arm-level Spearman over the eight arms. **n = 8, so one rank swap moves rho by about
+    0.1, and no interval is attached to it.** Reported per cell and never pooled: the sign
+    is not constant across cells, and a single rho quoted without its cell is the same
+    defect F4 withdrew the pooled containment figure for.
+    """
+    arms = sorted({r["arm"] for r in k6_rows})
+    k6b_sub = [r for r in k6b_rows if r["tau_frac"] == tau_frac]
+    k6_sub = [r for r in k6_rows
+              if r["gamma"] == gamma and r["tau_frac"] == tau_frac]
+    a_star = _arm_means(k6b_sub,
+                        np.array([r["alpha_star"] for r in k6b_sub], dtype=float), arms)
+    total = _arm_means(k6_sub, error_volumes(k6_sub, "pred")["total"], arms)
+    x = np.array([a_star[a] for a in arms], dtype=float)
+    y = np.array([total[a] for a in arms], dtype=float)
+    rho = (float("nan") if x.std() == 0 or y.std() == 0
+           else float(spearmanr(x, y).statistic))
+    return {"gamma": gamma, "tau_frac": tau_frac, "n_arms": len(arms), "rho": rho,
+            "alpha_star_by_arm": a_star, "total_error_vol_by_arm": total,
+            "reading": ("higher alpha* goes with MORE total error" if rho > 0
+                        else "higher alpha* goes with LESS total error")}
+
+
 def _provenance() -> dict:
     def v(pkg):
         try:
@@ -458,6 +487,36 @@ def main() -> None:
     print(f"   -> reported ranking: {out['decision']['reported_ranking']}"
           f"   (prevalence spans {out['decision']['prevalence_range'][0]:.4f}"
           f"-{out['decision']['prevalence_range'][1]:.4f})")
+
+    # -- 4b. does the SUPERSEDED metric agree with the SUPERSEDING one? ---------------
+    print(f"\n   Does `alpha*` agree with the metric that supersedes AUC? Arm-level "
+          f"Spearman, n = 8 arms,\n   no interval attached. rho > 0 means higher "
+          f"`alpha*` goes with MORE total error.")
+    k6b_all = (committed_rows("results/k6b-conservative.json")
+               + committed_rows("results/k6b-conservative-spread.json"))
+    k6b_tfs = sorted({r["tau_frac"] for r in k6b_all})
+    a_vs_e = []
+    for tf in k6b_tfs:
+        for g in gammas:
+            if tf in tau_fracs:
+                a_vs_e.append(alpha_star_vs_error_volume(k6_rows, k6b_all, g, tf))
+    out["alpha_star_vs_error_volume"] = a_vs_e
+    print(f"   {'tau_f':>6}  " + "  ".join(f"g={g:<5.2f}" for g in gammas))
+    for tf in k6b_tfs:
+        cells_tf = [c for c in a_vs_e if c["tau_frac"] == tf]
+        vals = "  ".join(("    --   " if not np.isfinite(c["rho"])
+                          else f"{c['rho']:>+8.3f}") for c in cells_tf)
+        print(f"   {tf:>6.2f}  {vals}")
+    signs = [c["rho"] for c in a_vs_e if np.isfinite(c["rho"])]
+    out["alpha_star_vs_error_volume_note"] = (
+        f"The sign is NOT constant: {sum(1 for r in signs if r > 0)} of {len(signs)} "
+        f"scorable cells are positive. It is strongly positive at tau_frac=0.60 (higher "
+        f"alpha* <-> MORE total error, the damaging reading) and negative at 0.75 and "
+        f"0.85. A single pooled rho quoted without its cell is the defect F4 withdrew "
+        f"the pooled containment figure for. n = 8 arms per cell; one rank swap moves "
+        f"rho by about 0.1 and no interval is attached.")
+    print(f"\n   {sum(1 for r in signs if r > 0)} of {len(signs)} scorable cells "
+          f"positive — THE SIGN IS NOT CONSTANT, so this rho must carry its cell.")
 
     # -- 5. F2c: rank on IoU and Brier ------------------------------------------------
     print(f"\n{RULE}\n5. AMENDMENT F2c — IoU AND BRIER, COMMITTED PER ROW AND RANKED BY "

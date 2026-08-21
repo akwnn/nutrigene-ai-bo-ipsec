@@ -2737,7 +2737,49 @@ whether the metric is trustworthy.
 
 **Three of the four changes are on `alpha*`, and none of them may be quoted as evidence
 that an arm certifies better** (§1.4 consequence 1) — that restriction is a property of the
-metric and is unchanged by the unit. What the corroboration column adds is that **two of the three model-internal moves
+metric and is unchanged by the unit.
+
+##### And the state of `alpha*` itself is worse than "model-internal", but not in the way it was first put
+
+Two facts must travel with any `alpha*` table, including this one.
+
+1. **`alpha*` is NOT anti-correlated with regret, and the registered P4b rule had its sign
+   inverted.** Regret is a **loss**, so `rho(alpha*, regret) < 0` is *agreement*, not
+   anti-correlation. P4b measures **−0.3667** and neither branch of its rule fires.
+   *(From P4b; `results/p4b-alpha-star-anomaly.json` is not committed at the time of
+   writing, so that figure is cited, not verified here.)*
+2. **The two validated metrics disagree about `alpha*`** — but **the disagreement is
+   cell-dependent, and a single pooled `rho` inverts the reading at two thirds of the
+   cells.** P4b reports `rho` against the symmetric difference as **+0.4333 with a CI
+   excluding zero**, i.e. higher `alpha*` goes with *more* total error. Recomputed here per
+   cell (`results/f2-error-volumes.json`, `alpha_star_vs_error_volume`; arm-level Spearman
+   over the 8 arms, **n = 8, no interval attached, one rank swap moves `rho` by ~0.1**):
+
+| tau_frac | γ=0.50 | 0.70 | 0.80 | 0.90 | 0.95 | 0.99 |
+|---|---|---|---|---|---|---|
+| **0.60** | **+0.690** | **+0.619** | **+0.619** | **+0.524** | **+0.476** | −0.119 |
+| 0.75 | −0.167 | −0.738 | −0.786 | −0.905 | −0.762 | −0.405 |
+| 0.85 | −0.190 | −0.619 | −0.347 | −0.317 | −0.355 | +0.082 |
+| 0.95 | — | — | — | — | — | — *(every arm ties)* |
+
+   **Only 6 of the 18 scorable cells are positive.** The damaging reading — higher `alpha*`
+   with more total error — is a **`tau_frac = 0.60` phenomenon**, strongly so at five of six
+   gammas, and it **reverses at 0.75 and 0.85**. Since `tau_frac = 0.60` is the primary
+   cell, the concern is live exactly where it matters most; but stated as a single number
+   without its cell it would invert the reading at 12 of 18 cells. **That is the defect F4
+   withdrew the pooled containment figure for, reappearing in a correlation.**
+
+**What this does and does not do to the three upgrades.** It means they **cannot be called
+clean**, and equally that they cannot be called *"stronger readings of a statistic that
+rewards not knowing"* — fact 1 rules that phrasing out. But note what the `rho` is: an
+**arm-level rank association across eight arms**, which is a different object from a
+**paired contrast between two specific arms within one cell**. The former does not govern
+the latter. The KILL-2 upgrade sits at `tau_frac = 0.60`, i.e. in the region where the
+association is most damaging — and it is nevertheless corroborated by **Brier** and
+**regret**, both validated, both agreeing in benefit direction. So the honest position is:
+**the `alpha*` ranking is not trustworthy at the primary cell, and these particular paired
+contrasts are corroborated anyway.** Both halves are needed; neither substitutes for the
+other. What the corroboration column adds is that **two of the three model-internal moves
 are backed by a metric that consults the truth**, and the one that is not — the downgrade —
 was actively *contradicted* by one, so removing it costs nothing. All four clear the SESOI
 of 0.02.

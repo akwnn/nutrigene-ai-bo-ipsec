@@ -36,6 +36,7 @@ from boec.calibration import error_volumes as canonical_error_volumes  # noqa: E
 
 from analyse_f2_error_volumes import (  # noqa: E402
     REQUIRED_COLUMNS,
+    alpha_star_vs_error_volume,
     committed_rows,
     ce_error_volumes,
     error_volumes,
@@ -175,6 +176,12 @@ def test_required_columns_are_the_three_the_registration_names():
 
 # --------------------------------------------------------------------------------- CE
 @pytest.fixture(scope="module")
+def k6_rows_all():
+    return (committed_rows("results/k6-designspace.json")
+            + committed_rows("results/k6-designspace-spread.json"))
+
+
+@pytest.fixture(scope="module")
 def k6b_rows():
     return (committed_rows("results/k6b-conservative.json")
             + committed_rows("results/k6b-conservative-spread.json"))
@@ -254,3 +261,20 @@ def test_a_fully_empty_cell_ranks_prevalence_not_arms(k6b_rows):
     ev = ce_error_volumes([r for r in k6b_rows if r["tau_frac"] == 0.95], 0.5)
     assert bool(ev["empty"].all()), "every CE_0.50 set at tau_frac=0.95 should be empty"
     assert np.array_equal(ev["total"], ev["prevalence"])
+
+
+def test_alpha_star_vs_error_volume_is_cell_dependent(k6_rows_all, k6b_rows):
+    """Whether `alpha*` agrees with the superseding metric depends on the CELL.
+
+    P4b reports a single rho between `alpha*` and the symmetric difference. Measured
+    per-cell it does not have one sign: strongly POSITIVE at `tau_frac = 0.60` (higher
+    `alpha*` <-> more total error, which is the damaging reading) and NEGATIVE at 0.75 and
+    0.85. A single pooled rho quoted without its cell is the same defect F4 withdrew the
+    pooled containment figure for, so this asserts the sign flip rather than a number.
+    """
+    at_60 = alpha_star_vs_error_volume(k6_rows_all, k6b_rows, 0.50, 0.60)
+    at_75 = alpha_star_vs_error_volume(k6_rows_all, k6b_rows, 0.50, 0.75)
+    assert at_60["rho"] > 0.3, f"expected a strong positive rho at tau_frac=0.60, got {at_60['rho']:+.4f}"
+    assert at_75["rho"] < 0.0, f"expected a negative rho at tau_frac=0.75, got {at_75['rho']:+.4f}"
+    # n = 8 arms, so one rank swap moves rho by roughly 0.1 and no interval is attached.
+    assert at_60["n_arms"] == 8 and "ci" not in at_60
