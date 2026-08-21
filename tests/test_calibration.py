@@ -669,3 +669,75 @@ def test_the_checkpoint_write_path_actually_runs(tmp_path):
     assert doc["provenance"]["torch_threads"] == 1
     # the checkpoint is removed on promotion, so only the final document survives
     assert not out.with_suffix(".partial.json").exists()
+
+
+# --- Version B: the arm the project is actually about ------------------------------
+#
+# Amendment F2d makes the Murphy split a PRIMARY Phase 2 deliverable, and F2 promoted
+# calibration precisely because AUC cannot see it. SPADE's whole claim -- "this region
+# holds at assurance gamma" -- IS a calibrated statement, so Version B is the arm for
+# which calibration matters most. It was absent because COVERAGE-MATRIX marks it
+# UNGATABLE, and "cannot be gated" was allowed to become "do not run". Those differ: a
+# Version B campaign is seed-deterministic and fully scoreable; it simply has no
+# committed regret column to reproduce.
+
+def test_the_version_b_arms_are_in_the_arm_set():
+    p7 = _p7()
+    for a in ("versionb", "versionb_random", "versionb_predictive", "plate1_only"):
+        assert a in p7.ARMS, f"{a} missing from ARMS"
+
+
+def test_plate1_only_is_never_counted_as_a_separate_arm_in_a_ranking():
+    """D23.1. It IS `lhs` at 48 wells -- reported, never double-counted."""
+    p7 = _p7()
+    assert "plate1_only" in p7.RANKING_EXCLUDED
+    rows = _rows({"lhs": 0.30, "plate1_only": 0.30, "versionb": 0.10})
+    cell = p7.summarise(rows)["cells"][0]
+    assert "plate1_only" not in cell["arms"]
+    assert "plate1_only" not in cell["pred"]["rank_by_brier"]
+    assert "versionb" in cell["arms"], "the ungated arms DO rank"
+
+
+def test_every_row_states_whether_it_was_gated_and_why_not():
+    """UNGATED is a caveat that must travel with the number, not grounds for absence."""
+    p7 = _p7()
+    assert p7.gate_status("versionb")["gated"] is False
+    assert "UNGATABLE" in p7.gate_status("versionb")["gate_reason"]
+    assert p7.gate_status("versionb_predictive")["gated"] is False
+    # plate1_only and the six original arms all have a committed column
+    assert p7.gate_status("plate1_only")["gated"] is True
+    assert p7.gate_status("plate1_only")["gate_reason"] is None
+    assert p7.gate_status("qlogei")["gated"] is True
+
+
+def test_plate1_only_gates_against_the_committed_lhs_column():
+    """Its committed comparator is spelled `lhs`, because that is what it is."""
+    p7 = _p7()
+    assert p7.GATE_AS["plate1_only"] == "lhs"
+
+
+def test_the_version_b_builder_produces_a_scoreable_48_well_campaign():
+    """Built through P2's `build_campaign`, imported rather than reimplemented.
+
+    A second copy of plate 2's LSE selection would be a second campaign, and its columns
+    could not be checked against the committed ones at all (D12). P2 makes exactly this
+    argument for importing `run_versionb._two_plate`; the same argument applies one
+    level up.
+    """
+    p7 = _p7()
+    from boec.replay import committed_rows, regenerate
+    key = sorted({(r["instance"], r["seed"]) for r in committed_rows()
+                  if r["dim"] == 6 and r["sigma"] == 0.25 and r["arm"] == "qlogei"})[0]
+    inst_id, seed = key
+    rec = regenerate(inst_id, 6, 0.25, seed, "versionb_random",
+                     builder=p7.versionb_builder("versionb_random", inst_id, 0.25))
+    assert tuple(rec.X.shape) == (48, 6)
+    assert rec.Y.shape[0] == 48 and rec.Yvar.shape[0] == 48
+    assert 0.0 <= rec.regret < 1.0
+
+    # plate1_only IS lhs: same design, same data, same regret, to the bit.
+    p1 = regenerate(inst_id, 6, 0.25, seed, "plate1_only",
+                    builder=p7.versionb_builder("plate1_only", inst_id, 0.25))
+    lhs = regenerate(inst_id, 6, 0.25, seed, "lhs")
+    assert p1.regret == lhs.regret
+    assert torch.equal(p1.X, lhs.X) and torch.equal(p1.Y, lhs.Y)
