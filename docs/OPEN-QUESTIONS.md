@@ -7286,3 +7286,76 @@ Every row now carries `separation_from_prevalence`, `ranking_is_prevalence_only`
 `rankable`. **`cell_separation` is called only from `merge`**, so this changed no campaign row and
 could not disturb the run in flight or the banked checkpoints — the right place for a
 cross-arm property, and the reason a live correction cost nothing.
+
+---
+
+## 📌 ERRATUM 10 — **PARTIALLY REVERSED. The turn-tie hypothesis was RIGHT; my evidence for it was wrong.**
+
+Erratum 10 recorded the silent-death count as **zero** — P3 and P6 self-killed on my hold order,
+P7 crashed on a real `UnboundLocalError` — and concluded I had *"built a systemic diagnosis out of
+my own instructions."*
+
+**The P4/D23 worker's nine-arm P4b pass died at 44/50 from exactly the mechanism I had retracted:**
+*"killed when the harness stopped its background task — the same tie-to-an-agent's-turn failure
+you flagged."*
+
+> **So the count is ONE, not zero. The hypothesis was correct and every case I cited for it was
+> not.** I over-corrected: having found my three examples were my own instructions, I discarded the
+> mechanism along with the evidence. **A hypothesis is not refuted by its supporting cases being
+> wrong.**
+
+**The remedy was right throughout** — detached launch at PPID 1 — and it is now confirmed working
+under real conditions: **P3's cell survived its agent going idle**, and P4b's relaunch is at PPID 1
+with its checkpoint intact.
+
+### 🔴 And `setsid` failed silently a THIRD time
+
+*"Your prescribed form failed silently and my first relaunch never started."* **Third worker to
+hit it.** The line I circulated does not merely fail — **it fails in a way that looks exactly like
+the death it was prescribed to prevent**, which is how it nearly manufactured evidence for a
+diagnosis that was, ironically, correct. **`nohup … & disown` reaches PPID 1 on macOS and is what
+is running now.**
+
+### My checkpoint search was wrong, and I said it might be
+
+I reported no `*p4b*` checkpoint under the scratchpad. **The checkpoint was in `$TMPDIR` —
+`/var/folders/...`, the per-user macOS path — not the session scratchpad I searched. 396 rows, 44
+units, never at risk.** I flagged the search as unreliable rather than authoritative and asked for
+it to be verified; **it was, and it was wrong.** Fourth process-inspection error of mine today.
+
+**The arm-aware checkpoint preserved all 396 nine-arm campaigns**, so the twelve-arm relaunch is a
+**254-campaign top-up, not a 650-campaign re-run** — ~40 minutes.
+
+---
+
+## 📌 ERRATUM 13 — REFINED · **The γ=0.50 restriction was PRINCIPLED. The τ_frac variation is the real limitation.**
+
+**The P4/D23 worker pushed back and is largely right.** Erratum 13 recorded that
+ρ(α\*, symmetric difference) = **+0.4333 inverts at 11 of 17 cells** and called it a pooled
+statistic. **Two framings, and they differ:**
+
+**Its figure is already cell-attached** — (γ = 0.50, τ_frac = 0.60) — and **γ = 0.50 is not one
+choice among six.** It is the **only** γ at which K6's τ and K6b's γ-free θ are the *same number*:
+worst |τ − θ| = **3.331e-16 there against ≥ 0.124 at all five others.** So the eleven inversions
+found across other γ are **correlations between α\* and an error volume computed on DIFFERENT
+superlevel sets** — precisely the comparison the analysis was restricted to avoid, **not a
+robustness failure of the matched one.**
+
+**Where my point does land, and the worker has taken it: the sign varies across τ_frac WITHIN
+γ = 0.50.**
+
+```
+gamma = 0.50:   tau_frac 0.60  ->  +0.4333
+                         0.75  ->  -0.2333
+                         0.85  ->  -0.1833
+                         0.95  ->  nan  (every arm certifies nothing; coefficient undefined)
+```
+
+> **So *"α\* tracks badness on the symmetric difference"* is a τ_frac = 0.60 STATEMENT, not a
+> general one.** That is the F4 defect, and it is real — **but it is a τ_frac defect, not the γ
+> defect I registered.**
+
+**Erratum 13 stands corrected in its diagnosis while its conclusion holds:** the figure needs its
+**τ_frac** attached, the **γ = 0.50 restriction is a feature and must not be described as
+cherry-picking**, and the 11-of-17 table is a comparison across mismatched thresholds rather than
+seventeen attempts at the same one.
