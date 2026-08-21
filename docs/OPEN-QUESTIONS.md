@@ -7044,3 +7044,55 @@ between a kill condition and a pause, and it was drawn without being asked.
 variants measured **indistinguishable on regret** on both ackley and hartmann6 while **distinct on
 `vol_pred` / `iou` / `brier` / `auprc`.** **A regret-based kill would be unable to detect its own
 effect.**
+
+---
+
+## 📌 ERRATUM 14 · **"24 of 24 cells" is "18 of 18 RANKABLE cells". And the `plate1_only` gate target I specified does not exist at the cells I specified it for.**
+
+### 14a. The F2a headline has the wrong denominator. Direction and strength unchanged.
+
+**Found by the P3 worker applying the degenerate-cell rule to the committed baseline. Verified
+independently — 6 of 24 exactly degenerate, all six at τ_frac = 0.95:**
+
+```
+separation_from_prevalence, k6-designspace.json
+ gamma        0.60        0.75        0.85        0.95
+  0.50     3.68e-01    1.55e-02    2.68e-04    0.00e+00
+  0.70     3.94e-01    1.89e-02    4.91e-04    0.00e+00
+  0.80     3.41e-01    1.45e-02    2.52e-04    0.00e+00
+  0.90     2.36e-01    1.09e-02    6.00e-05    0.00e+00
+  0.95     1.51e-01    7.02e-03    2.00e-05    0.00e+00
+  0.99     6.68e-02    1.50e-03    2.00e-06    0.00e+00
+```
+
+At τ_frac = 0.95 **`empty_pred = 1.00`** — every arm certifies nothing, so **total error volume IS
+the prevalence for all of them** and any ordering ranks the landscape, not the arms.
+
+**So Amendment F2a's *"the error-volume ranking differs from AUC's in 24 of 24 cells"* is
+correctly *"18 of 18 rankable cells."*** **The finding is unchanged in direction and strength —
+still 100% disagreement wherever a ranking exists** — but **six of the twenty-four could never
+have agreed OR disagreed**, and a reader is entitled to know which denominator they are looking
+at. **I have quoted 24/24 repeatedly, including to Joseph.** Relayed to the F-analysis worker,
+which owns the technical report.
+
+**Also flagged, and the handling is right:** the **τ_frac = 0.85** column decays **9.2e-3 → 5.0e-5**
+as γ rises — *technically rankable and nearly vacuous.* The worker **excluded only the exactly
+degenerate and reports the separation for the rest**, on the grounds that *"a chosen cutoff would
+be my judgement masquerading as a measurement."* **Adopted as the rule: report the separation,
+exclude only exact degeneracy, never pick a vacuousness threshold.**
+
+### 14b. 🔴 My `plate1_only` gate target does not exist at the cells I gave it for.
+
+I instructed three workers to gate `plate1_only` against **`k6-designspace-spread.json · lhs`.**
+**That file covers d=6, σ=0.25 ONLY — none of P3's three cells, and nothing off hill.**
+
+**The correct target is `e2-grid.json · lhs`**, which carries `lhs` at all three of P3's cells —
+**and is the stronger target under D12 anyway:** the original E2 runner against a replay, rather
+than one replay against another. **Measured |Δ| = 0.0 exactly at (6, 0.10).**
+
+**And the construction detail that makes it gateable at all:** `plate1_only` must be regenerated
+**as `lhs` and relabelled**, so it is built by the arithmetic its column was built by —
+**including the 20-ordering mean.** Building a fresh LHS instead misses by ~1e-16 and fires the
+gate **on an artefact.** *(Fifth sighting of the `static_curve` artefact, and the second time it is
+latent in the obvious implementation.)* Every row carries `duplicate_of: "lhs"` so no downstream
+table can double-count it, per D23.1.
