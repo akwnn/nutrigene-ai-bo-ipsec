@@ -10,6 +10,7 @@ import math
 import torch
 
 from boec.designspace import (brier_and_auc, certified_mask, certified_volume_curve,
+                              component_report, connected_components,
                               false_inclusion_rate, inscribed_box, iou,
                               inscribed_box_from_mask, predictive_probability_map,
                               probability_map, tau_max)
@@ -258,3 +259,197 @@ def test_tau_max_exact_collapses_to_tau_max_with_no_additive_noise():
 
     for gamma in (0.70, 0.95, 0.99):
         assert tau_max_exact(gamma, 0.25, 0.0) == tau_max(gamma, 0.25)
+
+
+# ---------------------------------------------------------------------------
+# Version C section 4 -- connected-component design spaces.
+#
+# `D_gamma` is already a mask. A multimodal process genuinely has SEVERAL acceptable
+# operating windows and a batch record can name more than one, so a single-box metric
+# structurally penalises a method for finding more than one good region -- which is
+# precisely what spread designs are better at than clustered ones.
+#
+# The grid is a SCATTERED Sobol set, not a lattice, so `scipy.ndimage.label` does not
+# apply and connectivity has to be defined by a neighbourhood graph. These tests pin
+# that definition against the lattice case where the two provably agree.
+# ---------------------------------------------------------------------------
+
+
+def _lattice(side: int, dim: int = 2) -> torch.Tensor:
+    """``(side**dim, dim)`` regular lattice on the unit box, C-ordered like numpy."""
+    axis = (torch.arange(side, dtype=torch.double) + 0.5) / side
+    return torch.cartesian_prod(*([axis] * dim)).reshape(-1, dim)
+
+
+def test_an_empty_mask_has_no_components():
+    X = _lattice(8)
+    labels, n = connected_components(torch.zeros(X.shape[0], dtype=torch.bool), X)
+    assert n == 0
+    assert int(labels.sum()) == 0
+
+
+def test_points_outside_the_mask_are_labelled_zero():
+    X = _lattice(8)
+    mask = torch.zeros(X.shape[0], dtype=torch.bool)
+    mask[:5] = True
+    labels, _ = connected_components(mask, X)
+    assert bool((labels[~mask] == 0).all())
+    assert bool((labels[mask] > 0).all())
+
+
+def test_component_sizes_partition_the_mask():
+    X = _lattice(10)
+    mask = (X[:, 0] < 0.3) | (X[:, 0] > 0.7)
+    labels, n = connected_components(mask, X)
+    assert n == 2
+    assert sum(int((labels == c).sum()) for c in range(1, n + 1)) == int(mask.sum())
+
+
+def test_two_separated_blobs_are_two_components_one_blob_is_one():
+    X = _lattice(12)
+    left = (X[:, 0] < 0.25) & (X[:, 1] < 0.25)
+    right = (X[:, 0] > 0.75) & (X[:, 1] > 0.75)
+    assert connected_components(left | right, X)[1] == 2
+    assert connected_components(left, X)[1] == 1
+
+
+def test_labels_agree_with_scipy_ndimage_on_a_lattice():
+    """**The correctness gate.** On a regular lattice with ``k = 2d`` the neighbourhood
+    graph is face connectivity, which is what ``scipy.ndimage.label`` uses by default.
+
+    The blobs are separated by more than one lattice spacing on purpose. At the box
+    boundary a point's ``2d`` nearest neighbours include a diagonal -- there are fewer
+    than ``2d`` face neighbours to find -- so the two definitions can disagree across a
+    one-cell gap. They cannot disagree across a two-cell gap, and that is the regime the
+    assertion is made in. The docstring of `connected_components` states the same limit.
+    """
+    from scipy import ndimage
+
+    side = 16
+    X = _lattice(side)
+    img = torch.zeros(side, side, dtype=torch.bool)
+    img[1:5, 1:6] = True
+    img[9:14, 8:14] = True
+    img[12:15, 2:4] = True
+    mask = img.reshape(-1)
+
+    ref, n_ref = ndimage.label(img.numpy())
+    labels, n = connected_components(mask, X)
+    assert n == n_ref == 3
+
+    # Same partition, up to how the two number their components.
+    ours = {frozenset(torch.nonzero(labels == c).reshape(-1).tolist())
+            for c in range(1, n + 1)}
+    theirs = {frozenset(torch.nonzero(torch.as_tensor(ref.reshape(-1)) == c)
+                        .reshape(-1).tolist()) for c in range(1, n_ref + 1)}
+    assert ours == theirs
+
+
+def test_components_are_numbered_largest_first():
+    """Stable numbering, so `component_report`'s first row is the dominant window.
+
+    Without it the label of a component depends on grid order, and a per-component table
+    could not be compared across campaigns at all.
+    """
+    X = _lattice(14)
+    big = (X[:, 0] < 0.5) & (X[:, 1] < 0.5)
+    small = (X[:, 0] > 0.85) & (X[:, 1] > 0.85)
+    labels, n = connected_components(big | small, X)
+    assert n == 2
+    sizes = [int((labels == c).sum()) for c in range(1, n + 1)]
+    assert sizes == sorted(sizes, reverse=True)
+
+
+def _sobol_blobs(half_width: float):
+    """Two Chebyshev balls at opposite corners of a 4D Sobol grid."""
+    from boec.norms import sobol_grid
+
+    X = sobol_grid(4, 4096, seed=0)
+    a = torch.tensor([0.15, 0.15, 0.5, 0.5], dtype=torch.double)
+    b = torch.tensor([0.85, 0.85, 0.5, 0.5], dtype=torch.double)
+    mask = (((X - a).abs().max(dim=1).values < half_width)
+            | ((X - b).abs().max(dim=1).values < half_width))
+    return mask, X
+
+
+def test_a_scattered_sobol_grid_separates_two_genuine_blobs():
+    """The case the lattice cannot exercise: irregular spacing, which is the real grid."""
+    mask, X = _sobol_blobs(0.18)
+    assert int(mask.sum()) > 100, "fixture is too sparse to be a connectivity test"
+    assert connected_components(mask, X)[1] == 2
+
+
+def test_a_region_sparser_than_the_grid_fragments_and_that_is_the_definition():
+    """**A limit of the statistic, pinned rather than hidden.**
+
+    Component count is resolution-dependent. At half-width 0.12 each blob holds 15 of
+    4,096 points and its within-blob median nearest-neighbour distance is **0.1131**
+    against the grid's own **0.0932** -- the "region" is sparser than the grid that is
+    supposed to resolve it, so it is not one region at this resolution and reporting it
+    as one would be the fiction.
+
+    This matters beyond the metric: Version C section 3.2 offers the component count as a
+    regime-detector statistic, so a count driven by grid resolution rather than by the
+    landscape would be a detector reading its own grid. Any threshold fitted on it must be
+    fitted at the grid the detector will run on.
+    """
+    sparse, X = _sobol_blobs(0.12)
+    dense, _ = _sobol_blobs(0.18)
+    assert int(sparse.sum()) < 40
+    assert connected_components(sparse, X)[1] > 2
+    assert connected_components(dense, X)[1] == 2
+
+
+def test_component_report_rows_sum_to_the_whole_certified_volume():
+    X = _lattice(12)
+    left = (X[:, 0] < 0.25) & (X[:, 1] < 0.25)
+    right = (X[:, 0] > 0.75) & (X[:, 1] > 0.75)
+    mask = left | right
+    truth = torch.where(mask, 1.0, 0.0).double()
+
+    rows = component_report(mask, X, truth, tau=0.5)
+    assert len(rows) == 2
+    assert abs(sum(r["vol"] for r in rows) - float(mask.double().mean())) < 1e-12
+
+
+def test_component_report_carries_the_single_box_number_alongside():
+    """Section 4: report the single-box number always, so the committed comparison stays
+    intact and the difference between the two is visible."""
+    X = _lattice(12)
+    left = (X[:, 0] < 0.25) & (X[:, 1] < 0.25)
+    right = (X[:, 0] > 0.75) & (X[:, 1] > 0.75)
+    mask = left | right
+    truth = torch.where(mask, 1.0, 0.0).double()
+
+    rows = component_report(mask, X, truth, tau=0.5)
+    _, whole_box = inscribed_box_from_mask(X, mask, seed_score=truth)
+    assert all(r["box_vol_all_components"] == whole_box for r in rows)
+    # Each component's own box cannot exceed the box fitted to the union.
+    assert all(r["box_vol"] <= whole_box + 1e-12 for r in rows)
+
+
+def test_component_report_error_volume_is_the_symmetric_difference():
+    """Type I read alone ranks silence first -- the repo has already been caught by that
+    once. The per-component number is the symmetric difference, same as `error_volumes`."""
+    X = _lattice(12)
+    mask = (X[:, 0] < 0.25) & (X[:, 1] < 0.25)
+    # Truth clears tau on HALF the certified blob, so there is a real type I error.
+    truth = torch.where(mask & (X[:, 1] < 0.125), 1.0, 0.0).double()
+
+    (row,) = component_report(mask, X, truth, tau=0.5)
+    assert row["fi"] > 0.0
+    assert row["total_error_vol"] == row["type_I_vol"] + row["type_II_vol"]
+
+
+def test_component_report_empirical_containment_is_all_or_nothing():
+    """Against one realisation of the truth a set is either wholly inside it or it is
+    not -- the same convention `boec.vorobev.empirical_containment` holds."""
+    X = _lattice(12)
+    left = (X[:, 0] < 0.25) & (X[:, 1] < 0.25)
+    right = (X[:, 0] > 0.75) & (X[:, 1] > 0.75)
+    # Truth clears tau on the LEFT blob only.
+    truth = torch.where(left, 1.0, 0.0).double()
+
+    rows = component_report(left | right, X, truth, tau=0.5)
+    contained = [r["empirical_containment"] for r in rows]
+    assert sorted(contained) == [False, True]

@@ -54,8 +54,9 @@ import torch
 from torch import Tensor
 from torch.distributions import Normal
 
-__all__ = ["POSTERIOR_CHUNK", "brier_and_auc", "certified_mask", "certified_volume_curve",
-           "false_inclusion_rate", "gp_adapter", "inscribed_box",
+__all__ = ["NEIGHBOURS_PER_AXIS", "POSTERIOR_CHUNK", "brier_and_auc", "certified_mask",
+           "certified_volume_curve", "component_report", "connected_components",
+           "false_inclusion_rate", "gp_adapter", "grid_neighbours", "inscribed_box",
            "inscribed_box_from_mask", "iou", "predictive_probability_map",
            "probability_map", "tau_max", "tau_max_exact"]
 
@@ -262,6 +263,227 @@ def inscribed_box_from_mask(X_grid: Tensor, mask: Tensor, n_steps: int = 20,
 
     widths = (hi - lo)[active]
     return torch.stack([lo, hi]), float(torch.prod(widths)) if widths.numel() else 0.0
+
+
+# ---------------------------------------------------------------------------
+# CONNECTED COMPONENTS OF THE CERTIFIED SET
+# ---------------------------------------------------------------------------
+#
+# WHY THIS IS NOT A WORKAROUND
+# ----------------------------
+# A multimodal process genuinely has several acceptable operating windows, and a batch
+# record can name more than one. The single-box metric therefore **structurally penalises
+# a method for finding more than one good region** -- which is precisely what spread
+# designs are better at than clustered ones, and precisely the comparison this repository
+# exists to make. `inscribed_box_from_mask` fits ONE box to the whole mask, so on a
+# disconnected `D_gamma` its volume is bounded by the largest component and the rest of
+# the certified space is invisible.
+#
+# The single-box number is reported **alongside**, always, so the committed comparison
+# stays intact and the difference between the two is a measurement rather than a revision.
+#
+# WHY A NEIGHBOURHOOD GRAPH AND NOT `scipy.ndimage.label`
+# ------------------------------------------------------
+# The evaluation grid is a **scattered Sobol set**, not a lattice. `ndimage.label` needs
+# an array whose axes are the coordinates; there is no such array here and constructing
+# one would mean binning 20,000 quasi-random points onto a raster, which invents a
+# resolution parameter and loses points to collisions. Connectivity is instead defined by
+# a k-nearest-neighbour graph **on the full grid**, of which the mask selects an induced
+# subgraph -- the exact analogue of a lattice, where connectivity is a property of the
+# lattice and the mask selects a subgraph of it.
+#
+# **The graph must be built on the full grid, not on the masked points.** A graph built on
+# the masked points alone joins each point to its k nearest *survivors*, however far away
+# they are, so every mask with more than k points comes back as one component and the
+# statistic is vacuous.
+
+#: Neighbours per axis. ``k = 2*d`` is face connectivity -- a point on a regular lattice
+#: has exactly ``2d`` face neighbours, and face connectivity is `scipy.ndimage.label`'s
+#: default structure. Not a tuned constant: it is the lattice's own coordination number,
+#: so the definition carries over to the scattered grid without acquiring a scale.
+NEIGHBOURS_PER_AXIS = 2
+
+
+def grid_neighbours(X_grid: Tensor, k: int | None = None,
+                    chunk: int = POSTERIOR_CHUNK) -> Tensor:
+    """``(n, k)`` indices of each grid point's ``k`` nearest neighbours, **chunked**.
+
+    Chunked for the same reason :func:`gp_adapter` is: the full pairwise distance matrix
+    at ``n = 20,000`` is 3.2 GB of doubles, the same trap that produced Q54's memory leak.
+    Only the ``k`` smallest entries of each row are ever used, so the rows are reduced as
+    they are produced.
+
+    Euclidean, because the ARD lengthscales are not in scope here -- this is the geometry
+    of the *grid*, which is the same for every arm and every campaign, and making it
+    model-dependent would let the component count of one arm's certified set be decided by
+    another arm's fitted hyperparameters.
+
+    Args:
+        k: neighbours per point. Defaults to ``NEIGHBOURS_PER_AXIS * d``.
+    """
+    n, d = X_grid.shape
+    k = int(NEIGHBOURS_PER_AXIS * d) if k is None else int(k)
+    k = max(1, min(k, n - 1))
+    out = torch.empty((n, k), dtype=torch.long)
+    Xd = X_grid.double()
+    for start in range(0, n, chunk):
+        block = Xd[start:start + chunk]
+        dist = torch.cdist(block, Xd)
+        # Exclude self, which is always the nearest at distance 0.
+        rows = torch.arange(block.shape[0])
+        dist[rows, rows + start] = float("inf")
+        out[start:start + chunk] = torch.topk(dist, k, dim=1, largest=False).indices
+    return out
+
+
+def connected_components(mask: Tensor, X_grid: Tensor, k: int | None = None,
+                         neighbours: Tensor | None = None) -> tuple[Tensor, int]:
+    """Label the connected components of ``mask``. ``(labels (n,) int64, n_components)``.
+
+    ``labels`` is ``0`` outside the mask and ``1..n_components`` inside it, **numbered
+    largest component first**. The numbering is by size and not by grid order, because a
+    per-component table whose row 1 meant a different region in every campaign could not
+    be compared across campaigns at all. Ties in size are broken by first grid index, so
+    the labelling is deterministic.
+
+    Connectivity is the ``k``-nearest-neighbour graph of :func:`grid_neighbours`,
+    symmetrised: ``i`` and ``j`` are adjacent if either is among the other's ``k`` nearest.
+    Symmetrised rather than mutual because a point on the edge of a component is
+    systematically *not* in its neighbours' nearest lists while they are in its, and a
+    mutual graph would shave those edges off and split single regions.
+
+    **Component count is resolution-dependent, and that is not a defect to be tuned out.**
+    A region sparser than the grid that is meant to resolve it is not one region at that
+    grid. Measured on a 4,096-point Sobol grid in 4D: a Chebyshev ball holding 15 points
+    has a within-ball median nearest-neighbour distance of 0.1131 against the grid's own
+    0.0932, and comes back as several components -- correctly. Version C section 3.2
+    offers this count as a regime-detector statistic, so **any threshold fitted on it must
+    be fitted at the grid the detector will run on**, or the detector is reading its own
+    resolution rather than the landscape.
+
+    **The one place this can disagree with lattice face connectivity.** At the boundary of
+    the box a point has fewer than ``2d`` face neighbours, so its ``2d`` nearest include a
+    diagonal, and two regions separated by a single lattice cell along the boundary can
+    therefore be joined. Across a two-cell gap the two definitions cannot disagree.
+    ``tests/test_designspace.py`` gates against ``scipy.ndimage.label`` in that regime and
+    says so.
+
+    Args:
+        neighbours: a precomputed :func:`grid_neighbours` result. The graph depends only on
+            the grid, so a caller sweeping many ``(gamma, tau)`` cells on one grid should
+            build it once -- it is by far the most expensive part of this call.
+    """
+    n = int(mask.shape[0])
+    if not bool(mask.any()):
+        return torch.zeros(n, dtype=torch.long), 0
+
+    nbr = grid_neighbours(X_grid, k=k) if neighbours is None else neighbours
+
+    # Union-find with path halving and union by size. Only masked points are ever united,
+    # so the induced subgraph is what gets labelled.
+    parent = list(range(n))
+    size = [1] * n
+
+    def find(a: int) -> int:
+        while parent[a] != a:
+            parent[a] = parent[parent[a]]
+            a = parent[a]
+        return a
+
+    def union(a: int, b: int) -> None:
+        ra, rb = find(a), find(b)
+        if ra == rb:
+            return
+        if size[ra] < size[rb]:
+            ra, rb = rb, ra
+        parent[rb] = ra
+        size[ra] += size[rb]
+
+    idx = torch.nonzero(mask.reshape(-1)).reshape(-1)
+    inside = mask.reshape(-1)
+    # Symmetrised: iterating every masked point's own neighbour list and uniting whenever
+    # the neighbour is also masked covers both directions of the "either is among the
+    # other's k nearest" relation, because the union is symmetric.
+    for i in idx.tolist():
+        for j in nbr[i].tolist():
+            if inside[j]:
+                union(i, j)
+
+    roots: dict[int, list[int]] = {}
+    for i in idx.tolist():
+        roots.setdefault(find(i), []).append(i)
+
+    # Largest first; ties broken by first grid index, so the order is total and stable.
+    ordered = sorted(roots.values(), key=lambda m: (-len(m), m[0]))
+    labels = torch.zeros(n, dtype=torch.long)
+    for label, members in enumerate(ordered, start=1):
+        labels[torch.tensor(members, dtype=torch.long)] = label
+    return labels, len(ordered)
+
+
+def component_report(mask: Tensor, X_grid: Tensor, truth: Tensor, tau: float,
+                     k: int | None = None, neighbours: Tensor | None = None,
+                     n_steps: int = 20, active: Tensor | None = None,
+                     seed_score: Tensor | None = None) -> list[dict]:
+    """One row per connected component of ``mask``, largest first.
+
+    Per component: ``vol``, ``box_vol`` and its per-axis ranges, ``fi``, the type I / type
+    II / symmetric-difference error volumes, and ``empirical_containment``.
+
+    **The symmetric difference, not type I alone.** Type I error volume read by itself
+    ranks a method that certifies nothing in first place -- this repository has already
+    been caught by that once -- so the per-component number is the same symmetric
+    difference :func:`boec.calibration.error_volumes` reports, computed against the
+    component's own certified volume.
+
+    **``box_vol_all_components`` is on every row**, so the committed single-box number
+    travels with the decomposition and the difference between the two is visible rather
+    than inferred. That is the whole point of section 4: it must not silently replace the
+    number the committed comparison is made on.
+
+    ``empirical_containment`` is all-or-nothing per component, the convention
+    :func:`boec.vorobev.empirical_containment` holds -- against one realisation of the
+    truth a set is either wholly inside it or it is not.
+
+    Args:
+        truth: ``(n,)`` noiseless values on the same grid. Requires oracle access, so this
+            is a scoring function and never part of a method's own decision path.
+    """
+    from boec.calibration import error_volumes
+
+    labels, n_comp = connected_components(mask, X_grid, k=k, neighbours=neighbours)
+    t = truth.reshape(-1)
+    true_set = t >= tau
+    prevalence = float(true_set.double().mean())
+    _, whole_box = inscribed_box_from_mask(X_grid, mask, n_steps=n_steps, active=active,
+                                           seed_score=seed_score)
+
+    rows: list[dict] = []
+    for c in range(1, n_comp + 1):
+        part = labels == c
+        box, box_vol = inscribed_box_from_mask(X_grid, part, n_steps=n_steps,
+                                               active=active, seed_score=seed_score)
+        vol = float(part.double().mean())
+        fi = false_inclusion_rate(part, truth, tau)
+        # `error_volumes` is defined exactly where `fi` is nan -- an empty region makes no
+        # type I error -- but a component is non-empty by construction, so `fi` is real.
+        ev = error_volumes(vol, fi, prevalence)
+        rows.append({
+            "component": c,
+            "n_points": int(part.sum()),
+            "vol": vol,
+            "box_vol": box_vol,
+            "box_lower": [float(v) for v in box[0]],
+            "box_upper": [float(v) for v in box[1]],
+            "box_vol_all_components": whole_box,
+            "n_components": n_comp,
+            "fi": fi,
+            "iou": iou(part, truth, tau),
+            "true_frac_above_tau": prevalence,
+            "empirical_containment": bool(t[part].ge(tau).all()),
+            **ev,
+        })
+    return rows
 
 
 def tau_max_exact(gamma: float, sigma_rel: float, sigma_add: float,
