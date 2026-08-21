@@ -205,3 +205,111 @@ def test_an_all_axes_arm_is_scored_on_the_unpinned_grid(p4b):
 def test_the_ranking_includes_coord(p4b):
     """P4 exists so this ranking is 9 arms wide. Silently dropping to 8 is the failure."""
     assert tuple(sorted(p4b.ARMS)) == NINE
+
+
+# --------------------------------------------------------------------------------------
+# AMENDMENT F1 — THE SPEARMAN CI AT BOTH UNITS, n=25 GOVERNING
+# --------------------------------------------------------------------------------------
+#
+# The registered rule -- rho <= -0.5 with a CI excluding 0 -- is decided on the n=25 CI.
+# The coefficient is taken over nine arm MEANS, so resampling changes those means and
+# nothing else; the point estimate is identical at both units on a balanced design and
+# only the interval moves. With nine points that interval is wide, and a conclusion that
+# survives only at n=50 is not a conclusion.
+
+def test_spearman_is_reported_at_both_units_with_n25_governing(p4b):
+    res = p4b.dual_spearman(_synthetic(-1))
+    assert res["governing_unit"] == "n25"
+    assert res["n50"]["n_units"] == 50
+    assert res["n25"]["n_units"] == 25
+    assert res["n50"]["n_arms"] == res["n25"]["n_arms"] == 9
+    # Arm means are unchanged by re-grouping a balanced design, so rho cannot move.
+    assert res["n50"]["rho"] == res["n25"]["rho"]
+
+
+def test_the_instance_unit_bootstrap_is_wider_on_noisy_data(p4b):
+    """25 units carry less information than 50. If the CI did not widen, seeds were
+    not being collapsed and the anti-conservative unit was being reported twice."""
+    rng = np.random.default_rng(11)
+    data = {arm: {(f"i{u:02d}", s): (float(rng.standard_normal()),
+                                     float(rng.standard_normal()))
+                  for u in range(25) for s in (0, 1)} for arm in NINE}
+    res = p4b.dual_spearman(data)
+    w50 = res["n50"]["ci_hi"] - res["n50"]["ci_lo"]
+    w25 = res["n25"]["ci_hi"] - res["n25"]["ci_lo"]
+    assert w25 >= w50, (w25, w50)
+
+
+# --------------------------------------------------------------------------------------
+# AMENDMENT F2a/F2c — ERROR VOLUMES, AND THE ONE CELL WHERE alpha* AND K6 SHARE A THRESHOLD
+# --------------------------------------------------------------------------------------
+
+def test_k6_tau_matches_k6b_theta_only_at_gamma_one_half():
+    """The threshold-matching fact the symmetric-difference comparison rests on.
+
+    K6b's `theta = tau_frac * mu_max` is gamma-free -- margin 1 collapses into the
+    tau-as-fraction parameterisation. K6's `tau = tau_frac * tau_max(gamma)` is not, and
+    `tau_max(gamma) = mu_max * (1 - z(gamma) * sigma_rel)`. Since z(0.5) = 0 the two
+    coincide at gamma = 0.50 and nowhere else, so pairing alpha* against an error volume
+    at any other gamma compares two different superlevel sets.
+
+    **Not asserted as exact equality, because they are not the same expression.** K6
+    calls `tau_max(gamma, sigma_rel)` at its DEFAULT `mu_max = 1.0` and rounds to 10 dp;
+    K6b multiplies by the instance's own `optimum_value`, which is 1.0 only to within
+    3.331e-16 over the 25-instance ensemble (13 of 25 are exactly 1.0). So the residual
+    at gamma = 0.50 is that normalisation's float error and nothing else. The test pins
+    the measured SEPARATION -- ULP scale here, and larger than SESOI by more than a
+    factor of six at every other gamma -- which is the property the comparison needs.
+    """
+    k6b = {(r["instance"], r["seed"], r["arm"], r["tau_frac"]): r
+           for r in _k6b("k6b-conservative.json")}
+    k6 = json.loads((ROOT / "results" / "k6-designspace.json").read_text())["rows"]
+    worst = {}
+    for r in k6:
+        key = (r["instance"], r["seed"], r["arm"], r["tau_frac"])
+        if key in k6b:
+            worst[r["gamma"]] = max(worst.get(r["gamma"], 0.0),
+                                    abs(r["tau"] - k6b[key]["theta"]))
+    assert len(worst) == 6, worst
+    assert worst[0.50] < 1e-15, worst[0.50]
+    for g, w in worst.items():
+        if g != 0.50:
+            assert w > 0.12, (g, w)
+
+
+def test_error_volumes_reproduce_the_committed_iou(p4b):
+    """F2a's arithmetic, gated against the committed `iou_pred` column, not asserted.
+
+    `implied_iou` exists ONLY for this check. It is not a new estimand and is not
+    reported as one.
+    """
+    rows = [r for r in p4b.k6_rows() if not r["empty_pred"]
+            and np.isfinite(r["iou_pred"])]
+    assert len(rows) > 500, len(rows)
+    worst = 0.0
+    for r in rows:
+        ev = p4b.error_volumes(r["vol_pred"], r["fi_pred"], r["true_frac_above_tau"])
+        worst = max(worst, abs(ev["implied_iou"] - r["iou_pred"]))
+    assert worst < 1e-12, worst
+
+
+def test_an_empty_region_is_iou_zero_not_nan_when_the_true_set_is_not_empty():
+    """`fi` and `iou` do NOT go nan together, and assuming they do has already caught
+    one worker on this team. `fi` is nan whenever `D_est` is empty; `iou` is nan only
+    when the UNION is empty, so an empty `D_est` against a non-empty true set is 0."""
+    rows = [r for r in json.loads(
+        (ROOT / "results" / "k6-designspace.json").read_text())["rows"]
+        if r["empty_pred"] and r["true_frac_above_tau"] > 0]
+    assert rows, "no empty-region rows against a non-empty true set to check"
+    assert all(not np.isfinite(r["fi_pred"]) for r in rows)
+    assert all(r["iou_pred"] == 0.0 for r in rows), (
+        [r["iou_pred"] for r in rows[:5]])
+
+
+def test_the_nine_arm_ranking_covers_iou_and_brier(p4b):
+    """F2c: `analyse_k6.py` ranks on neither, and both are committed per row."""
+    r = p4b.rank_arms(gamma=0.50, tau_frac=0.75)
+    assert set(r) >= {"iou_pred", "brier_pred", "symmetric_difference",
+                      "type_I_vol", "type_II_vol"}
+    for metric, ranking in r.items():
+        assert len(ranking) == 9, (metric, ranking)
