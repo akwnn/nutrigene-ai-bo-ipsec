@@ -1005,3 +1005,115 @@ costs more than it saves. **Released.** P2 stays paused on work-lost grounds onl
 
 Recording the reversal because a silently-dropped instruction is indistinguishable from a
 forgotten one, and this team is running on written instructions.
+
+## D40 ✅ **F1 answered, and it partly REFUTES the premise I registered. Both headlines survive.**
+
+`96c0870`, `results/f1-dual-n.json`, 137 contrasts at both units, read from committed blobs via
+`git show HEAD:` with **no campaign run**.
+
+| family | n | Holm-sig n=50 | Holm-sig n=25 | changed |
+|---|---|---|---|---|
+| **HEADLINE 1 — `lhs − doe` on AUC(pred)** | 24 | **24** | **24** | **0** |
+| `doe − qlogei` on AUC(pred) | 24 | 24 | 24 | 0 |
+| **D20 HEADLINE 2 — rule-P reversal, per arm** | 10 | 8 | 8 | **0** |
+| **D20 — the SIGN FLIP itself** | 2 | 2 | 2 | **0** |
+| containment cells | 156 | — | — | **0** |
+
+**Both headlines survive the conservative unit unchanged.** The registered kill
+(`improvement(versionb) − improvement(doe)`) is significant at both — p = 2.4e-13 and
+1.2e-07 — and did not fire.
+
+**And the premise of my own amendment is wrong in an interesting way.** F1 asserted n=50
+"narrows every bootstrap CI by roughly **√2**". Measured:
+
+```
+CI inflation  sqrt(Var_n25/Var_n50):  median 0.9884   min 0.4922   max 1.1763   below 1.0: 73/137
+ICC equivalent:                       median -0.0231  min -0.7577  max +0.3836  negative: 73/137
+```
+
+**√2 is the ICC = 1 corner, and the median ICC is slightly NEGATIVE.** Two seeds on one
+landscape are not positively correlated *on the paired differences*, because the landscape
+effect largely cancels in the difference — which is exactly the quantity being tested. **So
+n = 50 was not meaningfully anti-conservative on these contrasts.**
+
+**The exercise was still right.** The convention genuinely contradicted itself
+(`K6-TECHNICAL-REPORT.md` §3.8 vs `RESEARCH-SUMMARY.md`), nothing recorded the switch, and the
+discrepancy is now **measured rather than assumed**. That is the defence it was for. But the
+honest headline is *"the inconsistency was real and its effect is ~zero"* — not "we were
+wrong", and not "we were fine".
+
+**Four Holm status changes — and THREE are UPGRADES, all on SPADE's registered kills:**
+* ⬆ KILL 1 `versionb − qlognei` on **`alpha_star`** tf=0.85, and on **AUC** tf=0.75
+* ⬆ KILL 2 `versionb − versionb_random` on **`alpha_star`** tf=0.6
+* ⬇ §5.8 `sobol − qlognei` on `alpha_star` tf=0.6
+
+KILL 1 goes **2/8 → 4/8**, KILL 2 **3/8 → 4/8**. **The conservative unit makes SPADE look
+better.**
+
+**⚠️ The caveat that must travel with that, and it is not a small one.** **Two of the three
+upgrades are on `alpha_star` — MODEL-INTERNAL**, and P4b is currently testing α\* as
+*anti-correlated* with the validated metrics. **An upgrade on α\* is not SPADE improving; it
+is a stronger reading of a statistic under suspicion.** Only the AUC upgrade is validated —
+and under F2a the AUC ranking is itself superseded by the error volumes wherever they
+disagree, so even that one must clear the new framing before it is quoted.
+
+## D41 🔴 **The machine, diagnosed by two workers independently and verified. Two items are Joseph's call.**
+
+```
+CCXProcess (Adobe, pid 41386)   82.1% CPU,  4,491 CPU-MINUTES accumulated since 13 Aug
+free RAM                        59 MB       (was 146 MB an hour earlier)
+wired                           16.2 GB     compressor 5.4 GB
+swap                            24.4 GB of 28.7 GB
+CPU                             40.3% user, 57.7% sys, 2.0% idle
+```
+
+**~75 hours of CPU burned by Adobe for nothing to do with this programme.** Measured cost to
+the team: `qlogei` **220 s** per campaign against a committed 16 s; `doe` **115 s** against
+0.1 s; each worker receiving **5–6% of one core**. P3's estimate moved 7 h → **17 h**.
+
+**Both workers named it, neither touched it, and both said explicitly that killing a process
+on Joseph's machine is his call.** That is the correct boundary and both drew it unprompted.
+**Escalated with their numbers.**
+
+**One correction so it does not travel unqualified:** `pmset -g therm` reports **no recorded
+thermal warning level**. That neither confirms nor refutes P3's `kernel_task` at 177% reading
+— pmset logs warning levels, not the throttle mechanism — so the thermal point is passed on as
+**P3's observation, not as verified fact.** The Adobe and memory numbers *are* verified.
+
+## D42 🟡 **Serialised to two heavy slots. Third instruction to P3, and the churn is mine.**
+
+Both P1 and P3 independently recommended serialising the campaign generators. Adopted.
+**Running: P1** (an hour invested; blocks P3's own kernel gate) **and P4-D23-trio** (`doe` at
+0.1 s/campaign — best value per CPU-second on the team, and D23 qualifies the session
+headline). **Paused: P7, P3, P2. Release order: P7 → P3 → P2.**
+
+**I paused P3, released it, and re-paused it.** The release was wrong and the reason is worth
+recording: I had measured that our processes were small in **RSS** and inferred they could not
+be the problem. **At 59 MB free that inference does not hold** — every torch process is
+200–400 MB resident-or-compressed, and seven of them is the difference between paging and not.
+P3's *"everything is paging"* was the right reading of a true observation and my inference from
+it was wrong.
+
+**P3 refused to re-scope itself twice**, writing *"the only honest lever is scope, and that is
+your call to make explicitly, not mine to take quietly."* **Both refusals were correct.**
+Answered on the record: **the registered grid stands** — three cells, eight arms, n=50, full γ
+and τ_frac grids. Any reduction will be written, registered and logged with its reason,
+**never a smaller run that reads like the full one.**
+
+## D43 🟢 P1 cut 2 CPU-h by measuring an assumption instead of paying for it.
+
+P1 had a real concern — K6 reaches `build_gp` via `score_campaign` while K6b calls it directly,
+and moving `build_gp`'s position in the global RNG stream could break reproduction. The lazy
+options were two passes (costly) or assuming it does not matter (unsound).
+
+**It measured:** the same `(X, Y, Yvar, bounds)` fitted under two deliberately different global
+RNG states returns parameters identical at **|Δ| = 0.000e+00** — `build_gp` at
+`fit_restarts=1` takes the early-return `fit_gpytorch_mll` path and never touches the global
+stream, and `joint_draws` carries its own `torch.Generator`. K6 and K6b now score from **one**
+regeneration. **~2 CPU-h saved, scope unchanged, 2,800 rows and the kill condition intact.**
+
+**And it kept the evidence the second pass had been providing for free** — a
+`--determinism-recheck` that re-regenerates a few kernel campaigns and re-gates them, at ~3% of
+the cost. That is the part most would have dropped. Asked for both RNG facts to go in the
+committed `provenance` block rather than the report: a fact that lives only in a chat log is a
+fact this project has already lost once.
