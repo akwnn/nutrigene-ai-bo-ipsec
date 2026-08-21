@@ -108,15 +108,21 @@ def test_the_registered_anomaly_is_present_in_the_committed_files():
 # THE BOOTSTRAP RESAMPLES UNITS, NOT ARMS
 # --------------------------------------------------------------------------------------
 
-def _synthetic(sign: int, n_units: int = 50) -> dict[str, dict[tuple[str, int], tuple]]:
-    """``arm -> unit -> (alpha_star, regret)`` with a ranking fixed by construction."""
+def _synthetic(sign: int, n_instances: int = 25) -> dict[str, dict[tuple[str, int], tuple]]:
+    """``arm -> unit -> (alpha_star, regret)`` with a ranking fixed by construction.
+
+    Shaped like the real design — 25 instances x 2 seeds — so the n=25 collapse has
+    something to collapse. A fixture of 50 singly-seeded instances would leave
+    `instance_level` a no-op and the dual-unit tests would pass while testing nothing.
+    """
     rng = np.random.default_rng(7)
     out = {}
     for k, arm in enumerate(NINE):
         out[arm] = {}
-        for u in range(n_units):
-            regret = 0.1 + 0.01 * k + 0.001 * rng.standard_normal()
-            out[arm][("i%02d" % u, 0)] = (sign * regret, regret)
+        for u in range(n_instances):
+            for s in (0, 1):
+                regret = 0.1 + 0.01 * k + 0.001 * rng.standard_normal()
+                out[arm][("i%02d" % u, s)] = (sign * regret, regret)
     return out
 
 
@@ -227,17 +233,43 @@ def test_spearman_is_reported_at_both_units_with_n25_governing(p4b):
     assert res["n50"]["rho"] == res["n25"]["rho"]
 
 
-def test_the_instance_unit_bootstrap_is_wider_on_noisy_data(p4b):
-    """25 units carry less information than 50. If the CI did not widen, seeds were
-    not being collapsed and the anti-conservative unit was being reported twice."""
+def test_n50_is_anti_conservative_exactly_when_the_landscape_effect_is_real(p4b):
+    """The mechanism F1 exists to correct, made visible in both directions.
+
+    **Not** "n=25 is always wider" — that is false and this team has already measured it
+    false (median CI inflation 0.9884, median ICC −0.0231, negative in 73 of 137
+    contrasts, because a landscape effect cancels in a paired difference). Averaging two
+    iid seeds halves each unit's variance while halving the unit count, so on pure noise
+    the interval barely moves.
+
+    What IS true is the thing the correction is for: when the two seeds of an instance
+    agree, `(instance, seed)` counts 50 units where 25 exist, and n=50's interval is
+    then too narrow. Both halves are pinned here so neither can be claimed loosely.
+    """
     rng = np.random.default_rng(11)
-    data = {arm: {(f"i{u:02d}", s): (float(rng.standard_normal()),
-                                     float(rng.standard_normal()))
-                  for u in range(25) for s in (0, 1)} for arm in NINE}
-    res = p4b.dual_spearman(data)
+
+    # Strong landscape effect: both seeds of an instance carry the identical value, so
+    # there are genuinely 25 units and n=50 double-counts every one of them.
+    shared = {arm: {u: (float(rng.standard_normal()), float(rng.standard_normal()))
+                    for u in range(25)} for arm in NINE}
+    clustered = {arm: {(f"i{u:02d}", s): shared[arm][u]
+                       for u in range(25) for s in (0, 1)} for arm in NINE}
+    res = p4b.dual_spearman(clustered)
     w50 = res["n50"]["ci_hi"] - res["n50"]["ci_lo"]
     w25 = res["n25"]["ci_hi"] - res["n25"]["ci_lo"]
-    assert w25 >= w50, (w25, w50)
+    assert w50 < w25, ("n=50 must be the narrower, anti-conservative unit when the "
+                       "seeds are redundant", w50, w25)
+
+    # No landscape effect: seeds are independent draws, and the two units carry the same
+    # information about the arm mean, so the intervals are comparable rather than sqrt(2)
+    # apart. Pinned loosely on purpose -- the claim is "comparable", not a constant.
+    indep = {arm: {(f"i{u:02d}", s): (float(rng.standard_normal()),
+                                      float(rng.standard_normal()))
+                   for u in range(25) for s in (0, 1)} for arm in NINE}
+    res2 = p4b.dual_spearman(indep)
+    r = ((res2["n25"]["ci_hi"] - res2["n25"]["ci_lo"])
+         / (res2["n50"]["ci_hi"] - res2["n50"]["ci_lo"]))
+    assert 0.7 < r < 1.4, r
 
 
 # --------------------------------------------------------------------------------------
@@ -313,3 +345,55 @@ def test_the_nine_arm_ranking_covers_iou_and_brier(p4b):
                       "type_I_vol", "type_II_vol"}
     for metric, ranking in r.items():
         assert len(ranking) == 9, (metric, ranking)
+
+
+# --------------------------------------------------------------------------------------
+# A RANK CORRELATION OVER NINE POINTS HAS LEVERAGE, AND THE SIGN NEEDS WORDS
+# --------------------------------------------------------------------------------------
+
+def test_leave_one_arm_out_is_reported_for_every_arm(p4b):
+    """Nine points is few enough that one arm can carry the coefficient.
+
+    Reporting rho without the sensitivity would let a single high-leverage arm stand in
+    for a ranking claim about nine. The diagnostic is cheap and it is not optional.
+    """
+    # Eight arms in perfect POSITIVE order, then `doe` dragged to the opposite corner:
+    # the highest alpha* paired with the lowest regret. That is the shape of the real
+    # data, where `doe` sits at the extreme of both axes and the other eight are nearly
+    # unordered. A fixture that merely made `doe` extreme in the SAME direction as the
+    # rest would create no leverage at all and the test would pass while testing nothing.
+    data = _synthetic(+1)
+    for u in data["doe"]:
+        data["doe"][u] = (5.0, -5.0)
+    res = p4b.spearman_across_arms(data)
+
+    loo = res["rho_leave_one_arm_out"]
+    assert set(loo) == set(NINE)
+    assert loo["doe"] == 1.0, loo["doe"]
+    assert abs(loo["doe"] - res["rho"]) > 0.1, (loo["doe"], res["rho"])
+    assert all(-1.0 <= v <= 1.0 for v in loo.values())
+
+
+def test_the_sign_is_spelled_out_because_regret_is_a_loss(p4b):
+    """`rho <= -0.5` and "anti-correlated" do not mean the same thing for a LOSS.
+
+    Regret is a loss, so a NEGATIVE rho between alpha* and regret means arms with a
+    higher alpha* have LOWER regret -- alpha* agreeing with the validated metric, not
+    opposing it. A label alone is misreadable in exactly the direction that matters, so
+    the direction travels as a sentence.
+    """
+    agrees = p4b.spearman_across_arms(_synthetic(-1))     # alpha* = -regret
+    assert agrees["rho"] == -1.0
+    assert "lower" in agrees["direction_in_words"].lower()
+
+    opposes = p4b.spearman_across_arms(_synthetic(+1))    # alpha* = +regret
+    assert opposes["rho"] == 1.0
+    assert "higher" in opposes["direction_in_words"].lower()
+    assert agrees["direction_in_words"] != opposes["direction_in_words"]
+
+
+def test_the_spread_arm_subset_is_reported_beside_the_nine(p4b):
+    """The registration's anomaly is stated over three arms. It is measured over three."""
+    res = p4b.spearman_across_arms(_synthetic(+1))
+    assert res["rho_spread_arms_only"]["arms"] == ["lhs", "random", "sobol"]
+    assert -1.0 <= res["rho_spread_arms_only"]["rho"] <= 1.0

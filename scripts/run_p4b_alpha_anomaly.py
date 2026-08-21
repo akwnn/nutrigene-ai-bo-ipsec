@@ -83,6 +83,7 @@ torch.set_num_threads(1)
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
+from boec.calibration import error_volumes                           # noqa: E402
 from boec.designspace import gp_adapter                              # noqa: E402
 from boec.norms import sobol_grid                                    # noqa: E402
 from boec.replay import CampaignRecord, regenerate, unit_bounds      # noqa: E402
@@ -95,6 +96,12 @@ SUBSET_N, GRID_SEED = 2_000, 0
 TAU_FRACS = (0.60, 0.75, 0.85, 0.95)
 #: Declared before the coefficients were seen. See the module docstring.
 PRIMARY_TAU_FRAC = 0.75
+#: The ONLY gamma at which K6's `tau` and K6b's `theta` are the same threshold.
+#: `tau_max(gamma) = mu_max(1 - z*sigma_rel)` and z(0.50) = 0, so tau_max = mu_max
+#: there and nowhere else. Measured worst |tau - theta|: 3.331e-16 at 0.50 against
+#: >= 0.124 at every other gamma. Pairing alpha* against an error volume off this
+#: cell would correlate two different superlevel sets.
+MATCHED_GAMMA = 0.50
 
 #: Nine, because P4 added the ninth. Eight is the failure mode this task exists to avoid.
 ARMS = ("coord", "doe", "lhs", "qlogei", "qlogei-add", "qlogei-addonly", "qlognei",
@@ -102,6 +109,7 @@ ARMS = ("coord", "doe", "lhs", "qlogei", "qlogei-add", "qlogei-addonly", "qlogne
 
 E2_GRID = ROOT / "results" / "e2-grid.json"
 K6 = ROOT / "results" / "k6-designspace.json"
+K6_SPREAD = ROOT / "results" / "k6-designspace-spread.json"
 K6B = ROOT / "results" / "k6b-conservative.json"
 K6B_SPREAD = ROOT / "results" / "k6b-conservative-spread.json"
 P4_COORD = ROOT / "results" / "p4-coord.json"
@@ -155,6 +163,66 @@ def committed_alpha_star() -> dict[tuple[str, int, str, float], float]:
         rows += _rows(P4_COORD, "k6b_rows")
     return {(r["instance"], int(r["seed"]), r["arm"], float(r["tau_frac"])):
             float(r["alpha_star"]) for r in rows if r["arm"] in ARMS}
+
+
+@lru_cache(maxsize=1)
+def k6_rows() -> list[dict]:
+    """Every committed K6 row for the nine arms. No compute — all three files exist."""
+    rows = _rows(K6) + _rows(K6_SPREAD)
+    if P4_COORD.exists():
+        rows += _rows(P4_COORD, "k6_rows")
+    return [r for r in rows if r["arm"] in ARMS]
+
+
+def rank_arms(gamma: float = MATCHED_GAMMA, tau_frac: float = PRIMARY_TAU_FRAC) -> dict:
+    """``metric -> [arm, ...] best first``, over the nine arms. **Amendments F2a and F2c.**
+
+    F2a makes the expected error volumes the primary design-space metric above AUC, which
+    is invariant to monotone transformation and so scores ranking and never calibration.
+    F2c adds IoU and Brier, both committed per row and ranked by nothing in the project.
+
+    **The symmetric difference is the one to read when one number is needed.** Type I
+    volume alone ranks SILENCE first: an arm certifying the empty set scores exactly 0 on
+    it, having certified nothing to be wrong about. Reporting type I alone would put the
+    most reticent arm at the top for no other reason.
+    """
+    by_arm: dict[str, list[dict]] = {}
+    for r in k6_rows():
+        if r["gamma"] == gamma and r["tau_frac"] == tau_frac:
+            by_arm.setdefault(r["arm"], []).append(r)
+
+    stats: dict[str, dict[str, float]] = {}
+    for arm, rows in by_arm.items():
+        ev = [error_volumes(r["vol_pred"], r["fi_pred"], r["true_frac_above_tau"])
+              for r in rows]
+        stats[arm] = {
+            "type_I_vol": float(np.mean([e["type_I_vol"] for e in ev])),
+            "type_II_vol": float(np.mean([e["type_II_vol"] for e in ev])),
+            "symmetric_difference": float(np.mean([e["total_error_vol"] for e in ev])),
+            # nanmean: an empty region against an empty true set is genuinely undefined
+            # for IoU, and 0 would average in as if the arm had been wrong.
+            "iou_pred": float(np.nanmean([r["iou_pred"] for r in rows])),
+            "brier_pred": float(np.nanmean([r["brier_pred"] for r in rows])),
+            "auc_pred": float(np.nanmean([r["auc_pred"] for r in rows])),
+            "prevalence": float(np.mean([r["true_frac_above_tau"] for r in rows])),
+        }
+    #: Higher is better for IoU and AUC; lower is better for every error quantity.
+    higher_better = {"iou_pred", "auc_pred"}
+    return {m: sorted(stats, key=lambda a: -stats[a][m] if m in higher_better
+                      else stats[a][m])
+            for m in ("type_I_vol", "type_II_vol", "symmetric_difference",
+                      "iou_pred", "brier_pred", "auc_pred")}
+
+
+def arm_symmetric_difference(gamma: float = MATCHED_GAMMA,
+                             tau_frac: float = PRIMARY_TAU_FRAC
+                             ) -> dict[tuple[str, int, str], float]:
+    """``(instance, seed, arm) -> total error volume`` at one cell. F2a's summary number."""
+    return {(r["instance"], int(r["seed"]), r["arm"]):
+            error_volumes(r["vol_pred"], r["fi_pred"],
+                          r["true_frac_above_tau"])["total_error_vol"]
+            for r in k6_rows()
+            if r["gamma"] == gamma and r["tau_frac"] == tau_frac}
 
 
 # ======================================================================================
@@ -261,6 +329,19 @@ def spearman_across_arms(data: dict[str, dict[tuple[str, int], tuple[float, floa
         take = idx[b]
         boots[b] = spearmanr(alpha[:, take].mean(axis=1),
                              regret[:, take].mean(axis=1)).statistic
+    # LEVERAGE. Nine points is few enough that one arm can carry the coefficient, and
+    # `doe` sits at the extreme of both axes on the real data. Reporting rho without this
+    # would let a single arm stand in for a ranking claim about nine.
+    loo = {}
+    for j, arm in enumerate(arms):
+        keep = [i for i in range(len(arms)) if i != j]
+        loo[arm] = float(spearmanr(alpha[keep].mean(axis=1),
+                                   regret[keep].mean(axis=1)).statistic)
+    spread = [i for i, a in enumerate(arms) if a in ("lhs", "sobol", "random")]
+    spread_rho = (float(spearmanr(alpha[spread].mean(axis=1),
+                                  regret[spread].mean(axis=1)).statistic)
+                  if len(spread) == 3 else float("nan"))
+
     lo, hi = _boot_ci(boots)
     # Two-sided bootstrap p: twice the smaller tail mass on the far side of 0, floored at
     # 1/N_BOOT. Spearman's asymptotic p is not available — the coefficient is taken over
@@ -270,6 +351,26 @@ def spearman_across_arms(data: dict[str, dict[tuple[str, int], tuple[float, floa
     return {"rho": rho, "ci_lo": lo, "ci_hi": hi,
             "bootstrap_p": max(p, 1.0 / N_BOOT),
             "ci_excludes_zero": bool(lo > 0 or hi < 0),
+            # THE SIGN, IN WORDS. Regret is a LOSS, so a negative rho means arms with a
+            # higher alpha* have LOWER regret -- alpha* AGREEING with the validated
+            # metric, not opposing it. The registered branch-1 label is
+            # "anti-correlated" at rho <= -0.5, which under this convention describes
+            # agreement. A bare label is misreadable in exactly the direction that
+            # decides how this result gets cited, so the direction travels as a sentence.
+            "direction_in_words": (
+                "arms with a higher mean alpha* have LOWER mean regret (alpha* tracks "
+                "the validated metric)" if rho < 0 else
+                "arms with a higher mean alpha* have HIGHER mean regret (alpha* tracks "
+                "the opposite of the validated metric)" if rho > 0 else
+                "no monotone association between mean alpha* and mean regret"),
+            "sign_convention": ("regret is a LOSS: lower is better. rho < 0 therefore "
+                                "means alpha* and quality AGREE."),
+            "rho_leave_one_arm_out": loo,
+            "rho_spread_arms_only": {
+                "rho": spread_rho, "arms": [arms[i] for i in spread],
+                "note": ("The registration states its anomaly over these three arms. It "
+                         "is measured over these three, beside the nine, because a "
+                         "three-arm claim and a nine-arm claim are different claims.")},
             "n_arms": len(arms), "n_units": len(units), "n_boot": N_BOOT,
             #: Constant by construction — the bootstrap resamples units, so every
             #: resample still ranks all of the arms. Recorded so that stays checkable.
@@ -295,6 +396,50 @@ def _ols(x: np.ndarray, y: np.ndarray) -> dict:
             "n": int(len(x))}
 
 
+def instance_level(values: dict[tuple[str, int], float]) -> dict[str, float]:
+    """``(instance, seed) -> value`` collapsed to ``instance -> mean over its seeds``.
+
+    **Amendment F1's n=25 unit.** Two seeds on one landscape share the landscape, so
+    ``(instance, seed)`` is not 50 independent units. Seeds are averaged **before** any
+    differencing or ranking, which is the registered wording.
+    """
+    by_inst: dict[str, list[float]] = {}
+    for (inst, _seed), v in values.items():
+        by_inst.setdefault(inst, []).append(float(v))
+    return {i: float(np.mean(v)) for i, v in by_inst.items()}
+
+
+def dual_spearman(data: dict[str, dict[tuple[str, int], tuple[float, float]]]) -> dict:
+    """The ranking correlation at both F1 units. **n=25 decides the registered rule.**
+
+    The coefficient is taken over nine arm MEANS, and re-grouping a balanced design does
+    not change a mean -- so ``rho`` is identical at both units and only the interval
+    moves. With nine points that interval is wide, and the registered wording is decided
+    on the narrower-information unit precisely so that a conclusion surviving only at
+    n=50 is not recorded as a conclusion.
+    """
+    collapsed = {
+        arm: {(inst, -1): (a, r) for inst, (a, r) in _collapse_pairs(vals).items()}
+        for arm, vals in data.items()}
+    n50 = spearman_across_arms(data)
+    n25 = spearman_across_arms(collapsed)
+    return {"governing_unit": "n25", "n50": n50, "n25": n25,
+            "n50_note": "anti-conservative unit: two seeds on one landscape are not two "
+                        "independent units",
+            "units_agree": bool((n50["rho"] <= RHO_THRESHOLD
+                                 and n50["ci_excludes_zero"])
+                                == (n25["rho"] <= RHO_THRESHOLD
+                                    and n25["ci_excludes_zero"]))}
+
+
+def _collapse_pairs(vals: dict[tuple[str, int], tuple[float, float]]
+                    ) -> dict[str, tuple[float, float]]:
+    """Seeds averaged within instance, on both members of the ``(alpha*, regret)`` pair."""
+    alpha = instance_level({k: v[0] for k, v in vals.items()})
+    regret = instance_level({k: v[1] for k, v in vals.items()})
+    return {i: (alpha[i], regret[i]) for i in alpha}
+
+
 def _paired(name: str, a: np.ndarray, b: np.ndarray) -> dict:
     """Paired ``a - b`` over the 50 units. Wilcoxon governs yes/no, bootstrap magnitude."""
     d = np.asarray(a, dtype=float) - np.asarray(b, dtype=float)
@@ -312,6 +457,18 @@ def _paired(name: str, a: np.ndarray, b: np.ndarray) -> dict:
             "exceeds_sesoi": bool(abs(float(d.mean())) > SESOI)}
 
 
+def _dual_paired(name: str, a: dict[tuple[str, int], float],
+                 b: dict[tuple[str, int], float], keys: list) -> dict:
+    """One paired contrast at both F1 units. n=25 governs; n=50 sits beside it."""
+    n50 = _paired(name, np.array([a[k] for k in keys]), np.array([b[k] for k in keys]))
+    ai, bi = instance_level(a), instance_level(b)
+    insts = sorted(ai)
+    n25 = _paired(name, np.array([ai[i] for i in insts]),
+                  np.array([bi[i] for i in insts]))
+    return {"contrast": name, "n50": n50, "n25": n25, "governing_unit": "n25",
+            "units_agree": bool((n50["p"] < 0.05) == (n25["p"] < 0.05))}
+
+
 def spread_arm_inversion(width: dict, alpha: dict, units: list, tf: float) -> dict:
     """Is the three-way spread-arm inversion an ordering, or three means in a row?
 
@@ -325,15 +482,19 @@ def spread_arm_inversion(width: dict, alpha: dict, units: list, tf: float) -> di
     pairs = (("random", "lhs"), ("random", "sobol"), ("lhs", "sobol"))
     out = []
     for hi_arm, lo_arm in pairs:
-        out.append(_paired(
+        out.append(_dual_paired(
             f"alpha*({hi_arm}) - alpha*({lo_arm})",
-            np.array([alpha[(u[0], u[1], hi_arm, tf)] for u in units]),
-            np.array([alpha[(u[0], u[1], lo_arm, tf)] for u in units])))
-        out.append(_paired(
+            {u: alpha[(u[0], u[1], hi_arm, tf)] for u in units},
+            {u: alpha[(u[0], u[1], lo_arm, tf)] for u in units}, units))
+        out.append(_dual_paired(
             f"regret({hi_arm}) - regret({lo_arm})",
-            np.array([width[(u[0], u[1], hi_arm)]["regret"] for u in units]),
-            np.array([width[(u[0], u[1], lo_arm)]["regret"] for u in units])))
-    return {"tau_frac": tf, "contrasts": _holm(out),
+            {u: width[(u[0], u[1], hi_arm)]["regret"] for u in units},
+            {u: width[(u[0], u[1], lo_arm)]["regret"] for u in units}, units))
+    # Holm inside each unit separately -- a step-down mixing 50-unit and 25-unit
+    # p-values would correct across two analyses, not across one family's cells.
+    _holm([c["n50"] for c in out])
+    _holm([c["n25"] for c in out])
+    return {"tau_frac": tf, "contrasts": out, "governing_unit": "n25",
             "note": ("A positive alpha* difference alongside a positive regret "
                      "difference for the same pair IS the inversion: the arm that scores "
                      "higher on the model-internal statistic is the one with more regret.")}
@@ -364,7 +525,19 @@ def analyse(width_rows: list[dict], alpha: dict) -> dict:
     for tf in TAU_FRACS:
         data = {a: {u: (alpha[(u[0], u[1], a, tf)], width[(u[0], u[1], a)]["regret"])
                     for u in units} for a in arms}
-        rank = spearman_across_arms(data)
+        rank_dual = dual_spearman(data)
+        rank = rank_dual["n25"]                       # n=25 decides the registered rule
+
+        # AMENDMENT F2a: regret is not the only validated metric. The symmetric
+        # difference (type I + type II error volume) is now the primary design-space one,
+        # and if alpha* anti-correlates with one but not the other that is the finding.
+        # Read ONLY at gamma = 0.50, the single cell where K6's tau IS K6b's theta.
+        sym = arm_symmetric_difference(MATCHED_GAMMA, tf)
+        sym_dual = None
+        if all((u[0], u[1], a) in sym for a in arms for u in units):
+            sym_data = {a: {u: (alpha[(u[0], u[1], a, tf)], sym[(u[0], u[1], a)])
+                            for u in units} for a in arms}
+            sym_dual = dual_spearman(sym_data)
 
         # --- the hypothesis: alpha* is a functional of posterior WIDTH ---------------
         within = {}
@@ -403,13 +576,18 @@ def analyse(width_rows: list[dict], alpha: dict) -> dict:
                                       "mean_posterior_sd":
                                           {a: float(arm_sd[i])
                                            for i, a in enumerate(arms)}},
+            "rank_correlation_alpha_vs_regret_dual_n": rank_dual,
+            "rank_correlation_alpha_vs_symmetric_difference_dual_n": sym_dual,
+            "matched_gamma": MATCHED_GAMMA,
+            "arm_rankings": rank_arms(MATCHED_GAMMA, tf),
             "spread_arm_inversion": spread_arm_inversion(width, alpha, units, tf),
             "p": rank["bootstrap_p"],
         }
 
     _holm([per_cell[tf] for tf in TAU_FRACS])
 
-    prim = per_cell[PRIMARY_TAU_FRAC]["rank_correlation_alpha_vs_regret"]
+    prim_dual = per_cell[PRIMARY_TAU_FRAC]["rank_correlation_alpha_vs_regret_dual_n"]
+    prim = prim_dual["n25"]                           # F1: n=25 governs the verdict
     confirmed = prim["rho"] <= RHO_THRESHOLD and prim["ci_excludes_zero"]
     if confirmed:
         verdict = "ANTICORRELATED"
@@ -461,7 +639,15 @@ def _provenance(argv) -> dict:
             "generated_at": time.strftime("%Y-%m-%dT%H:%M:%S%z"), "argv": list(argv),
             "python": platform.python_version(), "torch": torch.__version__,
             "botorch": botorch.__version__, "gpytorch": gpytorch.__version__,
-            "numpy": np.__version__, "scipy": scipy.__version__}
+            "numpy": np.__version__, "scipy": scipy.__version__,
+            # Documentation, not a control variable: P7 reproduced 144 rows x 11
+            # committed K6 columns at worst |delta| = 0 with threads capped against
+            # columns produced at the torch default. Exactness is not thread-contingent
+            # for this workload -- but the setting is recorded so that stays checkable.
+            "torch_num_threads": torch.get_num_threads(),
+            "thread_env": {k: os.environ.get(k) for k in
+                           ("OMP_NUM_THREADS", "MKL_NUM_THREADS",
+                            "VECLIB_MAXIMUM_THREADS", "OPENBLAS_NUM_THREADS")}}
 
 
 def _load_checkpoint(path: Path) -> list[dict]:
@@ -486,6 +672,9 @@ def main() -> None:
                    help="1 runs serially in-process. Higher spawns a pool, which this "
                         "machine kills under memory pressure -- see the checkpoint below.")
     ap.add_argument("--limit", type=int, default=None)
+    ap.add_argument("--analyse-only", action="store_true",
+                   help="re-run the analysis over a COMPLETE checkpoint and rewrite the "
+                        "result. Runs no campaign, so it cannot change a gated number.")
     ap.add_argument("--checkpoint", type=str,
                    default=str(Path(tempfile.gettempdir()) / "p4b-alpha-ckpt.json"),
                    help="scratch file of scored units, re-read on restart. NOT the "
@@ -551,7 +740,19 @@ def main() -> None:
               f"seed={batch[0]['seed']}  {el/60:5.1f} min elapsed, "
               f"~{el/k*(len(jobs)-k)/60:5.1f} min left", flush=True)
 
-    if args.workers > 1:
+    if args.analyse_only:
+        if jobs:
+            raise SystemExit(f"--analyse-only needs a COMPLETE checkpoint; {len(jobs)} of "
+                             f"{len(units)} units are missing from {ckpt}")
+        print(f"  --analyse-only: {len(done)} units read from the checkpoint, "
+              f"none re-run\n", flush=True)
+        # The gate is re-derived here too, so a re-analysis never inherits a pass it did
+        # not itself compute.
+        for r in rows:
+            ref, src = committed[(r["instance"], r["seed"], r["arm"])]
+            r["regret_committed"], r["gate_source"] = ref, src
+            r["gate_abs_delta"] = abs(r["regret"] - ref)
+    elif args.workers > 1:
         with ProcessPoolExecutor(max_workers=args.workers) as pool:
             for k, batch in enumerate(pool.map(_one, jobs), 1):
                 _record(batch, k)
