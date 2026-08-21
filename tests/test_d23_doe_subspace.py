@@ -35,6 +35,7 @@ from __future__ import annotations
 
 import importlib.util
 import json
+import sys
 from pathlib import Path
 
 import pytest
@@ -47,8 +48,17 @@ DIM, SIGMA, ARM = 6, 0.25, "doe"
 
 
 def _load():
+    """Import the runner by path.
+
+    Registered in `sys.modules` before `exec_module`, which is not optional here: the
+    runner declares a `@dataclass` under `from __future__ import annotations`, so
+    `dataclasses` resolves the string annotations through `sys.modules[cls.__module__]`
+    and raises `AttributeError: 'NoneType' object has no attribute '__dict__'` for a
+    module that was never registered.
+    """
     spec = importlib.util.spec_from_file_location("d23_doe_subspace", SCRIPT)
     m = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = m
     spec.loader.exec_module(m)
     return m
 
@@ -110,8 +120,10 @@ def test_restricted_argmax_finds_the_constrained_optimum():
     kept = (0, 2, 3, 5)
     grid = torch.rand(512, 6, generator=torch.Generator().manual_seed(0),
                       dtype=torch.double)
+    pinned = d23.pin(grid, held)
 
-    r = d23.restricted_argmax(predict, grid, kept, held, d23.unit_bounds(6))
+    r = d23.restricted_argmax(predict, pinned, predict(pinned).reshape(-1), kept, held,
+                              d23.unit_bounds(6))
 
     assert float(r.x[1]) == 0.2 and float(r.x[4]) == 0.2, r.x
     for j in kept:
@@ -130,8 +142,11 @@ def test_restricted_argmax_cannot_beat_the_unrestricted_one(d23):
     grid = torch.rand(512, 6, generator=torch.Generator().manual_seed(0),
                       dtype=torch.double)
     bounds = d23.unit_bounds(6)
+    held = {1: 0.2, 4: 0.2}
+    pinned = d23.pin(grid, held)
     full = d23.full_argmax(predict, grid, predict(grid).reshape(-1), bounds)
-    sub = d23.restricted_argmax(predict, grid, (0, 2, 3, 5), {1: 0.2, 4: 0.2}, bounds)
+    sub = d23.restricted_argmax(predict, pinned, predict(pinned).reshape(-1),
+                                (0, 2, 3, 5), held, bounds)
     assert sub.value <= full.value + 1e-12
 
 
