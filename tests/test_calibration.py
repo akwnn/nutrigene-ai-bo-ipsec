@@ -594,3 +594,34 @@ def test_the_conservative_unit_does_not_report_a_narrower_interval():
     w25 = out["n25"]["ci95"][1] - out["n25"]["ci95"][0]
     assert out["n25"]["mean_diff"] == pytest.approx(out["n50"]["mean_diff"], abs=1e-12)
     assert w25 > w50, f"n=25 width {w25:.4f} should exceed n=50 width {w50:.4f}"
+
+
+# --- the completeness marker -------------------------------------------------------
+#
+# An in-progress checkpoint that carries a full provenance block and a gate section is
+# indistinguishable from a finished result unless it says so itself. Two of two long
+# runners left exactly that file at a STAGEABLE path tonight (`.gitignore:20` ignores
+# `results/*`, line 211 negates `results/p7-murphy.json`), so a bare `git add -A` would
+# have committed an 8%-complete file as the finished Murphy result.
+
+def test_a_partial_document_says_so_before_it_says_anything_else():
+    p7 = _p7()
+    d = p7.payload("partial", 4, 50, ["x"], [], [], {}, 0, [], 0.0, [])
+    assert list(d)[:3] == ["status", "keys_present", "keys_expected"]
+    assert d["status"] == "partial"
+    assert (d["keys_present"], d["keys_expected"]) == (4, 50)
+
+
+def test_the_checkpoint_path_is_not_the_final_path_and_cannot_be_staged():
+    """The final path is git-negated on purpose so an artefact can never be silently
+    ignored; that is exactly what makes an unmarked partial there dangerous."""
+    import subprocess
+    p7 = _p7()
+    assert p7.CKPT != p7.OUT
+    root = Path(__file__).resolve().parents[1]
+    ignored = subprocess.run(["git", "check-ignore", "-q", str(p7.CKPT)],
+                             cwd=root).returncode == 0
+    stageable = subprocess.run(["git", "check-ignore", "-q", str(p7.OUT)],
+                               cwd=root).returncode != 0
+    assert ignored, f"{p7.CKPT} must be unstageable"
+    assert stageable, "the final path is expected to be git-negated; that is the hazard"

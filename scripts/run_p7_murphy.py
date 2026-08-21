@@ -83,6 +83,13 @@ from boec.torch_oracle import BiphasicOracle
 
 ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "results/p7-murphy.json"
+#: In-progress checkpoints go HERE, never to OUT. `.gitignore:20` ignores `results/*`
+#: while line 211 NEGATES `results/p7-murphy.json` -- so the final path is stageable and
+#: an 8%-complete file sitting there would read as the finished Murphy result: full
+#: provenance, a gate block, and nothing to distinguish it. Two of two long runners hit
+#: this tonight. OUT is written ONCE, whole, at the end; this path carries everything
+#: before that and is unstageable by construction.
+CKPT = ROOT / "results/p7-murphy.partial.json"
 GATE = ROOT / "results/k1-replay-gate.json"
 #: Committed map columns. `brier_raw` must reproduce these, or the map is not the map.
 MAP_GATE = (ROOT / "results/k6-designspace.json",
@@ -145,6 +152,29 @@ def _provenance(argv: list[str]) -> dict:
                     primary_map="pred", verdict_source="pred"),
     )
 
+
+
+def payload(status: str, keys_present: int, keys_expected: int, argv: list[str],
+            gate_fail: list, map_fail: list, worst_map: dict, n_map_checked: int,
+            identity_fail: list, worst_identity: float, rows: list) -> dict:
+    """The result document. `status` is FIRST because it is what a reader must see.
+
+    A partial file that carries a full provenance block and a gate section is
+    indistinguishable from a finished one unless it says so itself, and no downstream
+    script should have to count keys to find out.
+    """
+    return {
+        "status": status,
+        "keys_present": keys_present, "keys_expected": keys_expected,
+        "provenance": _provenance(argv),
+        "gate_failures": gate_fail,
+        "map_gate": {"target": [str(q.relative_to(ROOT)) for q in MAP_GATE],
+                     "columns": list(GATED_COLUMNS), "rows_checked": n_map_checked,
+                     "worst_abs_delta": worst_map, "failures": map_fail},
+        "identity": {"bar": IDENTITY_BAR, "max_residual": worst_identity,
+                     "failures": identity_fail},
+        "rows": rows,
+    }
 
 
 def _gate_tol(arm: str) -> float:
@@ -574,19 +604,22 @@ def main() -> None:
             print(f"\nsummary refreshed in {path}")
         return
 
-    global ARMS, OUT
+    global ARMS, OUT, CKPT
     if args.arms:
         ARMS = tuple(a.strip() for a in args.arms.split(","))
     if args.out:
         OUT = Path(args.out)
+        CKPT = OUT.with_suffix(".partial.json")
     prior = None
     if OUT.exists():
-        if not args.resume:
-            sys.exit(f"{OUT} exists. A committed result is never overwritten; "
-                     f"pass --out for a smoke run or --resume to continue one.")
-        if _is_tracked(OUT):
-            sys.exit(f"{OUT} is tracked by git. A committed result is never rewritten.")
-        prior = json.loads(OUT.read_text())
+        sys.exit(f"{OUT} exists. A finished result is never overwritten; "
+                 f"pass --out for a smoke run, or delete it if it is not the real one.")
+    if args.resume:
+        if not CKPT.exists():
+            sys.exit(f"--resume needs {CKPT}, which does not exist.")
+        if _is_tracked(CKPT):
+            sys.exit(f"{CKPT} is tracked by git. A committed result is never rewritten.")
+        prior = json.loads(CKPT.read_text())
 
     print(f"P7 · Murphy decomposition · HEAD={_git('rev-parse', 'HEAD')[:8]} · "
           f"python={platform.python_version()}")
@@ -682,23 +715,24 @@ def main() -> None:
                   f"regret={rec.regret:.4f} rows={len(new)} ({time.time() - t:.1f}s)",
                   flush=True)
 
-        OUT.write_text(json.dumps({
-            "provenance": _provenance(sys.argv),
-            "gate_failures": gate_fail,
-            "map_gate": {"target": [str(p.relative_to(ROOT)) for p in MAP_GATE],
-                         "column": "brier_pred / brier_latent",
-                         "rows_checked": n_map_checked,
-                         "worst_abs_delta": worst_map, "failures": map_fail},
-            "identity": {"bar": IDENTITY_BAR, "max_residual": worst_identity,
-                         "failures": identity_fail},
-            "rows": rows}, indent=1))
+        CKPT.write_text(json.dumps(payload(
+            "partial", len({(r["instance"], r["seed"]) for r in rows}), len(keys),
+            sys.argv, gate_fail, map_fail, worst_map, n_map_checked, identity_fail,
+            worst_identity, rows), indent=1))
         del truth
         gc.collect()
 
+    # Promote ONCE, whole, and only now. Everything above this line lived at CKPT.
     summary = summarise(rows)
-    payload = json.loads(OUT.read_text())
-    payload["summary"] = summary
-    OUT.write_text(json.dumps(payload, indent=1))
+    n_keys = len({(r["instance"], r["seed"]) for r in rows})
+    final = payload("complete", n_keys, len(keys), sys.argv, gate_fail, map_fail,
+                    worst_map, n_map_checked, identity_fail, worst_identity, rows)
+    final["summary"] = summary
+    if n_keys != len(keys):
+        final["status"] = "partial"
+        print(f"*** {n_keys} of {len(keys)} keys scored — writing status=partial ***")
+    OUT.write_text(json.dumps(final, indent=1))
+    CKPT.unlink(missing_ok=True)
 
     print(f"\n{len(rows)} scored rows in {time.time() - t0:.0f}s")
     print(f"regret gate failures: {len(gate_fail)}")
