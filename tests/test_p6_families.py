@@ -494,3 +494,98 @@ def test_the_registered_cell_order_puts_the_sigma_axis_second(p6):
     """
     assert p6.CELL_ORDER == ((6, 0.25), (6, 0.10), (8, 0.25), (8, 0.10))
     assert p6.CELL_ORDER[1] == (6, 0.10), "the sigma axis runs before the d axis"
+
+
+# =================================================================================
+# THE SPADE SCOPE GAP · the four Version B arms
+#
+# P6 without them delivers every arm EXCEPT the method the project exists to evaluate.
+# "Cannot be gated" became "do not run": a Version B campaign is seed-deterministic and
+# fully scoreable, it merely has no committed regret column to reproduce off hill.
+# =================================================================================
+
+def test_the_four_version_b_arms_are_in_the_arm_list(p6):
+    for arm in ("versionb", "versionb_random", "versionb_predictive", "plate1_only"):
+        assert arm in p6.ARMS, f"{arm} missing -- SPADE has never been run off hill"
+
+
+def test_version_b_arms_are_ungated_off_hill_with_a_reason(p6):
+    """Ungated, never skipped. Seed determinism is their ONLY guarantee and it is said."""
+    for family in p6.FAMILIES:
+        _, _, ungated = p6.build_gate_index(family, 6, 0.25)
+        for arm in ("versionb", "versionb_random", "versionb_predictive", "plate1_only"):
+            assert arm in ungated, f"{arm} must be recorded ungatable, not dropped"
+            assert "determin" in ungated[arm].lower()
+            assert len(ungated[arm]) > 30
+
+
+def test_plate1_only_is_flagged_never_to_be_counted_separately(p6):
+    """D23.1: it IS `lhs` at 48 wells. Both are reported; neither is double-counted."""
+    r = p6.row_identity(family="levy", dim=6, sigma=0.25, seed=0, arm="plate1_only")
+    assert r["never_rank_separately"] is True
+    assert p6.row_identity(family="levy", dim=6, sigma=0.25, seed=0,
+                           arm="lhs")["never_rank_separately"] is False
+    # And its comparator is hill-only, so off hill it is ungated like the rest.
+    _, _, ungated = p6.build_gate_index("levy", 6, 0.25)
+    assert "plate1_only" in ungated and "lhs" in ungated["plate1_only"].lower()
+
+
+def test_the_two_plate_builder_is_imported_not_reimplemented(p6):
+    """A second copy of plate 2's LSE selection would be a second campaign.
+
+    The `builder=` hook exists so `replay` keeps the oracle, the scoring rule and the
+    provenance while the two-plate logic stays in the runner that owns it.
+    """
+    src = SCRIPT.read_text()
+    assert "_two_plate(" in src
+    for reimplemented in ("def _two_plate", "batch_lse(", "straddle_score(",
+                          "straddle_predictive_score("):
+        assert reimplemented not in src, f"{reimplemented} is a second definition"
+    assert callable(p6.versionb_builder("versionb"))
+    with pytest.raises(KeyError):
+        p6.versionb_builder("not_a_version_b_arm")
+
+
+def test_the_design_threshold_is_recorded_and_flagged_where_it_is_degenerate(p6):
+    """Version B targets a threshold that is NOT the one P6 scores it at.
+
+    Plate 2's straddle criterion uses `theta = DESIGN_TAU_FRAC * mu_max = 0.75` on every
+    family, because `UnitScaled` puts every optimum at 1.0 -- the same absolute number
+    everywhere, which is the §2.4 defect appearing inside the arm's own design rather
+    than in the scoring. On ackley 0.75 is above the ENTIRE grid range (max 0.410), so
+    the straddle has nothing to straddle; on hartmann6 the target set is 0.2% of the box.
+    Scoring is at `tau_q`. The mismatch is recorded, never silently carried.
+    """
+    assert p6.DESIGN_TAU_FRAC == 0.75
+    for family, dim, expect_degenerate in (("ackley", 6, True), ("ackley", 8, True),
+                                           ("hartmann6", 6, True), ("levy", 6, False),
+                                           ("rosenbrock", 6, False)):
+        d = p6.design_target(family, dim)
+        assert d["design_theta"] == 0.75
+        assert d["design_target_degenerate"] is expect_degenerate, (family, dim)
+    assert p6.design_target("ackley", 6)["design_target_prevalence"] == 0.0
+    assert p6.design_target("levy", 6)["design_target_prevalence"] > 0.5
+
+
+def test_a_cell_where_every_arm_certifies_nothing_is_not_rankable(p6):
+    """When every region is empty, total error volume IS the prevalence, so the
+    'ranking' ranks prevalences and says nothing about the arms. Measured in 4 of 12 CE
+    cells at 100% emptiness, where the higher-prevalence arm places last mechanically.
+
+    The census guarantees this happens here: rosenbrock is 8/8 above the ceiling at
+    gamma >= 0.90 and levy 8/8 at gamma >= 0.95.
+    """
+    silent = [{"family": "rosenbrock", "dim": 6, "sigma": 0.25, "gamma": 0.99, "p": 0.10,
+               "arm": a, "total_error_vol_pred": 0.10, "true_frac_above_tau": 0.10}
+              for a in ("doe", "qlogei", "lhs")]
+    v = p6.cell_separation(silent)
+    assert v["separation_from_prevalence"] == 0.0
+    assert v["rankable"] is False
+
+    real = [{"family": "levy", "dim": 6, "sigma": 0.25, "gamma": 0.50, "p": 0.75,
+             "arm": "doe", "total_error_vol_pred": 0.40, "true_frac_above_tau": 0.75},
+            {"family": "levy", "dim": 6, "sigma": 0.25, "gamma": 0.50, "p": 0.75,
+             "arm": "qlogei", "total_error_vol_pred": 0.20, "true_frac_above_tau": 0.75}]
+    v2 = p6.cell_separation(real)
+    assert v2["separation_from_prevalence"] == pytest.approx(0.55)
+    assert v2["rankable"] is True
