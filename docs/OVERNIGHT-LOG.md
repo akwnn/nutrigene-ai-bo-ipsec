@@ -1117,3 +1117,82 @@ regeneration. **~2 CPU-h saved, scope unchanged, 2,800 rows and the kill conditi
 the cost. That is the part most would have dropped. Asked for both RNG facts to go in the
 committed `provenance` block rather than the report: a fact that lives only in a chat log is a
 fact this project has already lost once.
+
+## D44 🔴 **I had the γ ladder backwards. P2 found it; verified from committed data.**
+
+My P2 registration framed **γ=0.99 as the hard corner** of the containment ladder — *"tightens
+`tau_max` from 1.0000 to 0.4184 and there is no reason the certificate must survive that."*
+
+**It is the easy corner.** γ enters τ **multiplicatively** (`tau = tau_frac × tau_max(γ,σ)`)
+and `tau_max` *decreases* in γ, so higher γ buys a **lower** absolute τ, a **larger** true
+superlevel set, and **easier** containment. Measured on committed `lhs` rows:
+
+```
+gamma=0.99  tf=0.60   tau=0.2510   prevalence 0.99916   <- I called this HARD
+gamma=0.50  tf=0.95   tau=0.9500   prevalence 0.00294   <- the actual hard corner
+```
+
+**I conflated "a higher assurance requirement" with "a harder threshold."** Higher γ *does*
+demand more assurance — and discharges it by lowering the threshold it is willing to certify.
+**59 grid points of 20,000** is where the certificate is actually tested.
+
+**The registered kill is unchanged** — every cell runs, every below-nominal containment is
+reported as a failure. **It was correctly specified; only my expectation about where it would
+bite was wrong.** Adopted programme-wide, P2's call: **`true_frac_above_tau` travels beside
+every containment fraction.** A containment number read without its prevalence **inverts the
+reading** — 0.99 where the true set covers 99.9% of the box is nearly vacuous; 0.94 where it
+covers 0.29% is a strong result.
+
+**This sharpens F2a rather than complicating it, and the two were found independently.** AUC is
+unreliable at **both** ends of the ladder, mirrored — ~17 *negative* grid points of 20,000 at
+one end, ~59 *positive* at the other. **The type I / type II error volumes stay well-defined
+across the whole ladder**, including where `D_est` is empty. Two corrections, different routes,
+same direction.
+
+## D45 ✅ **ERRATUM 2 CLOSED. The gates are not thread-contingent — and P2 proved far more than was asked.**
+
+I registered the open question off the back of my own bad benchmark: nothing in this repository
+records the thread count under which any |Δ| = 0 gate was measured, so every gate might have
+rested on an unrecorded environment variable. **Two workers answered it independently.**
+
+* **P7** — bitwise reproduction (Δ = 0.000e+00) on `qlogei` and `qlognei` under
+  `set_num_threads(1)`.
+* **P2, the strong one** — extended its `plate1_only` gate from regret alone to **all 20
+  numeric K6 columns** (`sup_err`, `grid_r2`, `iou_pred`, `fi_pred`, `box_vol_pred`,
+  `auc_pred`, …) at **all 24 (γ, τ_frac) cells**, **every column exactly 0.0**, measured under
+  a thread change **and** after deliberately burning the global torch RNG by fitting an
+  unrelated GP first.
+
+**So the entire scoring path — not just regret — is invariant to thread count and to global
+RNG position.** Thread count becomes **provenance documentation**, not a control variable.
+**P2 built a gate that validates the whole scoring path from a registration that asked only
+for regret**, and did it without being asked.
+
+**A provenance defect found on the way, and it is the same class this project keeps finding.**
+`versionb.json`'s own `plate1_only` regret is **not** bitwise the committed `lhs` column — off
+by **3.33e-16** — because `run_versionb.py` scores it with a single `scored_curve` call while
+`replay.regenerate` reproduces `static_curve`'s 20-ordering arithmetic. **Two committed files
+disagree with each other at 3e-16.** P2 built against the gateable one.
+
+**That is the `static_curve` float-mean artefact for the THIRD independent time** — I hit it,
+the Fix 1 worker hit it hours later, and P2 has now found it sitting *inside a committed
+file*. The standing rule (match the arithmetic, never widen the tolerance) has caught it in
+three separate places, which is the strongest evidence yet that the rule is load-bearing
+rather than ceremonial.
+
+## D46 🟢 P3 and P1 made *opposite* engineering calls, and both are right.
+
+P1 shares one GP fit between K6 and K6b, having **measured** that `build_gp` at
+`fit_restarts=1` never touches the global RNG stream (D43) — saving ~2 CPU-h.
+
+**P3 deliberately does NOT**, and said so explicitly: `run_k6_designspace.score_campaign` fits
+internally, and P3 imports it **unmodified** precisely so that K6's numbers come from the
+committed code path. Sharing the fit would mean re-expressing that path and losing the
+guarantee, to save ~5% of runtime.
+
+**These are not in conflict.** P1 is *already* re-expressing K6b's scorer (it is inline in
+`main()` and cannot be imported), so it has no committed path to preserve and must validate by
+other means — which it does, by re-scoring already-gated arms. P3 *does* have one and keeps it.
+**Two workers, opposite decisions, each correct for its own constraint, each stated with its
+reason.** Recorded because a reader comparing the two runners will otherwise see an
+inconsistency where there is a considered difference.
