@@ -782,3 +782,127 @@ of them are writing *new* result files right now, and a column omitted at write 
 (`true_frac_above_tau` — the omission that makes `versionb.json`'s error volumes
 uncomputable **to this day**) costs a full re-score to add later. Interrupting six agents
 mid-run was cheaper than that, so every brief was amended in place.
+
+## D32 🔴 **My thread-capping benchmark was confounded. P7 caught it. Retracted.**
+
+I measured 4-thread vs 1-thread GP fits **sequentially, under a load that was itself
+changing**, with no interleaving and no repetition — then reported **"4.6× faster"** to seven
+agents as a measured fact and told five of them to restart their runs on it.
+
+P7 measured it directly under real conditions: `torch.set_num_threads(1)` reproduces regret
+**bitwise (Δ = 0.000e+00 on `qlogei` and `qlognei`)** but gives **no wall-clock gain**.
+**Thread count is not a lever.** Retracted to all workers.
+
+**The irony is worth recording.** I have spent two sessions insisting that a gate comparing a
+regeneration against an untracked file "can only report that a clone agrees with itself", and
+that a statistic which cannot fail is not a check — and then ran an A/B with no control for
+the one variable that was moving. **A benchmark under uncontrolled load is the same defect in
+a different costume.**
+
+**What survives:** thread-capping is bitwise safe (P7 verified), so it stays where already
+applied, at zero cost and zero benefit. And **Erratum 2's registered question stands and is
+now more interesting, not less** — nothing in this repository records the thread count under
+which any |Δ| = 0 gate was measured. P7's Δ = 0 across a thread-count change is the first
+evidence that the gates are *not* thread-contingent. That is a real result; it just is not
+the one I claimed.
+
+## D33 🔴 **The machine is in a pathological state, and it is NOT our workload.**
+
+Measured after two workers independently reported 13× and 50× slowdowns against committed
+per-campaign costs:
+
+```
+free      = 0.0 GB          wired = 16.1 GB       compressor = 5.0 GB
+swap      = 24.4 GB used of 28.7 GB total
+processes = 762 total, 116 running, 6,441 threads
+CPU       = 32.7% user, 57.7% sys, 10.2% idle
+scan procs= 269  (Gatekeeper / XProtect / mds)
+```
+
+**Sixteen gigabytes of *wired* — kernel-locked, non-pageable — memory, with zero free and
+swap nearly exhausted.** Meanwhile **no process in the top-12 RSS list exceeds 300 MB**, and
+our six Python workers sum to well under 1 GB. P3's independent read was the same: *"the six
+team processes sum to roughly one core of lifetime-average CPU between them. The kernel is
+eating the machine and everything is paging."*
+
+**So the 50× slowdown is not something the team can fix by running fewer jobs**, and saying
+otherwise would be theatre. Serialising is a real but small lever. **Escalated to Joseph** —
+clearing 16 GB of wired memory and a 269-process scan storm is a decision about his machine,
+and I will not take it unasked.
+
+**Measured cost of the state:** `qlogei` per campaign has gone from a committed 10.4 s to
+133.7 s (P7), and a `doe` d=8 campaign worth ~3 s took 164.5 s wall while its process
+received 31 s of CPU in 282 s elapsed — **11% of one core** (P3).
+
+## D34 🟡 Paused P2 and P3, and refused to re-scope P3 silently.
+
+Pause order chosen by **work-lost, not by importance**: P2 and P3 are the least-progressed
+heavy jobs and both checkpoint per `(instance, seed)`, so pausing costs nothing; P7 is 300
+campaigns deep with incremental writes; P1 is well into a run P3 itself depends on.
+
+**P3 wrote:** *"I will not raise any tolerance or shrink the registered grid to make this
+fit. If you want a smaller scope, that is your call to make, not mine."* **That was the right
+refusal and the right escalation.** My answer, on the record: **the registered grid stands —
+three cells, eight arms, n = 50.** If the machine cannot be recovered and scope must give, the
+reduction is **declared, registered and logged with its reason**, never absorbed into a
+smaller run that reads like the full one. That failure mode is how `results/q30-additive.json`
+came to be cited for eight months without existing.
+
+## D35 ⭐ **P7 found that the Murphy identity cannot hold against our published Brier. It reported both rather than redefining one.**
+
+The three-term decomposition `calibration − refinement + uncertainty = brier` **cannot** hold
+against the raw continuous Brier under binning. The residual is the within-bin term
+`mean_k n_k [var_k(p) − 2 cov_k(p,o)]`, and **no sign convention removes it** — Murphy (1973)
+is stated for a forecast taking finitely many values, where the bins *are* the distinct
+values.
+
+The resolution: report **`brier`** (of the *binned* forecast, which the identity governs
+exactly — max residual **1.67e-16** against the registered 1e-10 bar) **and `brier_raw`**
+(bitwise `designspace.brier_and_auc`, the project's published quantity), with the gap named
+`within_bin`. **The registered decision rule is evaluated against `brier_raw`**, because that
+is the sum Amendment A5 is actually arguing about.
+
+**The sentence that makes this the best call of the session:** *"Folding the residual into a
+redefined 'calibration' would have made the identity true by construction and tested
+nothing."* **That is the circular-containment defect this project already retracted once**,
+caught this time *before* it was written instead of after it was published.
+
+**P7 also built a better gate than the one I registered.** Regret agreeing proves the
+campaign reproduced; **`brier_raw` reproducing the committed `brier_pred`/`brier_latent` at
+|Δ| = 0.0 on all 144 rows proves the same 20,000-point map was rebuilt** — which is the actual
+object being decomposed. I did not ask for that and should have.
+
+## D36 ✅ **P5 landed. `tau_q` is exact, and ackley really does become runnable.**
+
+`66112e2`, `results/p5-tau-quantile.json`. Gate: worst |achieved prevalence − p| over **232
+rows = 0.000e+00**, against a registered bar of one grid cell (5e-5). **Exact, not near** —
+because at n = 20,000 none of the four registered `p` puts numpy's interpolation point on a
+grid value, so the superlevel set has exactly `round(p·n)` members.
+
+**Decision 3 is vindicated on the measurement, not on my reasoning.** Ackley's grid max is
+0.410 (d=6) / 0.336 (d=8) — **below every `tau_frac`**, which is exactly why prevalence was
+0.00000 and AUC/Brier/IoU/false-inclusion were all `nan`. Under `tau_q` the set has exactly
+15000 / 5000 / 2000 / 200 members at every `p`, both dimensions. **`CANNOT RUN` was a property
+of the threshold, not of the family.**
+
+**Two honest findings P5 recorded rather than smoothed, both of which qualify my own
+registration:**
+1. My *"to within 0.0394"* is a 4-dp quotation of the d=6 measurement **0.039442**, so a
+   literal `<= 0.0394` assertion fails by 4e-7 on rounding. P5 asserted at **the precision the
+   figure was quoted to** rather than widening a tolerance. Correct.
+2. **The same statistic at d=8 is 0.042468 — larger than the number I registered**, because I
+   quoted the d=6 row only. Recorded in the JSON's `calibration` block at both dimensions.
+
+**A structural consequence P5 surfaced that Phase 3 must carry:** rosenbrock d=6 at p=0.01 is
+`tau_q` = **0.98631**, against `tau_max` = **0.4184** at γ=0.99. So at high `p` and high γ the
+threshold sits far above the predictive noise floor and `D_γ` is **structurally empty** — not
+a bug, an algebraic certainty. **This is precisely the case Amendment F2a handles gracefully
+and AUC does not:** an empty `D_est` gives type I = 0 and type II = prevalence, both exactly
+correct, while AUC and IoU return `nan`. The two corrections met in the middle without being
+designed to.
+
+**Two ownership deviations, both correctly reported:** `tau_q` lives in
+`scripts/run_p5_tau_quantile.py` and its test in `tests/test_p5_tau_quantile.py`, because
+`designspace.py` and `tests/test_designspace.py` belong to P3 this session. The registered
+assertion is unchanged. **Follow-up owed:** move `tau_q` beside `tau_max` once P3 releases the
+file — the committed JSON is the registered artefact either way.
