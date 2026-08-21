@@ -587,6 +587,111 @@ def test_the_committed_result_files_cannot_be_written_over(mod):
             _run_main(mod, argv)
 
 
+# ------------------------------- a partial must never be mistakable for a finished run
+#
+# The failure class: an EXISTING file that would be cited as complete. `.gitignore:199`
+# carries `!results/p2-versionb-gamma.json`, so the deliverable path is explicitly
+# stageable -- a `git add -A` while a run is in flight would commit a 16%-complete file
+# with full provenance and a clean gate, and neither a reader nor a downstream script
+# could tell. This is the project's own recurring defect inverted: not a cited file that
+# does not exist, but an existing file that is not what it claims.
+
+
+def test_incremental_writes_go_to_a_path_git_cannot_stage(mod):
+    """The final path is written ONCE, whole, at the end. Never during the run."""
+    out = ROOT / "results" / "p2-versionb-gamma.json"
+    work = mod.work_path_for(out)
+    assert work != out
+    assert work.name.endswith(".partial")
+    import subprocess as sp
+    assert sp.run(["git", "check-ignore", "-q", str(work)], cwd=ROOT).returncode == 0, (
+        f"{work} is stageable; a `git add -A` mid-run would commit a partial")
+    assert sp.run(["git", "check-ignore", "-q", str(out)], cwd=ROOT).returncode != 0, (
+        "the deliverable path is expected to be allowlisted -- that is WHY the work "
+        "path must differ")
+
+
+def test_every_payload_states_whether_it_is_complete(mod):
+    """`status`, `keys_present`, `keys_expected` at top level, on partial and final."""
+    part = mod.payload(rows=[{"instance": "i0", "seed": 0}], gate_failures=[],
+                       determinism=[], n_gated=0, dim=6, sigma=0.25, limit=None,
+                       prov={}, keys_expected=50)
+    assert part["status"] == "partial"
+    assert part["keys_present"] == 1 and part["keys_expected"] == 50
+    assert part["complete"] is False
+
+    rows = [{"instance": f"i{i:02d}", "seed": s} for i in range(25) for s in (0, 1)]
+    done = mod.payload(rows=rows, gate_failures=[], determinism=[], n_gated=1200,
+                       dim=6, sigma=0.25, limit=None, prov={}, keys_expected=50)
+    assert done["status"] == "complete"
+    assert done["keys_present"] == 50 and done["complete"] is True
+
+
+def test_a_gate_failure_is_never_labelled_complete(mod):
+    rows = [{"instance": f"i{i:02d}", "seed": s} for i in range(25) for s in (0, 1)]
+    bad = mod.payload(rows=rows, gate_failures=[{"instance": "i00"}], determinism=[],
+                      n_gated=1200, dim=6, sigma=0.25, limit=None, prov={},
+                      keys_expected=50)
+    assert bad["status"] == "partial" and bad["complete"] is False
+
+
+def test_a_limited_run_is_partial_even_at_full_coverage_of_its_own_limit(mod):
+    """A smoke run must never land at the deliverable path looking finished.
+
+    `keys_expected` is the registered 50 regardless of `--limit`, so `--limit 3` reads
+    as 3/50 -- which is what it is.
+    """
+    rows = [{"instance": f"i{i:02d}", "seed": s} for i in range(2) for s in (0, 1)]
+    p = mod.payload(rows=rows, gate_failures=[], determinism=[], n_gated=96, dim=6,
+                    sigma=0.25, limit=2, prov={}, keys_expected=50)
+    assert p["status"] == "partial"
+    assert p["keys_present"] == 2 and p["keys_expected"] == 50
+
+
+def test_promote_refuses_to_write_the_deliverable_from_a_partial(mod, tmp_path):
+    out = tmp_path / "final.json"
+    work = mod.work_path_for(out)
+    work.write_text(json.dumps({"status": "partial", "keys_present": 8,
+                                "keys_expected": 50, "rows": []}))
+    assert mod.promote(work, out) is False
+    assert not out.exists(), "a partial was promoted to the deliverable path"
+
+    work.write_text(json.dumps({"status": "complete", "keys_present": 50,
+                                "keys_expected": 50, "rows": []}))
+    assert mod.promote(work, out) is True
+    assert json.loads(out.read_text())["status"] == "complete"
+
+
+def test_the_analysis_refuses_to_consume_a_partial(ana, tmp_path):
+    """The other half of the hazard: a partial that IS consumed silently."""
+    f = tmp_path / "p.json"
+    f.write_text(json.dumps({"status": "partial", "keys_present": 8,
+                             "keys_expected": 50, "provenance": {}, "config": {},
+                             "gate": {}, "gate_failures": [], "rows": []}))
+    with pytest.raises(SystemExit, match="partial"):
+        ana.load_complete(f)
+
+
+def test_the_analysis_accepts_a_complete_file(ana, tmp_path):
+    f = tmp_path / "p.json"
+    f.write_text(json.dumps({"status": "complete", "keys_present": 50,
+                             "keys_expected": 50, "rows": [{"a": 1}]}))
+    assert ana.load_complete(f)["keys_present"] == 50
+
+
+def test_a_file_with_no_status_field_at_all_is_refused(ana, tmp_path):
+    """Files written before this guard existed cannot assert their own completeness."""
+    f = tmp_path / "old.json"
+    f.write_text(json.dumps({"rows": [{"a": 1}]}))
+    with pytest.raises(SystemExit, match="status"):
+        ana.load_complete(f)
+
+
+def test_default_workers_is_two(mod):
+    """Fewer processes is what survives this machine; the cache bought the headroom."""
+    assert mod.DEFAULT_WORKERS == 2
+
+
 def test_resume_refuses_a_schema_change(mod, tmp_path):
     """Amendment F added six columns. Resuming across that would MIX two schemas.
 

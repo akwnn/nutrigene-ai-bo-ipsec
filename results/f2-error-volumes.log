@@ -17,17 +17,25 @@ AMENDMENT F2a — EXPECTED TYPE I / TYPE II ERROR VOLUMES AS THE PRIMARY DESIGN-
    registered: 2.220e-16 over 2,553 rows, zero negative type-II volumes
    negative type-II volumes: 0    REPRODUCES: True
 
-3. SCORABLE ROWS — the error volumes are defined where the false-inclusion rate is not
-   k6-designspace               pred    rows= 6000  error-vol scorable= 6000  fi scorable= 2553  committed IoU finite= 6000  empty= 57.5%
-   k6-designspace               latent  rows= 6000  error-vol scorable= 6000  fi scorable= 4927  committed IoU finite= 6000  empty= 17.9%
-   k6-designspace-spread        pred    rows= 3600  error-vol scorable= 3600  fi scorable= 1318  committed IoU finite= 3600  empty= 63.4%
-   k6-designspace-spread        latent  rows= 3600  error-vol scorable= 3600  fi scorable= 2827  committed IoU finite= 3600  empty= 21.5%
+3. SCORABLE ROWS — and the TWO nan conditions, counted separately
+   `fi` is nan when D_est is empty. `iou` is nan only when the UNION is empty,
+   i.e. D_est AND D_true both empty. F2a treated them as one condition; they are not,
+   and the margin over IoU is much smaller than the margin over fi.
+   k6-designspace               pred    rows= 6000  error-vol= 6000  fi= 2553 (+3447)  IoU= 6000 (+0)  D_est empty= 57.5%  union empty=0
+   k6-designspace               latent  rows= 6000  error-vol= 6000  fi= 4927 (+1073)  IoU= 6000 (+0)  D_est empty= 17.9%  union empty=0
+   k6-designspace-spread        pred    rows= 3600  error-vol= 3600  fi= 1318 (+2282)  IoU= 3600 (+0)  D_est empty= 63.4%  union empty=0
+   k6-designspace-spread        latent  rows= 3600  error-vol= 3600  fi= 2827 (+773)  IoU= 3600 (+0)  D_est empty= 21.5%  union empty=0
 
 ================================================================================================================
 4. THE REGISTERED DECISION — does the error-volume ranking differ from AUC's?
 ================================================================================================================
    Error volumes: LOWER is better. AUC: HIGHER is better. Both descriptive arm means over
    the cell's 400 rows; no n and no p is attached to a ranking (F4).
+   `prev` = true_frac_above_tau, carried beside every row because a ranking read without
+   its prevalence inverts. NOTE the gamma direction: gamma enters tau multiplicatively
+   through tau_max, which DECREASES in gamma, so HIGH gamma means a LOW absolute
+   threshold and a HUGE positive class. At gamma=0.99, tau_frac=0.60 prevalence is 0.9992 —
+   the minority class there is the NEGATIVE one, ~16 of 20,000 points (Erratum 3).
 
    Spearman rho against the AUC ordering: +1 identical, -1 exactly reversed.
    `tie` = every arm scores identically, so there is no ranking to compare.
@@ -111,3 +119,39 @@ AMENDMENT F2a — EXPECTED TYPE I / TYPE II ERROR VOLUMES AS THE PRIMARY DESIGN-
    The design is balanced -- 25 instances x 2 seeds, no nan drops -- so an arm MEAN is bitwise identical at both units and the RANKINGS above cannot differ between them. Only the contrasts move, which is where n is doing work.
 
   written to results/f2-error-volumes.json
+
+================================================================================================================
+6. F2a EXTENDED TO `CE_alpha` — the object the SPADE certificate is actually about
+================================================================================================================
+   Zero new campaigns: `ce_vol_*`, `ce_false_in_*` and `true_frac_above` have all been
+   committed since K6b ran. Same canonical arithmetic, different inputs.
+   TWO LIMITS. (1) There is NO committed IoU column for the CE sets, so this application
+   has no independent cross-check of the kind that gates the map derivation. (2) K6b scores
+   `doe` on its own 4-D active subspace (B3), so the prevalence differs BY ARM within a cell
+   in 198 of 200 cells — the cross-arm ranking is NOT like-for-like, and `doe`'s slice is
+   the easier one, so the bias runs in its favour.
+
+    tau_f  alpha  total error volume, best (lowest) first                           empty       sep
+                  `sep` = max |total - prevalence|. At sep = 0 every arm certifies nothing and the
+                  ranking is a ranking of PREVALENCES, which under B3 differ by arm.
+     0.60   0.50  doe < random < qlogei-addonly < lhs < qlogei-add < qlognei < qlogei < sobol    0%   5.6e-01
+     0.60   0.80  doe < random < qlogei-addonly < qlogei-add < qlogei < qlognei < lhs < sobol    4%   3.8e-01
+     0.60   0.95  doe < qlogei < qlogei-add < qlognei < qlogei-addonly < random < lhs < sobol   46%   2.2e-01
+     0.75   0.50  qlogei-addonly < random < lhs < qlogei-add < qlognei < qlogei < sobol < doe   30%   2.8e-02
+     0.75   0.80  qlogei-addonly < qlognei < qlogei-add < qlogei < random < lhs < sobol < doe   79%   1.9e-03
+     0.75   0.95  qlognei < qlogei < qlogei-add < lhs < qlogei-addonly < random < sobol < doe   99%   3.0e-05
+     0.85   0.50  qlognei < qlogei < qlogei-addonly < lhs < qlogei-add < sobol < random < doe   91%   8.0e-05
+     0.85   0.80  qlognei < lhs < qlogei < qlogei-add < qlogei-addonly < random < sobol < doe  100%   1.0e-05
+     0.85   0.95  lhs < qlogei < qlogei-add < qlogei-addonly < qlognei < random < sobol < doe  100%   0.0e+00  <<< PREVALENCE ONLY, not a statement about the arms
+     0.95   0.50  lhs < qlogei < qlogei-add < qlogei-addonly < qlognei < random < sobol < doe  100%   0.0e+00  <<< PREVALENCE ONLY, not a statement about the arms
+     0.95   0.80  lhs < qlogei < qlogei-add < qlogei-addonly < qlognei < random < sobol < doe  100%   0.0e+00  <<< PREVALENCE ONLY, not a statement about the arms
+     0.95   0.95  lhs < qlogei < qlogei-add < qlogei-addonly < qlognei < random < sobol < doe  100%   0.0e+00  <<< PREVALENCE ONLY, not a statement about the arms
+
+   negative type-II volumes across all 1600 rows x 3 alphas: 0
+
+   8 of 12 cells carry any information about the arms; 4 rank prevalence only.
+   `doe` on total error volume in the informative cells (1 = best): [1, 1, 1, 8, 8, 8, 8, 8]
+   Best of eight at every `tau_frac = 0.60` cell, worst of eight at every other — but read
+   WITH limit (2): `doe`'s prevalence is not the other arms' prevalence, and its slice is easier.
+
+  written to results/f2-ce-error-volumes.json

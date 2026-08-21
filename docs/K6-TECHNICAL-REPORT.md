@@ -3052,6 +3052,14 @@ still every campaign — but the denominator is not a sample size.* AUC cannot s
 this. §6.6 adds the second defect: at `gamma = 0.99, tau_frac = 0.60` the minority class is
 about 16 grid points in 20,000.
 
+> **Read the `gamma` direction the right way round, because it inverts** (Erratum 3,
+> `26091c9`). `gamma` enters `tau` **multiplicatively through `tau_max`, which decreases in
+> `gamma`**, so **high `gamma` means a LOW absolute threshold and a HUGE positive class**.
+> Measured prevalence at `gamma = 0.99, tau_frac = 0.60` is **0.9992** — the minority class
+> there is the **negative** one. Any containment, AUC or ranking figure read without its
+> prevalence beside it inverts, which is why every cell in this section and in
+> `results/f2-error-volumes.json` carries `true_frac_above_tau`.
+
 F2a therefore makes **expected type I and type II error volumes the primary design-space
 metric** (Azzimonti & Ginsbourger 2018, Table 1 — what the cited community actually
 reports). They need no new campaign; they are derived from committed columns as
@@ -3061,13 +3069,28 @@ intersect)` reproduces the committed `iou_pred` at a worst `|delta|` of **2.220e
 2,553 rows**, with **zero** impossible negative type-II volumes
 (`tests/test_f2_error_volumes.py`, `results/f2-error-volumes.json`).
 
-**They are also better defined than the metric they replace.** Where `D_est` is empty,
-`fi` is 0/0 and unusable — but nothing was claimed, so type I is exactly 0 and the whole
-true set was missed, so type II is exactly the prevalence. **Scorable rows rise from the
-2,553 that `fi_pred` admits to all 6,000.** *One correction to the amendment's own wording:
-it states that `iou_pred` is `nan` on empty rows too. It is not — it is committed as
-**0.0** on all 3,447 of them, which is the correct value. The "defined where the others
-break" claim holds for the false-inclusion rate and not for IoU.*
+**They are also better defined than the metric they replace, but the margin is smaller
+than F2a registered and the two `nan` conditions are different.**
+
+* **`fi` is `nan` whenever `D_est` is empty** — 3,447 of 6,000 rows on the main file, 2,282
+  of 3,600 on the spread file. Nothing was claimed, so type I is exactly 0 and the whole
+  true set was missed, so type II is exactly the prevalence. **Scorable rows rise from the
+  2,553 that `fi_pred` admits to all 6,000.** That gain is real and large.
+* **`iou` is `nan` only when the UNION is empty** — `D_est` *and* `D_true` both empty. An
+  empty `D_est` against a non-empty true set gives IoU = **0**, which is correct.
+  **On this file the true excursion set is never empty** (minimum prevalence 0.0012), so
+  the committed `iou_*` is finite on **every one of the 9,600 rows** and the coverage gain
+  over IoU is **zero rows.**
+
+*Erratum against Amendment F2a, which stated that `fi_pred` and `iou_pred` are both `nan`
+when `D_est` is empty and concluded that the volumes are defined "precisely where AUC and
+IoU break". The two conditions are not the same one; the claim holds for the
+false-inclusion rate and, on this data, not for IoU. The two counts are reported separately
+in `results/f2-error-volumes.json` rather than as a single figure.* **The AUC half of the
+argument — which was always the stronger half — is untouched.** The union-empty case is not
+hypothetical: it occurs **6 times** in `results/k6b-conservative.json`, where a campaign's
+true excursion set is empty and its `CE_alpha` is empty too, and there the error volumes
+are both exactly 0 while IoU is genuinely 0/0 (§6.10.2).
 
 **The registered decision rule fires.** The error-volume ranking differs from the AUC
 ranking in **24 of 24 cells**, and the disagreement is not a near-miss: Spearman rho
@@ -3111,6 +3134,68 @@ between n = 50 and n = 25**; only the contrasts move (§3.8).
 `true_frac_above_tau` but `vol_*` and `fi_*` as well — so **error volumes are not
 computable for Version B**. Reported as a finding; the prevalence is *not* imputed from
 another file, because it is a property of the campaign's own evaluation grid.
+
+#### 6.10.2 The same primary metric applied to `CE_alpha` — the object the certificate is actually about
+
+F2a's error volumes were registered for the probability map. They apply unchanged to the
+**conservative excursion estimate**, which is the set SPADE's certificate is a statement
+about, and at zero cost: `ce_vol_{alpha}`, `ce_false_in_{alpha}` and `true_frac_above` have
+all been committed since K6b ran. `scripts/analyse_f2_error_volumes.py` →
+`results/f2-ce-error-volumes.json`, 1,600 rows x 3 alphas, no new campaign.
+
+**Two limits, and they bound this harder than they bound §6.10.1.**
+
+1. **There is no committed IoU column for the CE sets**, so this application has no
+   independent cross-check of the kind that gates the map derivation (§6.10.1). What can
+   still be falsified is that the three columns share a normalisation — `ce_vol * (1 −
+   ce_false_in)` exceeding the prevalence would drive type II negative. It does not, in any
+   of the **4,800** (row, alpha) combinations.
+2. **K6b scores `doe` on its own 4-dimensional active subspace** (Amendment B3, §2.8), so
+   **the prevalence differs by arm within a cell in 198 of 200 cells**, and `doe`'s slice is
+   the easier one. **The cross-arm ranking is therefore NOT like-for-like** — the exact
+   opposite of the K6 map, where all eight arms share the 6-D grid and the prevalence is
+   identical in all 1,200 cells.
+
+**And a third thing, which is a trap rather than a limit.** When *every* arm certifies
+nothing, type I is 0 for all of them and total error volume is **exactly the prevalence** —
+so the "ranking" is a ranking of prevalences and says nothing whatever about the arms.
+Under B3 `doe`'s prevalence is the higher one (0.0046 against 0.0029 at `tau_frac = 0.95`),
+so it is ranked **last** in those cells **mechanically**. This is the same class of error as
+*"type I read alone ranks silence first"* (§6.10.1) and it bites in **4 of the 12 cells**,
+all at `tau_frac >= 0.85` where emptiness is 100%. Those cells are flagged
+`ranking_is_prevalence_only` and are excluded from the reading below; every cell carries
+`separation_from_prevalence = max |total − prevalence|` so the margin is visible rather
+than assumed.
+
+| tau_frac | alpha | total error volume, best first | empty | separation |
+|---|---|---|---|---|
+| 0.60 | 0.50 | **`doe`** < random < qlogei-addonly < lhs < qlogei-add < qlognei < qlogei < sobol | 0% | 5.6e-01 |
+| 0.60 | 0.80 | **`doe`** < random < qlogei-addonly < qlogei-add < qlogei < qlognei < lhs < sobol | 4% | 3.8e-01 |
+| 0.60 | 0.95 | **`doe`** < qlogei < qlogei-add < qlognei < qlogei-addonly < random < lhs < sobol | 46% | 2.2e-01 |
+| 0.75 | 0.50 | qlogei-addonly < random < lhs < qlogei-add < qlognei < qlogei < sobol < **`doe`** | 30% | 2.8e-02 |
+| 0.75 | 0.80 | qlogei-addonly < qlognei < qlogei-add < qlogei < random < lhs < sobol < **`doe`** | 79% | 1.9e-03 |
+| 0.75 | 0.95 | qlognei < qlogei < qlogei-add < lhs < qlogei-addonly < random < sobol < **`doe`** | 99% | 3.0e-05 |
+| 0.85 | 0.50 | qlognei < qlogei < qlogei-addonly < lhs < qlogei-add < sobol < random < **`doe`** | 91% | 8.0e-05 |
+| 0.85 | 0.80 | qlognei < lhs < qlogei < qlogei-add < qlogei-addonly < random < sobol < **`doe`** | 100% | 1.0e-05 |
+| *0.85* | *0.95* | *prevalence only — excluded* | 100% | **0** |
+| *0.95* | *all three* | *prevalence only — excluded* | 100% | **0** |
+
+**`doe` is best of eight at all three `tau_frac = 0.60` cells and worst of eight at all five
+other informative cells.** That is the same shape as §5.9's IoU result — *"pinning two axes
+near the response ridge buys a well-located coarse region and destroys the fine structure
+needed at a high threshold"* — now measured on the certified set rather than the Vorob'ev
+expectation. **It is not evidence that `doe` certifies better at `tau_frac = 0.60`**, both
+because of limit 2 and because §5.10.2 shows the same arm's certified set at that very cell
+is contained in the truth in **0 of 50 campaigns**. A set can have small symmetric-difference
+volume and still fail its joint guarantee at every level, and `doe` at `tau_frac = 0.60` is
+the worked example: **error volume and containment are different questions, and only the
+second one is what a certificate promises.**
+
+**The one place in this programme where IoU genuinely breaks.** §6.10.1 records that on the
+K6 map the union is never empty, so IoU never goes `nan` there. In K6b it does: **6 rows**
+have an empty true excursion set *and* an empty `CE_alpha`, so IoU is 0/0 while type I and
+type II are both exactly 0 and exactly right. F2a's "defined where IoU breaks" claim is
+therefore correct in principle and worth **6 rows of 9,600** in practice.
 
 ### 6.11 Two arms CANNOT be gated — retracted upward from "ungated"
 
@@ -3585,6 +3670,7 @@ The `provenance.argv` array in each result JSON records the command that produce
   > results/f1-dual-n.log 2>&1          # writes results/f1-dual-n.json
 .venv/bin/python scripts/analyse_f2_error_volumes.py \
   > results/f2-error-volumes.log 2>&1   # writes results/f2-error-volumes.json
+                                        #    AND results/f2-ce-error-volumes.json
 
 # Unit tests for the five modules (56 tests)
 .venv/bin/python -m pytest tests/test_designspace.py tests/test_vorobev.py \
@@ -3722,6 +3808,36 @@ writes none (§6.16). The other five files all carry one, and all five are empty
   one unspecified machine.
 
 ---
+
+### 9.5 A near-miss in the analysis layer, recorded because the grid is about to triple
+
+`scripts/analyse_f1_dual_n.py` was first written with its grid hardcoded:
+
+```python
+GAMMAS = (0.50, 0.90, 0.95, 0.99)          # the committed config has SIX
+TAU_FRACS = (0.60, 0.75, 0.85, 0.95)
+```
+
+The committed `results/k6-designspace.json` config carries **six** gammas — `0.50, 0.70,
+0.80, 0.90, 0.95, 0.99`. The script therefore silently computed the "24 of 24" screening
+family over **16 cells**, dropped `gamma = 0.70` and `0.80` entirely, printed
+`Holm family of 16`, and produced a result that was **internally consistent, correctly
+Holm-adjusted, and wrong** — a third of the headline family missing, with nothing in the
+output saying so. It was caught only because the printed family size was compared against
+the number the report claims.
+
+**The fix is not "be careful": it is that an analysis script must read its grid from the
+committed config and assert what it assumed.** Both Amendment F scripts now do
+(`k6["config"]["gammas"]`, with the spread run's config asserted equal first, exactly as
+`analyse_k6.py` does before merging).
+
+This is recorded as a methods note because **it is the failure mode that survives a grid
+tripling unnoticed.** Phase 6 takes this grid to five oracle families x two dimensions x two
+noise levels; a hardcoded coordinate list that silently drops a third of the cells produces
+a smaller, cleaner, entirely wrong table, and no test that checks internal consistency will
+see it. It is the same class as the wrong-column gate that would have passed on 88% of
+`ackley` rows: **both are silent, both are self-consistent, and both are only visible by
+comparing a count against an independent statement of what the count should be.**
 
 ## 10. What may and may not be written from these data
 

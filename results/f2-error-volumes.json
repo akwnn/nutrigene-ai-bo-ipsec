@@ -1,8 +1,8 @@
 {
  "provenance": {
-  "git_sha": "27d47ffc48785ac6c8e513f91375db9d33393689",
+  "git_sha": "44fb8fa4881b77349e792178938df5ab1e3086ce",
   "git_dirty": true,
-  "generated_at": "2026-08-21T12:33:46+08:00",
+  "generated_at": "2026-08-21T13:40:12+08:00",
   "argv": [
    "scripts/analyse_f2_error_volumes.py"
   ],
@@ -73,38 +73,50 @@
  "scorable_rows": {
   "k6-designspace:pred": {
    "rows": 6000,
-   "error_volumes": 6000,
-   "false_inclusion_rate": 2553,
-   "committed_iou": 6000,
+   "error_volumes_scorable": 6000,
+   "fi_scorable": 2553,
+   "committed_iou_finite": 6000,
    "empty_D_est": 3447,
+   "empty_union": 0,
+   "gain_over_fi": 3447,
+   "gain_over_iou": 0,
    "empty_frac": 0.5745
   },
   "k6-designspace:latent": {
    "rows": 6000,
-   "error_volumes": 6000,
-   "false_inclusion_rate": 4927,
-   "committed_iou": 6000,
+   "error_volumes_scorable": 6000,
+   "fi_scorable": 4927,
+   "committed_iou_finite": 6000,
    "empty_D_est": 1073,
+   "empty_union": 0,
+   "gain_over_fi": 1073,
+   "gain_over_iou": 0,
    "empty_frac": 0.1788333333333333
   },
   "k6-designspace-spread:pred": {
    "rows": 3600,
-   "error_volumes": 3600,
-   "false_inclusion_rate": 1318,
-   "committed_iou": 3600,
+   "error_volumes_scorable": 3600,
+   "fi_scorable": 1318,
+   "committed_iou_finite": 3600,
    "empty_D_est": 2282,
+   "empty_union": 0,
+   "gain_over_fi": 2282,
+   "gain_over_iou": 0,
    "empty_frac": 0.633888888888889
   },
   "k6-designspace-spread:latent": {
    "rows": 3600,
-   "error_volumes": 3600,
-   "false_inclusion_rate": 2827,
-   "committed_iou": 3600,
+   "error_volumes_scorable": 3600,
+   "fi_scorable": 2827,
+   "committed_iou_finite": 3600,
    "empty_D_est": 773,
+   "empty_union": 0,
+   "gain_over_fi": 773,
+   "gain_over_iou": 0,
    "empty_frac": 0.21472222222222226
   }
  },
- "emptiness_note": "Reported beside the volumes regardless, per F2a. NOTE the correction: only `fi_*` is nan on an empty D_est; the committed `iou_*` is 0.0 there and is finite on every row, so IoU does not break where the registration says it does.",
+ "emptiness_note": "Reported beside the volumes regardless, per F2a. CORRECTION to the registration, which treated the two nan conditions as one: `fi_*` is nan when D_est is empty; `iou_*` is nan only when the UNION is empty (D_est and D_true both empty). On this data D_true is never empty \u2014 minimum prevalence 0.0012 \u2014 so the committed `iou_*` is finite on EVERY row and the coverage gain over IoU is 0 rows at most. The gain over `fi` is real and large. F2a's claim that the volumes are defined 'precisely where AUC and IoU break' holds for the false-inclusion rate and, on this data, not for IoU. The AUC half of the argument is untouched.",
  "cells": [
   {
    "gamma": 0.5,
@@ -4655,8 +4667,18 @@
     "bootstrap_wilcoxon_disagree_n25": false,
     "reported_unit": "instance",
     "n50_label": "anti-conservative unit",
-    "label": "lhs - doe",
     "metric": "iou_pred",
+    "metric_class": "validated",
+    "arms": [
+     "lhs",
+     "doe"
+    ],
+    "key_b": null,
+    "filters": {
+     "gamma": 0.5,
+     "tau_frac": 0.6
+    },
+    "label": "lhs - doe",
     "gamma": 0.5,
     "tau_frac": 0.6
    },
@@ -4692,8 +4714,18 @@
     "bootstrap_wilcoxon_disagree_n25": false,
     "reported_unit": "instance",
     "n50_label": "anti-conservative unit",
-    "label": "lhs - doe",
     "metric": "iou_pred",
+    "metric_class": "validated",
+    "arms": [
+     "lhs",
+     "doe"
+    ],
+    "key_b": null,
+    "filters": {
+     "gamma": 0.9,
+     "tau_frac": 0.75
+    },
+    "label": "lhs - doe",
     "gamma": 0.9,
     "tau_frac": 0.75
    },
@@ -4729,8 +4761,18 @@
     "bootstrap_wilcoxon_disagree_n25": false,
     "reported_unit": "instance",
     "n50_label": "anti-conservative unit",
-    "label": "lhs - doe",
     "metric": "iou_latent",
+    "metric_class": "validated",
+    "arms": [
+     "lhs",
+     "doe"
+    ],
+    "key_b": null,
+    "filters": {
+     "gamma": 0.5,
+     "tau_frac": 0.6
+    },
+    "label": "lhs - doe",
     "gamma": 0.5,
     "tau_frac": 0.6
    },
@@ -4766,8 +4808,18 @@
     "bootstrap_wilcoxon_disagree_n25": false,
     "reported_unit": "instance",
     "n50_label": "anti-conservative unit",
-    "label": "lhs - doe",
     "metric": "iou_latent",
+    "metric_class": "validated",
+    "arms": [
+     "lhs",
+     "doe"
+    ],
+    "key_b": null,
+    "filters": {
+     "gamma": 0.9,
+     "tau_frac": 0.75
+    },
+    "label": "lhs - doe",
     "gamma": 0.9,
     "tau_frac": 0.75
    },
@@ -4803,8 +4855,18 @@
     "bootstrap_wilcoxon_disagree_n25": false,
     "reported_unit": "instance",
     "n50_label": "anti-conservative unit",
-    "label": "lhs - doe",
     "metric": "brier_pred",
+    "metric_class": "validated",
+    "arms": [
+     "lhs",
+     "doe"
+    ],
+    "key_b": null,
+    "filters": {
+     "gamma": 0.5,
+     "tau_frac": 0.6
+    },
+    "label": "lhs - doe",
     "gamma": 0.5,
     "tau_frac": 0.6
    },
@@ -4840,8 +4902,18 @@
     "bootstrap_wilcoxon_disagree_n25": false,
     "reported_unit": "instance",
     "n50_label": "anti-conservative unit",
-    "label": "lhs - doe",
     "metric": "brier_pred",
+    "metric_class": "validated",
+    "arms": [
+     "lhs",
+     "doe"
+    ],
+    "key_b": null,
+    "filters": {
+     "gamma": 0.9,
+     "tau_frac": 0.75
+    },
+    "label": "lhs - doe",
     "gamma": 0.9,
     "tau_frac": 0.75
    },
@@ -4877,8 +4949,18 @@
     "bootstrap_wilcoxon_disagree_n25": false,
     "reported_unit": "instance",
     "n50_label": "anti-conservative unit",
-    "label": "lhs - doe",
     "metric": "brier_latent",
+    "metric_class": "validated",
+    "arms": [
+     "lhs",
+     "doe"
+    ],
+    "key_b": null,
+    "filters": {
+     "gamma": 0.5,
+     "tau_frac": 0.6
+    },
+    "label": "lhs - doe",
     "gamma": 0.5,
     "tau_frac": 0.6
    },
@@ -4914,8 +4996,18 @@
     "bootstrap_wilcoxon_disagree_n25": false,
     "reported_unit": "instance",
     "n50_label": "anti-conservative unit",
-    "label": "lhs - doe",
     "metric": "brier_latent",
+    "metric_class": "validated",
+    "arms": [
+     "lhs",
+     "doe"
+    ],
+    "key_b": null,
+    "filters": {
+     "gamma": 0.9,
+     "tau_frac": 0.75
+    },
+    "label": "lhs - doe",
     "gamma": 0.9,
     "tau_frac": 0.75
    },
@@ -4951,8 +5043,18 @@
     "bootstrap_wilcoxon_disagree_n25": false,
     "reported_unit": "instance",
     "n50_label": "anti-conservative unit",
-    "label": "doe - qlogei",
     "metric": "iou_pred",
+    "metric_class": "validated",
+    "arms": [
+     "doe",
+     "qlogei"
+    ],
+    "key_b": null,
+    "filters": {
+     "gamma": 0.5,
+     "tau_frac": 0.6
+    },
+    "label": "doe - qlogei",
     "gamma": 0.5,
     "tau_frac": 0.6
    },
@@ -4988,8 +5090,18 @@
     "bootstrap_wilcoxon_disagree_n25": false,
     "reported_unit": "instance",
     "n50_label": "anti-conservative unit",
-    "label": "doe - qlogei",
     "metric": "iou_pred",
+    "metric_class": "validated",
+    "arms": [
+     "doe",
+     "qlogei"
+    ],
+    "key_b": null,
+    "filters": {
+     "gamma": 0.9,
+     "tau_frac": 0.75
+    },
+    "label": "doe - qlogei",
     "gamma": 0.9,
     "tau_frac": 0.75
    },
@@ -5025,8 +5137,18 @@
     "bootstrap_wilcoxon_disagree_n25": false,
     "reported_unit": "instance",
     "n50_label": "anti-conservative unit",
-    "label": "doe - qlogei",
     "metric": "iou_latent",
+    "metric_class": "validated",
+    "arms": [
+     "doe",
+     "qlogei"
+    ],
+    "key_b": null,
+    "filters": {
+     "gamma": 0.5,
+     "tau_frac": 0.6
+    },
+    "label": "doe - qlogei",
     "gamma": 0.5,
     "tau_frac": 0.6
    },
@@ -5062,8 +5184,18 @@
     "bootstrap_wilcoxon_disagree_n25": false,
     "reported_unit": "instance",
     "n50_label": "anti-conservative unit",
-    "label": "doe - qlogei",
     "metric": "iou_latent",
+    "metric_class": "validated",
+    "arms": [
+     "doe",
+     "qlogei"
+    ],
+    "key_b": null,
+    "filters": {
+     "gamma": 0.9,
+     "tau_frac": 0.75
+    },
+    "label": "doe - qlogei",
     "gamma": 0.9,
     "tau_frac": 0.75
    },
@@ -5099,8 +5231,18 @@
     "bootstrap_wilcoxon_disagree_n25": false,
     "reported_unit": "instance",
     "n50_label": "anti-conservative unit",
-    "label": "doe - qlogei",
     "metric": "brier_pred",
+    "metric_class": "validated",
+    "arms": [
+     "doe",
+     "qlogei"
+    ],
+    "key_b": null,
+    "filters": {
+     "gamma": 0.5,
+     "tau_frac": 0.6
+    },
+    "label": "doe - qlogei",
     "gamma": 0.5,
     "tau_frac": 0.6
    },
@@ -5136,8 +5278,18 @@
     "bootstrap_wilcoxon_disagree_n25": false,
     "reported_unit": "instance",
     "n50_label": "anti-conservative unit",
-    "label": "doe - qlogei",
     "metric": "brier_pred",
+    "metric_class": "validated",
+    "arms": [
+     "doe",
+     "qlogei"
+    ],
+    "key_b": null,
+    "filters": {
+     "gamma": 0.9,
+     "tau_frac": 0.75
+    },
+    "label": "doe - qlogei",
     "gamma": 0.9,
     "tau_frac": 0.75
    },
@@ -5173,8 +5325,18 @@
     "bootstrap_wilcoxon_disagree_n25": false,
     "reported_unit": "instance",
     "n50_label": "anti-conservative unit",
-    "label": "doe - qlogei",
     "metric": "brier_latent",
+    "metric_class": "validated",
+    "arms": [
+     "doe",
+     "qlogei"
+    ],
+    "key_b": null,
+    "filters": {
+     "gamma": 0.5,
+     "tau_frac": 0.6
+    },
+    "label": "doe - qlogei",
     "gamma": 0.5,
     "tau_frac": 0.6
    },
@@ -5210,8 +5372,18 @@
     "bootstrap_wilcoxon_disagree_n25": false,
     "reported_unit": "instance",
     "n50_label": "anti-conservative unit",
-    "label": "doe - qlogei",
     "metric": "brier_latent",
+    "metric_class": "validated",
+    "arms": [
+     "doe",
+     "qlogei"
+    ],
+    "key_b": null,
+    "filters": {
+     "gamma": 0.9,
+     "tau_frac": 0.75
+    },
+    "label": "doe - qlogei",
     "gamma": 0.9,
     "tau_frac": 0.75
    }
