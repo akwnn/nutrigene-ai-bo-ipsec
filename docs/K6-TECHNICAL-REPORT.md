@@ -2639,6 +2639,31 @@ landscape**: the shared landscape effect largely cancels in the difference, and 
 difference is the quantity being tested. What is left is seed-level noise, and averaging
 two seeds of it *reduces* the per-unit variance about as fast as halving `n` inflates it.
 
+> #### The portable half — and it is the most transferable thing F1 produced
+>
+> **The near-zero ICC is a property of PAIRED DIFFERENCES, not of this design, and it must
+> not be generalised to anything unpaired.** Pairing is what removes the landscape; a raw
+> per-arm value keeps it in full. The same identity applied to raw `auc_pred`, over the
+> 24 cells:
+>
+> | arm | median unpaired ICC | min | max |
+> |---|---|---|---|
+> | `lhs` | **+0.581** | +0.003 | +0.650 |
+> | `qlogei` | +0.234 | −0.061 | +0.349 |
+> | `qlogei-add` | +0.122 | −0.082 | +0.211 |
+> | `random` | +0.036 | −0.313 | +0.078 |
+> | `qlognei` | −0.122 | −0.358 | −0.065 |
+> | `qlogei-addonly` | −0.221 | −0.302 | −0.117 |
+> | `doe` | −0.226 | −0.293 | +0.207 |
+> | `sobol` | **−0.343** | −0.466 | +0.143 |
+>
+> **It is both large and strongly arm-dependent** — a span of 0.92 from `lhs` to `sobol`.
+> So for any **unpaired** quantity — an arm mean with an interval, a containment
+> proportion, a prevalence figure — **the unit of analysis still matters and `n = 25`
+> remains the default.** It may not be waved through on the strength of the
+> paired-difference median. This applies directly to §5.10.2's containment tables, which
+> are proportions rather than contrasts, and to every arm mean in §6.10.1.
+
 **But the direction is family-dependent, and a single median hides that.** Per Holm family:
 
 | family | contrasts | median ICC | median inflation | range |
@@ -2700,9 +2725,19 @@ signs inverts two of these four readings.
 | **↑** `versionb` − `qlognei` @ tf=0.75 | `auc` | **validated** | +0.0440 | 6.53e-02 → 2.05e-02 | **Yes** — `brier_0.75` −0.0154, p < 1e-4 |
 | **↑** `versionb` − `versionb_random` @ tf=0.60 | `alpha_star` | **model-internal** | +0.0261 | 1.89e-01 → 1.85e-02 | **Yes** — `brier_0.6` −0.0071 (p = 0.0012) and `regret` −0.0091 (p = 0.0117) |
 
+**Every one of the three upgrades is a power effect of averaging seeds, not new evidence,
+and that sentence travels with them wherever they are quoted.** All three sit in the two
+families with the most strongly negative ICC — KILL 1 at **−0.339** and KILL 2 at
+**−0.175** — i.e. precisely where the conservative unit is the *more* powerful one because
+within-landscape seed noise exceeds between-landscape variance. Their individual
+inflations are **0.621, 0.791 and 0.889**, all below 1. Nothing new was measured; the same
+50 campaigns were aggregated in a way that happens to have more power here. This is a
+mechanical statement and it is the better caveat: it does not depend on any judgement about
+whether the metric is trustworthy.
+
 **Three of the four changes are on `alpha*`, and none of them may be quoted as evidence
-that an arm certifies better** (§1.4 consequence 1) — that restriction is unchanged by the
-unit. What the corroboration column adds is that **two of the three model-internal moves
+that an arm certifies better** (§1.4 consequence 1) — that restriction is a property of the
+metric and is unchanged by the unit. What the corroboration column adds is that **two of the three model-internal moves
 are backed by a metric that consults the truth**, and the one that is not — the downgrade —
 was actively *contradicted* by one, so removing it costs nothing. All four clear the SESOI
 of 0.02.
@@ -2717,8 +2752,27 @@ KILL 1 at −0.339, KILL 2 at −0.175 — i.e. precisely where the conservative
 (ii) F2a's error volumes, which supersede AUC where the two disagree (§6.10.1), **cannot be
 computed for Version B at all**: `results/versionb.json` carries none of `vol_*`, `fi_*` or
 `true_frac_above_tau`. The AUC upgrade is therefore corroborated on **Brier**, the other
-validated map metric the file does carry, and not on the error volumes. Settling that would
-need the Version B runner to emit the three columns.
+validated map metric the file does carry, and not on the error volumes.
+
+> **A concrete and cheap fix, named because it is the same omission that has made Version B
+> unscoreable throughout.** `scripts/run_versionb.py` needs to emit **three columns** —
+> `vol_{tau_frac}`, `fi_{tau_frac}` and `true_frac_above_tau` — for each threshold, exactly
+> as `run_k6_designspace.py` already does. They are computed inside the run and discarded.
+> With them, **every F2a quantity becomes available for Version B at no additional campaign
+> cost**: the error volumes, the type I / type II split, and the derived-IoU gate that
+> checks the arithmetic. Without them, Version B is the one arm family in this study that
+> cannot be scored on the metric the report now treats as primary, and the KILL-1 and
+> KILL-2 verdicts rest on AUC and `alpha*` alone.
+
+**Provenance of `results/f1-dual-n.json`.** The file has been regenerated twice since it
+was first committed, both times **additively**: on each regeneration, all 137 contrasts'
+pre-existing fields, `containment_per_cell`, `registered_kill`, `families`, `units`,
+`seed_average_policy`, `statistics` and every prior `summary` key were verified
+programmatically to be byte-identical to the committed version, and only new keys were
+added (`metric`, `metric_class`, `arms`, `key_b`, `filters`, `source`,
+`status_change_audit`, `unpaired_icc_raw_auc_pred`). Stated here because an additive
+regeneration of a committed result is permitted only when the byte-identity is *proved*
+rather than asserted.
 
 #### 5.13.2 The honest summary
 

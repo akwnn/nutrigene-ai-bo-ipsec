@@ -179,6 +179,32 @@ def paired(rows, arm_a, arm_b, key, unit, key_b=None, **filters):
     return ia, ib, dropped
 
 
+def unpaired_icc(rows, arm, key, **filters) -> float:
+    """Intra-class correlation of RAW per-arm values — NOT of paired differences.
+
+    Same identity, different input: `1 + ICC = (n50/n25) * s25^2 / s50^2`, where `s25` is
+    the variance of the 25 instance means and `s50` that of the 50 campaign values.
+
+    **This is the portable half of F1.** The paired differences have a median ICC near
+    zero, because pairing has already removed the landscape — the shared landscape effect
+    cancels in the difference, which is exactly what makes pairing worth doing. That does
+    **not** transfer to unpaired quantities. An arm mean, a containment proportion or a
+    prevalence figure keeps the landscape effect in full, so for those the unit of
+    analysis still matters and `n = 25` remains the default.
+    """
+    acc: dict[str, list[float]] = {}
+    for r in rows:
+        if r["arm"] == arm and all(r[k] == v for k, v in filters.items()):
+            val = float(r[key])
+            if np.isfinite(val):
+                acc.setdefault(r["instance"], []).append(val)
+    flat = np.array([x for v in acc.values() for x in v], dtype=float)
+    means = np.array([np.mean(v) for v in acc.values()], dtype=float)
+    if flat.size == 0 or means.size == 0 or flat.var() == 0:
+        return float("nan")
+    return float((flat.size / means.size) * means.var() / flat.var() - 1.0)
+
+
 def contrast(pa, pb) -> dict:
     """Mean of `pa - pb`, its percentile bootstrap CI, and the two-sided Wilcoxon p.
 
@@ -737,6 +763,29 @@ def main() -> None:
     contain_changed = [r for v in contain.values() for r in v
                        if r["verdict_changed"] and r["n50"]["value"] is not None]
 
+    # The portable half: the same statistic on RAW values, where the landscape does NOT
+    # cancel. Reported so the near-zero paired ICC is not mis-generalised to arm means,
+    # containment proportions or prevalence figures.
+    unpaired = {}
+    for arm in sorted({r["arm"] for r in k6_rows}):
+        vals = [unpaired_icc(k6_rows, arm, "auc_pred", gamma=g, tau_frac=tf)
+                for g in gammas for tf in tau_fracs]
+        vals = [v for v in vals if np.isfinite(v)]
+        if vals:
+            unpaired[arm] = {"median": float(np.median(vals)),
+                             "min": float(np.min(vals)), "max": float(np.max(vals)),
+                             "cells": len(vals)}
+    print(f"\n{'=' * 118}\n  THE PORTABLE HALF — the near-zero ICC is a property of "
+          f"PAIRED DIFFERENCES, not of this design\n{'=' * 118}")
+    print("  Pairing removes the landscape: the shared landscape effect cancels in the "
+          "difference, which\n  is what makes pairing worth doing. Raw per-arm values "
+          "keep it in full. So for anything\n  UNPAIRED — arm means with intervals, "
+          "containment proportions, prevalence — the unit still\n  matters and n = 25 "
+          "stays the default.\n")
+    print(f"  {'arm':<17}{'unpaired ICC of raw auc_pred (median)':>38}{'min':>9}{'max':>9}")
+    for arm, v in sorted(unpaired.items(), key=lambda kv: -kv[1]["median"]):
+        print(f"  {arm:<17}{v['median']:>+38.3f}{v['min']:>+9.3f}{v['max']:>+9.3f}")
+
     infl = np.array([c["ci_inflation"] for c in all_cs
                      if np.isfinite(c["ci_inflation"])])
     summary = {
@@ -756,6 +805,14 @@ def main() -> None:
         "status_changed_holm": len(holm_changed),
         "downgraded_holm": [f"{c['family']}: {c['label']}" for c in downgraded],
         "upgraded_holm": [f"{c['family']}: {c['label']}" for c in upgraded],
+        "unpaired_icc_raw_auc_pred": unpaired,
+        "unpaired_icc_reading": (
+            "The near-zero ICC of the PAIRED DIFFERENCES is a property of pairing, not "
+            "of this design: the landscape cancels in a difference. Raw per-arm values "
+            "keep it, and the unpaired ICC is both large and arm-dependent. For any "
+            "UNPAIRED quantity -- arm means with intervals, containment proportions, "
+            "prevalence -- the unit of analysis still matters and n=25 stays the "
+            "default. This is the portable half of F1."),
         "containment_cells": sum(len(v) for v in contain.values()),
         "containment_verdict_changed": len(contain_changed),
         "status_changes_by_metric_class": {

@@ -1,8 +1,8 @@
 {
  "provenance": {
-  "git_sha": "48820f524fe51a1bb19a28db98e516e2bf3226f4",
+  "git_sha": "67a6f8936c4f7a5da82f859f7c4fae38e647681c",
   "git_dirty": true,
-  "generated_at": "2026-08-21T13:26:25+08:00",
+  "generated_at": "2026-08-21T13:48:20+08:00",
   "argv": [
    "scripts/analyse_f1_dual_n.py"
   ],
@@ -48,6 +48,57 @@
    "\u00a75.11.3 KILL 1 \u2014 does plate 2 close the gap to qLogNEI?: versionb - qlognei auc tf=0.75",
    "\u00a75.11.4 KILL 2 \u2014 does the LSE criterion beat 8 RANDOM wells?: versionb - versionb_random alpha_star tf=0.6"
   ],
+  "unpaired_icc_raw_auc_pred": {
+   "doe": {
+    "median": -0.22590368569859504,
+    "min": -0.2934023896046205,
+    "max": 0.20694704408806608,
+    "cells": 24
+   },
+   "lhs": {
+    "median": 0.5805698723148295,
+    "min": 0.0026799268054322756,
+    "max": 0.6498064879096566,
+    "cells": 24
+   },
+   "qlogei": {
+    "median": 0.23393966303759162,
+    "min": -0.06091457813434309,
+    "max": 0.34870057912208985,
+    "cells": 24
+   },
+   "qlogei-add": {
+    "median": 0.12204748784373398,
+    "min": -0.08161022663957462,
+    "max": 0.21073895423380384,
+    "cells": 24
+   },
+   "qlogei-addonly": {
+    "median": -0.220859265211382,
+    "min": -0.301530703896564,
+    "max": -0.11737110501171966,
+    "cells": 24
+   },
+   "qlognei": {
+    "median": -0.12218714357433152,
+    "min": -0.3575031763536691,
+    "max": -0.0649617107909295,
+    "cells": 24
+   },
+   "random": {
+    "median": 0.03560649183771458,
+    "min": -0.3126608527103214,
+    "max": 0.07767114393952923,
+    "cells": 24
+   },
+   "sobol": {
+    "median": -0.342859035967754,
+    "min": -0.4657764434254197,
+    "max": 0.14344907403176155,
+    "cells": 24
+   }
+  },
+  "unpaired_icc_reading": "The near-zero ICC of the PAIRED DIFFERENCES is a property of pairing, not of this design: the landscape cancels in a difference. Raw per-arm values keep it, and the unpaired ICC is both large and arm-dependent. For any UNPAIRED quantity -- arm means with intervals, containment proportions, prevalence -- the unit of analysis still matters and n=25 stays the default. This is the portable half of F1.",
   "containment_cells": 156,
   "containment_verdict_changed": 0,
   "status_changes_by_metric_class": {

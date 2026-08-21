@@ -350,6 +350,24 @@ D20 HEADLINE 2 — the SIGN FLIP that is the reversal   [fix1-terminal-rule]  Ho
       => CORROBORATED BY A VALIDATED METRIC: True
 
 ======================================================================================================================
+  THE PORTABLE HALF — the near-zero ICC is a property of PAIRED DIFFERENCES, not of this design
+======================================================================================================================
+  Pairing removes the landscape: the shared landscape effect cancels in the difference, which
+  is what makes pairing worth doing. Raw per-arm values keep it in full. So for anything
+  UNPAIRED — arm means with intervals, containment proportions, prevalence — the unit still
+  matters and n = 25 stays the default.
+
+  arm               unpaired ICC of raw auc_pred (median)      min      max
+  lhs                                              +0.581   +0.003   +0.650
+  qlogei                                           +0.234   -0.061   +0.349
+  qlogei-add                                       +0.122   -0.082   +0.211
+  random                                           +0.036   -0.313   +0.078
+  qlognei                                          -0.122   -0.358   -0.065
+  qlogei-addonly                                   -0.221   -0.302   -0.117
+  doe                                              -0.226   -0.293   +0.207
+  sobol                                            -0.343   -0.466   +0.143
+
+======================================================================================================================
   HOW MANY REPORTED CONTRASTS CHANGE STATUS AT n = 25?
 ======================================================================================================================
     contrasts recomputed          : 137

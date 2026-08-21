@@ -39,6 +39,7 @@ from analyse_f1_dual_n import (  # noqa: E402
     holm,
     metric_class,
     paired,
+    unpaired_icc,
 )
 
 TOL = 1e-12
@@ -211,3 +212,42 @@ def test_every_metric_in_the_class_table_has_a_direction():
     """A column that is classified but has no direction would silently score as a tie."""
     for prefix, _kind, _higher in METRIC_PREFIXES:
         assert benefit_sign(prefix, 1.0) in (1, -1), prefix
+
+
+def test_unpaired_icc_hits_both_corners_exactly():
+    """The same 1 + ICC identity applied to RAW values rather than paired differences.
+
+    Two exact corners pin the arithmetic:
+      * both seeds of an instance identical, instances differing -> ICC = +1
+      * instance means all equal, seeds differing within -> ICC = -1
+    """
+    identical = [{"arm": "a", "instance": f"i{i}", "seed": s, "v": float(i)}
+                 for i in range(5) for s in (0, 1)]
+    assert unpaired_icc(identical, "a", "v") == pytest.approx(1.0, abs=1e-12)
+
+    no_between = [{"arm": "a", "instance": f"i{i}", "seed": s,
+                   "v": 10.0 + (1.0 if s else -1.0) * (i + 1)}
+                  for i in range(5) for s in (0, 1)]
+    assert unpaired_icc(no_between, "a", "v") == pytest.approx(-1.0, abs=1e-12)
+
+
+def test_the_near_zero_icc_does_not_generalise_beyond_paired_differences(k6_rows):
+    """THE portable finding: pairing removes the landscape, raw values keep it.
+
+    The paired differences have a median ICC of about -0.02, so n = 50 was barely
+    anti-conservative for the contrasts. That does NOT transfer to unpaired quantities --
+    arm means, containment proportions, prevalence figures -- where the landscape effect
+    is still fully present. `lhs` on raw `auc_pred` runs far positive while `doe` runs
+    negative, so the unpaired ICC is both large and arm-dependent.
+    """
+    med = {}
+    for arm in ("lhs", "doe", "qlogei", "qlognei", "random"):
+        vals = [unpaired_icc(k6_rows, arm, "auc_pred", gamma=g, tau_frac=t)
+                for g in (0.50, 0.70, 0.80, 0.90, 0.95, 0.99)
+                for t in (0.60, 0.75, 0.85, 0.95)]
+        med[arm] = float(np.median([v for v in vals if np.isfinite(v)]))
+    assert med["lhs"] > 0.4, f"lhs unpaired ICC {med['lhs']:+.3f} — expected strongly positive"
+    assert med["doe"] < 0.0, f"doe unpaired ICC {med['doe']:+.3f} — expected negative"
+    assert max(med.values()) - min(med.values()) > 0.5, (
+        "the unpaired ICC should be strongly arm-dependent; if it has flattened, the "
+        "claim that n=25 must stay the default for unpaired quantities needs re-checking")
