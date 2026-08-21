@@ -5536,3 +5536,74 @@ the first acquisition and land at 0–4 of 50.**
 
 **This is a property to REPORT, not to repair.** Re-seeding per σ would invalidate every
 committed campaign in the project. `torch_oracle.py` stays on the do-not-modify list.
+
+---
+
+## 📌 ERRATUM 3 to Amendment F / P2 · **I inverted the γ-ladder difficulty ordering. P2 found it; verified from committed data.**
+
+**What P2's registration says (mine):** *"γ=0.99 tightens `tau_max` from 1.0000 to 0.4184 and
+there is no reason the certificate must survive that."* — framing **γ=0.99 as the hard corner**.
+
+**What is true.** γ enters τ **multiplicatively**: `tau = tau_frac × tau_max(γ, σ_rel)`, and
+`tau_max` *decreases* in γ. So a **higher** γ buys a **lower absolute τ**, a **larger** true
+superlevel set, and **easier** containment. Measured on the committed `lhs` rows
+(`k6-designspace-spread.json`, mean `true_frac_above_tau` over 50 campaigns):
+
+| γ | τ_frac | τ | prevalence |
+|---|---|---|---|
+| **0.99** | 0.60 | 0.2510 | **0.99916** ← I called this the hard corner |
+| 0.99 | 0.95 | 0.3975 | 0.98090 |
+| 0.95 | 0.60 | 0.3533 | 0.99131 |
+| 0.50 | 0.60 | 0.6000 | 0.73569 |
+| 0.50 | 0.85 | 0.8500 | 0.06844 |
+| **0.50** | **0.95** | 0.9500 | **0.00294** ← the actual hard corner |
+
+**I conflated "a higher assurance requirement" with "a harder threshold."** Higher γ *does*
+demand more assurance — and it discharges that demand by lowering the threshold it is willing
+to certify. The certificate is hardest at **γ=0.50, τ_frac=0.95**, where the true set is
+**59 grid points of 20,000**.
+
+**What changes and what does not.**
+* **The registered kill is UNCHANGED** — every cell still runs and every below-nominal
+  containment is still reported as a failure. **The kill was correctly specified; only my
+  expectation about where it would bite was wrong.**
+* **`true_frac_above_tau` must travel beside every containment fraction** — P2's call, adopted
+  programme-wide. A containment number read without its prevalence **inverts the reading**:
+  0.99 containment where the true set covers 99.9% of the box is nearly vacuous, and 0.94
+  where it covers 0.29% is a strong result.
+
+**This sharpens Amendment F2a rather than complicating it.** AUC is unreliable at **both** ends
+of this ladder, mirrored: at γ=0.99 τ_frac=0.60 the **negative** class is ~17 grid points of
+20,000; at γ=0.50 τ_frac=0.95 the **positive** class is ~59. Davis & Goadrich cuts both ways.
+The **type I / type II error volumes are well-defined across the entire ladder**, including
+where `D_est` is empty. **The metric correction and the ladder correction were found
+independently and point the same way.**
+
+---
+
+## ✅ ERRATUM 2 — **CLOSED. The `|Δ| = 0` gates are NOT thread-contingent.**
+
+Erratum 2 registered the open question: *"nothing in this repository records the thread count
+under which any |Δ| = 0 gate was measured."* **Two workers have now answered it independently,
+and the answer is no.**
+
+* **P7:** `torch.set_num_threads(1)` reproduces regret **bitwise (Δ = 0.000e+00)** on `qlogei`
+  and `qlognei` against their committed columns.
+* **P2, and this is the strong one:** its `plate1_only` gate was extended from regret alone to
+  **all 20 numeric K6 columns** (`sup_err`, `grid_r2`, `iou_pred`, `fi_pred`, `box_vol_pred`,
+  `auc_pred`, …) at **all 24 (γ, τ_frac) cells** — **every column exactly 0.0**, measured
+  under `set_num_threads(1)` **and** after deliberately burning the global torch RNG by
+  fitting an unrelated GP first.
+
+**So the whole scoring path, not just regret, is invariant to thread count and to global RNG
+position.** Per Erratum 2's registered remedy, **thread count goes into every `provenance`
+block from now on** — cheap, and now known to be documentation rather than a control variable.
+
+**A provenance defect found on the way, worth recording because it is exactly the class this
+project keeps finding.** `versionb.json`'s own `plate1_only` regret column is **not** bitwise
+the committed `lhs` column — it differs by **3.33e-16**, because `run_versionb.py` scores it
+with a single `scored_curve` call while `replay.regenerate` reproduces `static_curve`'s
+20-ordering arithmetic. **Two committed files disagree with each other at 3e-16.** P2 built
+against the gateable one. This is the `static_curve` float-mean artefact for the **third**
+time; the rule of matching arithmetic rather than widening tolerance has now caught it in
+three independent places.
