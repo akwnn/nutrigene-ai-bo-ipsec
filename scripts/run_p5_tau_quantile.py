@@ -171,7 +171,13 @@ def _rows() -> list[dict]:
                     out.append({
                         "family": family, "dim": dim, "instance": instance, "p": p,
                         "tau_q": tau,
-                        "achieved_prevalence": prevalence(family, dim, tau, instance),
+                        # Amendment F2a names this quantity: it is the denominator-side
+                        # input to `type_II_vol = true_frac_above_tau - intersect`, the
+                        # primary design-space metric. Under `tau_q` it equals `p` by
+                        # construction, and the gate is that it does; it is stored
+                        # MEASURED rather than copied from `p` so the gate has something
+                        # to check and a downstream scorer never has to assume it.
+                        "true_frac_above_tau": prevalence(family, dim, tau, instance),
                         "n_selected": int((v >= tau).sum()),
                         "grid_min": float(v.min()), "grid_max": float(v.max()),
                         # DECISION 3: ackley is IN, but never as a headline.
@@ -235,6 +241,10 @@ def main() -> None:
             "grid_n": GRID_N, "grid_seed": GRID_SEED, "p_grid": list(P_GRID),
             "dims": list(DIMS), "families": list(ALL_FAMILIES),
             "quantile_method": "numpy linear interpolation",
+            "true_frac_above_tau": "the ACHIEVED fraction of the registered grid with "
+                                   "noiseless f >= tau_q. Amendment F2a's primary-metric "
+                                   "input; the gate asserts it equals p to within one "
+                                   "grid cell. Measured, never copied from p.",
             "hill_instances_from": "results/e2-grid.json",
             "one_grid_cell": 1.0 / GRID_N,
             # Family-independent (COVERAGE-MATRIX B2: the noise model is bit-for-bit the
@@ -247,7 +257,7 @@ def main() -> None:
     }
     OUT.write_text(json.dumps(doc, indent=1))
 
-    worst = max(abs(r["achieved_prevalence"] - r["p"]) for r in rows)
+    worst = max(abs(r["true_frac_above_tau"] - r["p"]) for r in rows)
     print(f"P5 · tau_q · {len(rows)} rows · worst |achieved - p| = {worst:.3e} "
           f"(one grid cell = {1/GRID_N:.1e})")
     hdr = "  ".join(f"p={p:<6}" for p in P_GRID)

@@ -200,6 +200,10 @@ def test_committed_tau_table_recomputes_exactly():
     for r in rows:
         v = _grid_truth(r["family"], r["dim"], r.get("instance"))
         assert r["tau_q"] == float(np.quantile(v, 1.0 - r["p"])), r
-        assert r["achieved_prevalence"] == float((v >= r["tau_q"]).mean()), r
-        assert abs(r["achieved_prevalence"] - r["p"]) <= ONE_GRID_CELL, r
+        # Amendment F2a's key. Stored measured, so this is a real check and not a
+        # restatement of `p`: `type_II_vol = true_frac_above_tau - intersect` is wrong by
+        # exactly this row's error if the file ever carries the nominal value instead.
+        assert r["true_frac_above_tau"] == float((v >= r["tau_q"]).mean()), r
+        assert r["n_selected"] == int((v >= r["tau_q"]).sum()), r
+        assert abs(r["true_frac_above_tau"] - r["p"]) <= ONE_GRID_CELL, r
         assert r["sensitivity"] is (r["family"] == "ackley")
