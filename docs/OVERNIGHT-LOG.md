@@ -680,3 +680,105 @@ plane.
 the SPADE certificate is *about* — changes completely. **P3 can invalidate the project's
 design-space headline**, and that is why it is in Phase 4 rather than dropped as
 housekeeping. Recording the exposure now, before the result, so it cannot be reframed after.
+
+## D30 🔴 **Joseph found four defects in the metrics. Three of them I should have caught, and one is in our own two documents.**
+
+Raised mid-run, while six agents were computing contrasts. Registered as **Amendment F**
+(`07e98df`) before any of those contrasts landed, and all six agents were messaged with the
+parts that bind them. **Three of the four cost no new campaigns**, which is exactly why they
+had to go in now rather than after Phase 3 — cheap on one cell, expensive on twenty.
+
+### F1 — the one that is squarely our own inconsistency. **n = 50 vs n = 25.**
+
+* `docs/K6-TECHNICAL-REPORT.md` §3.8 — *"25 instances × 2 seeds = **n = 50** for every contrast."*
+* `docs/RESEARCH-SUMMARY.md` — *"25 landscapes × 2 seeds; **average seeds first; n = 25.**"*
+
+**Two seeds on one landscape share the landscape.** They are not independent units. n = 50
+inflates the effective sample size, narrows every bootstrap CI by ~**√2**, and lowers every
+Wilcoxon p. The earlier paper chose the conservative unit; **K6 silently chose the other, and
+nothing in the repository records the switch.**
+
+**This is a miss I own.** I have spent this session checking gates to 1e-16 and re-deriving
+one agent's number against another's, and the whole time the analysis unit contradicted our
+own published convention in a document I have read. Bitwise gate discipline does not detect
+a wrong denominator. Every contrast now runs both ways; **where they disagree, n = 25
+governs**, and that includes the two headlines — the 24/24 screening result and D20's
+reversal. Their effect sizes make survival likely. *Likely is not measured.*
+
+### F2 — **the primary metric is the least standard one we compute.**
+
+AUC is invariant to monotone transformation, so it scores **ranking, never calibration** —
+and a design space is a calibrated absolute statement. The evidence that this bites is
+already in our own file: mean `grid_r2` is **negative for all eight arms** (`doe` −6.1883
+through `lhs` −0.1756), i.e. the posterior mean is a worse point predictor than the constant
+grid mean, *everywhere*, and **AUC cannot see it.** Precisely: `doe` is negative in
+1200/1200; the BO and spread arms are positive in 4–24% of theirs. Only the arm-level claim
+is used. AUC also misleads under the imbalance we have — at γ=0.99, τ_frac=0.60 the minority
+class is ~**16 grid points of 20,000**.
+
+**The fix turned out to be free, which I did not expect.** Expected type I / type II error
+volumes — what Azzimonti & Ginsbourger (2018) Table 1 actually reports — are derivable from
+columns **already committed**:
+
+    type_I_vol  = vol_pred * fi_pred
+    intersect   = vol_pred * (1 - fi_pred)
+    type_II_vol = true_frac_above_tau - intersect
+
+**I validated the algebra before registering it rather than after:** the implied IoU
+reproduces the committed `iou_pred` to a worst |Δ| of **2.220e-16 over 2,553 rows**, with
+**zero** impossible negative type-II volumes. So the field-standard primary metric was
+recoverable from disk with no compute at all.
+
+**And it is better-defined than what it replaces**, which is the part I would not have
+predicted. An empty `D_est` makes `fi_pred` and `iou_pred` `nan` (0/0) — but type I volume
+is **0** and type II volume is **the prevalence**, both exactly right. Since 54–69% of
+predictive regions are empty at some cells, **the error volumes are defined precisely where
+AUC and IoU break.** That matters most at the top of P2's new γ ladder and in P3's σ=0.10
+cells, which is where emptiness is worst.
+
+Also folded in: **AUPRC** beside AUC wherever prevalence < 0.01; **rank on IoU and Brier**,
+both committed on all 9,600 rows and ranked on by nothing; and **P7 (Murphy) is promoted to
+a primary Phase 2 deliverable**, because calibration is the exact component AUC is blind to.
+
+### F3 — **a winner's curse inside our own safety metric.**
+
+`conservative_estimate` scans **64** Vorob'ev quantiles and takes the **largest** whose
+containment, measured on **512 draws**, clears α. That is a **maximum over 64 noisy
+estimates**, so any quantile whose true containment sits just below α gets selected whenever
+noise pushes it above. **`CE_α` is anti-conservative by construction.**
+
+This is *our own optimizer's-curse result*, the one the identification analysis documents,
+now operating inside the safety metric. Registered a 2048-draw sweep to measure it.
+
+**It may already be visible and nobody read it that way.** `doe`'s circular `ce_contain`
+reads 0.972–0.998 while its **empirical** containment against ground truth is
+**0.000 / 0.240 / 0.500**. We attributed that gap entirely to circularity (D4/D7). Selection
+bias is a second mechanism that produces the same signature, and the draw-count sweep is
+what separates them. **Recorded now so it is not later claimed as foresight.**
+
+### F4 — **the pooled containment figure counts one campaign four times. Withdrawn.**
+
+§3.7 pools containment over `tau_frac` to n ≤ 200. The four thresholds are computed on the
+same campaign, the same posterior, the same 512 draws. **"pooled 0.9307 / 1.0000 / 1.0000"
+is withdrawn, not recomputed with a wider interval** — a wider interval on a fabricated
+denominator is still fabricated. Per-cell only, each with its own `n`.
+
+**The load-bearing numbers are untouched:** `versionb` 0.940 (n=50) / 1.000 (n=50) /
+1.000 (n=22) at τ_frac=0.60 was always per-cell and stands.
+
+## D31 🟢 Blocked P6 rather than letting the cross-family grid start.
+
+**🔴 No cross-family campaign begins until F1, F2a, F2c and F4 are committed.** P5 (`tau_q`)
+and B4 (`replay` family support) continue — they are engineering, not campaigns.
+
+The reasoning is arithmetic, not caution. These four corrections are re-analyses of data
+already on disk. Run them now: one cell. Run them after Phase 3: **five families × two
+dimensions × two noise levels**, and every table rebuilt. A seventh agent was dispatched
+solely to land them, and it owns `docs/K6-TECHNICAL-REPORT.md` because it is the one holding
+the corrected numbers.
+
+**What I did not do:** let the six running agents finish first and correct afterwards. Four
+of them are writing *new* result files right now, and a column omitted at write time
+(`true_frac_above_tau` — the omission that makes `versionb.json`'s error volumes
+uncomputable **to this day**) costs a full re-score to add later. Interrupting six agents
+mid-run was cheaper than that, so every brief was amended in place.
