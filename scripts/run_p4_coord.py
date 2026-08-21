@@ -77,6 +77,10 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
 from boec.baselines import coordinate_descent                        # noqa: E402
+from boec.calibration import average_precision, error_volumes        # noqa: E402
+from boec.designspace import (brier_and_auc, false_inclusion_rate,   # noqa: E402
+                              gp_adapter, iou,
+                              predictive_probability_map, probability_map)
 from boec.norms import sobol_grid                                    # noqa: E402
 from boec.replay import (CampaignRecord, committed_rows,             # noqa: E402
                          instance_by_id, scored_curve, unit_bounds)
@@ -150,15 +154,106 @@ def regenerate_coord(instance: str, dim: int, sigma: float, seed: int) -> Campai
 # SCORING
 # ======================================================================================
 
+def auprc_pair(p: torch.Tensor, truth: torch.Tensor, tau: float) -> dict:
+    """AUPRC on both classes, each with the baseline a no-skill ranker would score.
+
+    **Amendment F2b.** Two things this does not do.
+
+    It does not score the minority class as ``-truth >= -tau``. A point whose truth is
+    exactly ``tau`` satisfies ``truth >= tau`` *and* ``-truth >= -tau``, so the negated
+    form puts it in both classes; the explicit complement ``truth < tau`` is exclusive by
+    construction. Ranking the complement means ranking by ``-p``.
+
+    It does not report an AP without its baseline. A ranker with no skill scores the
+    prevalence, not 0.5, and prevalence across this grid runs from 0.0012 to 0.999 -- so
+    the positive-class AP is trivially near 1 at exactly the cells F2b flags as primary,
+    where about 16 of 20,000 points are NEGATIVE. Both baselines travel on every row.
+    """
+    t = truth.reshape(-1)
+    pos = t >= tau
+    prevalence = float(pos.double().mean())
+    ap = average_precision(p, truth, tau)
+    # The complement, scored explicitly: label `truth < tau`, ranked by `-p`.
+    #
+    # `average_precision` labels `truth >= tau`, so the complement has to be expressed in
+    # that form. Negating gives `-truth >= -tau`, which is `truth <= tau` -- it INCLUDES
+    # the boundary, so a point at exactly `tau` lands in both classes, which is the whole
+    # defect this function exists to avoid. `nextafter` moves the threshold to the
+    # smallest float strictly above `-tau`, making the condition `-truth > -tau` exactly,
+    # i.e. `truth < tau`, for every float64 input.
+    comp_tau = float(np.nextafter(-float(tau), np.inf))
+    ap_min = average_precision(-p.reshape(-1), -t, comp_tau)
+    n_minority = int((t < tau).sum())
+    assert n_minority == int((-t >= comp_tau).sum()), "complement label is not `truth < tau`"
+    return {"auprc": float("nan") if ap is None else ap,
+            "ap_baseline": prevalence,
+            "auprc_minority": float("nan") if ap_min is None else ap_min,
+            "ap_baseline_minority": 1.0 - prevalence,
+            "n_positive": int(pos.sum()), "n_minority": n_minority}
+
+
 def score_k6(rec: CampaignRecord, orc, grid: torch.Tensor,
              truth: torch.Tensor) -> list[dict]:
-    """The 24 gamma x tau_frac cells, produced by K6's own `score_campaign`."""
+    """The 24 gamma x tau_frac cells, produced by K6's own `score_campaign`.
+
+    Then enriched with Amendment F2a's error volumes and F2b's AUPRC. The volumes are
+    pure arithmetic on columns K6 already returns. **AUPRC is not** -- it needs the
+    `p_pred` vector, which `score_campaign` computes internally and discards, so P4
+    rebuilds the maps.
+
+    A second probability map is a second definition of every metric derived from it, so
+    each row carries `_recomputed_*` copies of eight of K6's own columns, taken from
+    P4's maps. `tests/test_p4_coord.py::test_the_auprc_maps_are_k6s_maps` requires them
+    to match K6's row bitwise. That is what makes the AUPRC a column of the same table
+    rather than a number from a lookalike.
+    """
     active = torch.zeros(rec.dim, dtype=torch.bool)
     if rec.kept_factors is None:
         active[:] = True
     else:
         active[list(rec.kept_factors)] = True
-    return _K6.score_campaign(rec, orc, grid, truth, active)
+    rows = _K6.score_campaign(rec, orc, grid, truth, active)
+
+    model = build_gp(rec.X, rec.Y, rec.Yvar, unit_bounds(rec.dim))
+    mean, sd = gp_adapter(model).posterior_mean_and_sd(grid)
+
+    class _M:
+        def posterior_mean_and_sd(self, X):
+            return mean, sd
+
+    m = _M()
+    # A lab does not know f, so the predictive SD is a PLUG-IN from the posterior mean.
+    # K6's line, reproduced because the map depends on it.
+    sigma_pred = ((orc.sigma_rel * mean).abs() ** 2 + orc.sigma_add ** 2).sqrt()
+
+    for row in rows:
+        tau, gamma = row["tau"], row["gamma"]
+        p_pred = predictive_probability_map(m, grid, tau, sigma_pred)
+        p_lat = probability_map(m, grid, tau)
+        d_gamma = p_pred >= gamma
+        latent = p_lat >= gamma
+        prevalence = row["true_frac_above_tau"]
+
+        for label, region, p in (("pred", d_gamma, p_pred), ("latent", latent, p_lat)):
+            fi = false_inclusion_rate(region, truth, tau)
+            ev = error_volumes(float(region.double().mean()), fi, prevalence)
+            row[f"type_I_vol_{label}"] = ev["type_I_vol"]
+            row[f"intersect_{label}"] = ev["intersect"]
+            row[f"type_II_vol_{label}"] = ev["type_II_vol"]
+            row[f"symmetric_difference_{label}"] = ev["total_error_vol"]
+            row.update({f"{k}_{label}": v for k, v in auprc_pair(p, truth, tau).items()})
+            # The self-gate: K6's own columns, recomputed from P4's maps.
+            b, a = brier_and_auc(p, truth, tau)
+            row[f"_recomputed_vol_{label}"] = float(region.double().mean())
+            row[f"_recomputed_brier_{label}"] = b
+            row[f"_recomputed_auc_{label}"] = a
+            if label == "pred":
+                row["_recomputed_iou_pred"] = iou(region, truth, tau)
+                row["_recomputed_fi_pred"] = fi
+
+    del model, mean, sd
+    gc.collect()
+    return rows
 
 
 def score_k6b(rec: CampaignRecord, orc, X_sub: torch.Tensor,

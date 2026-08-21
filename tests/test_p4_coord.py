@@ -268,6 +268,15 @@ def test_minority_auprc_scores_the_explicit_complement(p4):
     assert 0.0 <= out["auprc"] <= 1.0
     assert 0.0 <= out["auprc_minority"] <= 1.0
 
+    # The label counts `auprc_pair` actually scored, not the arithmetic beside it. Three
+    # of the four points are >= tau and exactly one is < tau; the two classes must
+    # partition the grid. Checking only `ap_baseline` above would leave the tie handling
+    # INSIDE the function unexercised -- which is how the first implementation shipped
+    # with `-truth >= -tau` and scored the ties into both classes.
+    assert out["n_positive"] == 3
+    assert out["n_minority"] == 1
+    assert out["n_positive"] + out["n_minority"] == truth.numel()
+
 
 def test_ap_baseline_travels_because_ap_is_not_comparable_without_it(p4):
     """A no-skill ranker scores the prevalence, not 0.5, and prevalence runs 0.0012 to
