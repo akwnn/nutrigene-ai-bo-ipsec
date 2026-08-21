@@ -729,3 +729,98 @@ rows.
 
 **Open, needing a decision:** whether the B3 subspace comparison is re-run per cell, since it
 cannot be made from committed files at all.
+
+---
+
+# PART III · OVERNIGHT RESULTS, 2026-08-21 → 22
+
+Four runs completed. **All gates clean.** Result files committed alongside this section.
+
+## 13. ⭐⭐ At (d=6, σ_rel=0.10) the map/regret disagreement REVERSES — and SPADE sweeps the map
+
+**`results/p3-k6-d6-s010.json`** — 14,400 rows, 12 arms, **0 gate failures**, `status: complete`.
+**This is the first time SPADE has been scored on the design-space map anywhere except γ=0.50 at
+the primary cell.**
+
+| rank | regret (best first) | | AUC(pred), γ=0.50 τ_f=0.60 (best first) |
+|---|---|---|---|
+| 1 | `qlogei-addonly` 0.0627 | | **`versionb` 0.8441** |
+| 2 | `qlogei-add` 0.0791 | | **`versionb_predictive` 0.8417** |
+| 3 | `qlognei` 0.0808 | | **`versionb_random` 0.8351** |
+| 4 | `qlogei` 0.0874 | | `sobol` 0.8209 |
+| 5 | **`doe` 0.0892** | | `qlogei-addonly` 0.8105 |
+| 6–7 | `lhs` / `plate1_only` 0.1027 | | `lhs` / `plate1_only` 0.8072 |
+| 8–9 | `sobol` / `versionb_random` 0.1210 | | `qlogei` 0.8050 |
+| 10 | **`versionb` 0.1261** | | `random` 0.8017 |
+| 11 | **`versionb_predictive` 0.1279** | | `qlogei-add` 0.7980 |
+| 12 | `random` 0.1693 | | `qlognei` 0.7685 |
+| | | | **`doe` 0.5665** ← **LAST, and barely above chance** |
+
+**Two things this establishes:**
+
+1. **The SPADE arms are 9th–11th of 12 on regret and 1st–3rd of 12 on the map.** The two objects
+   do not merely rank differently — **they rank SPADE almost exactly opposite.** This is the
+   sharpest instance of K6's central claim yet, and it is the first measured at a cell other than
+   the primary one.
+2. **`doe` is 5th on regret here, not 1st** — confirming §9.2's single-cell finding directly at the
+   cell where it was predicted to fail — **and it is LAST on the map at 0.5665**, which is
+   *barely above the 0.5 of a coin flip.*
+
+**A free consistency check:** `plate1_only` and `lhs` agree to the printed precision on **both**
+regret (0.1027) and AUC (0.8072). They are the same 48-well design; the duplicate guard works.
+
+## 14. 🔴 **THE REGISTERED KILL FIRED. SPADE's certificate FAILS at high assurance.**
+
+**`results/p2-versionb-gamma.json`** — 4,800 rows, **50/50 keys**, **0 gate failures**, and the
+`plate1_only` full-width gate at **1,200 rows × 24 columns = 28,800 comparisons, |Δ| = 0.0.**
+
+**The registration said:** *"If containment falls below nominal at any γ × τ_frac × α cell, that is
+a failure of the certificate and is reported as one. The committed 0.940/1.000/1.000 at γ=0.50 is
+not a prediction for the ladder."*
+
+**`versionb` empirical containment, below nominal in 4 of 72 cells — all at α = 0.95, all at high γ:**
+
+| γ | τ_frac | α | measured | nominal |
+|---|---|---|---|---|
+| 0.95 | 0.60 | 0.95 | **0.900** | 0.95 |
+| 0.99 | 0.60 | 0.95 | **0.840** | 0.95 |
+| 0.99 | 0.75 | 0.95 | **0.880** | 0.95 |
+| 0.99 | 0.85 | 0.95 | **0.900** | 0.95 |
+
+**And the γ=0.50 row reproduces the committed figures exactly — 0.940 (n=50) / 1.000 (n=50)** —
+which is what makes the failures elsewhere credible rather than a scoring change.
+
+**The reading, with Erratum 3's correction attached.** High γ is the **easy** corner of this
+ladder, not the hard one: at γ=0.99, τ_frac=0.60 the true set covers **0.99916** of the box. **So
+the certificate is failing where the target is nearly the whole space** — which is a worse failure
+than the same number at a small target, not a better one.
+
+> **SPADE's certificate holds at the assurance level it was measured at and degrades as assurance
+> rises. It cannot currently be claimed at α = 0.95 for γ ≥ 0.95.**
+
+## 15. The α\* question does not resolve — and that is the answer
+
+**`results/p4b-alpha-star-anomaly.json`** — 12 arms, 650/650 keys, `COMPLETE`, `gate_failures: []`.
+
+**Verdict: `NEGATIVE_BUT_ABOVE_THRESHOLD`.** At τ_frac = 0.60, twelve arms:
+**ρ(α\*, regret) = −0.3497, CI [−0.5245, −0.1259], bootstrap p = 0.0075.**
+
+**The CI excludes zero but ρ does not reach the registered −0.5.** Neither branch fires.
+
+**And the sign means α\* AGREES with regret** — regret is a loss, so ρ < 0 means arms with higher
+α\* have *lower* regret. Against the **symmetric-difference error volume** the correlation runs the
+other way at τ_frac = 0.60.
+
+> **α\* tracks quality against regret and badness against the error volumes.** Neither reading
+> resolves, and **that is the finding** — reported and not resolved, per Q20 §2.
+
+**Twelve-arm numbers supersede the nine-arm ρ = −0.3667 recorded as provisional in Erratum 11.**
+The three structural qualifications survive: one-arm leverage from `doe`, the local inversion among
+the spread arms, and the regret/error-volume disagreement.
+
+## 16. `results/q30-additive.json` exists
+
+Registered in the Phase 2–4 block, **absent from this repository for eight months while being
+cited.** The comparator now exists and the kernel arms are gateable — `results/p3-taumax-sensitivity.json`
+already gates `qlogei-add` and `qlogei-addonly` against it. **The 2,800-row re-score that decides
+whether the committed kernel rows are VALIDATED or WITHDRAWN has not run.**
