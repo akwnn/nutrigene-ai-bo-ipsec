@@ -278,14 +278,13 @@ def test_error_volumes_reproduce_the_committed_iou(mod, filename):
     worst = 0.0
     checked = negatives = 0
     for r in rows:
-        t1, inter, t2 = mod.error_volumes(r["vol_pred"], r["fi_pred"],
-                                          r["true_frac_above_tau"])
-        union = r["vol_pred"] + r["true_frac_above_tau"] - inter
-        if union <= 0:                        # both sets empty: iou is nan by design
+        ev = mod.error_volumes(r["vol_pred"], r["fi_pred"], r["true_frac_above_tau"])
+        if math.isnan(ev["implied_iou"]):     # both sets empty: iou is nan by design
             assert math.isnan(r["iou_pred"])
             continue
-        worst = max(worst, abs(inter / union - r["iou_pred"]))
-        negatives += int(t1 < 0 or t2 < -1e-12 or inter < 0)
+        worst = max(worst, abs(ev["implied_iou"] - r["iou_pred"]))
+        negatives += int(ev["type_I_vol"] < 0 or ev["type_II_vol"] < -1e-12
+                         or ev["intersect"] < 0)
         checked += 1
     assert checked > 2000, f"only {checked} committed rows exercised in {filename}"
     assert negatives == 0, f"{negatives} impossible negative volumes in {filename}"
@@ -296,23 +295,44 @@ def test_error_volumes_reproduce_the_committed_iou(mod, filename):
 
 def test_error_volumes_are_defined_where_iou_and_fi_are_nan(mod):
     """The whole point at gamma = 0.99. Empty region: 0 false positives, all misses."""
-    t1, inter, t2 = mod.error_volumes(0.0, float("nan"), 0.42)
-    assert t1 == 0.0, "an empty region certifies nothing, so it cannot be wrong"
-    assert inter == 0.0
-    assert t2 == 0.42, "every truly-good point was missed, which is the prevalence"
+    ev = mod.error_volumes(0.0, float("nan"), 0.42)
+    assert ev["type_I_vol"] == 0.0, "an empty region certifies nothing; it cannot be wrong"
+    assert ev["intersect"] == 0.0
+    assert ev["type_II_vol"] == 0.42, "every good point missed, which is the prevalence"
+    assert ev["total_error_vol"] == 0.42, "all of the error is type II"
+    # The true set is non-empty, so the union is non-empty and IoU is 0, not nan --
+    # which is what `designspace.iou` returns here too. `fi` is the nan, not `iou`.
+    assert ev["implied_iou"] == 0.0
+
+    # Both sets empty is the only genuinely undefined case, and it stays undefined.
+    assert math.isnan(mod.error_volumes(0.0, float("nan"), 0.0)["implied_iou"])
 
     # And the complementary degenerate case: a region covering everything.
-    t1, inter, t2 = mod.error_volumes(1.0, 0.58, 0.42)
-    assert t1 == pytest.approx(0.58)
-    assert inter == pytest.approx(0.42)
-    assert t2 == pytest.approx(0.0)
+    ev = mod.error_volumes(1.0, 0.58, 0.42)
+    assert ev["type_I_vol"] == pytest.approx(0.58)
+    assert ev["intersect"] == pytest.approx(0.42)
+    assert ev["type_II_vol"] == pytest.approx(0.0)
+
+
+def test_error_volumes_is_the_canonical_one_not_a_second_copy(mod):
+    """Imported from `boec.calibration`, never redefined here.
+
+    A second definition of a committed quantity is worse than a slow one -- the same
+    standard this runner applied when it declined to reimplement
+    `containment_probability` to make the Vorob'ev scan cheaper.
+    """
+    from boec.calibration import average_precision, error_volumes
+    assert mod.error_volumes is error_volumes
+    assert mod.auprc is not average_precision, "auprc is the None->nan wrapper"
+    assert mod.auprc.__doc__ and "second implementation" in mod.auprc.__doc__
 
 
 def test_the_row_carries_the_amendment_f_columns(scored):
     """F2a's volumes, F2b's AUPRC, and the prevalence F4 requires beside containment."""
-    needed = {"type_I_vol", "intersect", "type_II_vol",
-              "type_I_vol_latent", "intersect_latent", "type_II_vol_latent",
-              "auprc_pred", "auprc_latent", "true_frac_above_tau"}
+    needed = {"type_I_vol", "intersect", "type_II_vol", "total_error_vol",
+              "implied_iou", "type_I_vol_latent", "intersect_latent",
+              "type_II_vol_latent", "auprc_pred", "auprc_latent",
+              "true_frac_above_tau"}
     for row in scored:
         assert needed <= set(row), needed - set(row)
 
