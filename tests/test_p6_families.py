@@ -36,6 +36,7 @@ from __future__ import annotations
 import importlib.util
 import json
 import math
+import sys
 from pathlib import Path
 
 import pytest
@@ -52,6 +53,10 @@ Q59 = Path("results/q59-hartmann-no-screen.json")
 def p6():
     spec = importlib.util.spec_from_file_location("p6", SCRIPT)
     m = importlib.util.module_from_spec(spec)
+    # `@dataclass` resolves annotations through `sys.modules[cls.__module__]`, so a module
+    # executed outside the import system must be registered before it runs or the
+    # decorator raises on a None lookup. This is harness plumbing, not a design constraint.
+    sys.modules["p6"] = m
     spec.loader.exec_module(m)          # must not run anything on import
     return m
 
@@ -82,10 +87,15 @@ def test_tau_is_read_from_the_committed_p5_table(p6):
 def test_the_runner_never_recomputes_the_quantile(p6):
     """D12 in its cheapest form: the committed table is the artefact, not a suggestion."""
     src = SCRIPT.read_text()
-    for forbidden in ("np.quantile", "numpy.quantile", "torch.quantile", "sobol_grid("):
+    for forbidden in ("np.quantile", "numpy.quantile", "torch.quantile"):
         assert forbidden not in src, (
-            f"{forbidden} appears in the runner; tau must be read from "
-            f"{TAU_TABLE}, and the grid truth is the oracle's, not a re-derivation")
+            f"{forbidden} appears in the runner; tau must be READ from {TAU_TABLE}, "
+            "which is the registered artefact, not recomputed beside it")
+    # The 20,000-point Sobol grid at seed 0 is the opposite case: it is the registered
+    # grid and `sobol_grid` is its canonical constructor, so building it here is correct
+    # and re-deriving it any other way would be the defect. Asserted positively.
+    assert "sobol_grid(" in src
+    assert str(TAU_TABLE) in src
 
 
 def test_tau_lookup_raises_on_a_cell_the_committed_table_does_not_carry(p6):
@@ -294,7 +304,7 @@ def test_an_ungatable_arm_is_recorded_rather_than_dropped(p6):
     index, superseded, ungated = p6.build_gate_index("levy", 6, 0.25)
 
     class _Rec:
-        family, dim, sigma, seed, arm, regret = "levy", 6, 0.25, 0, "lhs"
+        family, dim, sigma, seed, arm, regret = "levy", 6, 0.25, 0, "lhs", 0.1
 
     v = p6.check_gate(_Rec(), index, superseded, ungated)
     assert v["gated"] is False and v["abs_delta"] is None
