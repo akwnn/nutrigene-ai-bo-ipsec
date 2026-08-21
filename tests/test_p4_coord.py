@@ -55,9 +55,16 @@ def p4():
 
 
 def _committed(path: str, arm: str) -> list[dict]:
+    """Committed rows for one arm **at the primary cell**.
+
+    The dim/sigma filter is not decoration: `e2-grid.json` carries `coord` at all four
+    (d, sigma_rel) cells, so an unfiltered pick returns a d=8 instance id and every
+    d=6 lookup after it fails.
+    """
     d = json.loads((ROOT / "results" / path).read_text())
     rows = d if isinstance(d, list) else d["rows"]
-    return [r for r in rows if r["arm"] == arm]
+    return [r for r in rows if r["arm"] == arm and r["dim"] == DIM
+            and abs(r["sigma"] - SIGMA) < 1e-12]
 
 
 # --------------------------------------------------------------------------------------
