@@ -1,0 +1,155 @@
+D23-RESCORE · doe on its screened subspace · HEAD=27d47ffc48785ac6c8e513f91375db9d33393689
+cell d=6 sigma=0.25 · 50 (instance, seed) pairs
+rule P: 20000-pt Sobol grid seed 0, polished at n_restarts=20 raw_samples=4096 seed=0
+gate: committed rule-A regret must reproduce at |delta| = 0 EXACTLY (results/e2-grid.json)
+check: full-space rule P must reproduce results/fix1-terminal-rule.json
+
+  [  1/50] 033466197eba3ddb seed=0  A=0.0440 P_full=0.2525 P_sub=0.2525  kept=[1, 2, 3, 4]   4.0 min
+  [  2/50] 033466197eba3ddb seed=1  A=0.1114 P_full=0.1450 P_sub=0.1447  kept=[1, 2, 3, 5]   4.0 min
+  [  3/50] 0a6e0788538a7c52 seed=0  A=0.0376 P_full=0.1729 P_sub=0.1728  kept=[1, 2, 3, 4]   6.7 min
+  [  4/50] 0a6e0788538a7c52 seed=1  A=0.0789 P_full=0.1459 P_sub=0.1458  kept=[0, 1, 2, 4]   6.7 min
+  [  5/50] 0ed87c75239d73f8 seed=0  A=0.0871 P_full=0.3500 P_sub=0.3501  kept=[2, 3, 4, 5]   9.0 min
+  [  6/50] 0ed87c75239d73f8 seed=1  A=0.0844 P_full=0.0671 P_sub=0.0670  kept=[1, 3, 4, 5]   9.4 min
+  [  7/50] 32bb966a18f1d863 seed=0  A=0.1224 P_full=0.2429 P_sub=0.2413  kept=[1, 2, 3, 5]  11.3 min
+  [  8/50] 32bb966a18f1d863 seed=1  A=0.1131 P_full=0.0703 P_sub=0.0703  kept=[0, 1, 3, 5]  12.1 min
+Traceback (most recent call last):
+  File "/Users/jy/BO/nutrigene-ai-bo-ipsec/scripts/run_d23_doe_subspace.py", line 582, in <module>
+    main()
+  File "/Users/jy/BO/nutrigene-ai-bo-ipsec/scripts/run_d23_doe_subspace.py", line 489, in main
+    for k, r in enumerate(pool.map(_one, keys), 1):
+  File "/Users/jy/.local/share/uv/python/cpython-3.11.15-macos-aarch64-none/lib/python3.11/concurrent/futures/process.py", line 620, in _chain_from_iterable_of_lists
+    for element in iterable:
+  File "/Users/jy/.local/share/uv/python/cpython-3.11.15-macos-aarch64-none/lib/python3.11/concurrent/futures/_base.py", line 619, in result_iterator
+    yield _result_or_cancel(fs.pop())
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/jy/.local/share/uv/python/cpython-3.11.15-macos-aarch64-none/lib/python3.11/concurrent/futures/_base.py", line 317, in _result_or_cancel
+    return fut.result(timeout)
+           ^^^^^^^^^^^^^^^^^^^
+  File "/Users/jy/.local/share/uv/python/cpython-3.11.15-macos-aarch64-none/lib/python3.11/concurrent/futures/_base.py", line 456, in result
+    return self.__get_result()
+           ^^^^^^^^^^^^^^^^^^^
+  File "/Users/jy/.local/share/uv/python/cpython-3.11.15-macos-aarch64-none/lib/python3.11/concurrent/futures/_base.py", line 401, in __get_result
+    raise self._exception
+concurrent.futures.process.BrokenProcessPool: A process in the process pool was terminated abruptly while the future was running or pending.
+D23-RESCORE · doe on its screened subspace · HEAD=b70172c987fd3f6aa6118129c9e11c6db1bb2981
+cell d=6 sigma=0.25 · 50 (instance, seed) pairs
+rule P: 20000-pt Sobol grid seed 0, polished at n_restarts=20 raw_samples=4096 seed=0
+gate: committed rule-A regret must reproduce at |delta| = 0 EXACTLY (results/e2-grid.json)
+check: full-space rule P must reproduce results/fix1-terminal-rule.json
+
+  [  1/50] 033466197eba3ddb seed=0  A=0.0440 P_full=0.2525 P_sub=0.2525  kept=[1, 2, 3, 4]   0.7 min elapsed, ~34.9 min left
+  [  2/50] 033466197eba3ddb seed=1  A=0.1114 P_full=0.1450 P_sub=0.1447  kept=[1, 2, 3, 5]   1.8 min elapsed, ~42.7 min left
+  [  3/50] 0a6e0788538a7c52 seed=0  A=0.0376 P_full=0.1729 P_sub=0.1728  kept=[1, 2, 3, 4]   4.9 min elapsed, ~76.6 min left
+  [  4/50] 0a6e0788538a7c52 seed=1  A=0.0789 P_full=0.1459 P_sub=0.1458  kept=[0, 1, 2, 4]   6.4 min elapsed, ~74.0 min left
+  [  5/50] 0ed87c75239d73f8 seed=0  A=0.0871 P_full=0.3500 P_sub=0.3501  kept=[2, 3, 4, 5]   8.1 min elapsed, ~72.6 min left
+  [  6/50] 0ed87c75239d73f8 seed=1  A=0.0844 P_full=0.0671 P_sub=0.0670  kept=[1, 3, 4, 5]   9.2 min elapsed, ~67.7 min left
+  [  7/50] 32bb966a18f1d863 seed=0  A=0.1224 P_full=0.2429 P_sub=0.2413  kept=[1, 2, 3, 5]  10.9 min elapsed, ~66.9 min left
+D23-RESCORE · doe on its screened subspace · HEAD=f6d93596f60c73dae1ae5bd1d8283f70e8a16a48
+cell d=6 sigma=0.25 · 50 (instance, seed) pairs
+rule P: 20000-pt Sobol grid seed 0, polished at n_restarts=20 raw_samples=4096 seed=0
+gate: committed rule-A regret must reproduce at |delta| = 0 EXACTLY (results/e2-grid.json)
+check: full-space rule P must reproduce results/fix1-terminal-rule.json
+
+  resuming — 7 campaigns already on the checkpoint, 43 to go
+
+  [  1/43] 32bb966a18f1d863 seed=1  A=0.1131 P_full=0.0703 P_sub=0.0703  kept=[0, 1, 3, 5]   5.5 min elapsed, ~229.4 min left
+  [  2/43] 443c180247c17191 seed=0  A=0.0725 P_full=0.1550 P_sub=0.1542  kept=[0, 1, 2, 3]   5.9 min elapsed, ~121.5 min left
+  [  3/43] 443c180247c17191 seed=1  A=0.1202 P_full=0.2981 P_sub=0.2980  kept=[0, 1, 2, 3]   5.9 min elapsed, ~79.1 min left
+  [  4/43] 48b1324dd0461cd9 seed=0  A=0.0758 P_full=0.2874 P_sub=0.2873  kept=[1, 2, 3, 5]   5.9 min elapsed, ~57.8 min left
+  [  5/43] 48b1324dd0461cd9 seed=1  A=0.1130 P_full=0.0927 P_sub=0.0926  kept=[0, 2, 3, 5]  10.0 min elapsed, ~76.2 min left
+  [  6/43] 4d4f7158b65b52ba seed=0  A=0.0875 P_full=0.3059 P_sub=0.3059  kept=[1, 2, 3, 4]  10.1 min elapsed, ~62.2 min left
+  [  7/43] 4d4f7158b65b52ba seed=1  A=0.1226 P_full=0.1863 P_sub=0.1860  kept=[1, 3, 4, 5]  10.1 min elapsed, ~51.8 min left
+  [  8/43] 51cf489c521a6911 seed=0  A=0.0760 P_full=0.1814 P_sub=0.1815  kept=[1, 2, 3, 4]  10.1 min elapsed, ~44.1 min left
+Exception in thread Thread-1:
+Traceback (most recent call last):
+  File "/Users/jy/.local/share/uv/python/cpython-3.11.15-macos-aarch64-none/lib/python3.11/threading.py", line 1045, in _bootstrap_inner
+    self.run()
+  File "/Users/jy/.local/share/uv/python/cpython-3.11.15-macos-aarch64-none/lib/python3.11/concurrent/futures/process.py", line 347, in run
+    self.terminate_broken(cause)
+  File "/Users/jy/.local/share/uv/python/cpython-3.11.15-macos-aarch64-none/lib/python3.11/concurrent/futures/process.py", line 499, in terminate_broken
+    work_item.future.set_exception(bpe)
+  File "/Users/jy/.local/share/uv/python/cpython-3.11.15-macos-aarch64-none/lib/python3.11/concurrent/futures/_base.py", line 559, in set_exception
+    raise InvalidStateError('{}: {!r}'.format(self._state, self))
+concurrent.futures._base.InvalidStateError: CANCELLED: <Future at 0x15f8f2190 state=cancelled>
+Traceback (most recent call last):
+  File "/Users/jy/BO/nutrigene-ai-bo-ipsec/scripts/run_d23_doe_subspace.py", line 623, in <module>
+    key = (r["instance"], r["seed"])
+^^^^^^
+  File "/Users/jy/BO/nutrigene-ai-bo-ipsec/scripts/run_d23_doe_subspace.py", line 542, in main
+    return {"git_sha": _git("rev-parse", "HEAD"),
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/jy/.local/share/uv/python/cpython-3.11.15-macos-aarch64-none/lib/python3.11/concurrent/futures/process.py", line 620, in _chain_from_iterable_of_lists
+    for element in iterable:
+  File "/Users/jy/.local/share/uv/python/cpython-3.11.15-macos-aarch64-none/lib/python3.11/concurrent/futures/_base.py", line 619, in result_iterator
+    yield _result_or_cancel(fs.pop())
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/jy/.local/share/uv/python/cpython-3.11.15-macos-aarch64-none/lib/python3.11/concurrent/futures/_base.py", line 317, in _result_or_cancel
+    return fut.result(timeout)
+           ^^^^^^^^^^^^^^^^^^^
+  File "/Users/jy/.local/share/uv/python/cpython-3.11.15-macos-aarch64-none/lib/python3.11/concurrent/futures/_base.py", line 456, in result
+    return self.__get_result()
+           ^^^^^^^^^^^^^^^^^^^
+  File "/Users/jy/.local/share/uv/python/cpython-3.11.15-macos-aarch64-none/lib/python3.11/concurrent/futures/_base.py", line 401, in __get_result
+    raise self._exception
+concurrent.futures.process.BrokenProcessPool: A process in the process pool was terminated abruptly while the future was running or pending.
+attempt 1 exit=1
+D23-RESCORE · doe on its screened subspace · HEAD=8e1fbed0c9bf922327d95883df571a0928598fd0
+cell d=6 sigma=0.25 · 50 (instance, seed) pairs
+rule P: 20000-pt Sobol grid seed 0, polished at n_restarts=20 raw_samples=4096 seed=0
+gate: committed rule-A regret must reproduce at |delta| = 0 EXACTLY (results/e2-grid.json)
+check: full-space rule P must reproduce results/fix1-terminal-rule.json
+
+  resuming — 15 campaigns already on the checkpoint, 35 to go
+
+  [  1/35] 51cf489c521a6911 seed=1  A=0.1553 P_full=0.3787 P_sub=0.3761  kept=[0, 1, 2, 5]   2.0 min elapsed, ~68.6 min left
+  [  2/35] 578e5d8768359f0f seed=0  A=0.1162 P_full=0.1370 P_sub=0.1342  kept=[0, 1, 2, 3]   2.1 min elapsed, ~34.3 min left
+  [  3/35] 578e5d8768359f0f seed=1  A=0.0927 P_full=0.1310 P_sub=0.1309  kept=[1, 2, 3, 5]   2.1 min elapsed, ~22.2 min left
+  [  4/35] 59e420274f4385d9 seed=0  A=0.1019 P_full=0.5401 P_sub=0.5386  kept=[1, 2, 3, 5]   2.1 min elapsed, ~16.1 min left
+  [  5/35] 59e420274f4385d9 seed=1  A=0.0848 P_full=0.0845 P_sub=0.0844  kept=[1, 3, 4, 5]   3.3 min elapsed, ~19.8 min left
+  [  6/35] 5b3926ef2c5fe4b6 seed=0  A=0.0673 P_full=0.1868 P_sub=0.1856  kept=[1, 2, 3, 4]   3.3 min elapsed, ~15.9 min left
+  [  7/35] 5b3926ef2c5fe4b6 seed=1  A=0.0973 P_full=0.2297 P_sub=0.2296  kept=[0, 1, 2, 4]   3.3 min elapsed, ~13.2 min left
+  [  8/35] 763e0f58925816ca seed=0  A=0.0970 P_full=0.2000 P_sub=0.1990  kept=[1, 2, 3, 5]   3.4 min elapsed, ~11.4 min left
+  [  9/35] 763e0f58925816ca seed=1  A=0.1676 P_full=0.1320 P_sub=0.1298  kept=[0, 1, 3, 5]   4.1 min elapsed, ~11.7 min left
+  [ 10/35] 7b6071e568a98779 seed=0  A=0.1033 P_full=0.1596 P_sub=0.1583  kept=[0, 2, 3, 4]   4.1 min elapsed, ~10.2 min left
+  [ 11/35] 7b6071e568a98779 seed=1  A=0.0686 P_full=0.3719 P_sub=0.3718  kept=[0, 3, 4, 5]   4.1 min elapsed, ~ 8.9 min left
+  [ 12/35] 7ef3fc89acece49c seed=0  A=0.0566 P_full=0.1288 P_sub=0.1286  kept=[0, 2, 3, 5]   4.1 min elapsed, ~ 7.9 min left
+  [ 13/35] 7ef3fc89acece49c seed=1  A=0.0997 P_full=0.0834 P_sub=0.0834  kept=[2, 3, 4, 5]   4.7 min elapsed, ~ 7.9 min left
+  [ 14/35] 7f5c7431c0530e74 seed=0  A=0.1382 P_full=0.1980 P_sub=0.1979  kept=[1, 2, 3, 5]   4.8 min elapsed, ~ 7.1 min left
+  [ 15/35] 7f5c7431c0530e74 seed=1  A=0.1453 P_full=0.1306 P_sub=0.1306  kept=[0, 1, 2, 5]   4.8 min elapsed, ~ 6.4 min left
+  [ 16/35] 8abe35e93ddfcad1 seed=0  A=0.0954 P_full=0.3513 P_sub=0.3512  kept=[0, 1, 2, 3]   4.8 min elapsed, ~ 5.7 min left
+  [ 17/35] 8abe35e93ddfcad1 seed=1  A=0.0722 P_full=0.2202 P_sub=0.2200  kept=[0, 1, 3, 5]   5.2 min elapsed, ~ 5.5 min left
+  [ 18/35] 9414bc879284eef0 seed=0  A=0.1439 P_full=0.1984 P_sub=0.1970  kept=[1, 2, 3, 5]   5.4 min elapsed, ~ 5.1 min left
+  [ 19/35] 9414bc879284eef0 seed=1  A=0.0824 P_full=0.0856 P_sub=0.0855  kept=[0, 1, 3, 5]   5.5 min elapsed, ~ 4.6 min left
+  [ 20/35] 9f3cdb4d835c6909 seed=0  A=0.0924 P_full=0.2584 P_sub=0.2578  kept=[1, 2, 3, 5]   5.5 min elapsed, ~ 4.1 min left
+  [ 21/35] 9f3cdb4d835c6909 seed=1  A=0.0941 P_full=0.0677 P_sub=0.0676  kept=[0, 2, 3, 5]   6.1 min elapsed, ~ 4.1 min left
+  [ 22/35] c75f6d6f50fe2434 seed=0  A=0.1172 P_full=0.1413 P_sub=0.1395  kept=[0, 2, 3, 5]   6.2 min elapsed, ~ 3.7 min left
+  [ 23/35] c75f6d6f50fe2434 seed=1  A=0.1237 P_full=0.1499 P_sub=0.1500  kept=[0, 2, 3, 5]   6.4 min elapsed, ~ 3.4 min left
+  [ 24/35] ce7334da318bc5e5 seed=0  A=0.0646 P_full=0.4477 P_sub=0.4477  kept=[0, 1, 2, 3]   6.4 min elapsed, ~ 3.0 min left
+  [ 25/35] ce7334da318bc5e5 seed=1  A=0.0646 P_full=0.3337 P_sub=0.3336  kept=[0, 1, 2, 3]   6.6 min elapsed, ~ 2.6 min left
+  [ 26/35] da5ec2fbb20c9f9b seed=0  A=0.0428 P_full=0.1141 P_sub=0.1137  kept=[0, 1, 2, 3]   6.7 min elapsed, ~ 2.3 min left
+  [ 27/35] da5ec2fbb20c9f9b seed=1  A=0.0700 P_full=0.3518 P_sub=0.3514  kept=[0, 1, 2, 3]   6.9 min elapsed, ~ 2.0 min left
+  [ 28/35] e402c32907f27534 seed=0  A=0.1397 P_full=0.0654 P_sub=0.0645  kept=[1, 2, 3, 4]   6.9 min elapsed, ~ 1.7 min left
+  [ 29/35] e402c32907f27534 seed=1  A=0.1205 P_full=0.0716 P_sub=0.0714  kept=[0, 1, 3, 4]   7.2 min elapsed, ~ 1.5 min left
+  [ 30/35] e946207e9dfe1876 seed=0  A=0.0318 P_full=0.0979 P_sub=0.0978  kept=[0, 2, 3, 4]   7.3 min elapsed, ~ 1.2 min left
+  [ 31/35] e946207e9dfe1876 seed=1  A=0.1044 P_full=0.1267 P_sub=0.1267  kept=[2, 3, 4, 5]   7.3 min elapsed, ~ 0.9 min left
+  [ 32/35] ef2815cdafff288c seed=0  A=0.0959 P_full=0.2878 P_sub=0.2878  kept=[1, 2, 3, 5]   7.4 min elapsed, ~ 0.7 min left
+  [ 33/35] ef2815cdafff288c seed=1  A=0.1149 P_full=0.0959 P_sub=0.0958  kept=[1, 2, 3, 5]   7.5 min elapsed, ~ 0.5 min left
+  [ 34/35] f79c5cf175034acd seed=0  A=0.1102 P_full=0.3721 P_sub=0.3721  kept=[1, 3, 4, 5]   7.6 min elapsed, ~ 0.2 min left
+  [ 35/35] f79c5cf175034acd seed=1  A=0.0713 P_full=0.0817 P_sub=0.0816  kept=[0, 1, 4, 5]   7.8 min elapsed, ~ 0.0 min left
+
+  gate (rule A vs e2-grid.json): 50 rows, worst |delta| = 0.000e+00, 0 failures
+  check (rule P full vs fix1-terminal-rule.json): worst |delta| = 0.000e+00
+
+====================================================================================
+  rule A          0.0958
+  rule P full     0.1993
+  rule P subspace 0.1988
+  distance to rule A anchor 0.0958: 0.1030  (SESOI 0.02)
+  distance to full-space anchor 0.1993: 0.0005
+  share of the collapse removed: 0.005
+
+  VERDICT: D20_STANDS
+  The prior is not the mechanism; the response surface is (grid_r2 = -6.19). D20 stands as written.
+====================================================================================
+  written to results/d23-doe-subspace.json  (7.9 min)
+attempt 2 exit=0
