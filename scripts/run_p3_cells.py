@@ -330,8 +330,12 @@ def score_k6b(rec, orc, X_sub: torch.Tensor, mu_max: float) -> list[dict]:
               row[f"ce_empty_{a}"] = n_ce == 0
               row[f"ce_false_in_{a}"] = (float((truth_eval[ce] < theta).double().mean())
                                          if n_ce else float("nan"))
-              # The real function, not the memo -- it is looked up off the module so the
-              # committed runner's exact call is reproduced whether or not a cache is live.
+              # Looked up off the module, so inside the cache scope this IS the memo --
+              # and that is exactly why the value is unchanged: `conservative_estimate`
+              # has just selected on this same `(theta, ce)`, so the memo returns the
+              # float the real function computed moments earlier, not a recomputation.
+              # With no cache live it is the real function. The committed
+              # `k6b-conservative.json` rows reproduce at exact float equality either way.
               row[f"ce_contain_{a}"] = (_vorobev.containment_probability(draws, ce, theta)
                                         if n_ce else float("nan"))
               emp = empirical_containment(ce, truth_eval, theta)
