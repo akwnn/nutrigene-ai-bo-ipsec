@@ -1,0 +1,60 @@
+===== THREADS=1 (control) =====
+threads requested=1  torch.get_num_threads()=1  interop=8
+  doe     hartmann6   0.586700459389584      ref 0.586700459389584      delta=0.000e+00 (0.3s)
+  doe     ackley      0.0                    ref 0.0                    delta=0.000e+00 (0.4s)
+  doe     levy        0.036445130321727914   ref 0.036445130321727914   delta=0.000e+00 (0.2s)
+  doe     rosenbrock  0.02275297191729475    ref 0.02275297191729475    delta=0.000e+00 (0.2s)
+  qlogei  hartmann6   0.22786852462983065    ref 0.22786852462983065    delta=0.000e+00 (39.7s)
+  qlognei hartmann6   0.1699699208688239     ref 0.1699699208688239     delta=0.000e+00 (81.8s)
+
+threads=1: worst |delta| over 6 gates = 0.000000e+00  EXACT
+
+===== TORCH DEFAULT (treatment) =====
+threads requested=default  torch.get_num_threads()=4  interop=8
+  doe     hartmann6   0.586700459389584      ref 0.586700459389584      delta=0.000e+00 (0.2s)
+  doe     ackley      0.0                    ref 0.0                    delta=0.000e+00 (0.7s)
+  doe     levy        0.036445130321727914   ref 0.036445130321727914   delta=0.000e+00 (0.3s)
+  doe     rosenbrock  0.02275297191729475    ref 0.02275297191729475    delta=0.000e+00 (0.2s)
+  qlogei  hartmann6   0.22786852462983065    ref 0.22786852462983065    delta=0.000e+00 (41.3s)
+  qlognei hartmann6   0.1699699208688239     ref 0.1699699208688239     delta=0.000e+00 (126.5s)
+
+threads=default: worst |delta| over 6 gates = 0.000000e+00  EXACT
+
+================================================================================
+ERRATUM 2 · VERDICT FOR THE B4 FAMILY GATES: exactness is NOT contingent on the
+BLAS thread count.
+================================================================================
+
+Six family gates, each against a committed column, run twice in one session on one
+machine, changing nothing but the thread setting:
+
+  threads=1        worst |delta| = 0.000000e+00  EXACT
+  torch default=4  worst |delta| = 0.000000e+00  EXACT
+
+Covered: `doe` on all four families against `d20-rescore.json · doe_a_new`;
+`qlogei` on hartmann6 against `q42-families.json · bo_a`; `qlognei` on hartmann6
+against `q59-hartmann-no-screen.json · rows[].arms.qlognei.rule_a`. All d=6,
+sigma_rel=0.25, seed 0.
+
+The two BO arms are the ones that could have broken: both fit a GP by marginal
+likelihood and run multi-start L-BFGS-B over an MC acquisition, so a change in BLAS
+reduction order would show up there if anywhere. It does not, at either setting, to
+the last bit.
+
+WHAT THIS DOES AND DOES NOT ESTABLISH. It establishes that these six gates hold at
+both thread counts on this machine, which is what Erratum 2 asked each worker to
+check. It does not establish the same for the Hill gates in
+`results/k1-replay-gate.json`, which were measured under a thread count nobody
+recorded and are a different code path (BiphasicOracle, not TorchEvaluator over
+UnitScaled). The committed family columns were themselves produced at one thread --
+`run_q42_families.py:60,68`, `rescore_d20.py:33,39`,
+`run_q59_hartmann_no_screen.py:70,76` all set OMP_NUM_THREADS=1 and
+torch.set_num_threads(1) -- so threads=1 is the control here and torch's default is
+the treatment, not the other way round.
+
+TIMING, REPORTED AS OBSERVED AND CONFOUNDED. qlogei 39.7s at 1 thread vs 41.3s at 4;
+qlognei 81.8s vs 126.5s. The two arms ran sequentially under a changing machine load
+(other agents' campaigns), so this is not a controlled comparison and the 1.0x-1.55x
+spread should not be quoted against the 4.6x measured on the isolated
+fit-plus-posterior microbenchmark. Capping threads is still right; the campaign-level
+gain was not measured cleanly here.
