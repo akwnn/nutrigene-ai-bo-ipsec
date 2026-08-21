@@ -210,3 +210,9 @@ COMMIT_MSG.txt
 !results/p6-families.json
 !results/p7-murphy.json
 !results/d23-doe-subspace.json
+
+# Amendment F -- the four corrections. F1/F2a/F2c/F4 are analysis-layer and consume
+# no new campaigns; registered before the affected analyses landed.
+!results/f1-dual-n.json
+!results/f2-error-volumes.json
+!results/f3-draw-sweep.json

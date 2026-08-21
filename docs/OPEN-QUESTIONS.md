@@ -5168,3 +5168,166 @@ Halt and report, do not repair:
    0.99, where it may legitimately fail.** A failure there is a result, not a bug.
 3. P1's re-score disagreeing with the committed kernel-arm rows.
 4. Wanting to raise a tolerance, or to change any registered threshold in this block.
+
+---
+
+# 🔴 AMENDMENT F · **Four corrections to the Phases 2–4 registration, raised by Joseph 2026-08-21, registered before the affected analyses land**
+
+Raised while the six Phase 2–4 agents were running. **Three of the four are analysis-layer
+and cost no new campaigns; they are cheap now and expensive after the grid triples**, which
+is why they are registered ahead of any cross-family run. Amendment F **supersedes the
+"Statistics for every contrast in Phases 2–4" section above** where the two conflict.
+
+## F1 · **n = 50 contradicts this project's own earlier convention. Every contrast runs BOTH ways.**
+
+**The inconsistency, in the project's own words:**
+* `docs/K6-TECHNICAL-REPORT.md` §3.8 — *"25 instances × 2 seeds = **n = 50** for every contrast."*
+* `docs/RESEARCH-SUMMARY.md` — *"25 landscapes × 2 seeds; **average seeds first; n = 25.**"*
+
+**These are different analyses and the difference is not cosmetic.** Two seeds on one
+landscape share the landscape, so they are not independent units. Treating them as 50
+inflates the effective sample size, narrows every bootstrap CI by roughly **√2**, and lowers
+every Wilcoxon p-value. **The original paper chose the conservative version; K6 silently
+chose the other, and nothing recorded the switch.**
+
+**Registered fix.** Every contrast in Phases 2–4, and every contrast already reported in
+`docs/K6-TECHNICAL-REPORT.md`, `docs/FINDINGS-SPADE.md` and `docs/OVERNIGHT-LOG.md`, is
+computed **both ways**:
+* **n = 50**, unit `(instance, seed)` — as currently reported.
+* **n = 25**, unit `instance`, **seeds averaged first** — the conservative unit, and the one
+  the earlier paper committed to.
+
+Both appear in every table. Where they agree, the n = 25 column is the one quoted.
+
+**Registered decision rule, winner NOT pre-written.**
+* A result **significant under both** → reported as it stands, with the n = 25 p-value
+  quoted, and it has gained a defence at zero cost.
+* A result **significant at n = 50 and not at n = 25** → **downgraded to n = 25's verdict.**
+  The n = 50 figure is reported beside it and explicitly labelled as the anti-conservative
+  unit. It is not quoted alone anywhere.
+* This applies **without exception to the two headline results** — the 24/24 screening
+  contrast and D20's rule-P reversal. Their effect sizes make survival likely; *likely is
+  not measured*, and a headline that has not been checked at the conservative unit is not
+  citable under rule 1.
+
+## F2 · **AUC is the least standard metric this project computes, and the two most standard ones are computed-and-unanalysed or uncomputed.**
+
+**Two defects in AUC as the primary, both verified here rather than accepted:**
+
+**(a) AUC is invariant to monotone transformation**, so it scores *ranking*, never
+calibration — and a design space is a calibrated absolute statement, not a ranking.
+Verified: mean `grid_r2` is **negative for all eight arms** — `doe` −6.1883, `qlognei`
+−0.4526, `qlogei` −0.2939, `random` −0.2924, `qlogei-add` −0.2818, `qlogei-addonly` −0.2229,
+`sobol` −0.1762, `lhs` −0.1756 — i.e. **the posterior mean is a worse point predictor than
+the constant grid mean, for every arm.** *Stated precisely, because the arm mean is not the
+row:* `doe` is negative in **1200/1200** campaigns, while the BO and spread arms are positive
+in **4%–24%** of theirs. The arm-level claim holds; the row-level one does not, and only the
+arm-level claim is used. **AUC cannot see any of this.**
+
+**(b) AUC misleads under heavy class imbalance** (Davis & Goadrich 2006; precision–recall
+preferred). §6.6 measures the imbalance: at γ=0.99, τ_frac=0.60 the minority class is about
+**16 grid points out of 20,000**, so AUC there is estimated from a few dozen points.
+
+**Registered fix, in priority order.**
+
+**F2a — expected type I / type II error volumes become the PRIMARY design-space metric**
+(Azzimonti & Ginsbourger 2018, Table 1 — what the cited community actually reports).
+**They require no new campaigns.** Derivation from columns already committed:
+
+    type_I_vol  = vol_pred * fi_pred                        # |D_est \ D_true| / |grid|
+    intersect   = vol_pred * (1 - fi_pred)
+    type_II_vol = true_frac_above_tau - intersect           # |D_true \ D_est| / |grid|
+
+**Validated before registration, not asserted:** `intersect / (vol_pred +
+true_frac_above_tau − intersect)` reproduces the committed `iou_pred` to a worst
+|Δ| of **2.220e-16 over 2,553 rows**, and produces **zero** impossible negative type-II
+volumes. The algebra is right.
+
+**And it is better-defined than the metrics it replaces**, which is the part that was not
+obvious: when `D_est` is empty, `fi_pred` and `iou_pred` are `nan` (0/0) — but type I volume
+is **0** and type II volume is **the prevalence**, both exactly correct. Since 54%–69% of
+predictive regions are empty at some cells (§5.7), **the error volumes are defined precisely
+where AUC and IoU break.** Emptiness must be reported beside them regardless.
+
+**F2b — AUPRC beside AUC at every cell**, and flagged as primary over AUC wherever minority
+prevalence < 0.01. Requires the raw maps, so it is folded into the P7 re-score, which already
+regenerates campaigns and recomputes maps at the primary cell.
+
+**F2c — actually rank on IoU and Brier.** Both are computed and committed **per row** and
+`scripts/analyse_k6.py` ranks on **neither**. This is a pure analysis gap: the data has been
+on disk since K6 ran.
+
+**F2d — the Murphy calibration–refinement split** (P7, already dispatched and running) is
+the component AUC structurally cannot see. Its priority is raised from "registered, never
+run" to a **primary deliverable of Phase 2**.
+
+**Registered decision rule.** If the arm ranking under **type I / type II error volumes**
+differs from the ranking under AUC, **the error-volume ranking is the reported one** and the
+AUC ranking is retained beside it as the superseded figure. If they agree, AUC is vindicated
+*at this imbalance* and that is stated with the prevalence attached.
+
+## F3 · **A winner's curse inside `CE_α`, and it is the project's own optimizer's-curse mechanism operating inside its safety metric.**
+
+`conservative_estimate` scans **64** Vorob'ev quantiles and selects the **largest** whose
+containment, measured on **512 draws**, is ≥ α. That is a **maximum over 64 noisy
+estimates**: any quantile whose *true* containment sits just below α is selected whenever
+noise pushes its estimate above. **So `CE_α` is anti-conservative in expectation by
+construction**, with bias growing in the number of ρ values scanned and shrinking in draw
+count.
+
+**Registered test.** Re-run K6b on a subset at **`N_DRAWS = 2048`** (4× the committed 512)
+and test whether `alpha_star` and CE volumes shift **systematically downward**. Paired by
+campaign, both n conventions per F1.
+
+**Registered decision rule.**
+* Systematic downward shift beyond SESOI → the committed `alpha_star` and CE volumes carry a
+  **stated selection bias** and the 512-draw figures are corrected or withdrawn.
+* No detectable shift → the bias is bounded at this draw count and that bound is reported as
+  a number, never as "small".
+
+**Recorded so it is not later claimed as foresight:** this bias may already be visible.
+`doe`'s circular `ce_contain` reads 0.972–0.998 while its **empirical** containment against
+ground truth is **0.000 / 0.240 / 0.500**. That gap is consistent with exactly this
+mechanism, and the draw-count sweep is what separates selection bias from ordinary model
+mis-specification. **Priority: after F1/F2/F4, before any cross-family claim about `CE_α`.**
+
+## F4 · **The pooled containment figure treats one campaign as four. WITHDRAWN.**
+
+§3.7 pools containment over `tau_frac` to **n ≤ 200** per (arm, α). The four thresholds are
+computed on **the same campaign, the same posterior, the same 512 draws.** They are not four
+Bernoulli trials.
+
+**Registered fix.** The pooled figure — quoted as **"pooled 0.9307 / 1.0000 / 1.0000"** — is
+**WITHDRAWN**, not recomputed with a wider interval. **Per-cell containment at n = 50 (and
+n = 25 per F1) is the only reported form.** Any cross-τ_frac summary requires a
+mixed-effects model with campaign as a random effect; until one exists, no pooled containment
+number appears in any document. Every table states its `n` and its cell.
+
+**This does not touch the per-cell numbers**, which were always the load-bearing ones:
+`versionb` 0.940 (n=50) / 1.000 (n=50) / 1.000 (n=22) at τ_frac = 0.60 stands unchanged.
+
+## Ordering, and what is blocked
+
+**F1, F2a, F2c and F4 run on data already on disk and are cheap NOW and expensive after the
+grid triples.** Therefore:
+
+> **🔴 NO CROSS-FAMILY CAMPAIGN (P6) STARTS UNTIL F1, F2a, F2c AND F4 ARE COMMITTED.**
+> P5 (`tau_q`) and B4 (family support in `replay`) continue — they are engineering and
+> registration, not campaigns.
+
+F2b folds into P7. F3 runs after F1/F2/F4.
+
+## What was right, recorded because these were choices and not defaults
+
+Carried forward unchanged, and each of these is a decision someone made rather than a
+default that fell out:
+* **Peterson's `D_γ` on the posterior *predictive***, carrying σ² rather than only s². This
+  is the correct object and the standard one, and it is the part most implementations get
+  wrong.
+* **Empirical containment against ground truth**, and catching that `ce_contain` was
+  circular — a defect of that shape usually survives to publication.
+* **Holm across dependent cells** — valid, because Holm holds under arbitrary dependence, so
+  it is conservative here, which is the right direction to err.
+* **Wilson intervals with `n` reported per cell**, and refusing to count empty sets as
+  successes.
+* **The τ-as-fraction re-registration**, without which every table would have been zeros.
