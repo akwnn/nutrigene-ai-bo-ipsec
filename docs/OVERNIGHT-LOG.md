@@ -1509,3 +1509,88 @@ the result, and it was right.
   search.** D23 removes the *prior* explanation; it does not touch either of those.
 
 **Three qualifications survive, one is discharged, and the discharged one was the material one.**
+
+## D61 🔴 **CORRECTION to D55 and D58: P2 was not SIGKILLed, and its file was not left in `results/`.**
+
+D55 recorded *"P2 was SIGKILLed at 8 of 50"* and D58 listed its partial as sitting at the final
+path. **Both are wrong on the specifics, and the worker corrected me:**
+
+* **It was not killed.** I had told it to *"pause after the current checkpoint"*; it ran `pkill`
+  **itself**, at key 8, and reported that. The `resource_tracker: 5 leaked semaphore objects` line
+  is **its own pool teardown**, not the machine's.
+* **The file is not in `results/`.** Verified now: `ls results/ | grep p2-versionb` → nothing;
+  `git status --porcelain | grep p2` → nothing. It had moved it to the scratchpad. *(My
+  observation at 13:15 was accurate for that moment — both copies existed then — and it moved the
+  `results/` one afterwards. The record should say the hazard was **transient**, not that I
+  misread the disk.)*
+
+**The CLASS of hazard is real and unaffected**, which is why the fixes stand: `.gitignore:199`
+does carry `!results/p2-versionb-gamma.json`, so the deliverable path **is** explicitly stageable
+and a partial there would read as finished. **P7's file WAS at its final path and that instance
+was real.** But *"two of two long runners left a partial at the final path"* is **one of two**,
+and D58's framing of it as established default behaviour is corrected.
+
+**This is the second time in one session I have generalised a pattern from cases that turned out
+to be my own instructions** — after Erratum 10's "three turn-tied deaths" that were zero. **Both
+times a worker caught it by re-reading its own logs rather than accepting mine.**
+
+## D62 ⭐ **A structural finding: no file in this project stores the probability map, so every new probability-based metric forces a full re-run.**
+
+P2 established that its 8 completed keys **cannot** be resumed under Amendment F, and the reason
+generalises well past P2:
+
+* **8 of the 10 new columns ARE derivable** from stored values — `error_volumes` is a pure
+  function of `vol_pred`, `fi_pred` and `true_frac_above_tau`.
+* **`auprc_pred` and `auprc_latent` are NOT.** AUPRC needs the **20,000-point predictive
+  probability map**, and **no results file in this project stores it.** Recovering it costs the GP
+  refit — i.e. the entire campaign.
+
+> **This is the `replay.py` defect class recurring one level up.** No file stores `X`/`Y`, so
+> campaigns must be regenerated. No file stores the probability map, so **any new
+> probability-based metric forces a full re-run of every campaign it touches.**
+
+**Measured cost of that property today:** it is what made P3's, P7's and P2's Amendment F retrofits
+require re-runs rather than re-scores, and what made `p4-coord.json` — 1,400 rows, already
+committed — need a fresh `coord` re-score for one column.
+
+**Registered as a decision for later, not taken now:** if the programme expects further
+probability-based metrics, **persisting the map once** is the fix. It is 20,000 floats per (arm,
+campaign, γ, τ_frac) cell, so it is not free — but it is cheaper than the third full re-run.
+
+## D63 ✅ **F-analysis's unpaired-ICC table is stronger than the figure I registered: the span is 0.92 and it is ARM-DEPENDENT.**
+
+Erratum 9c recorded raw per-arm `auc_pred` ICC as running "−0.226 to +0.581". Computed properly
+in a committed script, with both exact corners pinned by test (identical seeds → +1; equal
+instance means → −1):
+
+| arm | median | | arm | median |
+|---|---|---|---|---|
+| `lhs` | **+0.581** | | `qlognei` | −0.122 |
+| `qlogei` | +0.234 | | `qlogei-addonly` | −0.221 |
+| `qlogei-add` | +0.122 | | `doe` | −0.226 |
+| `random` | +0.036 | | `sobol` | **−0.343** |
+
+**A span of 0.92 across arms.** So the warning is not merely *"unpaired quantities have a
+non-zero ICC"* — it is that **the ICC is arm-dependent**, and therefore:
+
+> **An analysis that picks one unit for all arms on the strength of a pooled figure is wrong by
+> different amounts for different arms.**
+
+It bites in two named places in the current record: **§5.10.2's containment tables, which are
+proportions and not contrasts**, and **every arm mean in §6.10.1.**
+
+## D64 🟢 The three Holm upgrades now carry a mechanical caveat, replacing my suspicious one.
+
+I had written that the α\* upgrades were *"a stronger reading of a statistic under suspicion"*.
+**The better caveat is mechanical**, and it is now attached to the upgrades themselves rather than
+sitting in a limits paragraph:
+
+> **All three are a power effect of averaging seeds, not new evidence.** They sit in the two
+> families with the most strongly negative ICC — KILL 1 at **−0.339**, KILL 2 at **−0.175** —
+> precisely where the conservative unit is the **more** powerful one. Individual inflations
+> **0.621, 0.791, 0.889**, all below 1. **Nothing new was measured; the same 50 campaigns were
+> aggregated in a way that happens to have more power here.**
+
+**And Erratum 11 adds the second half:** they cannot be called clean either, because ρ(α\*,
+symmetric difference) = **+0.4333** with a CI excluding zero — higher α\* ↔ **more total error** —
+while ρ(α\*, regret) = −0.3667 points the other way. **Both facts travel with any α\* table.**
