@@ -7165,3 +7165,69 @@ replay. **Measured |Δ| = 0.0 exactly at (6, 0.10).**
 
 *(The P6 worker independently marked `plate1_only` ungatable off hill, so it was never exposed —
 but it was exposed by luck rather than by my instruction being right.)*
+
+---
+
+## 📌 ERRATUM 14a — REFINED · **The denominator differs BY METRIC. "18 of 18" overstates the evidence for type I.**
+
+**Two refinements from the F-analysis worker, one of which corrects my correction in the direction
+of overstatement.**
+
+### 1. 🔴 Per-metric denominators, and type I is 14 not 18
+
+```
+type_I  : degenerate 10 of 24  ->  denominator 14
+type_II : degenerate  6 of 24  ->  denominator 18
+total   : degenerate  6 of 24  ->  denominator 18
+```
+
+**An all-empty region scores type I EXACTLY 0**, so it ties at **four further high-γ cells** —
+(0.90, 0.85), (0.95, 0.85), (0.99, 0.75), (0.99, 0.85) — **where type II still separates the
+arms.** *(This is Erratum 6b's "type I read alone ranks silence first" reappearing as a
+denominator, not just as a ranking hazard.)*
+
+**"18 of 18" quoted for type I would be wrong in the direction of OVERSTATING the evidence.**
+All three denominators are now stated explicitly and locked in a test.
+
+### 2. The rankability criterion is a TIE TEST, not `separation == 0`
+
+**Two of the six degenerate cells have separation `1.1e-16`, not `0`** — (0.90, 0.95) and
+(0.99, 0.95). **A rule written as `separation == 0.0` would have kept them as rankable.** The
+criterion that actually decides is **whether the arm means tie** (`max − min ≤ 1e-15`).
+
+*(My own quick table and the worker's differ in the non-degenerate entries — 3.68e-01 vs 3.98e-01
+at γ=0.50, τ_frac=0.60 — almost certainly a `pred`/`latent` or arm-set difference in my ad-hoc
+recomputation. **Not load-bearing for the denominator**, and the worker's committed script is the
+authority; recorded because we were both quoting the column.)*
+
+---
+
+## 📌 ⚠️⚠️ **THE TWO DEGENERACY FLAGS ARE NOT INTERCHANGEABLE — and the cross-family case needs BOTH.**
+
+**This is the most important thing to come out of the correction, and it is invisible from the map
+alone.**
+
+| | prevalence across arms | at full emptiness | which flag catches it |
+|---|---|---|---|
+| **K6 map** | **arm-identical** (0 of 1,200 cells differ) | every arm **ties** | **`_degenerate` (tie test)** |
+| **CE sets** | **arm-DIFFERENT** — B3 scores `doe` on its 4-D subspace | arms **do NOT tie; they differ BY PREVALENCE** | **`ranking_is_prevalence_only` only** |
+
+> **`_degenerate` alone would have missed all four vacuous CE cells** — the tie test stays
+> **silent** while the ranking is exactly as vacuous. **And `ranking_is_prevalence_only` alone does
+> not generalise to metrics that are not prevalence-anchored.**
+>
+> **Neither is sufficient once arms or families differ in prevalence — which is the cross-family
+> case BY CONSTRUCTION.**
+
+Locked in a test asserting `_degenerate` must **not** fire on the CE τ_frac = 0.95 cell.
+
+**Registered requirement for P6:** it must carry **both** flags. Its own ceiling census —
+**rosenbrock 8/8 above the noise ceiling at γ ≥ 0.90, levy 8/8 at γ ≥ 0.95** — guarantees it hits
+the **CE-shaped** case, not the map-shaped one, **wherever families are compared at a common
+threshold.**
+
+**Unchanged:** direction and strength stand — 100% disagreement wherever a ranking exists, ρ =
++0.071 unaffected (the Spearman already excluded degenerate cells, since a correlation against a
+constant is undefined). Descriptive arm means remain over all 24 cells, legitimately: **the six
+degenerate cells contribute the same prevalence to every arm, shifting all eight equally without
+changing their order.**
