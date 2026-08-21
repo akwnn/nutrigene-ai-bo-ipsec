@@ -1316,3 +1316,81 @@ because **AUPRC is not recoverable after the fact**, and this has already cost u
 
 **Release queue for compute: P7 → P3 → P2**, and nothing new starts until something finishes.
 The box is at **59 MB free RAM** with Adobe holding 82% of a core.
+
+## D55 🔴 **A partial result file that is indistinguishable from a complete one. Found on a killed run.**
+
+P2 was **SIGKILLed at 8 of 50** — its log ends mid-progress followed by
+`resource_tracker: There appear to be 5 leaked semaphore objects`, the signature of an abrupt
+pool teardown. Third worker this has happened to. What it left behind is the finding:
+
+```
+results/p2-versionb-gamma.json   1,077,881 bytes   768 rows
+  distinct (instance, seed) keys:  8       (expected 50)
+  provenance:  full                gate_failures:  []
+  completeness marker:  NONE
+```
+
+**Untracked but STAGEABLE** — `.gitignore:199` carries `!results/p2-versionb-gamma.json`, so
+**any `git add -A` commits a 16%-complete file that reads as the finished Version B γ-ladder
+result.** Full provenance, clean gate, and nothing a reader or a downstream analysis script
+could use to tell.
+
+**This is this project's own recurring failure class, inverted.** Every previous instance was a
+*cited file that did not exist* (`q30-additive.json`, `e2-doe-d8.json`, the Q50 shards). This is
+an *existing file that would be cited as complete.* The `.gitignore` negation discipline that
+fixed the first class is what **creates** the second: the negation was added at registration
+time, before the file existed, precisely so it could not be silently ignored — and it now
+un-ignores a partial just as eagerly.
+
+**Required of every runner, propagated:** write incrementally to a **scratch path**, promote to
+the final `results/` path **once, whole, at the end**; and carry a top-level `status` plus
+`keys_present` / `keys_expected` so a partial cannot be silently consumed even if it does land
+at the final path. The D23 worker had already adopted exactly this after being killed itself.
+
+**Nothing has swept it up**, because every commit this session used a path-scoped
+`git add -A docs/… .gitignore` rather than a bare `git add -A`. **That was discipline that
+happened to matter**, and it is now a stated rule rather than a habit.
+
+## D56 🟡 **I withdrew three releases. The hold on P3 is now deliberate.**
+
+I released P3 three times and each crossed its report in flight. **I have withdrawn all three.**
+Machine state at the moment of withdrawal:
+
+```
+free RAM   108 MB          swap  14,750 MB of 15,360  ->  96% FULL
+alive      3 heavy runners (P7, P1's Q30, D23)
+down       P2 (SIGKILLed at 8/50),  P6 (never started — no log)
+Adobe      4,524 CPU-minutes and counting
+```
+
+**Two of the six runs I released are down.** Starting three more torch pools into 108 MB of free
+RAM would likely kill P2's restart, P7 or D23 — all closer to delivering than P3's cells.
+
+**Sequencing: P7 and D23 finish → P2 restarts from its 8 keys → P3 goes.** That puts the
+longest job (~17–24 h) last, which is the **opposite** of what its scientific value deserves —
+P3's cells are the only work that can invalidate the design-space headline (D29). **Recorded as
+a cost of the machine state, not as a judgement about the work.**
+
+**P3 has been told the hold is deliberate**, so it stops reading it as message-crossing. Its
+held work is complete and none of it is wasted: Amendment F wired into the scorer means the
+cells run **once**; the d=8 gate exemption is keyed on the arm with a test proving it does not
+weaken any other arm.
+
+## D57 ⭐ Two independent arrivals at 24-of-24, and an early D23 signal.
+
+**The error-volume ranking differs from AUC's in 24 of 24 cells** — found by the F-analysis
+worker as its registered F2a deliverable, and **independently by P3 while merely checking its
+analysis script ran.** Two routes, same number, neither aware of the other. That is worth more
+than either alone.
+
+**D23's early signal (5/50, gates clean, full-space rule P reproducing `fix1-terminal-rule.json`
+at exactly 0.0):** subspace rule-P regret is tracking full-space rule-P to **~1e-4 per
+campaign.** If it holds to 50, that is the **second registered branch** — *the prior is not the
+mechanism, the response surface is (`grid_r2` = −6.19), and D20 stands as written.* **Not
+called at 5 of 50**, and recorded here as a signal precisely so a later confirmation cannot be
+presented as having been obvious.
+
+**P4 is DONE:** `coord` gated 50/50 at |Δ| = 0.000e+00 against `e2-grid.json`, 1,200 K6 rows +
+200 K6b rows committed. **The design-space ranking is now nine arms wide** — `coord` lands
+mid-pack at regret 0.1420 (3rd of 9), `grid_r2` −0.585 (5th). Both P4 scorers were gated
+bitwise against a committed `lhs` row before any `coord` number was read.
