@@ -4866,3 +4866,305 @@ across cells with different `n`.
 **validated** — they consult the noiseless oracle. `alpha*` is **model-internal** — it is a
 functional of the fitted posterior and nothing else, and section 1.4 of the technical
 report shows it flattering exactly the arm whose posterior is least trustworthy.
+
+---
+
+# 🔴 PHASES 2–4 · PRE-REGISTRATION · **written and committed BEFORE any runner file exists**
+
+**Registered:** 2026-08-21. **Standing rule being honoured:** *register before you run;*
+this block is committed in its own commit, and no script named below exists on disk yet.
+**Gate rule (D12):** every regeneration is gated against a **committed** column, never
+against a regeneration of itself. **Tolerance rule:** no constant is raised to make a gate
+pass; a gate that fails is reported as a failure.
+
+## THE THREE DECISIONS I MADE ON JOSEPH'S BEHALF
+
+He said "finish 2–4" without answering the three open scope calls. I made them rather than
+stall the whole programme, and each is written here so it can be reversed by reading one
+paragraph. **None of them modifies a committed quantity.** Two create *new, separately
+named* estimands that sit beside the old ones.
+
+### 🟢 DECISION 1 — Amendment A1 / Q30: **RE-RUN.**
+`results/q30-additive.json` never existed, so `qlogei-add`/`qlogei-addonly` are
+`CANNOT GATE` and 2,800 committed design-space rows rest on nothing. Phase 2's explicit
+task is *"gate the kernel arms"*, which is impossible without this file. Cost ≈ 2.6 CPU-h.
+Rejected alternative: gate them against `k6-designspace.json`, which is circular under D12.
+
+### 🟢 DECISION 2 — Phase 3 τ: **RE-REGISTER AS A PER-FAMILY PREVALENCE QUANTILE, under a new name.**
+`tau_frac` is **not modified and not deprecated**; every committed file keeps its meaning.
+A **new** estimand `tau_q` is registered below. The reason `tau_frac` cannot cross families
+is measured, not asserted: at one `tau_frac` the true superlevel set covers 0.00000 of the
+box on ackley and 0.95550 on rosenbrock (COVERAGE-MATRIX §2.4). That is not a comparison.
+
+### 🟢 DECISION 3 — Ackley: **IN, as a declared sensitivity, never as a headline.**
+Under `tau_q` ackley's superlevel set is non-empty **by construction**, so the
+`CANNOT RUN` verdict dissolves — it was a property of the threshold, not of the family.
+It stays out of every headline for two reasons that survive the fix: the CCD evaluates the
+box centre, which is ackley's exact optimum (blocker B3), and the DoE arm attains the
+optimum in 7 of 25 instances. Its rows carry `sensitivity: true`.
+
+---
+
+## P5 · **`tau_q` — τ as a per-family prevalence quantile.** The new estimand, defined before it is used.
+
+**Definition.** For a family `F` and dimension `d`, let `G` be the registered
+20,000-point Sobol grid at seed 0 and `f` the *noiseless* oracle. Then
+
+    tau_q(F, d, p) = Quantile_{x in G}( f(x), 1 - p )
+
+so that the true superlevel set `{x in G : f(x) >= tau_q}` covers a fraction `p` of the
+grid **by construction, identically on every family**. Registered grid:
+
+    p in {0.75, 0.25, 0.10, 0.01}
+
+**Why these four.** They reproduce the prevalence the committed `tau_frac` grid already
+achieved on hill — 0.73569 / 0.28944 / 0.06844 / 0.00294 at `tau_frac` 0.60/0.75/0.85/0.95
+— to within **0.0394**. So hill is scored on both grids and the two are comparable; the new
+grid is calibrated against the old one rather than replacing it blind.
+
+**What this is NOT.** It is not a fix to `tau_frac`, not a re-run of any committed cell, and
+not a licence to re-score anything already published. `tau_q` rows live in new files with a
+`tau_p` key; `tau_frac` rows keep theirs.
+
+**Gate.** `tau_q` is a deterministic function of a committed grid and a noiseless oracle, so
+it is checked by recomputation, not by campaign replay: `tests/test_designspace.py` must
+assert the achieved grid prevalence equals `p` to within one grid cell (5e-5) for all four
+`p`, all five families, both `d`.
+
+**Kill condition, winner not pre-written.** If on hill the `tau_q` grid and the `tau_frac`
+grid disagree on the **sign** of any arm-vs-arm AUC contrast that is significant under both,
+the two estimands are reported as measuring different things and **no cross-family claim is
+made from either**. Agreement is not assumed; it is the test.
+
+**Output:** `results/p5-tau-quantile.json` — the τ table itself, every (family, d, p),
+with achieved prevalence beside each. Committed before any family campaign runs.
+
+---
+
+## P1 · **Q30 re-run, and the retroactive validation of 2,800 committed rows.**
+
+**What runs.** `scripts/run_q30_additive.py` as committed, current code, writing
+`results/q30-additive.json`. Four arms, d ∈ {6,8} × σ_rel ∈ {0.25, 0.10}.
+
+**Why this is a real gate and not circular.** `run_q30_additive.py` is the *original
+campaign runner*; `src/boec/replay.py` is an *independent reimplementation*. Two
+independent code paths agreeing at |Δ| = 0 is the same structure that makes
+`e2-grid.json` a valid gate target. What it does **not** prove on its own is that the
+kernel-arm rows **already committed** in `k6-designspace.json` came from these campaigns.
+So:
+
+**Registered kill condition — this is the point of P1, not a formality.**
+After the gate passes, the `qlogei-add` and `qlogei-addonly` design-space rows are
+**re-scored** and compared to the committed `k6-designspace.json` / `k6b-conservative.json`
+rows. Then:
+* **|Δ| = 0 on all 2,800 rows** → the committed kernel-arm rows are validated retroactively
+  and A1 becomes citable under rule 1.
+* **any Δ ≠ 0** → the committed kernel-arm rows are **WITHDRAWN**, §5.5 of the technical
+  report loses its "cleanest figure", and that is reported as the P1 result. It is not
+  repaired by re-running until it matches.
+
+**Known-in-advance hazard, recorded so it cannot be discovered as a surprise.** The
+2026-08-11 `q30-additive.log` means for the two optimiser arms do **not** reproduce from
+the current `e2-grid.json` (`qlogei` 0.1666 vs 0.1553; `qlognei` 0.1512 vs 0.1532), while
+all five non-optimiser arms reproduce exactly. A fresh run is therefore **expected** to
+disagree with the old log. That disagreement is a **provenance finding about the log**, and
+must be reported as one; it is *not* evidence about the additive kernel and may not be
+written up as a change in the A1 result.
+
+**Output:** `results/q30-additive.json` (the comparator) and `results/p1-kernel-gate.json`
+(the gate + re-score verdict). **Never overwrite either.**
+
+---
+
+## P2 · **Version B on the γ ladder, with the four columns it has never had.**
+
+**The gap, confirmed by audit §3.1/§3.2.** Version B's entire γ coverage is **one point**,
+γ = 0.50 — K6's lowest-assurance corner and the only γ at which τ is unconstrained by the
+noise floor. Its AUC at that point is **200/200 bitwise identical** to K6's γ=0.50 row, so
+it is not independent evidence either. And it carries **no region metric that depends on γ
+at all**: no IoU, no `sup_err`, no `grid_r2`, no false-inclusion.
+
+**What runs.** All Version B arms — `versionb`, `versionb_random`, `plate1_only`,
+`versionb_predictive` — through the **full 24-cell** (γ × τ_frac) K6 grid, γ ∈ {0.50, 0.70,
+0.80, 0.90, 0.95, 0.99}, plus `iou_pred`/`iou_latent`, `sup_err`, `grid_r2`,
+`fi_pred`/`fi_latent`, `vol_pred`, `empty_pred`.
+
+**Gate.** `plate1_only` is `lhs` at 48 wells and **is** gateable against
+`k6-designspace-spread.json · lhs` — worst |Δ| measured at 4.44e-16. It is the only gate
+Version B has and it must be run. `versionb`/`versionb_random`/`versionb_predictive` are
+**UNGATABLE in principle** (no comparator exists and none ever will); their guarantee is
+seed determinism only, and every table carrying them says so.
+
+**Registered kill, winner not pre-written.** `versionb` empirical containment is measured at
+every γ. **If it falls below nominal at any γ × τ_frac × α cell, that is a failure of the
+certificate and is reported as one.** The committed 0.940 / 1.000 / 1.000 at γ=0.50 is not a
+prediction for the ladder; γ=0.99 tightens `tau_max` from 1.0000 to 0.4184 and there is no
+reason the certificate must survive that.
+
+**`plate1_only` may never be counted as a separate arm in any ranking** (D23.1). It is
+`lhs`. Both are reported; neither is double-counted.
+
+**Output:** `results/p2-versionb-gamma.json`.
+
+---
+
+## P7 · **Murphy calibration–refinement decomposition, 10 equal-count bins.**
+
+Registered under Amendment A5 and never run. Brier = calibration − refinement + uncertainty;
+A5's argument is that **refinement** is the new information, and the project has only ever
+reported the sum.
+
+**Specification, fixed here.** 10 **equal-count** bins over the predicted probability (not
+equal-width — equal-width bins are empty at the tails where these maps live). Reported per
+(arm, γ, τ_frac): `brier`, `calibration`, `refinement`, `uncertainty`, and `bin_counts`.
+Identity check as a **test**: `calibration − refinement + uncertainty` must equal `brier`
+to 1e-10 on every row, or the decomposition is wrong and the row is not written.
+
+**New module** `src/boec/calibration.py` — **not** `designspace.py`, so it cannot collide
+with P3's work in the same file.
+
+**Registered decision rule.** If the arm ranking by **refinement** differs from the ranking
+by **Brier**, the decomposition has found something and is reported as the A5 result. If the
+two rankings are identical at every cell, A5 is a **null** and is written up as one.
+
+**Output:** `results/p7-murphy.json`.
+
+---
+
+## P4 · **`coord` at the primary cell.**
+
+A committed arm with 50 gated campaigns at d=6 σ=0.25 and **not one design-space metric
+anywhere**. Cheapest possible widening of the ranking, 8 arms → 9. Gate against
+`e2-grid.json · coord`. **Output:** `results/p4-coord.json`.
+
+---
+
+## D23-RESCORE · **Is `doe`'s rule-P collapse the design, or a BoTorch prior?**
+
+**The finding it qualifies.** D20: under a posterior-mean terminal rule the regret ranking
+inverts, `doe` 0.0958 → 0.1993, first to last. **The caveat:** `doe`'s posterior on its two
+screened-out axes is prior-driven — the likelihood is flat there, so the lengthscale reverts
+to the prior mode 0.5016. Part of the collapse may be a library default rather than the
+design.
+
+**The test.** Re-score `doe` under rule P with the argmax **restricted to its 4 kept
+factors**, the 2 dropped factors held at the CCD's own hold values —
+`CampaignRecord.kept_factors` and `dropped_held_at` already carry both, and
+`tests/test_replay.py` already asserts they are recorded rather than inferred.
+
+**Registered decision rule, winner not pre-written.**
+* Subspace rule-P regret **recovers to within SESOI 0.02 of `doe`'s rule-A regret
+  (0.0958)** → D20's reversal is **substantially a prior artefact**, and the headline must
+  be relabelled *"DoE's model is unidentified off its screened subspace"*, which is a
+  different and weaker claim.
+* Subspace rule-P regret **stays near the full-space 0.1993** → the prior is not the
+  mechanism, the response surface is (`grid_r2 = −6.19`), and D20 stands as written.
+* **Anything between** → both mechanisms are live, the split is reported as a magnitude,
+  and neither wording is used alone.
+
+**Gate:** rule A must reproduce `e2-grid.json · doe` at |Δ| = 0 on all 50, as in Fix 1.
+**Output:** `results/d23-doe-subspace.json`.
+
+---
+
+## P3 · **The three missing (d, σ_rel) cells** — (6, 0.10), (8, 0.25), (8, 0.10).
+
+The only axis that is `NOT RUN` rather than `CANNOT RUN`. `tau_max` moves 0.589 → 0.836 at
+σ_rel = 0.10, so the entire emptiness structure changes; the (6, 0.25) result that the whole
+project rests on is currently a single point on this axis.
+
+**Gate targets:** `e2-grid.json` for 7 arms; **`doe` at d=8 has no column there — use
+`results/e2-doe-d8.json`** (audit §5, P3). A run that silently skips the `doe` d=8 gate is
+the §3.6 defect repeating and is a stop condition.
+
+**Output:** one file per cell, never merged over a cell boundary:
+`results/p3-k6-d6-s010.json`, `results/p3-k6-d8-s025.json`, `results/p3-k6-d8-s010.json`,
+and the matching `p3-k6b-*.json`.
+
+### P3-B2 · **`tau_max` omits σ_add. Registered as a bounded sensitivity, NOT as a fix.**
+
+`tau_max = mu_max(1 − z·σ_rel)` drops the additive term. Exact value is
+`mu_max − z·sqrt((σ_rel·mu_max)² + σ_add²)`. Re-derived error: **3.288e-04** at σ_rel=0.25
+and **8.204e-04** at σ_rel=0.10 — ratio **2.49**, not the 10× first claimed (D19).
+
+**Decision: `tau_max` is NOT changed, and every P3 cell uses it unmodified.** Reason: if
+the σ=0.10 cells used a corrected threshold and the σ=0.25 cells used the current one, the
+σ axis would be confounded with a definition change — a far worse defect than 8e-4.
+`tau_max_exact` is added **beside** it, used for nothing but the sensitivity below.
+
+**Registered kill.** Re-score the (6, 0.10) cell — where the correction is largest — under
+both definitions. If any arm-vs-arm contrast moves by more than **SESOI 0.02**, the whole
+grid is re-registered on `tau_max_exact` and P3 is re-run. If not, the correction is
+recorded as bounded-and-immaterial with the measured maximum movement stated.
+
+**Output:** `results/p3-taumax-sensitivity.json`.
+
+---
+
+## P4b · **The α\* / regret rank inversion on the spread arms.**
+
+**The anomaly, measured from committed files, stated before it is explained.** Mean α\* at
+τ_frac = 0.75: `random` 0.6521 > `lhs` 0.6291 > `sobol` 0.5275. Committed regret at the same
+cell: `lhs` 0.1270 < `sobol` 0.1724 < `random` 0.2216. **α\* ranks the three spread arms in
+almost exactly the reverse of regret**, and `doe` — the worst response surface in the
+project, `grid_r2` = −6.19 — scores α\* = **1.0000**, the maximum, at τ_frac = 0.60.
+
+**Hypothesis to be tested, not assumed:** α\* is a functional of posterior *width*, so a
+design that leaves large unsampled gaps buys a wider posterior, a more diffuse Vorob'ev
+structure, and a higher α\* — i.e. the statistic rewards not knowing.
+
+**Registered test.** Per campaign, regress α\* on the mean posterior sd over the registered
+grid, within arm and across arms; report Spearman ρ of α\* against regret across the 9 arms
+and its bootstrap CI.
+* **ρ ≤ −0.5 with a CI excluding 0** → α\* is confirmed anti-correlated with the validated
+  metric and **every table carrying α\* must carry that fact**.
+* **CI includes 0** → the ranking is reported as an unexplained anomaly, recorded and not
+  smoothed, in the manner of `docs/METHODS.md:583`.
+
+**Output:** `results/p4b-alpha-star-anomaly.json`.
+
+---
+
+## P6 · **Family coverage** — hartmann6, levy, rosenbrock, ackley(sensitivity).
+
+**BLOCKED on P5 and on B4's engineering** (family support in `replay.regenerate` + the
+builder hook, ~11 h estimated). Runs only after `results/p5-tau-quantile.json` is committed.
+
+**Gate columns, verified live by the audit at |Δ| = 0:** `qlogei` ← `q42-families.json ·
+bo_a` and `d20-rescore.json · bo_a`; `doe` ← **`d20-rescore.json · doe_a_new`, NOT
+`q42-families.json · doe_a`**, which is the pre-D20 column and is the obvious wrong target;
+`qlognei` ← `q59-hartmann-no-screen.json`, **hartmann6 only**. `lhs`/`sobol`/`random` have
+**no family gate column and are ungatable off hill** — every table says so.
+
+**Registered kill.** If any family arm fails its gate at anything other than |Δ| = 0, the
+family programme **stops** and reports the failure. It is not repaired by widening a
+tolerance.
+
+**Output:** `results/p6-families.json`.
+
+---
+
+## Statistics for every contrast in Phases 2–4
+
+Unchanged from Amendment E and restated so no runner has to go looking: unit of analysis
+`(instance, seed)`, **n = 50**, paired. **4,000-resample percentile bootstrap** of the paired
+differences, `numpy.random.default_rng(0)`, **and** a two-sided **Wilcoxon signed-rank** on
+the same pairs. **Holm across the cells** of each family. **SESOI 0.02.** Per Q20 §2,
+**Wilcoxon governs yes/no, the bootstrap reports magnitude, and disagreements between them
+are REPORTED, not resolved.** Empirical containment is a fraction of non-empty certified
+sets, reported with its own `n`, never averaged across cells with different `n`.
+
+**Metric status travels with every number.** VALIDATED (consults the noiseless oracle):
+regret, oracle-best, AUC, Brier and its Murphy components, IoU, empirical containment,
+false-inclusion, `sup_err`, `grid_r2`. MODEL-INTERNAL (a functional of the fitted posterior
+and nothing else): α\*, `vorobev_deviation`, `ce_contain`. **A validated metric beats a
+model-internal one, and the disagreement is reported.**
+
+## Stop conditions for Phases 2–4
+
+Halt and report, do not repair:
+1. Any regenerated campaign missing its committed column by anything other than **0**.
+2. `versionb` empirical containment below nominal — **now expected to be tested at γ up to
+   0.99, where it may legitimately fail.** A failure there is a result, not a bug.
+3. P1's re-score disagreeing with the committed kernel-arm rows.
+4. Wanting to raise a tolerance, or to change any registered threshold in this block.

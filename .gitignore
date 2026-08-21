@@ -188,3 +188,25 @@ COMMIT_MSG.txt
 !results/versionb-predictive.json
 !results/versionb-predictive.log
 !results/versionb-predictive-analysis.log
+
+# Phases 2-4, registered in docs/OPEN-QUESTIONS.md before any runner existed.
+# Every one of these is anchored BY PATH from that registration, so an ignored
+# artefact here is the aa0785d failure mode again: a log line claiming a run that
+# no clone can check. Listed at registration time, NOT after the runs finish --
+# that ordering is the whole point of the rule.
+!results/q30-additive.json
+!results/p1-kernel-gate.json
+!results/p2-versionb-gamma.json
+!results/p3-k6-d6-s010.json
+!results/p3-k6-d8-s025.json
+!results/p3-k6-d8-s010.json
+!results/p3-k6b-d6-s010.json
+!results/p3-k6b-d8-s025.json
+!results/p3-k6b-d8-s010.json
+!results/p3-taumax-sensitivity.json
+!results/p4-coord.json
+!results/p4b-alpha-star-anomaly.json
+!results/p5-tau-quantile.json
+!results/p6-families.json
+!results/p7-murphy.json
+!results/d23-doe-subspace.json
