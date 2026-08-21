@@ -97,6 +97,8 @@ from pathlib import Path
 os.environ.setdefault("OMP_NUM_THREADS", "1")
 
 import torch                                                         # noqa: E402
+from sklearn.metrics import average_precision_score                  # noqa: E402
+from torch import Tensor                                             # noqa: E402
 
 warnings.filterwarnings("ignore")
 # One BLAS thread per process, then one process per core. The 64-rho Vorob'ev scan is
@@ -181,6 +183,51 @@ def _rel(path: Path) -> str:
         return str(Path(path).resolve().relative_to(ROOT))
     except ValueError:
         return str(path)
+
+
+
+#: Every column a current row carries that a pre-Amendment-F row does not. Resuming
+#: across this boundary would silently mix two schemas in one file.
+SCHEMA_REQUIRED = ("type_I_vol", "intersect", "type_II_vol", "type_I_vol_latent",
+                   "intersect_latent", "type_II_vol_latent", "auprc_pred",
+                   "auprc_latent", "true_frac_above_tau")
+
+
+def is_git_tracked(path: Path) -> bool:
+    """Is this path already under version control?
+
+    The overwrite guard is "is it tracked", not a hand-maintained list of filenames --
+    a list is a thing someone has to remember to extend, and `NEVER_OVERWRITE` already
+    proved that by needing four entries. Anything git tracks is a committed result.
+    """
+    try:
+        r = subprocess.run(["git", "ls-files", "--error-unmatch", str(path)], cwd=ROOT,
+                           capture_output=True, text=True)
+    except Exception:                                                # noqa: BLE001
+        return False
+    return r.returncode == 0
+
+
+def resumable_rows(path: Path) -> list[dict]:
+    """Rows already on disk, or `[]`. **Refuses to resume across a schema change.**
+
+    Amendment F added the error volumes and AUPRC. A file written before them holds rows
+    that cannot be told apart from current ones except by which key they belong to, and
+    a per-cell table would average the two populations without showing that it had. So
+    a missing column is a stop, not a backfill.
+    """
+    if not path.exists():
+        return []
+    rows = json.loads(path.read_text()).get("rows", [])
+    if not rows:
+        return []
+    missing = [k for k in SCHEMA_REQUIRED if k not in rows[0]]
+    if missing:
+        raise SystemExit(
+            f"{path} was written under a different schema -- it is missing {missing}. "
+            f"Resuming would mix two populations of rows in one file. Re-run with "
+            f"--no-resume, or point --out somewhere new.")
+    return rows
 
 
 def gate_note() -> str:
@@ -278,6 +325,63 @@ def plate1_only_record(instance: str, dim: int, sigma: float,
     docstring. The record comes back labelled `lhs`, which is what it is.
     """
     return regenerate(instance, dim, sigma, seed, "lhs")
+
+
+def error_volumes(vol: float, fi: float, true_frac: float) -> tuple[float, float, float]:
+    """``(type I, intersection, type II)`` as fractions of the grid. **Amendment F2a.**
+
+    Azzimonti & Ginsbourger (2018) Table 1 -- what the excursion-set literature actually
+    reports, and now the PRIMARY design-space metric here. AUC is invariant to monotone
+    transformation, so it scores ranking and never calibration; mean ``grid_r2`` is
+    negative for all eight arms, meaning the posterior mean is a worse point predictor
+    than the constant grid mean, and AUC cannot see that at all.
+
+        type I  = |D_est \\ D_true| / |grid| = vol * fi
+        inter   = |D_est & D_true| / |grid| = vol * (1 - fi)
+        type II = |D_true \\ D_est| / |grid| = prevalence - inter
+
+    **The reason this is the metric that survives this ladder.** When ``D_est`` is empty,
+    :func:`boec.designspace.false_inclusion_rate` and :func:`boec.designspace.iou` return
+    ``nan`` -- correctly, because nothing was claimed and ``0.0`` would read as perfectly
+    safe. But the error volumes are not undefined there at all: **nothing was certified,
+    so there are no false positives, and every truly-good point was missed.** At
+    gamma = 0.99 ``tau_max`` falls to 0.4184 and empty regions are common, so this is
+    where AUC and IoU go silent and these do not.
+
+    Registered validation, measured against the **committed** columns and not a rerun:
+    ``inter / (vol + prevalence - inter)`` reproduces `k6-designspace-spread.json`'s
+    ``iou_pred`` to a worst |delta| of 2.220e-16, with zero impossible negatives.
+    ``tests/test_p2_versionb_gamma.py`` re-measures it on every committed row.
+
+    The type II term is returned **unclamped**. A negative would mean the intersection
+    exceeds the true set, which is arithmetically impossible, so clamping it would hide
+    exactly the inconsistency the identity above exists to detect.
+    """
+    if vol <= 0.0:
+        return 0.0, 0.0, float(true_frac)
+    inter = vol * (1.0 - fi)
+    return float(vol * fi), float(inter), float(true_frac - inter)
+
+
+def auprc(p: Tensor, truth: Tensor, tau: float) -> float:
+    """Average precision against ``1{f >= tau}``. **Amendment F2b**, beside AUC.
+
+    AUC misleads under heavy class imbalance (Davis & Goadrich 2006) and **this ladder
+    is imbalanced at both ends, mirrored**: at gamma = 0.99, tau_frac = 0.60 the minority
+    class is ~17 *negative* grid points of 20,000; at gamma = 0.50, tau_frac = 0.95 it is
+    ~59 *positive*. AUPRC is primary wherever minority prevalence is below 1%.
+
+    ``sklearn.metrics.average_precision_score`` rather than a hand-rolled estimator --
+    AUPRC has several inequivalent estimators (trapezoid, interpolated, step) and
+    choosing one here would be a fourth. ``nan`` when either class is absent, the same
+    convention :func:`boec.designspace.brier_and_auc` uses for AUC: ``0.5`` would read as
+    "no skill" when the honest answer is "undefined", and it would average in as data.
+    """
+    label = (truth.reshape(-1) >= tau).double()
+    if int(label.sum()) == 0 or int((1 - label).sum()) == 0:
+        return float("nan")
+    return float(average_precision_score(label.numpy(),
+                                         p.reshape(-1).double().numpy()))
 
 
 @contextlib.contextmanager
@@ -416,13 +520,19 @@ def score_campaign(*, X, Y, Yvar, orc, dim, grid, truth, X_sub, truth_sub, seed,
 
             b_pred, a_pred = brier_and_auc(p_pred, truth, tau)
             b_lat, a_lat = brier_and_auc(p_lat, truth, tau)
+            prevalence = float(true_set.double().mean())
+            vol_p = float(d_gamma.double().mean())
+            vol_l = float(latent.double().mean())
+            t1_p, inter_p, t2_p = error_volumes(
+                vol_p, false_inclusion_rate(d_gamma, truth, tau), prevalence)
+            t1_l, inter_l, t2_l = error_volumes(
+                vol_l, false_inclusion_rate(latent, truth, tau), prevalence)
             _, box_vol = inscribed_box_from_mask(grid, d_gamma, active=active,
                                                  seed_score=p_pred)
             rows.append({**base, "gamma": gamma, "tau_frac": tf, "tau": tau,
                          "tau_max": tmax,
-                         "true_frac_above_tau": float(true_set.double().mean()),
-                         "vol_pred": float(d_gamma.double().mean()),
-                         "vol_latent": float(latent.double().mean()),
+                         "true_frac_above_tau": prevalence,
+                         "vol_pred": vol_p, "vol_latent": vol_l,
                          "empty_pred": int(d_gamma.sum()) == 0,
                          "empty_latent": int(latent.sum()) == 0,
                          "iou_pred": iou(d_gamma, truth, tau),
@@ -432,6 +542,16 @@ def score_campaign(*, X, Y, Yvar, orc, dim, grid, truth, X_sub, truth_sub, seed,
                          "brier_pred": b_pred, "auc_pred": a_pred,
                          "brier_latent": b_lat, "auc_latent": a_lat,
                          "box_vol_pred": box_vol,
+                         # Amendment F2b: AUPRC beside AUC, primary under imbalance.
+                         "auprc_pred": auprc(p_pred, truth, tau),
+                         "auprc_latent": auprc(p_lat, truth, tau),
+                         # Amendment F2a: the PRIMARY design-space metric. Defined where
+                         # iou_pred and fi_pred are nan, which is most of this ladder's
+                         # top end.
+                         "type_I_vol": t1_p, "intersect": inter_p,
+                         "type_II_vol": t2_p,
+                         "type_I_vol_latent": t1_l, "intersect_latent": inter_l,
+                         "type_II_vol_latent": t2_l,
                          **vorobev_columns(draws, truth_sub, tau, alphas)})
     del model, mean, sd, draws
     gc.collect()
@@ -584,6 +704,9 @@ def main() -> None:
         if out == guarded.resolve():
             raise SystemExit(f"refusing to overwrite {guarded} -- it is a committed "
                              f"result. Pass a different --out.")
+    if is_git_tracked(out):
+        raise SystemExit(f"refusing to write {_rel(out)} -- it is git-tracked, so it is "
+                         f"already a committed result. Pass a different --out.")
     arms = tuple(a.strip() for a in args.arms.split(",")) if args.arms else ARMS
     unknown = set(arms) - set(ARMS)
     if unknown:
@@ -610,9 +733,10 @@ def main() -> None:
         keys = keys[:args.limit]
 
     rows: list[dict] = []
-    if out.exists() and not args.no_resume:
-        rows = json.loads(out.read_text())["rows"]
-        print(f"  resuming — {len(rows)} rows already on disk")
+    if not args.no_resume:
+        rows = resumable_rows(out)
+        if rows:
+            print(f"  resuming — {len(rows)} rows already on disk")
     have = {(r["instance"], r["seed"], r["arm"]) for r in rows}
     jobs = [(i, s, tuple(a for a in arms if (i, s, a) not in have), args.dim, args.sigma)
             for (i, s) in keys]

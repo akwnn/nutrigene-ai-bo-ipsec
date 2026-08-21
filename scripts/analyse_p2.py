@@ -47,9 +47,13 @@ REPORTED_ARMS = ("versionb", "versionb_random", "versionb_predictive", "plate1_o
 #: Amendment E, restated so no reader has to go looking.
 N_BOOT, BOOT_SEED, SESOI = 4000, 0, 0.02
 ALPHAS = (0.50, 0.80, 0.95)
+#: Amendment F2b. Below this minority-class share AUPRC is primary over AUC.
+MINORITY_PREVALENCE_FLOOR = 0.01
 
 #: Which side of the VALIDATED / MODEL-INTERNAL line each metric sits on.
 STATUS = {"regret": "VALIDATED", "auc_pred": "VALIDATED", "auc_latent": "VALIDATED",
+          "type_I_vol": "VALIDATED (F2a PRIMARY)", "type_II_vol": "VALIDATED (F2a PRIMARY)",
+          "intersect": "VALIDATED", "auprc_pred": "VALIDATED", "auprc_latent": "VALIDATED",
           "brier_pred": "VALIDATED", "brier_latent": "VALIDATED",
           "iou_pred": "VALIDATED", "iou_latent": "VALIDATED",
           "fi_pred": "VALIDATED", "fi_latent": "VALIDATED",
@@ -78,20 +82,87 @@ def holm(pvalues) -> list[float]:
     return adj
 
 
-def paired(rows, arm_a, arm_b, key, gamma=None, tau_frac=None):
-    """Paired ``(instance, seed)`` values. Pairs with nan on either side drop, counted."""
+def minority_prevalence(true_frac: float) -> float:
+    """``min(prevalence, 1 - prevalence)``. **Amendment F2b.**"""
+    return float(min(true_frac, 1.0 - true_frac))
+
+
+def primary_ranking_metric(true_frac: float) -> str:
+    """AUPRC where the minority class is under 1% of the grid, else AUC.
+
+    Davis & Goadrich (2006). **This ladder is imbalanced at BOTH ends, mirrored**: at
+    gamma = 0.99, tau_frac = 0.60 the minority class is ~17 *negative* grid points of
+    20,000; at gamma = 0.50, tau_frac = 0.95 it is ~59 *positive*. AUC misleads in both.
+    """
+    return ("auprc_pred" if minority_prevalence(true_frac) < MINORITY_PREVALENCE_FLOOR
+            else "auc_pred")
+
+
+def paired(rows, arm_a, arm_b, key, gamma=None, tau_frac=None,
+           unit: str = "instance_seed"):
+    """Paired values for two arms. Pairs with nan on either side drop, and are counted.
+
+    **Amendment F1.** ``unit`` selects the unit of analysis, and both are reported:
+
+    * ``"instance_seed"`` -- n = 50. What `K6-TECHNICAL-REPORT.md` §3.8 uses.
+    * ``"instance"`` -- n = 25, **seeds averaged first**, then the paired test on 25
+      instance-level differences. What `RESEARCH-SUMMARY.md` uses.
+
+    Two seeds on one landscape share the landscape, so they are not independent; n = 50
+    inflates the effective sample size, narrows every bootstrap CI by roughly sqrt(2)
+    and lowers every Wilcoxon p. Where the two disagree, **n = 25 governs** and n = 50
+    is reported beside it labelled anti-conservative.
+    """
+    if unit not in ("instance_seed", "instance"):
+        raise ValueError(f"unknown unit {unit!r}")
+
     def pick(arm):
-        return {(r["instance"], r["seed"]): r[key] for r in rows
+        return [(r["instance"], r["seed"], r[key]) for r in rows
                 if r["arm"] == arm
                 and (gamma is None or r["gamma"] == gamma)
-                and (tau_frac is None or r["tau_frac"] == tau_frac)}
+                and (tau_frac is None or r["tau_frac"] == tau_frac)]
 
-    a, b = pick(arm_a), pick(arm_b)
+    def index(arm):
+        vals = pick(arm)
+        if unit == "instance_seed":
+            return {(i, s): float(v) for i, s, v in vals}
+        by_inst: dict[str, list[float]] = {}
+        for i, _s, v in vals:
+            by_inst.setdefault(i, []).append(float(v))
+        # Seeds averaged FIRST, then paired. An instance whose seeds are all nan drops
+        # whole rather than contributing a partial mean.
+        out = {}
+        for i, vs in by_inst.items():
+            good = [v for v in vs if not math.isnan(v)]
+            out[i] = float(np.mean(good)) if good else float("nan")
+        return out
+
+    a, b = index(arm_a), index(arm_b)
     keys = sorted(set(a) & set(b))
     pa = np.array([a[k] for k in keys], dtype=float)
     pb = np.array([b[k] for k in keys], dtype=float)
     ok = ~(np.isnan(pa) | np.isnan(pb))
     return pa[ok], pb[ok], int((~ok).sum())
+
+
+def dual_contrast(rows, arm_a, arm_b, key, gamma=None, tau_frac=None) -> dict:
+    """**Amendment F1**: every contrast, both ways, with n = 25 governing.
+
+    Never returns a single verdict. ``n25`` is the governing test; ``n50`` sits beside
+    it carrying the label that says why it is not.
+    """
+    a50, b50, drop50 = paired(rows, arm_a, arm_b, key, gamma, tau_frac, "instance_seed")
+    a25, b25, drop25 = paired(rows, arm_a, arm_b, key, gamma, tau_frac, "instance")
+    c50, c25 = contrast(a50, b50), contrast(a25, b25)
+    sig50 = c50["wilcoxon_p"] < 0.05
+    sig25 = c25["wilcoxon_p"] < 0.05
+    return {"n50": {**c50, "dropped_nan": drop50},
+            "n25": {**c25, "dropped_nan": drop25},
+            "governs": "n25",
+            "n50_label": ("unit (instance, seed); two seeds share a landscape, so this "
+                          "is anti-conservative -- CI ~sqrt(2) too narrow, p too low"),
+            "disagree": bool(sig50 != sig25),
+            "gamma": gamma, "tau_frac": tau_frac, "key": key}
 
 
 def contrast(pa, pb, n_boot=N_BOOT, seed=BOOT_SEED) -> dict:
@@ -233,8 +304,12 @@ def _print_ladder(rows, cfg) -> None:
     print("\n" + "=" * 78)
     print("THE GAMMA LADDER — the region metrics Version B has never had")
     print("=" * 78)
-    print("VALIDATED: iou_pred, fi_pred, auc_pred.  "
-          "MODEL-INTERNAL: alpha_star, ce_contain.\n")
+    print("PRIMARY (Amendment F2a): type I / type II error volumes, as grid fractions.")
+    print("They stay defined where iou_pred and fi_pred are nan -- an empty region has")
+    print("0 false positives and misses the whole prevalence -- which is most of the top")
+    print("of this ladder. `rank` is the metric that ranks THIS cell: AUPRC where the")
+    print("minority class is under 1% of the grid, AUC otherwise (F2b).")
+    print("MODEL-INTERNAL: alpha_star.  `true` = prevalence.\n")
     for arm in REPORTED_ARMS:
         sub0 = [r for r in rows if r["arm"] == arm]
         if not sub0:
@@ -244,21 +319,27 @@ def _print_ladder(rows, cfg) -> None:
               f"sup_err={np.mean([r['sup_err'] for r in sub0]):.4f} "
               f"grid_r2={np.mean([r['grid_r2'] for r in sub0]):.4f} "
               f"regret={np.mean([r['regret'] for r in sub0]):.4f}")
-        print(f"  {'gamma':>5} {'tauF':>5} {'tau':>7} {'iou_pred':>9} {'fi_pred':>8} "
-              f"{'vol_pred':>9} {'empty%':>7} {'auc_pred':>9} {'alpha*':>7}")
+        print(f"  {'gamma':>5} {'tauF':>5} {'tau':>7} {'true':>7} "
+              f"{'typeI':>8} {'typeII':>8} {'inter':>8} "
+              f"{'iou':>7} {'empty%':>7} {'rank':>6} {'value':>7} {'alpha*':>7}")
         for g in cfg["gammas"]:
             for tf in cfg["tau_fracs"]:
                 sub = [r for r in sub0 if r["gamma"] == g and r["tau_frac"] == tf]
                 if not sub:
                     continue
-                def nm(k):
-                    v = np.array([r[k] for r in sub], dtype=float)
+
+                def nm(k, _sub=sub):
+                    v = np.array([r[k] for r in _sub], dtype=float)
                     return float(np.nanmean(v)) if np.isfinite(v).any() else float("nan")
-                print(f"  {g:>5.2f} {tf:>5.2f} {sub[0]['tau']:>7.4f} "
-                      f"{_fmt(nm('iou_pred'), 9)} {_fmt(nm('fi_pred'), 8)} "
-                      f"{_fmt(nm('vol_pred'), 9)} "
+
+                true_frac = nm("true_frac_above_tau")
+                rank_key = primary_ranking_metric(true_frac)
+                print(f"  {g:>5.2f} {tf:>5.2f} {sub[0]['tau']:>7.4f} {true_frac:>7.5f} "
+                      f"{_fmt(nm('type_I_vol'), 8, 5)} {_fmt(nm('type_II_vol'), 8, 5)} "
+                      f"{_fmt(nm('intersect'), 8, 5)} {_fmt(nm('iou_pred'), 7)} "
                       f"{np.mean([r['empty_pred'] for r in sub]):>6.0%} "
-                      f"{_fmt(nm('auc_pred'), 9)} {_fmt(nm('alpha_star'), 7)}")
+                      f"{rank_key.replace('_pred', ''):>6} {_fmt(nm(rank_key), 7)} "
+                      f"{_fmt(nm('alpha_star'), 7)}")
         print()
 
 
@@ -312,12 +393,15 @@ def _print_containment(rows, cfg) -> None:
 
 def _print_contrasts(rows, cfg) -> None:
     print("\n" + "=" * 78)
-    print("ARM CONTRASTS — Holm across the 24 cells, SESOI 0.02")
+    print("ARM CONTRASTS — Amendment F1, both n, Holm across the 24 cells, SESOI 0.02")
     print("=" * 78)
     print(f"Ranked arms: {', '.join(RANKED_ARMS)}. "
           f"plate1_only is NOT ranked -- it IS lhs (D23.1).")
-    print("Wilcoxon governs yes/no; the bootstrap reports magnitude; a `!` marks a")
-    print("disagreement between them, which is reported and not resolved (Q20 §2).\n")
+    print("EVERY contrast is reported at n=25 (unit `instance`, seeds averaged FIRST)")
+    print("and n=50 (unit `(instance, seed)`). Two seeds share a landscape, so n=50 is")
+    print("anti-conservative. **Where they disagree, n=25 governs.** A `#` marks that")
+    print("disagreement. Within each n, Wilcoxon governs yes/no and the bootstrap")
+    print("reports magnitude; a `!` marks THAT disagreement, reported not resolved.\n")
 
     pairs = [("versionb", "versionb_random",
               "does the LSE criterion beat 8 RANDOM wells?"),
@@ -325,33 +409,41 @@ def _print_contrasts(rows, cfg) -> None:
               "does a second plate help at all? (budget-matched, 48 wells)"),
              ("versionb_predictive", "versionb",
               "does targeting the PREDICTIVE boundary beat the latent one?")]
-    for key in ("iou_pred", "auc_pred", "alpha_star"):
-        print(f"### {key}  [{STATUS[key]}]  (positive favours the first arm)")
+    for key in ("type_II_vol", "type_I_vol", "iou_pred", "alpha_star"):
+        print(f"### {key}  [{STATUS.get(key, '?')}]  "
+              f"(negative favours the first arm for an ERROR volume)")
         for a, b, why in pairs:
-            cells, ps = [], []
+            cells = []
             for g in cfg["gammas"]:
                 for tf in cfg["tau_fracs"]:
-                    pa, pb, dropped = paired(rows, a, b, key, g, tf)
-                    c = contrast(pa, pb)
-                    c.update({"gamma": g, "tau_frac": tf, "dropped_nan": dropped})
-                    cells.append(c)
-                    ps.append(c["wilcoxon_p"])
-            adj = holm([1.0 if math.isnan(p) else p for p in ps])
-            for c, q in zip(cells, adj):
-                c["holm_p"] = q
-            sig = [c for c in cells if c["holm_p"] < 0.05]
+                    cells.append(dual_contrast(rows, a, b, key, g, tf))
+            for which in ("n25", "n50"):
+                adj = holm([1.0 if math.isnan(c[which]["wilcoxon_p"])
+                            else c[which]["wilcoxon_p"] for c in cells])
+                for c, q in zip(cells, adj):
+                    c[which]["holm_p"] = q
+            sig25 = [c for c in cells if c["n25"]["holm_p"] < 0.05]
+            sig50 = [c for c in cells if c["n50"]["holm_p"] < 0.05]
             print(f"  {a} - {b}: {why}")
-            print(f"    significant after Holm at {len(sig)}/{len(cells)} cells; "
-                  f"disagreements: {sum(c['disagrees'] for c in cells)}")
+            print(f"    Holm-significant: n=25 (GOVERNS) {len(sig25)}/{len(cells)} "
+                  f"cells; n=50 (anti-conservative) {len(sig50)}/{len(cells)}; "
+                  f"n disagree at {sum(c['disagree'] for c in cells)}")
             for c in cells:
-                if c["holm_p"] < 0.05 or c["disagrees"]:
-                    print(f"      gamma={c['gamma']:.2f} tauF={c['tau_frac']:.2f} "
-                          f"n={c['n']:2d} mean={c['mean']:+.4f} "
-                          f"[{c['lo']:+.4f},{c['hi']:+.4f}] p={c['wilcoxon_p']:.4f} "
-                          f"holm={c['holm_p']:.4f}"
-                          f"{'  <SESOI' if c['within_sesoi'] else ''}"
-                          f"{'  !' if c['disagrees'] else ''}"
-                          f"  dropped(nan)={c['dropped_nan']}")
+                show = (c["n25"]["holm_p"] < 0.05 or c["disagree"]
+                        or c["n25"]["disagrees"])
+                if not show:
+                    continue
+                for which in ("n25", "n50"):
+                    v = c[which]
+                    print(f"      [{which}] gamma={c['gamma']:.2f} "
+                          f"tauF={c['tau_frac']:.2f} n={v['n']:2d} "
+                          f"mean={v['mean']:+.5f} [{v['lo']:+.5f},{v['hi']:+.5f}] "
+                          f"p={v['wilcoxon_p']:.4f} holm={v['holm_p']:.4f}"
+                          f"{'  <SESOI' if v['within_sesoi'] else ''}"
+                          f"{'  !' if v['disagrees'] else ''}"
+                          f"  dropped(nan)={v['dropped_nan']}")
+                if c["disagree"]:
+                    print(f"      # n=25 and n=50 disagree here; n=25 governs.")
         print()
 
 

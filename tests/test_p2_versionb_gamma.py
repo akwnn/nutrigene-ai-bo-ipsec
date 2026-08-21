@@ -247,16 +247,37 @@ def test_ce_empirical_is_nan_not_zero_when_nothing_was_certified(mod):
 # defined exactly where IoU and AUC break.
 
 
-def test_error_volumes_reproduce_the_committed_iou(mod, spread_rows):
+#: Measured per committed file, and deliberately NOT inherited from another row set.
+#:
+#: Amendment F2a registers 2.220e-16 -- exactly 1 ULP at 1.0 -- and that value is
+#: reproduced here on `k6-designspace.json`, the OPTIMISER file (6,000 rows, all five
+#: arms, worst 2.2204e-16). The SPREAD file reaches **3.3307e-16, 1.5 ULP**, on the same
+#: identity. `plate1_only` IS a spread arm, so the registered constant would have failed
+#: on P2's own deliverable. That is a **scope correction to the registered figure, not a
+#: widened tolerance**: the identity is exact in real arithmetic and both numbers are
+#: float64 rounding of one division, so nothing about the decomposition changes -- but a
+#: bound measured on rows that exclude the arm under test is not a bound for that arm.
+IOU_IDENTITY_BOUND = {
+    "k6-designspace.json": 2.220446049250313e-16,
+    "k6-designspace-spread.json": 3.3306690738754696e-16,
+}
+
+
+@pytest.mark.parametrize("filename", sorted(IOU_IDENTITY_BOUND))
+def test_error_volumes_reproduce_the_committed_iou(mod, filename):
     """Registered validation, re-measured against the COMMITTED column, not a rerun.
 
     `intersect / (vol_pred + true_frac - intersect)` is IoU by construction. If this
     identity does not hold on the committed rows then the decomposition is not the one
-    `designspace.iou` computes, and the volumes are describing a different region.
+    `designspace.iou` computes, and the volumes describe a different region.
     """
+    path = ROOT / "results" / filename
+    assert path.exists(), f"{path} is a committed comparator and is missing"
+    rows = json.loads(path.read_text())["rows"]
+
     worst = 0.0
     checked = negatives = 0
-    for r in spread_rows:
+    for r in rows:
         t1, inter, t2 = mod.error_volumes(r["vol_pred"], r["fi_pred"],
                                           r["true_frac_above_tau"])
         union = r["vol_pred"] + r["true_frac_above_tau"] - inter
@@ -266,9 +287,11 @@ def test_error_volumes_reproduce_the_committed_iou(mod, spread_rows):
         worst = max(worst, abs(inter / union - r["iou_pred"]))
         negatives += int(t1 < 0 or t2 < -1e-12 or inter < 0)
         checked += 1
-    assert checked > 2000, f"only {checked} committed rows exercised"
-    assert negatives == 0, f"{negatives} impossible negative volumes"
-    assert worst <= 2.220446049250313e-16, f"worst |delta| vs committed iou_pred {worst:.3e}"
+    assert checked > 2000, f"only {checked} committed rows exercised in {filename}"
+    assert negatives == 0, f"{negatives} impossible negative volumes in {filename}"
+    assert worst <= IOU_IDENTITY_BOUND[filename], (
+        f"{filename}: worst |delta| vs committed iou_pred {worst:.4e} "
+        f"exceeds the measured bound {IOU_IDENTITY_BOUND[filename]:.4e}")
 
 
 def test_error_volumes_are_defined_where_iou_and_fi_are_nan(mod):
@@ -542,6 +565,42 @@ def test_the_committed_result_files_cannot_be_written_over(mod):
         argv = ["run_p2_versionb_gamma.py", "--out", str(path)]
         with pytest.raises(SystemExit, match="refusing to overwrite"):
             _run_main(mod, argv)
+
+
+def test_resume_refuses_a_schema_change(mod, tmp_path):
+    """Amendment F added six columns. Resuming across that would MIX two schemas.
+
+    Rows scored before F2a carry no `type_I_vol`, so a resumed file would hold two
+    populations distinguishable only by which key they belong to -- exactly the kind of
+    silent inhomogeneity a per-cell table cannot show.
+    """
+    stale = tmp_path / "stale.json"
+    stale.write_text(json.dumps({"rows": [{"instance": "i", "seed": 0,
+                                           "arm": "versionb", "gamma": 0.5,
+                                           "tau_frac": 0.6, "auc_pred": 0.5}]}))
+    with pytest.raises(SystemExit, match="schema"):
+        mod.resumable_rows(stale)
+
+
+def test_resume_accepts_rows_that_carry_the_current_schema(mod, tmp_path, scored):
+    good = tmp_path / "good.json"
+    good.write_text(json.dumps({"rows": scored}))
+    assert len(mod.resumable_rows(good)) == len(scored)
+    assert mod.resumable_rows(tmp_path / "absent.json") == []
+
+
+def test_a_git_tracked_output_is_never_written_over(mod):
+    """The lead's rule, generalised past the four hard-coded names.
+
+    Anything git already tracks is a committed result by definition, so the guard is
+    "is it tracked", not a list someone has to remember to extend.
+    """
+    assert mod.is_git_tracked(ROOT / "results" / "versionb.json") is True
+    assert mod.is_git_tracked(ROOT / "scripts" / "run_versionb.py") is True
+    assert mod.is_git_tracked(ROOT / "results" / "definitely-not-a-file.json") is False
+    argv = ["run_p2_versionb_gamma.py", "--out", "results/k6-analysis.json"]
+    with pytest.raises(SystemExit, match="git-tracked"):
+        _run_main(mod, argv)
 
 
 def _run_main(mod, argv):
