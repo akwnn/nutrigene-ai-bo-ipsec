@@ -6350,3 +6350,78 @@ the three columns.
 (Erratum 7e): **an additive regeneration of one's own output is permitted when byte-identity of
 every pre-existing field is proved programmatically and stated in the report.** Trust is not
 sufficient; the proof is what makes it an exception rather than a breach.
+
+---
+
+## 📌 AMENDMENT F2a — CORRECTION · **The registered IoU bound was measured on rows that exclude the arm under test. Per-file bounds, both named.**
+
+**Found by the P2 worker. Verified independently, and it reproduces exactly:**
+
+| file | arms | worst \|Δ\| | ULP at 1.0 | rows | negatives |
+|---|---|---|---|---|---|
+| `k6-designspace.json` | optimiser + `doe` | **2.220446049250313e-16** | **1.00** | 2,553 | 0 |
+| `k6-designspace-spread.json` | **spread** | **3.3306690738754696e-16** | **1.50** | 1,318 | 0 |
+
+**Amendment F2a registered `2.220e-16` — measured on the optimiser file only. `plate1_only` IS a
+spread arm, so the registered constant would have FAILED on P2's own deliverable.**
+
+**Registered correction: the bound is recorded PER FILE, both values named**, not widened to a
+single global bar:
+* optimiser rows — `2.220446049250313e-16`
+* **spread rows — `3.3306690738754696e-16`**
+
+**This is NOT a tolerance being widened, and the distinction is the whole point.** The identity is
+**exact in real arithmetic**; both numbers are float64 rounding of a single division; nothing about
+the decomposition changes. What changed is the **population the bound was measured on.** In the
+worker's words, which are the registered statement:
+
+> **"A bound measured on rows that exclude the arm under test is not a bound for that arm."**
+
+**This is the third time tonight a constant I quoted has been wrong for the population it was
+applied to** — after `0.0394` (d=6 only, quoted as general) and the audit's `doe` column shifts
+(one cell, quoted as pooled). **Same failure mode, three times: a number measured on a subset and
+registered as if it were universal.** Registered as a standing check: **every constant in a
+registration names the population it was measured on.**
+
+---
+
+## 📌 MULTI-AGENT HAZARD · **Never use an unscoped `pkill` in a shared session.**
+
+The P2 worker ran `pkill -9 -f "spawn_main"` while cleaning up its own workers. **That pattern is
+not scoped to one run** — it matches every Python multiprocessing child on the machine, belonging
+to any of seven concurrent agents.
+
+**It self-reported this unprompted, checked immediately, and confirmed nothing of anyone's was
+killed** (P7, P1's Q30, P3 and P1's gate are all single-process; `run_d23_doe_subspace` started
+afterwards). **Registered as a rule anyway, because the check was luck rather than design:** kill
+by **PID** from your own launch, or by a pattern containing **your own script name**. Never by a
+shared runtime symbol.
+
+**⚠️ One consequence worth flagging rather than asserting.** The P4/D23 worker reported **three
+runs dying with `BrokenProcessPool` — "workers not raising, being SIGKILLed"** — and attributed it
+to memory pressure. **`pkill -9` produces exactly that signature too**, and both explanations fit.
+The timeline says its D23 run started after, so at least that one is memory — but **the earlier
+losses should not be attributed to memory with confidence.** Recorded so the machine's behaviour
+is not over-diagnosed from an ambiguous signal.
+
+---
+
+## 📌 P2 SCHEMA DISCARD · **Discarding 8 completed keys was CORRECT. Registered so it is not read as waste.**
+
+Amendment F added six columns to every row **after** P2 had completed 8 of 50 keys. Resuming across
+that boundary would have put **two schemas in one file, distinguishable only by which key a row
+belongs to** — inhomogeneity that a per-cell table averages **without showing.**
+
+**The 8 keys are discarded, `resumable_rows()` refuses the schema change explicitly, and the
+partial is parked OUTSIDE `results/`.** Cost ~20 minutes.
+
+**What they established survives the discard and is recorded here:**
+* **Gate: 192 rows × 24 columns = 4,608 comparisons, 0 failures.**
+* **Determinism: 18 of 24 campaigns at worst |Δ| = 0.000e+00.** The other **6 are all one
+  instance** — `32bb966a18f1d863`, whose `optimum_value` is **`1.0000000000000002`** — and **the
+  only column that moves is `brier_pred`, at ≤1.39e-16.** `alpha_star`, `vorobev_deviation`,
+  `auc_pred` and all twelve `ce_*` are **exactly 0.0 even there.**
+
+**That is §3.1's float offset landing precisely where the `exact_mu_max` split was built to catch
+it:** Brier is **continuous in the threshold** and sees a 2e-16 shift; AUC is **rank-based** and
+cannot. A design decision made earlier in the project, confirmed by a defect it was built for.
