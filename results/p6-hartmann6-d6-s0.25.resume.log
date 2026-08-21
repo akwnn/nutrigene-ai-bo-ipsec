@@ -1,0 +1,28 @@
+P6 · hartmann6 d=6 sigma=0.25 · arms=('doe', 'qlogei', 'qlognei', 'lhs', 'sobol', 'random', 'versionb', 'versionb_random', 'versionb_predictive', 'plate1_only')
+  tau from results/p5-tau-quantile.json: p=0.75->0.00733  p=0.25->0.09706  p=0.1->0.21929  p=0.01->0.56612
+  gamma=(0.5, 0.7, 0.8, 0.9, 0.95, 0.99) (certification level ONLY; tau_q does not move with gamma)
+  grid: 20000 Sobol at seed 0 · threads=1 · OMP=1
+  ranking scalar: total_error_vol_pred (symmetric difference; NOT type I alone)
+  UNGATABLE lhs: no committed family column exists for 'lhs' on any family -- lhs/sobol/random are ungatable off hill (COVERAGE-MATRIX B4). Reproducibility is the RNG's: one static_design call and one evaluate call, both seeded.
+  UNGATABLE sobol: no committed family column exists for 'sobol' on any family -- lhs/sobol/random are ungatable off hill (COVERAGE-MATRIX B4). Reproducibility is the RNG's: one static_design call and one evaluate call, both seeded.
+  UNGATABLE random: no committed family column exists for 'random' on any family -- lhs/sobol/random are ungatable off hill (COVERAGE-MATRIX B4). Reproducibility is the RNG's: one static_design call and one evaluate call, both seeded.
+  UNGATABLE versionb: 'versionb' has no committed family column and none can exist -- SPADE was never run off hill, so there is nothing to reproduce. UNGATED. Its only guarantee is SEED DETERMINISM: the same seed rebuilds the same two plates through the same imported run_versionb._two_plate. Every table carrying this arm says so.
+  UNGATABLE versionb_random: 'versionb_random' has no committed family column and none can exist -- SPADE was never run off hill, so there is nothing to reproduce. UNGATED. Its only guarantee is SEED DETERMINISM: the same seed rebuilds the same two plates through the same imported run_versionb._two_plate. Every table carrying this arm says so.
+  UNGATABLE versionb_predictive: 'versionb_predictive' has no committed family column and none can exist -- SPADE was never run off hill, so there is nothing to reproduce. UNGATED. Its only guarantee is SEED DETERMINISM: the same seed rebuilds the same two plates through the same imported run_versionb._two_plate. Every table carrying this arm says so.
+  UNGATABLE plate1_only: plate1_only's comparator is k6-designspace-spread.json lhs, which is HILL-ONLY, so off hill it is UNGATED like the rest. Its only guarantee is SEED DETERMINISM. It is `lhs` at 48 wells (D23.1) and carries never_rank_separately so it is never counted as a second arm in any ranking.
+  doe gate distinguishes the pre-D20 column on 10/25 committed seeds -- over the whole column, not just the seeds run here
+  tau above the predictive ceiling in 1/24 (p, gamma) cells -- empty by the noise floor, flagged per row
+    p=0.01@g=0.99
+  checkpoint p6-hartmann6-d6-s0.25.ckpt.jsonl: 242 campaigns already done
+
+  [24] qlognei  regret=0.2887 gated=True (54.7s)
+  [24] lhs      regret=0.7445 gated=False (5.3s)
+  [24] sobol    regret=0.5297 gated=False (5.8s)
+  [24] random   regret=0.6228 gated=False (7.7s)
+  [24] versionb regret=0.5297 gated=False (21.6s)
+  [24] versionb_random regret=0.3763 gated=False (20.1s)
+  [24] versionb_predictive regret=0.4310 gated=False (22.8s)
+  [24] plate1_only regret=0.7445 gated=False (19.1s)
+
+250 campaigns in p6-hartmann6-d6-s0.25.ckpt.jsonl · 181s · gate failures: 0
+  results/p6-families.json is NOT written here. Run --merge when cells finish.

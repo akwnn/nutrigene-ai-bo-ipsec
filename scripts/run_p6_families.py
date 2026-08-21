@@ -197,6 +197,9 @@ RANKING_SCALAR = "total_error_vol_pred"
 #: **P6 runs lhs, sobol and random**, so a gate asserting the 1-ULP bound would fail on
 #: three of its six arms for a reason that is not an error. Neither value is widened into
 #: a single global bar: each names the population it was measured on.
+#: Unit roundoff. `fl(a op b) = (a op b)(1 + d)` with `|d| <= u`, u = eps/2.
+_U = 1.1102230246251565e-16
+
 IOU_IDENTITY_BOUND = {
     "optimiser": 2.220446049250313e-16,   # k6-designspace.json: doe, qlogei, qlognei
     "spread": 3.3306690738754696e-16,     # k6-designspace-spread.json: lhs, sobol, random
@@ -228,6 +231,59 @@ def iou_bound_for(arm: str) -> float:
     one level further down. Caught by the gate itself on the first real run.
     """
     return IOU_IDENTITY_BOUND[iou_population(arm)]
+
+
+
+#: **The DERIVED per-row bound that replaced the two scalars above as the gate.**
+#:
+#: P6 halted on hartmann6 seed 24 with ``qlognei`` missing by 3.331e-16 against the
+#: 2.220e-16 "optimiser" bar. Investigating rather than widening found that **neither
+#: scalar is a bound**. Both are ``max(observed)`` over a few thousand Hill rows. The
+#: identity's float error is data dependent, because the two sides are not comparable
+#: pieces of arithmetic:
+#:
+#:   ``designspace.iou``            ``int(inter) / int(union)`` -- exact ints, ONE rounding
+#:   ``calibration.error_volumes``  ``vol*(1-fi)`` then ``vol+prev-inter`` then a divide
+#:
+#: The reconstruction chains five roundings on three already-rounded inputs and carries
+#: two amplifications that no constant can cover:
+#:
+#:   ``vol / intersect``        ``1 - fi`` loses relative precision as ``fi -> 1``
+#:   ``(vol + prev) / union``   ``vol + prev - intersect`` cancels
+#:
+#: Measured on pure arithmetic -- no oracle, no GP, no dataset -- the 1.0-ULP bar breaks
+#: on 0.152% of configurations and the 1.5-ULP bar on 0.011%. P6 runs ~120k identity
+#: checks per family, so the wider bar alone would fire on float noise roughly a dozen
+#: times per family. **The bars were never population-specific. They were SAMPLE-SIZE
+#: specific**, which is worse: they silently tighten as more rows are collected, so the
+#: gate got stricter every time the study got bigger.
+#:
+#: This is NOT a widened tolerance. It is Higham (ASNA sec 3.1) first-order propagation
+#: evaluated per row from the operands, and it is the same expression whether or not
+#: hartmann6 was ever run. It is *tighter* than 2.22e-16 wherever ``iou`` is small and
+#: looser only where the arithmetic itself warrants. Validated at
+#: ``tests/test_p6_families.py``: zero violations in 60k configurations (worst ratio
+#: 0.54) while still firing on 100% of three injected F2a bugs.
+#:
+#: :data:`IOU_IDENTITY_BOUND` is KEPT -- it is the honest record of what was measured on
+#: each committed file, it is asserted against those files in
+#: ``tests/test_p2_versionb_gamma.py``, and it is written into provenance. It is simply
+#: no longer what gates a family it was not measured on.
+def iou_identity_bound(vol: float, prev: float, inter: float, union: float,
+                       ref: float) -> float | None:
+    """Absolute bound on ``|implied_iou - iou|`` from THIS row's operands.
+
+    ``None`` when the identity is not defined (empty union or empty intersection), which
+    is the common case rather than the corner -- 54-69% of predictive regions are empty
+    at some cells, and the caller already skips ``nan`` on both sides.
+    """
+    if not (union > 0.0 and inter > 0.0 and ref == ref):
+        return None
+    # `vol`, `prev` and `fi` are each an exact-integer sum divided once, so each carries
+    # exactly one rounding going in.
+    rel_inter = _U * (2.0 + vol / inter)           # 3 + (vol-inter)/inter == 2 + vol/inter
+    abs_union = 2.0 * _U * (vol + prev) + rel_inter * inter + _U * union
+    return ref * (rel_inter + abs_union / union + 2.0 * _U)   # +u for got, +u for ref
 
 
 #: **Lower-is-better or higher-is-better, per metric.** No cross-metric agreement check
@@ -595,17 +651,31 @@ def score_campaign(rec, orc, grid, truth, active, taus, arm_label=None) -> list[
                         sigma_pred=sigma_pred, active=active)
             # P5 measured this on the same grid and the same noiseless oracle. If the two
             # disagree the runner is not scoring the landscape P5 registered.
-            # F2a's derivation is checkable, so it is checked rather than trusted, at the
-            # bound measured on THIS arm's population.
-            bound = iou_bound_for(arm)
+            # F2a's derivation is checkable, so it is checked rather than trusted -- at
+            # the bound DERIVED from this row's operands, never at a scalar measured on
+            # a population that excludes the family under test. See `iou_identity_bound`.
             for suffix in ("pred", "latent"):
                 got, ref = r[f"implied_iou_{suffix}"], r[f"iou_{suffix}"]
-                if got == got and ref == ref and abs(got - ref) > bound:
+                bound = iou_identity_bound(
+                    r[f"vol_{suffix}"], r["true_frac_above_tau"],
+                    r[f"intersect_{suffix}"], r[f"vol_{suffix}"]
+                    + r["true_frac_above_tau"] - r[f"intersect_{suffix}"], ref)
+                # Recorded on every row so the gate is auditable after the fact rather
+                # than binary, and so a later analysis can gate on a COMMITTED column.
+                r[f"iou_identity_resid_{suffix}"] = (
+                    abs(got - ref) if (got == got and ref == ref) else float("nan"))
+                r[f"iou_identity_bound_{suffix}"] = (
+                    bound if bound is not None else float("nan"))
+                if bound is not None and got == got and abs(got - ref) > bound:
                     raise MissingGateTarget(
                         f"{rec.family} {arm} seed={rec.seed} p={t.p} gamma={gamma}: "
                         f"error-volume identity misses iou_{suffix} by "
-                        f"{abs(got - ref):.3e}, over the {bound:.3e} bound measured on "
-                        f"the {iou_population(arm)} arms")
+                        f"{abs(got - ref):.3e}, over the {bound:.3e} bound DERIVED from "
+                        f"this row (vol={r[f'vol_{suffix}']:.6g} "
+                        f"prev={r['true_frac_above_tau']:.6g} "
+                        f"inter={r[f'intersect_{suffix}']:.6g}). This is an arithmetic "
+                        f"error, not float noise -- the derived bound covers float noise "
+                        f"by construction.")
             if r["true_frac_above_tau"] != t.true_frac_above_tau:
                 raise MissingGateTarget(
                     f"{rec.family} d={rec.dim} p={t.p}: prevalence re-measures "

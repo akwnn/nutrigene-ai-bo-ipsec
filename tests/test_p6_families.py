@@ -36,6 +36,7 @@ from __future__ import annotations
 import importlib.util
 import json
 import math
+import random
 import re
 import sys
 from pathlib import Path
@@ -172,6 +173,37 @@ def test_the_two_nan_conditions_are_recorded_separately(p6):
     assert r["type_II_vol_pred"] == r["true_frac_above_tau"]
 
 
+def _identity_configs(limit=60000, seed=1):
+    """Deterministic (intersect, vol, prevalence) counts on a 20k grid."""
+    rng = random.Random(seed)
+    out = []
+    for _ in range(limit):
+        vol_c = rng.randint(1, 20000)
+        prev_c = rng.randint(1, 20000)
+        out.append((rng.randint(0, min(vol_c, prev_c)), vol_c, prev_c))
+    return out
+
+
+def _identity_paths(n, inter_c, vol_c, prev_c):
+    """The two paths the F2a gate compares, from exact integer counts.
+
+    reference    ``designspace.iou``     : exact ints, ONE rounding
+    reconstruct  ``calibration.error_volumes`` : five chained roundings
+    """
+    union_c = vol_c + prev_c - inter_c
+    if union_c <= 0 or vol_c == 0 or inter_c == 0:
+        return None
+    ref = inter_c / union_c
+    vol, prev = vol_c / n, prev_c / n
+    fi = (vol_c - inter_c) / vol_c
+    inter = vol * (1.0 - fi)
+    union = vol + prev - inter
+    if union <= 0:
+        return None
+    return {"ref": ref, "got": inter / union, "err": abs(inter / union - ref),
+            "vol": vol, "prev": prev, "fi": fi, "inter": inter, "union": union}
+
+
 def test_error_volume_identity_reproduces_iou(p6):
     """F2a's derivation is checkable, not asserted -- the gate travels with the function."""
     r = _row(p6, mean=[0.2, 0.6, 0.9, 0.95], sd=[0.02] * 4,
@@ -209,6 +241,94 @@ def test_the_iou_identity_bound_is_per_population_and_both_are_named(p6):
         assert p6.iou_bound_for(arm) == p6.IOU_IDENTITY_BOUND[p6.iou_population(arm)]
     assert p6.iou_bound_for("spread") != p6.iou_bound_for("lhs"), (
         "the split must key on the arm, not on a name that merely looks like one")
+
+
+def test_the_registered_scalar_bounds_are_not_bounds_at_all(p6):
+    """**Why the per-row bound replaced them.** P6 halted on hartmann6 seed 24 with
+    ``qlognei`` missing by 3.331e-16 against the 2.220e-16 "optimiser" bar.
+
+    Both registered numbers are ``max(observed)`` over a few thousand Hill rows, not
+    derived bounds. The identity's float error is *data dependent* -- the reference
+    ``designspace.iou`` is an exact integer ratio rounded once, while the reconstruction
+    chains five roundings and carries two amplifications that no constant can cover:
+
+        vol / intersect        ``1 - fi`` loses relative precision as ``fi -> 1``
+        (vol + prev) / union   ``vol + prev - intersect`` cancels
+
+    Over pure arithmetic, with no oracle and no GP, the 1.0-ULP bar breaks on ~0.15% of
+    configurations and the 1.5-ULP bar on ~0.011%. P6 performs ~120k identity checks per
+    family, so the 1.5-ULP bar alone would fire on float noise roughly a dozen times per
+    family. The bars were never population-specific; they were SAMPLE-SIZE specific,
+    which silently tightens as more rows are collected.
+    """
+    broke_1, broke_15, n = 0, 0, 0
+    for inter_c, vol_c, prev_c in _identity_configs():
+        r = _identity_paths(20000, inter_c, vol_c, prev_c)
+        if r is None:
+            continue
+        n += 1
+        if r["err"] > 2.220446049250313e-16:
+            broke_1 += 1
+        if r["err"] > 3.3306690738754696e-16:
+            broke_15 += 1
+    assert n > 50000, f"only {n} configurations exercised"
+    assert broke_1 > 0, ("the 1.0-ULP bar is claimed to be a bound; if this stops "
+                         "failing the arithmetic changed, not the bar")
+    assert broke_15 > 0, "the 1.5-ULP bar is not a bound either"
+
+
+def test_the_derived_identity_bound_is_never_violated(p6):
+    """Higham ASNA sec 3.1 forward propagation, evaluated per row from the operands.
+
+    Not fitted to any observed failure: it is the same expression whether or not
+    hartmann6 was ever run. Zero violations is the contract -- a single one means the
+    derivation is wrong, not that the bound needs widening.
+    """
+    worst_ratio, n = 0.0, 0
+    for inter_c, vol_c, prev_c in _identity_configs():
+        r = _identity_paths(20000, inter_c, vol_c, prev_c)
+        if r is None:
+            continue
+        b = p6.iou_identity_bound(r["vol"], r["prev"], r["inter"], r["union"], r["ref"])
+        if b is None:
+            continue
+        n += 1
+        worst_ratio = max(worst_ratio, r["err"] / b)
+    assert n > 50000, f"only {n} configurations exercised"
+    assert worst_ratio <= 1.0, (
+        f"derived bound violated: worst err/bound = {worst_ratio:.4f}")
+
+
+def test_the_derived_bound_still_catches_a_real_arithmetic_bug(p6):
+    """A bound that never fires is not a gate. Three ways F2a could be miswritten.
+
+    Float noise is O(1e-16) and a wrong formula is O(1e-2); the gate has to separate
+    them, and the derived bound does so by ~13 orders of magnitude.
+    """
+    for kind in ("type_ii_uses_vol", "fi_not_complemented", "union_is_sum"):
+        fired = total = 0
+        for inter_c, vol_c, prev_c in _identity_configs(limit=3000):
+            r = _identity_paths(20000, inter_c, vol_c, prev_c)
+            if r is None:
+                continue
+            vol, prev, fi = r["vol"], r["prev"], r["fi"]
+            if kind == "type_ii_uses_vol":
+                bad_i, bad_u = vol * (1.0 - fi), vol + prev - vol
+            elif kind == "fi_not_complemented":
+                bad_i = vol * fi
+                bad_u = vol + prev - bad_i
+            else:
+                bad_i, bad_u = vol * (1.0 - fi), vol + prev
+            if bad_u <= 0:
+                continue
+            b = p6.iou_identity_bound(vol, prev, r["inter"], r["union"], r["ref"])
+            if b is None:
+                continue
+            total += 1
+            if abs(bad_i / bad_u - r["ref"]) > b:
+                fired += 1
+        assert total > 1000, f"{kind}: only {total} configurations"
+        assert fired / total > 0.99, f"{kind}: gate fired on only {fired}/{total}"
 
 
 def test_every_metric_declares_whether_lower_or_higher_is_better(p6):
