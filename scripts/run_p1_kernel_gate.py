@@ -174,9 +174,23 @@ def compare_row(committed: dict, rescored: dict, keys: tuple[str, ...]) -> list[
 
 
 def _jsonable(v):
-    if isinstance(v, float) and (math.isnan(v) or math.isinf(v)):
+    if isinstance(v, float) and not math.isfinite(v):
         return str(v)
     return v
+
+
+def _sanitize(o):
+    """Recursively make a payload writable under ``allow_nan=False``.
+
+    `abs_delta` is `inf` whenever a NaN column failed to reproduce as NaN, and
+    `json.dumps` raises on non-finite floats rather than the `default=` hook. Losing
+    a four-hour run at the write step, after the verdict is known, is avoidable.
+    """
+    if isinstance(o, dict):
+        return {k: _sanitize(v) for k, v in o.items()}
+    if isinstance(o, (list, tuple)):
+        return [_sanitize(v) for v in o]
+    return _jsonable(o)
 
 
 # ------------------------------------------------------------------------- indexing
@@ -327,7 +341,7 @@ def _pairs(index: dict[tuple, dict]) -> list[tuple[str, int]]:
 
 def _write(payload: dict) -> None:
     OUT.parent.mkdir(exist_ok=True)
-    OUT.write_text(json.dumps(payload, indent=1, allow_nan=False, default=_jsonable))
+    OUT.write_text(json.dumps(_sanitize(payload), indent=1, allow_nan=False))
 
 
 def main() -> None:
@@ -399,6 +413,7 @@ def main() -> None:
                 g = gate_regret(comparator, instance=inst_id, dim=DIM,
                                 sigma=PRIMARY_SIGMA, seed=seed, arm=arm,
                                 regenerated=rec.regret)
+                g["pass"] = "k6"
                 gate_rows.append(g)
                 if not g["passed"]:
                     gate_failures.append(g)
@@ -493,6 +508,7 @@ def main() -> None:
         rec = regenerate(inst_id, DIM, sigma, seed, arm)
         g = gate_regret(comparator, instance=inst_id, dim=DIM, sigma=sigma,
                         seed=seed, arm=arm, regenerated=rec.regret)
+        g["pass"] = "gate_only"
         gate_rows.append(g)
         if not g["passed"]:
             gate_failures.append(g)

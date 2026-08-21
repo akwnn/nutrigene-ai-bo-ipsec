@@ -173,6 +173,19 @@ def test_an_incomplete_rescore_cannot_be_reported_as_validated(mod):
         mod.assert_full_coverage(rescored_k6=2399, rescored_k6b=400)
 
 
+def test_the_payload_survives_a_nan_mismatch(mod):
+    """`abs_delta` is inf when a NaN column failed to reproduce; json.dumps raises on
+    non-finite floats, which would lose the run at the write step after the verdict."""
+    fails = mod.compare_row(
+        {"instance": "a", "dim": 6, "sigma": 0.25, "seed": 0, "arm": "qlogei-add",
+         "tau_frac": 0.6, "fi_pred": float("nan")},
+        {"instance": "a", "dim": 6, "sigma": 0.25, "seed": 0, "arm": "qlogei-add",
+         "tau_frac": 0.6, "fi_pred": 0.5}, mod.K6B_KEYS)
+    assert fails[0]["abs_delta"] == math.inf
+    written = json.dumps(mod._sanitize({"rescore_failures": fails}), allow_nan=False)
+    assert "Infinity" not in written and "inf" in written
+
+
 def test_provenance_block_matches_the_q52_model(mod):
     """`results/q52-budget-to-target.json` is the registered model for this block."""
     model = set(json.loads(Path("results/q52-budget-to-target.json").read_text())
