@@ -99,6 +99,12 @@ from run_k6_designspace import GAMMAS, GRID_N, GRID_SEED, TAU_FRACS   # noqa: E4
 from run_k6b_conservative import ALPHAS, N_DRAWS, SUBSET_N, joint_draws  # noqa: E402
 from run_k6b_conservative import TAU_FRACS as K6B_TAU_FRACS           # noqa: E402
 
+# AMENDMENT F1 (commit 07e98df). Imported from the F1 owner's module rather than
+# re-implemented: two workers computing "the same" contrast from two bootstrap loops is
+# how a programme ends up with two conventions and no record of the switch, which is
+# the exact defect F1 was raised to fix.
+from analyse_f1_dual_n import committed, dual_contrast, holm          # noqa: E402
+
 Q30 = Path("results/q30-additive.json")
 K6 = Path("results/k6-designspace.json")
 K6B = Path("results/k6b-conservative.json")
@@ -121,6 +127,12 @@ Q30_KEYS = ("instance", "dim", "sigma", "seed", "arm")
 #: The registration's own number. Asserted, never inferred from the files themselves.
 REGISTERED_K6_ROWS = 2400
 REGISTERED_K6B_ROWS = 400
+
+#: A1's comparator column, read as stored. Regenerating qLogEI to compare a fresh
+#: kernel arm against it would be one run compared with another (D12).
+A1_COMPARATOR_SOURCE = "results/e2-grid.json"
+#: The four cells Holm is applied across: two kernel arms x two noise levels.
+A1_SIGMAS = (0.25, 0.10)
 
 
 # --------------------------------------------------------------------------- exactness
@@ -210,8 +222,14 @@ def index_rows(rows: list[dict], keys: tuple[str, ...]) -> dict[tuple, dict]:
 
 def committed_index(path: Path, keys: tuple[str, ...],
                     arms: tuple[str, ...] = KERNEL_ARMS) -> dict[tuple, dict]:
-    """The committed kernel-arm rows of a K6/K6b file, exactly as stored."""
-    rows = json.loads(Path(path).read_text())["rows"]
+    """The committed kernel-arm rows of a K6/K6b file, read **at HEAD**.
+
+    Not off disk. Six agents are writing into `results/` concurrently in this
+    programme, and a gate that reads a working-tree file is gating against whatever
+    the last process happened to leave there. D12 says the target is the *committed*
+    column, so this takes it literally.
+    """
+    rows = committed(str(path))["rows"]
     return index_rows([r for r in rows if r["arm"] in arms], keys)
 
 
@@ -249,6 +267,38 @@ def assert_full_coverage(*, rescored_k6: int, rescored_k6b: int) -> None:
 def verdict(gate_failures: list[dict], rescore_failures: list[dict]) -> str:
     """The registered kill condition. |Δ| = 0 everywhere, or the rows are withdrawn."""
     return "WITHDRAWN" if (gate_failures or rescore_failures) else "VALIDATED"
+
+
+def a1_contrasts(rows: list[dict]) -> list[dict]:
+    """The A1 result — each kernel arm against qLogEI — at both registered units.
+
+    This is the only quantity in P1 that has a p-value, and it is the number the phase
+    exists to decide the citability of. Amendment F1 requires both units: n = 50 on
+    `(instance, seed)`, and n = 25 with seeds averaged first, which is the conservative
+    unit and the one the earlier paper committed to. **n = 25 governs; n = 50 is
+    reported beside it labelled the anti-conservative unit and is never quoted alone.**
+
+    Holm runs across the four cells (2 arms x 2 sigma_rel) separately at each unit. A
+    cell with nothing to score contributes p = 1.0 rather than a NaN, which would
+    propagate through the step-down and silently null the adjustment for every cell.
+
+    `rows` must carry the kernel arms from the freshly written
+    `results/q30-additive.json` and qLogEI from the committed
+    :data:`A1_COMPARATOR_SOURCE`, never from a regeneration of either.
+    """
+    cells = []
+    for arm in KERNEL_ARMS:
+        for sigma in A1_SIGMAS:
+            c = dual_contrast(rows, arm, "qlogei", "regret", dim=DIM, sigma=sigma)
+            c["arm"], c["comparator"], c["sigma"] = arm, "qlogei", sigma
+            c["sign_convention"] = "negative = the kernel arm has LESS regret"
+            cells.append(c)
+    for tag in ("n50", "n25"):
+        ps = [c[tag]["wilcoxon_p"] for c in cells]
+        for c, p in zip(cells, holm([p if math.isfinite(p) else 1.0 for p in ps]),
+                        strict=True):
+            c[f"p_holm_{tag}"] = float(p)
+    return cells
 
 
 def provenance() -> dict:
@@ -368,6 +418,17 @@ def main() -> None:
     comparator = index_rows(q30_rows, Q30_KEYS)
     print(f"comparator: {len(comparator)} rows from {Q30}")
 
+    # AMENDMENT F1. Kernel arms from the fresh comparator, qLogEI from the committed
+    # grid at HEAD. Cheap, so it is computed up front and lands in every checkpoint.
+    a1 = a1_contrasts(q30_rows + [r for r in committed(A1_COMPARATOR_SOURCE)
+                                  if r["dim"] == DIM and r["arm"] == "qlogei"])
+    for c in a1:
+        print(f"  A1 {c['arm']:14s} - qlogei  sigma={c['sigma']:<5} "
+              f"n25 {c['n25']['mean']:+.4f} [{c['n25']['lo']:+.4f},"
+              f"{c['n25']['hi']:+.4f}] p={c['n25']['wilcoxon_p']:.4f} "
+              f"holm={c['p_holm_n25']:.4f}  |  n50 p={c['n50']['wilcoxon_p']:.4f}"
+              f"{'  <-- UNIT CHANGES THE VERDICT' if c['status_changed'] else ''}")
+
     k6_committed = committed_index(K6, K6_KEYS)
     k6b_committed = committed_index(K6B, K6B_KEYS)
     ctrl_k6 = committed_index(K6, K6_KEYS, arms=CONTROL_ARMS)
@@ -426,6 +487,13 @@ def main() -> None:
                                          default=0.0),
                 "control_abs_delta": max((f["abs_delta"] for f in control_failures),
                                          default=0.0)},
+            "a1_contrast": {
+                "note": "Amendment F1: n25 is the reported unit and governs the "
+                        "verdict; n50 is the anti-conservative unit and is never "
+                        "quoted alone. Kernel arms from results/q30-additive.json, "
+                        f"qlogei from {A1_COMPARATOR_SOURCE} at HEAD. Holm across the "
+                        "four cells, separately at each unit.",
+                "cells": a1},
             "gate_failures": gate_failures,
             "rescore_failures": rescore_failures,
             "control_failures": control_failures,
