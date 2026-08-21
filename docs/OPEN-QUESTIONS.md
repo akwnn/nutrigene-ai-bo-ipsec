@@ -5400,3 +5400,139 @@ file can only report that a clone agrees with itself) in a new costume.
 
 **If exactness holds**, the thread count should be recorded in every `provenance` block from
 now on, and that is the cheap permanent fix.
+
+---
+
+## 📌 EXPLORATORY E7 · **`doe`'s regret advantage is mostly an IDENTIFICATION effect, and that is why it needs both a terminal rule and a noise level.** POST-HOC — labelled as such.
+
+**Status: POST-HOC decomposition of committed data. NOT registered before it was computed, and
+therefore NOT confirmatory.** It is written here so that the confirmatory version can be
+registered before anything re-runs. Source: `results/q57-search-vs-id.json` (200 rows,
+d ∈ {6,8} × σ_rel ∈ {0.25, 0.10}, 3 arms), `results/e2-grid.json`, `results/e2-doe-d8.json`.
+
+**Provenance of the question.** P3 reported (D37) that `doe`'s regret advantage is significant
+and beyond SESOI at **(6, 0.25) only**, with the sign flipping at both σ=0.10 cells. Asking
+*which half of regret moves* is what produced this.
+
+**Step 1 — `doe` is the arm that benefits LEAST from less noise.** Mean regret change,
+σ_rel 0.25 → 0.10:
+
+| d | qlognei | qlogei | coord | random | sobol | lhs | **doe** |
+|---|---|---|---|---|---|---|---|
+| 6 | −0.0724 | −0.0679 | −0.0539 | −0.0523 | −0.0514 | −0.0243 | **−0.0066** |
+| 8 | −0.0256 | −0.0275 | −0.0873 | −0.0440 | −0.0836 | −0.0367 | **−0.0015** |
+
+So the sign flip is **not `doe` degrading. It is every other arm improving while `doe` stands
+still.**
+
+**Step 2 — decompose `regret = oracle-best (SEARCH) + identification gap`.** `doe` − `qlognei`,
+positive favours `doe`:
+
+| cell | total | = search | + identification |
+|---|---|---|---|
+| **d=6, σ=0.25** | **+0.0574** | +0.0237 | **+0.0337 (59%)** |
+| d=6, σ=0.10 | −0.0084 | −0.0109 | +0.0025 |
+| d=8, σ=0.25 | +0.0142 | +0.0111 | +0.0031 |
+| d=8, σ=0.10 | −0.0100 | +0.0064 | −0.0164 |
+
+**Step 3 — the asymmetry that explains it.** Identification gap per arm, and its response to
+less noise:
+
+| d | arm | σ=0.25 | σ=0.10 | Δ |
+|---|---|---|---|---|
+| 6 | **doe** | 0.0361 | 0.0348 | **−0.0013** |
+| 6 | qlogei | 0.0797 | 0.0378 | −0.0420 |
+| 6 | qlognei | 0.0698 | 0.0373 | −0.0325 |
+| 8 | **doe** | 0.0388 | 0.0448 | **+0.0060** |
+| 8 | qlogei | 0.0545 | 0.0319 | −0.0226 |
+| 8 | qlognei | 0.0419 | 0.0284 | −0.0135 |
+
+**`doe`'s identification gap is noise-invariant. Every BO arm's roughly halves.**
+
+**Mechanism, stated as a hypothesis and not a result.** BO's rule A takes the **argmax of 48
+noisy readings**, so its identification gap carries a winner's-curse term that scales with σ.
+`doe`'s rule A is a **confirmation well at a CCD-fitted optimum** — a single reading at one
+point, with no maximisation over noise — so its gap does not scale. `doe`'s advantage at the
+primary cell is therefore substantially *the curse it declines to pay*, not a better design.
+
+**Why this matters: three independent routes now give one mechanism.**
+1. **D20** — the advantage inverts under **rule P**, a terminal rule that does not maximise over noisy readings.
+2. **D37** — the advantage survives only at the **highest σ**, and flips at the lowest.
+3. **E7** — **59% of it at the primary cell is identification**, and `doe`'s identification gap is the only one that does not shrink with σ.
+
+None of the three was designed to test the others.
+
+### Limits, stated because this is post-hoc
+
+* **d=8 is NOT clean and must not be quoted as a percentage.** Its totals are small
+  (+0.0142, −0.0100), so the identification share is computed on a near-zero denominator and
+  reads 22% and 164%. **Report the per-arm gaps at d=8, never the decomposition percentages.**
+* **The σ cells share noise draws** (E8 below), so the σ=0.25 → 0.10 comparison is paired far
+  more tightly than independent replicates. This makes an observed *change* stronger evidence,
+  but it means the effective n for a cross-σ static-arm comparison is **12–27 of 50**, not 50.
+* **`doe`'s rule A is model-informed once**, at its confirmation well (already noted in D23),
+  so "model vs no model" was never the right framing and is not the framing here.
+* n = 50 only. **Amendment F1 requires the n = 25 version before any of this is quoted.**
+
+### The confirmatory version, registered here BEFORE it runs
+
+**Registered prediction:** if the mechanism is right, then re-scoring every arm under **rule P**
+(posterior-mean argmax, no maximisation over noisy readings) should make the identification
+gaps **converge across arms**, and `doe`'s residual advantage at (6, 0.25) should fall below
+**SESOI 0.02**. Fix 1 already produced rule-P regret for ten arms at (6, 0.25) in
+`results/fix1-terminal-rule.json`; the missing piece is oracle-best under rule P at both σ.
+
+**Registered kill:** if `doe`'s advantage under rule P at (6, 0.25) **remains above SESOI**,
+the identification mechanism does **not** explain it and E7 is withdrawn as an explanation,
+keeping only its descriptive decomposition. **Output:** `results/e7-search-vs-id-rule-p.json`.
+
+---
+
+## 📌 E8 · **The σ_rel = 0.25 and σ_rel = 0.10 cells are NOT independent samples. Found by P3, verified independently.**
+
+**Mechanism, verified to bitwise equality:** `BiphasicOracle` seeds on `seed` alone, never on
+σ, and `numpy.random.Generator.normal(0, s)` is **bitwise** `s * standard_normal()` off the
+same stream. Confirmed at n = 100,000 for both σ:
+
+```
+default_rng(7).normal(0, 0.25) == default_rng(7).standard_normal() * 0.25   -> True
+default_rng(7).normal(0, 0.10) == default_rng(7).standard_normal() * 0.10   -> True
+```
+
+So for a given `(instance, seed)` the two σ cells are **one noise realisation at two
+amplitudes**, sharing z-draws and additive η draws (σ_add fixed at 0.01 both times).
+
+**One correction to P3's write-up, on an incidental point.** P3 stated the ratio is "2.5
+exactly, elementwise". Measured: the ratio takes **2 distinct float64 values 1 ULP apart**, and
+is exactly 2.5 in 73,639 of 100,000. **The substantive claim — shared standardised draws — is
+exact; the "2.5 exactly" is a float-division artefact.** The finding is unaffected.
+
+**Consequence, counted in committed columns and reproduced independently — all 14 counts match
+P3's:**
+
+| | doe | lhs | sobol | random | coord | qlogei | qlognei |
+|---|---|---|---|---|---|---|---|
+| d=6 | 34/50 | 38/50 | 32/50 | 30/50 | 15/50 | 0/50 | 0/50 |
+| d=8 | 30/50 | 37/50 | 23/50 | 31/50 | 8/50 | 3/50 | 4/50 |
+
+bitwise-identical regret between the two σ levels. The split is exactly what the mechanism
+predicts: a **one-shot** arm's design is fixed, so σ can only move which well the noisy `Y`
+nominates, and scaling the same z-draws rarely moves the argmax. **Adaptive arms diverge at
+the first acquisition and land at 0–4 of 50.**
+
+**What this does and does not damage.**
+* It does **not** invalidate anything committed. Every campaign is a legitimate draw and every
+  gate still holds at |Δ| = 0.
+* **Any analysis treating σ=0.25 and σ=0.10 as independent replicates is wrong** — pooling
+  across σ, or any unpaired cross-σ contrast. *(Checked: the technical report does not pool
+  across σ. F4's withdrawn pooling was across `tau_frac`, a different axis.)*
+* **Effective n for a cross-σ STATIC-arm comparison is 12–27 of 50**, not 50: distinct values
+  are `lhs` d=6 **12/50**, `doe` d=6 **16/50**, `sobol` d=8 **27/50**, `qlogei` d=6 **50/50**.
+* **For D37 it cuts in our favour**, and P3 is right to say so: shared draws make the cells
+  *more alike* than independent sampling would, so a ranking change observed across σ **cannot**
+  be explained as independent sampling noise. **But note the asymmetry** — the `doe − qlognei`
+  contrast pairs an arm that is 34/50 σ-correlated against one that is 0/50, so the
+  correlation is **not uniform across the difference** and no single effective-n applies to it.
+
+**This is a property to REPORT, not to repair.** Re-seeding per σ would invalidate every
+committed campaign in the project. `torch_oracle.py` stays on the do-not-modify list.
