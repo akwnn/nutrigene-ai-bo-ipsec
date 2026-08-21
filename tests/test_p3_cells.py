@@ -469,3 +469,103 @@ def test_amendment_f_columns_do_not_disturb_the_committed_ones():
                 assert gv != gv, key
             else:
                 assert gv == wv, f"{key}: {gv!r} != {wv!r}"
+
+
+# --- the partial-file hazard, found on P2's corpse -------------------------------------
+
+def test_the_registered_result_paths_are_un_ignored_and_therefore_stageable():
+    """The premise of everything below, measured rather than assumed.
+
+    `.gitignore` un-ignores all six P3 outputs BY PATH at registration time, which is a
+    deliberate rule (an ignored artefact is a log line no clone can check). The cost is
+    that a partial written there is stageable, and `results/p2-versionb-gamma.json` shows
+    what that looks like: 8/50 keys, a full provenance block, `gate_failures: []`, and
+    nothing at all saying it is incomplete.
+    """
+    import subprocess
+
+    for name in ("p3-k6-d6-s010", "p3-k6-d8-s025", "p3-k6-d8-s010",
+                 "p3-k6b-d6-s010", "p3-k6b-d8-s025", "p3-k6b-d8-s010"):
+        r = subprocess.run(["git", "check-ignore", f"results/{name}.json"],
+                           cwd=ROOT, capture_output=True, text=True)
+        assert r.returncode != 0, f"results/{name}.json is ignored; registration says not"
+
+
+def test_a_partial_is_marked_in_progress_with_its_key_counts(tmp_path):
+    from run_p3_cells import _write
+
+    out = tmp_path / "cell.json"
+    _write(out, "sha", False, {"dim": 6, "sigma": 0.1, "arms": ["lhs"]}, [], {}, [],
+           "2026-08-21T00:00:00+08:00", status="in_progress",
+           keys_present=8, keys_expected=50)
+    d = json.loads(out.read_text())
+    assert d["status"] == "in_progress"
+    assert d["keys_present"] == 8 and d["keys_expected"] == 50
+    assert d["complete"] is False
+
+
+def test_a_finished_file_says_so_and_its_counts_agree(tmp_path):
+    from run_p3_cells import _write
+
+    out = tmp_path / "cell.json"
+    _write(out, "sha", False, {"dim": 6, "sigma": 0.1, "arms": ["lhs"]}, [], {}, [],
+           "2026-08-21T00:00:00+08:00", status="complete",
+           keys_present=50, keys_expected=50)
+    d = json.loads(out.read_text())
+    assert d["status"] == "complete" and d["complete"] is True
+    assert d["keys_present"] == d["keys_expected"] == 50
+
+
+def test_promote_refuses_to_publish_an_incomplete_file(tmp_path):
+    """A partial must not be able to reach a registered result path, even by mistake."""
+    from run_p3_cells import IncompleteResult, _write, promote
+
+    scratch = tmp_path / "scratch.json"
+    out = tmp_path / "results" / "cell.json"
+    out.parent.mkdir()
+    _write(scratch, "sha", False, {"dim": 6, "sigma": 0.1, "arms": ["lhs"]}, [], {}, [],
+           "t", status="in_progress", keys_present=8, keys_expected=50)
+    with pytest.raises(IncompleteResult):
+        promote(scratch, out)
+    assert not out.exists(), "an incomplete file reached the results path"
+
+
+def test_promote_publishes_a_complete_file(tmp_path):
+    from run_p3_cells import _write, promote
+
+    scratch = tmp_path / "scratch.json"
+    out = tmp_path / "results" / "cell.json"
+    out.parent.mkdir()
+    _write(scratch, "sha", False, {"dim": 6, "sigma": 0.1, "arms": ["lhs"]}, [], {}, [],
+           "t", status="complete", keys_present=50, keys_expected=50)
+    promote(scratch, out)
+    assert json.loads(out.read_text())["status"] == "complete"
+
+
+@pytest.mark.slow
+def test_a_smoke_run_writes_nothing_into_the_results_directory(tmp_path):
+    """`--limit` is mechanically incapable of producing a committable result.
+
+    The working rule has always been "a smoke run is NEVER committed as a result". That
+    was discipline; this makes it structural. A limited run writes only to scratch and
+    its status is `smoke`, so there is nothing at the registered path to sweep up.
+    """
+    import subprocess
+
+    k6 = tmp_path / "results" / "p3-k6-smoke.json"
+    k6b = tmp_path / "results" / "p3-k6b-smoke.json"
+    k6.parent.mkdir()
+    scratch = tmp_path / "scratch"
+    r = subprocess.run(
+        [".venv/bin/python", "scripts/run_p3_cells.py", "--dim", "6", "--sigma", "0.10",
+         "--limit", "1", "--arms", "lhs", "--scratch", str(scratch),
+         "--k6-out", str(k6), "--k6b-out", str(k6b)],
+        cwd=ROOT, capture_output=True, text=True, timeout=900)
+    assert r.returncode == 0, r.stdout[-3000:] + r.stderr[-3000:]
+
+    assert not k6.exists() and not k6b.exists(), "a smoke run reached the results path"
+    partials = sorted(scratch.glob("*.json"))
+    assert partials, f"no scratch partial written; stdout:\n{r.stdout[-2000:]}"
+    d = json.loads(partials[0].read_text())
+    assert d["status"] == "smoke"
+    assert d["complete"] is False

@@ -118,6 +118,17 @@ GATE_KERNEL = ROOT / "results/q30-additive.json"
 GATE_TOL = 0.0
 
 
+class IncompleteResult(RuntimeError):
+    """An attempt to publish a partial run to a registered result path.
+
+    Raised rather than warned. `results/p2-versionb-gamma.json` is what the alternative
+    looks like: a SIGKILLed run left 8 of 50 keys, 768 rows, a full provenance block and
+    `gate_failures: []`, with nothing saying it was incomplete -- and `.gitignore`
+    un-ignores that path by name, so any `git add -A` would have committed a 16% run as
+    the finished result.
+    """
+
+
 class MissingGateTarget(RuntimeError):
     """A campaign that should have been gated had no committed comparator.
 
@@ -449,8 +460,26 @@ def score_k6_dual_tau(rec, orc, grid: torch.Tensor, truth: torch.Tensor,
 
 # --- the cell run ----------------------------------------------------------------------
 
+def promote(scratch: Path, out: Path) -> None:
+    """Publish a finished run to its registered result path. Refuses a partial.
+
+    The completeness check reads the file being published rather than trusting the
+    caller, so the guarantee survives a caller that gets its own bookkeeping wrong.
+    """
+    d = json.loads(scratch.read_text())
+    if d.get("status") != "complete" or d.get("keys_present") != d.get("keys_expected"):
+        raise IncompleteResult(
+            f"refusing to publish {scratch} to {out}: status={d.get('status')!r} "
+            f"keys {d.get('keys_present')}/{d.get('keys_expected')}")
+    out.parent.mkdir(parents=True, exist_ok=True)
+    tmp = out.with_suffix(out.suffix + ".tmp")
+    tmp.write_text(scratch.read_text())
+    os.replace(tmp, out)
+
+
 def _write(path: Path, head: str, dirty: bool, cfg: dict, gate_fail: list,
-           ungated: dict, rows: list, started: str) -> None:
+           ungated: dict, rows: list, started: str, *, status: str,
+           keys_present: int, keys_expected: int) -> None:
     """Checkpoint one cell. **Atomic**, because this box SIGKILLs processes.
 
     A kill part-way through a 20 MB `write_text` leaves a truncated JSON that is not a
@@ -458,9 +487,19 @@ def _write(path: Path, head: str, dirty: bool, cfg: dict, gate_fail: list,
     checkpoint. Writing to a temp file in the same directory and `os.replace`-ing it is
     atomic on POSIX, so a kill at any instant leaves either the previous checkpoint or
     the new one, never a half-written file.
+
+    Every file carries ``status`` / ``complete`` / ``keys_present`` / ``keys_expected``
+    at the TOP LEVEL, so a partial can never be silently consumed as a finished run --
+    the defect `results/p2-versionb-gamma.json` demonstrates. ``status`` is one of
+    ``in_progress``, ``complete`` or ``smoke``.
     """
+    path.parent.mkdir(parents=True, exist_ok=True)
     tmp = path.with_suffix(path.suffix + ".tmp")
     tmp.write_text(json.dumps({
+        "status": status,
+        "complete": status == "complete" and keys_present == keys_expected,
+        "keys_present": keys_present,
+        "keys_expected": keys_expected,
         "provenance": {"git_sha": head, "git_dirty": dirty,
                        "generated_at": started, "argv": sys.argv, **_versions()},
         "config": cfg,
@@ -481,7 +520,13 @@ def main() -> None:
     ap.add_argument("--sensitivity-out", type=str, default=None,
                     help="P3-B2 only; scores the cell under tau_max_exact as well")
     ap.add_argument("--limit", type=int, default=None,
-                    help="smoke runs only; a limited run is never committed as a result")
+                    help="smoke runs only. A limited run is now MECHANICALLY incapable "
+                         "of producing a committable result: it writes to scratch, its "
+                         "status is 'smoke', and it never promotes.")
+    ap.add_argument("--scratch", type=str, default=None,
+                    help="where partial checkpoints live. Default $TMPDIR/p3-partials. "
+                         "Deliberately OUTSIDE results/, which .gitignore un-ignores by "
+                         "name, so no `git add -A` can sweep up an unfinished run.")
     ap.add_argument("--arms", type=str, default=None)
     args = ap.parse_args()
 
@@ -489,6 +534,12 @@ def main() -> None:
     arms = tuple(a.strip() for a in args.arms.split(",")) if args.arms else ARMS
     k6_out, k6b_out = Path(args.k6_out), Path(args.k6b_out)
     sens_out = Path(args.sensitivity_out) if args.sensitivity_out else None
+    scratch_dir = Path(args.scratch) if args.scratch else (
+        Path(os.environ.get("TMPDIR", "/tmp")) / "p3-partials")
+    scratch_dir.mkdir(parents=True, exist_ok=True)
+
+    def _scratch_for(out: Path) -> Path:
+        return scratch_dir / out.name
     head, dirty = _head(), _dirty()
     started = datetime.now(timezone.utc).astimezone().isoformat(timespec="seconds")
 
@@ -577,18 +628,24 @@ def main() -> None:
                "gammas": list(GAMMAS), "tau_fracs": list(TAU_FRACS),
                "grid_n": GRID_N, "grid_seed": GRID_SEED,
                "smoke_limit": args.limit}
-        _write(k6_out, head, dirty, cfg, gate_fail, ungated, k6_rows, started)
+        # Checkpoint to SCRATCH, never to the registered result path. The results path
+        # is written exactly once, whole, at the end -- see the promotion block below.
+        done = i == len(keys)
+        st = "smoke" if args.limit else ("complete" if done else "in_progress")
         # K6b is gamma-free by construction -- theta = tau_frac * mu_max absorbs margin 1
         # exactly -- so `gammas` and `grid_n` are dropped rather than carried as null.
         k6b_cfg = {k: v for k, v in cfg.items() if k not in ("gammas", "grid_n")}
-        _write(k6b_out, head, dirty,
+        marks = dict(status=st, keys_present=i, keys_expected=len(keys))
+        _write(_scratch_for(k6_out), head, dirty, cfg, gate_fail, ungated, k6_rows,
+               started, **marks)
+        _write(_scratch_for(k6b_out), head, dirty,
                {**k6b_cfg, "tau_fracs": list(K6B_TAU_FRACS), "alphas": list(ALPHAS),
                 "subset_n": SUBSET_N, "n_draws": N_DRAWS, "jitter": JITTER},
-               gate_fail, ungated, k6b_rows, started)
+               gate_fail, ungated, k6b_rows, started, **marks)
         if sens_out is not None:
-            _write(sens_out, head, dirty,
+            _write(_scratch_for(sens_out), head, dirty,
                    {**cfg, "sensitivity": "P3-B2 tau_max vs tau_max_exact",
-                    "sigma_add": 0.01}, gate_fail, ungated, sens_rows, started)
+                    "sigma_add": 0.01}, gate_fail, ungated, sens_rows, started, **marks)
         del truth
         gc.collect()
 
@@ -599,6 +656,16 @@ def main() -> None:
     if gate_fail:
         print("*** Regenerated campaigns did not reproduce. STOP CONDITION 1. ***")
         sys.exit(1)
+
+    if args.limit:
+        print(f"\nSMOKE RUN ({args.limit} keys) — NOT promoted. Partials in "
+              f"{scratch_dir}, status='smoke'. Nothing was written to results/.")
+        return
+
+    outs = [k6_out, k6b_out] + ([sens_out] if sens_out else [])
+    for out in outs:
+        promote(_scratch_for(out), out)
+        print(f"published: {out}")
 
 
 if __name__ == "__main__":
