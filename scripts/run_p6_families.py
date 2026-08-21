@@ -111,6 +111,29 @@ ROW_KEY = ("family", "dim", "sigma", "seed", "arm")
 #: The only family that is a declared sensitivity rather than a headline.
 SENSITIVITY_FAMILIES = ("ackley",)
 
+#: **Erratum 6a.** These are properties of the CAMPAIGN, repeated verbatim across every
+#: (gamma, p) row, so a row-wise count of them inflates by the number of cells -- 24x
+#: here. "1200/1200" was quoted for a quantity that was 50/50. Emitted in the config so an
+#: analyst cannot have to infer it.
+CAMPAIGN_LEVEL_COLUMNS = ("regret", "grid_r2", "sup_err", "n_active", "gate")
+#: Genuinely per-(gamma, p) and safe to count row-wise.
+CELL_LEVEL_COLUMNS = ("tau", "tau_max", "tau_above_ceiling", "true_frac_above_tau",
+                      "vol_pred", "vol_latent", "empty_pred", "empty_latent",
+                      "empty_true", "empty_union_pred", "empty_union_latent",
+                      "iou_pred", "iou_latent", "fi_pred", "fi_latent",
+                      "brier_pred", "brier_latent", "auc_pred", "auc_latent",
+                      "auprc_pred", "auprc_latent", "auprc_minority_pred",
+                      "auprc_minority_latent", "ap_baseline", "ap_baseline_minority",
+                      "type_I_vol_pred", "type_II_vol_pred", "total_error_vol_pred",
+                      "intersect_pred", "implied_iou_pred", "box_vol_pred", "degenerate")
+#: **Convention 1.** The scalar to rank on when one number is needed. NOT `type_I_vol`:
+#: read alone it ranks SILENCE first, because an arm certifying the empty set scores
+#: exactly 0. `doe` is 2nd of 8 on type I for that reason and no other, while being last
+#: of 8 on type II, symmetric difference, IoU and Brier. Azzimonti & Ginsbourger report
+#: both components; `total_error_vol` is their sum, the symmetric difference
+#: |D_est \ D_true| + |D_true \ D_est|.
+RANKING_SCALAR = "total_error_vol_pred"
+
 _SPREAD_REASON = (
     "no committed family column exists for {arm!r} on any family -- lhs/sobol/random are "
     "ungatable off hill (COVERAGE-MATRIX B4). Reproducibility is the RNG's: one "
@@ -353,9 +376,24 @@ def map_row(m, grid: torch.Tensor, truth: torch.Tensor, *, tau: float, gamma: fl
     ap_lat, apm_lat, _ = _ap_pair(p_lat, truth, tau, true_frac)
     _, box_vol = inscribed_box_from_mask(grid, d_gamma, active=active, seed_score=p_pred)
 
+    # Convention 3: FLAG degenerate cells, never rank them. 6 of 24 cells in the hill
+    # grid are ties because every region is empty in 100% of campaigns at tau_frac=0.95,
+    # and on families this is worse, not better. A `nan` that gets averaged and a tie that
+    # gets ranked are the two failure modes; naming the reason prevents both.
+    degenerate = []
+    if vol_pred == 0.0:
+        degenerate.append("empty_pred")
+    if true_frac == 0.0:
+        degenerate.append("empty_true")
+    if vol_pred == 0.0 and true_frac == 0.0:
+        degenerate.append("empty_union_pred")
+    if true_frac in (0.0, 1.0):
+        degenerate.append("single_class")       # auc and auprc are undefined here
+
     row = {
         "gamma": gamma, "tau": tau,
         "true_frac_above_tau": true_frac,
+        "degenerate": degenerate,
         "vol_pred": vol_pred, "vol_latent": vol_lat,
         # Erratum 5a: the two nan conditions are DIFFERENT and are never merged.
         # `fi` is nan when D_est is empty; `iou` is nan only when the UNION is empty, so
@@ -415,10 +453,14 @@ def score_campaign(rec, orc, grid, truth, active, taus) -> list[dict]:
                     f"{rec.family} d={rec.dim} p={t.p}: prevalence re-measures "
                     f"{r['true_frac_above_tau']!r} against P5's committed "
                     f"{t.true_frac_above_tau!r}")
+            ceiling = above_ceiling(t.tau, gamma, rec.sigma)
+            if ceiling:
+                # Structurally empty by algebra, not by the design. Ranking an arm on a
+                # cell it could not have won is not a comparison.
+                r["degenerate"] = r["degenerate"] + ["above_ceiling"]
             rows.append({**base, "p": t.p, "tau_source": "results/p5-tau-quantile.json",
                          "tau_max": tau_max(gamma, rec.sigma),
-                         "tau_above_ceiling": above_ceiling(t.tau, gamma, rec.sigma),
-                         **r})
+                         "tau_above_ceiling": ceiling, **r})
     del model, mean, sd
     gc.collect()
     return rows
@@ -448,20 +490,94 @@ def _provenance(argv, elapsed: float) -> dict:
     }
 
 
+def ckpt_path(family: str, dim: int, sigma: float) -> Path:
+    """One append-only checkpoint per (family, dim, sigma). One JSON line per campaign.
+
+    **This box SIGKILLs workers.** Three runs have died with `BrokenProcessPool` --
+    workers not raising, being *killed* -- and one lost 8 completed campaigns. So a
+    finished campaign is on disk before the next one starts, and
+    `results/p6-families.json` is written **once, whole, by `--merge`**. A half-finished
+    run therefore cannot be mistaken for a finished result: the result file does not exist
+    until someone merges.
+    """
+    return ROOT / "results" / f"p6-{family}-d{dim}-s{sigma:g}.ckpt.jsonl"
+
+
+def read_checkpoint(path: Path) -> list[dict]:
+    if not path.exists():
+        return []
+    out = []
+    for line in path.read_text().splitlines():
+        line = line.strip()
+        if line:
+            out.append(json.loads(line))
+    return out
+
+
+def merge() -> None:
+    """Assemble every checkpoint into `results/p6-families.json`, once, whole."""
+    entries, files = [], sorted((ROOT / "results").glob("p6-*.ckpt.jsonl"))
+    for f in files:
+        entries.extend(read_checkpoint(f))
+    rows = [r for e in entries for r in e["rows"]]
+    if not rows:
+        sys.exit("no checkpoints to merge")
+
+    if OUT.exists():
+        existing = len(json.loads(OUT.read_text())["rows"])
+        if len(rows) < existing:
+            # A merge is a pure function of the checkpoints, so a SHRINKING merge means
+            # checkpoints were deleted. Never silently replace a larger committed result.
+            sys.exit(f"refusing to shrink {OUT.name}: {existing} committed rows, "
+                     f"{len(rows)} in the checkpoints")
+
+    cells = sorted({(e["family"], e["dim"], e["sigma"]) for e in entries})
+    OUT.write_text(json.dumps({
+        "provenance": _provenance(sys.argv, 0.0),
+        "config": {"gammas": list(GAMMAS), "grid_n": GRID_N, "grid_seed": GRID_SEED,
+                   "tau_source": str(TAU_TABLE.relative_to(ROOT)),
+                   "row_key": list(ROW_KEY),
+                   "ranking_scalar": RANKING_SCALAR,
+                   "ranking_note": "type_I_vol read alone ranks SILENCE first -- an arm "
+                                   "certifying the empty set scores exactly 0. Rank on "
+                                   "the symmetric difference; report both components.",
+                   "campaign_level_columns": list(CAMPAIGN_LEVEL_COLUMNS),
+                   "cell_level_columns": list(CELL_LEVEL_COLUMNS),
+                   "counting_note": "Erratum 6a: campaign_level_columns repeat across "
+                                    "every (gamma, p) row; counting them row-wise "
+                                    "inflates by the number of cells.",
+                   "degenerate_note": "Rows with a non-empty `degenerate` list are "
+                                      "FLAGGED, not ranked. Never average a nan; never "
+                                      "rank a tie.",
+                   "cells": [list(c) for c in cells],
+                   "checkpoints": [f.name for f in files]},
+        "gate_failures": [g for e in entries for g in e.get("gate_failures", [])],
+        "rows": rows}, indent=1))
+    print(f"merged {len(files)} checkpoints · {len(entries)} campaigns · {len(rows)} rows "
+          f"· {len(cells)} cells -> {OUT.relative_to(ROOT)}")
+
+
 def main() -> None:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--family", choices=sorted(FAMILIES), required=True)
+    ap.add_argument("--family", choices=sorted(FAMILIES))
     ap.add_argument("--dim", type=int, default=6)
     ap.add_argument("--sigma", type=float, default=0.25)
     ap.add_argument("--arms", type=str, default=None, help="comma-separated; default all")
     ap.add_argument("--limit", type=int, default=None, help="seeds to score; default 25")
-    ap.add_argument("--out", type=str, default=None)
+    ap.add_argument("--merge", action="store_true",
+                    help="assemble every checkpoint into results/p6-families.json")
+    ap.add_argument("--ckpt", type=str, default=None, help="override checkpoint path")
     args = ap.parse_args()
 
+    if args.merge:
+        return merge()
+    if not args.family:
+        ap.error("--family is required unless --merge")
+
     arms = tuple(a.strip() for a in args.arms.split(",")) if args.arms else ARMS
-    out = Path(args.out) if args.out else OUT
     seeds = range(args.limit if args.limit else N_SEEDS)
     fam, dim, sigma = args.family, args.dim, args.sigma
+    ckpt = Path(args.ckpt) if args.ckpt else ckpt_path(fam, dim, sigma)
     t0 = time.time()
 
     taus = [tau_for(fam, dim, p) for p in sorted(registered_p(fam, dim), reverse=True)]
@@ -471,41 +587,39 @@ def main() -> None:
     print(f"  tau from {TAU_TABLE.relative_to(ROOT)}: "
           + "  ".join(f"p={t.p}->{t.tau:.5f}" for t in taus))
     print(f"  gamma={GAMMAS} (certification level ONLY; tau_q does not move with gamma)")
-    print(f"  grid: {GRID_N} Sobol at seed {GRID_SEED} · threads={torch.get_num_threads()}")
+    print(f"  grid: {GRID_N} Sobol at seed {GRID_SEED} · threads={torch.get_num_threads()}"
+          f" · OMP={os.environ.get('OMP_NUM_THREADS')}")
+    print(f"  ranking scalar: {RANKING_SCALAR} (symmetric difference; NOT type I alone)")
     for arm, why in ungated.items():
         print(f"  UNGATABLE {arm}: {why}")
     n_dist = count_distinguishing(fam, dim, sigma)
     n_committed = sum(1 for k in index if k[0] == "doe")
     print(f"  doe gate distinguishes the pre-D20 column on {n_dist}/{n_committed} "
           f"committed seeds -- over the whole column, not just the seeds run here")
-    # `tau_q` fixes tau by prevalence while `tau_max` falls with gamma, so unlike the
-    # committed `tau_frac` grid (where tau = tau_frac * tau_max(gamma) shrank with it)
-    # tau can now sit ABOVE the predictive ceiling. Those cells are empty because of the
-    # noise floor and not because of the design, and the census is printed up front so
-    # nobody spends a cell discovering it row by row.
     dead = [(t.p, g) for t in taus for g in GAMMAS if above_ceiling(t.tau, g, sigma)]
     print(f"  tau above the predictive ceiling in {len(dead)}/{len(taus)*len(GAMMAS)} "
           f"(p, gamma) cells -- empty by the noise floor, flagged per row")
     if dead:
-        print("    " + "  ".join(f"p={p_}@g={g}" for p_, g in dead) + "\n")
-    else:
-        print()
+        print("    " + "  ".join(f"p={p_}@g={g}" for p_, g in dead))
 
     grid = sobol_grid(dim, GRID_N, seed=GRID_SEED)
-    rows: list[dict] = json.loads(out.read_text())["rows"] if out.exists() else []
-    have = {(r["family"], r["dim"], r["sigma"], r["seed"], r["arm"]) for r in rows}
-    gate_fail: list[dict] = []
+    done = read_checkpoint(ckpt)
+    have = {tuple(e["key"]) for e in done}
+    print(f"  checkpoint {ckpt.name}: {len(done)} campaigns already done\n", flush=True)
 
     for seed in seeds:
         for arm in arms:
-            if (fam, dim, sigma, seed, arm) in have:
+            key = (fam, dim, sigma, seed, arm)
+            if key in have:
                 continue
             t = time.time()
             rec = regenerate(fam, dim, sigma, seed, arm, family=fam)
             verdict = check_gate(rec, index, superseded, ungated)
+            failures = []
             if verdict["gated"] and verdict["abs_delta"] != 0.0:
-                gate_fail.append({**row_identity(fam, dim, sigma, seed, arm), **verdict})
-                print(f"  !! GATE {arm} seed={seed} delta={verdict['abs_delta']:.3e}")
+                failures.append({**row_identity(fam, dim, sigma, seed, arm), **verdict})
+                print(f"  !! GATE {arm} seed={seed} delta={verdict['abs_delta']:.3e}",
+                      flush=True)
 
             orc = rec_oracle(rec, fam, dim, sigma, seed)
             with torch.no_grad():
@@ -519,28 +633,25 @@ def main() -> None:
             scored = score_campaign(rec, orc, grid, truth, active, taus)
             for r in scored:
                 r["gate"] = verdict
-            rows.extend(scored)
+            # ON DISK BEFORE THE NEXT CAMPAIGN STARTS. A SIGKILL here loses one campaign.
+            with ckpt.open("a") as fh:
+                fh.write(json.dumps({"key": list(key), "family": fam, "dim": dim,
+                                     "sigma": sigma, "seed": seed, "arm": arm,
+                                     "gate_failures": failures, "rows": scored}) + "\n")
             print(f"  [{seed:2d}] {arm:8s} regret={rec.regret:.4f} "
                   f"gated={verdict['gated']} ({time.time()-t:.1f}s)", flush=True)
             del truth
             gc.collect()
 
-        out.write_text(json.dumps({
-            "provenance": _provenance(sys.argv, time.time() - t0),
-            "config": {"family": fam, "dim": dim, "sigma": sigma, "arms": list(arms),
-                       "gammas": list(GAMMAS), "p_grid": [t.p for t in taus],
-                       "grid_n": GRID_N, "grid_seed": GRID_SEED,
-                       "tau_source": str(TAU_TABLE.relative_to(ROOT)),
-                       "row_key": list(ROW_KEY),
-                       "ungatable": ungated,
-                       "doe_distinguishing_seeds": n_dist},
-            "gate_failures": gate_fail, "rows": rows}, indent=1))
+            if failures:
+                print("*** REGISTERED KILL: a family arm missed its committed column by "
+                      "something other than 0. The family programme STOPS. This is not a "
+                      "tolerance to widen. ***", flush=True)
+                sys.exit(1)
 
-    print(f"\n{len(rows)} rows in {time.time()-t0:.0f}s · gate failures: {len(gate_fail)}")
-    if gate_fail:
-        print("*** REGISTERED KILL: a family arm missed its committed column by something "
-              "other than 0. The family programme STOPS. Not a tolerance to widen. ***")
-        sys.exit(1)
+    total = len(read_checkpoint(ckpt))
+    print(f"\n{total} campaigns in {ckpt.name} · {time.time()-t0:.0f}s · gate failures: 0")
+    print(f"  results/p6-families.json is NOT written here. Run --merge when cells finish.")
 
 
 def rec_oracle(rec, family: str, dim: int, sigma: float, seed: int):

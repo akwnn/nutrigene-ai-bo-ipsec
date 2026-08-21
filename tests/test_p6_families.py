@@ -309,3 +309,92 @@ def test_an_ungatable_arm_is_recorded_rather_than_dropped(p6):
     v = p6.check_gate(_Rec(), index, superseded, ungated)
     assert v["gated"] is False and v["abs_delta"] is None
     assert v["reason"] and "hill" in v["reason"].lower()
+
+
+# -- the machine hazards, aimed at this runner specifically -------------------------
+def test_every_posterior_goes_through_the_chunked_adapter(p6):
+    """The 20,000-point posterior trap, which does not crash -- it STARVES.
+
+    `model.posterior(X)` builds the JOINT covariance over all of X, so it is quadratic in
+    grid size while only the per-point marginals are ever used: 0.06 s at 2,000 points and
+    100.6 s at 20,000, and a 3.2 GB dense matrix. A D23 draft re-introduced it on a pinned
+    grid and spent 35 minutes of uninterruptible wait for 1 min 47 s of CPU, which reads
+    as "the machine is slow" rather than as a bug.
+
+    This runner builds a NEW grid path for four families x two dimensions, which is
+    exactly where the trap is invisible: the grid gets copied from an existing runner
+    without copying how it is evaluated.
+    """
+    src = SCRIPT.read_text()
+    assert ".posterior(" not in src, (
+        "a raw model.posterior call builds the joint covariance over the whole grid; "
+        "route it through boec.designspace.gp_adapter")
+    assert "gp_adapter(" in src
+
+
+def test_the_result_json_is_never_written_incrementally(p6):
+    """A half-finished run must not be mistakable for a finished result.
+
+    This box SIGKILLs workers -- three runs died with BrokenProcessPool, one losing 8
+    completed campaigns. So every finished campaign is appended to a checkpoint before the
+    next starts, and `results/p6-families.json` is written once, whole, by `--merge`.
+    """
+    src = SCRIPT.read_text()
+    assert src.count("OUT.write_text(") == 1, "OUT is written in exactly one place"
+    body = src[src.index("def main("):]
+    assert "OUT.write_text(" not in body, "main() must not write the result JSON"
+    assert "def merge(" in src and "ckpt.open(\"a\")" in src
+
+
+def test_a_shrinking_merge_is_refused(p6):
+    src = SCRIPT.read_text()
+    assert "refusing to shrink" in src
+
+
+# -- convention 1: the ranking scalar is the symmetric difference -------------------
+def test_the_ranking_scalar_is_the_symmetric_difference_not_type_I(p6):
+    """Type I read alone ranks SILENCE first: an empty region scores exactly 0.
+
+    `doe` is 2nd of 8 on type I for that reason and no other, while being last of 8 on
+    type II, symmetric difference, IoU and Brier.
+    """
+    assert p6.RANKING_SCALAR == "total_error_vol_pred"
+    silent = _row(p6, mean=[0.0] * 4, sd=[1e-9] * 4, truth=[0.9, 0.95, 0.99, 0.99],
+                  tau=0.5, gamma=0.99)
+    assert silent["type_I_vol_pred"] == 0.0, "silence is perfect on type I alone"
+    assert silent["total_error_vol_pred"] == silent["true_frac_above_tau"]
+    assert silent["total_error_vol_pred"] > 0.0, "and is correctly penalised on the sum"
+    good = _row(p6, mean=[0.2, 0.6, 0.9, 0.95], sd=[0.02] * 4,
+                truth=[0.1, 0.4, 0.95, 0.99], tau=0.5, gamma=0.50)
+    assert good["total_error_vol_pred"] < silent["total_error_vol_pred"]
+
+
+# -- convention 3: flag degenerate cells, never rank them ---------------------------
+def test_degenerate_cells_are_flagged_with_their_reason(p6):
+    ok = _row(p6, mean=[0.2, 0.6, 0.9, 0.95], sd=[0.02] * 4,
+              truth=[0.1, 0.4, 0.95, 0.99], tau=0.5, gamma=0.50)
+    assert ok["degenerate"] == []
+
+    empty = _row(p6, mean=[0.0] * 4, sd=[1e-9] * 4, truth=[0.9, 0.95, 0.99, 0.99],
+                 tau=0.5, gamma=0.99)
+    assert "empty_pred" in empty["degenerate"]
+    assert "empty_true" not in empty["degenerate"]
+    assert "empty_union_pred" not in empty["degenerate"]
+
+    one_class = _row(p6, mean=[0.9] * 4, sd=[0.05] * 4, truth=[0.9] * 4, tau=0.5)
+    assert "single_class" in one_class["degenerate"]
+    assert one_class["auc_pred"] != one_class["auc_pred"]      # nan
+    assert one_class["auprc_pred"] is None
+
+
+# -- convention 4: campaign-level columns are declared, not inferred ----------------
+def test_campaign_level_columns_are_declared_so_they_are_not_counted_row_wise(p6):
+    """Erratum 6a: `grid_r2` is a campaign property repeated across 24 rows.
+
+    A row-wise count of it inflated 50/50 into "1200/1200".
+    """
+    assert set(p6.CAMPAIGN_LEVEL_COLUMNS) == {"regret", "grid_r2", "sup_err",
+                                              "n_active", "gate"}
+    assert not set(p6.CAMPAIGN_LEVEL_COLUMNS) & set(p6.CELL_LEVEL_COLUMNS)
+    for c in ("auc_pred", "iou_pred", "true_frac_above_tau", "vol_pred", "tau"):
+        assert c in p6.CELL_LEVEL_COLUMNS
