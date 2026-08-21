@@ -6001,3 +6001,102 @@ recorded here *with its campaign key* so it is citable independently of P1's ful
 |Δ| = 0 on all 2,800 re-scored rows. Recorded now precisely so that a later VALIDATED verdict
 cannot be mistaken for having been foreseen, and a later WITHDRAWN cannot be said to have had no
 warning either way.
+
+---
+
+## 📌 AMENDMENT F1 — SUPPLEMENT · **F1's decision rule does not cover NULLS, and my statement about them was inverted.**
+
+**Found by the P3 worker.** I wrote: *"not significant at n=50 is a strictly weaker statement
+than not significant at n=25."* **That is backwards.** A non-detection is more informative from
+the **higher-power** unit — failing to reject *despite* more power is stronger evidence of
+absence.
+
+**And F1 as registered genuinely does not cover the case.** Its rule is written entirely for
+positive results (*significant at 50 and not at 25 → downgrade to n=25's verdict*). It says
+**nothing** about which unit governs a null.
+
+**The fix is not simply "n=50 governs nulls", because which unit has more power is measurable
+and varies.** The P3 worker's own per-cell measurement:
+
+| cell | ρ (within-instance, between seeds) | √(1+ρ) predicted | measured SE ratio |
+|---|---|---|---|
+| (6, 0.25) | **+0.192** | 1.092 | **1.097** |
+| (6, 0.10) | **+0.199** | 1.095 | **1.098** |
+| **(8, 0.25)** | **−0.168** | 0.912 | **0.724** |
+| (8, 0.10) | +0.181 | 1.087 | 0.976 |
+
+**At (8, 0.25) ρ is NEGATIVE** — the two seeds of one landscape disagree *more* than two
+landscapes do, so averaging cancels variance and **n=25 is the MORE precise unit there.**
+
+**REGISTERED RULE, added to F1:** *for a null result, the load-bearing evidence is the
+non-detection from whichever unit is more powerful **at that cell**, determined by the measured
+ρ — not by a fixed preference for either unit. Report ρ beside any null that is being leaned on.*
+
+### And "√2" is dead as a description of this data — it is ~9%, and my registration presented an upper bound as a typical value.
+
+√2 is the **ρ = 1 limit** — it holds only if the two seeds carry **no independent information at
+all.** Predicted-vs-measured agrees to within **0.005** at both d=6 cells, so the real cost of
+the conservative unit here is **about 9%, not 41%.** That is why **no verdict moved.**
+
+In the P3 worker's words, recorded verbatim because it is the sharpest statement of the error:
+*"anyone re-deriving a power calculation from it would be out by a factor of four in variance."*
+
+This is the **per-cell mechanism** behind the F-analysis worker's aggregate median ICC of
+**−0.0231** over 137 contrasts. Two workers, different routes, same conclusion. **F1's rule —
+run both, n=25 governs a positive — is unaffected and still right.**
+
+---
+
+## 📌 REGISTERED RULE · **A bar quoted at reduced precision is asserted at the precision of the underlying constant, never widened.**
+
+**Second occurrence tonight, both from my own registrations:**
+1. The P5 worker: my *"to within 0.0394"* is the d=6 measurement **0.039442** at 4 s.f., so a
+   literal `<= 0.0394` fails by **4e-7**.
+2. The P3 worker: my F2a validation bar *"2.220e-16"* is
+   **`2.220446049250313e-16`** at 4 s.f. — which **is `numpy.finfo(float).eps` exactly.** A
+   literal bar fails by **one ULP**.
+
+**Both workers asserted the underlying constant rather than widening a decimal**, which is the
+correct resolution and the same discipline as matching `static_curve`'s arithmetic instead of
+raising a tolerance. **Registered as a standing rule**, because the failure mode is mine — I
+keep quoting measured constants at display precision inside registrations that are then read as
+literal bars.
+
+---
+
+## 📌 CONSOLIDATION FIX · **`error_volumes` had TWO library homes because of my assignment. `boec.calibration` stands.**
+
+I gave `designspace.py` to the P3 worker and `calibration.py` to the P7 worker, then declared
+**`boec.calibration` canonical** (Erratum 5d) without telling P3 — which had meanwhile added
+`error_volumes()` to `designspace.py`. **My error, not theirs.**
+
+**Resolution: `boec.calibration` stands** — P7 has already deleted its private copy and the
+F-analysis worker is rewiring to it, so moving it now would rewire two consumers instead of one.
+**P3 imports and deletes its copy.**
+
+**But P3's GATE survives and replaces the incumbent:** it gates the arithmetic against the
+**committed `iou_pred` column** rather than against another implementation. That is strictly
+better and is now the test guarding the canonical function.
+
+**Scorable rows confirmed independently by two workers: 6,000, not 2,553** — `iou_pred` is
+committed as **`0.0`** on the 3,447 empty rows, not `nan` (Erratum 5a). 2,553 + 3,447 = 6,000,
+zero negative type-II volumes. **Neither worker took my erroneous `nan` claim on trust.**
+
+---
+
+## 📌 MACHINE HAZARD · **This box is SIGKILLing pool workers. Checkpoint or lose the run.**
+
+**Three runs died with `BrokenProcessPool`** — workers **not raising but being killed**, with
+ten-odd concurrent phases each holding a 4-worker torch pool on a machine at **~60 MB free RAM**.
+**D23 lost 8 completed campaigns; P4b lost its first.**
+
+**Any long `ProcessPoolExecutor` job without disk checkpointing will lose the whole run and may
+not notice why.** The pattern now in use: append every finished campaign to a checkpoint, re-read
+it on restart, and **write the result JSON once, whole, at the end** — so a half-finished run can
+never be mistaken for a finished one.
+
+**Second hazard, easy to re-introduce off the beaten path:** a D23 draft evaluated a *pinned*
+screen through `model.posterior` in **one call** — the 100.6 s / 3.2 GB joint-covariance case
+`designspace.gp_adapter` exists to prevent. **Under memory pressure it does not fail, it
+starves:** 35 minutes of uninterruptible wait for 1:47 of CPU. **Any new grid variant must route
+through the chunked adapter**, not just the grid copied from an existing runner.
