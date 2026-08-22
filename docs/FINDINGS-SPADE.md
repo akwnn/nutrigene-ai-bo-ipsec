@@ -2756,3 +2756,67 @@ the multiplier until it is measured on a matched population.
 to measure and it is not a defect in the measurement — but it means **no claim here is
 evidence that a lab running Version C prospectively would see these numbers.** The three
 scoring changes cannot be validated by re-scoring the campaigns they were designed against.
+
+---
+
+## 40. Three Phase 2–4 results that had no section here — and one of them is a trap
+
+Joseph asked that every result reach this document. An audit of all committed
+`results/*.json` against this file found the Phase-1 studies (`q34`–`q58`, `k6*`, `q42`,
+`q47`, `q50`) are documented in `RESULTS.md`, `CLAIMS.md` and `K6-TECHNICAL-REPORT.md` —
+this file is the SPADE evaluation, not a global index. **But three Phase 2–4 results
+appeared only in `HANDOFF.md` / `OPEN-QUESTIONS.md` / `OVERNIGHT-LOG.md` and nowhere here.**
+
+### 40.1 P1 — the kernel arms are **VALIDATED**, and the kill did not fire
+
+`results/p1-kernel-gate.json` · verdict **`VALIDATED`**.
+
+The registered kill: *"\|Δ\| = 0 on all 2,800 re-scored rows → the committed kernel-arm rows
+are validated retroactively and Amendment A1 becomes citable. Any Δ ≠ 0 → the committed
+kernel-arm rows are **WITHDRAWN**."* Note the phrasing — **withdrawn, not repaired by
+re-running.**
+
+**Coverage: 2,400 K6 rows + 400 K6b rows = 2,800 of 2,800 registered**, 100 gate campaigns,
+plus 1,320 / 220 control rows. **`error: null`.** So **Amendment A1 is citable**, and the
+`qlogei-add` / `qlogei-addonly` columns that appear in §34 and §38's arm tables rest on a
+gate that was actually run rather than assumed.
+
+### 40.2 🔴 P4 `coord` — AUPRC now exists, and the plain column is **prevalence in disguise**
+
+`results/p4-coord.json`, 1,200 K6 rows + 200 K6b rows, d=6, σ=0.25. The four `auprc_*`
+columns were added by a re-score gated at **\|Δ\| = 0 over all 50 rows** (the runner already
+computed them; the committed file predated that edit). `coord` was the **only** arm without
+them — and since §24 superseded AUC by error volumes, an arm missing AUPRC was missing from
+the metric that replaced the one it had.
+
+| `tau_frac` | prevalence | AP baseline (minority) | `auc_pred` | `auprc_pred` | `auprc_minority_pred` | lift over baseline |
+|---|---|---|---|---|---|---|
+| 0.60 | 0.9211 | 0.0789 | 0.6626 | **0.9544** | 0.1187 | **1.50×** |
+| 0.75 | 0.7495 | 0.2505 | 0.6446 | 0.8270 | 0.3049 | 1.22× |
+| 0.85 | 0.6029 | 0.3971 | 0.6413 | 0.6961 | 0.4481 | 1.13× |
+| 0.95 | 0.4696 | 0.4696 | 0.6476 | 0.5595 | 0.5739 | 1.22× |
+
+**`auprc_pred` falls from 0.954 to 0.560 across the ladder and this is NOT the map getting
+worse.** Prevalence falls from 0.921 to 0.470 over the same rows, and plain AUPRC's baseline
+*is* the positive rate. **The column is tracking the base rate, not the classifier.** Read
+without its baseline it would license a confident and entirely false statement that `coord`'s
+map degrades sharply with `tau_frac`.
+
+**What the map actually does is nearly flat.** `auc_pred` moves only 0.6413–0.6626 across the
+whole ladder, and the minority-AUPRC lift over baseline is **1.13–1.50×** — modest, and
+**not monotone** (it dips at 0.85 and rises again at 0.95). A real trend would not do that.
+
+This is §24's argument arriving from a new direction: **a metric quoted without its
+attainable floor is not a measurement.** It is also why `ap_baseline` and
+`ap_baseline_minority` travel on every `p6-families` row.
+
+### 40.3 P5 — the τ quantile table
+
+`results/p5-tau-quantile.json`, **232 rows** over `(family, dim, instance)` carrying `tau_q`,
+`true_frac_above_tau`, `grid_min`/`grid_max`, `n_selected` and a `sensitivity` flag. This is
+the table §20 draws on for the finding that **the certifiability ceiling is ordered by max
+`tau_q`, not by grid range** — the correction to the claim I repeated from the brief without
+checking it.
+
+**None of these three changes any conclusion elsewhere in this document.** They are recorded
+because a result that exists only in a decision log is a result the next reader will not find.
