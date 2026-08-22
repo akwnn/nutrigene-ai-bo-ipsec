@@ -71,6 +71,13 @@ HELD_OUT_FAMILIES = ("hartmann6", "ackley")
 
 IN = ROOT / "results" / "versionc-detector-fit.json"
 
+#: Attainable range, where one exists. A novelty rule can only fire OUTSIDE the support,
+#: so how much attainable range the support leaves over is the rule's power -- and it is
+#: computable from the fit set alone, before the single scoring pass rather than after it.
+#: `n_peaks_raw` and `ard_separation_ratio` have no upper bound and get `None`, which is
+#: honest where a number would read as power.
+STATISTIC_BOUNDS = {"additive_share": (0.0, 1.0)}
+
 
 def _values(rows: list[dict], stat: str) -> list[float]:
     return [float(r[stat]) for r in rows if r.get(stat) is not None]
@@ -116,6 +123,44 @@ def tightness(rows: list[dict], stat: str) -> float:
     return (hi - lo) / max(abs(med), 1e-12)
 
 
+def excluded_fraction(stat: str, boundary: tuple[float, float]) -> float | None:
+    """Fraction of the statistic's attainable range the boundary would fire on.
+
+    ``None`` for a statistic with no attainable range. **This is the rule's power**, and
+    it needs no deceptive example: a novelty rule fires only outside the support, so if
+    the tie families already span most of the range there is almost nothing left to fire
+    on -- knowable before the scoring pass rather than after it.
+    """
+    bounds = STATISTIC_BOUNDS.get(stat)
+    if bounds is None:
+        return None
+    lo_b, hi_b = bounds
+    span = hi_b - lo_b
+    lo, hi = boundary
+    inside = min(hi, hi_b) - max(lo, lo_b)
+    return max(0.0, (span - inside) / span)
+
+
+def within_family_share(rows: list[dict], stat: str) -> float:
+    """Mean per-family support width over the pooled support width.
+
+    Near 1 means **each family alone spans nearly the whole pooled range**, so the
+    statistic is dominated by seed-to-seed variation rather than by landscape class. A
+    boundary drawn on such a statistic cannot separate classes it cannot even order, and
+    that verdict is available from the fit set without touching a held-out family.
+    """
+    lo, hi = one_class_boundary(rows, stat)
+    pooled = hi - lo
+    if pooled <= 0:
+        return 1.0
+    widths = []
+    for f in FITTING_FAMILIES:
+        vals = _values([r for r in rows if r.get("family") == f], stat)
+        if len(vals) > 1:
+            widths.append(max(vals) - min(vals))
+    return (sum(widths) / len(widths) / pooled) if widths else 1.0
+
+
 def classify(value: float, boundary: tuple[float, float]) -> str:
     """Inside the support is UNIMODAL, outside in **either** direction is DECEPTIVE."""
     lo, hi = boundary
@@ -133,6 +178,8 @@ def rank_statistics(rows: list[dict]) -> list[dict]:
         vals = _values(rows, stat)
         out.append({"statistic": stat, "lo": lo, "hi": hi,
                     "tightness": tightness(rows, stat),
+                    "excluded_fraction": excluded_fraction(stat, (lo, hi)),
+                    "within_family_share": within_family_share(rows, stat),
                     "median": st.median(vals), "n": len(vals),
                     "per_family": {
                         f: [min(v), max(v)] for f in FITTING_FAMILIES
@@ -157,11 +204,13 @@ def main() -> None:
     print("  the fit set is SINGLE-CLASS (levy and rosenbrock are null at every Q53 cell,")
     print("  hill ties), so the rule is a novelty boundary, not a discriminative one.\n")
 
-    print(f"{'statistic':<26}{'support':>24}{'tight':>9}{'median':>10}")
+    print(f"{'statistic':<26}{'support':>24}{'tight':>9}{'fires on':>10}"
+          f"{'within/pooled':>15}")
     for r in ranked:
         support = f"[{r['lo']:.4g}, {r['hi']:.4g}]"
-        print(f"{r['statistic']:<26}{support:>24}{r['tightness']:>9.3f}"
-              f"{r['median']:>10.4g}")
+        ef = "n/a" if r["excluded_fraction"] is None else f"{r['excluded_fraction']:.1%}"
+        print(f"{r['statistic']:<26}{support:>24}{r['tightness']:>9.3f}{ef:>10}"
+              f"{r['within_family_share']:>15.2f}")
 
     if not ranked:
         print("\nNO USABLE STATISTIC. K-C7 fires: ship without Stage 0 (section 3.6).")
@@ -173,6 +222,17 @@ def main() -> None:
           f"[{best['lo']:.6g}, {best['hi']:.6g}], inclusive; UNIMODAL otherwise")
     print(f"  chosen as the tightest usable statistic on the fit set "
           f"(relative width {best['tightness']:.3f})")
+    if best["excluded_fraction"] is not None:
+        print(f"  POWER: fires on {best['excluded_fraction']:.1%} of the attainable range")
+    noisy = best["within_family_share"] > 0.7
+    note = "  <- dominated by seed noise, not by landscape class" if noisy else ""
+    print(f"  within-family / pooled spread: {best['within_family_share']:.2f}{note}")
+    weak = best["excluded_fraction"] is not None and best["excluded_fraction"] < 0.30
+    if weak or noisy:
+        print("\n  ** K-C7 IS LIKELY TO FIRE. ** The tie families already span most of")
+        print("  this statistic's range, so the boundary has little left to fire on. That")
+        print("  is a prediction made from the FIT SET ALONE, before the scoring pass --")
+        print("  it does not consume the one look at hartmann6 and ackley.")
     print("\n  per-family support:")
     for f, (lo, hi) in best["per_family"].items():
         print(f"    {f:<12} [{lo:.6g}, {hi:.6g}]")

@@ -100,3 +100,39 @@ def test_the_report_refuses_to_touch_a_held_out_family():
     with pytest.raises(ValueError) as e:
         B.rank_statistics(rows)
     assert "hartmann6" in str(e.value)
+
+
+def test_a_bounded_statistic_reports_how_much_range_the_boundary_excludes():
+    """**The power of a one-class boundary, computable without a deceptive example.**
+
+    A novelty rule can only fire on values outside the support. If the tie families
+    already span most of a bounded statistic's attainable range, the rule has almost
+    nothing left to fire on, and that is knowable before the single scoring pass rather
+    than after it.
+    """
+    # additive_share is bounded in [0, 1]. A support of [0.2, 0.8] leaves 40% outside.
+    assert B.excluded_fraction("additive_share", (0.2, 0.8)) == pytest.approx(0.40)
+    assert B.excluded_fraction("additive_share", (0.0, 1.0)) == pytest.approx(0.0)
+
+
+def test_an_unbounded_statistic_has_no_excluded_fraction():
+    """`n_peaks_raw` and `ard_separation_ratio` have no upper bound, so the fraction is
+    undefined -- reported as None rather than as a number that would read as power."""
+    assert B.excluded_fraction("n_peaks_raw", (10, 600)) is None
+    assert B.excluded_fraction("ard_separation_ratio", (1.0, 30.0)) is None
+
+
+def test_within_family_spread_is_reported_against_the_pooled_spread():
+    """If each family alone spans nearly the whole pooled support, the statistic is
+    dominated by seed-to-seed variation rather than by landscape class -- and a boundary
+    drawn on it cannot separate classes it cannot even order."""
+    rows = (_rows([0.1, 0.9], family="hill")
+            + _rows([0.15, 0.85], family="levy")
+            + _rows([0.2, 0.8], family="rosenbrock"))
+    frac = B.within_family_share(rows, "additive_share")
+    assert frac > 0.7, "each family spans most of the pooled range; this must show as high"
+
+    separated = (_rows([0.10, 0.12], family="hill")
+                 + _rows([0.50, 0.52], family="levy")
+                 + _rows([0.88, 0.90], family="rosenbrock"))
+    assert B.within_family_share(separated, "additive_share") < 0.2
