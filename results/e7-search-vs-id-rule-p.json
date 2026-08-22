@@ -1,0 +1,253 @@
+{
+ "status": "COMPLETE",
+ "provenance": {
+  "git_sha": "04eeebfaf4e19540b8f7865961d300c3872bb437",
+  "git_dirty": true,
+  "generated_at": "2026-08-22T17:56:09+0800",
+  "argv": [
+   "scripts/run_e7_rule_p.py"
+  ],
+  "python": "3.11.15",
+  "numpy": "2.4.6",
+  "scipy": "1.17.1",
+  "sources": {
+   "step0-oracle-best.json": "82d8055371ac19f4572cd868703c53d8cf7584c2",
+   "fix1-terminal-rule.json": "82d8055371ac19f4572cd868703c53d8cf7584c2",
+   "q57-search-vs-id.json": "e2b9e7b04fb2618f1b073404761c11bb0cc9c868",
+   "versionc-gate-s010.json": "37ddbe8c4450f991fe5af772399b81473bf8ab80"
+  }
+ },
+ "config": {
+  "n_boot": 4000,
+  "boot_seed": 0,
+  "join_tol": 1e-12,
+  "q57_arm_map": {
+   "doe": "doe",
+   "bo": "qlogei",
+   "nei": "qlognei"
+  },
+  "zero_new_campaigns": true
+ },
+ "cells": [
+  {
+   "sigma": 0.25,
+   "n_keys": 50,
+   "join": {
+    "step0_x_fix1_worst_abs_delta": 5.551115123125783e-16,
+    "n_shared_keys": 300
+   },
+   "per_arm": {
+    "doe": {
+     "n": 50,
+     "gap_rule_a": 0.03613417319646509,
+     "gap_rule_p": 0.13962043233600924,
+     "shift": 0.10348625913954412,
+     "wilcoxon_p": 4.945666454148068e-08,
+     "boot_ci95": [
+      0.07225003121385253,
+      0.13667376335054549
+     ],
+     "ci_excludes_zero": true
+    },
+    "lhs": {
+     "n": 50,
+     "gap_rule_a": 0.04749959230902029,
+     "gap_rule_p": 0.033928128248805194,
+     "shift": -0.013571464060215081,
+     "wilcoxon_p": 0.06346609527860991,
+     "boot_ci95": [
+      -0.03051249027723666,
+      0.004084448978416654
+     ],
+     "ci_excludes_zero": false
+    },
+    "plate1_only": {
+     "n": 50,
+     "gap_rule_a": 0.04749959230902029,
+     "gap_rule_p": 0.033928128248805194,
+     "shift": -0.013571464060215081,
+     "wilcoxon_p": 0.06346609527860991,
+     "boot_ci95": [
+      -0.03051249027723666,
+      0.004084448978416654
+     ],
+     "ci_excludes_zero": false
+    },
+    "qlognei": {
+     "n": 50,
+     "gap_rule_a": 0.06981027611173182,
+     "gap_rule_p": 0.04519202651284721,
+     "shift": -0.02461824959888463,
+     "wilcoxon_p": 0.0054056035788701,
+     "boot_ci95": [
+      -0.04168010918755903,
+      -0.007641877264361989
+     ],
+     "ci_excludes_zero": true
+    },
+    "random": {
+     "n": 50,
+     "gap_rule_a": 0.1251256667528348,
+     "gap_rule_p": 0.027653532933472787,
+     "shift": -0.097472133819362,
+     "wilcoxon_p": 2.994404724177002e-11,
+     "boot_ci95": [
+      -0.1176607942830833,
+      -0.07657265514609154
+     ],
+     "ci_excludes_zero": true
+    },
+    "sobol": {
+     "n": 50,
+     "gap_rule_a": 0.0730215905552549,
+     "gap_rule_p": 0.005679257612098043,
+     "shift": -0.06734233294315685,
+     "wilcoxon_p": 7.723469384046666e-07,
+     "boot_ci95": [
+      -0.09248938264282543,
+      -0.044476541775893996
+     ],
+     "ci_excludes_zero": true
+    },
+    "qlogei": {
+     "n": 50,
+     "gap_rule_a": 0.07974569023322708,
+     "gap_rule_p": 0.04770893343177301,
+     "shift": -0.03203675680145408,
+     "wilcoxon_p": 0.0011051033525024678,
+     "boot_ci95": [
+      -0.04892103581591358,
+      -0.015074944183211461
+     ],
+     "ci_excludes_zero": true
+    }
+   },
+   "excluded": {
+    "versionb_plate1_ceiling": "40 wells, not the shared 48 -- not comparable to the other arms"
+   },
+   "never_rank_separately": {
+    "plate1_only": "lhs"
+   },
+   "qlogei_note": null,
+   "spread_rule_a": {
+    "including_doe": {
+     "spread": 0.0889914935563697,
+     "arms": [
+      "doe",
+      "lhs",
+      "qlogei",
+      "qlognei",
+      "random",
+      "sobol"
+     ],
+     "n_arms": 6
+    },
+    "excluding_doe": {
+     "spread": 0.0776260744438145,
+     "arms": [
+      "lhs",
+      "qlogei",
+      "qlognei",
+      "random",
+      "sobol"
+     ],
+     "n_arms": 5
+    }
+   },
+   "spread_rule_p": {
+    "including_doe": {
+     "spread": 0.1339411747239112,
+     "arms": [
+      "doe",
+      "lhs",
+      "qlogei",
+      "qlognei",
+      "random",
+      "sobol"
+     ],
+     "n_arms": 6
+    },
+    "excluding_doe": {
+     "spread": 0.04202967581967496,
+     "arms": [
+      "lhs",
+      "qlogei",
+      "qlognei",
+      "random",
+      "sobol"
+     ],
+     "n_arms": 5
+    }
+   }
+  },
+  {
+   "sigma": 0.1,
+   "n_keys": 50,
+   "join": {
+    "n_shared_keys": 50,
+    "key_sets_identical": true
+   },
+   "per_arm": {
+    "doe": {
+     "n": 50,
+     "gap_rule_a": 0.03483846035509422,
+     "gap_rule_p": 0.21837425525734538,
+     "shift": 0.1835357949022512,
+     "wilcoxon_p": 1.5961560961841315e-09,
+     "boot_ci95": [
+      0.13870907387645484,
+      0.23065089813517037
+     ],
+     "ci_excludes_zero": true
+    },
+    "qlogei": {
+     "n": 50,
+     "gap_rule_a": 0.03777275603334941,
+     "gap_rule_p": 0.02065144158081889,
+     "shift": -0.017121314452530522,
+     "wilcoxon_p": 0.0035436448551049438,
+     "boot_ci95": [
+      -0.028001722278353916,
+      -0.006453384296746766
+     ],
+     "ci_excludes_zero": true
+    },
+    "qlognei": {
+     "n": 50,
+     "gap_rule_a": 0.03730547864762283,
+     "gap_rule_p": 0.019385226426315915,
+     "shift": -0.017920252221306925,
+     "wilcoxon_p": 4.521505763577238e-06,
+     "boot_ci95": [
+      -0.025126572597600066,
+      -0.010631007143596584
+     ],
+     "ci_excludes_zero": true
+    }
+   },
+   "coverage_limit": "only doe / qlogei / qlognei have a committed oracle_best at sigma=0.10 (q57). The spread arms enter at sigma=0.25 only unless a re-score adds them.",
+   "spread_rule_a": {
+    "including_doe": {
+     "spread": 0.0029342956782551916,
+     "arms": [
+      "doe",
+      "qlogei",
+      "qlognei"
+     ],
+     "n_arms": 3
+    }
+   },
+   "spread_rule_p": {
+    "including_doe": {
+     "spread": 0.19898902883102948,
+     "arms": [
+      "doe",
+      "qlogei",
+      "qlognei"
+     ],
+     "n_arms": 3
+    }
+   }
+  }
+ ]
+}
