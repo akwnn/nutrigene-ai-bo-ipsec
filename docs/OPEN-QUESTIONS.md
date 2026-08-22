@@ -8545,3 +8545,94 @@ which is the same rule §35.3 credits `MOOT_ARMS` for already following.
 
 **Ownership note:** at the time of writing another agent has been assigned this work. This
 block is the registration; it does not claim the implementation.
+
+---
+
+## 🔒 C3.3 — **THE DETECTOR RULE IS FROZEN.** Committed before hartmann6 or ackley is touched.
+
+This block **is** the freeze that C3.3 required (*"the rule is frozen in this file and
+committed **before** hartmann6 and ackley are scored, and they are scored **once**"*).
+Nothing below may be edited after the scoring pass. If the pass misfires, **K-C7 fires and
+Version C ships without Stage 0** — §3.6 already registered that as an acceptable outcome.
+
+### The frozen rule — exact literals, no recomputation permitted
+
+```
+statistic : additive_share
+DECEPTIVE if additive_share < 0.10542874984223577
+        or additive_share > 0.8860126525534584      (inclusive boundary => UNIMODAL)
+UNIMODAL  otherwise
+```
+
+**Provenance, verified in this session rather than copied.** These two literals are the
+**pooled min and max of `additive_share` over all 150 committed fit rows** in
+`results/versionc-detector-fit.json` (hill / levy / rosenbrock × 2 cells × 25 seeds). I
+recomputed them from the rows and they match `versionc-detector-boundary.json.proposed`
+**exactly** (`lo == lo and hi == hi`, not to a tolerance). This is a one-class novelty
+boundary per **C3.3a**: it was fitted **without ever seeing a deceptive landscape.**
+
+**This is a `max(observed)` — and under Erratum 20 that makes it a MEASUREMENT.** It is
+legitimate here *only* because a one-class boundary is *defined* as the observed range of
+the reference class; it is **not** being used as a bound on anything. It gates one thing —
+the DECEPTIVE/UNIMODAL call — and that gate is registered here in full.
+
+### Calibration reference, measured on the fit set BEFORE the pass
+
+**Leave-one-out false-positive rate: 2/150 = 0.0133.** Dropping each fit row, recomputing
+the pooled min/max from the other 149, and asking whether the dropped row falls outside.
+So a **fresh fit-family campaign lands outside this boundary 1.33% of the time.**
+
+**The boundary is tight against its own class and still predicted to be powerless**, and
+those are not in tension: `excluded_fraction = 0.2194` says the fit families already span
+**78% of the statistic's attainable range**, leaving little for a new class to fall into.
+`within_family_share = 0.8766` says most of the spread is seed noise, not landscape class.
+**Both were measured on the fit set and cost nothing from the one-shot budget (C3.3b).**
+
+### 🔒 K-C7's decision criterion — registered NOW, because after the pass it is unfalsifiable
+
+**Design:** 2 held-out families × 2 cells `((6, 0.25), (6, 0.10))` × 25 seeds = **50
+campaigns per family, 100 total** — matching the fit run's per-family n exactly.
+
+**PRIMARY (this alone decides K-C7):**
+
+> **K-C7 does NOT fire** iff **BOTH** hartmann6 **and** ackley are classified `DECEPTIVE`
+> in **≥ 33 of their 50 campaigns**. **Otherwise K-C7 FIRES** → ship without Stage 0.
+
+**33 is not a round number, it is the exact-tail threshold.** Against p = 0.50, the exact
+upper binomial tail `P(X ≥ 33 | n=50, p=0.5) = 1.6420e-02`, and Holm ×2 (two families) =
+**3.2839e-02 < 0.05**. At 32 it is **6.4909e-02 > 0.05** and fails. Computed with
+`scipy.stats.binom.sf`, **never a normal approximation** (Erratum 21).
+
+**REPORTED ALONGSIDE, and explicitly NOT part of the gate:** per-family DECEPTIVE rate with
+**Wilson 95%** intervals; the per-cell split; the LOO false-positive rate above as the
+reference; and the raw `additive_share` distribution per held-out family. Reporting these
+cannot change the K-C7 call — that is the point of fixing the primary criterion here.
+
+**Protocol hazard restated (C3.3):** Version C's performance on hartmann6 depends on the
+detector, and the detector is scored on hartmann6, both on this same single pass. **If the
+detector misfires that is a Version C result, not a reason to refit.**
+
+### Registered BEFORE the runner exists: `scripts/run_versionc_detector_heldout.py`
+
+`run_versionc_detector.py` **cannot** construct a held-out family — `evaluator_for` raises
+`HeldOutFamily` by name, and `analyse_versionc_detector._guard` refuses to read one. **Those
+guards stay exactly as they are**; the held-out pass gets its **own** runner so the fitting
+path can never be pointed at hartmann6 by a flag.
+
+The new runner must:
+
+1. **Refuse to run unless this freeze block is committed** — check `git` for a committed
+   `OPEN-QUESTIONS.md` containing the frozen literals, not merely present on disk.
+2. Read the two literals **from this document**, never recompute them from any fit file.
+3. Build hartmann6 and ackley at the fit run's own settings — `N_PLATE1 = 40`,
+   `GRID_N = 20_000`, `GRID_SEED = 0`, `N_BINS = 20`, `CELLS = ((6, 0.25), (6, 0.10))`,
+   25 seeds — and reuse `_instance_seed`, which already hashes the family name and so
+   yields designs distinct from every fit cell.
+4. Write `results/versionc-detector-heldout.json` with **per-campaign** `additive_share`
+   and `classification`, plus an explicit `k_c7` verdict field of `FIRED` / `NOT_FIRED`.
+5. **Never overwrite** `versionc-detector-fit.json` or `-boundary.json`.
+6. Run **exactly once.** A second invocation against an existing output must refuse.
+
+**`.gitignore` negations for `results/versionc-detector-heldout.json` go in with the
+registration**, not after the file exists — this repo has been bitten five times by a
+runner writing a registered artefact git then declined to track.
