@@ -1699,3 +1699,62 @@ investigation. What has to change is the *attribution*.
 
 **§22 said the containment sweep could not answer this by adding cells. It was right, and the
 answer was on the other axis entirely.**
+
+---
+
+## 30. Cells 3 and 4: the screening result STRENGTHENS at d = 8
+
+`results/p6-families.json` now carries **all 16 cells — 4,000 campaigns, 96,000 rows, gate
+failures 0 across every cell.** The registered stop condition *"the screening result fails to
+reproduce at d=8"* **did not fire.** It did the opposite.
+
+### Mean rank on the symmetric difference, both dimensions
+
+| arm | h6 d=6 | h6 d=8 | levy d=6 | levy d=8 | rosen d=6 | rosen d=8 | ackley d=6 | ackley d=8 |
+|---|---|---|---|---|---|---|---|---|
+| **`doe`** | 7.59 | **7.96** | 8.50 | 7.67 | 8.22 | **8.40** | 4.32 | **4.44** |
+| `qlogei` | 5.74 | 5.50 | 6.40 | 7.50 | 6.78 | 6.90 | 4.95 | 5.17 |
+| `qlognei` | 6.56 | 6.35 | 7.40 | 6.67 | 7.56 | 6.90 | 6.16 | 5.78 |
+| `lhs` | 4.59 | 4.54 | 3.50 | 4.25 | 3.11 | 3.00 | 4.95 | 5.56 |
+| `sobol` | 3.44 | 5.35 | **1.60** | 3.25 | 2.89 | **2.30** | 4.47 | 5.28 |
+| **`random`** | 4.96 | **2.85** | 2.20 | 3.08 | 4.22 | 3.90 | 6.05 | **4.17** |
+| `versionb` | 4.33 | 3.73 | 4.90 | 5.00 | 3.56 | 4.60 | 4.05 | 4.67 |
+| `versionb_predictive` | 3.67 | 3.81 | 5.30 | 4.33 | 4.44 | 4.20 | 3.95 | 4.83 |
+
+`doe` gets **worse** at d=8 on three of four families; only levy improves.
+
+### Every effect is larger at d=8, and the BO arms flip sides
+
+`doe` against each arm, paired on seed, pooled per dimension, Holm-adjusted (positive ⇒ the
+arm beats `doe`):
+
+| arm | d=6 | d=8 |
+|---|---|---|
+| `qlogei` | +0.0030 (p 3.5e-03) | **+0.0112** (p 1.1e-21) |
+| `qlognei` | **−0.0005, ns (p 0.97)** | **+0.0056** (p 5.9e-12) |
+| `lhs` | +0.0350 | **+0.0454** |
+| `sobol` | +0.0379 | **+0.0450** |
+| `random` | +0.0274 | **+0.0517** (p 7.9e-113) |
+| `versionb` | +0.0283 | **+0.0359** |
+| `versionb_random` | +0.0311 | **+0.0401** |
+| `versionb_predictive` | +0.0292 | **+0.0354** |
+
+**At d=6, `qlognei` ties `doe` and `qlogei` beats it only marginally. At d=8 every one of the
+eight arms beats `doe`, both BO arms included.** §19's caveat 2 — *"on hartmann6 `doe` beats
+both BO arms"* — is a **d=6 phenomenon and does not survive the harder regime.**
+
+`random`'s +0.0517 at p_holm = 7.9e-113 is **the largest single effect in the study**, and it
+is against the classical arm on the deliverable the classical arm exists to produce.
+
+### What this does and does not change
+
+* **Strengthens §19.** Three families at d=6 becomes three families at *both* dimensions, with
+  larger effects and one fewer exception.
+* **Narrows §19's caveat 2.** `doe` beating the BO arms was true at d=6 and false at d=8.
+* **Ackley still reverses it at both dimensions** (4.32, 4.44), so the exclusion recorded in
+  Decision 1 is unchanged and so is the reason for it.
+* **Rankability does not improve with dimension** — 44–81% of cells excluded at d=6, 46–79% at
+  d=8. §20's finding is dimension-independent.
+* **§26 still applies only at d=6.** The unscreened classical arm cannot exist at d=8 within 48
+  wells, so **the d=8 cells above inherit the screening/sub-box confound permanently.** The
+  ~30% attribution from §26 cannot be checked here.

@@ -301,7 +301,11 @@ def main() -> None:
 
     entries = read_ckpt(ckpt)
     rows = [r for e in entries for r in e["rows"]]
-    work = Path(str(OUT) + ".partial")
+    # PER-ARM partial. Both arms previously wrote `f3-draw-sweep.json.partial`, so
+    # whichever finished last silently overwrote the other. No data was lost -- the
+    # checkpoints are separate and are the source of truth -- but the partial only
+    # ever held one arm, and a reader would not have known which.
+    work = Path(str(OUT).replace(".json", f".{args.arm_of_design}.json") + ".partial")
     work.write_text(json.dumps({
         "status": "COMPLETE" if len(entries) >= len(pairs) else "PARTIAL",
         "keys_present": len(entries), "keys_expected": len(pairs),

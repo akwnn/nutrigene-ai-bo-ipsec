@@ -1,0 +1,5 @@
+  94/384 cells NOT rankable on total_error_vol_pred (94 arms tie, 94 ranking is prevalence only; neither flag subsumes the other)
+    type_I_vol_pred          degenerate 109/384 -> denominator 275
+    type_II_vol_pred         degenerate 95/384 -> denominator 289
+    total_error_vol_pred     degenerate 94/384 -> denominator 290
+merged 16 checkpoints · 4000 campaigns · 96000 rows · 16 cells -> results/p6-families.json

@@ -31,4 +31,4 @@ for cell in "${CELLS[@]}"; do
     echo "=== $fam d=$DIM sigma=$SIG  done  $(date +%H:%M:%S)" >> $LOG
   done
 done
-echo "=== cells 1+2 complete $(date +%H:%M:%S); run --merge next" >> $LOG
+echo "=== cells ${CELLS[*]} complete $(date +%H:%M:%S); run --merge next" >> $LOG
