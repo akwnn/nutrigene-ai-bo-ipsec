@@ -2153,7 +2153,14 @@ worse**. The literal kill condition ("remains above SESOI") is not met; the pred
 ("falls below SESOI") is not met either. Rule P does not equalise identification — **it
 replaces `doe`'s identification advantage with a larger model-quality deficit.**
 
-### 34.4 What this section does NOT establish, and the corrected scope
+### 34.3b 🔴 **SUPERSEDED BY §36.** The withdrawals in 34.4 were WRONG.
+
+Everything above stands. **34.4 below does not** — `q57-search-vs-id.json` carries the σ=0.10
+and `qlogei` columns I said did not exist, and `results/e7-search-vs-id-rule-p.json` is now
+committed. **Read §36 instead of 34.4.** 34.4 is left in place unedited because a withdrawal
+that turns out to be wrong is itself a result, and deleting it would hide the mistake.
+
+### 34.4 ~~What this section does NOT establish, and the corrected scope~~ (WRONG — see §36)
 
 * **σ = 0.10 is absent.** `step0-oracle-best.json` carries no `sigma` key at all —
   `scripts/run_step0_oracle_best.py:53` hardcodes `sigma_rel = 0.25`. The reported
@@ -2292,3 +2299,73 @@ belongs at the top is 35.2: **eight registered kills, zero adjudicated.**
 at |Δ| = 0 over 600 rows, and returned a real verdict that killed §2. The detector's fit set
 ran and produced a boundary. **The gap is specifically between scoring and adjudication**, and
 it is one file wide.
+
+---
+
+## 36. ⭐⭐ E7 COMMITTED — and at σ=0.10 the terminal rule separates identical arms by 70×
+
+`results/e7-search-vs-id-rule-p.json` now exists. **§34.4's withdrawals are withdrawn**
+(Erratum 32): both figures had a committed source I failed to find, and both reproduce
+exactly. **Zero new campaigns** — the runner builds no oracle, fits no GP, evaluates no
+design, and a test enforces that by refusing the constructors.
+
+**Both joins are checked at run time, not assumed.** σ=0.25 joins
+`step0.oracle_best × fix1.regret_p` at worst \|Δ\| = **5.551e-16** over 300 keys; σ=0.10
+joins `q57.{doe,bo,nei}_oracle_best × versionc-gate-s010.regret_p` over **50 of 50 identical
+keys**. A drift raises `JoinInvalid` rather than reporting across mismatched files.
+**`bo_` is `qlogei` and `nei_` is `qlognei`** — the mapping whose absence caused Erratum 28.
+
+### 36.1 σ = 0.25 — six arms, n = 50, 4000-resample bootstrap
+
+| arm | gap rule A | gap rule P | shift | Wilcoxon | boot 95% CI |
+|---|---|---|---|---|---|
+| **`doe`** | +0.0361 | **+0.1396** | **+0.1035** | 4.95e-08 | [+0.0723, +0.1367] |
+| `lhs` | +0.0475 | +0.0339 | −0.0136 | 6.35e-02 | [−0.0305, +0.0041] |
+| `qlognei` | +0.0698 | +0.0452 | −0.0246 | 5.41e-03 | [−0.0417, −0.0076] |
+| `sobol` | +0.0730 | **+0.0057** | −0.0673 | 7.72e-07 | [−0.0925, −0.0445] |
+| **`qlogei`** | **+0.0797** | **+0.0477** | −0.0320 | 1.11e-03 | [−0.0489, −0.0151] |
+| `random` | +0.1251 | +0.0277 | −0.0975 | 2.99e-11 | [−0.1177, −0.0766] |
+
+`plate1_only` returns **identical to `lhs` at every digit and on the same bootstrap CI** —
+an independent confirmation of Erratum 29, and of why it never ranks.
+
+**Spreads, each carrying its arm set** (the point of Erratum 32):
+
+| | rule A | rule P |
+|---|---|---|
+| 6 arms, **including `doe`** | 0.0890 | **0.1339 — diverge** |
+| 5 arms, **excluding `doe`** | 0.0776 | **0.0420 — converge** |
+
+**0.0420 is the correct excluding-`doe` figure and it is the agent's original number.** My
+0.0395 was the same statistic over four arms with `qlogei` absent. Both were right for their
+own arm set, which is exactly why the runner now attaches the arm list to every spread.
+
+### 36.2 ⭐⭐ σ = 0.10 — the sharpest version of the whole finding
+
+| arm | gap rule A | gap rule P | shift | Wilcoxon | boot 95% CI |
+|---|---|---|---|---|---|
+| **`doe`** | +0.0348 | **+0.2184** | **+0.1835** | 1.60e-09 | [+0.1387, +0.2307] |
+| `qlognei` | +0.0373 | **+0.0194** | −0.0179 | 4.52e-06 | [−0.0251, −0.0106] |
+| `qlogei` | +0.0378 | **+0.0207** | −0.0171 | 3.54e-03 | [−0.0280, −0.0065] |
+
+**Under rule A these three arms are indistinguishable — spread 0.0029, an order of magnitude
+below SESOI.** Under rule P they separate by **0.1990: a factor of 70.**
+
+This is the cleanest statement of D20 anywhere in the project. The three arms *identify* the
+best visited well equally well; what differs is entirely **what each terminal rule does with
+the campaign it was given.** `doe`'s rule-P gap is **worse at σ=0.10 than at σ=0.25**
+(+0.2184 against +0.1396) — the quieter the data, the more the quadratic surface's own
+stationary point costs it, because the BO arms' posterior means get *better* with less noise
+while the misspecified quadratic does not.
+
+**Registered coverage limit:** at σ=0.10 only `doe`, `qlogei` and `qlognei` have a committed
+`oracle_best` (q57). **The spread arms enter at σ=0.25 only**, and the σ=0.10 spread figures
+are over three arms and say so in the file.
+
+### 36.3 What §34's verdict becomes
+
+**Unchanged and strengthened.** Neither registered branch fires: under rule P `doe` has no
+advantage to be above or below SESOI — it has a deficit, now measured at **both** σ, with
+every CI excluding zero. §9.3's convergence holds for the arms it was about; `doe` is not one
+of them. The σ=0.10 cell makes the mechanism unmistakable: **rule P does not equalise
+identification, because identification was already equal.**
