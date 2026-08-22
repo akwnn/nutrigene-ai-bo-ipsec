@@ -66,9 +66,10 @@ def test_the_verdict_needs_both_families_before_it_will_call_the_prediction():
 
 def test_the_verdict_confirms_when_hartmann_exceeds_hill_and_refutes_otherwise():
     def rows(fam, ncomp, gain):
+        # >= MIN_DEFINED_ROWS non-empty rows, or the underpowered guard fires first.
         return [{"family": fam, "n_components": ncomp,
                  "component_box_vol_sum": gain + 0.1,
-                 "box_vol_all_components": 0.1} for _ in range(5)]
+                 "box_vol_all_components": 0.1} for _ in range(40)]
 
     confirmed = F.verdict(rows("hill", 1, 0.001) + rows("hartmann6", 6, 0.20))
     assert confirmed["prediction_holds"] is True
@@ -76,3 +77,44 @@ def test_the_verdict_confirms_when_hartmann_exceeds_hill_and_refutes_otherwise()
     flat = F.verdict(rows("hill", 5, 0.20) + rows("hartmann6", 5, 0.20))
     assert flat["prediction_holds"] is False
     assert "equally" in flat["note"].lower() or "not" in flat["note"].lower()
+
+
+def _row(fam, ncomp, gain=0.0):
+    return {"family": fam, "n_components": ncomp,
+            "component_box_vol_sum": gain + 0.1, "box_vol_all_components": 0.1}
+
+
+def test_the_verdict_conditions_on_NON_EMPTY_regions():
+    """**The loophole this caught in its own first version.**
+
+    A region that certifies nothing has `n_components = 0`. Averaging that in makes the
+    statistic measure EMPTINESS, not multimodality -- and hartmann6 certifies nothing in
+    89.7% of rows against hill's 27.0%, so the unconditioned mean (0.27 vs 2.00) was
+    almost entirely an emptiness contrast wearing a component contrast's name.
+
+    The prediction is about whether a NON-EMPTY superlevel set is disconnected. It is
+    undefined on the empty ones, and they must be excluded rather than scored as zero.
+    """
+    rows = ([_row("hill", 3, 0.02)] * 40 + [_row("hill", 0)] * 40
+            + [_row("hartmann6", 5, 0.05)] * 40 + [_row("hartmann6", 0)] * 200)
+    v = F.verdict(rows)
+    assert v["per_family"]["hill"]["mean_components"] == pytest.approx(3.0)
+    assert v["per_family"]["hartmann6"]["mean_components"] == pytest.approx(5.0)
+    assert v["prediction_holds"] is True
+
+
+def test_the_verdict_reports_the_empty_rate_because_it_is_the_confound():
+    rows = [_row("hill", 2)] * 80 + [_row("hill", 0)] * 20 + \
+           [_row("hartmann6", 2)] * 10 + [_row("hartmann6", 0)] * 90
+    v = F.verdict(rows)
+    assert v["per_family"]["hill"]["empty_rate"] == pytest.approx(0.2)
+    assert v["per_family"]["hartmann6"]["empty_rate"] == pytest.approx(0.9)
+
+
+def test_the_verdict_refuses_to_call_a_prediction_on_too_few_defined_rows():
+    """A family that certifies almost nothing cannot support a verdict either way. The
+    honest answer is UNDERPOWERED, not 'does not hold'."""
+    rows = [_row("hill", 2)] * 100 + [_row("hartmann6", 3)] * 3 + [_row("hartmann6", 0)] * 297
+    v = F.verdict(rows)
+    assert v["prediction_holds"] is None
+    assert "underpowered" in v["note"].lower() or "too few" in v["note"].lower()

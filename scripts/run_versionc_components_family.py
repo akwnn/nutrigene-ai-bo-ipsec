@@ -195,12 +195,30 @@ def score_one(family: str, dim: int, sigma: float, seed: int, arm: str,
     return rows
 
 
-def verdict(rows: list[dict]) -> dict:
-    """Does the registered prediction hold? Refuses on one family.
+#: A family that certifies almost nothing cannot support a verdict either way. Below this
+#: many DEFINED rows the honest answer is UNDERPOWERED, not "does not hold".
+MIN_DEFINED_ROWS = 30
 
-    A verdict computed from the target alone is not a contrast, and reporting hartmann6's
-    number as though it were "the effect" would be exactly the error the control exists to
-    prevent.
+
+def verdict(rows: list[dict]) -> dict:
+    """Does the registered prediction hold? **Conditioned on non-empty regions.**
+
+    ------------------------------------------------------------------------------
+    THE CONFOUND THIS FUNCTION GOT WRONG ON ITS FIRST PASS
+    ------------------------------------------------------------------------------
+
+    A region that certifies nothing has ``n_components = 0``. Averaging that in makes the
+    statistic measure **emptiness, not multimodality** -- and hartmann6 certifies nothing
+    in **89.7%** of rows against hill's **27.0%**, so the unconditioned means (0.27 against
+    2.00) were almost entirely an emptiness contrast wearing a component contrast's name.
+    The first run of this file reported "PREDICTION DOES NOT HOLD" on exactly that number.
+
+    **The prediction is about whether a NON-EMPTY superlevel set is disconnected.** It is
+    undefined on the empty ones, so they are excluded rather than scored as zero -- and the
+    empty rate is reported beside the result, because it is the confound and because
+    89.7% uncertifiable is itself the more important finding.
+
+    Refuses on one family: a verdict from the target alone is not a contrast.
     """
     fams = {r["family"] for r in rows}
     missing = set(FAMILIES) - fams
@@ -211,27 +229,45 @@ def verdict(rows: list[dict]) -> dict:
 
     out = {}
     for f in FAMILIES:
-        sub = [r for r in rows if r["family"] == f]
+        allrows = [r for r in rows if r["family"] == f]
+        defined = [r for r in allrows if r["n_components"] > 0]
         out[f] = {
-            "n": len(sub),
-            "mean_components": st.mean(r["n_components"] for r in sub),
-            "mean_box_gain": st.mean(r["component_box_vol_sum"]
-                                     - r["box_vol_all_components"] for r in sub),
+            "n_all": len(allrows),
+            "n_defined": len(defined),
+            "empty_rate": 1.0 - len(defined) / len(allrows) if allrows else float("nan"),
+            "mean_components": (st.mean(r["n_components"] for r in defined)
+                                if defined else float("nan")),
+            "frac_multi_component": (sum(1 for r in defined if r["n_components"] > 1)
+                                     / len(defined)) if defined else float("nan"),
+            "mean_box_gain": (st.mean(r["component_box_vol_sum"]
+                                      - r["box_vol_all_components"] for r in defined)
+                              if defined else float("nan")),
         }
+
     tgt, ctl = out[PREDICTION["largest"]], out[PREDICTION["near_zero"]]
+    if min(tgt["n_defined"], ctl["n_defined"]) < MIN_DEFINED_ROWS:
+        thin = (PREDICTION["largest"] if tgt["n_defined"] < MIN_DEFINED_ROWS
+                else PREDICTION["near_zero"])
+        return {"prediction": PREDICTION, "per_family": out, "prediction_holds": None,
+                "note": (f"UNDERPOWERED: {thin} has too few non-empty regions "
+                         f"({min(tgt['n_defined'], ctl['n_defined'])} < "
+                         f"{MIN_DEFINED_ROWS}) for the contrast to be defined. The family "
+                         f"barely certifies, so there is almost nothing to decompose -- "
+                         f"which is a finding about certifiability, not about the "
+                         f"decomposition.")}
+
     holds = (tgt["mean_components"] > ctl["mean_components"]
              and tgt["mean_box_gain"] > ctl["mean_box_gain"])
     return {
         "prediction": PREDICTION, "per_family": out, "prediction_holds": bool(holds),
         "note": (
             f"{PREDICTION['largest']} exceeds {PREDICTION['near_zero']} on both component "
-            f"count and box gain -- the decomposition recovers structure where the "
-            f"superlevel set is disconnected and not where it is not"
+            f"count and box gain, over non-empty regions only"
             if holds else
-            f"the prediction does NOT hold: the decomposition does not separate "
-            f"{PREDICTION['largest']} from {PREDICTION['near_zero']}. Registered in "
-            f"advance as the failure case -- 'if it helps everywhere equally, something "
-            f"is wrong'"),
+            f"the prediction does NOT hold on non-empty regions: the decomposition does "
+            f"not separate {PREDICTION['largest']} from {PREDICTION['near_zero']}. "
+            f"Registered in advance as the failure case -- 'if it helps everywhere "
+            f"equally, something is wrong'"),
     }
 
 

@@ -258,6 +258,7 @@ COMMIT_MSG.txt
 !results/e7-search-vs-id-rule-p.json
 !results/e7-oracle-best-fill.json
 !results/p8-certificate-families.json
+!results/p4-coord.SUPERSEDED-no-auprc.json
 !results/p8-certificate-families.log
 !results/versionc-kills-s010.json
 !results/versionc-kills-s025.json
@@ -286,3 +287,7 @@ COMMIT_MSG.txt
 # project four times plus once more for versionc-form1 itself.
 !results/versionc-kills-s010.json
 !results/versionc-kills-s025.json
+
+# Version C section 4's registered prediction, and its verdict. Small (~1 MB) but cited by
+# FINDINGS by path, and results/* ignores .json by default.
+!results/versionc-components-family.json
