@@ -1,0 +1,58 @@
+Q59 MAP RE-SCORE · hartmann6 d=6 · arms=('doe_screened', 'doe_unscreened')
+  sigmas=(0.25, 0.1) seeds=25 · 50 campaigns · already done=0
+  gamma=(0.5, 0.7, 0.8, 0.9, 0.95, 0.99) · tau from results/p5-tau-quantile.json
+  scored through run_p6_families.map_row -- comparable to p6-families.json
+  GATE: rule_a and oracle_best at |delta| = 0 against the committed Q59 column
+  threads=1 OMP=1
+  [  1/50] sigma=0.25 seed=0 48 rows (6.9s) ~5.6 min left
+  [  2/50] sigma=0.25 seed=1 48 rows (5.9s) ~5.1 min left
+  [  3/50] sigma=0.25 seed=2 48 rows (6.1s) ~4.9 min left
+  [  4/50] sigma=0.25 seed=3 48 rows (6.4s) ~4.9 min left
+  [  5/50] sigma=0.25 seed=4 48 rows (6.3s) ~4.7 min left
+  [  6/50] sigma=0.25 seed=5 48 rows (6.2s) ~4.6 min left
+  [  7/50] sigma=0.25 seed=6 48 rows (7.3s) ~4.6 min left
+  [  8/50] sigma=0.25 seed=7 48 rows (7.3s) ~4.6 min left
+  [  9/50] sigma=0.25 seed=8 48 rows (6.8s) ~4.5 min left
+  [ 10/50] sigma=0.25 seed=9 48 rows (6.6s) ~4.4 min left
+  [ 11/50] sigma=0.25 seed=10 48 rows (6.9s) ~4.3 min left
+  [ 12/50] sigma=0.25 seed=11 48 rows (7.3s) ~4.2 min left
+  [ 13/50] sigma=0.25 seed=12 48 rows (7.3s) ~4.1 min left
+  [ 14/50] sigma=0.25 seed=13 48 rows (7.4s) ~4.1 min left
+  [ 15/50] sigma=0.25 seed=14 48 rows (6.6s) ~3.9 min left
+  [ 16/50] sigma=0.25 seed=15 48 rows (7.0s) ~3.8 min left
+  [ 17/50] sigma=0.25 seed=16 48 rows (6.9s) ~3.7 min left
+  [ 18/50] sigma=0.25 seed=17 48 rows (6.6s) ~3.6 min left
+  [ 19/50] sigma=0.25 seed=18 48 rows (6.1s) ~3.5 min left
+  [ 20/50] sigma=0.25 seed=19 48 rows (6.2s) ~3.4 min left
+  [ 21/50] sigma=0.25 seed=20 48 rows (5.7s) ~3.2 min left
+  [ 22/50] sigma=0.25 seed=21 48 rows (6.1s) ~3.1 min left
+  [ 23/50] sigma=0.25 seed=22 48 rows (6.0s) ~3.0 min left
+  [ 24/50] sigma=0.25 seed=23 48 rows (6.4s) ~2.9 min left
+  [ 25/50] sigma=0.25 seed=24 48 rows (6.7s) ~2.8 min left
+  [ 26/50] sigma=0.1 seed=0 48 rows (7.6s) ~2.7 min left
+  [ 27/50] sigma=0.1 seed=1 48 rows (7.5s) ~2.6 min left
+  [ 28/50] sigma=0.1 seed=2 48 rows (7.3s) ~2.5 min left
+  [ 29/50] sigma=0.1 seed=3 48 rows (7.2s) ~2.3 min left
+  [ 30/50] sigma=0.1 seed=4 48 rows (6.5s) ~2.2 min left
+  [ 31/50] sigma=0.1 seed=5 48 rows (6.9s) ~2.1 min left
+  [ 32/50] sigma=0.1 seed=6 48 rows (6.6s) ~2.0 min left
+  [ 33/50] sigma=0.1 seed=7 48 rows (6.9s) ~1.9 min left
+  [ 34/50] sigma=0.1 seed=8 48 rows (6.9s) ~1.8 min left
+  [ 35/50] sigma=0.1 seed=9 48 rows (6.5s) ~1.7 min left
+  [ 36/50] sigma=0.1 seed=10 48 rows (6.7s) ~1.6 min left
+  [ 37/50] sigma=0.1 seed=11 48 rows (6.8s) ~1.5 min left
+  [ 38/50] sigma=0.1 seed=12 48 rows (6.8s) ~1.3 min left
+  [ 39/50] sigma=0.1 seed=13 48 rows (6.3s) ~1.2 min left
+  [ 40/50] sigma=0.1 seed=14 48 rows (6.6s) ~1.1 min left
+  [ 41/50] sigma=0.1 seed=15 48 rows (7.0s) ~1.0 min left
+  [ 42/50] sigma=0.1 seed=16 48 rows (7.0s) ~0.9 min left
+  [ 43/50] sigma=0.1 seed=17 48 rows (6.9s) ~0.8 min left
+  [ 44/50] sigma=0.1 seed=18 48 rows (7.1s) ~0.7 min left
+  [ 45/50] sigma=0.1 seed=19 48 rows (7.1s) ~0.6 min left
+  [ 46/50] sigma=0.1 seed=20 48 rows (6.7s) ~0.4 min left
+  [ 47/50] sigma=0.1 seed=21 48 rows (6.8s) ~0.3 min left
+  [ 48/50] sigma=0.1 seed=22 48 rows (6.9s) ~0.2 min left
+  [ 49/50] sigma=0.1 seed=23 48 rows (6.6s) ~0.1 min left
+  [ 50/50] sigma=0.1 seed=24 48 rows (6.8s) ~0.0 min left
+
+50 campaigns · 2400 rows -> q59-map-rescore.json.partial

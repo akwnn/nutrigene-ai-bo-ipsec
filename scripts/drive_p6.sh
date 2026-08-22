@@ -11,7 +11,11 @@
 set -u
 cd "${0:A:h}/.." || exit 1
 LOG=results/p6-drive.log
-for cell in "6 0.25" "6 0.10"; do
+# Cells default to 1+2 (the registered fallback pair). Pass others as args:
+#   zsh scripts/drive_p6.sh "8 0.25" "8 0.10"     -> cells 3+4
+CELLS=("${@:-6 0.25}")
+[ $# -eq 0 ] && CELLS=("6 0.25" "6 0.10")
+for cell in "${CELLS[@]}"; do
   set -- ${=cell}; DIM=$1; SIG=$2
   for fam in hartmann6 levy rosenbrock ackley; do
     echo "=== $fam d=$DIM sigma=$SIG  start $(date +%H:%M:%S)" >> $LOG

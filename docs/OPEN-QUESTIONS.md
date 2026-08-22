@@ -8175,3 +8175,29 @@ this re-score; it is the reason the 6→4 screen exists at all, and it means **P
 can never have this confound isolated.**
 
 **Output:** `results/q59-map-rescore.json`, with its `.gitignore` negation added in this commit.
+
+## ✅ Q59 MAP RE-SCORE · **RESOLVED. The registered "screening is NOT the mechanism" branch fired.**
+
+`results/q59-map-rescore.json` · 50 campaigns · 2,400 rows · **0 gate misses** (regenerated
+`rule_a`/`oracle_best` at |Δ| = 0 on all 100 arm-campaigns). Full account in
+`FINDINGS-SPADE.md` §26.
+
+**`doe_unscreened` still loses the symmetric difference to every spread arm above SESOI** —
+lhs +0.0264 (p_holm 7.81e-12), sobol +0.0270 (5.38e-13), random +0.0211 (7.52e-11). Turning
+the screen off does not rescue the classical arm's map.
+
+**But the screen accounts for a consistent ~30% of the gap** — 30.5% / 31.3% / 27.7% against
+lhs / sobol / random. **The defensible statement is neither "the screen is the mechanism" nor
+"the screen is irrelevant": the 6→4 cut costs the classical arm about a third of its map
+deficit and the response-surface model costs the other two thirds.** Part IV's headline
+survives with its magnitude cut by roughly a third and its sign unchanged.
+
+**Reported, not resolved, per Q20 §2:** `doe_unscreened` − `doe_screened` has median +0.0036
+with a CI spanning zero but Wilcoxon p_holm = 1.22e-04, and the **means run the other way**
+(0.3265 vs 0.3607). Median and mean have opposite signs — the paired differences are strongly
+skewed. The within-arm comparison is therefore not load-bearing; the cross-arm contrasts are.
+
+**Permanent limitation, recorded so it is not rediscovered:** an unscreened classical pipeline
+is **arithmetically impossible at d=8** within 48 wells (45 second-order terms, no
+face-centred CCD lands on 48; the only design small enough has 35 runs for 45 parameters).
+**Part IV's d=8 cells inherit this confound permanently and no future run can remove it.**

@@ -1375,3 +1375,75 @@ it is d=6 only.
 half is not.** Nothing in Phases 2–4 measures SPADE's calibrated claim anywhere except the one
 cell it was born on — which is exactly what §22 says the containment sweep lacks the power to
 resolve, and exactly what F3 was registered to attack.
+
+---
+
+## 26. ⭐ Q59: screening is NOT the mechanism. Part IV's caveat 1 is discharged.
+
+`results/q59-map-rescore.json` — 50 campaigns, 2,400 rows, **0 gate misses**: regenerated
+`rule_a` and `oracle_best` reproduce the committed Q59 columns at **|Δ| = 0** on all 100
+arm-campaigns. Scored through `run_p6_families.map_row`, imported, on the same grid at the
+same seed against the same committed `tau_q` table, so every row is comparable to
+`results/p6-families.json` cell for cell. Both files use `UnitScaled(Hartmann6())`; that was
+checked before any comparison was made.
+
+### The registered decision rule, and which branch fired
+
+Registered before the runner existed: *"`doe_unscreened` still loses the symmetric difference
+to the spread arms → screening is **not** the mechanism and Part IV's caveat 1 is
+discharged."*
+
+**That branch fired.** Paired on seed, non-degenerate cells only, Holm across the family,
+SESOI 0.02. Positive ⇒ the first arm carries **more** error:
+
+| contrast | median | CI | p_holm | |
+|---|---|---|---|---|
+| `doe_unscreened` − `lhs` | **+0.0264** | [+0.0208, +0.0327] | 7.81e-12 | **> SESOI** |
+| `doe_unscreened` − `sobol` | **+0.0270** | [+0.0214, +0.0330] | 5.38e-13 | **> SESOI** |
+| `doe_unscreened` − `random` | **+0.0211** | [+0.0169, +0.0246] | 7.52e-11 | **> SESOI** |
+| `doe_unscreened` − `versionb` | +0.0185 | [+0.0126, +0.0264] | 0.0718 | ns at 0.05 |
+| `doe_unscreened` − `qlogei` | **−0.0376** | [−0.0622, −0.0279] | 1.02e-24 | **> SESOI** |
+
+**Turning the screen off does not rescue the classical arm's map.** It still loses to every
+spread arm by more than SESOI at p_holm < 1e-10.
+
+### But the screen does account for a consistent third of the gap
+
+| against | screened | unscreened | closed |
+|---|---|---|---|
+| `lhs` | +0.0380 | +0.0264 | **30.5%** |
+| `sobol` | +0.0393 | +0.0270 | **31.3%** |
+| `random` | +0.0292 | +0.0211 | **27.7%** |
+
+**~30%, three times, against three different arms.** So the honest statement is neither *"the
+screen is the mechanism"* nor *"the screen is irrelevant"*: **the 6→4 cut costs the classical
+arm about a third of its map deficit, and the other two thirds are the response-surface model
+itself.** Part IV's headline survives the confound with its magnitude reduced by roughly a
+third, not with its sign changed.
+
+### The disagreement the registration requires me to report rather than resolve
+
+`doe_unscreened` − `doe_screened`: **median +0.0036, CI [−0.0029, +0.0091] spanning zero,
+Wilcoxon p_holm = 1.22e-04.** And the **means run the other way**: 0.3265 unscreened against
+0.3607 screened.
+
+Median and mean have **opposite signs**, so the paired differences are strongly skewed —
+unscreened is better on average and marginally worse at the median. Per Q20 §2 the Wilcoxon
+governs yes/no and the bootstrap reports magnitude, and **disagreements are reported, not
+resolved.** The within-arm comparison is therefore *not* the load-bearing one; the
+cross-arm contrasts above are, and they are unambiguous.
+
+### And `doe` beats both BO arms on the map here too
+
+`doe_unscreened` − `qlogei` = **−0.0376**, `doe_screened` − `qlogei` = −0.0182, both
+significant. §19 found exactly this on hartmann6 at d=6 — `doe` beats the BO arms on the map
+while losing to every spread arm — and it reproduces on an arm built by a different runner.
+**The failure is specific to spread designs, not to "everything beats screening."**
+
+### What cannot be reached, by arithmetic
+
+**d=8 can never have this confound isolated.** A second-order model needs `C(d+2,2)` terms —
+28 at d=6, **45 at d=8** — and no face-centred CCD lands on 48 wells at d=8; the only design
+small enough carries 35 runs for 45 parameters. **An unscreened classical pipeline does not
+exist at d=8 within the shared budget**, which is the reason the 6→4 screen exists at all.
+Part IV's d=8 cells inherit the confound permanently, and no future run can remove it.
