@@ -364,6 +364,15 @@ def detector_statistics(model, X: Tensor, bounds: Tensor, grid_n: int = 20_000,
     # the plausible region, and then required to clear the SECOND-highest UCB -- a peak
     # that cannot beat the runner-up's optimistic bound is not a competing basin, it is
     # the same basin's shoulder.
+    #
+    # MEASURED: `n_local_maxima` is IDENTICALLY ZERO at the real operating point -- 40
+    # wells, d=6, sigma=0.10, the 20,000-point grid -- on both hill and levy. An LCB must
+    # exceed the second-highest UCB among peaks, and at 0.49 neighbours per lengthscale
+    # the posterior is nowhere near tight enough. A statistic that cannot vary cannot
+    # detect anything, so this candidate is NOT VIABLE at this budget and the fitting run
+    # must not select it. `n_peaks_raw` -- the same peaks with no confidence bar -- does
+    # vary (135 and 149 on those two fits) and is the usable form. Both are returned.
+    # tests/test_versionc_detector_run.py pins the zero as an alarm.
     higher = mean[neighbours] > mean.unsqueeze(1)
     is_peak = (~higher.any(dim=1)) & plausible
     ucb = mean + z * sd
