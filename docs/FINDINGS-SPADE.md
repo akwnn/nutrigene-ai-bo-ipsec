@@ -2820,3 +2820,66 @@ checking it.
 
 **None of these three changes any conclusion elsewhere in this document.** They are recorded
 because a result that exists only in a decision log is a result the next reader will not find.
+
+---
+
+## 41. 🔴⭐⭐⭐ P8 — **SPADE's certificate does not FAIL off hill. It DECLINES TO ANSWER.** *(IN FLIGHT)*
+
+> **⚠️ IN FLIGHT.** The run is at ~400/1000 with `hill` and `hartmann6` complete and `levy`,
+> `rosenbrock`, `ackley` pending. **No number below is a finding yet.** This section is
+> replaced when `results/p8-certificate-families.json` promotes. It is written now because
+> the two completed families already answer the registered question, and because the shape
+> of the answer changes what the remaining families are evidence *about*.
+
+**SPADE (`versionb`), α = 0.95, n = 50 campaigns per cell, 4,096 draws, d=6, σ=0.25.**
+Containment is `ce_empirical` — the validated statistic. `ce_contain` is **circular**
+(`conservative_estimate` selects on it, so it cannot fall below α) and the analyser raises
+rather than reporting it.
+
+| | hill | hartmann6 |
+|---|---|---|
+| cells where the α=0.95 set is **empty in all 50 campaigns** | **6 of 24** | **22 of 24** |
+| cells with any scored campaign | 18 of 24 | **2 of 24** |
+| containment where scored | **1.000** in 17 of 18 (0.980 once) | **0.900** (n=10) and **0.500** (n=2) |
+| mean `alpha_star` range | 0.083 – 1.000 | **0.000 – 0.511** |
+
+Only at γ = 0.99 does hartmann6 certify anything at all: **10 of 50** campaigns at
+τ_frac = 0.60 and **2 of 50** at 0.75. Everywhere else the conservative set is empty in
+every campaign.
+
+### 41.1 The registered prediction is wrong in an informative way
+
+It said *"containment at γ=0.95 will be LOWER off hill."* **Containment off hill is mostly
+UNDEFINED**, because there is no set to measure. That is a third outcome the registration
+could not express — **the same shape as E7's failure in §34.3**, and the second time in this
+project that a two-branch registration has met a sign-flip or a category change.
+
+### 41.2 🔴 The trap this would have walked into
+
+`ce_empirical` is `nan` for an empty set — an empty certificate is *vacuously* contained.
+**Had empties counted as successes, hartmann6 would report containment 1.000 at nearly every
+cell**: a perfect score for a method that certified nothing, fifty times out of fifty, and it
+would have read as *better* than hill's 0.980 at γ=0.99.
+
+The analyser therefore drops empties from the numerator **and** the denominator, carries
+`n_scored` beside every rate, and returns `None` — never 1.0, never 0.0 — for a cell that
+certified nothing. `tests/test_p8_analysis.py` pins all three.
+
+### 41.3 What this is NOT
+
+**Not a kill.** §29 withdrew *"the certificate fails below nominal at high assurance"* as a
+512-draw artefact, and P8 runs at 4,096. This records where containment sits.
+
+**Not "hill is special and the others are broken".** Hill is empty in **6 of 24** cells
+itself — emptiness is driven by `(γ, τ_frac)` as well as by family, and both axes move it.
+The honest contrast is **6 of 24 against 22 of 24**, not "hill works, hartmann6 does not".
+
+**Not yet a cross-family result.** Two families of five. `levy`, `rosenbrock` and `ackley`
+are pending, and §20's ceiling ordering predicts they will differ from each other.
+
+### 41.4 What it already means for α\*
+
+§31 declared α\* measures **willingness to certify**. Hill's mean α\* is at or near 1.000
+across most of the ladder; hartmann6's is **0.000 to 0.020 in 17 of 24 cells**. The two
+statements — "the set is empty" and "α\* is ~0" — are **the same fact in two languages**, and
+their agreement here is the first off-hill evidence for §31's reading.
