@@ -1,0 +1,75 @@
+........................................................................ [  5%]
+........................................................................ [ 11%]
+........................................................................ [ 16%]
+........................................................................ [ 22%]
+........................................................................ [ 27%]
+........................................................................ [ 33%]
+........................................................................ [ 38%]
+........................................................................ [ 44%]
+........................................................................ [ 49%]
+........................................................................ [ 55%]
+........................................................................ [ 60%]
+........................................................................ [ 66%]
+........................................................................ [ 72%]
+........................................................................ [ 77%]
+........................................................................ [ 83%]
+........................................................................ [ 88%]
+........................................................................ [ 94%]
+........................................................................ [ 99%]
+....                                                                     [100%]
+=============================== warnings summary ===============================
+.venv/lib/python3.11/site-packages/torch/jit/_script.py:1488
+.venv/lib/python3.11/site-packages/torch/jit/_script.py:1488
+  /Users/jy/BO/nutrigene-ai-bo-ipsec/.venv/lib/python3.11/site-packages/torch/jit/_script.py:1488: DeprecationWarning: `torch.jit.script` is deprecated. Please switch to `torch.compile` or `torch.export`.
+    warnings.warn(
+
+tests/test_d23_doe_subspace.py::test_the_decision_is_reported_at_both_units
+  /Users/jy/BO/nutrigene-ai-bo-ipsec/scripts/run_d23_doe_subspace.py:503: ConstantInputWarning: An input array is constant; the correlation coefficient is not defined.
+    rho, rho_p = spearmanr(ps, a)
+
+tests/test_lab_fcs.py::test_reading_events_of_an_aborted_file_raises_rather_than_returning_empty
+  /Users/jy/BO/nutrigene-ai-bo-ipsec/.venv/lib/python3.11/site-packages/flowio/flowdata.py:451: UserWarning: FCS file well 1.fcs reported incorrect data offset. Attempting to parse data section, but event data should be reviewed before trusting this file.
+    warn(warn_msg)
+
+tests/test_p1_kernel_gate.py::test_a1_contrasts_cover_the_four_registered_cells_and_are_holm_adjusted
+  /Users/jy/BO/nutrigene-ai-bo-ipsec/scripts/analyse_f1_dual_n.py:270: RuntimeWarning: Degrees of freedom <= 0 for slice
+    spread[tag] = (float(d.var()), len(d))
+
+tests/test_p1_kernel_gate.py::test_a1_contrasts_cover_the_four_registered_cells_and_are_holm_adjusted
+  /Users/jy/BO/nutrigene-ai-bo-ipsec/.venv/lib/python3.11/site-packages/numpy/_core/_methods.py:178: RuntimeWarning: invalid value encountered in divide
+    arrmean = um.true_divide(arrmean, div, out=arrmean,
+
+tests/test_p1_kernel_gate.py::test_a1_contrasts_cover_the_four_registered_cells_and_are_holm_adjusted
+  /Users/jy/BO/nutrigene-ai-bo-ipsec/.venv/lib/python3.11/site-packages/numpy/_core/_methods.py:211: RuntimeWarning: invalid value encountered in scalar divide
+    ret = ret.dtype.type(ret / rcount)
+
+tests/test_p4b_alpha_anomaly.py::test_a_degenerate_correlation_reports_nan_not_significance
+  /Users/jy/BO/nutrigene-ai-bo-ipsec/scripts/run_p4b_alpha_anomaly.py:516: ConstantInputWarning: An input array is constant; the correlation coefficient is not defined.
+    rho = float(spearmanr(alpha.mean(axis=1), regret.mean(axis=1)).statistic)
+
+tests/test_p4b_alpha_anomaly.py::test_a_degenerate_correlation_reports_nan_not_significance
+  /Users/jy/BO/nutrigene-ai-bo-ipsec/scripts/run_p4b_alpha_anomaly.py:523: ConstantInputWarning: An input array is constant; the correlation coefficient is not defined.
+    boots[b] = spearmanr(alpha[:, take].mean(axis=1),
+
+tests/test_p4b_alpha_anomaly.py::test_a_degenerate_correlation_reports_nan_not_significance
+  /Users/jy/BO/nutrigene-ai-bo-ipsec/scripts/run_p4b_alpha_anomaly.py:531: ConstantInputWarning: An input array is constant; the correlation coefficient is not defined.
+    loo[arm] = float(spearmanr(alpha[keep].mean(axis=1),
+
+tests/test_p4b_alpha_anomaly.py::test_a_degenerate_correlation_reports_nan_not_significance
+  /Users/jy/BO/nutrigene-ai-bo-ipsec/scripts/run_p4b_alpha_anomaly.py:534: ConstantInputWarning: An input array is constant; the correlation coefficient is not defined.
+    spread_rho = (float(spearmanr(alpha[spread].mean(axis=1),
+
+tests/test_replay.py::test_adaptive_arms_report_no_screen
+  /Users/jy/BO/nutrigene-ai-bo-ipsec/.venv/lib/python3.11/site-packages/botorch/optim/optimize.py:844: RuntimeWarning: Optimization failed in `gen_candidates_scipy` with the following warning(s):
+  [NumericalWarning('A not p.d., added jitter of 1.0e-08 to the diagonal'), OptimizationWarning('Optimization failed within `scipy.optimize.minimize` with status 2 and message ABNORMAL: .')]
+  Trying again with a new set of initial conditions.
+    return _optimize_acqf_batch(opt_inputs=opt_inputs)
+
+tests/test_replay.py::test_family_qlogei_reproduces_on_every_family_and_at_d8
+  /Users/jy/BO/nutrigene-ai-bo-ipsec/.venv/lib/python3.11/site-packages/botorch/optim/optimize.py:844: RuntimeWarning: Optimization failed in `gen_candidates_scipy` with the following warning(s):
+  [OptimizationWarning('Optimization failed within `scipy.optimize.minimize` with status 2 and message ABNORMAL: .')]
+  Trying again with a new set of initial conditions.
+    return _optimize_acqf_batch(opt_inputs=opt_inputs)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+1300 passed, 13 warnings in 253.50s (0:04:13)
