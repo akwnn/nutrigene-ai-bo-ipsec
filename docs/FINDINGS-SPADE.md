@@ -2455,83 +2455,135 @@ its Stage 0 does not work. §35's *"eight registered, zero adjudicated"* is no l
 
 ---
 
-## 38. IN FLIGHT — Version C Form 1's re-score. **Not a result yet.**
+## 38. VERSION C FORM 1 — the re-score. **Both sigma committed, all eight kills adjudicated.**
 
-**Recorded while running**, so a reader who finds this document mid-flight knows what is
-executing and what it will decide. **No number in this section is a finding.** The result
-section replaces it when the run promotes.
+`results/versionc-form1-s010.json` and `-s025.json` — **14,400 rows each**, 12 arms x 50 keys
+x 24 (gamma, tau_frac) cells, **GATE CLEAN at |delta| = 0** across all 20 committed K6
+columns at both sigma. Verdicts in `results/versionc-kills-s010.json` / `-s025.json`.
+**Zero new wells.**
 
-**Progress at the time of writing: 35 of 50 keys at sigma=0.10, ~184 s/key, gate
-failures 0.** The sigma=0.25 run is queued behind it on the same chain.
+### 38.1 What was actually run
 
-### 38.1 What is running, and why it is a re-score rather than a campaign
-
-`scripts/run_versionc_form1.py`, writing `results/versionc-form1-s010.json.partial` then
-`-s025`. **Zero new wells.**
-
-C0 (section 32) returned `IDENTIFICATION_ARTEFACT`, so section 2's trust region was never
-built; K-C7 has now fired (section 37), so the detector does not gate. With `m = 0` and no
+C0 (section 32) returned `IDENTIFICATION_ARTEFACT` so section 2's trust region was never
+built, and K-C7 has fired (section 37) so the detector does not gate. With `m = 0` and no
 detector, section 5's arm table collapses -- `versionc` = `versionc_form1` =
-`versionc_nodetect`, `versionc_fixed_m` is moot, `versionc_random` **is** the
-already-committed `versionb_random` -- and section 1's three changes are **scoring and
-reporting only**, since section 1.4 keeps plate 1, the LSE criterion and the predictive
-straddle unchanged.
+`versionc_nodetect`, `versionc_fixed_m` is moot, and `versionc_random` **is** the
+already-committed `versionb_random`. Section 1's three changes are scoring and reporting
+only, since section 1.4 keeps plate 1, the LSE criterion and the predictive straddle
+unchanged.
 
-> **Version C Form 1's campaign IS Version B's campaign.** The three changes are rule P as
-> the terminal rule, the split-sample CE, and components + five columns + non-vacuity.
+> **Version C Form 1's campaign IS Version B's campaign**, so every difference below is
+> attributable to the three scoring changes and to nothing else. That attribution is only
+> licensed because every shared column reproduces at `|delta| = 0`, which is why the base
+> scoring is `run_p3_cells.score_k6_dual_tau` **imported and called** rather than
+> reimplemented.
 
-**The attribution this buys is the cleanest available**: the arms are campaign-identical, so
-any difference is attributable to the three scoring changes and to nothing else -- *provided*
-every shared column reproduces at `|delta| = 0`. That proviso is why the base scoring is
-`run_p3_cells.score_k6_dual_tau` **imported and called**, not reimplemented. A second
-implementation would have to be argued into agreement; a call to the first agrees by
-construction.
+**The gate earned itself on the first smoke run**, catching an all-six active mask where
+Amendment B3 requires per-arm: `doe` came back with `n_active = 6` against a committed 4
+and `box_vol_pred = 0.0053` against 1.0.
 
-**The gate has already earned itself.** On the first smoke run it caught a real defect: the
-active mask was hardcoded to all six factors, so `doe` came back with `n_active = 6` against
-a committed 4 and `box_vol_pred = 0.0053` against 1.0 -- Amendment B3, which the committed
-file applies per arm.
+### 38.2 The kill ledger — eight registered, eight adjudicated
 
-### 38.2 What it will decide, and what it structurally cannot
-
-Evaluated by `scripts/analyse_versionc_form1.py` -- which did not exist when the run was
-launched, and without which the run would have finished and **nothing would have called a
-single kill condition.**
-
-| kill | status | decided by |
+| kill | verdict | evidence |
 |---|---|---|
-| **K-C1** parity at sigma=0.10 | **LIVE** | this run. `r*` = **0.0808** (`qlognei`), read from `e2-grid.json` alone, as registered |
-| **K-C2** containment at gamma=0.50 | **LIVE, HARD STOP** | the **sigma=0.25** run -- the committed 0.940/1.000/1.000 population is `versionb.json`, which is sigma=0.25 |
-| **K-C3** symmetric difference | **LIVE** | this run |
+| **K-C1** parity at sigma=0.10 | **PASS** | regret_P **0.0792** vs `r*` **0.0808** (`qlognei`, read from `e2-grid.json` alone) -> gap **-0.0016**. **Below the bar, not merely within SESOI** |
+| **K-C2** containment, gamma=0.50 | **PASS — HARD STOP CLEARS** | measured {0.50: 0.940, 0.80: 1.000, 0.95: 1.000} against a committed nominal of exactly those three. `failed_alphas` empty, `invariance_violated` **False** |
+| **K-C3** symmetric difference | **PASS** both sigma | 0.21089 vs 0.21089 (sigma=0.10), 0.35828 vs 0.35828 (sigma=0.25), +0.00% against a +10% bar |
 | K-C4 / K-C5 / K-C8 | **MOOT** | settled by C0 -- no trust region, and the other labels name the same campaign |
 | K-C6 | **MISFIRES** | C1.2a -- the cross-fit returns a bit-identical set, so it would fire automatically for the wrong reason |
-| K-C7 | **FIRED** | section 37, 0/50 both families |
+| **K-C7** | **FIRED** | section 37, 0/50 both held-out families -> ship without Stage 0 |
 
-**K-C2 and K-C3 are invariant by construction.** They are built from columns gated at
-`|delta| = 0`, and Version C's selected sets are bit-identical to Version B's (C1.2a). So
-**a movement in either is a defect in the re-score, not evidence about the certificate** --
-the analyser carries `invariance_violated` as a field separate from `fired`, because
-reporting one as the other would publish a bug as a scientific finding. **A pass on K-C2
-here is structural, not evidential**, and must not be read as the certificate having been
-re-tested.
+**Independent cross-check on K-C1:** C0 measured `versionb`'s rule-P regret at **0.0792**
+through a separate runner and a separate gate path. The re-score reproduces it to four
+decimals. Two routes, one number.
 
-### 38.3 One thing already visible, and it is the point of section 1.2
+### 38.3 🔴 K-C2 and K-C3 pass STRUCTURALLY, not evidentially
 
-On the smoke campaign, `doe`'s **circular** `ce_contain_0.95` reads **1.0000** where the
-held-out half reads **0.9844** -- a selection bias of **+0.0156**, and +0.033 on the next
-row. The circular statistic cannot fall below alpha by construction; the cross-fit can, and
-does. That is the anti-conservatism section 1.2 was built to expose, measured on a real
-campaign rather than argued.
+Version C's selected sets are bit-identical to Version B's (C1.2a), and both quantities are
+built from columns gated at `|delta| = 0`. **They could not move, and they did not — to the
+digit.** `invariance_violated` is `False` on both at both sigma.
 
-### 38.4 Provenance -- this run is on the correct side of the `sigma_add` fix
+> **A pass here must not be read as the certificate having been independently re-tested.**
+> It was not. **F3 is what re-tested it** (section 29), by sweeping draws — a mechanism that
+> changes the selected set, which the cross-fit by construction does not.
 
-The defect section 33 records (`sigma_pred` written without the `+ sigma_add**2` term,
-making the predictive band 30.2% too narrow at sigma=0.10) does **not** affect this run.
-Both scoring paths carry the term: `run_versionc_form1.py:263` and
-`run_p3_cells.score_k6_dual_tau`'s own. Checked against a live oracle -- `sigma_add = 0.01`,
-non-zero and included.
+The analyser carries `invariance_violated` as a field separate from `fired` for exactly this
+reason: a movement in either would have been a **defect in the re-score**, and reporting a
+bug as a kill would publish it as a scientific finding.
 
----
+### 38.4 ⭐ What section 1.2 actually bought: the selection bias, measured
+
+The circular `ce_contain` cannot fall below alpha by construction. The cross-fit can, and
+does. **Mean bias (circular minus held-out), over every non-empty certificate:**
+
+| | alpha = 0.50 | alpha = 0.95 |
+|---|---|---|
+| **sigma = 0.10** | **+0.01898** (n=10956, max +0.1270) | **+0.03297** (n=7002, max +0.1270) |
+| **sigma = 0.25** | +0.00420 (n=6498) | +0.00836 (n=1812) |
+
+**Two things fall out, neither of them registered in advance.** The bias **rises with
+alpha** — the scan maximises over more near-tied candidates as the bar rises — and it is
+**~4x larger at sigma = 0.10 than at sigma = 0.25**, which is the opposite of where a reader
+would expect an estimator to struggle. At alpha = 0.95, sigma = 0.10 the reported
+containment is overstated by **3.3 percentage points on average**
+and by up to **12.7**.
+
+This is a statement about the **estimator**, never about the certificate.
+
+### 38.5 The component prediction: the Hill half CONFIRMS, the hartmann6 half is UNTESTED
+
+Registered before the run: *largest on hartmann6 (multimodal, disconnected superlevel sets),
+near-zero on Hill (unimodal, one component). If it helps everywhere equally, something is
+wrong.*
+
+**Hill, excluding `doe`:** mean components at gamma=0.50, tau_frac=0.60 is
+**1.07** (sigma=0.10) and **1.50** (sigma=0.25) — one
+component, as predicted — and the box-volume gain from decomposing is
+**+0.000375** mean / +0.0316 max. **Near-zero, as registered.**
+
+**The hartmann6 half has not been run.** These are Hill campaigns. The prediction's
+discriminating half needs the cross-family cells and is section B4 step 5.
+
+### 38.6 🔴 `component_box_vol_sum` is UNDEFINED for a screened arm
+
+`doe` alone gives a box-volume "gain" of **+9.55 mean and +59.00 max**, against
+**+0.000375 / +0.0316** for every other arm. It is not a
+finding, it is a defect in the aggregate.
+
+**Mechanism.** `doe` has `n_active = 4`, and its `box_vol_all_components` takes only the
+values **{0.0, 1.0}**. With the inactive axes pinned to the seed, almost no grid point
+falls "inside" a candidate box, so `mask[inside].all()` is **vacuously true** and the box
+expands to fill the whole active subspace. That degeneracy is already present in the
+committed single-box column — which is why this run gates against it at `|delta| = 0` — but
+**summing it across N components multiplies 1.0 by N.**
+
+**`component_box_vol_sum` must not be reported for arms with a screen.** The per-component
+volumes and the committed single-box number are unaffected.
+
+### 38.7 Non-vacuity: D21's homeless effect finally has one
+
+Registered as a metric in section 1.4 because it *"has surfaced post-hoc twice with no
+registered home."* Fraction of cells producing a **non-empty** predictive certificate:
+
+| arm | sigma = 0.10 | sigma = 0.25 |
+|---|---|---|
+| `versionb` | 0.7892 | 0.4225 |
+| `versionb_predictive` | 0.7883 | **0.4267** |
+| `versionb_random` | 0.7617 | 0.3925 |
+
+At sigma = 0.25 the predictive straddle certifies **more often** than the latent one
+(0.4267 vs 0.4225) and markedly more than random
+(0.3925) — D21's effect, now in a committed column at 24 cells. **At
+sigma = 0.10 the ordering does not hold** (0.7892 vs
+0.7883), so the advantage is not general and must carry its
+cell.
+
+### 38.8 What Version C is, now that it is measured
+
+**Form 1: section 1 + section 3, no trust region, no Stage 0.** Two plate rounds, zero new
+wells beyond Version B's, parity **beaten** at sigma=0.10 under a terminal rule the method
+declares as its own, the hard stop cleared, and the regime detector shipped as a
+**documented failure** rather than a claim.
 
 ## 39. ⭐⭐⭐ **SPADE ENTERS E7** — and at σ=0.10 rule P beats the oracle-best ceiling
 
