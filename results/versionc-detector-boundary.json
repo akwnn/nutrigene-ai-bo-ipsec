@@ -1,0 +1,156 @@
+{
+ "source": "/Users/jy/BO/nutrigene-ai-bo-ipsec/results/versionc-detector-fit.json",
+ "fit_families": [
+  "hill",
+  "levy",
+  "rosenbrock"
+ ],
+ "single_class": true,
+ "ranked": [
+  {
+   "statistic": "additive_share",
+   "lo": 0.10542874984223577,
+   "hi": 0.8860126525534584,
+   "tightness": 1.1826670454699229,
+   "excluded_fraction": 0.2194160972887773,
+   "within_family_share": 0.8766208145650976,
+   "median": 0.660019999458989,
+   "n": 150,
+   "per_family": {
+    "hill": [
+     0.10542874984223577,
+     0.8860126525534584
+    ],
+    "levy": [
+     0.20556099582371623,
+     0.8694654075649678
+    ],
+    "rosenbrock": [
+     0.26434331787841486,
+     0.8726832933192856
+    ]
+   }
+  },
+  {
+   "statistic": "additive_refit_residual",
+   "lo": 0.28683721131952844,
+   "hi": 1.7134753828162501,
+   "tightness": 2.0360903967245125,
+   "excluded_fraction": null,
+   "within_family_share": 0.8656583122546064,
+   "median": 0.7006752616641063,
+   "n": 150,
+   "per_family": {
+    "hill": [
+     0.39453463833781305,
+     1.7134753828162501
+    ],
+    "levy": [
+     0.28683721131952844,
+     1.6299926686248303
+    ],
+    "rosenbrock": [
+     0.38428713008701004,
+     1.4271345035108212
+    ]
+   }
+  },
+  {
+   "statistic": "n_components_plausible",
+   "lo": 1.0,
+   "hi": 5.0,
+   "tightness": 4.0,
+   "excluded_fraction": null,
+   "within_family_share": 0.75,
+   "median": 1.0,
+   "n": 150,
+   "per_family": {
+    "hill": [
+     1.0,
+     5.0
+    ],
+    "levy": [
+     1.0,
+     5.0
+    ],
+    "rosenbrock": [
+     1.0,
+     2.0
+    ]
+   }
+  },
+  {
+   "statistic": "ard_separation_ratio",
+   "lo": 1.0007917605992245,
+   "hi": 30.658105890620305,
+   "tightness": 4.799499849026916,
+   "excluded_fraction": null,
+   "within_family_share": 0.6641676588349205,
+   "median": 6.17925097675209,
+   "n": 150,
+   "per_family": {
+    "hill": [
+     2.180836582815803,
+     22.73476231410021
+    ],
+    "levy": [
+     1.9507031861501127,
+     30.658105890620305
+    ],
+    "rosenbrock": [
+     1.0007917605992245,
+     10.831750004048345
+    ]
+   }
+  },
+  {
+   "statistic": "n_peaks_raw",
+   "lo": 22.0,
+   "hi": 600.0,
+   "tightness": 8.626865671641792,
+   "excluded_fraction": null,
+   "within_family_share": 0.8131487889273357,
+   "median": 67.0,
+   "n": 150,
+   "per_family": {
+    "hill": [
+     22.0,
+     600.0
+    ],
+    "levy": [
+     33.0,
+     584.0
+    ],
+    "rosenbrock": [
+     25.0,
+     306.0
+    ]
+   }
+  }
+ ],
+ "proposed": {
+  "statistic": "additive_share",
+  "lo": 0.10542874984223577,
+  "hi": 0.8860126525534584,
+  "tightness": 1.1826670454699229,
+  "excluded_fraction": 0.2194160972887773,
+  "within_family_share": 0.8766208145650976,
+  "median": 0.660019999458989,
+  "n": 150,
+  "per_family": {
+   "hill": [
+    0.10542874984223577,
+    0.8860126525534584
+   ],
+   "levy": [
+    0.20556099582371623,
+    0.8694654075649678
+   ],
+   "rosenbrock": [
+    0.26434331787841486,
+    0.8726832933192856
+   ]
+  }
+ },
+ "frozen": false
+}

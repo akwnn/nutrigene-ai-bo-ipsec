@@ -229,3 +229,24 @@ COMMIT_MSG.txt
 
 # Q59 map re-score. Registered in OPEN-QUESTIONS before the runner existed.
 !results/q59-map-rescore.json
+
+# ---------------------------------------------------------------------------
+# VERSION C. `results/*` above ignores .json by default, and this repository has
+# now been bitten four times by a runner writing a registered artefact that git
+# then silently declined to track -- D17, e2-doe-d8, and twice more. These four
+# are gate targets and registration evidence, so they are named here rather than
+# left to `git add -f`, which works once and is forgotten by the next session.
+#
+# `versionc-gate-s010.json` is the C0 gate: 600 rows, the branch fires on it.
+# `versionc-gate-analysis.json` carries the per-arm table and the regression.
+# `versionc-detector-fit.json` is section 3.2's fitting set, and
+# `versionc-detector-boundary.json` the proposed one-class rule. The last two are
+# what any future freeze must be checked against, so losing them loses the
+# provenance of the rule.
+#
+# The `.partial` siblings stay ignored ON PURPOSE: the whole point of the partial
+# convention is that a half-finished file must not be stageable.
+!results/versionc-gate-s010.json
+!results/versionc-gate-analysis.json
+!results/versionc-detector-fit.json
+!results/versionc-detector-boundary.json
