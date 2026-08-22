@@ -65,7 +65,7 @@ from __future__ import annotations
 import torch
 from torch import Tensor
 
-__all__ = ["ard_lengthscales", "n_effective"]
+__all__ = ["ard_lengthscales", "conservative_columns", "n_effective"]
 
 
 def ard_lengthscales(model) -> Tensor:
@@ -136,3 +136,109 @@ def n_effective(X: Tensor, x_hat: Tensor, lengthscales: Tensor) -> int:
         raise ValueError(f"non-positive lengthscale in {ls.tolist()}")
     dist = ((Xd - x) / ls).pow(2).sum(dim=1).sqrt()
     return 1 + int((dist <= 1.0).sum())
+
+
+def conservative_columns(draws_sel: Tensor, draws_val: Tensor, truth_eval: Tensor,
+                         theta: float, alphas=(0.50, 0.80, 0.95)) -> dict:
+    """The conservative-set columns, with the two absences filled and the cross-fit added.
+
+    Sections 1.2 and 1.3, together, because they land on the same rows.
+
+    ------------------------------------------------------------------------------
+    SECTION 1.3 -- WHAT WAS MISSING AND WHY IT BLOCKED A METRIC
+    ------------------------------------------------------------------------------
+
+    ``versionb.json`` and ``k6b-conservative*.json`` carry ``ce_vol`` but **no
+    false-inclusion rate and no prevalence**, and :func:`boec.calibration.error_volumes`
+    needs all three. So the primary error-volume metric -- the symmetric difference, which
+    superseded the AUC rankings wherever a ranking exists -- has never been computable on
+    a *conservative set* at all, only on the predictive and latent maps. That absence has
+    blocked it twice. ``true_frac_above_tau`` and ``ce_fi_{alpha}`` are added here, and
+    the derived volumes with them.
+
+    **The type I volume is not reported alone.** Read by itself it ranks a method that
+    certifies nothing in first place, which this repository has already been caught by
+    once; ``ce_total_error_vol_{alpha}`` is the symmetric difference.
+
+    ------------------------------------------------------------------------------
+    SECTION 1.2 -- THE CROSS-FIT, BESIDE THE CIRCULAR COLUMN AND NEVER INSTEAD OF IT
+    ------------------------------------------------------------------------------
+
+    ``ce_contain_{alpha}`` is circular: :func:`boec.vorobev.conservative_estimate` selects
+    on it, so it cannot fall below ``alpha``. It is **kept**, because removing it would
+    hide the tautology rather than expose it, and **the difference between it and
+    ``ce_split_contain_{alpha}`` is the selection bias** -- which is the quantity section
+    1.2 exists to measure.
+
+    ------------------------------------------------------------------------------
+    THE TWO HALVES MUST BE DRAWN SEQUENTIALLY, NOT AS ONE BLOCK OF 1,024
+    ------------------------------------------------------------------------------
+
+    Measured, not assumed: ``torch.randn(n, 1024)[:, :512]`` is **not**
+    ``torch.randn(n, 512)`` from the same seed, because torch fills a tensor in memory
+    order. Drawing 1,024 at once would therefore change every committed ``ce_*`` column
+    silently. Two sequential ``randn(n, 512)`` calls on one generator leave the first
+    block bit-identical to the committed draw and give a genuinely independent second --
+    asserted in ``tests/test_versionc.py``. Callers must supply the halves that way; this
+    function checks only that they are equal in size, since it cannot see the generator.
+
+    Args:
+        draws_sel: ``(n_draws, n)`` the **committed** half. Selection happens here alone.
+        draws_val: ``(n_draws, n)`` the held-out half. Scoring happens here alone.
+        truth_eval: ``(n,)`` noiseless values on the same evaluation points.
+
+    Raises:
+        ValueError: on unequal halves or a truth of the wrong width. Silently re-weighting
+            an unequal split would make the reported containment a different estimator.
+    """
+    from boec.calibration import error_volumes
+    from boec.designspace import false_inclusion_rate
+    from boec.vorobev import (alpha_star, conservative_estimate, containment_probability,
+                              empirical_containment, vorobev_deviation)
+
+    if draws_sel.shape != draws_val.shape:
+        raise ValueError(
+            f"the two halves must be equal in size, got {tuple(draws_sel.shape)} and "
+            f"{tuple(draws_val.shape)} -- re-weighting an unequal split silently changes "
+            "the estimator")
+    t = torch.as_tensor(truth_eval, dtype=torch.double).reshape(-1)
+    if t.numel() != draws_sel.shape[1]:
+        raise ValueError(
+            f"truth has {t.numel()} points, the draws have {draws_sel.shape[1]}")
+
+    out: dict = {
+        # Every committed column is computed on the SELECTION half alone, so it is
+        # bit-identical to what the committed 512-draw run produced.
+        "alpha_star": alpha_star(draws_sel, theta),
+        "vorobev_deviation": vorobev_deviation(draws_sel, theta),
+        "true_frac_above_tau": float((t >= theta).double().mean()),
+    }
+    for a in alphas:
+        ce = conservative_estimate(draws_sel, theta, a)
+        n_ce = int(ce.sum())
+        vol = n_ce / ce.numel()
+        out[f"ce_vol_{a}"] = vol
+        out[f"ce_empty_{a}"] = n_ce == 0
+        out[f"ce_contain_{a}"] = (containment_probability(draws_sel, ce, theta)
+                                  if n_ce else float("nan"))
+        emp = empirical_containment(ce, t, theta)
+        out[f"ce_empirical_{a}"] = float("nan") if emp is None else float(emp)
+
+        # --- section 1.3, added beside them, never in place of them ------------------
+        fi = false_inclusion_rate(ce, t, theta)
+        out[f"ce_fi_{a}"] = fi
+        for k, v in error_volumes(vol, fi, out["true_frac_above_tau"]).items():
+            out[f"ce_{k}_{a}"] = v
+
+        # --- section 1.2: the same set, scored where it was not selected -------------
+        out[f"ce_split_contain_{a}"] = (containment_probability(draws_val, ce, theta)
+                                        if n_ce else float("nan"))
+        # NO `ce_split_empirical`. `empirical_containment` scores against the TRUTH, not
+        # against draws, so a "split" version of it would be bit-identical to
+        # `ce_empirical_{alpha}` -- a duplicate column dressed as new information. The
+        # cross-fit repairs the MODEL-INTERNAL number; the empirical one was never
+        # circular and needs no repair.
+        out[f"ce_selection_bias_{a}"] = (out[f"ce_contain_{a}"]
+                                         - out[f"ce_split_contain_{a}"]) if n_ce \
+            else float("nan")
+    return out

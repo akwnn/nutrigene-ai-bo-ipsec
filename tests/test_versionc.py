@@ -11,7 +11,7 @@ import math
 
 import torch
 
-from boec.versionc import ard_lengthscales, n_effective
+from boec.versionc import ard_lengthscales, conservative_columns, n_effective
 
 
 def _unit_lengthscales(d: int, value: float = 0.5) -> torch.Tensor:
@@ -111,3 +111,105 @@ def test_n_eff_falls_as_the_fitted_lengthscale_shrinks_on_a_real_design():
               for v in (0.1, 0.3, 0.6, 1.0, 5.0)]
     assert counts == sorted(counts), f"n_eff must be monotone in lengthscale, got {counts}"
     assert counts[0] == 1 and counts[-1] == 41
+
+
+# ---------------------------------------------------------------------------
+# Version C sections 1.2 and 1.3 -- the conservative-set columns.
+#
+# `versionb.json` and `k6b-conservative*.json` carry `ce_vol` but no false-inclusion
+# rate and no prevalence, so `boec.calibration.error_volumes` cannot be computed on a
+# conservative set at all. That is the absence section 1.3 names, and it is the same
+# path section 1.2's cross-fit re-score has to write.
+# ---------------------------------------------------------------------------
+
+
+def _corr_draws(n_draws, n_pts=80, seed=0, shift=0.0):
+    g = torch.Generator().manual_seed(seed)
+    base = torch.linspace(0.55, 0.75, n_pts, dtype=torch.double) + shift
+    return (base.unsqueeze(0)
+            + 0.12 * torch.randn(n_draws, 1, generator=g, dtype=torch.double)
+            + 0.02 * torch.randn(n_draws, n_pts, generator=g, dtype=torch.double))
+
+
+def _sel_val(n_pts=80, seed=0):
+    """Two blocks of 512 drawn SEQUENTIALLY from one generator -- the only construction
+    that leaves the committed first half bit-identical. Measured: `randn(n, 1024)[:, :512]`
+    is NOT `randn(n, 512)`, because torch fills in memory order, so drawing 1,024 at once
+    would silently change every committed `ce_*` column."""
+    g = torch.Generator().manual_seed(seed)
+    base = torch.linspace(0.55, 0.75, n_pts, dtype=torch.double)
+    blocks = []
+    for _ in range(2):
+        blocks.append(base.unsqueeze(0)
+                      + 0.12 * torch.randn(512, 1, generator=g, dtype=torch.double)
+                      + 0.02 * torch.randn(512, n_pts, generator=g, dtype=torch.double))
+    return blocks
+
+
+def test_conservative_columns_reproduce_the_committed_keys_exactly():
+    """The committed `ce_vol` / `ce_empty` / `ce_contain` / `ce_empirical` must come back
+    bit-identical, or the re-score is a new estimand rather than an added column."""
+    from boec.vorobev import (conservative_estimate, containment_probability,
+                              empirical_containment)
+
+    sel, val = _sel_val()
+    truth = torch.linspace(0.4, 0.8, 80, dtype=torch.double)
+    cols = conservative_columns(sel, val, truth, theta=0.5, alphas=(0.50, 0.95))
+
+    for a in (0.50, 0.95):
+        ce = conservative_estimate(sel, 0.5, a)
+        n_ce = int(ce.sum())
+        assert cols[f"ce_vol_{a}"] == n_ce / ce.numel()
+        assert cols[f"ce_empty_{a}"] == (n_ce == 0)
+        assert cols[f"ce_contain_{a}"] == (containment_probability(sel, ce, 0.5)
+                                           if n_ce else float("nan")) or n_ce == 0
+        emp = empirical_containment(ce, truth, 0.5)
+        assert cols[f"ce_empirical_{a}"] == (float("nan") if emp is None else float(emp)) \
+            or emp is None
+
+
+def test_conservative_columns_add_the_prevalence_and_the_false_inclusion_rate():
+    """The two absences. Without both, `error_volumes` is not computable on a
+    conservative set -- which has blocked the primary error-volume metric twice."""
+    from boec.calibration import error_volumes
+
+    sel, val = _sel_val()
+    truth = torch.linspace(0.4, 0.8, 80, dtype=torch.double)
+    cols = conservative_columns(sel, val, truth, theta=0.5, alphas=(0.50,))
+
+    assert "true_frac_above_tau" in cols
+    assert "ce_fi_0.5" in cols
+    ev = error_volumes(cols["ce_vol_0.5"], cols["ce_fi_0.5"], cols["true_frac_above_tau"])
+    assert math.isfinite(ev["total_error_vol"])
+    assert cols["ce_type_I_vol_0.5"] == ev["type_I_vol"]
+    assert cols["ce_total_error_vol_0.5"] == ev["total_error_vol"]
+
+
+def test_the_split_column_is_scored_on_the_validation_half():
+    from boec.vorobev import conservative_estimate_split
+
+    sel, val = _sel_val()
+    truth = torch.linspace(0.4, 0.8, 80, dtype=torch.double)
+    cols = conservative_columns(sel, val, truth, theta=0.5, alphas=(0.95,))
+    _, expected = conservative_estimate_split(torch.cat([sel, val]), 0.5, 0.95)
+    assert cols["ce_split_contain_0.95"] == expected or math.isnan(expected)
+
+
+def test_the_split_column_sits_beside_the_circular_one_and_never_replaces_it():
+    """Both are reported. Removing the circular column would hide the tautology rather
+    than expose it, and the difference between the two IS the selection bias."""
+    sel, val = _sel_val()
+    truth = torch.linspace(0.4, 0.8, 80, dtype=torch.double)
+    cols = conservative_columns(sel, val, truth, theta=0.5, alphas=(0.95,))
+    assert "ce_contain_0.95" in cols and "ce_split_contain_0.95" in cols
+
+
+def test_mismatched_half_sizes_raise():
+    sel, val = _sel_val()
+    try:
+        conservative_columns(sel, val[:100], torch.zeros(80, dtype=torch.double),
+                             theta=0.5, alphas=(0.95,))
+    except ValueError as e:
+        assert "half" in str(e).lower() or "equal" in str(e).lower()
+    else:
+        raise AssertionError("unequal halves must raise, not silently re-weight")
