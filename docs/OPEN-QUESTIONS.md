@@ -8484,3 +8484,64 @@ comparison at 48 is a snapshot taken across a crossing.**
 GP arms; and for `doe` in `q52`, rule C is **not a GP at all** — it is the quadratic surface's
 own stationary point. **Do not pool the q52 `doe` `rule_c` column with the `fix1` `rule_p`
 column.** They share a name and nothing else.
+
+---
+
+## 🔴 VERSION C AUDIT · **eight kill conditions registered, ZERO adjudicated**
+
+Raised by Joseph. Full evidence in `docs/FINDINGS-SPADE.md` **§35**. Verified by grepping
+every script and by listing the top-level keys of every committed Version C artefact.
+
+**`grep -rno "K-C[1-8]" scripts/` returns four hits, all K-C7.** K-C1, K-C2, K-C3, K-C4,
+K-C5, K-C6 and K-C8 are named in **no script in this repository**. No Version C artefact on
+disk carries a kill verdict field — not `versionc-gate-s010.json`, not
+`versionc-gate-analysis.json` (in which the string `"K-C"` does not occur at all), not
+`versionc-detector-boundary.json`, which carries **`frozen: false`**. K-C7's three code sites
+`print()` a **prediction** to stdout and record nothing.
+
+**REGISTERED FINDING: a kill condition that exists only in prose is an intention, not a kill
+condition.** This project's central methodological claim is that registered predictions must
+be adjudicated against committed columns. Version C registered eight and adjudicated none.
+That is recorded here as a defect in Version C's execution, and it is the reason the
+programme-level verdict given before this audit mis-ranked what matters.
+
+### Three kills are MOOT, and Version C's own code says why
+
+C0 returned `IDENTIFICATION_ARTEFACT` and **§2 was never built**, which takes with it:
+
+* **K-C4** — `versionc_fixed_m` cannot exist without §2. `run_versionc_form1.MOOT_ARMS` states
+  this verbatim.
+* **K-C5** — `ARM_ALIASES` maps `versionc_random` → `versionb_random`, already committed.
+* **K-C8** — `ARM_ALIASES` maps `versionc_nodetect` → `versionc_form1`. **It would compare an
+  arm to itself.**
+
+**§2's collapse took three of Version C's eight kills with it.** This is a finding about the
+design's dependence on §2, not an execution failure, and it should be reported as one.
+
+### K-C6 would misfire; K-C7 is blocked on the one-shot pass
+
+**K-C6** — registered separately in **C1.2a**: it would fire automatically and for the wrong
+reason. Unchanged by this audit. **K-C7** — predicted to fire from the fit set alone (C3.3b,
+`additive_share` fires on 21.9% of its attainable range, within-family share 0.88). Spending
+the one-shot pass remains **Joseph's decision** and is not taken here.
+
+### 🔴 REGISTERED GAP: K-C1, K-C2 and K-C3 have no evaluator
+
+These three are Version C's **entire remaining live test surface**, and **K-C2 is the
+registered hard stop**.
+
+**The columns they need are being produced.** `run_versionc_form1.py` sweeps
+`GAMMAS = (0.50, …)` — γ=0.50 is K-C2's and K-C3's cell — carries `versionb` in `ARMS` as
+K-C3's comparator, and runs σ=0.10 first as K-C1 requires.
+
+**The evaluator does not exist.** There is no `analyse_versionc_form1.py`. Without it the run
+completes, writes ~7 MB of correct columns, and **the hard stop is never called.**
+
+**REGISTERED, before the analyser is written:** it must be gated against
+`versionc-form1-s010.json` as committed and must emit an explicit verdict field per kill —
+`FIRED` / `NOT_FIRED` / `MOOT` / `UNEVALUABLE` — with the moot three carrying their reason
+string. **A kill that cannot be evaluated must say so in the file rather than be omitted**,
+which is the same rule §35.3 credits `MOOT_ARMS` for already following.
+
+**Ownership note:** at the time of writing another agent has been assigned this work. This
+block is the registration; it does not claim the implementation.

@@ -26,7 +26,7 @@ runs. Observed **~180 s per campaign × 50 campaigns ≈ 2.5 h per σ, ≈ 5 h t
 
 **When it lands:** gate is `p3-k6-d6-s010.json` at \|Δ\| = 0 over 20 columns, 12 arms × 50
 keys. If the gate fails the run aborts and the `.partial` is the evidence — do not delete it.
-**Zero new wells**: this is a re-score of stored Version B campaigns (see §8.4).
+**Zero new wells**: this is a re-score of stored Version B campaigns (see §8.5).
 
 To check: `ps -o pid,ppid,etime,args -p 74464` and `tail -3 results/versionc-form1-s010.log`.
 
@@ -42,22 +42,29 @@ To check: `ps -o pid,ppid,etime,args -p 74464` and `tail -3 results/versionc-for
 | `docs/FINDINGS-SPADE.md` §32 | **Version C, C0** — the σ=0.10 deficit was an identification artefact |
 | `docs/FINDINGS-SPADE.md` §33 | **the RSM toolkit** — the classical arm fails all four of its own diagnostics |
 | `docs/FINDINGS-SPADE.md` §34 | **NEW** — the D20 reversal as a rank, and **E7's prediction fails** |
+| `docs/FINDINGS-SPADE.md` **§35** | 🔴 **VERSION C: eight kills registered, ZERO adjudicated** — read before touching Version C |
 | `docs/OPEN-QUESTIONS.md`, from the Phase 2–4 block | every registration **plus errata 20–30** |
 | `docs/OVERNIGHT-LOG.md` **D67–D75** | the decision trail |
 
-**The four lines that matter most:**
+**The five lines that matter most:**
 
-1. **§29 — the registered kill was an artefact of 512 draws.** "SPADE's certificate fails
+1. **§35 — Version C registered EIGHT kill conditions and adjudicated NONE.**
+   `grep -rno "K-C[1-8]" scripts/` returns four hits, all K-C7, and not one Version C
+   artefact carries a verdict field. Three kills (K-C4/5/8) are **moot** — §2 was never
+   built and K-C8 would compare an arm to itself. **K-C1, K-C2 (the hard stop) and K-C3 are
+   the entire live surface and have no evaluator.** The columns are being produced; the
+   verdict has no code.
+2. **§29 — the registered kill was an artefact of 512 draws.** "SPADE's certificate fails
    below nominal at high assurance" is **WITHDRAWN**. A 1.5–3.5 pp selection bias survives at
    4,096 draws, concentrated where the quantiles tie; Version C's cross-fit finds the same
    thing by an independent route. **`N_DRAWS = 512` is now a registered insufficiency.**
-2. **§19 — screening is fatal for a design-space deliverable on three of four families**, and
+3. **§19 — screening is fatal for a design-space deliverable on three of four families**, and
    **reproduces at d = 8** (`doe` mean rank 7.78 of 9 vs 7.59 at d = 6). Ackley reverses it
    and is excluded from DoE contrasts by a decision taken before the numbers existed.
-3. **§34 — E7's registered prediction FAILS, and so does its kill condition.** Under rule P
+4. **§34 — E7's registered prediction FAILS, and so does its kill condition.** Under rule P
    `doe` has no advantage to be above or below SESOI; **it has a deficit.** Its identification
    gap nearly quadruples while every other arm's falls.
-4. **§33 — the classical arm fails its own single-well acceptance test in 50 of 50 campaigns**,
+5. **§33 — the classical arm fails its own single-well acceptance test in 50 of 50 campaigns**,
    predicts a response above the global maximum in half of them, and lands on a saddle every
    time.
 
@@ -95,6 +102,7 @@ gated. **Do not restart them.**
 
 | task | state | cost |
 |---|---|---|
+| 🔴 **`analyse_versionc_form1.py`** | **DOES NOT EXIST.** Version C's hard stop (K-C2) and K-C1/K-C3 have **no evaluator** — see §8.3 and FINDINGS §35. The live run produces every column they need | **the single highest-value missing file** |
 | **E7 runner** | `results/e7-search-vs-id-rule-p.json` **does not exist.** §34.3's rule-P column is an in-session join of two committed files. The recipe is in §34.3 and the join is exact (\|Δ\| = 5.55e-16 on 300 shared keys) | **re-score only**, minutes |
 | **`coord` AUPRC re-score** | verified absent: `p4-coord.json.k6_rows` has no `auprc` key | ~20 min |
 | **Tier 1 document corrections** | inventoried, **not applied**: B3 removal, AUC "superseded" marks, pooled-containment restatements | editing only |
@@ -222,10 +230,35 @@ at 0.090. **§2 was not built.** Full result in FINDINGS §32.
 `designspace.connected_components` / `component_report`; `run_versionc_gate.py`,
 `run_versionc_form1.py`, `run_versionc_detector.py`, and the two analysers. All committed.
 
-**8.3 — The Version C commits are on `main`**, following this repository's convention and the
+**8.3 — 🔴 EIGHT KILLS REGISTERED, ZERO ADJUDICATED.** See FINDINGS **§35** and the Version C
+audit block in `OPEN-QUESTIONS.md`. Version C is being **scored**, not **adjudicated**.
+
+| # | status | why |
+|---|---|---|
+| **K-C2** (hard stop) | **LIVE — no evaluator** | γ=0.50 containment; the live run produces the column |
+| K-C1 | **LIVE — no evaluator** | `r*` at σ=0.10; the live run is σ=0.10 first |
+| K-C3 | **LIVE — no evaluator** | symmetric difference vs `versionb` at γ=0.50; `versionb` is in `ARMS` |
+| K-C4 | **MOOT** | `versionc_fixed_m` needs §2, which was never built (`MOOT_ARMS` says so) |
+| K-C5 | **MOOT** | `ARM_ALIASES`: `versionc_random` → `versionb_random`, already committed |
+| K-C8 | **MOOT** | `ARM_ALIASES`: `versionc_nodetect` → `versionc_form1` — **compares an arm to itself** |
+| K-C6 | **WOULD MISFIRE** | registered in C1.2a; fires automatically for the wrong reason |
+| K-C7 | predicted to fire | one-shot pass unspent; `boundary.frozen = false`. **Joseph's call** |
+
+**What is missing is exactly one file: `analyse_versionc_form1.py`.** The repo has
+`analyse_versionc_gate.py` and `analyse_versionc_detector.py` only. Without it the live run
+finishes, writes ~7 MB of correct columns, and **the hard stop is never called.** It must emit
+`FIRED` / `NOT_FIRED` / `MOOT` / `UNEVALUABLE` per kill, with the moot three carrying their
+reason string, and gate against `versionc-form1-s010.json` as committed.
+
+**⚠️ ANOTHER AGENT IS ASSIGNED THIS.** Two collision risks: (1) the live run holds
+`results/versionc-form1-s010.json.partial` and auto-chains to σ=0.25 — a second launch of the
+same runner races on that path; (2) the `.gitignore` negations for `versionc-form1-s010/025.json`
+landed only in `68e200c` — before that git would have silently refused both files.
+
+**8.4 — The Version C commits are on `main`**, following this repository's convention and the
 evaluation track's. Flagged because it departs from the global "branch first" rule.
 
-**8.4 — The one thing that would otherwise be rediscovered.**
+**8.5 — The one thing that would otherwise be rediscovered.**
 **Version C Form 1 requires ZERO new campaigns.** §1's three changes are scoring and reporting
 changes only. With §2 unbuilt and K-C7 predicted, `versionc` ≡ `versionc_form1` ≡
 `versionc_nodetect`, `versionc_fixed_m` is moot, and `versionc_random` ≡ the already-committed

@@ -2192,3 +2192,103 @@ is a snapshot across a crossing, not a summary of a curve.
 
 **Do not pool the q52 `doe` `rule_c` column with the `fix1` `rule_p` column.** They answer
 different questions with different estimators and share only a name.
+
+---
+
+## 35. 🔴 VERSION C's KILL CONDITIONS: one of eight is named in code, and three are already moot
+
+Raised by Joseph — *"why the fuck are you not testing Version C, isn't that the whole point"* —
+and the audit says the objection lands, though not where it first appears to.
+
+**Version C is being SCORED. It is not being ADJUDICATED.** The distinction is the whole
+content of this section: the columns that decide the kills are being produced right now, and
+**no code anywhere turns them into a verdict.**
+
+### 35.1 The audit — every kill condition against the code that would evaluate it
+
+Eight kills were registered before any Version C arm was scored (`OPEN-QUESTIONS.md`, *Kill
+conditions*). **K-C2 is the hard stop; the others narrow the claim.**
+
+| # | condition | named in any script? | status |
+|---|---|---|---|
+| **K-C2** | containment at γ=0.50 below 0.940/1.000/1.000 — **HALT** | **NO** | **LIVE — no evaluator** |
+| K-C1 | `versionc` does not reach `r*` at σ=0.10 | **NO** | **LIVE — no evaluator** |
+| K-C3 | symmetric-difference volume worsens >10% vs Version B at γ=0.50 | **NO** | **LIVE — no evaluator** |
+| K-C4 | `versionc` does not beat `versionc_fixed_m` | **NO** | **MOOT** — §2 never built |
+| K-C5 | `versionc` does not beat `versionc_random` | **NO** | **MOOT** — alias to `versionb_random` |
+| K-C6 | split-sample CE does not move §14's four failures | **NO** | **WOULD MISFIRE** (C1.2a) |
+| **K-C7** | detector does not separate held-out families | **YES** — 3 sites | predicted to fire; **one-shot pass unspent** |
+| K-C8 | `versionc` does not beat `versionc_nodetect` on hartmann6 | **NO** | **MOOT** — alias to `versionc_form1` |
+
+`grep -rno "K-C[1-8]" scripts/` returns **four hits total**: three in
+`analyse_versionc_detector.py` and one in a `run_versionc_form1.py` docstring. **K-C1, K-C2,
+K-C3, K-C4, K-C5, K-C6 and K-C8 appear in no script in this repository.**
+
+### 35.2 No Version C artefact on disk carries a kill verdict
+
+Verified against the top-level keys of every committed Version C file:
+
+| file | top-level keys | verdict field? |
+|---|---|---|
+| `versionc-gate-s010.json` | `status`, `complete`, `keys_present`, `keys_expected`, `provenance`, `config`, `gate`, `rows` | **none** |
+| `versionc-gate-analysis.json` | `source`, `per_arm`, `branch`, `regression`, `sesoi`, `n_boot`, `boot_seed` | **none** (`"K-C"` does not occur in the file) |
+| `versionc-detector-boundary.json` | `source`, `fit_families`, `single_class`, `ranked`, `proposed`, `frozen` | **none** |
+| `versionc-detector-fit.json` | fit rows | **none** |
+
+Even K-C7 — the one kill with code — is only a `print()` to stdout in
+`analyse_versionc_detector.py`, and what it prints is a **prediction** (*"K-C7 IS LIKELY TO
+FIRE"*), never a recorded verdict. `versionc-detector-boundary.json` carries
+**`frozen: false`**.
+
+**A kill condition that exists only in prose is not a kill condition. It is an intention.**
+This project has spent an entire programme establishing that registered predictions must be
+adjudicated against committed columns; Version C registered eight and adjudicated none.
+
+### 35.3 The three moot kills are moot for a real reason, and the code already says so
+
+C0 returned **`IDENTIFICATION_ARTEFACT`** and **§2 — the trust region — was never built**
+(§32). Everything downstream of §2 collapses, and `run_versionc_form1.py`'s own constants
+record the collapse rather than silently dropping the arms:
+
+```python
+ARM_ALIASES = {"versionc": "versionc_form1", "versionc_nodetect": "versionc_form1",
+               "versionc_form1": "versionc_form1", "versionc_random": "versionb_random"}
+MOOT_ARMS = {"versionc_fixed_m": ("splits 4 trust + 4 boundary, and section 2's trust "
+                                  "region was never built -- C0 returned IDENTIFICATION_ARTEFACT")}
+```
+
+* **K-C4** compares `versionc` to `versionc_fixed_m` — an arm that cannot exist without §2.
+* **K-C5** compares `versionc` to `versionc_random`, which **aliases to `versionb_random`**.
+* **K-C8** compares `versionc` to `versionc_nodetect`, which **aliases to `versionc_form1`** —
+  the same campaign. It would compare an arm to itself.
+
+**Three of the eight kills were rendered unanswerable by Version C's own first result**, and
+that is a finding about the design, not a failure of execution: **§2's collapse took most of
+Version C's test surface with it.**
+
+### 35.4 What is actually still live, and what is missing
+
+**K-C1, K-C2 and K-C3 are Version C's entire remaining test surface**, and **K-C2 is the hard
+stop.** All three are decided by the run executing at the time of writing.
+
+**The columns they need ARE being produced.** `run_versionc_form1.py` sweeps
+`GAMMAS = (0.50, 0.70, 0.80, 0.90, 0.95, 0.99)` — γ=0.50 is exactly K-C2's and K-C3's cell —
+and its `ARMS` tuple includes `versionb`, which is K-C3's comparator. It runs σ=0.10 first,
+which is K-C1's cell.
+
+**What is missing is one analyser.** There is no `analyse_versionc_form1.py`; the repository
+has `analyse_versionc_gate.py` and `analyse_versionc_detector.py` only. Without it the run
+finishes, writes ~7 MB of correct columns, and **nobody calls the verdict — including the
+hard stop.**
+
+### 35.5 The correction to §34 and to the verdict I gave
+
+The programme-level verdict reported before this audit led with SPADE, `doe` and the spread
+arms, and put Version C eighth. **That ordering was wrong for what this project is for.**
+`lhs` and `sobol` are comparators; **Version C is the object under test.** The finding that
+belongs at the top is 35.2: **eight registered kills, zero adjudicated.**
+
+**What this section does NOT say:** it does not say Version C is untested. C0 ran, gated clean
+at |Δ| = 0 over 600 rows, and returned a real verdict that killed §2. The detector's fit set
+ran and produced a boundary. **The gap is specifically between scoring and adjudication**, and
+it is one file wide.
