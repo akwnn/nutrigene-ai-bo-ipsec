@@ -250,3 +250,5 @@ COMMIT_MSG.txt
 !results/versionc-gate-analysis.json
 !results/versionc-detector-fit.json
 !results/versionc-detector-boundary.json
+!results/versionc-form1-s010.json
+!results/versionc-form1-s025.json

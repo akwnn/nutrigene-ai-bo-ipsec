@@ -1944,7 +1944,7 @@ tested; the runner is not written.
 
 ---
 
-## 32. The RSM community's own toolkit, run at last — and the classical arm fails all four
+## 33. The RSM community's own toolkit, run at last — and the classical arm fails all four
 
 §6.2 of the evaluation brief records **zero coverage** of the diagnostics the response-surface
 community would itself demand. All four now exist. Every number below comes off regenerated
@@ -1952,7 +1952,7 @@ community would itself demand. All four now exist. Every number below comes off 
 at **worst |Δ| = 0.000e+00 over all 50 (σ, seed) rows**. n = 50 campaigns for items 1 and 4;
 3 seeds at σ=0.25 for items 2 and 3 (design geometry, which barely varies by seed).
 
-### 32.1 Lack-of-fit F-test — the arm CAN run it, and throws away the power to
+### 33.1 Lack-of-fit F-test — the arm CAN run it, and throws away the power to
 
 **It has pure error: 2 df.** The stage-2 CCD carries 3 centre runs among 27 points.
 
@@ -1984,7 +1984,7 @@ multiplicative, so pure error is estimated at one location and applied across a 
 test is run as the literature specifies; the assumption it rests on is violated by this
 project's noise model.
 
-### 32.2 🔴 `doe`'s 48 wells are NOT A DESIGN for the model it reports
+### 33.2 🔴 `doe`'s 48 wells are NOT A DESIGN for the model it reports
 
 D- and G-efficiency, 48-point designs at d=6, second-order model, **p = 28**:
 
@@ -2016,7 +2016,7 @@ together are not a design at all.
 *G-eff is an upper bound: the maximum is taken over a finite candidate set (the 20,000-point
 grid plus vertices, face centres and design points).*
 
-### 32.3 FDS is the bridge to certifiability, and it is exact arithmetic
+### 33.3 FDS is the bridge to certifiability, and it is exact arithmetic
 
 `SecondOrderModel.prediction_interval` (`boec/rsm.py:238`) has half-width
 `t·σ·sqrt(1 + SPV/n)`. **So the FDS curve IS the distribution of prediction-interval width
@@ -2039,7 +2039,7 @@ spread designs win the map while BO wins the search.
 posterior** SD, and no committed file stores per-grid-point posterior SD, so a GP-based FDS
 would need a fresh 20,000-point posterior per arm per seed.*
 
-### 32.4 ⭐ The classical arm fails its OWN acceptance test, 25 times out of 25
+### 33.4 ⭐ The classical arm fails its OWN acceptance test, 25 times out of 25
 
 The confirmation run is the well the classical pipeline spends on checking itself. True global
 optimum = 1.0000, n = 25 per σ:
@@ -2061,3 +2061,134 @@ campaigns**, its chosen point is a **saddle every single time**, and the confirm
 `grid_r2 = −6.19` is the same fact in a language the RSM community does not use. **This is that
 fact in the language it does use, and it is worse:** the classical pipeline's own,
 self-administered, single-well acceptance test **fails in 50 of 50 campaigns.**
+
+---
+
+## 34. ⭐⭐ The D20 reversal as a RANK, and E7's registered prediction FAILS
+
+Every number in this section was **recomputed from committed files in this session**, not
+taken from the agent that first reported them. Two of the reported numbers did not survive
+that check; both corrections are below and both are material.
+
+The join is exact: `step0-oracle-best.json.rule_a` and `fix1-terminal-rule.json.regret_a`
+agree to **max |Δ| = 5.55e-16** over all 300 shared `(instance, seed, arm)` keys, so the two
+files describe the same campaigns and may be joined without re-running anything.
+
+### 34.1 🔴 The reported ranks included `plate1_only` as a tenth arm
+
+`plate1_only` carries `never_rank_separately` — it **is** `lhs` at 48 wells. I verified on
+this file that its `regret_p` is **identical to `lhs` in 50 of 50 rows**. Ranking both makes
+`lhs` a double arm and inflates every other arm's mean rank. This is the §19 trap a second
+time, caught here before publication rather than after.
+
+**n = 25 instances** (regret averaged over the 2 seeds within each instance, then ranked),
+d = 6, σ = 0.25, `results/fix1-terminal-rule.json`:
+
+| arm | rule A | rule P | shift |
+|---|---|---|---|
+| **`doe`** | **1.88** (best) | **7.92** (worst) | **+6.04** |
+| `lhs` | 3.64 | 4.60 | +0.96 |
+| `qlogei-add` | 4.80 | 4.16 | −0.64 |
+| `qlogei` | 5.00 | 5.28 | +0.28 |
+| `qlognei` | 5.08 | 5.40 | +0.32 |
+| **`versionb`** (SPADE) | 5.28 | **3.76** (best) | −1.52 |
+| `qlogei-addonly` | 5.52 | 4.48 | −1.04 |
+| `sobol` | 5.88 | 4.04 | −1.84 |
+| `random` | 7.92 (worst) | 5.36 | −2.56 |
+
+*(The ten-arm figures first reported — `doe` 2.12 → 8.80, `random` 8.88, `versionb` 4.08 —
+reproduce exactly but are **superseded**: they rank `plate1_only` separately.)*
+
+**`doe` goes from best of nine to worst of nine, and SPADE from sixth to first, on the same
+campaigns, purely by changing the terminal rule.** Nothing about the designs changed.
+
+### 34.2 The registered caveats verified
+
+Paired mean Δ(P − A) in regret, n = 50 rows per arm:
+
+`random` **−0.0975** · `sobol` −0.0673 · `versionb` **−0.0543** · `qlogei-addonly` −0.0473 ·
+`qlogei-add` −0.0400 · `qlogei` −0.0320 · `qlognei` −0.0246 · `lhs` −0.0136 ·
+**`doe` +0.1035** (the only arm the non-maximising rule *hurts*).
+
+* **The gain is not SPADE's.** `random` gains **more** than SPADE: paired difference
+  **0.0431**, two-sided Wilcoxon **p = 5.07e-03**. *(First reported as p = 1.1e-2; the raw
+  paired test on the committed columns gives 5.07e-03. The looser figure is not reproducible
+  from this file and is withdrawn.)* The benefit is **general to spread designs**, not
+  evidence for SPADE.
+* **`lhs` alone does not reach significance**: raw Wilcoxon p = 6.35e-02, Holm ×2 =
+  **0.1269** — the registered "p = 0.13", confirmed to four figures.
+
+### 34.3 🔴⭐ E7: **neither registered branch fires**
+
+Registered prediction: under rule P the identification gaps **converge**, and `doe`'s
+advantage **falls below SESOI (0.02)**.
+
+Identification gap = `terminal_rule_regret − oracle_best`. Rule A column is
+`step0-oracle-best.json.identification_gap` (confirmed identically equal to
+`rule_a − oracle_best`, max deviation **0.00e+00**); rule P column is
+`fix1.regret_p − step0.oracle_best`. n = 50, 4000-resample bootstrap, `default_rng(0)`.
+
+| arm | gap, rule A | gap, rule P | shift | Wilcoxon p | boot 95% CI on shift |
+|---|---|---|---|---|---|
+| **`doe`** | **+0.0361** | **+0.1396** | **+0.1035** | 4.95e-08 | [+0.0723, +0.1367] |
+| `lhs` | +0.0475 | +0.0339 | −0.0136 | 6.35e-02 | [−0.0304, +0.0040] |
+| `qlognei` | +0.0698 | +0.0452 | −0.0246 | 5.41e-03 | [−0.0419, −0.0077] |
+| `sobol` | +0.0730 | **+0.0057** | −0.0673 | 7.72e-07 | [−0.0921, −0.0449] |
+| `random` | +0.1251 | +0.0277 | −0.0975 | 2.99e-11 | [−0.1175, −0.0771] |
+
+**Spread of mean gaps** (`plate1_only` excluded throughout):
+
+| | rule A | rule P |
+|---|---|---|
+| **excluding `doe`** | 0.0776 | **0.0395 — they converge** |
+| **including `doe`** | 0.0890 | **0.1339 — they diverge** |
+
+So §9.3's convergence mechanism **holds for every arm it was about**, and every non-`doe`
+arm's gap falls. `doe` is not a case of it: its gap nearly **quadruples**.
+
+**The verdict, and it matches neither branch.** Under rule P `doe` has **no advantage to be
+above or below SESOI — it has a deficit.** Against `lhs` it goes from +0.0114 *better* under
+rule A to **0.1057 worse** under rule P; against `sobol`, from 0.0369 better to **0.1339
+worse**. The literal kill condition ("remains above SESOI") is not met; the prediction
+("falls below SESOI") is not met either. Rule P does not equalise identification — **it
+replaces `doe`'s identification advantage with a larger model-quality deficit.**
+
+### 34.4 What this section does NOT establish, and the corrected scope
+
+* **σ = 0.10 is absent.** `step0-oracle-best.json` carries no `sigma` key at all —
+  `scripts/run_step0_oracle_best.py:53` hardcodes `sigma_rel = 0.25`. The reported
+  "`doe` +0.0348 → +0.2184 at σ = 0.10" **cannot come from this file and is not reproducible
+  from anything committed.** It is **withdrawn pending a σ-parameterised re-run.**
+* **`qlogei` is not in E7.** `step0-oracle-best.json` carries `qlognei` only. The reported
+  "`qlogei` .0797 → .0477" has no committed source; it is **withdrawn**. This is also why the
+  excluding-`doe` rule-P spread is **0.0395 here and not the 0.0420 first reported** — that
+  figure counted a sixth arm this file does not contain.
+* **SPADE cannot enter E7.** The only Version B row is `versionb_plate1_ceiling` at **40
+  wells**, not 48. It is excluded from the table above; a 40-well arm is not comparable to
+  eight 48-well ones.
+* **No result file exists.** `results/e7-search-vs-id-rule-p.json` is **absent from disk.**
+  The rule-P gap column above is a join computed in-session. **It is reproducible from two
+  committed files by the recipe in 34.3 and needs no new campaigns**, but until a runner
+  writes it, it is not a committed artefact and must not be cited as one.
+
+### 34.5 The endpoint hides a crossing — `doe` does not lead throughout
+
+`results/q52-budget-to-target.json` stores **11 budget checkpoints** (8, 12, 16, 20, 24, 32,
+48, 64, 100, 150, 200) for **4 arms** (`qlogei`, `doe`, `random`, `spread_gp`) under both
+`rule_a` and `rule_c` — the only per-budget curve committed anywhere. **No committed file
+stores per-evaluation regret curves**; 11 checkpoints is the finest resolution that exists.
+
+At σ = 0.25 `doe` leads at the shared budget of 48 (−0.0658, p = 1.5e-3) but `qlogei` closes
+the gap by 150–200. At σ = 0.10 the lead is **already gone at 48** (p = 0.77) and **inverts**
+by 150. **"`doe` leads throughout" is false at both σ**; the single-budget comparison at 48
+is a snapshot across a crossing, not a summary of a curve.
+
+### 34.6 🔴 Three different non-maximising rules are on disk, and they are not one estimator
+
+* `fix1-terminal-rule.json` → **rule P** (posterior-mean argmax, multi-start, `from_grid` flag)
+* `q52-budget-to-target.json` → **rule C** for the GP arms
+* …and for `doe` in q52, rule C is **not a GP at all** — it is the quadratic surface's own
+  stationary point
+
+**Do not pool the q52 `doe` `rule_c` column with the `fix1` `rule_p` column.** They answer
+different questions with different estimators and share only a name.

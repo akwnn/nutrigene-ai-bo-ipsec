@@ -8407,3 +8407,80 @@ agree.**
 across all eight cells (250 campaigns each). The screening result **reproduces at d=8** —
 `doe` mean rank 7.78 of 9 on hartmann6 σ=0.25 against 7.59 at d=6. **The registered stop
 condition "the screening result fails to reproduce at d=8" did NOT fire.**
+
+---
+
+## ⚖️ TASK 6.3 / 6.4 · **E7's registered prediction FAILS — and so does its kill condition**
+
+Full result and all arithmetic in `docs/FINDINGS-SPADE.md` **§34**. Recomputed from committed
+files in-session; **not** taken on the reporting agent's word.
+
+**Registered prediction:** under rule P the identification gaps converge and `doe`'s advantage
+falls below SESOI (0.02). **Registered kill:** the advantage *remains above* SESOI.
+
+**VERDICT: NEITHER BRANCH FIRES, and the registration was mis-specified.** Under rule P `doe`
+has **no advantage to be above or below SESOI — it has a deficit.** Its identification gap
+nearly quadruples (+0.0361 → **+0.1396**, Wilcoxon p = 4.95e-08, bootstrap 95% CI
+[+0.0723, +0.1367]), while **every** non-`doe` arm's gap falls. Excluding `doe` the gaps do
+converge (spread 0.0776 → **0.0395**); including it they diverge (0.0890 → **0.1339**).
+
+§9.3's mechanism is therefore **confirmed for the arms it was about and `doe` is not one of
+them.** Rule P does not equalise identification — it replaces `doe`'s identification advantage
+with a larger model-quality deficit. **A registration that offers only "above SESOI" and
+"below SESOI" cannot express a sign flip; this one could not, and the finding is recorded as
+a third outcome rather than forced into either branch.**
+
+**REGISTERED CONSTRAINT — E7 is not a committed artefact.**
+`results/e7-search-vs-id-rule-p.json` **does not exist.** The rule-P gap column is a join of
+`fix1-terminal-rule.json.regret_p` onto `step0-oracle-best.json.oracle_best`. The join is
+sound (`rule_a` agrees across the two files to **max |Δ| = 5.55e-16** over all 300 shared
+keys) and **needs no new campaigns**, but until a runner writes the file, **E7 must not be
+cited as a committed result.**
+
+### Erratum 28 — two E7 figures had no committed source and are WITHDRAWN
+
+1. **"`doe` +0.0348 → +0.2184 at σ = 0.10."** `step0-oracle-best.json` carries **no `sigma`
+   key**; `scripts/run_step0_oracle_best.py:53` hardcodes `sigma_rel = 0.25`. **There is no
+   σ = 0.10 E7 measurement on disk.** Withdrawn pending a σ-parameterised re-run.
+2. **"`qlogei` .0797 → .0477."** That file carries `qlognei` only. Withdrawn. This is also
+   why the excluding-`doe` rule-P spread is **0.0395, not the 0.0420 first reported** — the
+   larger figure counted a sixth arm the file does not contain.
+
+**Both figures came from an agent's report and both died on the first check against disk.
+The standing rule — verify every number handed to you, including ones you asked for — earned
+its place again here.**
+
+### Erratum 29 — the D20 rank reversal was first reported over TEN arms, including `plate1_only`
+
+`plate1_only` carries `never_rank_separately`; its `regret_p` is **identical to `lhs` in 50 of
+50 rows** on this file. The ten-arm figures (`doe` 2.12 → 8.80, `random` 8.88, `versionb`
+4.08) reproduce exactly but rank `lhs` twice and are **superseded** by the nine-arm table in
+§34.1: **`doe` 1.88 (best of nine) → 7.92 (worst of nine); `versionb` 5.28 → 3.76 (best).**
+The conclusion is unchanged and the shift is still the largest of any arm. **This is the §19
+trap for the second time in this project** — caught before publication, not after.
+
+### Erratum 30 — the `random`-vs-SPADE caveat's p-value
+
+Reported as **p = 1.1e-2**; the two-sided paired Wilcoxon on the committed columns gives
+**p = 5.07e-03**. The paired difference (**0.0431**) and the conclusion — *the gain from the
+non-maximising rule is general to spread designs and is not evidence for SPADE, because
+`random` gains more than SPADE does* — are unchanged and strengthened. The looser figure is
+not reproducible from `fix1-terminal-rule.json` and is withdrawn.
+
+**STANDS unchanged:** `lhs` alone does not reach significance — raw Wilcoxon **6.35e-02**,
+Holm ×2 = **0.1269**, confirming the registered "p = 0.13" to four figures.
+
+### Registered: "`doe` leads throughout" is FALSE at both σ
+
+`q52-budget-to-target.json` is the **only** committed per-budget curve (11 checkpoints, 4
+arms; **no committed file stores per-evaluation regret curves**). At σ = 0.25 `doe` leads at
+the shared budget of 48 (−0.0658, p = 1.5e-3) but `qlogei` closes by 150–200; at σ = 0.10 the
+lead is **already gone at 48** (p = 0.77) and **inverts** by 150. **The single-budget
+comparison at 48 is a snapshot taken across a crossing.**
+
+### Registered: three non-maximising rules are on disk and MUST NOT be pooled
+
+`fix1` stores **rule P** (posterior-mean argmax, multi-start); `q52` stores **rule C** for the
+GP arms; and for `doe` in `q52`, rule C is **not a GP at all** — it is the quadratic surface's
+own stationary point. **Do not pool the q52 `doe` `rule_c` column with the `fix1` `rule_p`
+column.** They share a name and nothing else.
