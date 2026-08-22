@@ -52,6 +52,12 @@ STEP0 = R / "step0-oracle-best.json"
 FIX1 = R / "fix1-terminal-rule.json"
 Q57 = R / "q57-search-vs-id.json"
 VC010 = R / "versionc-gate-s010.json"
+#: SPADE's `oracle_best` at 48 wells. No committed file carried it -- step0 has only
+#: `versionb_plate1_ceiling` at 40 -- which is the whole reason SPADE was absent from E7.
+#: Gated clean at |delta| = 0 on lhs/sobol/random/plate1_only against step0.
+FILL = R / "e7-oracle-best-fill.json"
+FILL_ARMS = ("versionb", "versionb_random", "versionb_predictive",
+             "lhs", "sobol", "random", "plate1_only")
 
 #: Erratum 32. `bo_*` and `nei_*` are arm names in disguise.
 Q57_ARM = {"doe": "doe", "bo": "qlogei", "nei": "qlognei"}
@@ -90,6 +96,23 @@ def spread(mean_gaps: dict) -> dict:
 
 def _rows(path: Path) -> list:
     return json.loads(path.read_text())["rows"]
+
+
+def fill_table(sigma: float) -> dict:
+    """`(instance, seed, arm) -> oracle_best` at 48 wells, for the arms nothing carried.
+
+    Refuses a fill file with any gate failure: the four gated arms vouch for the
+    construction that produced SPADE's column, and if they missed, SPADE's is worthless.
+    """
+    if not FILL.exists():
+        return {}
+    d = json.loads(FILL.read_text())
+    if d.get("gate_failures"):
+        raise JoinInvalid(
+            f"{FILL.name} has {len(d['gate_failures'])} gate failures; its oracle_best "
+            f"column does not reproduce step0 and cannot be joined")
+    return {(r["instance"], r["seed"], r["arm"]): r["oracle_best"]
+            for r in d["rows"] if r["sigma"] == sigma}
 
 
 def q57_rule_a_gaps() -> dict:
@@ -157,6 +180,21 @@ def cell_sigma_025() -> dict:
     else:
         qlogei_note = f"key overlap {len(kq)} of 50; qlogei EXCLUDED"
 
+    # SPADE. oracle_best from the fill, regret_p from fix1. The reason E7 exists at all.
+    fill = fill_table(0.25)
+    f1_by = {}
+    for r in _rows(FIX1):
+        f1_by.setdefault(r["arm"], {})[(r["instance"], r["seed"])] = r
+    for arm in FILL_ARMS:
+        if arm in per_arm or arm not in f1_by:
+            continue
+        ks = [k for k in sorted(f1_by[arm]) if (k[0], k[1], arm) in fill]
+        if len(ks) != len(f1_by[arm]):
+            continue
+        per_arm[arm] = _paired_stats(
+            [gap(f1_by[arm][k]["regret_a"], fill[(k[0], k[1], arm)]) for k in ks],
+            [gap(f1_by[arm][k]["regret_p"], fill[(k[0], k[1], arm)]) for k in ks])
+
     rk = rankable(per_arm)
     return {"sigma": 0.25, "n_keys": len(shared) // max(len(arms), 1),
             "join": {"step0_x_fix1_worst_abs_delta": worst, "n_shared_keys": len(shared)},
@@ -191,13 +229,24 @@ def cell_sigma_010() -> dict:
         per_arm[arm] = _paired_stats(
             [gap(q[k][f"{prefix}_rule_a"], q[k][f"{prefix}_oracle_best"]) for k in ks],
             [gap(v[k][arm]["regret_p"], q[k][f"{prefix}_oracle_best"]) for k in ks])
+    fill = fill_table(0.10)
+    for arm in FILL_ARMS:
+        if arm in per_arm:
+            continue
+        ks = [k for k in keys if arm in v[k] and (k[0], k[1], arm) in fill]
+        if len(ks) != len(keys):
+            continue
+        per_arm[arm] = _paired_stats(
+            [gap(v[k][arm]["regret_a"], fill[(k[0], k[1], arm)]) for k in ks],
+            [gap(v[k][arm]["regret_p"], fill[(k[0], k[1], arm)]) for k in ks])
+
     rk = rankable(per_arm)
     return {"sigma": 0.10, "n_keys": len(keys),
             "join": {"n_shared_keys": len(keys), "key_sets_identical": True},
             "per_arm": per_arm,
-            "coverage_limit": ("only doe / qlogei / qlognei have a committed oracle_best "
-                               "at sigma=0.10 (q57). The spread arms enter at sigma=0.25 "
-                               "only unless a re-score adds them."),
+            "coverage_limit": ("doe/qlogei/qlognei from q57; SPADE and the spread arms "
+                               "from e7-oracle-best-fill.json at 48 wells, gated clean. "
+                               "qlogei-add / qlogei-addonly are not filled."),
             "spread_rule_a": {"including_doe": spread(
                 {a: per_arm[a]["gap_rule_a"] for a in rk})},
             "spread_rule_p": {"including_doe": spread(

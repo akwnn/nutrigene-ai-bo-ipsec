@@ -2530,3 +2530,78 @@ making the predictive band 30.2% too narrow at sigma=0.10) does **not** affect t
 Both scoring paths carry the term: `run_versionc_form1.py:263` and
 `run_p3_cells.score_k6_dual_tau`'s own. Checked against a live oracle -- `sigma_add = 0.01`,
 non-zero and included.
+
+---
+
+## 39. ⭐⭐⭐ **SPADE ENTERS E7** — and at σ=0.10 rule P beats the oracle-best ceiling
+
+SPADE was absent from §36's tables for a mundane reason, not a principled one:
+`step0-oracle-best.json` carried only `versionb_plate1_ceiling` at **40 wells**, and a
+40-well ceiling is not comparable to eight 48-well arms. **The object under test was missing
+from the result that matters most.** `results/e7-oracle-best-fill.json` closes it — 700
+rows, **all at 48 wells**, **0 gate failures**: `lhs`, `sobol`, `random` and `plate1_only`
+were regenerated alongside and reproduce `step0`'s committed `oracle_best` at **\|Δ\| = 0**,
+which is what vouches for SPADE's column. Zero new experiments; campaigns are regenerated
+deterministically through `replay.regenerate`.
+
+### 39.1 σ = 0.25 — SPADE sits with the spread arms, not with `doe`
+
+| arm | gap rule A | gap rule P | shift | Wilcoxon |
+|---|---|---|---|---|
+| **`doe`** | +0.0361 | **+0.1396** | **+0.1035** | 4.95e-08 |
+| `lhs` | +0.0475 | +0.0339 | −0.0136 | 6.35e-02 |
+| `qlognei` | +0.0698 | +0.0452 | −0.0246 | 5.41e-03 |
+| `sobol` | +0.0730 | +0.0057 | −0.0673 | 7.72e-07 |
+| **`versionb` (SPADE)** | **+0.0742** | **+0.0199** | **−0.0543** | **1.76e-09** |
+| `qlogei` | +0.0797 | +0.0477 | −0.0320 | 1.11e-03 |
+| `random` | +0.1251 | +0.0277 | −0.0975 | 2.99e-11 |
+
+**SPADE gains 0.0543 from the non-maximising rule** — more than `qlogei`, `qlognei` and
+`lhs`, less than `sobol` and `random`. §34.2's caveat holds and is now measured against
+SPADE's own 48-well column: **the gain is general to spread designs and `random` still gains
+more.** `doe` remains the only arm the rule *hurts*.
+
+### 39.2 🔴⭐⭐⭐ σ = 0.10 — five arms post a NEGATIVE identification gap
+
+| arm | gap rule A | gap rule P | shift | Wilcoxon | boot 95% CI |
+|---|---|---|---|---|---|
+| `sobol` | +0.0217 | **−0.0171** | −0.0387 | 1.69e-05 | [−0.0544, −0.0234] |
+| `lhs` | +0.0232 | **−0.0031** | −0.0263 | 2.12e-04 | [−0.0393, −0.0129] |
+| **`doe`** | +0.0348 | **+0.2184** | **+0.1835** | 1.60e-09 | [+0.1387, +0.2307] |
+| `versionb_random` | +0.0357 | **−0.0125** | −0.0482 | 8.40e-08 | [−0.0632, −0.0332] |
+| `qlognei` | +0.0373 | +0.0194 | −0.0179 | 4.52e-06 | [−0.0251, −0.0106] |
+| `qlogei` | +0.0378 | +0.0207 | −0.0171 | 3.54e-03 | [−0.0280, −0.0065] |
+| **`versionb` (SPADE)** | **+0.0393** | **−0.0075** | **−0.0468** | **3.04e-07** | [−0.0623, −0.0304] |
+| `versionb_predictive` | +0.0412 | **−0.0088** | −0.0500 | 3.09e-08 | [−0.0642, −0.0347] |
+| `random` | +0.0728 | +0.0026 | −0.0701 | 5.32e-10 | [−0.0863, −0.0534] |
+
+**A negative identification gap means the terminal rule found a point BETTER than any well
+the campaign actually visited.** `oracle_best` is the regret of the best *visited* well; a
+rule that only picks among visited wells cannot go below it. **The posterior-mean argmax is
+not restricted to the sampled set**, and at σ=0.10 it lands outside it, on a better point,
+for **all three SPADE arms plus `lhs` and `sobol`**.
+
+**So "identification gap" stops being a gap and becomes an extrapolation margin.** The
+ceiling is not a ceiling once the terminal rule is allowed to propose an unsampled point.
+This is the mechanism behind D20 stated at its most literal: with clean data the GP's
+posterior mean is a *better* guide to the optimum than the best observation, and every arm
+whose design supports a decent fit exploits that — while `doe`'s quadratic stationary point
+goes **+0.2184** in the opposite direction.
+
+**Correction to §36.2's framing.** That section reported the σ=0.10 rule-A spread as
+**0.0029** and called the arms indistinguishable. **That figure is over the three arms q57
+carried.** Across the nine arms now available it is **0.0511**, and the rule-P spread is
+**0.2354**. The three-arm statement remains true of those three arms; *"under rule A all
+arms are equal at σ=0.10"* would be false and is not claimed. Every spread in the file
+carries its arm list precisely so this cannot be misread again.
+
+### 39.3 What this does and does not say about SPADE
+
+**Says:** SPADE's certificate machinery is not what drives its rule-P gain — `versionb`,
+`versionb_random` and `versionb_predictive` shift by −0.0468, −0.0482 and −0.0500, which are
+**indistinguishable from each other**, and `lhs` and `sobol` are in the same band. **The
+wells earn the gain; the selection criterion does not.** That is the same conclusion §34.2
+reached at σ=0.25 by a different route, now confirmed at 48 wells with SPADE's own column.
+
+**Does not say:** that SPADE is worthless. E7 measures *identification*, not certification.
+SPADE's claim is a calibrated conservative set, and **no E7 column touches that.**

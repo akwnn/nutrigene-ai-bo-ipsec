@@ -1,9 +1,9 @@
 {
  "status": "COMPLETE",
  "provenance": {
-  "git_sha": "04eeebfaf4e19540b8f7865961d300c3872bb437",
+  "git_sha": "57f196daa4131961c41322cff7bc32c21d16ddfe",
   "git_dirty": true,
-  "generated_at": "2026-08-22T17:56:09+0800",
+  "generated_at": "2026-08-22T19:07:38+0800",
   "argv": [
    "scripts/run_e7_rule_p.py"
   ],
@@ -120,6 +120,18 @@
       -0.015074944183211461
      ],
      "ci_excludes_zero": true
+    },
+    "versionb": {
+     "n": 50,
+     "gap_rule_a": 0.07423100578274426,
+     "gap_rule_p": 0.01990720939726369,
+     "shift": -0.054323796385480565,
+     "wilcoxon_p": 1.7568968502246207e-09,
+     "boot_ci95": [
+      -0.06928781070598541,
+      -0.03984640664834545
+     ],
+     "ci_excludes_zero": true
     }
    },
    "excluded": {
@@ -138,9 +150,10 @@
       "qlogei",
       "qlognei",
       "random",
-      "sobol"
+      "sobol",
+      "versionb"
      ],
-     "n_arms": 6
+     "n_arms": 7
     },
     "excluding_doe": {
      "spread": 0.0776260744438145,
@@ -149,9 +162,10 @@
       "qlogei",
       "qlognei",
       "random",
-      "sobol"
+      "sobol",
+      "versionb"
      ],
-     "n_arms": 5
+     "n_arms": 6
     }
    },
    "spread_rule_p": {
@@ -163,9 +177,10 @@
       "qlogei",
       "qlognei",
       "random",
-      "sobol"
+      "sobol",
+      "versionb"
      ],
-     "n_arms": 6
+     "n_arms": 7
     },
     "excluding_doe": {
      "spread": 0.04202967581967496,
@@ -174,9 +189,10 @@
       "qlogei",
       "qlognei",
       "random",
-      "sobol"
+      "sobol",
+      "versionb"
      ],
-     "n_arms": 5
+     "n_arms": 6
     }
    }
   },
@@ -223,29 +239,125 @@
       -0.010631007143596584
      ],
      "ci_excludes_zero": true
+    },
+    "versionb": {
+     "n": 50,
+     "gap_rule_a": 0.039339743653835926,
+     "gap_rule_p": -0.007494544615468557,
+     "shift": -0.046834288269304476,
+     "wilcoxon_p": 3.0412363649645613e-07,
+     "boot_ci95": [
+      -0.062325109006137344,
+      -0.03038149382832776
+     ],
+     "ci_excludes_zero": true
+    },
+    "versionb_random": {
+     "n": 50,
+     "gap_rule_a": 0.03571451437519875,
+     "gap_rule_p": -0.012470475248594784,
+     "shift": -0.04818498962379353,
+     "wilcoxon_p": 8.403119267086367e-08,
+     "boot_ci95": [
+      -0.06322039698064258,
+      -0.03324961462766469
+     ],
+     "ci_excludes_zero": true
+    },
+    "versionb_predictive": {
+     "n": 50,
+     "gap_rule_a": 0.041208842828083014,
+     "gap_rule_p": -0.008795473857291916,
+     "shift": -0.05000431668537493,
+     "wilcoxon_p": 3.094002387626915e-08,
+     "boot_ci95": [
+      -0.06422888788988734,
+      -0.034652422835880825
+     ],
+     "ci_excludes_zero": true
+    },
+    "lhs": {
+     "n": 50,
+     "gap_rule_a": 0.023187041194564426,
+     "gap_rule_p": -0.0030658224980925496,
+     "shift": -0.02625286369265697,
+     "wilcoxon_p": 0.00021178724761483636,
+     "boot_ci95": [
+      -0.03934232480643616,
+      -0.012904019709185838
+     ],
+     "ci_excludes_zero": true
+    },
+    "sobol": {
+     "n": 50,
+     "gap_rule_a": 0.02166334205410054,
+     "gap_rule_p": -0.01706754785421028,
+     "shift": -0.03873088990831082,
+     "wilcoxon_p": 1.6896629077223224e-05,
+     "boot_ci95": [
+      -0.054359123691402146,
+      -0.0233667059484415
+     ],
+     "ci_excludes_zero": true
+    },
+    "random": {
+     "n": 50,
+     "gap_rule_a": 0.07277792873470991,
+     "gap_rule_p": 0.002629868401414528,
+     "shift": -0.07014806033329538,
+     "wilcoxon_p": 5.318447904301138e-10,
+     "boot_ci95": [
+      -0.08629111488217092,
+      -0.05343035190944526
+     ],
+     "ci_excludes_zero": true
+    },
+    "plate1_only": {
+     "n": 50,
+     "gap_rule_a": 0.023187041194564426,
+     "gap_rule_p": -0.0030658224980925496,
+     "shift": -0.02625286369265697,
+     "wilcoxon_p": 0.00021178724761483636,
+     "boot_ci95": [
+      -0.03934232480643616,
+      -0.012904019709185838
+     ],
+     "ci_excludes_zero": true
     }
    },
-   "coverage_limit": "only doe / qlogei / qlognei have a committed oracle_best at sigma=0.10 (q57). The spread arms enter at sigma=0.25 only unless a re-score adds them.",
+   "coverage_limit": "doe/qlogei/qlognei from q57; SPADE and the spread arms from e7-oracle-best-fill.json at 48 wells, gated clean. qlogei-add / qlogei-addonly are not filled.",
    "spread_rule_a": {
     "including_doe": {
-     "spread": 0.0029342956782551916,
+     "spread": 0.05111458668060937,
      "arms": [
       "doe",
+      "lhs",
       "qlogei",
-      "qlognei"
+      "qlognei",
+      "random",
+      "sobol",
+      "versionb",
+      "versionb_predictive",
+      "versionb_random"
      ],
-     "n_arms": 3
+     "n_arms": 9
     }
    },
    "spread_rule_p": {
     "including_doe": {
-     "spread": 0.19898902883102948,
+     "spread": 0.23544180311155566,
      "arms": [
       "doe",
+      "lhs",
       "qlogei",
-      "qlognei"
+      "qlognei",
+      "random",
+      "sobol",
+      "versionb",
+      "versionb_predictive",
+      "versionb_random"
      ],
-     "n_arms": 3
+     "n_arms": 9
     }
    }
   }
