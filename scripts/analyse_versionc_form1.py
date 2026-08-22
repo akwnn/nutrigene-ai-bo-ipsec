@@ -114,11 +114,16 @@ KILLS = {
                        "empirical containment CANNOT move. The kill would fire "
                        "automatically and for the wrong reason. F3 resolved section 14 "
                        "separately, by sweeping draws"},
-    "K-C7": {"status": "BLOCKED", "hard_stop": False,
+    "K-C7": {"status": "FIRED", "hard_stop": False, "fired": True,
              "condition": "detector does not separate held-out families",
-             "consequence": "ship without Stage 0",
-             "reason": "blocked on the ONE-SHOT held-out pass, which section 3.5 says "
-                       "cannot be repeated; C3.3b predicts it fires"},
+             "consequence": "ship without Stage 0 (section 3.6)",
+             "reason": "FIRED. The one-shot held-out pass ran once against a rule frozen "
+                       "and committed at 95fca9c BEFORE hartmann6 or ackley was touched: "
+                       "0 / 50 DECEPTIVE on both families, all four cells, Holm-adjusted "
+                       "tails 1.0. Not a near miss -- both held-out additive_share ranges "
+                       "sit NESTED INSIDE the fit range [0.1054, 0.8860]. C3.3b predicted "
+                       "this from the fit set alone, before the pass was spent. "
+                       "FINDINGS section 37"},
     "K-C8": {"status": "MOOT", "hard_stop": False,
              "condition": "versionc does not beat versionc_nodetect on hartmann6",
              "consequence": "Stage 0 detects but the response does not help",

@@ -33,6 +33,7 @@ def test_the_settled_kills_carry_the_reason_they_are_settled():
     for kill, expect in (("K-C4", "trust region"), ("K-C5", "versionb_random"),
                          ("K-C8", "same campaign"), ("K-C6", "cannot"),
                          ("K-C7", "one-shot")):
+        # K-C7 has now FIRED; its reason still names the one-shot pass that settled it.
         assert K.KILLS[kill]["status"] != "LIVE", f"{kill} is not live"
         assert expect.lower() in K.KILLS[kill]["reason"].lower(), kill
 
@@ -135,3 +136,14 @@ def test_the_verdict_never_writes_back_over_its_own_input(tmp_path):
     assert K.verdict_path(src) != src
     assert K.verdict_path(tmp_path / "versionc-form1-s010.json").name == \
         "versionc-kills-s010.json"
+
+
+def test_kc7_records_that_it_HAS_fired_not_that_it_is_predicted_to():
+    """The one-shot pass ran (FINDINGS §37): 0/50 DECEPTIVE on both hartmann6 and ackley,
+    against a rule frozen and committed at 95fca9c before either was touched. Leaving the
+    status as BLOCKED/predicted would misreport a settled result as pending."""
+    k = K.KILLS["K-C7"]
+    assert k["status"] == "FIRED"
+    assert k["fired"] is True
+    assert "0 / 50" in k["reason"] or "0/50" in k["reason"]
+    assert "without Stage 0" in k["consequence"]
