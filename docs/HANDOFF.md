@@ -236,30 +236,30 @@ at 0.090. **§2 was not built.** Full result in FINDINGS §32.
 `designspace.connected_components` / `component_report`; `run_versionc_gate.py`,
 `run_versionc_form1.py`, `run_versionc_detector.py`, and the two analysers. All committed.
 
-**8.3 — THE KILL LEDGER (was: eight registered, zero adjudicated — no longer true).** See FINDINGS **§35** and the Version C
-audit block in `OPEN-QUESTIONS.md`. Version C is being **scored**, not **adjudicated**.
+**8.3 — THE KILL LEDGER: eight registered, EIGHT ADJUDICATED.** ✅ Closed. Full result in
+FINDINGS **§38**; verdicts in `results/versionc-kills-s010.json` / `-s025.json`.
 
-| # | status | why |
+Both re-scores are committed: `versionc-form1-s010.json` and `-s025.json`, **14,400 rows
+each, gate clean at \|Δ\| = 0** across all 20 committed K6 columns.
+
+| # | verdict | evidence |
 |---|---|---|
-| **K-C2** (hard stop) | **evaluator EXISTS** (`8a67741`) | γ=0.50 containment; the live run produces the column |
-| K-C1 | **evaluator EXISTS** | `r*` at σ=0.10; the live run is σ=0.10 first |
-| K-C3 | **evaluator EXISTS** | symmetric difference vs `versionb` at γ=0.50; `versionb` is in `ARMS` |
-| K-C4 | **MOOT** | `versionc_fixed_m` needs §2, which was never built (`MOOT_ARMS` says so) |
-| K-C5 | **MOOT** | `ARM_ALIASES`: `versionc_random` → `versionb_random`, already committed |
-| K-C8 | **MOOT** | `ARM_ALIASES`: `versionc_nodetect` → `versionc_form1` — **compares an arm to itself** |
-| K-C6 | **WOULD MISFIRE** | registered in C1.2a; fires automatically for the wrong reason |
-| K-C7 | predicted to fire | one-shot pass unspent; `boundary.frozen = false`. **Joseph's call** |
+| **K-C1** | ✅ **PASS — beaten, not merely met** | regret_P **0.0792** vs `r*` **0.0808** (`qlognei`, from `e2-grid.json` alone) → gap **−0.0016** |
+| **K-C2** (hard stop) | ✅ **PASS — CLEARS** | {0.50: 0.940, 0.80: 1.000, 0.95: 1.000} against a committed nominal of exactly those three; `invariance_violated` **False** |
+| **K-C3** | ✅ **PASS** both σ | 0.21089 / 0.35828, +0.00% against a +10% bar |
+| K-C4 / K-C5 / K-C8 | **MOOT** | settled by C0 — no §2, and the other labels name the same campaign |
+| K-C6 | **WOULD MISFIRE** | C1.2a |
+| **K-C7** | 🔴 **FIRED** | §37 — 0/50 both held-out families. **Ship without Stage 0.** |
 
-**What is missing is exactly one file: `analyse_versionc_form1.py`.** The repo has
-`analyse_versionc_gate.py` and `analyse_versionc_detector.py` only. Without it the live run
-finishes, writes ~7 MB of correct columns, and **the hard stop is never called.** It must emit
-`FIRED` / `NOT_FIRED` / `MOOT` / `UNEVALUABLE` per kill, with the moot three carrying their
-reason string, and gate against `versionc-form1-s010.json` as committed.
+**🔴 Read §38.3 before quoting K-C2.** It passes **structurally, not evidentially**: it is
+built from columns gated at \|Δ\| = 0 and Version C's selected sets are bit-identical to
+Version B's, so it **could not have moved**. A pass is **not** an independent re-test of the
+certificate — **F3 (§29) is what re-tested it.**
 
-**⚠️ ANOTHER AGENT IS ASSIGNED THIS.** Two collision risks: (1) the live run holds
-`results/versionc-form1-s010.json.partial` and auto-chains to σ=0.25 — a second launch of the
-same runner races on that path; (2) the `.gitignore` negations for `versionc-form1-s010/025.json`
-landed only in `f6c2bf6` — before that git would have silently refused both files.
+`analyse_versionc_form1.py` — the file 8.3 previously recorded as missing — **exists and is
+what produced the table above.** Both collision risks are closed: one runner chain ran
+start to finish, and the `.gitignore` negations are in (plus two more for the verdict files,
+which were silently ignored until added).
 
 **8.4 — The Version C commits are on `main`**, following this repository's convention and the
 evaluation track's. Flagged because it departs from the global "branch first" rule.
