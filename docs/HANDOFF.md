@@ -10,6 +10,28 @@ Read this first, then `docs/FINDINGS-SPADE.md` **Part IV (§18 onward)**, then P
 
 ## 0. 🟢 RUNNING RIGHT NOW — do not launch a competing job
 
+### P8 — SPADE's certificate off hill (started 2026-08-22 evening, ~10 h)
+
+```
+PID 43033   .venv/bin/python -u scripts/run_p8_certificate_families.py   (PPID 1)
+```
+
+**The largest remaining gap, and the one Joseph named:** SPADE's *arms* are in 17 committed
+files but SPADE's **certificate** — `alpha_star`, `ce_contain_*`, containment — exists on
+**`hill` only**. `p6-families.json` has 60 columns across four families and **not one is a
+certificate column.** P8 closes it: 5 families × 4 arms × 50 seeds = **1,000 campaigns**,
+d=6, σ=0.25, **4,096 draws** (not P2's 512 — F3 registered 512 as insufficient at γ≥0.95, so
+hill is re-run here too rather than compared across draw counts).
+
+Writes `results/p8-certificate-families.json`. Gate: hill `regret`/`n_wells` against
+`p2-versionb-gamma.json` at \|Δ\| = 0 — **running clean**. Certificate columns are
+deliberately **not** gated (the draw count changed; they are meant to move).
+Registered at `b281d4b`, runner at `2941a20`. ~36 s/campaign, ETA ~10 h.
+
+### Version C Form 1 — FINISHED
+
+
+
 ```
 PID 74464   .venv/bin/python -u scripts/run_versionc_form1.py --sigma 0.10
 PID 74462   sh -c  (parent, PPID 1 — properly detached)
@@ -320,7 +342,7 @@ registration decision — P7's `SIGMA = 0.25` is deliberately hardcoded.
 
 | pid | what | state |
 |---|---|---|
-| 74464 | `run_versionc_form1.py --sigma 0.10` → chains to `--sigma 0.25` | ~40/50, ~265 s/campaign |
+| — | `run_versionc_form1.py` both σ | **DONE** — 28,800 rows, gate clean, kills adjudicated |
 
 When it lands, **`analyse_versionc_form1.py` (the other agent's, `8a67741`) decides K-C1,
 K-C2 (the hard stop) and K-C3.** That is the last data dependency before drafting.
