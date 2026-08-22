@@ -7797,3 +7797,42 @@ run reached disk.** The source is at 10 arms; nothing has been run from it.
 state is 0/50 at the registered arm set.** Murphy calibration is the one Brier component AUC
 cannot see, and SPADE's entire claim is a calibrated statement — so this is the single largest
 outstanding item in Phases 2–4, ahead of the d=8 cells.
+
+## 🔴 ERRATUM 26 · **The CIRCULAR statistic was pooled too, at five sites the F4 sweep missed.**
+
+The F4 un-pooling swept `ce_empirical` and left **`ce_contain` — the circular in-sample
+statistic — `tau_frac`-pooled in five places with no withdrawal note**:
+`K6-TECHNICAL-REPORT.md` §6.15's range table, its "note the ordering" passage, §3737's
+eight-arm ranges and §4027's summary bullet, and `FINDINGS-SPADE.md` §4.8.
+
+**Restating them per-cell STRENGTHENS every sentence they sit in**, which is why this is worth
+doing rather than merely correcting:
+
+| figure | pooled | **per-cell at `tau_frac = 0.60`** |
+|---|---|---|
+| `doe` `ce_contain` at nominal 0.95 | 0.9997 (n = **51**) | **1.0000 (n = 50)** |
+| nominal 0.50 range, 8 arms | 0.5443–0.5998 | 0.5495 (doe) – 0.6094 (sobol), n=50 |
+| nominal 0.80 range | 0.8640–0.8960 | 0.8681 (random) – 0.8960 (sobol), n=42–50 |
+| nominal 0.95 range | 0.9605–0.9997 | 0.9605 (sobol, n=13) – **1.0000 (doe, n=50)** |
+
+**The pooled `n` of 51 was fabricated from 50 campaigns at `tau_frac = 0.60` plus ONE at 0.75.**
+Un-pooled, `doe` scores a **flawless 1.0000 over 50 campaigns** on the in-sample statistic while
+its empirical containment **in the same cell** is **25/50 = 0.500**. A metric that is perfect on
+an arm that is right half the time is a sharper indictment than 0.9997 was.
+
+**At `tau_frac` 0.85 and 0.95 there is nothing to report at any alpha** — every arm empty in
+every campaign, `n = 0`. At 0.75, `n` is 1, 1 and 2 for the only three arms with anything.
+**Those `n`s are why the pooled version existed and why it had to go.**
+
+## ✅ VERIFIED FROM COMMITTED ROWS · the two per-cell figures the evaluation queue asserted
+
+| claim | measured |
+|---|---|
+| `doe` per-cell reads **0/50, 12/50, 25/50** | **exact** (`tau_frac = 0.60`, alpha 0.50 / 0.80 / 0.95) |
+| `random` **1 of 7** at `tau_frac = 0.85`, alpha 0.50, **86% empty** | **exact** — 1/7 non-empty, 43 of 50 empty = 86% |
+
+**And the wider audit result: all 156 per-cell containment figures already in the docs
+reproduce from the raw rows at max \|Δ\| = 0.000e+00, at BOTH the n=50 and n=25 units, with 0
+value and 0 `n` mismatches.** The seven `ce_empirical` sites the queue listed were **already
+corrected in place**. The un-pooling work that remained was on the circular statistic, which
+nobody had looked at.

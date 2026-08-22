@@ -325,7 +325,9 @@ Identical at n=25.
    question with no committed evidence either way.**
 
 The starkest evidence for why the circular metric had to go, restated per-cell: at nominal
-0.95 the `doe` arm's circular figure reads **0.9997** while its empirical containment at
+0.95 the `doe` arm's circular figure reads a **perfect 1.0000 (n=50)** — *the 0.9997
+previously quoted was itself `tau_frac`-pooled over a fabricated n=51, and un-pooling it makes
+the contrast starker* — while its empirical containment at
 `tau_frac = 0.60` is **25/50 = 0.500**. The in-sample statistic ranks the failing arm
 first. *(The previously quoted 0.5098 was the pooled figure and is withdrawn with the
 rest.)*

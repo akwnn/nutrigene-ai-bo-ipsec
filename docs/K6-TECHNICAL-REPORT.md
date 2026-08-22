@@ -1749,11 +1749,21 @@ all the `alpha = 0.95` evidence comes from one of four thresholds.
 `ce_contain_alpha` is the containment probability of the selected `CE_alpha`. Regenerated
 over all eight arms:
 
-| nominal alpha | achieved `ce_contain`, range across the 8 arms |
+**PER-CELL at `tau_frac = 0.60`**, with `n`. *(This table was `tau_frac`-pooled until
+2026-08-22 and is restated under F4. Pooling here was not merely wrong, it was **flattering to
+the pooled figure**: `doe`'s 0.9997 at nominal 0.95 blended 50 campaigns at `tau_frac = 0.60`
+with **one** at 0.75, for a fabricated `n` of 51. Un-pooled, `doe` scores a **perfect 1.0000**.)*
+
+| nominal alpha | achieved `ce_contain`, range across the 8 arms (`tau_frac = 0.60`) |
 |---|---|
-| 0.50 | 0.5443 (doe) – 0.5998 (sobol) |
-| 0.80 | 0.8640 (random) – 0.8960 (sobol) |
-| 0.95 | 0.9605 (sobol) – **0.9997 (doe)** |
+| 0.50 | 0.5495 (doe, n=50) – 0.6094 (sobol, n=50) |
+| 0.80 | 0.8681 (random, n=48) – 0.8960 (sobol, n=42) |
+| 0.95 | 0.9605 (sobol, n=13) – **1.0000 (doe, n=50)** |
+
+**At `tau_frac` 0.85 and 0.95 there is nothing to report at any alpha** — every arm's certified
+set is empty in every campaign, so `n = 0`. At 0.75 only `doe`, `qlogei` and `qlognei` have any
+non-empty campaigns at nominal 0.95, with `n` of 1, 1 and 2. **Those `n`s are why the pooled
+version existed and why it had to go.**
 
 At or above nominal for every arm at every level. **This statistic cannot fall below
 nominal, by construction.** The mechanism, precisely:
@@ -1780,9 +1790,12 @@ It was a tautology."* The column is retained in the committed JSON and labelled 
 in both the runner and the analysis script, so the tautology is visible in the data rather
 than silently deleted.
 
-Note the ordering: **`doe` has the *highest* circular containment at `alpha = 0.95`
-(0.9997) and the *lowest* empirical containment — 0.500, 25 of 50, at `tau_frac = 0.60`
-(the `0.5098` previously quoted here was `tau_frac`-pooled and is withdrawn under F4).**
+Note the ordering: **`doe` has the *highest* circular containment at `alpha = 0.95` — a
+**perfect 1.0000 over 50 campaigns** — and the *lowest* empirical containment, 0.500, 25 of 50,
+**in the same cell**, `tau_frac = 0.60`.** *(Both figures were `tau_frac`-pooled here until
+2026-08-22 — the circular one at 0.9997 over a fabricated n=51, the empirical one at 0.5098.
+Restating both per-cell makes the contrast starker, not weaker: a metric scoring a flawless
+1.0000 on an arm that is right half the time.)*
 The in-sample statistic ranks
 the failing arm first. It is the same pathology as `alpha*` (§1.4, §5.8) — a metric that
 consults only the model inherits the model's errors as facts.
@@ -3721,8 +3734,11 @@ retraction.
 2. **§4.8, achieved containment tables "0.560–0.592 / 0.864–0.872 / 0.972–0.998".** ❌ Void
    with item 1, twice over: they are the circular statistic, and they are five-arm ranges
    from the first run. The circular figures over all eight arms in the **re-run** are
-   0.5443–0.5998 / 0.8640–0.8960 / 0.9605–0.9997. The figures that carry information are
-   the empirical ones at §5.10.2.
+   0.5443–0.5998 / 0.8640–0.8960 / 0.9605–0.9997. *(Those three ranges are themselves
+   `tau_frac`-pooled and are withdrawn under F4. **Per-cell at `tau_frac = 0.60`**, with `n`:
+   0.5495–0.6094 (n=50) / 0.8681–0.8960 (n=42–50) / 0.9605–**1.0000** (n=13–50). At
+   `tau_frac` 0.85 and 0.95 every arm is empty in every campaign, so there is no range to
+   report at all.)* The figures that carry information are the empirical ones at §5.10.2.
 3. **§4.8, "`CE_alpha` is empty 52–88% of the time."** Five-arm range from the void run.
    Eight-arm range in the re-run is **51.5%–93.5%** (`sobol` at `alpha = 0.95`; the analysis
    script prints 52%–94%).
@@ -4011,9 +4027,11 @@ open. The retraction block at the top of this document is the index.
   `0.155 / 0.420 / 0.510` "short by a factor of 3.2" in an earlier revision; those were
   `tau_frac`-pooled and are withdrawn under Amendment F4.*
 - **That the in-sample containment statistic cannot see this**, because it re-reports the
-  criterion `conservative_estimate` selected on; it reads 0.9997 for that same arm at
-  nominal 0.95 where the empirical figure at `tau_frac = 0.60` is 0.500, 25 of 50. *The
-  `0.5098` previously quoted was `tau_frac`-pooled and is withdrawn under F4.*
+  criterion `conservative_estimate` selected on; **per-cell at `tau_frac = 0.60` it reads a
+  perfect 1.0000 over 50 campaigns for that same arm at nominal 0.95, where the empirical
+  figure in the same cell is 0.500, 25 of 50.** *(Both were `tau_frac`-pooled and are
+  withdrawn under F4 — the circular one at 0.9997 over a fabricated n=51, the empirical one
+  at 0.5098. Un-pooled, the gap is 1.0000 against 0.500.)*
 - **That `alpha*` and Vorob'ev deviation are model-internal and can flatter a broken
   posterior**, with the `doe` arm as the worked example: highest `alpha*` of eight arms at
   both easy thresholds, lowest Vorob'ev deviation at `tau_frac = 0.60`, worst empirical
