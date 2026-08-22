@@ -8246,3 +8246,117 @@ ways on the same arm. **This is what unblocks Task 8.**
 Rankings differ at **23 of 24** predictive cells (24 of 24 latent); **6 of 371** inverted pairs
 survive Holm at n=25 (6 at n=50); Spearman ρ across cells min −0.283, median −0.075,
 max +1.000; **371 of 864 pair inversions.** Reporting Brier alone hides which half an arm wins.
+
+## ⭐⭐ C0 RESULT — the gate returns **IDENTIFICATION_ARTEFACT**. §2 is NOT built.
+
+**`results/versionc-gate-s010.json`** — 600 rows, 12 arms × 50 keys, **gate clean at
+|Δ| = 0 exactly**, double-gated against `p3-k6-d6-s010.json` and, for seven arms,
+independently against `e2-grid.json`. `results/versionc-gate-analysis.json`.
+
+**`versionb` mean rule-P regret = 0.0792**, against the registered branch at 0.090.
+
+| arm | rule A | rule P | A − P | 95% CI | p Holm | n_eff |
+|---|---|---|---|---|---|---|
+| `qlogei-addonly` | 0.0627 | **0.0627** | −0.0000 | [−0.0098, +0.0108] | 0.8482 | 20.30 |
+| `qlognei` | 0.0808 | 0.0629 | +0.0179 | [+0.0106, +0.0251] | 0.0000 | 25.38 |
+| `qlogei` | 0.0874 | 0.0703 | +0.0171 | [+0.0065, +0.0280] | 0.0106 | 21.96 |
+| `lhs` / `plate1_only` | 0.1027 | 0.0765 | +0.0263 | [+0.0129, +0.0393] | 0.0011 | 10.76 |
+| **`versionb`** | 0.1261 | **0.0792** | **+0.0468** | [+0.0304, +0.0623] | 0.0000 | 13.98 |
+| `doe` | 0.0892 | **0.2728** | **−0.1835** | [−0.2307, −0.1387] | 0.0000 | 31.38 |
+
+**The σ=0.10 deficit was an identification artefact of rule A.** SPADE moves from 10th of
+12 under rule A to within SESOI of every arm except `doe` under rule P. Paired, on
+`(instance, seed)`:
+
+| contrast | Δ | 95% CI | p | |
+|---|---|---|---|---|
+| `versionb` − `qlogei-addonly` | +0.0165 | [+0.0029, +0.0314] | 0.0088 | **within SESOI** |
+| `versionb` − `qlognei` | +0.0163 | [+0.0031, +0.0320] | 0.1355 | **within SESOI** |
+| `versionb` − `qlogei` | +0.0090 | [−0.0034, +0.0230] | 0.3326 | **within SESOI** |
+| `versionb` − `lhs` | +0.0028 | [−0.0137, +0.0200] | 0.9695 | **within SESOI** |
+
+Against `qlogei-addonly` the Wilcoxon and the bootstrap **agree** that a real difference
+exists and that it is **below SESOI**. Per Q20 §2 both are reported: detectable, not
+material.
+
+**`doe` inverts at a second cell.** D20's reversal was measured at σ=0.25 (rule P 0.1993
+against rule A 0.0892). At σ=0.10 it is **0.2728 against 0.0892 — worse, not better.** An
+arm whose `grid_r2` is −6.19 is punished by a terminal rule that reads its own response
+surface, and the asymmetry now holds at both noise levels.
+
+### 🔴 But the MODEL behind §2.2 is dead, and the prediction was right by coincidence
+
+```
+regret_P ~ sigma/sqrt(n_eff):   all arms   slope -1.7347   R2 0.0309   n=600
+                                minus doe  slope +0.5124   R2 0.0112   n=550
+```
+
+**Excluding `doe` flips the sign and leaves R² ≈ 0.01.** This is not a `doe` artefact —
+the model explains about **one percent** of the variance either way.
+
+**And the agreement that fired the branch is a coincidence of two cancelling errors.** §0
+assumed `n_eff ≈ 1.4` and predicted `0.10/√1.4 = 0.0845` against a measured **0.0792** —
+excellent agreement. But **measured `n_eff` is 13.98, not 1.4**:
+
+| arm | n_eff | σ/√n_eff | measured regret_P | ratio |
+|---|---|---|---|---|
+| `sobol` | 9.56 | 0.0323 | 0.0823 | 2.54× |
+| `versionb` | 13.98 | 0.0267 | 0.0792 | **2.96×** |
+| `qlogei-addonly` | 20.30 | 0.0222 | 0.0627 | 2.82× |
+| `doe` | 31.38 | 0.0179 | 0.2728 | 15.28× |
+
+`n_eff` was underestimated by ~10× and the model under-predicts by ~3× — and √10 ≈ 3.16.
+**The two errors cancel almost exactly.** The number was right; the mechanism was not.
+
+**What this does and does not overturn.** The branch is a decision rule on the *measured*
+`regret_P`, which is gated and real, so **the branch stands and §2 is not built**. What
+falls is **§2.2's allocation rule**: `n_required = (σ̂/r*)²` rests on the σ/√n_eff model,
+that model is not validated, and §2.2's well-count formula therefore **has no basis and
+would have to be replaced by empirical calibration** — as §0 registered in advance,
+whichever way the branch fell.
+
+**One-sigma caveat, carried.** §0 registers the regression across both σ. This is σ=0.10
+alone; `fix1-terminal-rule.json` carries `regret_p` at σ=0.25 but no `n_eff`, and
+`run_fix1_terminal_rule.py` raises at HEAD. The two-sigma version needs the gate runner
+re-run at σ=0.25.
+
+### What Version C now is
+
+**Form 1 only: §1 + §3.** Plate 1 unchanged, plate 2 = 8 boundary wells, rule P as the
+terminal rule, split-sample CE, connected-component design spaces. No trust region.
+
+## ✅ TASK 8 · **α\* DECLARED. Option (a) taken and registered.**
+
+`FINDINGS-SPADE.md` §28. §15 declined to resolve α\* on the evidence then available; three
+things changed. §24 removed one ground for the refusal (the ρ≈0 finding does not replicate),
+§25 put SPADE inside the α\* investigation for the first time, and §27 added **calibration** —
+the validated metric that speaks directly to what a certificate claims.
+
+**The two extremes are exactly inverted**, same cell (hill, d=6, σ=0.25), 9 arms:
+
+| | α\* | calibration |
+|---|---|---|
+| `doe` | **0.7875 — rank 1** | **0.22959 — rank 9** (5.2× worse than any other arm) |
+| `sobol` | **0.5275 — rank 9** | **0.02893 — rank 1** |
+
+α\* against calibration ρ = **+0.4667**, against Brier **+0.2333** (both lower-is-better, so
+positive means α\* tracks **badness**), against regret **−0.5667** (tracks quality). **None is
+significant at n = 9 arms and the declaration does not rest on them** — it rests on the
+mechanism and the extremes.
+
+> **α\* is a functional of the fitted posterior and nothing else. It measures how confidently a
+> model asserts an excursion, not whether the assertion is right.** An arm that is badly
+> miscalibrated but confident scores highest, which is exactly `doe`.
+>
+> **α\* is NOT a metric of certificate quality and is not reported as one.** Retained, labelled
+> MODEL-INTERNAL, as a measure of *posterior confidence* — a real and different thing. **No
+> ranking, no claim and no kill condition may rest on it.**
+
+**This closes the §4.2 two-arm anomaly as well**, and shows it was never two: `random` scores
+2nd–3rd on α\* with the worst regret, `sobol` scores last with the best containment, and both
+are the same fact — **α\* rewards confident assertion and neither arm's confidence tracks its
+correctness.**
+
+**Still open, and now the ONLY open question about α\*:** *why* the posterior is confident
+where it is wrong (option (b), the spatial-coherence test). **Not required for any claim in
+the record, because nothing rests on α\* any more.**

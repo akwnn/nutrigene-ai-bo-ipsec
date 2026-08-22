@@ -1525,3 +1525,76 @@ Refinement and Brier rank the arms differently almost everywhere, with a Spearma
 cells of **min −0.283, median −0.075, max +1.000** and **371 of 864 pair inversions**. Reporting
 Brier alone hides which half of it an arm is winning — which is the whole argument for the
 decomposition, now measured rather than asserted.
+
+---
+
+## 28. ⭐ α\* DECLARED: it is not a metric of certificate quality
+
+§15 reported the α\* question and declined to resolve it, correctly, on the evidence then
+available. Three things have changed: §24 removed one of the grounds for the refusal (the
+ρ≈0 finding does not replicate), §25 put SPADE inside the α\* investigation for the first
+time, and §27 added **calibration** — the one validated metric that speaks directly to what a
+certificate claims. **Option (a), declare, is taken and registered.**
+
+### The table that decides it
+
+α\* and calibration, **the same cell** (hill, d=6, σ=0.25), 9 arms, `plate1_only` excluded:
+
+| arm | α\* | rank | calibration | rank | Brier | rank | regret | rank |
+|---|---|---|---|---|---|---|---|---|
+| **`doe`** | **0.7875** | **1** | **0.22959** | **9** | 0.3367 | 9 | 0.0958 | 1 |
+| `versionb` | 0.6908 | 2 | 0.03593 | 6 | 0.1303 | 3 | 0.1546 | 5 |
+| `versionb_predictive` | 0.6861 | 3 | 0.03532 | 5 | 0.1304 | 4 | 0.1510 | 3 |
+| `random` | 0.6521 | 4 | 0.03032 | 2 | 0.1307 | 5 | 0.2216 | 9 |
+| `lhs` | 0.6291 | 5 | 0.03034 | 3 | 0.1280 | 2 | 0.1270 | 2 |
+| `qlognei` | 0.6055 | 6 | 0.04425 | 8 | 0.1411 | 8 | 0.1532 | 4 |
+| `versionb_random` | 0.6054 | 7 | 0.03846 | 7 | 0.1350 | 7 | 0.1638 | 7 |
+| `qlogei` | 0.5968 | 8 | 0.03366 | 4 | 0.1331 | 6 | 0.1553 | 6 |
+| **`sobol`** | **0.5275** | **9** | **0.02893** | **1** | **0.1269** | **1** | 0.1724 | 8 |
+
+**The two extremes are exactly inverted.** α\* ranks `doe` **first** — an arm whose calibration
+is **5.2× worse than any other arm in the study** and which is last on refinement, last on
+Brier, and worst-or-near on the symmetric difference. α\* ranks `sobol` **last** — the arm that
+is first on calibration, first on Brier, first on empirical containment, and first on mean
+symmetric-difference rank on three of four families.
+
+### What it is actually tracking
+
+| against | Spearman ρ | reads as |
+|---|---|---|
+| calibration (lower better) | **+0.4667** (p = 0.21) | α\* tracks **badness** |
+| Brier (lower better) | **+0.2333** (p = 0.55) | α\* tracks **badness** |
+| regret (lower better) | **−0.5667** (p = 0.11) | α\* tracks **quality** |
+
+**None of these is individually significant at n = 9 arms, and the declaration does not rest on
+them.** It rests on the mechanism and on the extremes, which are unambiguous: α\* agrees with
+**regret** and disagrees with **every metric of how good the probabilities are**.
+
+### The declaration
+
+**α\* is a functional of the fitted posterior and nothing else.** It measures how confidently a
+model asserts an excursion, not whether the assertion is right. An arm whose posterior is
+badly miscalibrated but *confident* — which is exactly `doe`, at 5.2× the calibration error of
+any other arm — scores highest.
+
+The project's registered rule is that **a validated metric beats a model-internal one**. Five
+validated metrics (calibration, Brier, empirical containment, symmetric difference, and the
+per-family rank) now point one way and α\* points the other, on the same arms, in the same
+cell.
+
+> **α\* is not a metric of certificate quality and is not reported as one.** It is retained,
+> labelled MODEL-INTERNAL, as a measure of *posterior confidence* — which is a real thing and
+> a different thing. No ranking, no claim, and no kill condition in this project may rest on
+> it.
+
+### What this closes, and what it does not
+
+**Closes:** the §15/§4.2 anomaly, the two-arm puzzle of §4.2 (`random` scoring 2nd–3rd on α\*
+with the worst regret; `sobol` scoring last with the best containment). Both are the same
+fact seen twice — **α\* rewards confident assertion, and neither arm's confidence tracks its
+correctness.** They were never two anomalies.
+
+**Does not close:** *why* the posterior is confident where it is wrong. Option (b) — testing
+whether α\* rewards spatially coherent high exceedance probability rather than correctness —
+remains available and is now the only open question about α\*. It is **not** required for any
+claim in this document, because nothing here rests on α\* any more.
