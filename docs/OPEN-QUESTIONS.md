@@ -8733,3 +8733,56 @@ The handoff listed *"E7 at σ = 0.10"* as **blocked on a registration decision**
 So the rule-P identification gap at σ = 0.10 needs **no new campaigns and no change to any
 committed runner.** Registered coverage limit: at σ = 0.10 only the three arms q57 carries
 have an `oracle_best`, so the spread arms enter at σ = 0.25 only unless a re-score adds them.
+
+---
+
+## 🔴 **K-C7 · VERDICT: FIRED.** The one-shot pass is spent and cannot be repeated.
+
+`results/versionc-detector-heldout.json`, 100 campaigns, `status: complete`. Scored against
+the rule frozen at **`95fca9c`** (corrected by Erratum 31 at `72c2a39`), both **before**
+hartmann6 or ackley was touched. Full result in `FINDINGS-SPADE.md` **§37**.
+
+**hartmann6 0/50 DECEPTIVE · ackley 0/50 · zero in all four cells · Holm tails 1.0 for
+both.** The registered threshold was ≥ 33/50 on **both** families. **K-C7 FIRES → Version C
+ships without Stage 0 (§3.6).**
+
+**Not a near miss.** Fit range **[0.1054, 0.8860]**; hartmann6 **[0.2673, 0.8856]**; ackley
+**[0.2949, 0.8534]**. The held-out families are **nested strictly inside** the boundary at
+both ends; closest approach over 100 campaigns was **0.0004**. **No threshold setting
+separates classes when one range strictly contains the other**, so this is not a
+tuning failure and re-tuning is both forbidden (§3.5) and pointless.
+
+**The registered prediction (C3.3b) was correct**, and was made from the fit set alone at no
+cost to the one-shot budget.
+
+**§3.6's registered consequence applies as written:** Version C ships without Stage 0, and
+this is *"a smaller but real finding"* rather than a failure of the run.
+
+### Scope of the negative result — registered so it is not over-claimed
+
+Tested: **one** frozen statistic (`additive_share`), **one** plate size (40 wells), **two**
+held-out families, at `(6, 0.25)` and `(6, 0.10)`. C3.2a had already ruled two of the six
+candidates non-viable as written; the remaining three were ranked less tight on the fit set
+and were **not** frozen. **This does not establish that landscape class is undetectable from
+plate 1.** A different statistic, a larger plate, or a two-class fit set could still work —
+**and §3.5 forbids trying any of them against hartmann6 or ackley now.** A future attempt
+needs new held-out families.
+
+### Disclosure — a smoke run touched the held-out families before the pass
+
+4 campaigns, at a **non-protocol configuration** (16-well plate, 1024-point grid, against
+the protocol's 40 and 20,000), written outside `results/`. All four returned UNIMODAL.
+`--smoke` now **requires `--out`** so it can never write the registered file. This could not
+have moved the boundary — that was committed at `95fca9c` and is re-verified against
+`git show HEAD:docs/OPEN-QUESTIONS.md` on every start — but **"did you look at the evaluation
+set before scoring it" has the answer "yes, four campaigns, at settings that are not the
+measurement", and that belongs in the record rather than in a memory.**
+
+### Version C's kill ledger — no longer "eight registered, zero adjudicated"
+
+| # | verdict |
+|---|---|
+| K-C1, K-C2 (hard stop), K-C3 | evaluated by `analyse_versionc_form1.py` when the live re-score lands |
+| K-C4, K-C5, K-C8 | **MOOT** — §2 was never built |
+| K-C6 | **WOULD MISFIRE** as written (C1.2a) |
+| **K-C7** | **FIRED** — 0/50 both families |
