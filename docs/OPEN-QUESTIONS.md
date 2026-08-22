@@ -8739,7 +8739,7 @@ have an `oracle_best`, so the spread arms enter at σ = 0.25 only unless a re-sc
 ## 🔴 **K-C7 · VERDICT: FIRED.** The one-shot pass is spent and cannot be repeated.
 
 `results/versionc-detector-heldout.json`, 100 campaigns, `status: complete`. Scored against
-the rule frozen at **`95fca9c`** (corrected by Erratum 31 at `72c2a39`), both **before**
+the rule frozen at **`b7dcc41`** (corrected by Erratum 31 at `a797afa`), both **before**
 hartmann6 or ackley was touched. Full result in `FINDINGS-SPADE.md` **§37**.
 
 **hartmann6 0/50 DECEPTIVE · ackley 0/50 · zero in all four cells · Holm tails 1.0 for
@@ -8773,7 +8773,7 @@ needs new held-out families.
 4 campaigns, at a **non-protocol configuration** (16-well plate, 1024-point grid, against
 the protocol's 40 and 20,000), written outside `results/`. All four returned UNIMODAL.
 `--smoke` now **requires `--out`** so it can never write the registered file. This could not
-have moved the boundary — that was committed at `95fca9c` and is re-verified against
+have moved the boundary — that was committed at `b7dcc41` and is re-verified against
 `git show HEAD:docs/OPEN-QUESTIONS.md` on every start — but **"did you look at the evaluation
 set before scoring it" has the answer "yes, four campaigns, at settings that are not the
 measurement", and that belongs in the record rather than in a memory.**

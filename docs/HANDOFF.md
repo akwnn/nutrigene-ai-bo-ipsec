@@ -117,9 +117,9 @@ gated. **Do not restart them.**
 
 | task | outcome |
 |---|---|
-| `analyse_versionc_form1.py` | **DONE by the other agent** (`16e37b3`), with `tests/test_versionc_kills.py` |
-| **detector freeze + one-shot score** | **DONE.** Frozen at `95fca9c` (code-free commit), scored at `881a7e9`. **K-C7 FIRED, 0/50 both families** — FINDINGS **§37** |
-| **E7 runner** | **DONE** (`042d3db`). `e7-search-vs-id-rule-p.json` committed, zero new campaigns, both joins checked at run time — FINDINGS **§36** |
+| `analyse_versionc_form1.py` | **DONE by the other agent** (`8a67741`), with `tests/test_versionc_kills.py` |
+| **detector freeze + one-shot score** | **DONE.** Frozen at `b7dcc41` (code-free commit), scored at `debeffb`. **K-C7 FIRED, 0/50 both families** — FINDINGS **§37** |
+| **E7 runner** | **DONE** (`bf4526d`). `e7-search-vs-id-rule-p.json` committed, zero new campaigns, both joins checked at run time — FINDINGS **§36** |
 | **`qlogei` / σ=0.10 in E7** | **NOT missing — I was wrong.** Both come from `q57-search-vs-id.json`; Erratum 28 is withdrawn by **Erratum 32** |
 
 ### 3.3 🔴 BLOCKED ON A DECISION — do not take these unilaterally
@@ -132,7 +132,7 @@ gated. **Do not restart them.**
 
 ### 3.4 Open coordination item
 
-Version C's commit **`a4ee81c`** claims *"the cross-fit cannot move §14's failures."* **§29
+Version C's commit **`bba2575`** claims *"the cross-fit cannot move §14's failures."* **§29
 finds those failures were a draw-count artefact** with 1.5–3.5 pp residual bias. The two
 tracks reached compatible conclusions by independent routes, but the claim as worded in that
 commit no longer matches §29. **I offered to read their file; Joseph has not answered.**
@@ -241,7 +241,7 @@ audit block in `OPEN-QUESTIONS.md`. Version C is being **scored**, not **adjudic
 
 | # | status | why |
 |---|---|---|
-| **K-C2** (hard stop) | **evaluator EXISTS** (`16e37b3`) | γ=0.50 containment; the live run produces the column |
+| **K-C2** (hard stop) | **evaluator EXISTS** (`8a67741`) | γ=0.50 containment; the live run produces the column |
 | K-C1 | **evaluator EXISTS** | `r*` at σ=0.10; the live run is σ=0.10 first |
 | K-C3 | **evaluator EXISTS** | symmetric difference vs `versionb` at γ=0.50; `versionb` is in `ARMS` |
 | K-C4 | **MOOT** | `versionc_fixed_m` needs §2, which was never built (`MOOT_ARMS` says so) |
@@ -259,7 +259,7 @@ reason string, and gate against `versionc-form1-s010.json` as committed.
 **⚠️ ANOTHER AGENT IS ASSIGNED THIS.** Two collision risks: (1) the live run holds
 `results/versionc-form1-s010.json.partial` and auto-chains to σ=0.25 — a second launch of the
 same runner races on that path; (2) the `.gitignore` negations for `versionc-form1-s010/025.json`
-landed only in `68e200c` — before that git would have silently refused both files.
+landed only in `f6c2bf6` — before that git would have silently refused both files.
 
 **8.4 — The Version C commits are on `main`**, following this repository's convention and the
 evaluation track's. Flagged because it departs from the global "branch first" rule.
@@ -281,8 +281,8 @@ exists: the 0.0792 above. **Do not budget wells for it.**
 
 `results/p6-families.json` is **103.8 MB** against GitHub's **100 MB hard limit**, and an
 earlier **208.8 MB** version of the same file is also in unpushed history (added at
-`a59063b`). **Every push is rejected by the pre-receive hook.** Splitting the working-tree
-file — done at `9d91133`, 8 shards of ~22 MB plus a verified loader — **does not fix this**,
+`d191d69`). **Every push is rejected by the pre-receive hook.** Splitting the working-tree
+file — done at `5a5d948`, 8 shards of ~22 MB plus a verified loader — **does not fix this**,
 because a push sends the blobs that are in *history*, not the ones in the working tree.
 
 **The only fix is a destructive history rewrite over 49 commits.** It was **blocked by the
@@ -292,15 +292,15 @@ permission classifier**, correctly. Joseph must run it or approve it:
 git branch -f backup-before-blob-purge HEAD          # safety net first
 FILTER_BRANCH_SQUELCH_WARNING=1 git filter-branch -f --index-filter \
   'git rm --cached --ignore-unmatch -q results/p6-families.json' \
-  --prune-empty -- a59063b^..HEAD
+  --prune-empty -- d191d69^..HEAD
 git push origin main
 ```
 
 **Consequences, stated before it is run:**
 
-1. **Every commit SHA from `a59063b` onward changes.** ~50 SHAs are cited in
+1. **Every commit SHA from `d191d69` onward changes.** ~50 SHAs are cited in
    `FINDINGS-SPADE.md`, `OPEN-QUESTIONS.md`, `CLAIMS.md` and this file — including the
-   detector freeze `95fca9c`, whose whole evidentiary value is *"committed before the
+   detector freeze `b7dcc41`, whose whole evidentiary value is *"committed before the
    scoring pass"*. **The ordering survives** (the freeze commit still precedes the scoring
    commit) but **the citations must be rewritten** from the old→new map. `filter-branch`
    preserves commit order and count, so the map is `git rev-list --reverse` before ∥ after.
@@ -322,21 +322,21 @@ registration decision — P7's `SIGMA = 0.25` is deliberately hardcoded.
 |---|---|---|
 | 74464 | `run_versionc_form1.py --sigma 0.10` → chains to `--sigma 0.25` | ~40/50, ~265 s/campaign |
 
-When it lands, **`analyse_versionc_form1.py` (the other agent's, `16e37b3`) decides K-C1,
+When it lands, **`analyse_versionc_form1.py` (the other agent's, `8a67741`) decides K-C1,
 K-C2 (the hard stop) and K-C3.** That is the last data dependency before drafting.
 
 ## C. DONE THIS SESSION — do not redo
 
 | item | commit | outcome |
 |---|---|---|
-| Version C kill audit | `ab506d5` | 8 registered, 0 adjudicated → fixed by the other agent at `16e37b3` |
-| **Detector freeze** | `95fca9c` | code-free commit, so the ordering is checkable |
-| Erratum 31 | `72c2a39` | `_instance_seed` was dead code; my own freeze spec was wrong, caught pre-scoring |
-| **K-C7 one-shot pass** | `881a7e9` | **FIRED — 0/50 both families**, ranges nested inside the fit range |
-| Erratum 32 | `04eeebf` | **Erratum 28 was wrong** — q57 had the "sourceless" numbers all along |
-| E7 committed | `042d3db` | zero new campaigns, both joins checked at run time |
-| **SPADE into E7** | `482172b` | 700-row fill, **0 gate failures**, all 48 wells |
-| p6 shards | `9d91133` | 8 × 22 MB + verified loader |
+| Version C kill audit | `7f32d08` | 8 registered, 0 adjudicated → fixed by the other agent at `8a67741` |
+| **Detector freeze** | `b7dcc41` | code-free commit, so the ordering is checkable |
+| Erratum 31 | `a797afa` | `_instance_seed` was dead code; my own freeze spec was wrong, caught pre-scoring |
+| **K-C7 one-shot pass** | `debeffb` | **FIRED — 0/50 both families**, ranges nested inside the fit range |
+| Erratum 32 | `9d97f64` | **Erratum 28 was wrong** — q57 had the "sourceless" numbers all along |
+| E7 committed | `bf4526d` | zero new campaigns, both joins checked at run time |
+| **SPADE into E7** | `7d34e7b` | 700-row fill, **0 gate failures**, all 48 wells |
+| p6 shards | `5a5d948` | 8 × 22 MB + verified loader |
 
 ## D. EXPLICITLY NOT DOING — Joseph's call, 2026-08-22
 

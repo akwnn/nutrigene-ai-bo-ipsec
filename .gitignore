@@ -207,7 +207,9 @@ COMMIT_MSG.txt
 !results/p4-coord.json
 !results/p4b-alpha-star-anomaly.json
 !results/p5-tau-quantile.json
-!results/p6-families.json
+# results/p6-families.json is DELIBERATELY NOT tracked: 103.8MB exceeds the 100MB
+# remote limit and it was purged from history. It is reconstructed from the shards
+# below by scripts/load_p6_families.py. Re-adding the negation breaks every push.
 !results/p7-murphy.json
 !results/d23-doe-subspace.json
 

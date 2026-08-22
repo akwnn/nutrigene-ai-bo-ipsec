@@ -1616,7 +1616,7 @@ claim in this document, because nothing here rests on α\* any more.
 ## 29. 🔴⭐⭐ F3: §14's KILL WAS AN ESTIMATOR ARTEFACT. It fired on 512 draws, not on SPADE.
 
 `results/f3-draw-sweep.json` — 250 campaigns, 3,000 rows, **0 crashes**. Registered at commit
-445c028 **before the runner existed**; the decision rule below was written before any number
+8032925 **before the runner existed**; the decision rule below was written before any number
 existed. Every tail is `scipy.stats.binom.cdf`, exact, never a normal approximation.
 
 ### The registered branch that fired
@@ -2374,7 +2374,7 @@ identification, because identification was already equal.**
 
 ## 37. 🔴⭐⭐ **K-C7 FIRED. The detector separates nothing, 0 of 50 on both families.**
 
-The one-shot held-out pass ran once, against a rule frozen and committed at `95fca9c`
+The one-shot held-out pass ran once, against a rule frozen and committed at `b7dcc41`
 **before hartmann6 or ackley was touched**. `results/versionc-detector-heldout.json`,
 100 campaigns, `status: complete`.
 
