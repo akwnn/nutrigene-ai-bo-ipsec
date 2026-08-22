@@ -125,7 +125,7 @@ gated. **Do not restart them.**
 | task | state | cost |
 |---|---|---|
 | **`coord` AUPRC re-score** | verified absent: `p4-coord.json.k6_rows` has no `auprc` key | ~20 min |
-| **Tier 1 document corrections** | inventoried, **not applied**: B3 removal, AUC "superseded" marks, pooled-containment restatements | editing only |
+| ~~Tier 1 document corrections~~ | ✅ **VERIFIED ALREADY APPLIED, 2026-08-23.** B3: `K6-TECHNICAL-REPORT.md:600` already reads *withdrawn*, `:604` *RESOLVED*. Pooled containment: `:929` already reads *"no pooled containment number appears in this document"*, with the withdrawn 0.1546/0.4203/0.5098 listed at `:1816`. AUC: the only surviving mention (`CLAIMS.md:749`, "AUC 0.77–0.84") is **descriptive** — contrasting map quality against `grid_r2 = −6.19` — not a ranking, so §24 does not reach it. **No edit made; editing correct text is not a correction.** | — |
 
 ### 3.2 Needs compute
 
