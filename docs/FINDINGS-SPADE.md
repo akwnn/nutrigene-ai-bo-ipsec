@@ -860,3 +860,253 @@ failing test. Counts are of `def test_` in each file.
 3. **A check must be able to return "still there."** A survivor check on `ppid == parent` is
    structurally blind to orphans, which reparent to PPID 1 — it reported success while three
    processes were alive.
+
+---
+
+# PART IV · CROSS-FAMILY, 2026-08-22
+
+**`results/p6-families.json` · 8 cells · 2,000 campaigns · 48,000 rows · gate failures 0.**
+Registered family order (hartmann6 → levy → rosenbrock → ackley) across cells 1 and 2,
+`(d=6, σ=0.25)` and `(d=6, σ=0.10)` — the registered fallback pair. Wall clock **2 h 10 m**,
+against a registered estimate of ~14 h; the per-arm timings in that estimate were measured
+while the machine was running at roughly a tenth speed and are ~5× pessimistic.
+
+---
+
+## 18. 🔴 The IoU identity bound was never a bound — and it halted the programme
+
+P6 halted on hartmann6 seed 24, `qlognei` missing `iou_pred` by **3.331e-16** against the
+**2.220e-16** "optimiser" bar. Investigating instead of widening found that **neither
+registered scalar is a bound**. Both are `max(observed)` over a few thousand Hill rows.
+
+The two sides of the identity are not comparable pieces of arithmetic:
+
+| side | arithmetic | roundings |
+|---|---|---|
+| `designspace.iou` | `int(inter) / int(union)` | **one** — exact integer counts |
+| `calibration.error_volumes` | `vol*(1-fi)`; `vol+prev-inter`; divide | **five**, on three already-rounded inputs |
+
+and the reconstruction carries two amplifications no constant can cover:
+`vol/intersect` (the `1-fi` subtraction loses relative precision as `fi → 1`) and
+`(vol+prev)/union` (the union subtraction cancels).
+
+**Measured on pure arithmetic — no oracle, no GP, no dataset, so this evidence does not
+depend on having seen the failure — the 1.0-ULP bar breaks on 0.152% of configurations and
+the 1.5-ULP bar on 0.011%.** P6 runs ~120k identity checks per family, so the *wider* bar
+alone fires on float noise about a dozen times per family.
+
+> **The bars were never population-specific. They were SAMPLE-SIZE specific**, which is worse:
+> they silently tighten as the study collects more rows.
+
+This is why the same gate fired on `versionb_random` seed 1 earlier and the miss of *exactly*
+3.331e-16 was read as "evidence the proxy is right." It was not a population signature. It was
+the arithmetic's ordinary output. **That earlier fix — one decision behind both bound and
+message — was correct and is untouched; it repaired a second defect sitting on top of this one.**
+
+**No tolerance was widened.** `iou_identity_bound` is Higham (ASNA §3.1) first-order
+propagation evaluated per row from the operands — *tighter* than 2.22e-16 wherever `iou` is
+small, looser only where the arithmetic warrants. Zero violations in 60k configurations
+(worst err/bound **0.54**) while still firing on **100%** of three injected F2a bugs, which
+float noise misses by ~13 orders of magnitude. `IOU_IDENTITY_BOUND` is **kept**: it is the
+honest record of what each committed file measured, and it still gates those files in
+`tests/test_p2_versionb_gamma.py`. It is simply no longer what gates a family it was never
+measured on. Tests 39 → 42.
+
+**Schema note.** 242 of the 250 hartmann6 `(6, 0.25)` campaigns predate the fix and therefore
+lack `iou_identity_resid_*` / `iou_identity_bound_*`. Every other cell carries them on every
+row. A consumer expecting those columns uniformly will find them absent in that one cell.
+
+---
+
+## 19. ⭐⭐ **Screening is fatal for a design-space deliverable on THREE of four families**
+
+The 24/24 Hill screening result was one family and post-hoc. It now reproduces.
+
+**Mean rank on `total_error_vol_pred`** (the symmetric difference — type I alone ranks silence
+first and is never the scalar). `plate1_only` is **excluded**: it carries
+`never_rank_separately` because it *is* `lhs` at 48 wells, and counting it makes `lhs` a second
+arm. 1 = best of 9. Only non-degenerate, non-above-ceiling cells, paired over the same seeds.
+
+| arm | hartmann6 (27 cells) | levy (10) | rosenbrock (9) | ackley (19) |
+|---|---|---|---|---|
+| **doe** | **7.59** | **8.50** | **8.22** | **4.32** |
+| qlogei | 5.74 | 6.40 | 6.78 | 4.95 |
+| qlognei | 6.56 | 7.40 | 7.56 | 6.16 |
+| lhs | 4.59 | 3.50 | 3.11 | 4.95 |
+| **sobol** | **3.44** | **1.60** | **2.89** | 4.47 |
+| random | 4.96 | 2.20 | 4.22 | 6.05 |
+| versionb (SPADE) | 4.33 | 4.90 | 3.56 | 4.05 |
+| versionb_random | 4.11 | 5.20 | 4.22 | 6.11 |
+| versionb_predictive | 3.67 | 5.30 | 4.44 | 3.95 |
+
+**Registered contrast, `doe` vs each arm**, paired on seed: 4,000-resample percentile
+bootstrap of paired differences (`default_rng(0)`), two-sided Wilcoxon signed-rank on the same
+pairs, **Holm across the cells of each family**, SESOI 0.02. Positive median ⇒ `doe` carries
+*more* error ⇒ the arm beats `doe`.
+
+| family | arms beating `doe` | above SESOI | strongest |
+|---|---|---|---|
+| hartmann6 (n=587) | 6 of 8 | **5** | sobol +0.0250, CI [+0.0179, +0.0310], p_holm 6.9e-37 |
+| levy (n=209) | **8 of 8** | **6** | random +0.1628, CI [+0.1058, +0.2167], p_holm 1.6e-32 |
+| rosenbrock (n=174) | **8 of 8** | **6** | sobol +0.1718, CI [+0.0948, +0.1992], p_holm 9.8e-28 |
+| ackley (n=382) | 6 of 8 | **0** | versionb +0.0074 — *every* effect below SESOI |
+
+### The three things this does NOT say
+
+1. **It is not universal — ackley is a genuine exception**, and it is the one family where
+   `doe` ranks best (4.32) and wins 9 of 19 cells. Ackley is excluded from every DoE contrast
+   by a decision taken **before** these numbers existed, on the pre-existing ground that the
+   screen evaluates the box centre as well as the CCD and so hits ackley's exact optimum
+   **7 times**. That exclusion removes the only family where `doe` wins, which is exactly what
+   a referee will attack — so the ackley column is reported here in full rather than dropped,
+   and the effects there are *all* below SESOI in any case.
+2. **On hartmann6 `doe` beats both BO arms** (`qlogei` −0.0004, `qlognei` −0.0072) while losing
+   to every spread arm. The failure is specific to spread, not to "everything beats screening."
+3. **This is a MAP result, not a regret result.** Q53 has one-shot spread *losing* regret on
+   hartmann6 by +0.13 to +0.28, all p_holm ≤ 0.0016. Spread wins the map and loses the search
+   on the same family. Both are true and neither supersedes the other.
+
+### `sobol` is the best arm on three of four families
+
+Best mean rank on hartmann6 (3.44), levy (1.60) and rosenbrock (2.89), and the most cell wins
+on each. This is the §4.2 anomaly arriving from a third direction: `sobol` already had the best
+Brier of any arm (0.1273) and the best empirical containment in the study
+(0.959 / 1.000 / 1.000) **while placing last on α\* at three of four thresholds.**
+**α\* penalises the arm that three independent measurements now call the best.**
+
+---
+
+## 20. The certifiability ceiling is a result — and it is NOT ordered by grid range
+
+Fresh, independent corroboration of the census, measured at d=6 by the runners themselves:
+
+| family | σ=0.25 | σ=0.10 | d=6 total |
+|---|---|---|---|
+| ackley | 0/24 | 0/24 | **0%** |
+| hartmann6 | 1/24 | 0/24 | **2.1%** |
+| levy | 16/24 | 10/24 | **54%** |
+| rosenbrock | 18/24 | 13/24 | **65%** |
+
+**58 of 192 (d=6) cells sit above `tau_max`.** This reproduces the committed census
+(`results/p6-ceiling-census.json`) from a different code path — the first independent check
+that file has had. The census's own headline figures verify: 111/384 = 28.906%, and per family
+0% / 2.083% / 50.00% / 63.54%.
+
+**🔴 Correction — "ordered by grid range" is wrong**, and it was repeated into an earlier draft
+of this section before being checked. Exceedance is **not** monotone in the family's response
+range, and not nearly:
+
+| family | max `tau_q` | grid range (d=6) | exceedance |
+|---|---|---|---|
+| ackley | 0.16159 | 0.40925 | 0% |
+| hartmann6 | 0.56612 | **0.92112** | **2.1%** |
+| levy | 0.95996 | 0.93187 | 54% |
+| rosenbrock | 0.98631 | **0.85290** | **65%** |
+
+hartmann6 has a *larger* range than rosenbrock and 1/30th the exceedance. What **is** perfectly
+monotone — across all five families including hill — is **max `tau_q`**, which is what
+`above_ceiling` actually compares against `tau_max`. Since `tau_max` is a function of
+`(gamma, sigma)` alone, exceedance can only track where the prevalence quantile sits under
+`UnitScaled`. **The ordering variable is the quantile's position, not the family's range.**
+The `tau_q` column above is read from the runners' own logs, independently of the census file.
+
+**Two provenance defects in the census, found while checking it:**
+
+1. `above_ceiling` is a **majority vote**, not `tau > tau_max`: `n_above * 2 > len(taus)`
+   (`run_p6_families.py`). For the four external families `n_landscapes = 1`, so it collapses to
+   the strict test and the 384-cell arithmetic is unaffected. For `hill` (`n_landscapes = 25`) it
+   needs ≥13 of 25 — **4 hill rows read `above_ceiling = False` with ≥1 landscape above.** The
+   file-wide 480-row figure is therefore not the strict test; the 384-row one is.
+2. **All 8 ackley rows in the τ source are `sensitivity: true`**, and `ceiling_census()` applies
+   no `sensitivity` filter. The "ackley 0%" column is built entirely from sensitivity rows while
+   the other four families' columns are not. The arithmetic is unaffected; the provenance is not
+   comparable.
+
+**The consequence is severe and is the honest headline of Part IV: rankability collapses off
+Hill.** Of 48 cells per family, only **27** (hartmann6), **19** (ackley), **10** (levy) and
+**9** (rosenbrock) are rankable at all — **79% and 81% of levy and rosenbrock cells are
+excluded** as degenerate or above-ceiling. Every table above rests on those survivors and says
+so. The merge's own count: **48 of 192 cells not rankable on the ranking scalar** (48 arms tie,
+48 ranking is prevalence only), and per-metric denominators of 136 / 143 / 144 for type I /
+type II / symmetric difference.
+
+Emptiness is the mechanism. Empty predictive regions per arm:
+
+| family | range across arms |
+|---|---|
+| hartmann6 | 18.0% – 45.7% |
+| ackley | 1.2% – 57.8% |
+| levy | 64.8% – 74.2% |
+| **rosenbrock** | **69.5% – 77.8%** |
+
+*"How much of a response surface is certifiable at a given assurance"* has not been asked
+quantitatively in the QbD literature. On two of four families the answer at d=6 is **under a
+quarter of it.**
+
+---
+
+## 21. What Part IV does NOT license
+
+* **"Screening is always fatal."** Three of four families, and the fourth reverses it. The
+  defensible claim names the families and the metric.
+* **Any ackley DoE contrast.** Excluded by pre-registered decision; the design hits the optimum.
+* **Ranking anything on levy or rosenbrock without the denominator.** 9 and 10 rankable cells of
+  48. Every figure carries its `n` or it is withdrawn.
+* **A regret claim.** Part IV scores the map. Regret runs the other way on hartmann6.
+* **Cells 3 and 4.** `(8, 0.25)` and `(8, 0.10)` have not run. The registered cell order is what
+  makes stopping after cells 1+2 coherent — it does not make it complete.
+
+---
+
+## 22. 🔴 §14's multiplicity correction was computed with a normal approximation, and it does not survive the exact tail
+
+The four measured containment figures in §14 **reproduce exactly**: 0.840, 0.880, 0.900,
+0.900, at 42, 44, 45, 45 of 50. Nothing about the measurements is in question.
+
+**The p-values attached to them are not the exact binomial tail.** They are a
+continuity-corrected normal approximation to it, and the substitution is recoverable to the
+printed precision:
+
+| cell | X/50 | claimed p | **exact** `binom.cdf` | normal-cc | ratio |
+|---|---|---|---|---|---|
+| γ=0.99, τ_f=0.60 | 42 | 0.0006 | **0.00318834** | 0.00058843 | **5.31×** |
+| γ=0.99, τ_f=0.75 | 44 | 0.026 | **0.03777617** | 0.02578793 | 1.45× |
+| γ=0.95, τ_f=0.60 | 45 | 0.097 | **0.10361681** | 0.09718296 | 1.07× |
+| γ=0.99, τ_f=0.85 | 45 | 0.097 | **0.10361681** | 0.09718296 | 1.07× |
+
+A Binomial(50, 0.95) has `np(1−p) = 2.5` — an order of magnitude below the usual ≥10 rule of
+thumb, and the far-left tail is where the approximation is worst.
+
+### What changes
+
+* **Holm ×72 on the leading cell is 0.2296, not 0.043.** The claimed value is exactly
+  `72 × 0.00058843 = 0.042367`. With the exact tail it is `72 × 0.00318834 = 0.229561`.
+  **No cell survives Holm at α = 0.05 across the 72.**
+* **"Roughly seven at p < 0.10 expected by chance" is 2.72**, computed as the true null
+  probability that a Binomial(50, 0.95) draw yields an exact tail below 0.10 (0.037776),
+  times 72. **The observed count is 2 — below even that.**
+* The one-cell survival re-appears only in the **18-cell α=0.95 subfamily** (Holm 0.0574,
+  α=0.10) — a smaller family than the 72 the claim invokes, and choosing it after seeing the
+  table is not available.
+
+### What does NOT change
+
+**§14's registered kill still fired, exactly as specified.** It is a pre-registered decision
+rule on containment falling below nominal, not a hypothesis test, and it does not become
+un-fired because the post-hoc inference attached to it was computed with the wrong tail.
+What is withdrawn is the *inferential* claim layered on top: **"one of the four failures is
+statistically real" is not supported.** The defensible statement is that four cells fall below
+nominal and **none is distinguishable from chance across 72 cells.**
+
+### The design cannot detect what it was asked to detect
+
+Discreteness at n=50, p=0.95 sets a floor on what any single cell can achieve:
+
+| X | 40 | 41 | 42 | 43 | 44 | 45 |
+|---|---|---|---|---|---|---|
+| exact tail p | 0.000159 | 0.000756 | 0.003188 | 0.011786 | 0.037776 | 0.103617 |
+
+**A cell at 45/50 can never reach p < 0.10 no matter what else is true**, and after Holm ×72
+even 42/50 cannot reach 0.05. Detecting a sub-nominal certificate at this α with this many
+cells needs more seeds per cell, not more cells — which is a design finding, and it should be
+settled before any further containment sweep is registered.

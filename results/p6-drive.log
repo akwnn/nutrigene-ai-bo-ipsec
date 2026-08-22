@@ -4,3 +4,20 @@ nohup: setsid: No such file or directory
 HALT at hartmann6 d=6 sigma=0.25 (exit 1) -- registered kill or crash; see results/p6-hartmann6-d6-s0.25.log
 === hartmann6 d=6 sigma=0.25  start 14:12:22
 HALT at hartmann6 d=6 sigma=0.25 (exit 1) -- registered kill or crash; see results/p6-hartmann6-d6-s0.25.log
+=== hartmann6 d=6 sigma=0.25  start 02:11:22
+=== hartmann6 d=6 sigma=0.25  done  02:12:20
+=== levy d=6 sigma=0.25  start 02:12:20
+=== levy d=6 sigma=0.25  done  02:35:09
+=== rosenbrock d=6 sigma=0.25  start 02:35:09
+=== rosenbrock d=6 sigma=0.25  done  02:54:09
+=== ackley d=6 sigma=0.25  start 02:54:09
+=== ackley d=6 sigma=0.25  done  03:11:56
+=== hartmann6 d=6 sigma=0.10  start 03:11:56
+=== hartmann6 d=6 sigma=0.10  done  03:30:26
+=== levy d=6 sigma=0.10  start 03:30:26
+=== levy d=6 sigma=0.10  done  03:47:50
+=== rosenbrock d=6 sigma=0.10  start 03:47:50
+=== rosenbrock d=6 sigma=0.10  done  04:03:55
+=== ackley d=6 sigma=0.10  start 04:03:55
+=== ackley d=6 sigma=0.10  done  04:21:47
+=== cells 1+2 complete 04:21:47; run --merge next
