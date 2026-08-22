@@ -9037,3 +9037,69 @@ saturation**, not evidence that `tau_q` orders certifiability.
 map metrics) would, on the count metric alone, look like it transfers cleanly to the
 certificate. **It does not.** The transfer is threshold-shaped, and reporting the count
 ordering without the rate ordering beside it would overstate what `tau_q` buys.
+
+---
+
+## ✅ P8.1 / P8.2 · **ALL FIVE PREDICTIONS HELD** — including the one I registered as expected-to-fail
+
+`results/p8-certificate-families.json` promoted: **1,000 campaigns, 24,000 rows, 0 gate
+failures.** Adjudicated by `scripts/adjudicate_p8_predictions.py`, **written before
+`rosenbrock` finished and before `ackley` started**, with its bars copied from the
+registration commits and pinned by tests. Verdicts in `results/p8-predictions.json`.
+
+| | prediction | verdict | evidence |
+|---|---|---|---|
+| **P1** | `rosenbrock` ≤ 8 all-empty **and** α\* > 0.80 | **HELD** | 2 of 24; α\* **0.9351** |
+| **P2** | `ackley` ≥ 22 all-empty **and** α\* < 0.10 | **HELD** | **24 of 24**; α\* **0.0000** |
+| **P3** | count ordering is the exact reverse of max `tau_q` | **HELD** | **0 inverted pairs of 10** |
+| **P4** | `ackley` rate > 0.90, `rosenbrock` < 0.70 | **HELD** | **1.0000** and **0.4825** |
+| **P5** | P3 holds on counts, **fails** on rates | **HELD** | counts 0/10 inverted; rates **1/10** |
+
+### P3 held, and I had registered that it would fail
+
+Erratum 33 recorded *"I expect it to fail"* before the run. **It did not.** The error was
+mine and it was a units error: Erratum 33 read the ordering off the **empty rate** while P3
+was registered in **all-empty counts**. P8.2 caught that and predicted the split
+(**P5**), which held — **the single inverted rate pair is `levy` (τ_q 0.95996, rate 0.6133)
+against `hill` (τ_q 0.93129, rate 0.5608)**, exactly the mid-order pair P8.2 named, and it
+survived `ackley` landing at the extreme precisely as argued.
+
+**The adjudicator did not special-case the expectation.** `P3_EXPECTED_TO_FAIL` is recorded
+and no branch reads it; a test greps this file for a conditional on that constant. That test
+**failed on its own docstring** on first run, which is the check working.
+
+### 🔴 What the verdicts mean — and the one that matters most
+
+**`tau_q` is a THRESHOLD, not a rank.** It predicts *whether* a family certifies (P2, P4:
+ackley and hartmann6 at rates 1.000 and 0.990 against 0.48–0.61 for the rest) and **not how
+often** (P5: the rate ordering inverts mid-group). The count metric's clean ordering is an
+artefact of **saturation** — it asks *"did this cell ever certify"* and ignores frequency.
+**Reporting the count ordering alone would have overstated what `tau_q` buys**, which is why
+P8.2 was registered before the data.
+
+**§20's ceiling ordering transfers from the map to the certificate only in threshold form.**
+
+### 🔴🔴 REGISTERED: §14's withdrawn claim is TRUE off hill, and §29 still stands
+
+**Three of 64 scored cells fall below nominal and survive Holm across all 64** — `levy`
+γ=0.99/τ=0.60 at **0.694** (Holm **6.05e-07**), `rosenbrock` γ=0.99/τ=0.60 at **0.740**
+(**4.74e-05**), `levy` γ=0.99/τ=0.75 at **0.771** (**1.22e-03**). **All at γ = 0.99.
+`hill` has zero.** Per-cell throughout; **never pooled**, because one campaign appears in
+many cells.
+
+**§29 is NOT overturned.** On hill, at 4,096 draws, there are **no** failures — the
+withdrawal was correct *as a statement about hill at 512 draws*. **The effect is real
+elsewhere.** §14 fired on the right phenomenon, on the wrong family, using an estimator too
+noisy to see it, and was right by accident.
+
+**New registered constraint: no containment claim may be stated family-agnostically.**
+SPADE's certificate is calibrated on hill (0 of 18 cells below nominal) and under-covers at
+γ = 0.99 on `levy` and `rosenbrock`. Any future statement about SPADE's coverage **must name
+the family and the γ**.
+
+### What P8 does NOT settle
+
+**One cell.** d = 6, σ = 0.25. σ = 0.10 and d = 8 are untouched, and P8 must not be read as
+*"SPADE's certificate generalises"* — only as *"across five families at d=6, σ=0.25"*.
+The four synthetic families have **n = 4 `tau_q` rows** against hill's 100, so their max is a
+much noisier statistic — registered as a limitation before the data and unchanged by it.

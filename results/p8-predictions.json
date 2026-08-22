@@ -1,0 +1,105 @@
+{
+ "source": "p8-certificate-families.json",
+ "bars": {
+  "P1": {
+   "family": "rosenbrock",
+   "max_all_empty": 8,
+   "min_alpha_star": 0.8
+  },
+  "P2": {
+   "family": "ackley",
+   "min_all_empty": 22,
+   "max_alpha_star": 0.1
+  },
+  "P4": {
+   "ackley_min_empty_rate": 0.9,
+   "rosenbrock_max_empty_rate": 0.7
+  }
+ },
+ "p3_expected_to_fail": true,
+ "stats": {
+  "rosenbrock": {
+   "family": "rosenbrock",
+   "n_campaigns": 50,
+   "all_empty": 2,
+   "n_cells": 24,
+   "empty_rate": 0.4825,
+   "alpha_star": 0.93510009765625,
+   "sensitivity_flagged": false
+  },
+  "levy": {
+   "family": "levy",
+   "n_campaigns": 50,
+   "all_empty": 2,
+   "n_cells": 24,
+   "empty_rate": 0.6133333333333333,
+   "alpha_star": 0.874549560546875,
+   "sensitivity_flagged": false
+  },
+  "hill": {
+   "family": "hill",
+   "n_campaigns": 50,
+   "all_empty": 6,
+   "n_cells": 24,
+   "empty_rate": 0.5608333333333333,
+   "alpha_star": 0.859068603515625,
+   "sensitivity_flagged": false
+  },
+  "hartmann6": {
+   "family": "hartmann6",
+   "n_campaigns": 50,
+   "all_empty": 22,
+   "n_cells": 24,
+   "empty_rate": 0.99,
+   "alpha_star": 0.05593668619791667,
+   "sensitivity_flagged": false
+  },
+  "ackley": {
+   "family": "ackley",
+   "n_campaigns": 50,
+   "all_empty": 24,
+   "n_cells": 24,
+   "empty_rate": 1.0,
+   "alpha_star": 0.0,
+   "sensitivity_flagged": true
+  }
+ },
+ "verdicts": [
+  {
+   "prediction": "P1",
+   "held": true,
+   "all_empty": 2,
+   "bar_all_empty": "<= 8",
+   "c1": true,
+   "alpha_star": 0.93510009765625,
+   "bar_alpha_star": "> 0.8",
+   "c2": true
+  },
+  {
+   "prediction": "P2",
+   "held": true,
+   "all_empty": 24,
+   "bar_all_empty": ">= 22",
+   "c1": true,
+   "alpha_star": 0.0,
+   "bar_alpha_star": "< 0.1",
+   "c2": true
+  },
+  {
+   "prediction": "P3",
+   "held": true,
+   "n_pairs": 10,
+   "violations": []
+  },
+  {
+   "prediction": "P4",
+   "held": true,
+   "ackley_rate": 1.0,
+   "bar_ackley": "> 0.9",
+   "c1": true,
+   "rosenbrock_rate": 0.4825,
+   "bar_rosenbrock": "< 0.7",
+   "c2": true
+  }
+ ]
+}

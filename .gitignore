@@ -258,6 +258,7 @@ COMMIT_MSG.txt
 !results/e7-search-vs-id-rule-p.json
 !results/e7-oracle-best-fill.json
 !results/p8-certificate-families.json
+!results/p8-predictions.json
 !results/p4-coord-auprc.log
 !results/p4-coord.SUPERSEDED-no-auprc.json
 !results/p8-certificate-families.log

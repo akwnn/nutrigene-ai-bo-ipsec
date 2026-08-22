@@ -2823,63 +2823,81 @@ because a result that exists only in a decision log is a result the next reader 
 
 ---
 
-## 41. 🔴⭐⭐⭐ P8 — **SPADE's certificate does not FAIL off hill. It DECLINES TO ANSWER.** *(IN FLIGHT)*
+## 41. 🔴⭐⭐⭐ P8 — **SPADE's certificate off hill: it declines to answer, and where it answers at high assurance it UNDER-COVERS**
 
-> **⚠️ IN FLIGHT.** The run is at ~400/1000 with `hill` and `hartmann6` complete and `levy`,
-> `rosenbrock`, `ackley` pending. **No number below is a finding yet.** This section is
-> replaced when `results/p8-certificate-families.json` promotes. It is written now because
-> the two completed families already answer the registered question, and because the shape
-> of the answer changes what the remaining families are evidence *about*.
+`results/p8-certificate-families.json` — **1,000 campaigns, 24,000 rows, 0 gate failures**,
+five families × four SPADE arms × 50 seeds, d=6, σ=0.25, **4,096 draws**. Hill's `regret` and
+`n_wells` reproduce `p2-versionb-gamma.json` at **\|Δ\| = 0**.
 
-**SPADE (`versionb`), α = 0.95, n = 50 campaigns per cell, 4,096 draws, d=6, σ=0.25.**
+**This is the first measurement of SPADE's certificate anywhere but hill.** Every previous
+cross-family result (§19, §30) tested the *map*: `p6-families.json` carries 60 columns and not
+one is a certificate column.
+
 Containment is `ce_empirical` — the validated statistic. `ce_contain` is **circular**
 (`conservative_estimate` selects on it, so it cannot fall below α) and the analyser raises
-rather than reporting it.
+rather than reporting it. Empty sets are `nan` and leave **both** numerator and denominator:
+an empty certificate is vacuously contained, and counting it as a success would have reported
+**ackley at containment 1.000** for certifying nothing in 1,200 campaigns.
 
-| | hill | hartmann6 |
-|---|---|---|
-| cells where the α=0.95 set is **empty in all 50 campaigns** | **6 of 24** | **22 of 24** |
-| cells with any scored campaign | 18 of 24 | **2 of 24** |
-| containment where scored | **1.000** in 17 of 18 (0.980 once) | **0.900** (n=10) and **0.500** (n=2) |
-| mean `alpha_star` range | 0.083 – 1.000 | **0.000 – 0.511** |
+### 41.1 SPADE (`versionb`), α = 0.95, n = 50 per cell, 24 cells per family
 
-Only at γ = 0.99 does hartmann6 certify anything at all: **10 of 50** campaigns at
-τ_frac = 0.60 and **2 of 50** at 0.75. Everywhere else the conservative set is empty in
-every campaign.
+| family | max `tau_q` | cells that certify | all-empty | mean empty rate | mean α\* |
+|---|---|---|---|---|---|
+| `rosenbrock` | 0.98631 | **22 / 24** | 2 | 0.4825 | 0.9351 |
+| `levy` | 0.95996 | **22 / 24** | 2 | 0.6133 | 0.8745 |
+| `hill` | 0.93129 | 18 / 24 | 6 | 0.5608 | 0.8591 |
+| `hartmann6` | 0.56612 | **2 / 24** | 22 | 0.9900 | 0.0559 |
+| `ackley` ⚠️ | 0.16159 | **0 / 24** | 24 | **1.0000** | **0.0000** |
 
-### 41.1 The registered prediction is wrong in an informative way
+⚠️ **`ackley` carries `sensitivity: true` on every `p5` row.** It is in for a certificate
+study (this is not a DoE contrast) and the flag travels with it.
 
-It said *"containment at γ=0.95 will be LOWER off hill."* **Containment off hill is mostly
-UNDEFINED**, because there is no set to measure. That is a third outcome the registration
-could not express — **the same shape as E7's failure in §34.3**, and the second time in this
-project that a two-branch registration has met a sign-flip or a category change.
+**`ackley` certified NOTHING in 1,200 campaigns.** `hartmann6` certified in 12.
 
-### 41.2 🔴 The trap this would have walked into
+### 41.2 🔴🔴 **The withdrawn §14 claim is TRUE — off hill, at 4,096 draws, at γ = 0.99**
 
-`ce_empirical` is `nan` for an empty set — an empty certificate is *vacuously* contained.
-**Had empties counted as successes, hartmann6 would report containment 1.000 at nearly every
-cell**: a perfect score for a method that certified nothing, fifty times out of fifty, and it
-would have read as *better* than hill's 0.980 at γ=0.99.
+**Per-cell only. Never pooled** — one campaign appears in many `(γ, τ_frac)` cells, so
+pooling inflates *n*, and this project has already withdrawn figures built that way.
 
-The analyser therefore drops empties from the numerator **and** the denominator, carries
-`n_scored` beside every rate, and returns `None` — never 1.0, never 0.0 — for a cell that
-certified nothing. `tests/test_p8_analysis.py` pins all three.
+**Three of 64 scored cells fall below nominal and survive Holm across all 64:**
 
-### 41.3 What this is NOT
+| family | γ | τ_frac | contained | rate | Holm p |
+|---|---|---|---|---|---|
+| `levy` | **0.99** | 0.60 | 34 / 49 | **0.694** | **6.05e-07** |
+| `rosenbrock` | **0.99** | 0.60 | 37 / 50 | **0.740** | **4.74e-05** |
+| `levy` | **0.99** | 0.75 | 37 / 48 | **0.771** | **1.22e-03** |
 
-**Not a kill.** §29 withdrew *"the certificate fails below nominal at high assurance"* as a
-512-draw artefact, and P8 runs at 4,096. This records where containment sits.
+**All three are at γ = 0.99, the highest assurance level. `hill` has ZERO cells below
+nominal** — its worst is 0.980, and 18 of 18 scored cells clear 0.95.
 
-**Not "hill is special and the others are broken".** Hill is empty in **6 of 24** cells
-itself — emptiness is driven by `(γ, τ_frac)` as well as by family, and both axes move it.
-The honest contrast is **6 of 24 against 22 of 24**, not "hill works, hartmann6 does not".
+§14 fired *"SPADE's certificate fails below nominal at high assurance"*; §29 **withdrew** it
+as a 512-draw artefact. **Both stand, and P8 does not overturn either.** On hill the
+withdrawal holds — 0 failures at 4,096 draws. **The effect is real on `levy` and
+`rosenbrock`**, at the registered-sufficient draw count, surviving multiplicity correction.
 
-**Not yet a cross-family result.** Two families of five. `levy`, `rosenbrock` and `ackley`
-are pending, and §20's ceiling ordering predicts they will differ from each other.
+**The original kill fired on the right phenomenon, on the wrong family, for the wrong
+reason.** It was measured where the effect is absent, using an estimator too noisy to see
+anything, and it happened to fire. §29's withdrawal was correct *as a statement about hill
+at 512 draws* and would have been wrong as a statement about SPADE.
 
-### 41.4 What it already means for α\*
+### 41.3 The failure mode is emptiness, not miscoverage — except where it is both
 
-§31 declared α\* measures **willingness to certify**. Hill's mean α\* is at or near 1.000
-across most of the ladder; hartmann6's is **0.000 to 0.020 in 17 of 24 cells**. The two
-statements — "the set is empty" and "α\* is ~0" — are **the same fact in two languages**, and
-their agreement here is the first off-hill evidence for §31's reading.
+Two distinct failures, and conflating them would lose both:
+
+* **`ackley` and `hartmann6` DECLINE.** 0 and 2 certifying cells of 24, α\* 0.000 and 0.056.
+  Nothing to be right or wrong about. **This is not a calibration failure.**
+* **`levy` and `rosenbrock` ANSWER, and at γ = 0.99 they answer WRONG.** 22 of 24 cells
+  certify, α\* 0.87–0.94 — then under-cover at the highest assurance.
+
+**The families that certify most readily are the ones whose certificate is least
+trustworthy at high assurance.** Hill is the only family that is both willing (18/24) and
+calibrated (0 failures).
+
+### 41.4 §31's α\* reading gets its first off-hill confirmation
+
+§31 declared α\* measures **willingness to certify**, not certificate quality. P8 is the
+independent test: α\* tracks the emptiness rate almost exactly — ackley 0.000 at empty rate
+1.000, hartmann6 0.056 at 0.990, and the three willing families 0.86–0.94. **And α\* says
+nothing about whether the certificate is right**: `rosenbrock` has the *highest* α\*
+(0.9351) and *two* Holm-surviving coverage failures, while `hill` has a lower α\* (0.8591)
+and none. **Exactly what §31 predicted, on data §31 never saw.**
