@@ -7912,3 +7912,88 @@ per-family support width over the pooled width.
 **What would change the verdict.** A statistic with a materially tighter support on the tie
 families. None of the six candidates has one at 48 wells; whether one exists at a larger
 budget is a different question and is not answered here.
+
+---
+
+# 📌 REGISTRATION · **F3 REDESIGNED — the winner's curse inside `CE_alpha`, on BOTH axes**
+
+**Registered 2026-08-22, before `scripts/run_f3_draw_sweep.py` exists.** Scope decision taken
+by Joseph: **draws × seeds**, not the draws-only sweep originally registered.
+
+## Why the registered design changed
+
+**The original F3 was a draw sweep alone. Erratum 21 established it cannot detect the effect
+it was built to detect.** At n=50, p=0.95 the exact binomial tail is:
+
+| X/50 | 42 | 43 | 44 | 45 |
+|---|---|---|---|---|
+| exact tail | 0.0032 | 0.0118 | 0.0378 | 0.1036 |
+
+**A cell at 45/50 can never reach p < 0.10**, and after Holm ×72 even 42/50 cannot reach 0.05.
+A draws-only sweep would return four cells that still cannot be called, at four draw levels.
+
+**At n=200, p=0.95, 180/200 gives an exact tail ≈ 0.007** — inside Holm ×72. That is the
+difference between *cannot detect* and *can*. **The seeds axis is not a refinement; it is what
+makes the experiment able to answer its own question.**
+
+*(Recorded as a registered-design change with its reason, per the standing rule. The reason is
+not "the first result was inconvenient" — it is that the original design's power was never
+computed, and when computed it is insufficient by construction.)*
+
+## The mechanism under test
+
+`conservative_estimate` scans `n_rho` Vorob'ev quantiles and keeps the **largest** whose
+containment, **measured on the draws**, reaches α. A **maximum over `n_rho` noisy estimates**,
+then reported on the same draws that selected it — **anti-conservative by construction.** This
+is the project's own optimizer's-curse result operating inside its safety metric.
+
+**The bias should peak where the candidates tie.** At γ=0.99, τ_frac=0.60 the true set covers
+**0.99916** of the box, so the quantiles collapse onto each other — and that is exactly where
+§14's failures sit.
+
+## Design
+
+- **Cells:** the four §14 sub-nominal cells — (γ=0.99, τ_f=0.60), (γ=0.99, τ_f=0.75),
+  (γ=0.95, τ_f=0.60), (γ=0.99, τ_f=0.85). Plus **(γ=0.50, τ_f=0.60) as a negative control**:
+  the bias should be near-absent where the quantiles are well separated, and a sweep that moves
+  there too is measuring something else.
+- **Draws:** 512 → 1024 → 2048 → 4096.
+- **`n_rho`:** 16 and 64. The bias is a maximum over `n_rho` candidates, so it must scale with
+  `n_rho` if the mechanism is what we think.
+- **Seeds:** 50 → **200**.
+- **Arm:** `versionb` (SPADE). The certificate is SPADE's.
+
+## Reported, per (cell, draws, n_rho, n_seeds)
+
+`alpha_star`, `CE` volume, **empirical containment with its own `n`**, and the **EXACT binomial
+tail** (`scipy.stats.binom.cdf`) — **never a normal approximation** (Erratum 21). Wilson
+intervals on every proportion. Holm across the cells of the family, stated.
+
+**Also reported: `conservative_estimate_split` on the same draws**, so the measured bias and
+the cross-fit removal of it appear on the same row. Version C owns the split; this track owns
+the measurement; **neither was designed to test the other, and the two answers are compared
+explicitly.**
+
+## Registered decision rule — written before any number exists
+
+- **Containment rises toward nominal as draws increase, at n=200** → **the estimator failed,
+  not SPADE.** The correction is itself a reportable result, and §14's kill is attributed to
+  the estimator.
+- **Containment flat in draws at n=200** → **the certificate genuinely degrades with
+  assurance.** §14 stands and strengthens.
+- **Bias scales with `n_rho`** → confirms the maximum-over-candidates mechanism specifically,
+  as against any other draw-count effect.
+
+**Kill:** if `versionb` containment falls below nominal at **γ = 0.50** at any draw count, that
+is a different and worse event than the ladder failures, and the programme stops and reports it.
+
+## Constants
+
+**No constant in this runner may be derived as `max(observed)`** (Erratum 20). The only
+tolerance is the exact binomial tail, which is computed, not fitted.
+
+## Output
+
+`results/f3-draw-sweep.json`. **`.gitignore` negation added in this same commit, before the
+runner exists**, so the artefact cannot be silently ignored (the defect the gitignore's own
+comments record twice).
