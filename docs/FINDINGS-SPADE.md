@@ -1115,3 +1115,75 @@ Discreteness at n=50, p=0.95 sets a floor on what any single cell can achieve:
 even 42/50 cannot reach 0.05. Detecting a sub-nominal certificate at this α with this many
 cells needs more seeds per cell, not more cells — which is a design finding, and it should be
 settled before any further containment sweep is registered.
+
+---
+
+## 23. What Part IV signifies
+
+### 23.1 The screening result is now a claim about designs, not about Hill
+
+Before today, *"screening is fatal for a design-space deliverable"* rested on one family and was
+post-hoc besides — the spread arms were added after the fact. It now holds on **hartmann6, levy
+and rosenbrock**, with effects one to two orders of magnitude above SESOI and Holm-adjusted
+p-values down to 1e-37. That moves it from an observation about a landscape to a claim about
+**what a screening design does to a certified region**: it concentrates its budget on estimating
+main effects and leaves the posterior too uncertain, over too much of the box, to certify
+anything — and the symmetric difference sees that where regret does not.
+
+**The mechanism and the exception agree.** Ackley reverses the result, and ackley is the family
+whose optimum the screen's centre point lands on exactly. When the design happens to sample the
+right place, screening is fine. That is not a counterexample to the mechanism; it is the
+mechanism stated from the other side, and it is why the claim must name designs rather than
+families.
+
+### 23.2 The map and the search disagree, consistently, and both are real
+
+On hartmann6, spread arms **win the map and lose the search**: they beat `doe` on the symmetric
+difference by up to +0.0250 while Q53 has one-shot spread losing regret by +0.13 to +0.28. Both
+are measured, neither supersedes the other, and the project has now seen this sign split at
+(6, 0.10) (§13), under the terminal rule (D20), and across families here.
+
+**The implication for the deliverable is the whole point of the study:** *an arm chosen to find
+the optimum is not the arm to choose if the deliverable is a certified region.* A lab that wants
+a design space and picks its method from a regret benchmark is reading the wrong column.
+
+### 23.3 `sobol` keeps winning and α\* keeps not noticing
+
+`sobol` now has: the best Brier of any arm (0.1273), the best empirical containment in the study
+(0.959 / 1.000 / 1.000), and the best mean rank on the symmetric difference on **three of four
+families**. It also places **last on α\* at three of four thresholds.**
+
+§15 reported that α\* agrees with regret and disagrees with the error volumes, and declined to
+resolve it. Part IV does not resolve it either, but it narrows it: **α\* is now contradicted by
+three independent validated metrics on the arm where it is most confident.** α\* is
+model-internal — a functional of the fitted posterior and nothing else — and the rule that a
+validated metric beats a model-internal one already decides which to believe. **The open
+question is no longer "which is right" but "what is α\* measuring that makes it rank the safest
+arm last."**
+
+### 23.4 Most of a response surface is not certifiable, and nobody has said so
+
+**79% and 81% of levy and rosenbrock cells cannot be ranked at all** — degenerate or above the
+predictive ceiling — and 64.8–77.8% of predictive regions on those families are empty. At d=6
+this is not a corner case; on two of four families it is the majority of the design space.
+
+The QbD literature reports design spaces as though certifiability were free. It is not: it is
+bounded by `tau_max(gamma, sigma)`, the bound is algebraic and knowable **before any experiment
+is run**, and where the prevalence quantile sits relative to it decides whether the question is
+answerable at all. **A design-space claim at an assurance level the noise floor forecloses is
+not a weak result; it is not a result.** The census turns that into something a practitioner can
+check in advance, which is the most directly usable thing in Part IV.
+
+### 23.5 What the certificate story is now
+
+§14's kill fired and stands. §22 removes the statistical claim layered on it: four cells fall
+below nominal and **none is distinguishable from chance across 72**. So the honest position is
+**not** "SPADE's certificate is broken" and **not** "the failures were noise" — it is that
+**the experiment as designed cannot tell those apart**, because at n=50, p=0.95 and 72 cells the
+discreteness floor forecloses significance for anything short of 42/50.
+
+That is a stronger reason to run F3 than the one originally registered. F3 asks whether the
+sub-nominal containment is an artefact of the winner's curse inside `CE_alpha`; §22 says the
+containment sweep cannot answer it by adding cells. **The two together specify the next
+experiment: more draws and more seeds per cell, not a wider grid** — and `conservative_estimate_split`
+now exists to cross-check the answer by a route that removes the bias instead of measuring it.

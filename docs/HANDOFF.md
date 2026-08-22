@@ -12,6 +12,9 @@ Read this first, then `docs/FINDINGS-SPADE.md` **Part IV**, then Parts II–III.
 | `docs/FINDINGS-SPADE.md` §18–21 | **the cross-family results** — §19 is the headline, §18 is why the programme halted first |
 | `docs/FINDINGS-SPADE.md` §13–16 | the overnight results; §14 (the kill fired) still stands |
 | `docs/OPEN-QUESTIONS.md`, Phase 2–4 block onward | every registration, **plus the errata** |
+| `docs/OPEN-QUESTIONS.md`, **2026-08-22 block at the end** | the four decisions and **errata 20–22** |
+| `docs/OVERNIGHT-LOG.md` **D67–D74** | the decision trail for cross-family day |
+| `docs/FINDINGS-SPADE.md` **§23** | **what Part IV signifies** — implications, not results |
 
 **The three most important lines:**
 

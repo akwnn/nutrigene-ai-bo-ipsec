@@ -1629,3 +1629,107 @@ raised. **Measured cost: ~17 s/key for four arms against ~126 s/key for the orig
 **Totals for the stretch:** 110+ commits, **66 logged decisions**, **19 registered errata, scope
 corrections and hazards**, 6 result files committed, the findings record extended with Part II
 (§8–12).
+
+---
+
+# 2026-08-22 · CROSS-FAMILY DAY · D67–D74
+
+## D67 · The programme was not paused. It had crashed, and the gate that stopped it was wrong.
+
+The handoff read *"Nothing is running. All checkpoints are intact."* Both true, and both
+misleading: P6 had **halted on a fired gate** at hartmann6 seed 24 and the driver had logged
+`HALT ... exit 1` twice. "Nothing is running" and "nothing is wrong" are different statements
+and the handoff conflated them.
+
+**Lesson: a resume-point document must distinguish *stopped* from *failed*.** The next handoff
+says which.
+
+## D68 · The IoU identity bound was a fitted maximum wearing the costume of a bound
+
+Full account in `FINDINGS-SPADE.md` §18. The decision worth logging is the **method**: when a
+gate fires and the fix looks like widening a tolerance, the move is to **derive the quantity the
+gate should be comparing against** and check the derivation against data that has nothing to do
+with the failure. Here that was 400k pure-arithmetic configurations with no oracle, no GP and no
+dataset — evidence that would read identically had the failure never happened.
+
+**The general form of the defect: `max(observed)` registered as a bound gets STRICTER as the
+study grows.** Every such constant is a time bomb whose fuse is sample size. The registration
+rule "every constant names the population it was measured on" needs **"and the sample size"**
+appended — that is Erratum 20.
+
+## D69 · The estimate was 5× pessimistic because it was measured on a sick machine
+
+Registered: ~1.8 h per family, ~7 h per cell, ~14 h for cells 1+2. Actual: **16–22 min per
+family, 2 h 10 m for both cells.** The registered per-arm timings (doe 13 s, qlogei 51 s,
+qlognei 65 s) were measured while Adobe `CCXProcess` had been burning ~80% of a core since
+13 Aug and the machine was in heavy swap.
+
+**Lesson: a wall-clock estimate carries the machine state it was measured on, exactly like a
+statistical constant carries its population.** The estimate was not wrong; it was unlabelled.
+
+## D70 · Two runs died to causes the handoff had already warned about
+
+1. **The merge was launched as a plain background call and died with the session restart.**
+   The handoff's own rule — *"a run tied to an agent's turn dies with it"* — had been written
+   after this happened once before, and it happened again to the person reading it. The
+   checkpoints survived; only the merge was lost.
+2. **Five verification subagents died the same way**, and their findings were not on disk.
+   Re-dispatched with "write to the file as you go, not at the end."
+
+**Both now in the handoff's rules section.** The second is new: *subagent findings are session
+state and must be persisted like any other.*
+
+## D71 · `plate1_only` was ranked as a tenth arm in the first cut of the headline
+
+It carries `never_rank_separately` because it **is** `lhs` at 48 wells. Including it inflated
+the field to ten and made `lhs` a second arm. Caught before publication, redone at nine.
+
+**The flag existed, was documented in the runner's own output, and was still missed.** A flag
+that must be read by every consumer is weaker than a structure that cannot be misread.
+
+## D72 · Three claims in the evaluation queue did not survive being checked
+
+The queue's standing rule — *"verify rather than accept any number handed to you, **including
+the ones in this document**"* — earned itself three times over:
+
+| queue claim | verdict |
+|---|---|
+| "ordered by grid range" | **wrong.** Monotone in max `tau_q`, not range. hartmann6 has a *larger* range than rosenbrock and 1/30th the exceedance |
+| "restate §14 as one failure, not four" | **wrong in the other direction.** With the exact binomial tail, **zero** survive Holm ×72 |
+| "roughly seven at p<0.10 expected by chance" | **2.72**, and the observed count is 2 |
+
+And a fourth, from the document audit: **several of the queue's correction targets were already
+corrected in the repo.** Applying the queue verbatim would have reverted good text.
+
+**Lesson: a queue compiled from documents inherits their errors.** Every item was re-verified
+against current text and committed data before being acted on.
+
+## D73 · The §14 correction was itself computed with the wrong tail
+
+`FINDINGS-SPADE.md` §22. A continuity-corrected normal approximation stood in for
+`binom.cdf` on a Binomial(50, 0.95), where `np(1−p) = 2.5`. Recoverable to the printed
+precision, which is how it was identified rather than merely suspected.
+
+**The registered kill still fired** — it is a decision rule, not a hypothesis test. What is
+withdrawn is the inference layered on top.
+
+**The deeper finding is a design one:** at n=50 and p=0.95, discreteness means a cell at 45/50
+can never reach p<0.10, and after Holm ×72 even 42/50 cannot reach 0.05. **The sweep cannot
+detect what it was built to detect.** More seeds per cell, not more cells.
+
+## D74 · Four decisions taken, three by Joseph
+
+1. **Ackley: in for the map, out of every DoE contrast.** Taken *before* the cross-family
+   numbers existed, on the pre-existing ground that the screen hits ackley's exact optimum 7
+   times. It then turned out ackley is **the only family where `doe` wins** — so the ordering of
+   decision and result is itself part of the record, and the ackley column is reported in full
+   rather than dropped.
+2. **B3: dropped, claim removed.** Removed at both sites, including the one asserting it in the
+   document's own voice with no withdrawal marker.
+3. **Kernel-arm re-score: queued after cross-family**, launched when it finished.
+4. **The IoU identity bound is derived per row** (D68). This changed a registered gate; the
+   justification is independent of the failure that prompted it.
+
+**Totals for the day:** cells 1+2 of the cross-family programme complete (8 cells, 2,000
+campaigns, 48,000 rows, gate failures 0), one blocking defect found and fixed, three queue
+claims refuted, two document contradictions resolved, 4 decisions logged.
