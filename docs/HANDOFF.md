@@ -102,8 +102,6 @@ gated. **Do not restart them.**
 
 | task | state | cost |
 |---|---|---|
-| 🔴 **`analyse_versionc_form1.py`** | **DOES NOT EXIST.** Version C's hard stop (K-C2) and K-C1/K-C3 have **no evaluator** — see §8.3 and FINDINGS §35. The live run produces every column they need | **the single highest-value missing file** |
-| **E7 runner** | `results/e7-search-vs-id-rule-p.json` **does not exist.** §34.3's rule-P column is an in-session join of two committed files. The recipe is in §34.3 and the join is exact (\|Δ\| = 5.55e-16 on 300 shared keys) | **re-score only**, minutes |
 | **`coord` AUPRC re-score** | verified absent: `p4-coord.json.k6_rows` has no `auprc` key | ~20 min |
 | **Tier 1 document corrections** | inventoried, **not applied**: B3 removal, AUC "superseded" marks, pooled-containment restatements | editing only |
 
@@ -115,14 +113,22 @@ gated. **Do not restart them.**
 | **C0 at σ=0.25** | `versionc-gate-s025.json` absent. Closes the registered two-σ `n_eff` regression, currently one-σ only | ~1 h |
 | **P3 cells 2 and 3** | verified stalled at **[1/50]** in `p3-d8-s025.log` and `p3-d8-s010.log` | ~1.3 h each |
 
+### 3.2b ✅ CLOSED since the evening handoff
+
+| task | outcome |
+|---|---|
+| `analyse_versionc_form1.py` | **DONE by the other agent** (`16e37b3`), with `tests/test_versionc_kills.py` |
+| **detector freeze + one-shot score** | **DONE.** Frozen at `95fca9c` (code-free commit), scored at `881a7e9`. **K-C7 FIRED, 0/50 both families** — FINDINGS **§37** |
+| **E7 runner** | **DONE** (`042d3db`). `e7-search-vs-id-rule-p.json` committed, zero new campaigns, both joins checked at run time — FINDINGS **§36** |
+| **`qlogei` / σ=0.10 in E7** | **NOT missing — I was wrong.** Both come from `q57-search-vs-id.json`; Erratum 28 is withdrawn by **Erratum 32** |
+
 ### 3.3 🔴 BLOCKED ON A DECISION — do not take these unilaterally
 
 | task | why it is blocked |
 |---|---|
-| **E7 at σ = 0.10** | `scripts/run_step0_oracle_best.py:53` hardcodes `sigma_rel = 0.25`, and `step0-oracle-best.json` carries **no `sigma` key at all**. Adding the axis is easy; **it changes a committed artefact's shape**, so it needs a registration, not a flag |
 | **Task 6.1: σ = 0.10 on the γ ladder** | P7's `SIGMA = 0.25` is **deliberately** hardcoded — the source comment reads *"Not parameters — the only cell that carries…"*. This is a registration decision |
+| **spread arms in E7 at σ=0.10** | only `doe`/`qlogei`/`qlognei` have a committed `oracle_best` there (q57). Adding the rest is a re-score, but it extends a committed artefact's shape |
 | **`versionb` in E7 at 48 wells** | the only Version B row is `versionb_plate1_ceiling` at **40 wells**. A 40-well arm is not comparable to eight 48-well ones, so **SPADE cannot enter E7** until a 48-well row exists |
-| **Version C: spend the one-shot held-out pass** | C3.3b predicts **K-C7 fires** — every viable statistic has within-family ÷ pooled support width of 0.66–0.88, and `additive_share`'s boundary would fire on only **21.9%** of its attainable range. That prediction came from the fit set and cost nothing. §3.5 says the pass **cannot be repeated.** Spending it on a rule already predicted powerless is a judgement call |
 
 ### 3.4 Open coordination item
 
@@ -230,14 +236,14 @@ at 0.090. **§2 was not built.** Full result in FINDINGS §32.
 `designspace.connected_components` / `component_report`; `run_versionc_gate.py`,
 `run_versionc_form1.py`, `run_versionc_detector.py`, and the two analysers. All committed.
 
-**8.3 — 🔴 EIGHT KILLS REGISTERED, ZERO ADJUDICATED.** See FINDINGS **§35** and the Version C
+**8.3 — THE KILL LEDGER (was: eight registered, zero adjudicated — no longer true).** See FINDINGS **§35** and the Version C
 audit block in `OPEN-QUESTIONS.md`. Version C is being **scored**, not **adjudicated**.
 
 | # | status | why |
 |---|---|---|
-| **K-C2** (hard stop) | **LIVE — no evaluator** | γ=0.50 containment; the live run produces the column |
-| K-C1 | **LIVE — no evaluator** | `r*` at σ=0.10; the live run is σ=0.10 first |
-| K-C3 | **LIVE — no evaluator** | symmetric difference vs `versionb` at γ=0.50; `versionb` is in `ARMS` |
+| **K-C2** (hard stop) | **evaluator EXISTS** (`16e37b3`) | γ=0.50 containment; the live run produces the column |
+| K-C1 | **evaluator EXISTS** | `r*` at σ=0.10; the live run is σ=0.10 first |
+| K-C3 | **evaluator EXISTS** | symmetric difference vs `versionb` at γ=0.50; `versionb` is in `ARMS` |
 | K-C4 | **MOOT** | `versionc_fixed_m` needs §2, which was never built (`MOOT_ARMS` says so) |
 | K-C5 | **MOOT** | `ARM_ALIASES`: `versionc_random` → `versionb_random`, already committed |
 | K-C8 | **MOOT** | `ARM_ALIASES`: `versionc_nodetect` → `versionc_form1` — **compares an arm to itself** |
