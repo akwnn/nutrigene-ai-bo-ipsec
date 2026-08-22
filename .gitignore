@@ -255,6 +255,7 @@ COMMIT_MSG.txt
 !results/versionc-detector-heldout.json
 !results/e7-search-vs-id-rule-p.json
 !results/e7-oracle-best-fill.json
+!results/sha-before-purge.txt
 !results/p6-families.meta.json
 !results/p6-families/
 !results/p6-families/*.json
