@@ -1758,3 +1758,69 @@ is against the classical arm on the deliverable the classical arm exists to prod
 * **§26 still applies only at d=6.** The unscreened classical arm cannot exist at d=8 within 48
   wells, so **the d=8 cells above inherit the screening/sub-box confound permanently.** The
   ~30% attribution from §26 cannot be checked here.
+
+---
+
+## 31. What α\* is actually measuring: willingness to certify
+
+§28 declared α\* not a metric of certificate quality and left one question open — *why* the
+posterior is confident where it is wrong (option (b)). **P7's committed columns answer most of
+it with no new compute**, because **non-vacuity** — the fraction of campaigns in which the arm
+certifies a **non-empty** set — is derivable from `pred_empty` and had never been read.
+
+Hill, d=6, σ=0.25, 9 arms, same cell throughout:
+
+| arm | non-vacuity | α\* | calibration |
+|---|---|---|---|
+| **`doe`** | **0.4617** | **0.7875** | **0.22959** |
+| `versionb_predictive` | 0.4267 | 0.6861 | 0.03532 |
+| `versionb` | 0.4225 | 0.6908 | 0.03593 |
+| `qlogei` | 0.4183 | 0.5968 | 0.03366 |
+| `qlognei` | 0.4125 | 0.6055 | 0.04425 |
+| `random` | 0.4067 | 0.6521 | 0.03032 |
+| `versionb_random` | 0.3925 | 0.6054 | 0.03846 |
+| `lhs` | 0.3800 | 0.6291 | 0.03034 |
+| **`sobol`** | **0.3117** | **0.5275** | **0.02893** |
+
+| relationship | Spearman ρ | p |
+|---|---|---|
+| **non-vacuity vs α\*** | **+0.7333** | **0.0246** |
+| non-vacuity vs calibration (lower better) | +0.6333 | 0.0671 |
+| α\* vs calibration | +0.4667 | 0.2054 |
+
+**The α\*/non-vacuity correlation is the only relationship in the entire α\* investigation that
+reaches p < 0.05**, and it does so at n = 9 arms where nothing else came close.
+
+### The mechanism, stated
+
+**α\* measures how often an arm is willing to certify something.** An arm that certifies a
+non-empty region in 46% of campaigns scores 0.79; one that certifies in 31% scores 0.53. That
+is not a property of the region's *correctness* — it is a property of the arm's *readiness to
+make a claim at all*.
+
+And **willingness to certify is associated with worse calibration** (+0.6333, p = 0.067 —
+marginal, and stated as marginal). The arm most ready to claim is the arm whose probabilities
+are least reliable, by a factor of five.
+
+> **α\* rewards claiming more, and claiming more is associated with claiming worse.** That is
+> why it ranks `doe` first and `sobol` last, and it is the same fact §4.2 saw twice and called
+> two anomalies.
+
+### What this does not establish
+
+**n = 9 arms.** The α\*/non-vacuity link is significant; the non-vacuity/calibration link is
+**not** at 0.05 (p = 0.067) and is reported as marginal rather than claimed. The *spatial*
+half of option (b) — whether α\* specifically rewards **coherent** high-exceedance regions as
+against merely **large** ones — is untested and would need a region-geometry statistic this
+project does not compute.
+
+**§28's declaration does not depend on any of this.** It rests on the mechanism and the
+inverted extremes. §31 explains the mechanism; it does not carry the conclusion.
+
+### The non-vacuity ordering is itself a registered gap now filled
+
+D21 found the predictive straddle yields 32% more non-empty certificates at identical
+containment, and the brief records that **emptiness has surfaced post-hoc twice with no
+registered home.** It has one now: **`versionb_predictive` (0.4267) does certify more often
+than `versionb` (0.4225) and markedly more than `versionb_random` (0.3925)** — the predictive
+straddle's advantage, on the ladder, at 24 cells, in a committed file.
