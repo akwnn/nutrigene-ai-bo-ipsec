@@ -77,7 +77,14 @@ measured that path at ~2.5e-06. They do not: Q54's non-reproducibility was in th
 the campaign, which `Campaign.seed_everything` pins exactly. Worth having measured rather
 than assumed.
 
-### 4.2 K6 — the two rankings disagree in 24 of 24 cells ✅
+### 4.2 K6 — the two rankings disagree in **18 of 18 rankable** cells ✅
+
+*(Read "24 of 24" until 2026-08-22. Six of the 24 cells have no ranking at all — every arm
+ties to within 1e-15 — and counting a cell with no ordering as a disagreement is how 24
+arose. Denominator differs by metric: **14** for type I, **18** for type II and the symmetric
+difference. The committed file said so all along:
+`f2-error-volumes.json · decision.rankable_cells = {type_I: 14, type_II: 18, total: 18}`.
+**And see §24 — the count itself is near-vacuous and is no longer the evidence.)*
 
 **Result.** 9,600 rows, 8 arms, 50 instance-seeds, 0 gate failures.
 
@@ -572,8 +579,8 @@ committed** — validated against the committed `iou_pred` before being register
 
 | | |
 |---|---|
-| Spearman ρ, error-volume ordering vs AUC ordering | **+0.071** (type II), +0.214 (type I) |
-| cells where the rankings differ | **24 of 24** |
+| Spearman ρ, error-volume ordering vs AUC ordering | **+0.071** (type II), +0.214 (type I) — **n = 8 ARMS**, pooled arm-means, p = 0.87 and 0.61. Neither is distinguishable from zero. **Per-cell is a different statistic**: type I **+0.392** [+0.270, +0.514], type II **−0.007** [−0.193, +0.180]. **Neither replicates on P6 — see §24.** |
+| cells where the rankings differ | **18 of 18 rankable** (type II, symmetric difference); **14 of 14** (type I). *Not* 24 of 24 — six cells have no ranking. **Near-vacuous as evidence, §24.** |
 | scorable rows | **6,000 of 6,000** vs **2,553** under `fi_pred` |
 
 **The two orderings are close to unrelated. The error-volume ranking is now the reported one;
@@ -703,7 +710,9 @@ has now blocked the error volumes twice.
    winner's curse that adaptive search pays.* That is a statement about **terminal rules**, not
    about DoE versus BO.
 3. **The project's primary metric was the least standard one it computes**, and replacing it
-   changes the arm ranking in **24 of 24 cells.** The published rankings are superseded.
+   changes the arm ranking in **18 of 18 rankable cells** (14 of 14 for type I) — *not* 24 of
+   24; six cells have no ranking. The published rankings are superseded, but **§24 revises the
+   grounds**: the exact-ordering count is near-vacuous and the ρ≈0 finding does not replicate.
 4. **A published containment table was a pooling artefact**, and one of its two headline claims
    does not survive. **SPADE's own number was always per-cell and is untouched.**
 5. **SPADE's certificate has been measured at exactly one (family, d, σ) point in the entire
@@ -1187,3 +1196,71 @@ sub-nominal containment is an artefact of the winner's curse inside `CE_alpha`; 
 containment sweep cannot answer it by adding cells. **The two together specify the next
 experiment: more draws and more seeds per cell, not a wider grid** — and `conservative_estimate_split`
 now exists to cross-check the answer by a route that removes the bias instead of measuring it.
+
+---
+
+## 24. 🔴 The grounds for superseding AUC do not all survive — and one of them inverts on new data
+
+The **conclusion** stands: error volumes supersede AUC. **Two of the three things offered as
+evidence for it do not**, and they were the two most quoted.
+
+### 24.1 "The rankings differ in N of N cells" is near-vacuous
+
+Two independent random orderings of 8 arms coincide with probability **1/8! = 1/40,320**; of 9
+arms, **1/362,880**. **"0 of 18 exact agreement" is what near-identical metrics would also
+produce.** Two orderings that agreed 90% of the time pairwise would still almost never be
+*exactly* equal.
+
+`scripts/analyse_f2_error_volumes.py` says this in its own source — *"the two 8-arm orderings are
+not literally equal' is nearly uninformative — there are 40,320 of them"* — and the figure was
+quoted as a headline anyway, in five places, at the wrong denominator.
+
+**This count is no longer offered as evidence for anything.** It is reported as a descriptive
+fact with its denominator and nothing rests on it.
+
+### 24.2 The ρ ≈ 0 finding does not replicate — the sign structure REVERSES
+
+Per-cell Spearman(−AUC, volume) over arms, K6 against the fresh P6 cells:
+
+| metric | K6 (n = 14/18/18) | **P6 (n = 90/92/92)** |
+|---|---|---|
+| type I | **+0.392** [+0.270, +0.514] | −0.038 [−0.131, +0.054] |
+| type II | −0.007 [−0.193, +0.180] | **+0.248** [+0.151, +0.345] |
+| symmetric difference | +0.062 [−0.143, +0.267] | **+0.295** [+0.198, +0.393] |
+
+**An exact reversal.** On K6, type I is the metric concordant with AUC and type II / symmetric
+difference are indistinguishable from zero. On P6 it is the other way round: type I is null and
+type II / symmetric difference are **significantly positive**, CIs excluding zero on 92 cells
+across four families.
+
+So *"the two orderings are close to unrelated"* — the claim ρ = +0.071 was carrying — **holds on
+K6 and fails on P6.** On four families at d=6 the error volumes and AUC are weakly but reliably
+**concordant** on exactly the metrics where K6 said they were unrelated.
+
+**The +0.071 figure itself is verified and was always fragile:** it is `spearmanr` over
+**n = 8 arms**, one pair of 8-element orderings, p = 0.87. It was quoted with no `n` and no
+interval. At n = 8 it could not have been distinguished from zero in either direction.
+
+### 24.3 What the supersede decision now rests on
+
+Two grounds, both of which survive and neither of which is a rank correlation:
+
+1. **Arm-level reversals — the load-bearing one.** On P6, `doe` is AUC-best in **27 of 92** full
+   cells and symmetric-difference-**worst in 36 of 92**. On K6 the same reversal runs the other
+   way (`doe` AUC-last in 23 of 24, type I second). A metric that calls the same arm best and
+   worst on the same data is not measuring the deliverable. And **type I read alone ranks
+   certifying-nothing first** (§9.4), which is a defect of the metric, not of an arm.
+2. **Coverage.** Error volumes score **6,000 of 6,000** rows; `fi_pred` scores **2,553**. They
+   are defined exactly where `fi` and `iou` are `nan` — and 54–69% of predictive regions are
+   empty at some cells, so that is the common case, not the corner.
+
+### 24.4 What this costs
+
+`f2-ce-error-volumes.json` **cannot bear on this at all** — it carries no `auc_pred`, and its
+own `like_for_like_across_arms: false` records that B3 scores `doe` on a 4-D active subspace, so
+prevalence differs by arm in 198 of 200 cells. It must not be cited for any arm ranking.
+
+**The honest statement is narrower than the one it replaces**, and it is the shape this project
+keeps rediscovering: *a result measured on Hill described a property of Hill.* The supersede
+decision survives on mechanism — what the metrics do to an empty region, and to an arm that
+certifies nothing — not on a correlation that turned out to be family-dependent.

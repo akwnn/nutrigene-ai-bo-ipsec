@@ -7657,3 +7657,47 @@ longer reproduce its own committed file.** `results/fix1-terminal-rule.json` is 
 Flagged for the evaluation track, whose file it is. `run_versionc_gate.py` does not copy
 that path; every arm goes through `replay.regenerate`'s builder hook as `run_p3_cells.py`
 does.
+
+## 🔴 ERRATUM 23 · **"24 of 24" is "18 of 18 rankable", and the count was never good evidence.**
+
+`FINDINGS-SPADE.md` §24. The committed file always said so:
+`f2-error-volumes.json · decision.rankable_cells = {type_I: 14, type_II: 18, total: 18}`.
+Six of 24 cells have **no ranking** — every arm ties to within 1e-15 — and counting a cell with
+no ordering as a disagreement is how 24 arose. Corrected at three sites in `FINDINGS-SPADE.md`
+(§4.2 heading, the summary table, conclusion 3). **Two further "24 of 24" occurrences are a
+DIFFERENT quantity** — the `doe`-vs-`lhs` contrast being significant in 24 of 24 cells — and are
+correct as they stand. Do not "fix" them.
+
+**More importantly, the count is near-vacuous.** Two independent random orderings of 8 arms
+coincide with probability 1/40,320. "0 of 18 exact agreement" is what near-identical metrics
+would also produce. `analyse_f2_error_volumes.py` says this in its own source and it was quoted
+as a headline anyway. **It is no longer offered as evidence.**
+
+## 🔴 ERRATUM 24 · **The ρ ≈ 0 grounds for superseding AUC do NOT replicate. The sign structure inverts.**
+
+Per-cell Spearman(−AUC, volume), K6 vs the fresh P6 cells:
+
+| metric | K6 | P6 |
+|---|---|---|
+| type I | **+0.392** [+0.270, +0.514] | −0.038 [−0.131, +0.054] |
+| type II | −0.007 [−0.193, +0.180] | **+0.248** [+0.151, +0.345] |
+| symmetric difference | +0.062 [−0.143, +0.267] | **+0.295** [+0.198, +0.393] |
+
+**Exact reversal**, on 92 cells across four families. *"The two orderings are close to
+unrelated"* holds on K6 and fails on P6.
+
+**ρ = +0.071 is verified and was always fragile:** `spearmanr` over **n = 8 arms**, p = 0.87,
+quoted with no `n` and no interval.
+
+**The supersede decision STANDS**, on two grounds that survive and are not rank correlations:
+the **arm-level reversals** (`doe` AUC-best in 27 of 92 P6 cells and symmetric-difference-worst
+in 36 of 92; type I read alone ranks certifying-nothing first) and **coverage** (6,000 of 6,000
+scorable rows vs 2,553 under `fi_pred`).
+
+**`results/f2-ce-error-volumes.json` must not be cited for any arm ranking** — it carries no
+`auc_pred`, and its own `like_for_like_across_arms: false` records that B3 scores `doe` on a 4-D
+active subspace, so prevalence differs by arm in 198 of 200 cells.
+
+**The general lesson, for the third time this week: a result measured on Hill described a
+property of Hill.** Any claim not yet re-measured off Hill should be read as Hill-conditional
+until it is.
