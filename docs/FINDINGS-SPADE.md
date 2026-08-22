@@ -2369,3 +2369,86 @@ advantage to be above or below SESOI — it has a deficit, now measured at **bot
 every CI excluding zero. §9.3's convergence holds for the arms it was about; `doe` is not one
 of them. The σ=0.10 cell makes the mechanism unmistakable: **rule P does not equalise
 identification, because identification was already equal.**
+
+---
+
+## 37. 🔴⭐⭐ **K-C7 FIRED. The detector separates nothing, 0 of 50 on both families.**
+
+The one-shot held-out pass ran once, against a rule frozen and committed at `95fca9c`
+**before hartmann6 or ackley was touched**. `results/versionc-detector-heldout.json`,
+100 campaigns, `status: complete`.
+
+### 37.1 The result
+
+| family | DECEPTIVE | rate | Wilson 95% | clears 33/50? |
+|---|---|---|---|---|
+| **hartmann6** | **0 / 50** | 0.000 | [0.000, 0.071] | **no** |
+| **ackley** | **0 / 50** | 0.000 | [0.000, 0.071] | **no** |
+
+Zero in **all four** cells — `(6, 0.25)` and `(6, 0.10)`, 25 seeds each, both families.
+Holm-adjusted tails against p = 0.50 are **1.0 for both.** **K-C7 FIRED → Version C ships
+without Stage 0** (§3.6).
+
+### 37.2 🔴 It is not a near miss — the held-out ranges are NESTED INSIDE the fit range
+
+| set | `additive_share` range | n |
+|---|---|---|
+| **fit** (hill/levy/rosenbrock) | **[0.1054, 0.8860]** | 150 |
+| hartmann6 | [0.2673, **0.8856**] | 50 |
+| ackley | [0.2949, 0.8534] | 50 |
+
+**Both held-out families sit strictly inside the boundary at both ends.** The closest any of
+the 100 campaigns came to a boundary was **0.0004** — hartmann6's maximum, just under the
+top. A one-class rule can only fire on what falls outside its reference range, and nothing
+did.
+
+**The deceptive families are LESS extreme on this statistic than the unimodal ones.** That is
+stronger than "the detector is weak": it says the statistic's ordering does not track
+landscape class at all. Widening or tightening the threshold cannot fix it — **a boundary
+strictly containing both target classes has no setting that separates them.**
+
+### 37.3 The prediction was right, and it cost nothing
+
+**C3.3b predicted K-C7 would fire, from the fit set alone, before the pass.** Two fit-set
+measurements said so: `excluded_fraction = 0.2194` (the fit families already spanned 78% of
+the statistic's attainable range) and `within_family_share = 0.8766` (most of the spread is
+seed noise, not landscape class). **Neither consumed the one-shot budget**, and both were
+committed before the score.
+
+Measured before the pass and now interpretable: the fit set's **leave-one-out false-positive
+rate is 2/150 = 1.33%**. So the boundary is *tight* against its own class and still fires on
+nothing — the two facts together say the rule is well-formed and the **statistic** is empty,
+which is a sharper conclusion than either alone.
+
+### 37.4 What this licenses, and what it does not
+
+**Publishable negative finding, and the protocol is what makes it one:** *no first-plate
+additivity statistic among the six candidates separates smooth from deceptive landscapes at
+40 wells.* The rule was frozen in a commit that contains **no code and no result**, so the
+ordering is checkable in the history by anyone; the runner verifies the boundary against
+`git show HEAD:docs/OPEN-QUESTIONS.md` on every start; and the pass refuses to repeat.
+
+**It does NOT license** *"landscape class is undetectable from plate 1."* This tested **one
+frozen statistic** (`additive_share`) at **one plate size** (40) on **two held-out families**.
+C3.2a had already ruled two of the six candidates non-viable as written; the other three were
+ranked less tight on the fit set and were not frozen. **A different statistic, a larger plate,
+or a two-class fit set could all still work** — none was tried, and §3.5 forbids trying them
+against these two families now.
+
+**Disclosure.** A smoke run touched hartmann6 and ackley for 4 campaigns before the real
+pass, at a **non-protocol configuration** (16-well plate, 1024-point grid, against the
+protocol's 40 and 20,000), writing outside `results/`. All four returned UNIMODAL. It could
+not have moved the boundary — that was already committed and is re-verified against git at
+every start — but it is recorded rather than left for someone to discover.
+
+### 37.5 Version C's kill ledger is now complete
+
+| # | verdict |
+|---|---|
+| K-C1, K-C2 (hard stop), K-C3 | **evaluated by `analyse_versionc_form1.py`** once the live re-score lands |
+| K-C4, K-C5, K-C8 | **MOOT** — §2 was never built (§35.3) |
+| K-C6 | **WOULD MISFIRE** as written (C1.2a) |
+| **K-C7** | **🔴 FIRED — 0/50 both families. Ship without Stage 0.** |
+
+**Version C is now a measured method rather than a specification**, and the measurement says
+its Stage 0 does not work. §35's *"eight registered, zero adjudicated"* is no longer true.
