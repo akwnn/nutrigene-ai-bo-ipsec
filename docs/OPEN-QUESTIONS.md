@@ -8067,3 +8067,44 @@ steps of 1/50 = **0.02**. The selection bias measured on a correlated synthetic 
 effect. The evaluation track's redesigned F3 (draws × seeds, n=200) is the design that can,
 and **C1.2's re-score must run at that seed count or it repeats the defect erratum 21
 names.**
+
+## ✅ DECISION 3 RESOLVED · **The committed kernel rows are VALIDATED.**
+
+`results/p1-kernel-gate.json` · **2,400 K6 + 400 K6b = 2,800 rows re-scored · metric
+failures 0 · worst |Δ| = 0.000e+00 · VERDICT VALIDATED.**
+
+They had been neither validated nor withdrawn for eight months while `q30-additive.json`,
+the comparator Amendment A1 named, did not exist. It exists, the gate ran, and it passed
+exactly.
+
+**Declared scope reduction, disclosed rather than hidden:** PASS 3 deferred 100 campaigns at
+σ ≠ 0.25 and says so in the output's `deferred_scope`. P3's (6, 0.10) cell covers the same
+committed column through an independent code path.
+
+## ✅ ERRATUM 22's TWO PROVENANCE DEFECTS · fixed additively, arithmetic proved unchanged
+
+`ceiling_census()` now carries three new columns. **`above_ceiling` itself is NOT changed** —
+`results/p6-ceiling-census.json` is committed against its current semantics and must stay
+comparable — so the disclosure is beside it, not instead of it:
+
+| column | what it says |
+|---|---|
+| `above_ceiling_strict` | `n_above > 0` — the strict test |
+| `above_ceiling_rule` | `"majority: n_above * 2 > n_landscapes"` — names the vote in the row |
+| `sensitivity` | whether the cell's τ rows are all `sensitivity: true` (ackley: yes; the other four: no) |
+
+**Verified additive before regenerating**: 480 rows both, **3 keys added, 0 removed, 0 value
+mismatches on every shared key.**
+
+**The disclosed disagreement is exactly 4 rows, all hill, all vote=False / strict=True:**
+
+| cell | landscapes above |
+|---|---|
+| hill d=8 p=0.25 γ=0.80 σ=0.25 | 1/25 |
+| hill d=6 p=0.10 γ=0.95 σ=0.10 | 5/25 |
+| hill d=8 p=0.10 γ=0.95 σ=0.10 | 4/25 |
+| hill d=8 p=0.25 γ=0.99 σ=0.10 | 9/25 |
+
+**File-wide: vote 150/480, strict 154/480. Non-hill 384 cells: 111/384 by BOTH tests.** The
+headline figure is unaffected, which is what makes this a disclosure fix rather than a
+correction — and the 4 rows are now visible instead of implicit.

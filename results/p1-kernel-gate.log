@@ -1,0 +1,247 @@
+P1 · kernel-arm gate + re-score · HEAD=a59063b · python=3.11.15 · threads=1
+comparator: 200 rows from results/q30-additive.json
+  A1 qlogei-add     - qlogei  sigma=0.25  n25 -0.0070 [-0.0337,+0.0198] p=0.7510 holm=1.0000  |  n50 p=0.5867
+  A1 qlogei-add     - qlogei  sigma=0.1   n25 -0.0083 [-0.0205,+0.0036] p=0.2635 holm=0.7904  |  n50 p=0.3230
+  A1 qlogei-addonly - qlogei  sigma=0.25  n25 +0.0071 [-0.0202,+0.0339] p=0.5602 holm=1.0000  |  n50 p=0.6508
+  A1 qlogei-addonly - qlogei  sigma=0.1   n25 -0.0247 [-0.0360,-0.0133] p=0.0002 holm=0.0006  |  n50 p=0.0020
+committed kernel rows: 2400 K6 + 400 K6b = 2800
+
+PASS 1 — K6 + K6b re-score, 50 pairs x 2 kernel arms (+ controls)
+[  1/50] qlogei-add     033466197eba3ddb seed=0 regret=0.1018 metric_fails=0 (15.3s)
+[  1/50] qlogei-addonly 033466197eba3ddb seed=0 regret=0.0553 metric_fails=0 (10.9s)
+[  1/50] CONTROL doe            033466197eba3ddb seed=0 regret=0.0440 metric_fails=0 (2.6s)
+[  1/50] CONTROL qlogei         033466197eba3ddb seed=0 regret=0.1323 metric_fails=0 (6.0s)
+[  2/50] qlogei-add     033466197eba3ddb seed=1 regret=0.1797 metric_fails=0 (6.6s)
+[  2/50] qlogei-addonly 033466197eba3ddb seed=1 regret=0.1797 metric_fails=0 (6.6s)
+[  2/50] CONTROL doe            033466197eba3ddb seed=1 regret=0.1114 metric_fails=0 (2.7s)
+[  2/50] CONTROL qlogei         033466197eba3ddb seed=1 regret=0.2785 metric_fails=0 (3.6s)
+[  3/50] qlogei-add     0a6e0788538a7c52 seed=0 regret=0.1777 metric_fails=0 (22.5s)
+[  3/50] qlogei-addonly 0a6e0788538a7c52 seed=0 regret=0.1373 metric_fails=0 (7.3s)
+[  3/50] CONTROL doe            0a6e0788538a7c52 seed=0 regret=0.0376 metric_fails=0 (2.9s)
+[  3/50] CONTROL qlogei         0a6e0788538a7c52 seed=0 regret=0.1384 metric_fails=0 (7.0s)
+[  4/50] qlogei-add     0a6e0788538a7c52 seed=1 regret=0.1298 metric_fails=0 (12.5s)
+[  4/50] qlogei-addonly 0a6e0788538a7c52 seed=1 regret=0.2775 metric_fails=0 (6.6s)
+[  4/50] CONTROL doe            0a6e0788538a7c52 seed=1 regret=0.0789 metric_fails=0 (2.6s)
+[  4/50] CONTROL qlogei         0a6e0788538a7c52 seed=1 regret=0.1299 metric_fails=0 (6.1s)
+/Users/jy/BO/nutrigene-ai-bo-ipsec/.venv/lib/python3.11/site-packages/botorch/optim/optimize.py:844: RuntimeWarning: Optimization failed in `gen_candidates_scipy` with the following warning(s):
+[OptimizationWarning('Optimization failed within `scipy.optimize.minimize` with status 2 and message ABNORMAL: .')]
+Trying again with a new set of initial conditions.
+  return _optimize_acqf_batch(opt_inputs=opt_inputs)
+[  5/50] qlogei-add     0ed87c75239d73f8 seed=0 regret=0.1232 metric_fails=0 (25.5s)
+[  5/50] qlogei-addonly 0ed87c75239d73f8 seed=0 regret=0.1465 metric_fails=0 (10.9s)
+[  5/50] CONTROL doe            0ed87c75239d73f8 seed=0 regret=0.0871 metric_fails=0 (2.9s)
+/Users/jy/BO/nutrigene-ai-bo-ipsec/.venv/lib/python3.11/site-packages/botorch/optim/optimize.py:844: RuntimeWarning: Optimization failed in `gen_candidates_scipy` with the following warning(s):
+[OptimizationWarning('Optimization failed within `scipy.optimize.minimize` with status 2 and message ABNORMAL: .')]
+Trying again with a new set of initial conditions.
+  return _optimize_acqf_batch(opt_inputs=opt_inputs)
+[  5/50] CONTROL qlogei         0ed87c75239d73f8 seed=0 regret=0.1668 metric_fails=0 (10.0s)
+[  6/50] qlogei-add     0ed87c75239d73f8 seed=1 regret=0.1171 metric_fails=0 (13.5s)
+[  6/50] qlogei-addonly 0ed87c75239d73f8 seed=1 regret=0.3112 metric_fails=0 (9.3s)
+[  6/50] CONTROL doe            0ed87c75239d73f8 seed=1 regret=0.0844 metric_fails=0 (2.8s)
+/Users/jy/BO/nutrigene-ai-bo-ipsec/.venv/lib/python3.11/site-packages/botorch/optim/optimize.py:844: RuntimeWarning: Optimization failed in `gen_candidates_scipy` with the following warning(s):
+[OptimizationWarning('Optimization failed within `scipy.optimize.minimize` with status 2 and message ABNORMAL: .')]
+Trying again with a new set of initial conditions.
+  return _optimize_acqf_batch(opt_inputs=opt_inputs)
+[  7/50] qlogei-add     32bb966a18f1d863 seed=0 regret=0.1057 metric_fails=0 (19.6s)
+[  7/50] qlogei-addonly 32bb966a18f1d863 seed=0 regret=0.1057 metric_fails=0 (10.5s)
+[  7/50] CONTROL doe            32bb966a18f1d863 seed=0 regret=0.1224 metric_fails=0 (3.0s)
+[  8/50] qlogei-add     32bb966a18f1d863 seed=1 regret=0.0566 metric_fails=0 (11.5s)
+[  8/50] qlogei-addonly 32bb966a18f1d863 seed=1 regret=0.2046 metric_fails=0 (11.4s)
+[  8/50] CONTROL doe            32bb966a18f1d863 seed=1 regret=0.1131 metric_fails=0 (2.8s)
+/Users/jy/BO/nutrigene-ai-bo-ipsec/.venv/lib/python3.11/site-packages/botorch/optim/optimize.py:844: RuntimeWarning: Optimization failed in `gen_candidates_scipy` with the following warning(s):
+[OptimizationWarning('Optimization failed within `scipy.optimize.minimize` with status 2 and message ABNORMAL: .')]
+Trying again with a new set of initial conditions.
+  return _optimize_acqf_batch(opt_inputs=opt_inputs)
+[  9/50] qlogei-add     443c180247c17191 seed=0 regret=0.2142 metric_fails=0 (16.9s)
+[  9/50] qlogei-addonly 443c180247c17191 seed=0 regret=0.2310 metric_fails=0 (9.1s)
+[  9/50] CONTROL doe            443c180247c17191 seed=0 regret=0.0725 metric_fails=0 (3.0s)
+[ 10/50] qlogei-add     443c180247c17191 seed=1 regret=0.2897 metric_fails=0 (12.7s)
+[ 10/50] qlogei-addonly 443c180247c17191 seed=1 regret=0.2897 metric_fails=0 (5.0s)
+[ 10/50] CONTROL doe            443c180247c17191 seed=1 regret=0.1202 metric_fails=0 (2.9s)
+[ 11/50] qlogei-add     48b1324dd0461cd9 seed=0 regret=0.0940 metric_fails=0 (13.8s)
+[ 11/50] qlogei-addonly 48b1324dd0461cd9 seed=0 regret=0.1889 metric_fails=0 (9.2s)
+[ 11/50] CONTROL doe            48b1324dd0461cd9 seed=0 regret=0.0758 metric_fails=0 (3.4s)
+[ 12/50] qlogei-add     48b1324dd0461cd9 seed=1 regret=0.0553 metric_fails=0 (17.0s)
+[ 12/50] qlogei-addonly 48b1324dd0461cd9 seed=1 regret=0.1641 metric_fails=0 (8.6s)
+[ 12/50] CONTROL doe            48b1324dd0461cd9 seed=1 regret=0.1130 metric_fails=0 (2.7s)
+/Users/jy/BO/nutrigene-ai-bo-ipsec/.venv/lib/python3.11/site-packages/botorch/optim/optimize.py:844: RuntimeWarning: Optimization failed in `gen_candidates_scipy` with the following warning(s):
+[OptimizationWarning('Optimization failed within `scipy.optimize.minimize` with status 2 and message ABNORMAL: .')]
+Trying again with a new set of initial conditions.
+  return _optimize_acqf_batch(opt_inputs=opt_inputs)
+[ 13/50] qlogei-add     4d4f7158b65b52ba seed=0 regret=0.0455 metric_fails=0 (26.4s)
+[ 13/50] qlogei-addonly 4d4f7158b65b52ba seed=0 regret=0.0655 metric_fails=0 (10.2s)
+[ 13/50] CONTROL doe            4d4f7158b65b52ba seed=0 regret=0.0875 metric_fails=0 (3.2s)
+[ 14/50] qlogei-add     4d4f7158b65b52ba seed=1 regret=0.2377 metric_fails=0 (14.1s)
+[ 14/50] qlogei-addonly 4d4f7158b65b52ba seed=1 regret=0.2377 metric_fails=0 (10.8s)
+[ 14/50] CONTROL doe            4d4f7158b65b52ba seed=1 regret=0.1226 metric_fails=0 (2.8s)
+[ 15/50] qlogei-add     51cf489c521a6911 seed=0 regret=0.1829 metric_fails=0 (23.8s)
+[ 15/50] qlogei-addonly 51cf489c521a6911 seed=0 regret=0.1057 metric_fails=0 (15.8s)
+[ 15/50] CONTROL doe            51cf489c521a6911 seed=0 regret=0.0760 metric_fails=0 (3.3s)
+[ 16/50] qlogei-add     51cf489c521a6911 seed=1 regret=0.1285 metric_fails=0 (10.8s)
+[ 16/50] qlogei-addonly 51cf489c521a6911 seed=1 regret=0.1285 metric_fails=0 (10.1s)
+[ 16/50] CONTROL doe            51cf489c521a6911 seed=1 regret=0.1553 metric_fails=0 (2.8s)
+[ 17/50] qlogei-add     578e5d8768359f0f seed=0 regret=0.0917 metric_fails=0 (16.3s)
+[ 17/50] qlogei-addonly 578e5d8768359f0f seed=0 regret=0.1871 metric_fails=0 (12.0s)
+[ 17/50] CONTROL doe            578e5d8768359f0f seed=0 regret=0.1162 metric_fails=0 (5.0s)
+[ 18/50] qlogei-add     578e5d8768359f0f seed=1 regret=0.1037 metric_fails=0 (8.4s)
+[ 18/50] qlogei-addonly 578e5d8768359f0f seed=1 regret=0.0101 metric_fails=0 (8.2s)
+[ 18/50] CONTROL doe            578e5d8768359f0f seed=1 regret=0.0927 metric_fails=0 (3.3s)
+/Users/jy/BO/nutrigene-ai-bo-ipsec/.venv/lib/python3.11/site-packages/botorch/optim/optimize.py:844: RuntimeWarning: Optimization failed in `gen_candidates_scipy` with the following warning(s):
+[NumericalWarning('A not p.d., added jitter of 1.0e-08 to the diagonal'), OptimizationWarning('Optimization failed within `scipy.optimize.minimize` with status 2 and message ABNORMAL: .')]
+Trying again with a new set of initial conditions.
+  return _optimize_acqf_batch(opt_inputs=opt_inputs)
+/Users/jy/BO/nutrigene-ai-bo-ipsec/.venv/lib/python3.11/site-packages/botorch/optim/optimize.py:844: RuntimeWarning: Optimization failed on the second try, after generating a new set of initial conditions.
+  return _optimize_acqf_batch(opt_inputs=opt_inputs)
+[ 19/50] qlogei-add     59e420274f4385d9 seed=0 regret=0.0952 metric_fails=0 (25.8s)
+[ 19/50] qlogei-addonly 59e420274f4385d9 seed=0 regret=0.1278 metric_fails=0 (12.3s)
+[ 19/50] CONTROL doe            59e420274f4385d9 seed=0 regret=0.1019 metric_fails=0 (3.2s)
+[ 20/50] qlogei-add     59e420274f4385d9 seed=1 regret=0.3323 metric_fails=0 (25.8s)
+[ 20/50] qlogei-addonly 59e420274f4385d9 seed=1 regret=0.0665 metric_fails=0 (14.3s)
+[ 20/50] CONTROL doe            59e420274f4385d9 seed=1 regret=0.0848 metric_fails=0 (4.2s)
+[ 21/50] qlogei-add     5b3926ef2c5fe4b6 seed=0 regret=0.2105 metric_fails=0 (25.2s)
+[ 21/50] qlogei-addonly 5b3926ef2c5fe4b6 seed=0 regret=0.1921 metric_fails=0 (20.6s)
+[ 21/50] CONTROL doe            5b3926ef2c5fe4b6 seed=0 regret=0.0673 metric_fails=0 (6.4s)
+[ 22/50] qlogei-add     5b3926ef2c5fe4b6 seed=1 regret=0.1466 metric_fails=0 (22.0s)
+[ 22/50] qlogei-addonly 5b3926ef2c5fe4b6 seed=1 regret=0.1466 metric_fails=0 (15.9s)
+[ 22/50] CONTROL doe            5b3926ef2c5fe4b6 seed=1 regret=0.0973 metric_fails=0 (4.5s)
+/Users/jy/BO/nutrigene-ai-bo-ipsec/.venv/lib/python3.11/site-packages/botorch/optim/optimize.py:844: RuntimeWarning: Optimization failed in `gen_candidates_scipy` with the following warning(s):
+[OptimizationWarning('Optimization failed within `scipy.optimize.minimize` with status 2 and message ABNORMAL: .')]
+Trying again with a new set of initial conditions.
+  return _optimize_acqf_batch(opt_inputs=opt_inputs)
+[ 23/50] qlogei-add     763e0f58925816ca seed=0 regret=0.1619 metric_fails=0 (34.9s)
+[ 23/50] qlogei-addonly 763e0f58925816ca seed=0 regret=0.2027 metric_fails=0 (15.7s)
+[ 23/50] CONTROL doe            763e0f58925816ca seed=0 regret=0.0970 metric_fails=0 (4.9s)
+[ 24/50] qlogei-add     763e0f58925816ca seed=1 regret=0.3583 metric_fails=0 (19.0s)
+[ 24/50] qlogei-addonly 763e0f58925816ca seed=1 regret=0.1817 metric_fails=0 (12.2s)
+[ 24/50] CONTROL doe            763e0f58925816ca seed=1 regret=0.1676 metric_fails=0 (4.1s)
+/Users/jy/BO/nutrigene-ai-bo-ipsec/.venv/lib/python3.11/site-packages/botorch/optim/optimize.py:844: RuntimeWarning: Optimization failed in `gen_candidates_scipy` with the following warning(s):
+[NumericalWarning('A not p.d., added jitter of 1.0e-08 to the diagonal'), OptimizationWarning('Optimization failed within `scipy.optimize.minimize` with status 2 and message ABNORMAL: .')]
+Trying again with a new set of initial conditions.
+  return _optimize_acqf_batch(opt_inputs=opt_inputs)
+[ 25/50] qlogei-add     7b6071e568a98779 seed=0 regret=0.1140 metric_fails=0 (27.9s)
+[ 25/50] qlogei-addonly 7b6071e568a98779 seed=0 regret=0.1114 metric_fails=0 (17.9s)
+[ 25/50] CONTROL doe            7b6071e568a98779 seed=0 regret=0.1033 metric_fails=0 (5.4s)
+[ 26/50] qlogei-add     7b6071e568a98779 seed=1 regret=0.1270 metric_fails=0 (13.0s)
+[ 26/50] qlogei-addonly 7b6071e568a98779 seed=1 regret=0.1270 metric_fails=0 (10.2s)
+[ 26/50] CONTROL doe            7b6071e568a98779 seed=1 regret=0.0686 metric_fails=0 (4.6s)
+[ 27/50] qlogei-add     7ef3fc89acece49c seed=0 regret=0.1773 metric_fails=0 (32.2s)
+[ 27/50] qlogei-addonly 7ef3fc89acece49c seed=0 regret=0.0601 metric_fails=0 (12.0s)
+[ 27/50] CONTROL doe            7ef3fc89acece49c seed=0 regret=0.0566 metric_fails=0 (5.0s)
+[ 28/50] qlogei-add     7ef3fc89acece49c seed=1 regret=0.2594 metric_fails=0 (8.5s)
+[ 28/50] qlogei-addonly 7ef3fc89acece49c seed=1 regret=0.1278 metric_fails=0 (10.8s)
+[ 28/50] CONTROL doe            7ef3fc89acece49c seed=1 regret=0.0997 metric_fails=0 (4.2s)
+[ 29/50] qlogei-add     7f5c7431c0530e74 seed=0 regret=0.0323 metric_fails=0 (25.6s)
+[ 29/50] qlogei-addonly 7f5c7431c0530e74 seed=0 regret=0.2277 metric_fails=0 (16.3s)
+[ 29/50] CONTROL doe            7f5c7431c0530e74 seed=0 regret=0.1382 metric_fails=0 (4.6s)
+[ 30/50] qlogei-add     7f5c7431c0530e74 seed=1 regret=0.2008 metric_fails=0 (10.9s)
+[ 30/50] qlogei-addonly 7f5c7431c0530e74 seed=1 regret=0.0569 metric_fails=0 (11.6s)
+[ 30/50] CONTROL doe            7f5c7431c0530e74 seed=1 regret=0.1453 metric_fails=0 (4.4s)
+[ 31/50] qlogei-add     8abe35e93ddfcad1 seed=0 regret=0.1293 metric_fails=0 (25.5s)
+[ 31/50] qlogei-addonly 8abe35e93ddfcad1 seed=0 regret=0.1686 metric_fails=0 (24.7s)
+[ 31/50] CONTROL doe            8abe35e93ddfcad1 seed=0 regret=0.0954 metric_fails=0 (4.8s)
+[ 32/50] qlogei-add     8abe35e93ddfcad1 seed=1 regret=0.1250 metric_fails=0 (13.1s)
+[ 32/50] qlogei-addonly 8abe35e93ddfcad1 seed=1 regret=0.1121 metric_fails=0 (11.7s)
+[ 32/50] CONTROL doe            8abe35e93ddfcad1 seed=1 regret=0.0722 metric_fails=0 (4.0s)
+[ 33/50] qlogei-add     9414bc879284eef0 seed=0 regret=0.0351 metric_fails=0 (21.7s)
+[ 33/50] qlogei-addonly 9414bc879284eef0 seed=0 regret=0.1515 metric_fails=0 (12.2s)
+[ 33/50] CONTROL doe            9414bc879284eef0 seed=0 regret=0.1439 metric_fails=0 (3.9s)
+[ 34/50] qlogei-add     9414bc879284eef0 seed=1 regret=0.0980 metric_fails=0 (9.5s)
+[ 34/50] qlogei-addonly 9414bc879284eef0 seed=1 regret=0.0980 metric_fails=0 (9.7s)
+[ 34/50] CONTROL doe            9414bc879284eef0 seed=1 regret=0.0824 metric_fails=0 (3.9s)
+/Users/jy/BO/nutrigene-ai-bo-ipsec/.venv/lib/python3.11/site-packages/botorch/optim/optimize.py:844: RuntimeWarning: Optimization failed in `gen_candidates_scipy` with the following warning(s):
+[OptimizationWarning('Optimization failed within `scipy.optimize.minimize` with status 2 and message ABNORMAL: .')]
+Trying again with a new set of initial conditions.
+  return _optimize_acqf_batch(opt_inputs=opt_inputs)
+[ 35/50] qlogei-add     9f3cdb4d835c6909 seed=0 regret=0.1376 metric_fails=0 (22.4s)
+[ 35/50] qlogei-addonly 9f3cdb4d835c6909 seed=0 regret=0.2310 metric_fails=0 (9.8s)
+[ 35/50] CONTROL doe            9f3cdb4d835c6909 seed=0 regret=0.0924 metric_fails=0 (3.3s)
+[ 36/50] qlogei-add     9f3cdb4d835c6909 seed=1 regret=0.1317 metric_fails=0 (16.2s)
+[ 36/50] qlogei-addonly 9f3cdb4d835c6909 seed=1 regret=0.1654 metric_fails=0 (7.8s)
+[ 36/50] CONTROL doe            9f3cdb4d835c6909 seed=1 regret=0.0941 metric_fails=0 (2.9s)
+[ 37/50] qlogei-add     c75f6d6f50fe2434 seed=0 regret=0.1084 metric_fails=0 (14.1s)
+[ 37/50] qlogei-addonly c75f6d6f50fe2434 seed=0 regret=0.2258 metric_fails=0 (8.9s)
+[ 37/50] CONTROL doe            c75f6d6f50fe2434 seed=0 regret=0.1172 metric_fails=0 (3.2s)
+[ 38/50] qlogei-add     c75f6d6f50fe2434 seed=1 regret=0.1352 metric_fails=0 (10.3s)
+[ 38/50] qlogei-addonly c75f6d6f50fe2434 seed=1 regret=0.2712 metric_fails=0 (7.9s)
+[ 38/50] CONTROL doe            c75f6d6f50fe2434 seed=1 regret=0.1237 metric_fails=0 (3.0s)
+[ 39/50] qlogei-add     ce7334da318bc5e5 seed=0 regret=0.1941 metric_fails=0 (19.3s)
+[ 39/50] qlogei-addonly ce7334da318bc5e5 seed=0 regret=0.0838 metric_fails=0 (16.7s)
+[ 39/50] CONTROL doe            ce7334da318bc5e5 seed=0 regret=0.0646 metric_fails=0 (4.0s)
+[ 40/50] qlogei-add     ce7334da318bc5e5 seed=1 regret=0.1143 metric_fails=0 (13.4s)
+[ 40/50] qlogei-addonly ce7334da318bc5e5 seed=1 regret=0.1714 metric_fails=0 (10.2s)
+[ 40/50] CONTROL doe            ce7334da318bc5e5 seed=1 regret=0.0646 metric_fails=0 (4.6s)
+[ 41/50] qlogei-add     da5ec2fbb20c9f9b seed=0 regret=0.1035 metric_fails=0 (33.8s)
+[ 41/50] qlogei-addonly da5ec2fbb20c9f9b seed=0 regret=0.1802 metric_fails=0 (18.3s)
+[ 41/50] CONTROL doe            da5ec2fbb20c9f9b seed=0 regret=0.0428 metric_fails=0 (5.8s)
+[ 42/50] qlogei-add     da5ec2fbb20c9f9b seed=1 regret=0.1845 metric_fails=0 (16.7s)
+[ 42/50] qlogei-addonly da5ec2fbb20c9f9b seed=1 regret=0.2247 metric_fails=0 (15.6s)
+[ 42/50] CONTROL doe            da5ec2fbb20c9f9b seed=1 regret=0.0700 metric_fails=0 (4.9s)
+[ 43/50] qlogei-add     e402c32907f27534 seed=0 regret=0.1745 metric_fails=0 (28.6s)
+[ 43/50] qlogei-addonly e402c32907f27534 seed=0 regret=0.1291 metric_fails=0 (25.3s)
+[ 43/50] CONTROL doe            e402c32907f27534 seed=0 regret=0.1397 metric_fails=0 (6.7s)
+[ 44/50] qlogei-add     e402c32907f27534 seed=1 regret=0.1898 metric_fails=0 (15.0s)
+[ 44/50] qlogei-addonly e402c32907f27534 seed=1 regret=0.1696 metric_fails=0 (13.9s)
+[ 44/50] CONTROL doe            e402c32907f27534 seed=1 regret=0.1205 metric_fails=0 (4.5s)
+/Users/jy/BO/nutrigene-ai-bo-ipsec/.venv/lib/python3.11/site-packages/botorch/optim/optimize.py:844: RuntimeWarning: Optimization failed in `gen_candidates_scipy` with the following warning(s):
+[OptimizationWarning('Optimization failed within `scipy.optimize.minimize` with status 2 and message ABNORMAL: .'), OptimizationWarning('Optimization failed within `scipy.optimize.minimize` with status 2 and message ABNORMAL: .'), OptimizationWarning('Optimization failed within `scipy.optimize.minimize` with status 2 and message ABNORMAL: .')]
+Trying again with a new set of initial conditions.
+  return _optimize_acqf_batch(opt_inputs=opt_inputs)
+/Users/jy/BO/nutrigene-ai-bo-ipsec/.venv/lib/python3.11/site-packages/botorch/optim/optimize.py:844: RuntimeWarning: Optimization failed on the second try, after generating a new set of initial conditions.
+  return _optimize_acqf_batch(opt_inputs=opt_inputs)
+[ 45/50] qlogei-add     e946207e9dfe1876 seed=0 regret=0.0973 metric_fails=0 (36.7s)
+[ 45/50] qlogei-addonly e946207e9dfe1876 seed=0 regret=0.2329 metric_fails=0 (19.1s)
+[ 45/50] CONTROL doe            e946207e9dfe1876 seed=0 regret=0.0318 metric_fails=0 (6.4s)
+[ 46/50] qlogei-add     e946207e9dfe1876 seed=1 regret=0.1227 metric_fails=0 (10.6s)
+[ 46/50] qlogei-addonly e946207e9dfe1876 seed=1 regret=0.1227 metric_fails=0 (8.8s)
+[ 46/50] CONTROL doe            e946207e9dfe1876 seed=1 regret=0.1044 metric_fails=0 (4.0s)
+/Users/jy/BO/nutrigene-ai-bo-ipsec/.venv/lib/python3.11/site-packages/botorch/optim/optimize.py:844: RuntimeWarning: Optimization failed in `gen_candidates_scipy` with the following warning(s):
+[OptimizationWarning('Optimization failed within `scipy.optimize.minimize` with status 2 and message ABNORMAL: .'), OptimizationWarning('Optimization failed within `scipy.optimize.minimize` with status 2 and message ABNORMAL: .')]
+Trying again with a new set of initial conditions.
+  return _optimize_acqf_batch(opt_inputs=opt_inputs)
+[ 47/50] qlogei-add     ef2815cdafff288c seed=0 regret=0.1558 metric_fails=0 (30.7s)
+[ 47/50] qlogei-addonly ef2815cdafff288c seed=0 regret=0.1993 metric_fails=0 (18.2s)
+[ 47/50] CONTROL doe            ef2815cdafff288c seed=0 regret=0.0959 metric_fails=0 (4.8s)
+[ 48/50] qlogei-add     ef2815cdafff288c seed=1 regret=0.1149 metric_fails=0 (20.2s)
+[ 48/50] qlogei-addonly ef2815cdafff288c seed=1 regret=0.1149 metric_fails=0 (12.7s)
+[ 48/50] CONTROL doe            ef2815cdafff288c seed=1 regret=0.1149 metric_fails=0 (4.6s)
+/Users/jy/BO/nutrigene-ai-bo-ipsec/.venv/lib/python3.11/site-packages/botorch/optim/optimize.py:844: RuntimeWarning: Optimization failed in `gen_candidates_scipy` with the following warning(s):
+[OptimizationWarning('Optimization failed within `scipy.optimize.minimize` with status 2 and message ABNORMAL: .')]
+Trying again with a new set of initial conditions.
+  return _optimize_acqf_batch(opt_inputs=opt_inputs)
+/Users/jy/BO/nutrigene-ai-bo-ipsec/.venv/lib/python3.11/site-packages/botorch/optim/optimize.py:844: RuntimeWarning: Optimization failed on the second try, after generating a new set of initial conditions.
+  return _optimize_acqf_batch(opt_inputs=opt_inputs)
+[ 49/50] qlogei-add     f79c5cf175034acd seed=0 regret=0.0485 metric_fails=0 (34.0s)
+[ 49/50] qlogei-addonly f79c5cf175034acd seed=0 regret=0.0466 metric_fails=0 (32.0s)
+[ 49/50] CONTROL doe            f79c5cf175034acd seed=0 regret=0.1102 metric_fails=0 (8.7s)
+[ 50/50] qlogei-add     f79c5cf175034acd seed=1 regret=0.3623 metric_fails=0 (18.8s)
+[ 50/50] qlogei-addonly f79c5cf175034acd seed=1 regret=0.3623 metric_fails=0 (15.9s)
+[ 50/50] CONTROL doe            f79c5cf175034acd seed=1 regret=0.0713 metric_fails=0 (5.6s)
+
+PASS 2 — determinism recheck, 10 campaigns regenerated twice
+[  1/10] recheck qlogei-add     033466197eba3ddb seed=0 |d|=0.000e+00 (26.2s)
+[  2/10] recheck qlogei-addonly 033466197eba3ddb seed=0 |d|=0.000e+00 (16.3s)
+[  3/10] recheck qlogei-add     033466197eba3ddb seed=1 |d|=0.000e+00 (8.9s)
+[  4/10] recheck qlogei-addonly 033466197eba3ddb seed=1 |d|=0.000e+00 (8.1s)
+[  5/10] recheck qlogei-add     0a6e0788538a7c52 seed=0 |d|=0.000e+00 (42.3s)
+[  6/10] recheck qlogei-addonly 0a6e0788538a7c52 seed=0 |d|=0.000e+00 (9.8s)
+[  7/10] recheck qlogei-add     0a6e0788538a7c52 seed=1 |d|=0.000e+00 (22.8s)
+[  8/10] recheck qlogei-addonly 0a6e0788538a7c52 seed=1 |d|=0.000e+00 (11.3s)
+/Users/jy/BO/nutrigene-ai-bo-ipsec/.venv/lib/python3.11/site-packages/botorch/optim/optimize.py:844: RuntimeWarning: Optimization failed in `gen_candidates_scipy` with the following warning(s):
+[OptimizationWarning('Optimization failed within `scipy.optimize.minimize` with status 2 and message ABNORMAL: .')]
+Trying again with a new set of initial conditions.
+  return _optimize_acqf_batch(opt_inputs=opt_inputs)
+[  9/10] recheck qlogei-add     0ed87c75239d73f8 seed=0 |d|=0.000e+00 (58.7s)
+[ 10/10] recheck qlogei-addonly 0ed87c75239d73f8 seed=0 |d|=0.000e+00 (23.7s)
+
+PASS 3 — DEFERRED by declared scope reduction, 100 campaigns NOT gated here. Reason and how to run it are in the output's `deferred_scope`. P3's (6, 0.10) cell covers this against the same committed column through an independent code path.
+
+PASS 3 — gate-only, 0 campaigns at sigma != 0.25
+
+==============================================================================
+gate campaigns      : 100  failures: 0  worst |d| = 0.000e+00
+re-scored rows      : 2400 K6 + 400 K6b = 2800  metric failures: 0  worst |d| = 0.000e+00
+control rows        : 1320 K6 + 220 K6b  failures: 0  worst |d| = 0.000e+00
+determinism recheck : 10 campaigns regenerated twice  failures: 0
+VERDICT             : VALIDATED
+==============================================================================
+written to results/p1-kernel-gate.json

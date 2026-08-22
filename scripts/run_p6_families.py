@@ -746,8 +746,15 @@ def ceiling_census() -> dict:
     """
     table = json.loads(TAU_TABLE.read_text())["rows"]
     cells: dict[tuple, list[float]] = {}
+    # Erratum 22, defect 2: ALL 8 ackley rows in the tau source are `sensitivity: true`
+    # while the other four families' rows are not, and this function applied no filter.
+    # The rows are still counted -- excluding them would silently drop the family -- but
+    # the flag now travels with the cell so the provenance difference is visible.
+    sens: dict[tuple, set] = {}
     for r in table:
-        cells.setdefault((r["family"], r["dim"], r["p"]), []).append(r["tau_q"])
+        key = (r["family"], r["dim"], r["p"])
+        cells.setdefault(key, []).append(r["tau_q"])
+        sens.setdefault(key, set()).add(bool(r.get("sensitivity", False)))
 
     rows, summary = [], {}
     for sigma in (0.25, 0.10):
@@ -755,6 +762,13 @@ def ceiling_census() -> dict:
             tmax = tau_max(gamma, sigma)
             for (family, dim, p), taus in sorted(cells.items()):
                 n_above = sum(1 for t in taus if t > tmax)
+                # Erratum 22, defect 1: this is a MAJORITY VOTE, not `tau > tau_max`.
+                # At n_landscapes = 1 the two coincide, which is why the 384-cell
+                # arithmetic is unaffected -- but hill carries 25 and needs >= 13, so
+                # 4 hill rows read False with >= 1 landscape above. `above_ceiling` is
+                # NOT changed: `results/p6-ceiling-census.json` is committed against its
+                # current semantics and must stay comparable. The strict test is carried
+                # BESIDE it so a reader can tell which one any figure used.
                 above = n_above * 2 > len(taus)
                 rows.append({
                     "family": family, "dim": dim, "p": p, "gamma": gamma,
@@ -763,6 +777,9 @@ def ceiling_census() -> dict:
                     "n_landscapes": len(taus), "n_landscapes_above": n_above,
                     "unanimous": n_above in (0, len(taus)),
                     "above_ceiling": above,
+                    "above_ceiling_strict": n_above > 0,
+                    "above_ceiling_rule": "majority: n_above * 2 > n_landscapes",
+                    "sensitivity": sens[(family, dim, p)] == {True},
                 })
                 k = (family, sigma, gamma)
                 s_ = summary.setdefault(f"{family}|sigma={sigma}|gamma={gamma}",

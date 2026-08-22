@@ -787,3 +787,54 @@ def test_degeneracy_is_reported_per_metric_because_the_denominators_differ(p6):
         "type II still separates the arms at the same cell")
     assert v2["per_metric"]["type_I_vol_pred"]["rankable"] is False
     assert v2["per_metric"]["type_II_vol_pred"]["rankable"] is True
+
+
+def test_the_census_discloses_its_majority_vote_and_its_sensitivity_rows(p6):
+    """**Erratum 22's two provenance defects, made visible in the data itself.**
+
+    1. `above_ceiling` is a MAJORITY VOTE (`n_above * 2 > len(taus)`), not the strict
+       test `tau > tau_max`. At `n_landscapes = 1` the two coincide, which is why the
+       384-cell arithmetic is unaffected — but `hill` carries 25 landscapes and needs
+       ≥13, so **4 hill rows read False with ≥1 landscape above.** The file-wide 480-row
+       figure is therefore not the strict test while the 384-row one is, and nothing in
+       the row said so.
+    2. **All 8 ackley rows in the τ source are `sensitivity: true`** and `ceiling_census`
+       applied no filter, so the headline "ackley 0%" column has a different provenance
+       from the other four families' columns.
+
+    Neither is fixed by CHANGING `above_ceiling` — the committed
+    `results/p6-ceiling-census.json` depends on its current semantics and must stay
+    comparable. Both are fixed by ADDING columns that disclose them.
+    """
+    doc = p6.ceiling_census()
+    rows = doc["rows"]
+    assert rows, "census produced no rows"
+
+    for r in rows:
+        # the majority vote, under a name that says what it is
+        assert "above_ceiling" in r
+        assert "above_ceiling_strict" in r, (
+            "the strict test must be carried beside the vote, or a reader cannot tell "
+            "which one a figure used")
+        assert "sensitivity" in r, (
+            "ackley's column is built from sensitivity rows; if the row does not say "
+            "so, the provenance difference is invisible")
+        # strict is `any landscape above`; the vote needs a majority. Strict therefore
+        # implies-or-equals the vote can never be True while strict is False.
+        assert not (r["above_ceiling"] and not r["above_ceiling_strict"]), (
+            "a cell voted above the ceiling with NO landscape above it is impossible")
+
+    # the disclosed disagreement: hill, and only hill, can differ
+    differ = [r for r in rows if r["above_ceiling"] != r["above_ceiling_strict"]]
+    assert all(r["family"] == "hill" for r in differ), (
+        "only a family with n_landscapes > 1 can vote differently from the strict test")
+    assert all(r["n_landscapes"] > 1 for r in differ)
+    assert differ, "if this is empty the vote/strict distinction stopped being real"
+
+    # ackley is entirely sensitivity rows; the other four are entirely not
+    by_family = {}
+    for r in rows:
+        by_family.setdefault(r["family"], set()).add(r["sensitivity"])
+    assert by_family["ackley"] == {True}, "ackley's provenance claim changed"
+    for fam in ("hartmann6", "levy", "rosenbrock", "hill"):
+        assert by_family[fam] == {False}, fam
