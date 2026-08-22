@@ -146,3 +146,51 @@ def test_the_q59_runners_own_output_stays_json_serialisable(q59):
     # and asking for the design must not change any scalar
     for k, v in default.items():
         assert asked[k] == v, f"{k} changed when the design was requested"
+
+
+def test_sigma_add_is_read_from_the_evaluator_never_assumed(q59):
+    """🔴 **The defect this catches shipped, and it is the project's own Erratum 1.6 again.**
+
+    `TorchEvaluator.__init__` defaults `sigma_add = 0.01`, and Q59 constructs it with
+    `sigma_rel` alone — so `sigma_add` is **0.01, not 0**. The first version of
+    `run_q59_map_rescore.py` passed `0.0` to `_plug_in_yvar` AND wrote
+    `sigma_pred = ((sigma * mean).abs() ** 2).sqrt()`, dropping the `+ sigma_add ** 2`
+    term that `run_p6_families.py:640` carries.
+
+    That made the predictive SD **6.5% low at sigma=0.25 and 30.2% low at sigma=0.10**,
+    and `sigma_pred` feeds `predictive_probability_map` directly, so every error volume in
+    the re-score was computed against a too-narrow predictive band.
+
+    **The rule_a / oracle_best gate could not catch it** — neither quantity touches
+    `Yvar` or `sigma_pred`. A gate that does not cover the quantity the run exists to
+    measure is not a gate for that quantity, which is the lesson worth more than the fix.
+
+    Asserted against the evaluator's OWN attribute, never a literal, so it cannot drift
+    again if the default changes.
+    """
+    from boec.torch_oracle import TorchEvaluator
+    oracle = q59._oracle()
+    ev = TorchEvaluator(oracle, sigma_rel=0.25, seed=0)
+
+    assert ev.sigma_add != 0.0, (
+        "if this becomes 0 the bug is invisible; the test must know the real default")
+    assert ev.sigma_add == 0.01
+
+    import importlib.util, sys
+    spec = importlib.util.spec_from_file_location(
+        "q59rs", ROOT / "scripts" / "run_q59_map_rescore.py")
+    m = importlib.util.module_from_spec(spec)
+    sys.modules["q59rs"] = m
+    spec.loader.exec_module(m)
+
+    # _yvar must use the evaluator's sigma_add, not a hardcoded zero
+    Y = torch.full((5, 1), 0.1521, dtype=torch.double)
+    got = m._yvar(Y, 0.25, ev.sigma_add)
+    want = (0.25 * 0.1521) ** 2 + ev.sigma_add ** 2
+    assert abs(float(got[0, 0]) - want) < 1e-15, (
+        f"_yvar dropped sigma_add: {float(got[0,0]):.8e} against {want:.8e}")
+
+    # and the source must not carry the sigma_add-free predictive SD any more
+    src = (ROOT / "scripts" / "run_q59_map_rescore.py").read_text()
+    assert "((sigma * mean).abs() ** 2).sqrt()" not in src, (
+        "sigma_pred is missing the + sigma_add ** 2 term that run_p6_families carries")

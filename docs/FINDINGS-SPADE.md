@@ -1929,3 +1929,123 @@ The first three are **the same arm**, and its design **is Version B's design**.
 **What remains unrun:** the re-score itself — split-sample CE columns, connected-component
 design spaces, and the five columns, on stored campaigns. Every library piece is built and
 tested; the runner is not written.
+
+---
+
+## 32. The RSM community's own toolkit, run at last — and the classical arm fails all four
+
+§6.2 of the evaluation brief records **zero coverage** of the diagnostics the response-surface
+community would itself demand. All four now exist. Every number below comes off regenerated
+`doe` campaigns that reproduce the committed `q59-hartmann-no-screen.json · doe_screened.rule_c`
+at **worst |Δ| = 0.000e+00 over all 50 (σ, seed) rows**. n = 50 campaigns for items 1 and 4;
+3 seeds at σ=0.25 for items 2 and 3 (design geometry, which barely varies by seed).
+
+### 32.1 Lack-of-fit F-test — the arm CAN run it, and throws away the power to
+
+**It has pure error: 2 df.** The stage-2 CCD carries 3 centre runs among 27 points.
+
+| σ | F median | #F > 1 | **#p < 0.05** | MS_pure_error | MS_LOF |
+|---|---|---|---|---|---|
+| 0.25 | 3.56 | 23/25 | **2/25** | 0.000999 | 0.003430 |
+| 0.10 | 12.81 | 25/25 | **8/25** | 0.000186 | 0.002579 |
+
+**The misfit is real and the test cannot see it.** `MS_LOF` exceeds `MS_PE` in **48 of 50**
+campaigns — a median of 3.4× at σ=0.25 and **13.9× at σ=0.10** — but 2 denominator df puts
+`F_crit(0.05; 10, 2)` at **19.40**, so lack of fit is declared in 2/25 and 8/25.
+
+**And the arm discards replicates it has already paid for.** In **50/50** campaigns the best
+stage-1 run is one of the 4 screen centre points, so the stage-2 sub-box is `[0.25, 0.75]^4`
+every time and its centre lands on the *identical 6-d point* as the 4 screen centres — a
+**7-fold replicate** in the pooled 48. But the fit uses stage-2's 27 points only
+(`boec/doe.py:330`). Pooling them costs nothing:
+
+| σ | #p<0.05, as fitted (2 df) | #p<0.05, pooling the screen centres (6 df) |
+|---|---|---|
+| 0.25 | 2/25 | **8/25** |
+| 0.10 | 8/25 | **24/25** |
+
+**Tripling the pure-error df takes the σ=0.10 detection rate from 8/25 to 24/25 at zero extra
+cost.** The arm has the replicates and drops them at a stage boundary.
+
+*Caveat, stated not hidden:* the LOF test assumes constant variance; this oracle's noise is
+multiplicative, so pure error is estimated at one location and applied across a sub-box. The
+test is run as the literature specifies; the assumption it rests on is violated by this
+project's noise model.
+
+### 32.2 🔴 `doe`'s 48 wells are NOT A DESIGN for the model it reports
+
+D- and G-efficiency, 48-point designs at d=6, second-order model, **p = 28**:
+
+| arm | rank/28 | D-eff % | G-eff % | max SPV |
+|---|---|---|---|---|
+| **`doe`** | **25, 23, 25** | **undefined** | **undefined** | **undefined** |
+| `doe_unscreened` | 28 | 42.90–43.30 | 68.74–70.61 | 39.7–40.7 |
+| *ref* CCD(6), 48 runs | 28 | 42.42 | 68.87 | 40.7 |
+| `sobol` | 28 | 10.42–10.63 | 2.72–3.14 | 892–1031 |
+| `random` | 28 | 8.14–9.83 | 1.32–2.31 | 1213–2127 |
+| `lhs` | 28 | 9.08–9.20 | 0.93–1.54 | 1820–3007 |
+| `qlogei` | 28 | 4.48–4.71 | 0.14–0.35 | 7966–19991 |
+| `qlognei` | 28 | 3.44–7.47 | 0.08–0.54 | 5198–34416 |
+
+**`doe`'s pooled design is rank-deficient in 50 of 50 campaigns — full rank in ZERO.** Two
+exact collinearities, both structural rather than accidental:
+
+1. The two dropped factors are pinned across all 28 post-screen runs, so their pure-quadratic
+   columns are **identical vectors** over all 48 rows.
+2. The `2^(6-2)` screen is **resolution IV**, so its two-factor interactions are aliased in
+   pairs — and because those columns are nonzero only on the 16 screen rows, **the screen's
+   aliasing becomes an exact rank deficiency of the pooled design.**
+
+**The classical arm builds a well-designed 4-factor experiment** — its own stage-2 model is
+fine at D-eff 42.1%, G-eff 78.8% — **inside a box covering 1/16 of the space, then reports it
+as an answer about 6 factors.** By the RSM community's own criterion the 48 wells taken
+together are not a design at all.
+
+*G-eff is an upper bound: the maximum is taken over a finite candidate set (the 20,000-point
+grid plus vertices, face centres and design points).*
+
+### 32.3 FDS is the bridge to certifiability, and it is exact arithmetic
+
+`SecondOrderModel.prediction_interval` (`boec/rsm.py:238`) has half-width
+`t·σ·sqrt(1 + SPV/n)`. **So the FDS curve IS the distribution of prediction-interval width
+over the space, up to a constant** — and a certified region is exactly
+`{x : lower bound ≥ τ}`. Interval width multiplier `sqrt(1 + SPV/48)`:
+
+| arm | 10th | 50th | 90th | 99th |
+|---|---|---|---|---|
+| `doe_unscreened` | 1.09 | 1.17 | 1.24 | 1.29 |
+| `sobol` | 1.19 | 1.40 | 1.86 | 2.42 |
+| `lhs` | 1.22 | 1.52 | 2.21 | 3.15 |
+| `qlogei` | 1.74 | 2.95 | 5.52 | 8.81 |
+| `qlognei` | 1.68 | 2.89 | 5.40 | 9.14 |
+
+**The adaptive arms buy their regret by leaving the space 3–9× less precisely mapped than a
+CCD.** That is the trade §23.2 describes, in the RSM literature's own units, and it is why
+spread designs win the map while BO wins the search.
+
+*This is the classical, design-based FDS on SPV. The project's certified regions use **GP
+posterior** SD, and no committed file stores per-grid-point posterior SD, so a GP-based FDS
+would need a fresh 20,000-point posterior per arm per seed.*
+
+### 32.4 ⭐ The classical arm fails its OWN acceptance test, 25 times out of 25
+
+The confirmation run is the well the classical pipeline spends on checking itself. True global
+optimum = 1.0000, n = 25 per σ:
+
+| | σ=0.25 | σ=0.10 |
+|---|---|---|
+| predicted `f(x̂)` mean | 0.9805 | 0.9625 |
+| true `f(x̂)` mean | **0.0992** | **0.1015** |
+| **gap = predicted − true, mean** | **0.8813** | **0.8609** |
+| **over-promised (gap > 0)** | **25/25** | **25/25** |
+| **predicted ABOVE the true global optimum** | **12/25** | **12/25** |
+| stationary point classified a **saddle** | **25/25** | **25/25** |
+| confirmation beat the best of the 48 visited | **0/25** | **0/25** |
+
+**The arm predicts a response above the global maximum of the landscape in half its
+campaigns**, its chosen point is a **saddle every single time**, and the confirmation run
+**never once** improves on a point it had already visited.
+
+`grid_r2 = −6.19` is the same fact in a language the RSM community does not use. **This is that
+fact in the language it does use, and it is worse:** the classical pipeline's own,
+self-administered, single-well acceptance test **fails in 50 of 50 campaigns.**

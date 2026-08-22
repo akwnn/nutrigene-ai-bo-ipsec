@@ -102,7 +102,7 @@ def _committed_index() -> dict:
     return {(r["sigma"], r["seed"]): r["arms"] for r in doc["rows"]}
 
 
-def _yvar(Y: torch.Tensor, sigma_rel: float) -> torch.Tensor:
+def _yvar(Y: torch.Tensor, sigma_rel: float, sigma_add: float) -> torch.Tensor:
     """The plug-in observation variance, from the SAME function the evaluator uses.
 
     `run_doe_arm` and `run_unscreened_ccd` both discard the variance the evaluator
@@ -111,13 +111,17 @@ def _yvar(Y: torch.Tensor, sigma_rel: float) -> torch.Tensor:
     this is the evaluator's own definition and not a second one that happens to agree --
     `yhat^2 * sigma_rel^2 + sigma_add^2`, floored at `sigma_add^2`.
 
-    `sigma_add` is 0 for these arms: `Q59._oracle()` is `UnitScaled(Hartmann6())` and
-    `TorchEvaluator` is constructed with `sigma_rel` alone, so the additive term is its
-    default of 0 and the floor is non-binding.
+    **`sigma_add` is PASSED IN, read off the evaluator, never assumed.** The first
+    version of this function hardcoded `0.0` on the reasoning that `TorchEvaluator` is
+    constructed with `sigma_rel` alone. That reasoning was wrong:
+    `TorchEvaluator.__init__` defaults `sigma_add = 0.01`, so the additive term is
+    0.01 and dropping it made the variance 6.5% low at sigma=0.25 and **30.2% low at
+    sigma=0.10**. This is Erratum 1.6 -- `designspace.tau_max` omitting `sigma_add` --
+    happening a second time in a second place.
     """
     import numpy as np
     return torch.from_numpy(
-        _plug_in_yvar(Y.detach().cpu().numpy().astype(float), sigma_rel, 0.0))
+        _plug_in_yvar(Y.detach().cpu().numpy().astype(float), sigma_rel, sigma_add))
 
 
 def _campaigns(sigma: float, seed: int):
@@ -135,7 +139,7 @@ def _campaigns(sigma: float, seed: int):
     r = run_doe_arm(ev, b, truth=ev.truth, budget=_Q59.BUDGET, seed=seed)
     t = ev.truth(r.X_visited).double()
     screened = {
-        "X": r.X_visited, "Y": r.Y_visited, "Yvar": _yvar(r.Y_visited, sigma),
+        "X": r.X_visited, "Y": r.Y_visited, "Yvar": _yvar(r.Y_visited, sigma, ev.sigma_add),
         "rule_a": opt - float(_Q59.reported_best_curve(t, r.Y_visited)[-1]),
         "oracle_best": opt - float(t.max()),
         "kept_factors": list(r.kept_factors),
@@ -145,10 +149,10 @@ def _campaigns(sigma: float, seed: int):
     u = _Q59.run_unscreened_ccd(ev2, b, truth=ev2.truth, optimum_value=opt, seed=seed,
                                 return_design=True)
     unscreened = {"X": u["X_all"], "Y": u["Y_all"],
-                  "Yvar": _yvar(u["Y_all"], sigma),
+                  "Yvar": _yvar(u["Y_all"], sigma, ev2.sigma_add),
                   "rule_a": u["rule_a"], "oracle_best": u["oracle_best"],
                   "kept_factors": None}
-    return {"doe_screened": screened, "doe_unscreened": unscreened}, oracle
+    return {"doe_screened": screened, "doe_unscreened": unscreened}, oracle, ev.sigma_add
 
 
 def _active_mask(kept) -> torch.Tensor:
@@ -167,7 +171,7 @@ def _active_mask(kept) -> torch.Tensor:
 
 
 def score(sigma: float, seed: int, index: dict) -> list[dict]:
-    arms, oracle = _campaigns(sigma, seed)
+    arms, oracle, sigma_add = _campaigns(sigma, seed)
     ref = index[(sigma, seed)]
 
     # GATE FIRST, before any expensive scoring: a miss means the regeneration is not the
@@ -200,7 +204,10 @@ def score(sigma: float, seed: int, index: dict) -> list[dict]:
                 return mean, sd
 
         m = _M()
-        sigma_pred = ((sigma * mean).abs() ** 2).sqrt()
+        # + sigma_add ** 2, exactly as run_p6_families.py:640 carries it. Dropping
+        # it made the predictive SD 6.5% low at sigma=0.25 and 30.2% low at
+        # sigma=0.10, and sigma_pred feeds predictive_probability_map directly.
+        sigma_pred = ((sigma * mean).abs() ** 2 + sigma_add ** 2).sqrt()
         active = _active_mask(a["kept_factors"])
         base = {"family": FAMILY, "dim": DIM, "sigma": sigma, "seed": seed, "arm": arm,
                 "rule_a": a["rule_a"], "oracle_best": a["oracle_best"],

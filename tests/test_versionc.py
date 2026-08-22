@@ -16,7 +16,7 @@ from boec.versionc import (additive_refit_residual_ratio, additive_share,
                           ard_lengthscales,
                           ard_separation_ratio, conservative_columns,
                           detector_statistics, n_effective,
-                          plausible_optimum_mask)
+                          plausible_optimum_mask, split_joint_draws)
 
 
 def _unit_lengthscales(d: int, value: float = 0.5) -> torch.Tensor:
@@ -384,3 +384,55 @@ def test_the_cross_fit_CANNOT_move_empirical_containment():
     assert torch.equal(committed, split_mask), "the cross-fit changed the selected set"
     assert (empirical_containment(committed, truth, 0.5)
             == empirical_containment(split_mask, truth, 0.5))
+
+
+def test_split_joint_draws_first_half_is_bit_identical_to_the_committed_draw():
+    """**The load-bearing property of the whole re-score.**
+
+    `run_k6b_conservative.joint_draws` builds a FRESH generator per call, so calling it
+    twice returns the identical block -- useless as a cross-fit. The split variant must
+    draw both halves from ONE generator, and its first half must reproduce the committed
+    512-draw block exactly, or every committed `ce_*` column moves and the re-score stops
+    being a re-score.
+    """
+    import importlib.util
+    from pathlib import Path
+
+    root = Path(__file__).resolve().parents[1]
+    spec = importlib.util.spec_from_file_location(
+        "_k6b", root / "scripts" / "run_k6b_conservative.py")
+    k6b = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(k6b)
+
+    from boec.optimizers import lhs_design
+    from boec.replay import unit_bounds
+    from boec.surrogate import build_gp
+
+    d, bounds = 3, unit_bounds(3)
+    X = lhs_design(bounds, 18, seed=0)
+    Y = (1.0 - (X - 0.5).pow(2).sum(dim=1, keepdim=True)).double()
+    Yvar = torch.full_like(Y, 1e-3)
+    model = build_gp(X, Y, Yvar, bounds)
+    X_sub = lhs_design(bounds, 60, seed=1)
+
+    committed = k6b.joint_draws(model, X_sub, seed=7)
+    sel, val = split_joint_draws(model, X_sub, seed=7)
+
+    assert sel.shape == committed.shape
+    assert torch.equal(sel, committed), "the committed half moved; the re-score is void"
+    assert not torch.equal(sel, val), "the two halves are the same draw"
+
+
+def test_split_joint_draws_halves_are_equal_sized_and_independent():
+    from boec.optimizers import lhs_design
+    from boec.replay import unit_bounds
+    from boec.surrogate import build_gp
+
+    bounds = unit_bounds(3)
+    X = lhs_design(bounds, 18, seed=0)
+    Y = (1.0 - (X - 0.5).pow(2).sum(dim=1, keepdim=True)).double()
+    model = build_gp(X, Y, torch.full_like(Y, 1e-3), bounds)
+    sel, val = split_joint_draws(model, lhs_design(bounds, 40, seed=2), seed=3)
+    assert sel.shape == val.shape
+    # Independent blocks: their difference must not be degenerate.
+    assert float((sel - val).abs().mean()) > 1e-6
