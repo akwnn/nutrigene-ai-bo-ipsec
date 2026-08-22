@@ -57,7 +57,7 @@ route against which F3's draw sweep gets cross-checked.
 | task | state | resume cost |
 |---|---|---|
 | **P1 — kernel-arm gate** | Q30 comparator done; the **2,800-row re-score has NOT run**. **Joseph: run it now** (decided: queue after cross-family, which is finished) | decides VALIDATED vs WITHDRAWN |
-| **P7 — Murphy calibration** | **8/50**, 10 arms | ~2 h. Primary Phase 2 deliverable (F2d) |
+| 🔴 **P7 — Murphy calibration** | **0/50, NOT 8/50.** `results/p7-murphy.json` does not exist; both logged runs are at the OLD 6-arm tuple and the second logged zero campaigns. The "restart at 10 arms" never reached disk. | **The single largest outstanding item in Phases 2–4** — calibration is the one Brier component AUC cannot see, and SPADE's whole claim is calibrated |
 | **P6 — cells 3 and 4** | `(8, 0.25)` and `(8, 0.10)` never started | ~2 h per cell at observed speed, **not** the registered ~7 h |
 | **P3 — cells 2 and 3** | (8, 0.25) and (8, 0.10) held at key 1 | ~1.3 h each |
 | **`coord` AUPRC re-score** | `p4-coord.json` lacks `auprc` | ~20 min |
@@ -132,7 +132,11 @@ non-zero exit.
 
 ## 7. Outstanding, carried from the SPADE evaluation queue
 
-Tier 0 items still open: **F3 draw sweep** (no runner) and **the §10 scope gap**. The
+Tier 0 items still open: **F3 draw sweep** (no runner). **The §10 scope gap is mostly CLOSED** —
+Version B is in 5 of 8 runners' sources and 4 of 8 runners' committed results, and the α\* half
+is simply no longer true (P4b runs 12 arms). **But P6 tests SPADE's MAP off hill, not its
+certificate** — it carries no `alpha_star`, no `ce_*`, no `vorobev_*`, so the certificate is
+still measured at exactly one (family, d, σ) point. See §25. The
 **multiplicity correction is DONE** — and it contradicts the queue's own version of it (§22):
 the queue's instruction to "restate §14 as one failure, not four" is itself wrong; the exact
 tail gives **zero**. Tier 1 document corrections are inventoried but **not yet

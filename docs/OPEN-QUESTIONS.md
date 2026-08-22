@@ -7754,3 +7754,46 @@ the docstrings have stopped being true out loud.
 **Four candidates remain viable** and are what the one-class boundary will be fitted from:
 `n_components_plausible`, `additive_share`, `additive_refit_residual`,
 `ard_separation_ratio` — plus `n_peaks_raw` and `lengthscale_over_width`.
+
+## 🔴 ERRATUM 25 · **§10's scope gap is mostly closed. "1 of 8" is stale, and the α\* half is FALSE.**
+
+`FINDINGS-SPADE.md` §25. Version B arms are now in the source of **5 of 8** Phase 2–4 runners
+and the committed results of **4 of 8**. `results/p4b-alpha-star-anomaly.json` carries
+**`n_arms: 12`** including all three Version B arms — so *"the α\* investigation omitted every
+SPADE arm"* is **no longer true**. **ρ(α\*, regret) = −0.3916 [−0.6643, −0.0839]** at twelve
+arms, against the provisional nine-arm −0.3667.
+
+**Errata 11 and 13 are CLOSABLE** — both were marked PENDING on the grounds that the twelve-arm
+figures did not exist. They do.
+
+**Correction to the registration's own wording (`:6469`):** *"F1's three Holm upgrades are all
+on `alpha_star`, all on Version B contrasts"* — **all three are Version B contrasts, but only
+TWO are on `alpha_star`.** The third is on **`auc`, a VALIDATED metric**
+(`f1-dual-n.json · status_changes_by_metric_class = {validated: 1, model-internal: 3}`). This
+document already said **two** at `:6585` and contradicted itself at `:6469`.
+
+## 🔴 REGISTRATION LIMIT · **P6 tests SPADE's MAP off hill, NOT its certificate.**
+
+**Stated because Part IV is easy to misread as more than it is.**
+`results/p6-families.json` carries **no `alpha_star`, no `ce_contain_*`, no `ce_empirical_*`,
+no `vorobev_*`** — zero occurrences in any checkpoint. The conservative excursion estimate, which
+**is** the SPADE certificate, is not computed anywhere in the cross-family programme.
+
+> **SPADE's certificate has still been measured at exactly one (family, d, σ) point in the
+> entire project: hill, d=6, σ=0.25.** Four families and eight cells later, unchanged.
+
+P6 also excludes hill and is d=6 only. **The map half of the scope gap is closed; the
+certificate half is not.** That is precisely the gap §22 says the containment sweep lacks the
+power to close and F3 was registered to attack.
+
+## 🔴 **P7 HAS PRODUCED NOTHING. The "restart at 10 arms" left no trace.**
+
+`results/p7-murphy.json` **does not exist.** The log holds **two aborted runs, both at the OLD
+six-arm tuple** (`arms=('doe','qlogei','qlognei','lhs','sobol','random')`), the second logging
+zero campaign lines. `OVERNIGHT-LOG.md:1624` records *"P7 is restarting at 10 arms"* — **no such
+run reached disk.** The source is at 10 arms; nothing has been run from it.
+
+**This is the "8/50" in the handoff's unfinished table, and 8/50 overstates it: the correct
+state is 0/50 at the registered arm set.** Murphy calibration is the one Brier component AUC
+cannot see, and SPADE's entire claim is a calibrated statement — so this is the single largest
+outstanding item in Phases 2–4, ahead of the d=8 cells.

@@ -686,9 +686,14 @@ reproduce.
 
 **The two worst instances:**
 * **α\* IS SPADE's own statistic** — the conservative estimate is the certificate — and the
-  α\* investigation omitted every SPADE arm. F1's three Holm upgrades are **all on `alpha_star`,
-  all on Version B contrasts**, so the arm whose upgrades are in question was absent from the
-  test of the statistic that produced them.
+  α\* investigation omitted every SPADE arm *(**no longer true** — P4b was re-run at 12 ranked
+  arms including all three; §25)*. F1's three Holm upgrades are **all on Version B contrasts**,
+  and **two of three are on `alpha_star`** — the third is on `auc`, a **validated** metric
+  (`f1-dual-n.json · status_changes_by_metric_class = {validated: 1, model-internal: 3}`).
+  *(This read "all on `alpha_star`, all on Version B contrasts" until 2026-08-22;
+  `OPEN-QUESTIONS.md:6585` already said **two** and contradicted `:6469` in the same document.)*
+  The point it was making still holds historically: the arm whose upgrades were in question was
+  absent from the test of the statistic that produced them.
 * **Calibration is the metric promoted to primary precisely because AUC cannot see it**, and
   **SPADE's whole claim is a calibrated statement.**
 
@@ -716,7 +721,12 @@ has now blocked the error volumes twice.
 4. **A published containment table was a pooling artefact**, and one of its two headline claims
    does not survive. **SPADE's own number was always per-cell and is untouched.**
 5. **SPADE's certificate has been measured at exactly one (family, d, σ) point in the entire
-   project.** Until §10's gap is closed, **nothing in Phases 2–4 tests it anywhere else.**
+   project.** *(The second sentence — "until §10's gap is closed, nothing in Phases 2–4 tests
+   it anywhere else" — is **superseded, and the first sentence is STILL TRUE.** The scope gap is
+   largely closed for the **map**: Version B arms are now in 5 of 8 runners' sources and 4 of 8
+   runners' committed results. **But P6 carries no `alpha_star`, no `ce_*` and no `vorobev_*`
+   columns at all**, so the cross-family programme tests SPADE's **map** off Hill and **not its
+   certificate.** See §25.)*
 
 ---
 
@@ -1264,3 +1274,70 @@ prevalence differs by arm in 198 of 200 cells. It must not be cited for any arm 
 keeps rediscovering: *a result measured on Hill described a property of Hill.* The supersede
 decision survives on mechanism — what the metrics do to an empty region, and to an arm that
 certifies nothing — not on a correlation that turned out to be family-dependent.
+
+---
+
+## 25. The §10 scope gap is mostly closed — and P6 does NOT close the half that matters
+
+§10 was written when SPADE appeared in **1 of 8** Phase 2–4 runs. That is now stale, and it
+matters that the record says so rather than leaving a solved problem marked open.
+
+### 25.1 Where the Version B arms actually are
+
+| runner | Version B in source | in committed results |
+|---|---|---|
+| `run_p2_versionb_gamma` | ✅ all four | ✅ |
+| `run_p3_cells` | ✅ all four | ✅ (6, 0.10) only |
+| `run_p4b_alpha_anomaly` | ✅ all four scored, three ranked | ✅ |
+| `run_p6_families` | ✅ all four | ✅ **8 cells, today** |
+| **`run_p7_murphy`** | ✅ all four | 🔴 **no output exists at all** |
+| `run_p4_coord`, `run_p1_kernel_gate`, `run_d23_doe_subspace` | n/a — single-arm or kernel-only, as registered | — |
+
+**5 of 8 in source, 4 of 8 in committed results.** The registered fix's five requirements — arms
+added, ungated with a per-row reason, `plate1_only` gated where a comparator exists and never
+double-counted, all five error-volume columns emitted, results committed — are satisfied by
+`p3`, `p4b` and `p6`.
+
+### 25.2 The α\* half of §10 is simply no longer true
+
+`results/p4b-alpha-star-anomaly.json` carries **`n_arms: 12`**, including `versionb`,
+`versionb_random` and `versionb_predictive`, with `plate1_only` scored and excluded from the
+ranking. **ρ(α\*, regret) = −0.3916 [−0.6643, −0.0839]** on twelve arms, against the provisional
+nine-arm −0.3667. **Errata 11 and 13, both still marked PENDING on the grounds that the twelve-arm
+figures did not exist, can be closed from this file.**
+
+*(One stale artefact: all three P4b runs print `50 units x 9 arms` in a hard-coded banner while
+the final block reports 12.)*
+
+### 25.3 🔴 **P6 tests SPADE's map off Hill. It does not test SPADE's certificate.**
+
+This limit is easy to misread from Part IV and is stated here explicitly.
+
+`results/p6-families.json` carries **no `alpha_star`, no `ce_contain_*`, no `ce_empirical_*`,
+no `vorobev_*`** — zero occurrences of any of them in any checkpoint. P6 measures AUC, AUPRC,
+Brier, IoU, false inclusion and the type I / type II / symmetric-difference error volumes. All
+map. **The conservative excursion estimate — which IS the SPADE certificate — is not computed
+anywhere in the cross-family programme.**
+
+Consequently, and despite everything in Part IV:
+
+> **SPADE's certificate has still been measured at exactly one (family, d, σ) point in the
+> entire project: hill, d=6, σ=0.25.** Four families and eight cells later, that sentence is
+> unchanged.
+
+P6 also excludes hill, so it does not re-measure the one cell where the certificate exists, and
+it is d=6 only.
+
+### 25.4 What is still actually open
+
+| item | state |
+|---|---|
+| 🔴 **P7 Murphy calibration** | **no results exist.** `results/p7-murphy.json` does not exist; the log holds two aborted runs, **both at the OLD six-arm tuple**, the second logging zero campaigns. `OVERNIGHT-LOG.md` records "P7 is restarting at 10 arms" — **that restart left no trace and no JSON.** The source is at 10 arms; nothing has been run from it. Calibration is the one Brier component AUC cannot see, and SPADE's whole claim is a calibrated statement. |
+| 🔴 **P3 cells (8, 0.25) and (8, 0.10)** | never ran. Their logs stop after one campaign at the **pre-fix 8-arm tuple**, killed on the hold order. A re-run now picks up the 12-arm tuple automatically. |
+| 🟡 **`results/versionb.json` still lacks the five columns** | `vol_pred`, `vol_latent`, `fi_pred`, `fi_latent`, `true_frac_above_tau` are all absent. The requirement was that *new* rows emit them — satisfied — but the original file was never re-emitted, so **error volumes remain uncomputable from it.** |
+| 🟡 **Errata 11 and 13** | closable now; see §25.2. |
+
+**The honest restatement of §10: the map half of the scope gap is closed and the certificate
+half is not.** Nothing in Phases 2–4 measures SPADE's calibrated claim anywhere except the one
+cell it was born on — which is exactly what §22 says the containment sweep lacks the power to
+resolve, and exactly what F3 was registered to attack.
