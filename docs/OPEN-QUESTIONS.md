@@ -7701,3 +7701,56 @@ active subspace, so prevalence differs by arm in 198 of 200 cells.
 **The general lesson, for the third time this week: a result measured on Hill described a
 property of Hill.** Any claim not yet re-measured off Hill should be read as Hill-conditional
 until it is.
+
+## C3.3a — the fit set is SINGLE-CLASS, and that changes what the rule can be
+
+**Measured, not anticipated by the specification.** §3.3 says *"fit the rule and its
+threshold on hill, levy, rosenbrock ONLY"* and *"score ONCE on hartmann6 and ackley"*.
+Checked against the committed Q53 table: **levy is null at all four cells (−0.0002,
++0.0133, +0.0016, −0.0058) and rosenbrock is null at all four (−0.0019, …, +0.0067).**
+Hill ties. So **every family in the fit set is on the *same side* of the boundary**, and
+the two held-out families are the entire other side.
+
+**Consequence: a discriminative threshold cannot be fitted on the fit set.** There is no
+contrast in it to fit against, and "separation" cannot be measured there at all — a
+two-class statistic needs two classes. Fitting one anyway would require looking at
+hartmann6 or ackley, which is the single thing §3.3 exists to forbid.
+
+**The only protocol that survives.** The rule is a **one-class (novelty) boundary**:
+
+```
+DECEPTIVE  if a frozen statistic falls OUTSIDE the range observed
+           across hill / levy / rosenbrock on the fitting run
+UNIMODAL   otherwise
+```
+
+This is fittable **without ever seeing a deceptive landscape** — it needs only the tie
+families — and it is frozen before the single scoring pass. The scoring pass then measures
+whether hartmann6 and ackley fall outside that boundary, which **is** K-C7's test and is
+allowed to happen exactly once.
+
+**What this costs, stated up front.** A one-class boundary has no fitted false-positive
+rate against real deceptive landscapes, so its power is unknown until the single scoring
+pass, and that pass cannot be repeated to improve it. If it misfires, K-C7 fires and
+Version C ships without Stage 0 — which §3.6 already registered as an acceptable outcome
+and a smaller but real finding.
+
+## C3.2a — two of the six candidate statistics are non-viable as written
+
+Both found by measurement while building the fitting runner, before any threshold existed.
+
+1. **`{x : LCB(x) ≥ max LCB}`** — satisfied by the argmax alone, so its component count is
+   always exactly 1. Replaced by §2.3's plausible-optimum set `{x : UCB(x) ≥ max LCB}`.
+2. **`n_local_maxima`** — peaks whose LCB clears the *second-highest UCB*. **Identically
+   zero** at the real operating point (40 wells, d=6, σ=0.10, 20,000-point grid) on both
+   hill and levy. At 0.49 neighbours per lengthscale no LCB comes near a rival's
+   optimistic bound. `n_peaks_raw` — the same peaks with no confidence bar — does vary
+   (135 and 149 on those two fits) and is the usable form.
+
+Both zeros are pinned as **alarms** in the test suite rather than as targets: if the budget
+or noise level ever moves far enough that they fail, the candidates have become viable and
+the docstrings have stopped being true out loud.
+
+**Four candidates remain viable** and are what the one-class boundary will be fitted from:
+`n_components_plausible`, `additive_share`, `additive_refit_residual`,
+`ard_separation_ratio` — plus `n_peaks_raw` and `lengthscale_over_width`.
