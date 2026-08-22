@@ -1447,3 +1447,81 @@ while losing to every spread arm — and it reproduces on an arm built by a diff
 small enough carries 35 runs for 45 parameters. **An unscreened classical pipeline does not
 exist at d=8 within the shared budget**, which is the reason the 6→4 screen exists at all.
 Part IV's d=8 cells inherit the confound permanently, and no future run can remove it.
+
+---
+
+## 27. 🔴⭐ THE SCOPE GAP IS CLOSED — and calibration does not flatter SPADE
+
+`results/p7-murphy.json` — **500 campaigns, 12,000 rows, all 10 arms including all four
+Version B arms.** P7 had produced nothing at all before today: its only two logged runs were
+at the **old six-arm tuple** and the second logged zero campaigns, so the handoff's "8/50" was
+really **0/50**. It has now run at the registered arm set.
+
+**This is what §10 was blocking.** The Murphy decomposition was promoted to primary *precisely
+because AUC cannot see calibration*, and SPADE's entire claim — *"this region holds at
+assurance γ"* — is a calibrated statement. It had been run on every arm except the one making
+that claim. Not any more.
+
+`Brier = calibration − refinement + uncertainty`, verified on **all 12,000 rows: 0 violations,
+worst residual 2.220e-16.** Calibration is reliability (**lower is better**); refinement is
+resolution (**higher is better**).
+
+### The result
+
+Predictive map, non-degenerate cells, `plate1_only` excluded:
+
+| arm | calibration | rank | refinement | rank | Brier | AUC |
+|---|---|---|---|---|---|---|
+| `doe` | **0.22959** | **9** | 0.00235 | **9** | 0.3367 | 0.5960 |
+| `qlogei` | 0.03366 | 4 | 0.00996 | 7 | 0.1331 | 0.7005 |
+| `qlognei` | 0.04425 | 8 | 0.01261 | 4 | 0.1411 | 0.7392 |
+| `lhs` | 0.03034 | 3 | 0.01175 | 5 | 0.1280 | 0.7229 |
+| **`sobol`** | **0.02893** | **1** | 0.01142 | 6 | **0.1269** | 0.7270 |
+| `random` | 0.03032 | 2 | 0.00900 | 8 | 0.1307 | 0.6884 |
+| `versionb` | 0.03593 | **6** | **0.01506** | **1** | 0.1303 | **0.7583** |
+| `versionb_random` | 0.03846 | **7** | 0.01288 | 3 | 0.1350 | 0.7442 |
+| `versionb_predictive` | 0.03532 | **5** | 0.01436 | 2 | 0.1304 | 0.7529 |
+
+### 27.1 SPADE is the sharpest and it is not the best calibrated
+
+**SPADE takes ranks 1, 2 and 3 on refinement and ranks 5, 6 and 7 of 9 on calibration.** Its
+regions are the most *informative* in the study and its probabilities are *below average* in
+reliability.
+
+**And AUC ranks `versionb` FIRST (0.7583).** So on the very cell where the two metrics can
+disagree, they do: **the metric that cannot see calibration puts SPADE at the top, and
+calibration puts it in the bottom half.** The Murphy split was promoted to primary for exactly
+this reason, and the first thing it does with SPADE in scope is catch it.
+
+**This is not a kill.** SPADE's calibration (0.0353–0.0385) sits in the same band as every
+other non-`doe` arm (0.0289–0.0443), and it wins refinement outright. The honest statement is
+that **SPADE buys sharpness and does not buy reliability**, and any claim resting on the
+calibrated half needs that said beside it.
+
+### 27.2 `doe` is not merely worst — it is off the scale
+
+`doe`'s calibration is **0.22959 against 0.04425 for the next worst: 5.2× worse than any other
+arm and 7.9× worse than the best.** It is also last on refinement. **A single arm accounts for
+almost the entire spread of the metric**, and every other arm sits inside a band a tenth its
+width. Alongside §19 and §26 this is the strongest single indictment of the classical pipeline
+in the study, and it is on the metric the RSM community would itself nominate.
+
+### 27.3 `sobol` wins a FOURTH validated metric while α\* ranks it last
+
+`sobol` is now **best on calibration**, on top of best Brier, best empirical containment, and
+best mean symmetric-difference rank on three of four families (§23.3) — while placing **last on
+α\* at three of four thresholds**.
+
+**Four independent validated metrics, one model-internal metric, and they point in opposite
+directions on the same arm.** §15 declined to resolve α\*; §24 removed one of the grounds for
+that refusal. **This removes the last reason to treat it as unresolved** — see §28.
+
+### 27.4 The registered A5 check fired
+
+*"The two rankings differ at **23 of 24** predictive-map cells (24 of 24 latent), and **6 of
+371** inverted pairs survive Holm at the conservative unit n=25 (6 at n=50)."*
+
+Refinement and Brier rank the arms differently almost everywhere, with a Spearman ρ across
+cells of **min −0.283, median −0.075, max +1.000** and **371 of 864 pair inversions**. Reporting
+Brier alone hides which half of it an arm is winning — which is the whole argument for the
+decomposition, now measured rather than asserted.

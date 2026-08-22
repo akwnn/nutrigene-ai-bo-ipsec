@@ -8201,3 +8201,48 @@ skewed. The within-arm comparison is therefore not load-bearing; the cross-arm c
 is **arithmetically impossible at d=8** within 48 wells (45 second-order terms, no
 face-centred CCD lands on 48; the only design small enough has 35 runs for 45 parameters).
 **Part IV's d=8 cells inherit this confound permanently and no future run can remove it.**
+
+## ✅ TASK 1 / §10 SCOPE GAP · **CLOSED. P7 ran at the registered arm set.**
+
+`results/p7-murphy.json` — **500 campaigns, 12,000 rows, all 10 arms including all four
+Version B arms.** P7 had produced nothing before today; both its logged runs were at the OLD
+six-arm tuple and the second logged zero campaigns, so the handoff's "8/50" was really
+**0/50**. Full account in `FINDINGS-SPADE.md` §27.
+
+**`Brier = calibration − refinement + uncertainty` verified on all 12,000 rows: 0 violations,
+worst residual 2.220e-16.**
+
+### 🔴 The finding, and it does not flatter SPADE
+
+**SPADE ranks 5th, 6th and 7th of 9 on CALIBRATION** — the component the decomposition was
+promoted to primary to expose, and the one SPADE's whole claim rests on — **while ranking 1st,
+2nd and 3rd on REFINEMENT.** Its regions are the sharpest in the study and its probabilities
+are below average in reliability.
+
+**AUC ranks `versionb` FIRST (0.7583).** The metric that cannot see calibration puts SPADE at
+the top; calibration puts it in the bottom half. That is precisely the disagreement the Murphy
+split was adopted to catch, and the first thing it does with SPADE in scope is catch it.
+
+**Not a kill.** SPADE's calibration (0.0353–0.0385) sits inside the same band as every other
+non-`doe` arm (0.0289–0.0443) and it wins refinement outright. **The defensible statement is
+that SPADE buys SHARPNESS and does not buy RELIABILITY**, and every claim resting on the
+calibrated half must now carry that.
+
+### `doe`'s calibration is off the scale
+
+**0.22959 against 0.04425 for the next worst — 5.2× worse than any other arm, 7.9× worse than
+the best** — and last on refinement too. One arm accounts for nearly the whole spread of the
+metric.
+
+### `sobol` takes a FOURTH validated metric
+
+Best calibration, on top of best Brier, best empirical containment, and best mean
+symmetric-difference rank on three of four families — **while placing last on α\* at three of
+four thresholds.** Four validated metrics against one model-internal metric, pointing opposite
+ways on the same arm. **This is what unblocks Task 8.**
+
+### Registered A5 check fired
+
+Rankings differ at **23 of 24** predictive cells (24 of 24 latent); **6 of 371** inverted pairs
+survive Holm at n=25 (6 at n=50); Spearman ρ across cells min −0.283, median −0.075,
+max +1.000; **371 of 864 pair inversions.** Reporting Brier alone hides which half an arm wins.
