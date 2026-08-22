@@ -7870,3 +7870,45 @@ reproduce from the raw rows at max \|Δ\| = 0.000e+00, at BOTH the n=50 and n=25
 value and 0 `n` mismatches.** The seven `ce_empirical` sites the queue listed were **already
 corrected in place**. The un-pooling work that remained was on the circular statistic, which
 nobody had looked at.
+
+## C3.3b — K-C7 is PREDICTED TO FIRE, from the fit set alone
+
+**`results/versionc-detector-fit.json`** — 150 rows, hill / levy / rosenbrock, d=6, both
+σ, 40-well plate 1, 20,000-point grid. **`results/versionc-detector-boundary.json`** —
+the ranked statistics and the proposed boundary. **Nothing is frozen and nothing held out
+has been scored.**
+
+| statistic | support on the tie families | fires on | within-family ÷ pooled |
+|---|---|---|---|
+| `additive_share` | [0.1054, 0.8860] | **21.9%** | **0.88** |
+| `additive_refit_residual` | [0.2868, 1.7130] | n/a | 0.87 |
+| `n_peaks_raw` | [22, 600] | n/a | 0.81 |
+| `n_components_plausible` | [1, 5] | n/a | 0.75 |
+| `ard_separation_ratio` | [1.0010, 30.66] | n/a | 0.66 |
+
+**`within-family ÷ pooled` = 0.88 means a *single* tie family alone spans 88% of the range
+all three span together.** The statistic is dominated by seed-to-seed variation, not by
+landscape class. A statistic that cannot order the families *within* one class cannot
+separate that class from another, and a novelty boundary drawn on it has almost nothing
+left to fire on: `additive_share`'s support leaves **21.9%** of [0, 1] outside.
+
+> **Registered prediction, before the scoring pass: K-C7 fires.** Version C ships without
+> Stage 0, plate 2 always uses the boundary allocation, and the claim is cut to *"the
+> boundary exists and is deception-shaped"* — §3.6's outcome, which was registered as
+> acceptable and as a smaller but real finding.
+
+**Why this is worth having rather than merely disappointing.** The prediction is made from
+the **fit set alone**. It does not consume the single look at hartmann6 and ackley, which
+§3.5 says cannot be repeated. Learning that the rule is probably powerless *before*
+spending that look is strictly better than learning it after — after, there is no second
+pass in which to try a different statistic.
+
+**Two diagnostics carry it, both computable with no deceptive example.**
+`excluded_fraction` — a novelty rule fires only outside the support, so the attainable
+range the support leaves over **is** the rule's power; `None` for unbounded statistics,
+where a number would read as power it does not have. `within_family_share` — the mean
+per-family support width over the pooled width.
+
+**What would change the verdict.** A statistic with a materially tighter support on the tie
+families. None of the six candidates has one at 48 wells; whether one exists at a larger
+budget is a different question and is not answered here.
