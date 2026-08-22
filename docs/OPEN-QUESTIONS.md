@@ -8863,3 +8863,73 @@ across five families."
 
 `.gitignore` negation for `results/p8-certificate-families.json` goes in with this
 registration, before the file exists.
+
+---
+
+## 🔒 P8.1 — **PRE-REGISTERED: the certificate's emptiness is ordered by max `tau_q`.**
+
+**Registered 2026-08-23 while P8 is at ~500/1000, with `rosenbrock` and `ackley` NOT YET
+RUN.** This is a prediction, not a description. It is committed before the data exists so it
+can be wrong.
+
+### What the two completed families plus half of levy show
+
+SPADE (`versionb`), α = 0.95, n = 50 campaigns per cell, 4,096 draws, 24 `(γ, τ_frac)` cells:
+
+| family | cells empty in all campaigns | mean `alpha_star` | max `tau_q` (d=6, committed `p5-tau-quantile.json`) |
+|---|---|---|---|
+| levy *(partial, 26/50 seeds)* | 6 / 24 | 0.8722 | **0.95996** |
+| hill | 6 / 24 | 0.8591 | **0.93129** |
+| **hartmann6** | **22 / 24** | **0.0559** | **0.56612** |
+
+**§20 established the certifiability ceiling is ordered by max `tau_q`, not by grid range** —
+the correction to a claim repeated from the brief without checking. P8 reproduces that
+ordering **on a completely independent measurement**: not the map's ranking, but whether the
+conservative set is non-empty at all.
+
+**levy is the informative one.** It sits with hill, so the pattern is **not** "hill is
+special and the synthetic families are broken". **hartmann6 is the outlier**, and its
+`tau_q` says so.
+
+### 🔒 The prediction, with numeric bars, before `rosenbrock` or `ackley` is scored
+
+`rosenbrock` has the **highest** max `tau_q` of all five (0.98631); `ackley` has the
+**lowest** by a wide margin (0.16159, and **all four of its `p5` rows carry
+`sensitivity: true`**).
+
+> **P1 — `rosenbrock` certifies at least as readily as hill:** **≤ 8 of 24** cells empty in
+> all campaigns, **and** mean `alpha_star` **> 0.80**.
+>
+> **P2 — `ackley` is the worst of the five:** **≥ 22 of 24** cells empty, **and** mean
+> `alpha_star` **< 0.10**.
+>
+> **P3 — the ordering holds:** ranking the five families by cells-empty is the **exact
+> reverse** of ranking them by max `tau_q`, ties allowed.
+
+**Falsified if:** `rosenbrock` comes back with > 8 empty cells or α\* ≤ 0.80; or `ackley`
+with < 22 empty cells or α\* ≥ 0.10; or the P3 ordering inverts anywhere.
+
+**This costs nothing and can only lose.** Both families are already queued in a run that will
+finish regardless, so the prediction consumes no compute and buys a genuine out-of-sample
+test of §20's ordering.
+
+### What it would mean either way
+
+**If it holds:** the certifiability ceiling is not a property of the *map* — it governs
+whether SPADE can issue a certificate at all, and `tau_q` predicts that from the committed
+`p5` table **without running SPADE**. That is a usable diagnostic.
+
+**If it fails:** §20's ordering is about map quality only and does not transfer to the
+certificate, and P8's cross-family emptiness needs a different explanation. **Either
+outcome is reportable; neither is a kill.**
+
+### Registered caveats, stated now rather than after
+
+* **`ackley` carries `sensitivity: true` on every `p5` row.** The registered decision keeps
+  ackley **in for the map, out of every DoE contrast**. P8 is a certificate study, not a DoE
+  contrast, so ackley is **in** — but every ackley figure must carry the flag.
+* **`hartmann6`, `levy`, `rosenbrock` and `ackley` have n = 4 `tau_q` rows** against hill's
+  100. The max over 4 is a far noisier statistic than the max over 100, and **that asymmetry
+  is a limitation of this prediction, not of the families.**
+* **levy is partial at registration time** (26 of 50 seeds). Its 6/24 may move. The
+  prediction is about `rosenbrock` and `ackley`, which are **untouched**.
