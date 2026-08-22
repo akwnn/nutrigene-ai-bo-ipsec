@@ -252,3 +252,4 @@ COMMIT_MSG.txt
 !results/versionc-detector-boundary.json
 !results/versionc-form1-s010.json
 !results/versionc-form1-s025.json
+!results/versionc-detector-heldout.json

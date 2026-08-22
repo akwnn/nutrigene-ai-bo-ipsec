@@ -8636,3 +8636,39 @@ The new runner must:
 **`.gitignore` negations for `results/versionc-detector-heldout.json` go in with the
 registration**, not after the file exists — this repo has been bitten five times by a
 runner writing a registered artefact git then declined to track.
+
+### 🔴 Erratum 31 — correction to the freeze block's runner spec, made BEFORE any scoring
+
+**The frozen rule and K-C7's criterion are UNTOUCHED.** This corrects only item 3 of the
+runner specification, and it is recorded rather than silently edited. The freeze forbids
+edits *after the scoring pass*; nothing has been scored, and `versionc-detector-heldout.json`
+does not exist.
+
+**What I wrote:** *"reuse `_instance_seed`, which already hashes the family name and so
+yields designs distinct from every fit cell."*
+
+**What is true:** `run_versionc_detector._instance_seed` is **dead code.** It is defined at
+line 86 and **called nowhere** — `grep -n "_instance_seed"` returns the `def` line only. The
+fit runner passes the **raw loop seed** `0..24` directly to both the evaluator and
+`plate_one(..., seed=seed)` → `lhs_design(bounds, n, seed=seed)`.
+
+**Why it matters, and it is not cosmetic.** Had the held-out runner hashed its seeds while
+the fit runner did not, the two halves of a single frozen protocol would have been built by
+**different constructions**, and any difference in `additive_share` between fit and held-out
+families would be confounded with the seed derivation. That is precisely the confound this
+whole project exists to avoid, and it would have been invisible in the output.
+
+**Corrected spec:** the held-out runner **mirrors the fit runner exactly** — raw seeds
+`0..24`, passed to `family_evaluator(family, dim, sigma, seed)` and to
+`plate_one(..., seed=seed)`. Using the *same* seeds as the fit families is correct and
+deliberate: `lhs_design` at seed *s* is the same design on every family, so the fit/held-out
+contrast is not confounded by design differences either. The fit set already relies on this —
+hill, levy and rosenbrock all used seeds `0..24`.
+
+**Construction equivalence, verified:** the fit runner builds levy/rosenbrock as
+`TorchEvaluator(UnitScaled(inner), sigma_rel=sigma, seed=seed)`, which is **exactly** what
+`boec.replay.family_evaluator` returns. The held-out runner uses `family_evaluator` rather
+than a fourth copy of that expression.
+
+**`_instance_seed` is left in place, unused.** Deleting it would be a non-additive edit to a
+module a committed result depends on (D15), for no gain.
