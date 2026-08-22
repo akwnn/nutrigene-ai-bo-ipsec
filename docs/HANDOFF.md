@@ -270,3 +270,80 @@ changes only. With §2 unbuilt and K-C7 predicted, `versionc` ≡ `versionc_form
 `versionc_nodetect`, `versionc_fixed_m` is moot, and `versionc_random` ≡ the already-committed
 `versionb_random`. **Form 1's design IS Version B's design**, and its regret number already
 exists: the 0.0792 above. **Do not budget wells for it.**
+
+---
+
+# 🔴 OUTSTANDING WORK — labelled 2026-08-22, evening
+
+## A. BLOCKED ON JOSEPH — one action, and it gates everything else
+
+### A1. 🔴🔴 **THE REPO HAS NEVER BEEN PUSHED. 55 commits are stranded.**
+
+`results/p6-families.json` is **103.8 MB** against GitHub's **100 MB hard limit**, and an
+earlier **208.8 MB** version of the same file is also in unpushed history (added at
+`a59063b`). **Every push is rejected by the pre-receive hook.** Splitting the working-tree
+file — done at `9d91133`, 8 shards of ~22 MB plus a verified loader — **does not fix this**,
+because a push sends the blobs that are in *history*, not the ones in the working tree.
+
+**The only fix is a destructive history rewrite over 49 commits.** It was **blocked by the
+permission classifier**, correctly. Joseph must run it or approve it:
+
+```
+git branch -f backup-before-blob-purge HEAD          # safety net first
+FILTER_BRANCH_SQUELCH_WARNING=1 git filter-branch -f --index-filter \
+  'git rm --cached --ignore-unmatch -q results/p6-families.json' \
+  --prune-empty -- a59063b^..HEAD
+git push origin main
+```
+
+**Consequences, stated before it is run:**
+
+1. **Every commit SHA from `a59063b` onward changes.** ~50 SHAs are cited in
+   `FINDINGS-SPADE.md`, `OPEN-QUESTIONS.md`, `CLAIMS.md` and this file — including the
+   detector freeze `95fca9c`, whose whole evidentiary value is *"committed before the
+   scoring pass"*. **The ordering survives** (the freeze commit still precedes the scoring
+   commit) but **the citations must be rewritten** from the old→new map. `filter-branch`
+   preserves commit order and count, so the map is `git rev-list --reverse` before ∥ after.
+2. **The other agent's clone diverges** and must reset to the rewritten `main`.
+3. **`results/p6-families.json` leaves history entirely.** It stays on disk (ignored) and in
+   the shards. Nothing else in the repo reads the single file — `scripts/run_p6_families.py`
+   writes it; readers should move to `scripts/load_p6_families.py`.
+
+**Do not attempt a partial push.** Only 7 of the 55 commits predate the blob.
+
+### A2. Version C: nothing left blocked
+
+K-C7 is **spent and fired**. The σ=0.10 γ-ladder question (Task 6.1) still needs a
+registration decision — P7's `SIGMA = 0.25` is deliberately hardcoded.
+
+## B. RUNNING RIGHT NOW
+
+| pid | what | state |
+|---|---|---|
+| 74464 | `run_versionc_form1.py --sigma 0.10` → chains to `--sigma 0.25` | ~40/50, ~265 s/campaign |
+
+When it lands, **`analyse_versionc_form1.py` (the other agent's, `16e37b3`) decides K-C1,
+K-C2 (the hard stop) and K-C3.** That is the last data dependency before drafting.
+
+## C. DONE THIS SESSION — do not redo
+
+| item | commit | outcome |
+|---|---|---|
+| Version C kill audit | `ab506d5` | 8 registered, 0 adjudicated → fixed by the other agent at `16e37b3` |
+| **Detector freeze** | `95fca9c` | code-free commit, so the ordering is checkable |
+| Erratum 31 | `72c2a39` | `_instance_seed` was dead code; my own freeze spec was wrong, caught pre-scoring |
+| **K-C7 one-shot pass** | `881a7e9` | **FIRED — 0/50 both families**, ranges nested inside the fit range |
+| Erratum 32 | `04eeebf` | **Erratum 28 was wrong** — q57 had the "sourceless" numbers all along |
+| E7 committed | `042d3db` | zero new campaigns, both joins checked at run time |
+| **SPADE into E7** | `482172b` | 700-row fill, **0 gate failures**, all 48 wells |
+| p6 shards | `9d91133` | 8 × 22 MB + verified loader |
+
+## D. EXPLICITLY NOT DOING — Joseph's call, 2026-08-22
+
+Hill completeness (Task 6) · option (b) on α\* · more containment sweeps · a d=8 unscreened
+arm (arithmetically impossible: 45 parameters, no CCD lands on 48 wells — **state it as a
+permanent limit**).
+
+## E. THEN STOP AND DRAFT
+
+Five results, each survived an attempt to kill it. **The shortage is a draft, not data.**
