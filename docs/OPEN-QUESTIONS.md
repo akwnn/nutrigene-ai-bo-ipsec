@@ -7997,3 +7997,28 @@ tolerance is the exact binomial tail, which is computed, not fitted.
 `results/f3-draw-sweep.json`. **`.gitignore` negation added in this same commit, before the
 runner exists**, so the artefact cannot be silently ignored (the defect the gitignore's own
 comments record twice).
+
+## 🔴 ERRATUM 27 · **F3's own registration quoted a wrong tail. Caught by its test before the runner ran.**
+
+The registration one commit earlier justified the seeds axis with *"at n=200, p=0.95,
+180/200 gives an exact tail ≈ 0.007, inside Holm ×72."* **Both halves are wrong.** The exact
+tail at 180/200 is **0.002665**, and ×72 it is **0.1918** — it does **not** survive Holm.
+
+Caught by `tests/test_f3_draw_sweep.py::test_the_seeds_axis_is_what_makes_the_experiment_powered`,
+written before the runner existed and run before it was launched. **A registration is not
+exempt from its own standing rule** — *verify rather than accept any number handed to you,
+including the ones in this document* — and the number was mine.
+
+**The conclusion survives, and the correct arithmetic is stronger than the wrong one.** The
+right comparison is the *same containment rate* at the two sample sizes, not an arbitrary count:
+
+| n | X at §14's worst observed rate (0.840) | exact tail | Holm ×72 |
+|---|---|---|---|
+| 50 | 42/50 | 3.188e-03 | **0.2296 — cannot be called** |
+| **200** | **168/200** | **6.798e-09** | **≈ 0.0000 — survives decisively** |
+
+**The detection threshold at n=200 is 170/200 = 0.850** — the worst containment still callable
+after Holm ×72. At n=50 there is no such threshold below 1.0: *nothing* is callable.
+
+All three figures are pinned in the test, including 180/200 asserted to **fail**, so the wrong
+number cannot return.
