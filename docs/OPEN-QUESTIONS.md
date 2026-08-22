@@ -8672,3 +8672,64 @@ than a fourth copy of that expression.
 
 **`_instance_seed` is left in place, unused.** Deleting it would be a non-additive edit to a
 module a committed result depends on (D15), for no gain.
+
+---
+
+### 🔴🔴 Erratum 32 — **ERRATUM 28 WAS WRONG. I withdrew two numbers that had a committed source.**
+
+**This corrects my own correction, and the mistake is worse than the one it was correcting.**
+
+Erratum 28 withdrew two figures on the grounds that they had *"no committed source"*:
+
+* *"`qlogei` .0797 → .0477"* — I wrote that `step0-oracle-best.json` *"carries `qlognei`
+  only"*.
+* *"`doe` +0.0348 → +0.2184 at σ = 0.10"* — I wrote that *"there is no σ = 0.10 E7
+  measurement on disk"*.
+
+**Both rule-A figures are real and come from `results/q57-search-vs-id.json`**, recomputed
+from it in this session:
+
+| cell | `doe` | `qlogei` | `qlognei` |
+|---|---|---|---|
+| d=6, **σ=0.25** | +0.0361 | **+0.0797** | +0.0698 |
+| d=6, **σ=0.10** | **+0.0348** | +0.0378 | +0.0373 |
+| d=8, σ=0.25 | +0.0388 | +0.0545 | +0.0419 |
+| d=8, σ=0.10 | +0.0448 | +0.0319 | +0.0284 |
+
+`bo_*` **is** `qlogei` and `nei_*` **is** `qlognei`; q57 carries `dim ∈ {6,8}` and
+`sigma ∈ {0.1, 0.25}`, n = 50 per cell. **+0.0797 and +0.0348 reproduce to four decimal
+places.** The reporting agent was right and I was wrong.
+
+**How I got it wrong, because the mechanism matters more than the fix.** I checked
+`step0-oracle-best.json`, found no `sigma` key and no `qlogei`, and concluded *absence*. I
+had **already inspected q57's structure earlier in the same session** — I printed its row
+keys, saw `bo_oracle_best` and `nei_oracle_best`, and saw `sigmas: [0.1, 0.25]` — and did
+not connect it. **Checking one file and declaring a number sourceless is not verification;
+it is a single lookup wearing verification's clothes.** That is precisely the failure this
+project keeps cataloguing, committed by the person cataloguing it.
+
+**Erratum 28 is WITHDRAWN in its entirety.** Both figures are **reinstated as citable**,
+with `q57-search-vs-id.json` as the source and the arm-name mapping stated.
+
+**What Erratum 28 got right and what survives:** the excluding-`doe` rule-P spread
+recomputed on the five arms present in `step0-oracle-best.json` is **0.0395**; the reported
+0.0420 counted a sixth arm (`qlogei`) that file does not contain. Both numbers are correct
+for their own arm sets, and §34's table must name which set it is reporting. That is a
+**scope label**, not a withdrawal.
+
+**Erratum 29 (`plate1_only` ranked as a tenth arm) and Erratum 30 (p = 5.07e-03, not
+1.1e-2) are unaffected** — both were recomputed from `fix1-terminal-rule.json` directly and
+stand.
+
+### E7 at σ = 0.10 is a JOIN OF COMMITTED FILES, not a blocked re-run
+
+The handoff listed *"E7 at σ = 0.10"* as **blocked on a registration decision** because
+`run_step0_oracle_best.py:53` hardcodes `sigma_rel = 0.25`. **That block was unnecessary.**
+
+* `q57-search-vs-id.json` supplies `oracle_best` at σ = 0.10 for `doe`, `qlogei`, `qlognei`.
+* `versionc-gate-s010.json` supplies **`regret_p` for all 12 arms** at σ = 0.10.
+* The two files share **50 of 50 `(instance, seed)` keys** — verified, exact.
+
+So the rule-P identification gap at σ = 0.10 needs **no new campaigns and no change to any
+committed runner.** Registered coverage limit: at σ = 0.10 only the three arms q57 carries
+have an `oracle_best`, so the spread arms enter at σ = 0.25 only unless a re-score adds them.
