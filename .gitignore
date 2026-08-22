@@ -273,3 +273,10 @@ COMMIT_MSG.txt
 !results/p6-families.meta.json
 !results/p6-families/
 !results/p6-families/*.json
+
+# Version C's kill verdicts. `results/*` ignores .json by default, and this file is the
+# ADJUDICATION -- without it the re-score is 51 MB of columns that decided nothing. It is
+# cited by FINDINGS section 38 by path, and the gitignore gap has already bitten this
+# project four times plus once more for versionc-form1 itself.
+!results/versionc-kills-s010.json
+!results/versionc-kills-s025.json

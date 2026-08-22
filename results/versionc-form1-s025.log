@@ -1,0 +1,24 @@
+Version C Form 1 re-score · sigma=0.25 · ZERO NEW WELLS
+12 arms x 50 keys · gate p2-versionb-gamma.json at |delta| = 0.0 over 20 columns
+
+building the grid neighbour graph once ...
+[  1/50] 033466197eba3ddb seed=0 comps 0..52 (146.0s)
+[  2/50] 033466197eba3ddb seed=1 comps 0..17 (102.2s)
+[  3/50] 0a6e0788538a7c52 seed=0 comps 0..51 (144.5s)
+[  4/50] 0a6e0788538a7c52 seed=1 comps 0..35 (123.3s)
+[  5/50] 0ed87c75239d73f8 seed=0 comps 0..70 (142.2s)
+[  6/50] 0ed87c75239d73f8 seed=1 comps 0..47 (134.4s)
+[  7/50] 32bb966a18f1d863 seed=0 comps 0..51 (132.2s)
+[  8/50] 32bb966a18f1d863 seed=1 comps 0..23 (124.5s)
+[  9/50] 443c180247c17191 seed=0 comps 0..32 (131.6s)
+[ 10/50] 443c180247c17191 seed=1 comps 0..26 (113.2s)
+[ 11/50] 48b1324dd0461cd9 seed=0 comps 0..39 (136.8s)
+[ 12/50] 48b1324dd0461cd9 seed=1 comps 0..31 (134.3s)
+[ 13/50] 4d4f7158b65b52ba seed=0 comps 0..41 (134.6s)
+[ 14/50] 4d4f7158b65b52ba seed=1 comps 0..40 (119.1s)
+[ 15/50] 51cf489c521a6911 seed=0 comps 0..31 (127.2s)
+[ 16/50] 51cf489c521a6911 seed=1 comps 0..91 (110.2s)
+[ 17/50] 578e5d8768359f0f seed=0 comps 0..44 (126.6s)
+[ 18/50] 578e5d8768359f0f seed=1 comps 0..25 (120.1s)
+[ 19/50] 59e420274f4385d9 seed=0 comps 0..39 (133.7s)
+[ 20/50] 59e420274f4385d9 seed=1 comps 0..90 (129.8s)
