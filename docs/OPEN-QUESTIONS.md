@@ -8360,3 +8360,50 @@ correctness.**
 **Still open, and now the ONLY open question about α\*:** *why* the posterior is confident
 where it is wrong (option (b), the spatial-coherence test). **Not required for any claim in
 the record, because nothing rests on α\* any more.**
+
+## 🔴⭐ F3 RESOLVED · **§14's kill was an ESTIMATOR ARTEFACT. The registered branch fired.**
+
+`results/f3-draw-sweep.json` — 250 campaigns, 3,000 rows, 0 crashes.
+`FINDINGS-SPADE.md` §29. Decision rule written before any number existed.
+
+**Registered branch: *"containment rises toward nominal with draws → the estimator failed,
+not SPADE."*** It fired. All four §14 cells reach at-or-above nominal by **1,024 draws**; the
+worst goes **0.860 → 0.980** and flattens. **`p2-versionb-gamma.json` was produced at
+`N_DRAWS = 512`.**
+
+At 4,096 draws with **n = 200** — the size Erratum 21 showed was needed — **no cell is
+significantly below nominal**, not even before multiplicity correction.
+
+### 🔴 A REGISTERED PREDICTION FAILED, and is recorded as failed
+
+The registration predicted *"bias scales with `n_rho` → confirms the maximum-over-candidates
+mechanism."* **It does not scale: `n_rho` 16 and 64 give IDENTICAL containment at every draw
+level in all four cells.**
+
+**The mechanism is not the scan over candidates. It is Monte Carlo error in
+`containment_probability` at low draw counts** — each candidate's containment is estimated on
+the same 512 draws, and at 512 that estimate is too noisy. Scanning more candidates does not
+worsen it; scanning on more draws fixes it.
+
+### The cross-check the registration demanded
+
+Version C's `conservative_estimate_split` on the **same draws**: cross-fit containment is
+**−0.0350** and **−0.0150** below the full estimate at the two highest-γ cells and identical
+elsewhere. **Selection bias is real and survives at 4,096 draws at 1.5–3.5 percentage points,
+concentrated exactly where the quantiles tie.** This track measured it by sweeping draws;
+Version C removed it by cross-fitting; **neither was designed to test the other and they
+agree.**
+
+### What changes
+
+* **WITHDRAWN:** *"SPADE's certificate fails below nominal at high assurance."*
+* **STANDS:** the registered kill fired as specified — it is a decision rule, not a hypothesis
+  test, and it correctly stopped the programme and forced this investigation.
+* **NEW REGISTERED CONSTRAINT:** **`N_DRAWS = 512` is not sufficient to estimate `CE_alpha`'s
+  containment at γ ≥ 0.95. Any future containment claim requires ≥ 1,024 draws**, and the
+  residual bias at 4,096 requires the cross-fit.
+
+## ✅ TASK 3 · **P6 cells 3+4 COMPLETE.** d=8 at both σ, all four families, **gate failures 0**
+across all eight cells (250 campaigns each). The screening result **reproduces at d=8** —
+`doe` mean rank 7.78 of 9 on hartmann6 σ=0.25 against 7.59 at d=6. **The registered stop
+condition "the screening result fails to reproduce at d=8" did NOT fire.**

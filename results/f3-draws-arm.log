@@ -1,0 +1,59 @@
+F3 · draws arm · arm=versionb d=6 sigma=0.25
+  draws=(512, 1024, 2048, 4096)  n_rho=(16, 64)  alpha=0.95
+  cells=[(0.99, 0.6), (0.99, 0.75), (0.95, 0.6), (0.99, 0.85), (0.5, 0.6)]  (gamma=0.50 is the NEGATIVE CONTROL)
+  pairs=50  already done=0
+  rows per campaign = 40
+  threads=1 OMP=1
+  [  1/50] 033466197eba3ddb seed=0 40 rows (188.5s) ~154.0 min left
+  [  2/50] 0a6e0788538a7c52 seed=0 40 rows (177.2s) ~146.3 min left
+  [  3/50] 0ed87c75239d73f8 seed=0 40 rows (202.2s) ~148.3 min left
+  [  4/50] 32bb966a18f1d863 seed=0 40 rows (191.8s) ~145.6 min left
+  [  5/50] 443c180247c17191 seed=0 40 rows (187.0s) ~142.0 min left
+  [  6/50] 48b1324dd0461cd9 seed=0 40 rows (188.2s) ~138.7 min left
+  [  7/50] 4d4f7158b65b52ba seed=0 40 rows (205.2s) ~137.2 min left
+  [  8/50] 51cf489c521a6911 seed=0 40 rows (209.9s) ~135.6 min left
+  [  9/50] 578e5d8768359f0f seed=0 40 rows (215.0s) ~134.0 min left
+  [ 10/50] 59e420274f4385d9 seed=0 40 rows (204.0s) ~131.3 min left
+  [ 11/50] 5b3926ef2c5fe4b6 seed=0 40 rows (173.3s) ~126.6 min left
+  [ 12/50] 763e0f58925816ca seed=0 40 rows (153.9s) ~121.2 min left
+  [ 13/50] 7b6071e568a98779 seed=0 40 rows (168.6s) ~116.9 min left
+  [ 14/50] 7ef3fc89acece49c seed=0 40 rows (181.5s) ~113.4 min left
+  [ 15/50] 7f5c7431c0530e74 seed=0 40 rows (156.1s) ~109.0 min left
+  [ 16/50] 8abe35e93ddfcad1 seed=0 40 rows (161.8s) ~105.0 min left
+  [ 17/50] 9414bc879284eef0 seed=0 40 rows (165.9s) ~101.3 min left
+  [ 18/50] 9f3cdb4d835c6909 seed=0 40 rows (159.6s) ~97.5 min left
+  [ 19/50] c75f6d6f50fe2434 seed=0 40 rows (162.5s) ~93.9 min left
+  [ 20/50] ce7334da318bc5e5 seed=0 40 rows (162.4s) ~90.4 min left
+  [ 21/50] da5ec2fbb20c9f9b seed=0 40 rows (142.4s) ~86.5 min left
+  [ 22/50] e402c32907f27534 seed=0 40 rows (139.3s) ~82.7 min left
+  [ 23/50] e946207e9dfe1876 seed=0 40 rows (141.3s) ~79.0 min left
+  [ 24/50] ef2815cdafff288c seed=0 40 rows (131.7s) ~75.3 min left
+  [ 25/50] f79c5cf175034acd seed=0 40 rows (136.8s) ~71.8 min left
+  [ 26/50] 033466197eba3ddb seed=1 40 rows (132.0s) ~68.3 min left
+  [ 27/50] 0a6e0788538a7c52 seed=1 40 rows (154.2s) ~65.2 min left
+  [ 28/50] 0ed87c75239d73f8 seed=1 40 rows (125.9s) ~61.8 min left
+  [ 29/50] 32bb966a18f1d863 seed=1 40 rows (121.4s) ~58.4 min left
+  [ 30/50] 443c180247c17191 seed=1 40 rows (117.6s) ~55.1 min left
+  [ 31/50] 48b1324dd0461cd9 seed=1 40 rows (121.3s) ~51.9 min left
+  [ 32/50] 4d4f7158b65b52ba seed=1 40 rows (120.5s) ~48.7 min left
+  [ 33/50] 51cf489c521a6911 seed=1 40 rows (120.1s) ~45.7 min left
+  [ 34/50] 578e5d8768359f0f seed=1 40 rows (119.7s) ~42.7 min left
+  [ 35/50] 59e420274f4385d9 seed=1 40 rows (116.7s) ~39.7 min left
+  [ 36/50] 5b3926ef2c5fe4b6 seed=1 40 rows (122.3s) ~36.8 min left
+  [ 37/50] 763e0f58925816ca seed=1 40 rows (114.5s) ~33.9 min left
+  [ 38/50] 7b6071e568a98779 seed=1 40 rows (119.6s) ~31.1 min left
+  [ 39/50] 7ef3fc89acece49c seed=1 40 rows (120.5s) ~28.4 min left
+  [ 40/50] 7f5c7431c0530e74 seed=1 40 rows (116.2s) ~25.6 min left
+  [ 41/50] 8abe35e93ddfcad1 seed=1 40 rows (118.7s) ~22.9 min left
+  [ 42/50] 9414bc879284eef0 seed=1 40 rows (129.3s) ~20.3 min left
+  [ 43/50] 9f3cdb4d835c6909 seed=1 40 rows (128.5s) ~17.7 min left
+  [ 44/50] c75f6d6f50fe2434 seed=1 40 rows (125.2s) ~15.1 min left
+  [ 45/50] ce7334da318bc5e5 seed=1 40 rows (119.9s) ~12.5 min left
+  [ 46/50] da5ec2fbb20c9f9b seed=1 40 rows (122.0s) ~10.0 min left
+  [ 47/50] e402c32907f27534 seed=1 40 rows (120.5s) ~7.5 min left
+  [ 48/50] e946207e9dfe1876 seed=1 40 rows (120.8s) ~5.0 min left
+  [ 49/50] ef2815cdafff288c seed=1 40 rows (118.0s) ~2.5 min left
+  [ 50/50] f79c5cf175034acd seed=1 40 rows (126.3s) ~0.0 min left
+
+50 campaigns · 2000 rows -> f3-draw-sweep.json.partial
+  promote to f3-draw-sweep.json when the arm is complete

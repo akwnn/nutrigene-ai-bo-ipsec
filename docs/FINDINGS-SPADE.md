@@ -1598,3 +1598,104 @@ correctness.** They were never two anomalies.
 whether α\* rewards spatially coherent high exceedance probability rather than correctness —
 remains available and is now the only open question about α\*. It is **not** required for any
 claim in this document, because nothing here rests on α\* any more.
+
+---
+
+## 29. 🔴⭐⭐ F3: §14's KILL WAS AN ESTIMATOR ARTEFACT. It fired on 512 draws, not on SPADE.
+
+`results/f3-draw-sweep.json` — 250 campaigns, 3,000 rows, **0 crashes**. Registered at commit
+445c028 **before the runner existed**; the decision rule below was written before any number
+existed. Every tail is `scipy.stats.binom.cdf`, exact, never a normal approximation.
+
+### The registered branch that fired
+
+> *"Containment rises toward nominal as draws increase, at n=200 → **the estimator failed, not
+> SPADE**, and the correction is itself a reportable result."*
+
+**Empirical containment against draw count** (α = 0.95, n = 50 pairs, non-empty sets only):
+
+| cell | 512 | 1024 | 2048 | 4096 |
+|---|---|---|---|---|
+| **γ=0.99, τ_f=0.60** | **0.860** | **0.980** | 0.980 | 0.980 |
+| γ=0.99, τ_f=0.75 | 0.960 | 1.000 | 1.000 | 1.000 |
+| γ=0.95, τ_f=0.60 | 0.940 | 1.000 | 1.000 | 1.000 |
+| γ=0.99, τ_f=0.85 | 0.940 | 1.000 | 1.000 | 1.000 |
+| γ=0.50, τ_f=0.60 **[CONTROL]** | 1.000 | 1.000 | 1.000 | 1.000 |
+
+**All four of §14's sub-nominal cells reach at-or-above nominal by 1,024 draws and stay there.**
+The worst goes 0.860 → 0.980 and flattens.
+
+**`results/p2-versionb-gamma.json` was produced at `N_DRAWS = 512`.** That is the whole of it:
+**§14's certificate failure is an artefact of the draw count, not a property of SPADE's
+certificate.**
+
+### The powered test agrees
+
+Seeds arm, 4,096 draws, `n_rho`=64, **n = 200 pairs** — the sample size Erratum 21 showed was
+needed:
+
+| cell | x/n | rate | exact tail | Holm ×72 |
+|---|---|---|---|---|
+| γ=0.99, τ_f=0.60 | 186/200 | 0.9300 | 1.299e-01 | 1.0000 |
+| γ=0.99, τ_f=0.75 | 191/200 | 0.9550 | 6.730e-01 | 1.0000 |
+| γ=0.95, τ_f=0.60 | 196/200 | 0.9800 | 9.910e-01 | 1.0000 |
+| γ=0.99, τ_f=0.85 | 196/200 | 0.9800 | 9.910e-01 | 1.0000 |
+| γ=0.50, τ_f=0.60 **[CTRL]** | 65/66 | 0.9848 | 9.661e-01 | 1.0000 |
+
+**At 4,096 draws, with the power to detect it, no cell is significantly below nominal** — not
+even before multiplicity correction.
+
+### 29.1 The registered mechanism is REFINED: it is not the scan over `n_rho`
+
+The registration predicted *"bias scales with `n_rho` → confirms the maximum-over-candidates
+mechanism specifically."* **It does not scale.** `n_rho` = 16 and `n_rho` = 64 give **identical
+containment at every draw level in all four cells.**
+
+So the bias is **not** primarily the maximum over 64 near-tied quantiles. It is **Monte Carlo
+error in `containment_probability` itself at low draw counts** — the containment of *each*
+candidate is estimated on the same 512 draws, and at 512 that estimate is simply too noisy.
+Scanning more candidates does not make it worse; scanning them on more draws makes it better.
+
+**This is a prediction the design was built to test, and it failed. Recorded as a failed
+prediction, not quietly dropped.**
+
+### 29.2 The negative control behaves as registered
+
+γ=0.50 is **flat at 1.000 across every draw level**, with no trend to explain away. At
+`n_rho`=16 it has almost no non-empty sets (n = 2, 1, 0, 0) and is nearly vacuous there; at
+`n_rho`=64 it carries n = 22, 19, 16, 20. **The control was the reason to be able to say the
+draw trend is selection bias rather than a draw-count effect on everything**, and it earns it.
+
+### 29.3 The cross-fit confirms a small residual bias — two independent routes, compared
+
+Version C's `conservative_estimate_split` on the **same draws**, seeds arm:
+
+| cell | full | cross-fit | Δ |
+|---|---|---|---|
+| γ=0.99, τ_f=0.60 | 0.9300 | **0.8950** | **−0.0350** |
+| γ=0.99, τ_f=0.75 | 0.9550 | **0.9400** | **−0.0150** |
+| γ=0.95, τ_f=0.60 | 0.9800 | 0.9800 | 0.0000 |
+| γ=0.99, τ_f=0.85 | 0.9800 | 0.9800 | 0.0000 |
+| γ=0.50 **[CTRL]** | 0.9848 | 1.0000 | +0.0152 |
+
+**Selection bias is real and it survives at 4,096 draws — at 1.5 to 3.5 percentage points, and
+only at the two highest-γ cells.** This track *measured* the bias by sweeping draws; Version C
+*removed* it by cross-fitting; **neither was designed to test the other and they agree**: the
+bias exists, it is concentrated exactly where the quantiles tie, and it is an order of
+magnitude smaller than the 512-draw artefact that produced §14.
+
+### 29.4 What §14 now says
+
+**The registered kill fired as specified, and it fired on the estimator.** It is a decision
+rule, not a hypothesis test, and it did its job: it stopped the programme and forced this
+investigation. What has to change is the *attribution*.
+
+* **Withdrawn:** *"SPADE's certificate fails below nominal at high assurance."*
+* **Stands:** at 512 draws the conservative estimate is anti-conservative, most where the
+  Vorob'ev quantiles tie, and the project reported that as a property of SPADE for a week.
+* **New and stronger:** **`N_DRAWS = 512` is not enough to estimate `CE_alpha`'s containment at
+  γ ≥ 0.95.** Any future containment claim needs ≥ 1,024, and the residual selection bias at
+  4,096 needs the cross-fit.
+
+**§22 said the containment sweep could not answer this by adding cells. It was right, and the
+answer was on the other axis entirely.**
