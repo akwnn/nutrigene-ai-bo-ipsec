@@ -7099,7 +7099,41 @@ table can double-count it, per D23.1.
 
 ---
 
-## 📌 ⚠️ ERRATUM 11 — **PROVISIONAL. The ρ figures are NINE-arm numbers and the run is now TWELVE arms.**
+## ✅ ERRATUM 11 — **CLOSED 2026-08-22.** The twelve-arm top-up exists; all three structural predictions survived.
+
+`results/p4b-alpha-star-anomaly.json` · `n_arms: 12`. At the registered primary τ_frac = 0.75,
+n=25: **ρ = −0.3916, CI [−0.6643, −0.0839], p = 0.0175.**
+
+| provisional 9-arm | 12-arm | verdict |
+|---|---|---|
+| ρ = −0.3667 | **−0.3916** | direction and rough magnitude hold |
+| leave-one-out drop to −0.0952 | drop `doe` → **−0.2091** | `doe` **is still the max-leverage arm**, but the leverage is **weaker** than the 9-arm figure implied |
+| spread-arm-only +0.5000 | **+0.5000** | **unchanged exactly** |
+
+**Dropping `random` strengthens ρ to −0.6000 while dropping `doe` weakens it to −0.2091 — the two
+extreme arms pull in opposite directions.** That caveat travels with every quotation.
+
+**Erratum 13 is CLOSED with it**, on the same file.
+
+**And a NEW defect of the same shape, found while closing these:** `FINDINGS-SPADE.md` §15
+headlined **−0.3497 at τ_frac = 0.60** — not the registered primary, quoted without its
+threshold — and it propagated onward as "§15's twelve-arm result." Corrected. **All four
+thresholds now appear**, and they carry a finding that one cell was hiding:
+
+| τ_frac | ρ | CI excludes 0 |
+|---|---|---|
+| 0.60 | −0.3497 | yes |
+| **0.75 (primary)** | **−0.3916** | yes |
+| 0.85 | **+0.0070** | **no** (p = 0.83) |
+| 0.95 | **+0.0140** | **no** (p = 0.77) |
+
+**The α\* / regret relationship exists only at the two LOWER thresholds and vanishes at the two
+higher ones** — sign flips, CI spans zero. Whatever α\* tracks, it stops tracking it exactly
+where certified regions start going empty.
+
+---
+
+## 📌 ⚠️ ERRATUM 11 (original text, retained) — **PROVISIONAL. The ρ figures are NINE-arm numbers and the run is now TWELVE arms.**
 
 **Flagged by the P4/D23 worker before publication, unprompted.** Erratum 11 records
 **ρ(α\*, regret) = −0.3667**, the leave-one-out drop to −0.0952, and the spread-arm-only +0.5000.

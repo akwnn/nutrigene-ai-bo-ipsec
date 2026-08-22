@@ -828,10 +828,33 @@ than the same number at a small target, not a better one.
 
 **`results/p4b-alpha-star-anomaly.json`** — 12 arms, 650/650 keys, `COMPLETE`, `gate_failures: []`.
 
-**Verdict: `NEGATIVE_BUT_ABOVE_THRESHOLD`.** At τ_frac = 0.60, twelve arms:
-**ρ(α\*, regret) = −0.3497, CI [−0.5245, −0.1259], bootstrap p = 0.0075.**
+**Verdict: `NEGATIVE_BUT_ABOVE_THRESHOLD`.** At the **registered primary τ_frac = 0.75**,
+twelve arms, n=25: **ρ(α\*, regret) = −0.3916, CI [−0.6643, −0.0839], bootstrap p = 0.0175.**
 
 **The CI excludes zero but ρ does not reach the registered −0.5.** Neither branch fires.
+
+**🔴 Corrected 2026-08-22.** This section headlined **−0.3497 at τ_frac = 0.60** — a real number,
+but **not the registered primary**, and quoted without its threshold. That is Erratum 13's exact
+defect (*"a single-cell figure quoted without its cell"*) recurring on a different number, and it
+propagated onward as "§15's twelve-arm result." **All four thresholds, so no cell can be quoted
+alone again:**
+
+| τ_frac | ρ | CI | bootstrap p | CI excludes 0 |
+|---|---|---|---|---|
+| 0.60 | −0.3497 | [−0.5245, −0.1259] | 0.0075 | yes |
+| **0.75 (primary)** | **−0.3916** | **[−0.6643, −0.0839]** | **0.0175** | **yes** |
+| 0.85 | **+0.0070** | [−0.4406, +0.3916] | 0.8295 | **no** |
+| 0.95 | **+0.0140** | [−0.3147, +0.5105] | 0.7720 | **no** |
+
+**The relationship exists only at the two LOWER thresholds and vanishes completely at the two
+higher ones** — sign flips to positive, CI spans zero, p ≈ 0.8. Whatever α\* tracks, it stops
+tracking it exactly where the certified regions start going empty. **That is a stronger version
+of this section's own conclusion and it was invisible while one threshold stood in for four.**
+
+*(At n=50 the primary's CI is [−0.7063, +0.0350] and does **not** exclude zero, p = 0.081. The
+governing unit is n=25 — `ci_width_ratio_n25_over_n50 = 0.783`, so n=25 is the more powerful unit
+here, consistent with §9.6. The two units disagree on significance at the primary threshold and
+the file records `units_agree: True` only on direction.)*
 
 **And the sign means α\* AGREES with regret** — regret is a loss, so ρ < 0 means arms with higher
 α\* have *lower* regret. Against the **symmetric-difference error volume** the correlation runs the
@@ -840,9 +863,18 @@ other way at τ_frac = 0.60.
 > **α\* tracks quality against regret and badness against the error volumes.** Neither reading
 > resolves, and **that is the finding** — reported and not resolved, per Q20 §2.
 
-**Twelve-arm numbers supersede the nine-arm ρ = −0.3667 recorded as provisional in Erratum 11.**
-The three structural qualifications survive: one-arm leverage from `doe`, the local inversion among
-the spread arms, and the regret/error-volume disagreement.
+**Twelve-arm numbers supersede the nine-arm ρ = −0.3667 recorded as provisional in Erratum 11,
+which is now CLOSED.** All three structural qualifications survive, and the numbers are:
+
+| Erratum 11's provisional 9-arm figure | 12-arm measurement | survives? |
+|---|---|---|
+| ρ = −0.3667 | **−0.3916** (primary τ_frac = 0.75) | ✅ direction and rough magnitude |
+| leave-one-out drop to −0.0952 | drop `doe` → **−0.2091** | ✅ **`doe` is still the max-leverage arm** — its removal moves ρ furthest toward zero of all twelve — but the leverage is **weaker** than the 9-arm figure implied |
+| spread-arm-only +0.5000 | **+0.5000** | ✅ **unchanged exactly** (`lhs`, `random`, `sobol`) |
+
+Full leave-one-out at twelve arms: dropping `random` *strengthens* ρ to **−0.6000**; dropping
+`doe` weakens it to −0.2091. **The two extreme arms pull in opposite directions**, which is why
+the one-arm-leverage caveat has to travel with every quotation of this number.
 
 ## 16. `results/q30-additive.json` exists
 
