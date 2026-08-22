@@ -8988,3 +8988,52 @@ certifiable at all"* is actionable from the committed `p5` table before any camp
 A rank among certifiable families would be a weaker and, on the evidence above, an unsupported
 claim. **The reason to write it down now is that it was the original prediction's most likely
 failure mode, and reporting the failure mode after the fact is worth much less.**
+
+### 🔒 P8.2 — **the two metrics will DISAGREE about P3.** Registered while `ackley` is at 2 of 50.
+
+**My Erratum 33 expectation that P3 would fail is itself looking wrong, and I am saying so
+before the run promotes rather than after.**
+
+Erratum 33 read the ordering off the **n-stable empty rate** and concluded P3 "already looks
+wrong". **P3 was registered in `cells-all-empty` units**, and on *that* metric the four
+complete families are **perfectly reverse-ordered by max `tau_q`**:
+
+| family | max `tau_q` | all-empty / 24 | mean empty rate |
+|---|---|---|---|
+| `rosenbrock` | 0.98631 | **2** | **0.4825** |
+| `levy` | 0.95996 | **2** | 0.6133 |
+| `hill` | 0.93129 | **6** | 0.5608 |
+| `hartmann6` | 0.56612 | **22** | 0.9900 |
+| `ackley` *(n=2, not final)* | 0.16159 | — | — |
+
+All six pairs among the four complete families satisfy P3. **Erratum 33 compared the right
+numbers against the wrong metric** — it named the metric it was using, so it was not false,
+but the inference it drew about P3 does not follow.
+
+### 🔒 The prediction, still out-of-sample for `ackley`
+
+> **P5: P3 HOLDS on all-empty counts and FAILS on the n-stable empty rate.**
+>
+> On counts: `ackley` lands at **≥ 22** and the full five-family ordering has **0 inverted
+> pairs**. On rates: **`levy` (0.6133) exceeds `hill` (0.5608) while carrying the higher
+> `tau_q`** — an inversion that survives whatever `ackley` does, because `ackley` sits at the
+> extreme of both metrics and cannot repair a mid-order pair.
+
+**Falsified if** the five-family count ordering has any inverted pair, **or** if the rate
+ordering comes back clean.
+
+### Why the disagreement is the actual result
+
+A **count** of all-empty cells is a coarse, saturating statistic: it asks *"did this cell ever
+certify?"* and ignores how often. A **rate** asks *"how reliably?"* So if P5 holds, the honest
+reading is:
+
+**`tau_q` predicts WHETHER a family can certify at a given cell — and does not predict how
+OFTEN.** That is a threshold result dressed as a ranking, and it is exactly what P4 already
+claims on the rate metric. **The count metric's apparent ranking is an artefact of
+saturation**, not evidence that `tau_q` orders certifiability.
+
+**This matters for the paper.** "The certifiability ceiling is ordered by max `tau_q`" (§20,
+map metrics) would, on the count metric alone, look like it transfers cleanly to the
+certificate. **It does not.** The transfer is threshold-shaped, and reporting the count
+ordering without the rate ordering beside it would overstate what `tau_q` buys.
