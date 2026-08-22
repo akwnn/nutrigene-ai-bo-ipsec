@@ -1398,28 +1398,40 @@ SESOI 0.02. Positive ⇒ the first arm carries **more** error:
 
 | contrast | median | CI | p_holm | |
 |---|---|---|---|---|
-| `doe_unscreened` − `lhs` | **+0.0264** | [+0.0208, +0.0327] | 7.81e-12 | **> SESOI** |
-| `doe_unscreened` − `sobol` | **+0.0270** | [+0.0214, +0.0330] | 5.38e-13 | **> SESOI** |
-| `doe_unscreened` − `random` | **+0.0211** | [+0.0169, +0.0246] | 7.52e-11 | **> SESOI** |
-| `doe_unscreened` − `versionb` | +0.0185 | [+0.0126, +0.0264] | 0.0718 | ns at 0.05 |
-| `doe_unscreened` − `qlogei` | **−0.0376** | [−0.0622, −0.0279] | 1.02e-24 | **> SESOI** |
+| `doe_unscreened` − `lhs` | **+0.0295** | — | 4.97e-17 | **> SESOI** |
+| `doe_unscreened` − `sobol` | **+0.0327** | — | 1.98e-20 | **> SESOI** |
+| `doe_unscreened` − `random` | **+0.0240** | — | 3.76e-17 | **> SESOI** |
+| `doe_unscreened` − `versionb` | **+0.0234** | — | 3.59e-04 | **> SESOI** |
+| `doe_unscreened` − `qlogei` | **−0.0306** | — | 2.61e-22 | **> SESOI** |
+
+*(Corrected values, `sigma_add` fix. The `versionb` contrast was ns at 0.05 before the fix and
+is now significant AND above SESOI — the correction moved it across both bars.)*
 
 **Turning the screen off does not rescue the classical arm's map.** It still loses to every
 spread arm by more than SESOI at p_holm < 1e-10.
 
-### But the screen does account for a consistent third of the gap
+### 🔴 CORRECTED — the screen accounts for a fifth to a quarter, NOT "a consistent third"
 
-| against | screened | unscreened | closed |
-|---|---|---|---|
-| `lhs` | +0.0380 | +0.0264 | **30.5%** |
-| `sobol` | +0.0393 | +0.0270 | **31.3%** |
-| `random` | +0.0292 | +0.0211 | **27.7%** |
+**The numbers first published here were computed with `sigma_add` dropped from `sigma_pred`
+and from `Yvar`** — see §32's closing note. The predictive band was 6.5% too narrow at
+σ=0.25 and **30.2% too narrow at σ=0.10**, and `sigma_pred` feeds
+`predictive_probability_map` directly. Re-run with the fix (50 campaigns, 2,400 rows, **0 gate
+misses**):
 
-**~30%, three times, against three different arms.** So the honest statement is neither *"the
-screen is the mechanism"* nor *"the screen is irrelevant"*: **the 6→4 cut costs the classical
-arm about a third of its map deficit, and the other two thirds are the response-surface model
-itself.** Part IV's headline survives the confound with its magnitude reduced by roughly a
-third, not with its sign changed.
+| against | screened | unscreened | closed | *(as first published)* |
+|---|---|---|---|---|
+| `lhs` | +0.0412 | +0.0295 | **28.4%** | *30.5%* |
+| `sobol` | +0.0408 | +0.0327 | **19.8%** | *31.3%* |
+| `random` | +0.0305 | +0.0240 | **21.1%** | *27.7%* |
+
+**The "consistent ~30%, three times" claim is WITHDRAWN. It was an artefact of the bug.** The
+corrected range is **19.8–28.4%** — a fifth to a quarter, and *not* strikingly consistent. I
+read a pattern into three numbers that the defect had made agree.
+
+The conclusion is unchanged and slightly strengthened: **the 6→4 cut costs the classical arm
+roughly a fifth to a quarter of its map deficit; the response-surface model costs the rest.**
+Every corrected contrast is larger than the buggy one, so `doe` looks *worse* against the
+correct wider band, not better.
 
 ### The disagreement the registration requires me to report rather than resolve
 
