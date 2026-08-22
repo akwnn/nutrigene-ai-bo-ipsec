@@ -727,3 +727,56 @@ Development](https://www.biorxiv.org/content/10.64898/2026.02.02.703372v1) ·
 Optimization](https://research.google/pubs/biological-sequences-design-using-batched-bayesian-optimization/) ·
 [Multifactorial Optimizations for Directing Endothelial Fate from Stem
 Cells](https://journals.plos.org/plosone/article?id=10.1371%2Fjournal.pone.0166663)
+
+---
+
+# VERSION C — what it may claim, and what it may not
+
+**Added 2026-08-22 after C0 returned.** Evidence: `results/versionc-gate-s010.json`
+(600 rows, gate clean at |Δ| = 0), FINDINGS §32, registrations in `OPEN-QUESTIONS.md`.
+
+## The claim, at the strength the evidence supports
+
+> At (d=6, σ_rel=0.10), **SPADE's regret deficit under rule A is an identification
+> artefact, not a search deficit.** Re-scored on the same committed wells under a
+> posterior-mean terminal rule, SPADE moves from **10th of 12 to within SESOI of every arm
+> except `doe`** — +0.0165 against `qlogei-addonly`, +0.0163 against `qlognei`, +0.0090
+> against `qlogei`, +0.0028 against `lhs`, all paired on `(instance, seed)`, n = 50.
+
+**And the D20 asymmetry now holds at both noise levels.** `doe` moves 0.0892 → **0.2728**
+under rule P at σ=0.10, having moved 0.0892 → 0.1993 at σ=0.25. A terminal rule that reads
+the model punishes the arm whose `grid_r2` is −6.19 and rewards the arms whose map scores
+AUC 0.77–0.84.
+
+**Parity is the claim.** Against `qlogei-addonly` the Wilcoxon and the bootstrap agree that
+a real difference exists and that it is **below SESOI**. Both are reported. "Detectable,
+not material" is the honest phrasing; "SPADE matches BO" is not, and "SPADE beats BO" is
+false.
+
+## 🔴 What Version C may NOT claim
+
+* **Superiority over BO on regret at σ=0.10.** Parity is the goal and parity is the claim.
+* **A Hartmann win.** Q53 measured the loss (+0.13 to +0.28, every `p_holm` ≤ 0.0016).
+  Version C **declares** it; it does not close it.
+* **A working regime detector.** C3.3b predicts **K-C7 fires** — within-family ÷ pooled
+  support width is 0.66–0.88 across every viable statistic. **Nothing has been frozen and
+  the held-out families have not been scored.** Until that pass runs, no detector claim
+  exists at all.
+* **That §2.2's allocation rule is founded.** The `σ/√n_eff` model gives **R² 0.031**, and
+  **0.011 excluding `doe`**. The C0 prediction that matched the measurement did so by two
+  cancelling errors — `n_eff` underestimated ~10×, model under-predicting ~3×.
+* **That the trust region improved the certificate.** §2 was never built. Separately,
+  Version B's `plate1_only` matched `versionb` on containment at every cell, so
+  **containment is a floor that does not rank arms.**
+* **That the cross-fit repaired §14.** It cannot — C1.2a proves the selected set is
+  bit-identical, so empirical containment is unchanged. **F3 resolved §14** (FINDINGS §29),
+  by sweeping draws, which is a different mechanism.
+* **Anything about calibration** until the evaluation track's scope gap is fully closed.
+
+## What is carried, not resolved
+
+* **One σ only.** C0's registered regression spans both σ; only σ=0.10 has run.
+* **Version C has never been run as a method.** No `versionc` arm exists. Form 1 is a
+  re-score of Version B's stored campaigns and the runner is unwritten — so every number
+  above is a property of **Version B's wells scored under Version C's rule**, which is
+  exactly what C0 was designed to measure and is not a claim about a new experiment.

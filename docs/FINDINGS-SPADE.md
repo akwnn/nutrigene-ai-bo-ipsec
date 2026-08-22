@@ -1824,3 +1824,108 @@ containment, and the brief records that **emptiness has surfaced post-hoc twice 
 registered home.** It has one now: **`versionb_predictive` (0.4267) does certify more often
 than `versionb` (0.4225) and markedly more than `versionb_random` (0.3925)** — the predictive
 straddle's advantage, on the ladder, at 24 cells, in a committed file.
+
+---
+
+## 32. ⭐⭐ VERSION C, C0: the σ=0.10 regret deficit was an IDENTIFICATION ARTEFACT
+
+**`results/versionc-gate-s010.json`** — 600 rows, 12 arms × 50 keys, **gate clean at
+|Δ| = 0 exactly**, double-gated against `p3-k6-d6-s010.json` and, for seven arms,
+independently against `e2-grid.json`. Analysis in `results/versionc-gate-analysis.json`.
+Registered in `docs/OPEN-QUESTIONS.md` (C0) **before the runner existed**, branch thresholds
+and all.
+
+**This is the sharpest confirmation of the terminal-rule claim the project has.** §13
+measured SPADE at **10th–11th of 12 on regret** at (d=6, σ=0.10) while sweeping the map at
+1st–3rd. C0 re-scores the *same committed wells* under a posterior-mean terminal rule.
+
+| arm | rule A | rule P | A − P | 95% CI | p Holm | n_eff |
+|---|---|---|---|---|---|---|
+| `qlogei-addonly` | 0.0627 | **0.0627** | −0.0000 | [−0.0098, +0.0108] | 0.8482 | 20.30 |
+| `qlognei` | 0.0808 | 0.0629 | +0.0179 | [+0.0106, +0.0251] | 0.0000 | 25.38 |
+| `qlogei` | 0.0874 | 0.0703 | +0.0171 | [+0.0065, +0.0280] | 0.0106 | 21.96 |
+| `lhs` / `plate1_only` | 0.1027 | 0.0765 | +0.0263 | [+0.0129, +0.0393] | 0.0011 | 10.76 |
+| **`versionb`** | 0.1261 | **0.0792** | **+0.0468** | [+0.0304, +0.0623] | 0.0000 | 13.98 |
+| `doe` | 0.0892 | **0.2728** | **−0.1835** | [−0.2307, −0.1387] | 0.0000 | 31.38 |
+
+**SPADE moves from 10th of 12 to within SESOI of every arm except `doe`.** Paired on
+`(instance, seed)`, n = 50:
+
+| contrast | Δ | 95% CI | Wilcoxon p | |
+|---|---|---|---|---|
+| `versionb` − `qlogei-addonly` | +0.0165 | [+0.0029, +0.0314] | 0.0088 | **within SESOI** |
+| `versionb` − `qlognei` | +0.0163 | [+0.0031, +0.0320] | 0.1355 | **within SESOI** |
+| `versionb` − `qlogei` | +0.0090 | [−0.0034, +0.0230] | 0.3326 | **within SESOI** |
+| `versionb` − `lhs` | +0.0028 | [−0.0137, +0.0200] | 0.9695 | **within SESOI** |
+
+Against `qlogei-addonly` the Wilcoxon and the bootstrap **agree**: a real difference exists
+and it is **below SESOI**. Per Q20 §2 both are reported — detectable, not material.
+
+**`doe` inverts at a second cell.** D20 measured the reversal at σ=0.25 (rule P 0.1993
+against rule A 0.0892). At σ=0.10 it is **0.2728** — worse, not better. **The asymmetry
+now holds at both noise levels**: a terminal rule that reads the model punishes the arm
+whose `grid_r2` is −6.19 and rewards the arms whose map scores AUC 0.77–0.84. That is the
+D20 mechanism, reproduced at an independent cell, on 600 gated rows.
+
+### 32.1 🔴 But the model behind §2.2 is dead, and the prediction was right by coincidence
+
+C0 registered a second, separable test: regress `regret_P` on `σ/√n_eff`.
+
+```
+all arms    slope -1.7347   R2 0.0309   n=600
+minus doe   slope +0.5124   R2 0.0112   n=550
+```
+
+**Excluding `doe` flips the sign and leaves R² ≈ 0.01.** Not a `doe` artefact — the model
+explains about **one percent** of the variance either way.
+
+**And the agreement that fired the branch is two cancelling errors.** C0 assumed
+`n_eff ≈ 1.4` and predicted `0.10/√1.4 = 0.0845` against a measured **0.0792**. But:
+
+| arm | measured n_eff | σ/√n_eff | measured regret_P | ratio |
+|---|---|---|---|---|
+| `sobol` | 9.56 | 0.0323 | 0.0823 | 2.54× |
+| `versionb` | **13.98** | 0.0267 | 0.0792 | **2.96×** |
+| `qlogei-addonly` | 20.30 | 0.0222 | 0.0627 | 2.82× |
+| `doe` | 31.38 | 0.0179 | 0.2728 | 15.28× |
+
+`n_eff` was underestimated by ~**10×** and the model under-predicts by ~**3×**, and
+√10 ≈ 3.16. **The two errors cancel almost exactly.** The number was right; the mechanism
+was not. Every non-`doe` arm shows the same 2.5–3.0× ratio, so this is systematic rather
+than noise.
+
+**What this does and does not overturn.** The branch is a decision rule on the **measured**
+`regret_P`, which is gated and real — so the branch stands and **§2 is not built**. What
+falls is §2.2's allocation rule `n_required = (σ̂/r*)²`, which rested on that model: its
+well-count formula **has no basis and would require empirical calibration**. C0 registered
+that consequence in advance, whichever way the branch fell.
+
+**One-σ caveat, carried.** C0 registers the regression across **both** σ. This is σ=0.10
+alone. `fix1-terminal-rule.json` carries `regret_p` at σ=0.25 but no `n_eff`, and
+`run_fix1_terminal_rule.py` **raises at HEAD** (stale `_two_plate` signature — it passes
+`True` and unpacks three of four returns). The two-σ version needs the C0 runner re-run at
+σ=0.25.
+
+### 32.2 What Version C now is
+
+**Form 1 only — §1 + §3, no trust region.** And because §1's three changes are *scoring*
+and *reporting* changes only (§1.4 keeps plate 1, the LSE criterion and the predictive
+straddle unchanged), and because §2 is not built and K-C7 is predicted to fire, **§5's arm
+table collapses**:
+
+| §5 arm | after C0 |
+|---|---|
+| `versionc` | detector-gated → always boundary; `m` = 0 → 8 boundary |
+| `versionc_form1` | 8 boundary |
+| `versionc_nodetect` | always boundary |
+| `versionc_fixed_m` | **moot** — requires §2's trust region |
+| `versionc_random` | `m` = 0 → 8 random ≡ **`versionb_random`**, already committed |
+
+The first three are **the same arm**, and its design **is Version B's design**.
+
+> **Version C Form 1 requires zero new campaigns. It is a re-score of the stored Version B
+> campaigns**, and its regret number already exists: the **0.0792** in the table above.
+
+**What remains unrun:** the re-score itself — split-sample CE columns, connected-component
+design spaces, and the five columns, on stored campaigns. Every library piece is built and
+tested; the runner is not written.

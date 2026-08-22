@@ -15,6 +15,9 @@ Read this first, then `docs/FINDINGS-SPADE.md` **Part IV**, then Parts II–III.
 | `docs/OPEN-QUESTIONS.md`, **2026-08-22 block at the end** | the four decisions and **errata 20–22** |
 | `docs/OVERNIGHT-LOG.md` **D67–D74** | the decision trail for cross-family day |
 | `docs/FINDINGS-SPADE.md` **§23** | **what Part IV signifies** — implications, not results |
+| `docs/FINDINGS-SPADE.md` **§32** | **VERSION C, C0** — the σ=0.10 deficit was an identification artefact; §2 is not built |
+| `docs/OPEN-QUESTIONS.md`, **Version C block** | C0 / C1.2 / C1.2a / C1.3 / C3.2 / C3.2a / C3.3a / C3.3b / C4 and the K-C kills |
+| `docs/OVERNIGHT-LOG.md` **D75** | Version C's decision trail and **five specification defects** |
 
 **The three most important lines:**
 
@@ -143,3 +146,66 @@ tail gives **zero**. Tier 1 document corrections are inventoried but **not yet
 applied** — including B3 removal (decision 2 above), the AUC "superseded" marks, and the
 pooled-containment restatements. An audit found several of the queue's own claims are
 **already corrected in the repo**, so verify each against the current text before editing.
+
+
+---
+
+## 8. VERSION C — track status as of 2026-08-22 (afternoon)
+
+**Ran as a parallel track under §7's ownership boundary.** Nothing here edited `replay.py`,
+`campaign.py`, `surrogate.py`, `oracles.py`, `torch_oracle.py`, or any committed
+`results/` file. Both tracks touched `designspace.py`; the additions are disjoint and every
+commit states its insertion counts.
+
+### 8.1 The gate returned, and it closed §2
+
+**`results/versionc-gate-s010.json`** — 600 rows, 12 arms × 50 keys, **gate clean at
+|Δ| = 0**, double-gated against `p3-k6-d6-s010.json` and `e2-grid.json`. Verdict
+**`IDENTIFICATION_ARTEFACT`**: `versionb` rule-P regret **0.0792** against a registered
+branch at 0.090. **§2 was not built.** Full result in FINDINGS §32.
+
+### 8.2 What is committed and green
+
+| file | contents |
+|---|---|
+| `versionc-gate-s010.json` | the C0 gate, 600 rows, clean |
+| `versionc-gate-analysis.json` | per-arm rule A vs rule P, Holm, the n_eff regression |
+| `versionc-detector-fit.json` | §3.2 fitting set, 150 rows, hill/levy/rosenbrock |
+| `versionc-detector-boundary.json` | the proposed one-class rule — **`frozen: false`** |
+
+Library: `boec/versionc.py`, `vorobev.conservative_estimate_split`,
+`designspace.connected_components` / `component_report`. Runners: `run_versionc_gate.py`,
+`run_versionc_detector.py`, `analyse_versionc_gate.py`, `analyse_versionc_detector.py`.
+All four `.json` files are named in `.gitignore` negations rather than force-added — this
+repository has been bitten four times by a runner writing a registered artefact git then
+declined to track.
+
+### 8.3 🔴 UNFINISHED
+
+| task | state | cost |
+|---|---|---|
+| **Form 1 re-score** | **runner not written.** Every library piece is built and tested | **no new campaigns** — a re-score of stored Version B campaigns |
+| **C0 at σ=0.25** | not run | closes the registered two-σ `n_eff` regression, currently one-σ only |
+| **Freeze + score held-out** | **deliberately not done** | one-shot; see 8.4 |
+
+### 8.4 Needs Joseph's decision — and one of them is irreversible
+
+1. **Whether to spend the one-shot held-out scoring pass.** C3.3b predicts **K-C7 fires**:
+   every viable statistic has within-family ÷ pooled support width of **0.66–0.88**, and
+   `additive_share`'s boundary would fire on only **21.9%** of its attainable range. That
+   prediction came from the **fit set alone and cost nothing from the one-shot budget.**
+   §3.5 is explicit that the pass cannot be repeated. Spending it on a rule already
+   predicted powerless is a judgement call, not a technical one.
+2. **Whether to run the Form 1 re-score.** Cheap, and it is what turns Version C from a
+   tested library into a measured result.
+3. **The Version C commits are on `main`**, following this repository's convention and the
+   evaluation track's. Flagged because it departs from the global "branch first" rule.
+
+### 8.5 The one thing that would otherwise be rediscovered
+
+**Version C Form 1 requires ZERO new campaigns.** §1's three changes are scoring and
+reporting changes only — §1.4 keeps plate 1, the LSE criterion and the predictive straddle
+unchanged. With §2 unbuilt and K-C7 predicted, `versionc` ≡ `versionc_form1` ≡
+`versionc_nodetect`, `versionc_fixed_m` is moot, and `versionc_random` ≡ the already-committed
+`versionb_random`. **Form 1's design IS Version B's design**, and its regret number already
+exists: the 0.0792 above. Do not budget wells for it.

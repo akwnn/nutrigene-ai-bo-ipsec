@@ -1733,3 +1733,81 @@ detect what it was built to detect.** More seeds per cell, not more cells.
 **Totals for the day:** cells 1+2 of the cross-family programme complete (8 cells, 2,000
 campaigns, 48,000 rows, gate failures 0), one blocking defect found and fixed, three queue
 claims refuted, two document contradictions resolved, 4 decisions logged.
+
+---
+
+## D75 · Version C track: what was decided, and five things the specification got wrong
+
+Version C ran as a **parallel track** to the evaluation work, with §7's ownership boundary
+honoured — nothing in this track edited `replay.py`, `campaign.py`, `surrogate.py`,
+`oracles.py`, `torch_oracle.py`, or any committed `results/` file. Both tracks touched
+`designspace.py`; the additions were disjoint and each commit states its insertion counts,
+per §7's own instruction.
+
+### The decision C0 was built to make
+
+**Do not build §2 until the gate returns.** §2 proposes a trust region to close SPADE's
+0.045 regret deficit at σ=0.10. Two worlds are consistent with that deficit — an
+identification artefact of rule A, which a terminal rule fixes for free, or a genuine
+search deficit, which no terminal rule can repair. Building the trust region before knowing
+which would have been building a fix for a problem that might not exist.
+
+**The gate returned `IDENTIFICATION_ARTEFACT` (FINDINGS §32). §2 was not built.** The
+branch was written as a function, `gate_branch`, and registered with its thresholds before
+the runner existed, for the same reason `within_design_noise` is a function: a rule recalled
+at reading time is a rule applied selectively.
+
+### Five specification defects, all found by measurement rather than by argument
+
+1. **`{x : LCB(x) ≥ max LCB}`** (§3.2's first candidate statistic) is satisfied by the
+   argmax alone, so its component count is **always exactly 1**. Replaced by §2.3's
+   plausible-optimum set `{x : UCB(x) ≥ max LCB}`.
+2. **`n_local_maxima` is identically zero** at the real operating point — 40 wells, d=6,
+   σ=0.10, 20,000-point grid — on both hill and levy. At 0.49 neighbours per lengthscale no
+   LCB approaches a rival's UCB. `n_peaks_raw` is the usable form and does vary (135, 149).
+   **Two of six candidates were non-viable as written.**
+3. **§3.3's fit set is single-class.** Q53's committed table has **levy null at all four
+   cells and rosenbrock null at all four**; hill ties. All three fit families sit on one
+   side of the boundary and both held-out families are the other. A discriminative
+   threshold cannot be fitted on one class. The rule became a **one-class novelty
+   boundary** — the only form fittable without looking at a deceptive landscape.
+4. **§1.2's registered prediction targets a quantity the cross-fit cannot move.** The
+   cross-fit selects on the first half, bit-identical to the committed 512-draw estimator,
+   so it returns the **identical set**, and empirical containment is a function of
+   `(set, truth, θ)` alone. **K-C6 would have fired automatically and for the wrong
+   reason.** Recorded as C1.2a and pinned by a test.
+5. **The σ/√n_eff model behind §2.2 does not hold** (FINDINGS §32.1), and the prediction
+   that fired the branch was right by coincidence — `n_eff` underestimated ~10×, model
+   under-predicting ~3×, √10 ≈ 3.16.
+
+### One repository defect, flagged and not fixed
+
+**`scripts/run_fix1_terminal_rule.py` raises at HEAD.** It calls
+`run_versionb._two_plate(orc, DIM, seed, mu_max, True)` and unpacks three values; that
+function now takes `mode: str` and returns four. `results/fix1-terminal-rule.json` is
+unaffected — it predates the signature change — but **the runner can no longer reproduce
+its own committed file.** It is the evaluation track's file and was left to that track.
+C0's runner does not copy the path: every arm is built through `replay.regenerate`'s
+builder hook, as `run_p3_cells.py` does.
+
+### A decision NOT taken, deliberately
+
+**The detector rule was not frozen and the held-out families were not scored.** §3.5 says
+that pass happens once and cannot be repeated. C3.3b predicts **K-C7 fires** — every viable
+statistic has within-family ÷ pooled support width of 0.66–0.88, meaning a single tie family
+alone spans most of the range all three span together, and `additive_share`'s boundary would
+fire on only 21.9% of its attainable range. **That prediction was made from the fit set
+alone and therefore cost nothing from the one-shot budget.** Spending the pass on a rule
+already predicted to be powerless is a decision for Joseph, not for the track.
+
+### Cross-track corroboration, arrived at independently
+
+The evaluation track's **F3** (FINDINGS §29) resolved §14's kill as an estimator artefact of
+512 draws — all four sub-nominal cells reach nominal by 1,024 draws, with the γ=0.50 control
+flat at 1.000. That is the cross-check §1.2 asked for, **by a different route**: F3 sweeps
+draws, C1.2 cross-fits the selection. Neither was designed to test the other.
+
+It also **confirms C1.2a**. F3 moves the empirical numbers because more draws change the
+coverage function and therefore the selected set. The cross-fit does not, because its
+selection is bit-identical by construction. C1.2a predicted exactly that distinction before
+F3's result existed.
