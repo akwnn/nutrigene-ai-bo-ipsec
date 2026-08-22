@@ -145,19 +145,50 @@ def r_star(dim: int = 6, sigma: float = 0.10) -> tuple[float, str]:
     return means[best], best
 
 
-def kc1(regret_p: float, r_star: float) -> dict:
+def kc1(regret_p: float, r_star: float, r_star_rule_p: float | None = None) -> dict:
     """Parity at sigma=0.10. Fires when the gap exceeds SESOI.
+
+    ------------------------------------------------------------------------------
+    THE REGISTERED BAR MIXES ESTIMANDS, AND THAT IS CARRIED RATHER THAN FIXED
+    ------------------------------------------------------------------------------
+
+    ``r*`` is registered as *"the best committed regret at this (d, sigma) cell, read from
+    e2-grid.json"*, and **that column is rule A**. Version C's number is **rule P**. The
+    repository's own Fix 1 registration is explicit that this comparison is not allowed:
+
+        "A rule-P regret is also not comparable to any published rule-A number: they are
+         different estimands, and every table that carries both must say which column is
+         which."
+
+    A registered kill is **not silently re-specified**, so the verdict below is evaluated
+    against the bar as registered. But the **like-for-like** bar -- the best arm's rule-P
+    regret from the same run -- is carried beside it, and the mismatch is named, because
+    the two answer different questions:
+
+        against rule-A r* = 0.0808   ->  0.0792 is BELOW the bar
+        against rule-P best = 0.0627 ->  0.0792 is +0.0165 ABOVE it, inside SESOI
+
+    **Both are true. Only the second compares like with like**, and the headline "beaten
+    rather than met" rests entirely on the first.
 
     The residual gap is reported **whether or not it fires** -- the registration says
     "report the residual gap and its cause", so it is an output rather than something
     printed only on failure.
     """
     gap = regret_p - r_star
+    gap_llf = None if r_star_rule_p is None else regret_p - r_star_rule_p
+    note = ("the registered bar r* is a rule A column (e2-grid.json) while regret_P is "
+            "rule P -- different estimands. Evaluated as registered; the like-for-like "
+            "rule P bar is carried beside it")
     return {"kill": "K-C1", "fired": bool(gap > SESOI),
             "regret_p": regret_p, "r_star": r_star, "gap": gap, "sesoi": SESOI,
+            "r_star_rule": "A", "estimand_mismatch": True,
             "beats_r_star": bool(regret_p <= r_star),
-            "note": ("parity holds" if gap <= SESOI else
-                     "parity goal FAILS; report the residual gap and its cause")}
+            "r_star_rule_p": r_star_rule_p,
+            "gap_like_for_like": gap_llf,
+            "beats_r_star_like_for_like": (None if gap_llf is None else bool(gap_llf <= 0)),
+            "parity_like_for_like": (None if gap_llf is None else bool(gap_llf <= SESOI)),
+            "note": note}
 
 
 def kc2(containment: dict[float, float]) -> dict:
@@ -219,8 +250,17 @@ def verdict(rows: list[dict], sigma: float, arm: str = "versionb") -> dict:
     # --- K-C1, at sigma = 0.10 only ----------------------------------------------------
     if abs(sigma - 0.10) < 1e-9:
         rs, rs_arm = r_star(6, 0.10)
-        v = kc1(_mean(sub, "regret_p"), rs)
+        # The like-for-like bar: the best arm's rule-P regret in THIS run. Same estimand,
+        # same campaigns, so the contrast is defined -- which the registered bar is not.
+        by_arm = {}
+        for row in rows:
+            by_arm.setdefault(row["arm"], []).append(float(row["regret_p"]))
+        means_p = {a: st.mean(v) for a, v in by_arm.items()
+                   if a not in ("plate1_only",)}
+        best_p_arm = min(means_p, key=means_p.get)
+        v = kc1(_mean(sub, "regret_p"), rs, r_star_rule_p=means_p[best_p_arm])
         v["r_star_arm"] = rs_arm
+        v["r_star_rule_p_arm"] = best_p_arm
         v["r_star_source"] = R_STAR_SOURCE
         out["kills"]["K-C1"] = v
     else:
@@ -316,17 +356,26 @@ def main() -> None:
         hard = "  [HARD STOP]" if KILLS[name]["hard_stop"] else ""
         print(f"  {name}  {status}{hard}")
         if name == "K-C1" and "gap" in k:
-            print(f"        regret_P {k['regret_p']:.4f} vs r* {k['r_star']:.4f} "
-                  f"({k.get('r_star_arm')}) -> gap {k['gap']:+.4f}, SESOI {k['sesoi']}")
+            print(f"        registered bar  : regret_P {k['regret_p']:.4f} vs r* "
+                  f"{k['r_star']:.4f} ({k.get('r_star_arm')}, RULE A) -> "
+                  f"gap {k['gap']:+.4f}")
+            if k.get("gap_like_for_like") is not None:
+                print(f"        like-for-like   : vs best RULE P arm "
+                      f"{k['r_star_rule_p']:.4f} ({k.get('r_star_rule_p_arm')}) -> "
+                      f"gap {k['gap_like_for_like']:+.4f} "
+                      f"({'parity' if k['parity_like_for_like'] else 'BEYOND SESOI'})")
+            print(f"        ! {k['note']}")
+            continue
         if name == "K-C2" and "measured" in k:
             print(f"        measured {k['measured']} vs nominal {k['nominal']}")
         if name == "K-C3" and "relative_change" in k:
             print(f"        symmetric difference {k['versionc']:.5f} vs Version B "
                   f"{k['versionb']:.5f} -> {k['relative_change']:+.2%} "
                   f"(bar {k['max_worsening']:+.0%})")
-        for line in (k.get("note") or k.get("reason") or "").split(" -- "):
-            if line.strip():
-                print(f"        {line.strip()}")
+        if name != "K-C1":
+            for line in (k.get("note") or k.get("reason") or "").split(" -- "):
+                if line.strip():
+                    print(f"        {line.strip()}")
 
     print()
     if fired:

@@ -2486,7 +2486,7 @@ and `box_vol_pred = 0.0053` against 1.0.
 
 | kill | verdict | evidence |
 |---|---|---|
-| **K-C1** parity at sigma=0.10 | **PASS** | regret_P **0.0792** vs `r*` **0.0808** (`qlognei`, read from `e2-grid.json` alone) -> gap **-0.0016**. **Below the bar, not merely within SESOI** |
+| **K-C1** parity at sigma=0.10 | **PASS — as parity, not as a win. See §40.1** | registered bar: regret_P **0.0792** vs `r*` **0.0808** -> gap **-0.0016**. **But `r*` is a RULE A column and regret_P is RULE P.** Like-for-like, against the best rule-P arm (`qlogei-addonly`, **0.0627**), the gap is **+0.0165** — inside SESOI, so **parity holds and the bar is not beaten** |
 | **K-C2** containment, gamma=0.50 | **PASS — HARD STOP CLEARS** | measured {0.50: 0.940, 0.80: 1.000, 0.95: 1.000} against a committed nominal of exactly those three. `failed_alphas` empty, `invariance_violated` **False** |
 | **K-C3** symmetric difference | **PASS** both sigma | 0.21089 vs 0.21089 (sigma=0.10), 0.35828 vs 0.35828 (sigma=0.25), +0.00% against a +10% bar |
 | K-C4 / K-C5 / K-C8 | **MOOT** | settled by C0 -- no trust region, and the other labels name the same campaign |
@@ -2657,3 +2657,102 @@ reached at σ=0.25 by a different route, now confirmed at 48 wells with SPADE's 
 
 **Does not say:** that SPADE is worthless. E7 measures *identification*, not certification.
 SPADE's claim is a calibrated conservative set, and **no E7 column touches that.**
+
+---
+
+## 40. 🔴 VERSION C — the loophole audit. Three claims do not survive it, including my own headline.
+
+**Written after both re-scores and the component run committed.** Every item below is a
+defect found in **Version C's own results**, not in another track's. Each is stated with
+what survives, because a retraction that leaves nothing standing is usually an overcorrection.
+
+### 40.1 🔴 K-C1's bar mixes estimands. "Beaten" is withdrawn; **parity survives.**
+
+`r*` is registered as *"the best committed regret at this (d, σ) cell, read from
+`e2-grid.json`"* — **and that column is rule A.** Version C's number is **rule P**.
+
+This repository's own Fix 1 registration (`OPEN-QUESTIONS.md`) forbids exactly this:
+
+> *"A rule-P regret is also **not comparable to any published rule-A number**: they are
+> different estimands, and every table that carries both must say which column is which."*
+
+| bar | value | Version C | gap | |
+|---|---|---|---|---|
+| registered `r*` — **rule A** | 0.0808 (`qlognei`) | 0.0792 | **−0.0016** | below the bar |
+| like-for-like — **rule P** | **0.0627** (`qlogei-addonly`) | 0.0792 | **+0.0165** | above it, **inside SESOI** |
+
+**Both are true; only the second compares like with like.** The kill is evaluated against
+the bar as registered — a registered kill is not silently re-specified — but
+**"K-C1 beaten, not merely met" is withdrawn.** The defensible claim is the one C0 already
+made and §8 of the spec already required: **parity is the goal and parity is the claim.**
+
+`analyse_versionc_form1.kc1` now carries both bars and the `estimand_mismatch` flag, so the
+mismatch cannot be quoted away.
+
+### 40.2 🔴 §4's registered prediction FAILS — and my own verdict function had the confound
+
+`results/versionc-components-family.json`, 1,200 rows, hill + hartmann6, both σ, 25 seeds,
+3 arms. Registered before any component number existed: *largest on hartmann6, near-zero on
+hill; if it helps everywhere equally, something is wrong.*
+
+**The first verdict printed "DOES NOT HOLD" for the wrong reason.** A region that certifies
+nothing has `n_components = 0`, and averaging that in measures **emptiness, not
+multimodality**:
+
+| family | certifies **nothing** |
+|---|---|
+| hill | 27.0% |
+| **hartmann6** | **89.7%** |
+
+The reported 0.27 against 2.00 was almost entirely an emptiness contrast wearing a
+component contrast's name.
+
+**Conditioned on non-empty regions — the only place the prediction is defined:**
+
+| family | defined n | mean components | **>1 component** | box gain |
+|---|---|---|---|---|
+| hill | 438 | 2.75 | 42.5% | +0.000619 |
+| hartmann6 | **62** | 2.65 | **64.5%** | +0.000528 |
+
+**The verdict still fails, and the failure splits.** hartmann6 **is** more often
+multi-component — 64.5% against 42.5%,
+the direction predicted — but its mean component count and box gain are both **slightly
+lower** than hill's. So the prediction fails on the **magnitude** metrics while the
+**frequency** metric supports it. Reported as that split rather than collapsed to a word.
+
+**And the box gain is near-zero on both** (+0.000619, +0.000528).
+**§4's decomposition buys almost nothing on either family at this budget.**
+
+An `UNDERPOWERED` branch was added: below 30 defined rows the honest answer is not "does
+not hold" but *"the family barely certifies, so there is almost nothing to decompose"*.
+hartmann6 clears it at 62, so the verdict stands.
+
+### 40.3 The σ-comparison in §38.4 rests on unequal, self-selected populations
+
+§38.4 reports the selection bias as **~4× larger at σ=0.10 than σ=0.25**. The `n` behind
+those means are **not** comparable: 10,956 against 6,498 at α=0.50, and **7,002 against
+1,812** at α=0.95. Non-empty certificates are far rarer at σ=0.25, and the ones that
+survive are the **easy** ones — so the σ=0.25 mean is taken over a self-selected, better-
+behaved subset.
+
+**The direction is safe** — the bias is real and positive at both σ, and the α-ordering
+holds within each σ. **The 4× is not**, and should be quoted as *"larger at σ=0.10"* without
+the multiplier until it is measured on a matched population.
+
+### 40.4 What survives the audit
+
+* **The C0 gate result (§32)** — 600 rows, double-gated at |Δ| = 0, and the branch is a
+  decision rule on a measured number. Unaffected.
+* **K-C2 and K-C3** — but only as **structural** passes (§38.3), which was already stated.
+* **The selection bias itself (§38.4)** — real, positive at both σ, rising with α. Only the
+  cross-σ multiplier is withdrawn.
+* **K-C7 (§37)** — the one-shot pass ran against a frozen rule; 0/50 both families.
+* **Non-vacuity (§38.7)** — already carried its own caveat that the ordering fails at σ=0.10.
+
+### 40.5 The loophole that remains open, and cannot be closed by re-scoring
+
+**Version C has never been run as a method.** Every number in §32, §38 and §40 is
+**Version B's wells scored under Version C's rules**. That is exactly what C0 was designed
+to measure and it is not a defect in the measurement — but it means **no claim here is
+evidence that a lab running Version C prospectively would see these numbers.** The three
+scoring changes cannot be validated by re-scoring the campaigns they were designed against.

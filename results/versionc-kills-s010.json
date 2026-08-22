@@ -10,9 +10,16 @@
    "r_star": 0.08080460661018998,
    "gap": -0.001576329999950818,
    "sesoi": 0.02,
+   "r_star_rule": "A",
+   "estimand_mismatch": true,
    "beats_r_star": true,
-   "note": "parity holds",
+   "r_star_rule_p": 0.06269938392277466,
+   "gap_like_for_like": 0.016528892687464505,
+   "beats_r_star_like_for_like": false,
+   "parity_like_for_like": true,
+   "note": "the registered bar r* is a rule A column (e2-grid.json) while regret_P is rule P -- different estimands. Evaluated as registered; the like-for-like rule P bar is carried beside it",
    "r_star_arm": "qlognei",
+   "r_star_rule_p_arm": "qlogei-addonly",
    "r_star_source": "results/e2-grid.json"
   },
   "K-C2": {

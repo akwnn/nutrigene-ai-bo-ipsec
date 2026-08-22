@@ -147,3 +147,39 @@ def test_kc7_records_that_it_HAS_fired_not_that_it_is_predicted_to():
     assert k["fired"] is True
     assert "0 / 50" in k["reason"] or "0/50" in k["reason"]
     assert "without Stage 0" in k["consequence"]
+
+
+def test_kc1_carries_BOTH_bars_because_the_registered_one_mixes_estimands():
+    """**The loophole in K-C1 as registered.**
+
+    `r*` is registered as "the best committed regret ... read from e2-grid.json", and that
+    column is **rule A**. Version C's number is **rule P**. The repository's own Fix 1
+    registration says: *"A rule-P regret is not comparable to any published rule-A number:
+    they are different estimands, and every table that carries both must say which column
+    is which."*
+
+    So the registered bar is evaluated as registered -- a kill is not silently re-specified
+    -- but the like-for-like bar is carried beside it, and the mismatch is named.
+    """
+    v = K.kc1(regret_p=0.0792, r_star=0.0808, r_star_rule_p=0.0627)
+    assert v["r_star_rule"] == "A"
+    assert v["gap"] == pytest.approx(0.0792 - 0.0808)
+    assert v["gap_like_for_like"] == pytest.approx(0.0792 - 0.0627)
+    assert v["estimand_mismatch"] is True
+    assert "rule A" in v["note"] and "rule P" in v["note"]
+
+
+def test_kc1_like_for_like_is_parity_not_a_win():
+    """Against the best rule-P arm the gap is +0.0165 -- inside SESOI, so parity holds,
+    but it is NOT below the bar. The headline 'beaten' rests on the mismatched bar."""
+    v = K.kc1(regret_p=0.0792, r_star=0.0808, r_star_rule_p=0.0627)
+    assert v["beats_r_star"] is True                      # against the registered rule-A bar
+    assert v["beats_r_star_like_for_like"] is False       # against the rule-P bar
+    assert v["parity_like_for_like"] is True              # but still within SESOI
+    assert v["fired"] is False
+
+
+def test_kc1_without_a_rule_p_bar_says_so_rather_than_implying_none_exists():
+    v = K.kc1(regret_p=0.0792, r_star=0.0808)
+    assert v["gap_like_for_like"] is None
+    assert v["estimand_mismatch"] is True
