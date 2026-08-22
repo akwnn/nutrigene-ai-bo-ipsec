@@ -114,7 +114,8 @@ def _oracle():
     return UnitScaled(Hartmann6())
 
 
-def run_unscreened_ccd(evaluator, bounds, *, truth, optimum_value: float, seed: int) -> dict:
+def run_unscreened_ccd(evaluator, bounds, *, truth, optimum_value: float, seed: int,
+                       return_design: bool = False) -> dict:
     """The classical pipeline with the screen removed. 47-run CCD + 1 confirmation.
 
     Deliberately parallel to :func:`boec.doe.run_doe_arm` and deliberately **not** a
@@ -147,11 +148,25 @@ def run_unscreened_ccd(evaluator, bounds, *, truth, optimum_value: float, seed: 
     X_all = torch.cat([X, x_star])
     Y_all = torch.cat([Y, Yc])
     t_all = truth(X_all).double()
-    return dict(
+    out = dict(
         rule_a=optimum_value - float(reported_best_curve(t_all, Y_all)[-1]),
         oracle_best=optimum_value - float(t_all.max()),
         rule_c=optimum_value - float(truth(x_star)),
         n_design=n, residual_df=n - p)
+    # ADDITIVE and OPT-IN (D15): 1 parameter, 2 keys, 0 removed, and the DEFAULT return
+    # is byte-for-byte what it was. The committed `results/q59-hartmann-no-screen.json`
+    # carries only the scalars, so the map -- which is where Part IV's screening claim
+    # actually lives -- could not be scored on this arm at all. Exposing the design is
+    # what lets the Q59 map re-score separate SCREENING from SUB-BOX CONFINEMENT.
+    #
+    # It is opt-in because `main()` does `json.dumps(dict(..., rows=done))` on exactly
+    # this dict, and a tensor in the default return makes the committed runner
+    # un-rerunnable. The first version of this edit did precisely that;
+    # `tests/test_q59_map_rescore.py::test_the_q59_runners_own_output_stays_json_serialisable`
+    # caught it before it shipped.
+    if return_design:
+        out["X_all"], out["Y_all"] = X_all, Y_all
+    return out
 
 
 def one(job: tuple[float, int]) -> dict:
