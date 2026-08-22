@@ -391,11 +391,16 @@ arms that differ in nothing else, and running exactly opposite to regret. This i
 strongest and most portable result of the investigation. It needs no new method, no new
 campaign, and does not depend on SPADE winning anything.
 
-**Joint certification works for seven of eight arms.** Under the corrected, non-circular
-test, every arm except the screened classical one meets nominal at every level, so a
+**Joint certification works for six of eight arms.** *(This sentence read "seven of eight
+… every arm except the screened classical one" and **directly contradicted §9.5 and §12 of
+this same file**, both of which already carried the correction. Fixed 2026-08-22.)* Under the
+corrected, non-circular test, six of eight arms meet nominal at every level, so a
 `(gamma, alpha)` statement built from 48 wells is honest — with plug-in hyperparameters,
 which was the flagged risk. The classical arm fails at every level, and at `tau_frac=0.60,
-alpha=0.50` its region is contained in **zero of fifty** campaigns.
+alpha=0.50` its region is contained in **zero of fifty** campaigns. **`random` also fails**,
+in one thin cell — contained in **1 of 7** non-empty sets at `tau_frac=0.85, alpha=0.50`.
+That cell is 86% empty, so the failure is **not demonstrated**; what is withdrawn is the
+claim that *only one* arm fails, which was a pooling artefact.
 
 **And model-internal metrics cannot be trusted alone.** `doe` posts the *highest* `alpha*`
 at easy thresholds and the *worst* empirical containment. `alpha*` measures how confident

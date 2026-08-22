@@ -1606,11 +1606,15 @@ maximal exactly where the certificate is worthless. This is the concrete case re
 at §1.4 and it is the reason no `alpha*` ranking in this document is presented as evidence
 of certification quality.
 
-**Applying B3 made the flattery worse, not better.** Under the void, policy-(c) run `doe`
-scored 0.9998 / 0.7251 / 0.2126 / 0.0377; on its active subspace it scores 1.0000 / 0.7875
+**Applying B3 raised `alpha*`.** Under the void, policy-(c) run `doe` scored
+0.9998 / 0.7251 / 0.2126 / 0.0377; on its active subspace it scores 1.0000 / 0.7875
 / 0.2424 / 0.0332. Restricting the arm to the 4 axes it actually varied **raised** its
-`alpha*` at three of four thresholds (by up to +0.062) while its empirical containment at
-`alpha = 0.50` **fell** from 0.250 to 0.155. Part of that rise is not a modelling effect at
+`alpha*` at three of four thresholds (by up to +0.062).
+*(The containment half of this sentence — "its empirical containment at `alpha = 0.50` fell
+from 0.250 to 0.155" — is **removed with the rest of the B3 comparison**: both figures are
+`tau_frac`-pooled and the unrestricted run was never broken out per cell. It had been left
+standing here in the document's own voice with no F4 marker while every other site carried
+one. The `alpha*` half is a different quantity, is not pooled, and survives.)* Part of that rise is not a modelling effect at
 all: on `doe`'s pinned slice the true excursion prevalence is higher (0.8251 vs 0.7355 at
 `tau_frac = 0.60`), so the slice is easier (§2.8, consequence 1).
 
@@ -1877,11 +1881,10 @@ demonstrated* rather than one that is, and it must never be carried without its 
 rests on four cells of which three have `n = 50` and one `n = 47`, and it is unchanged at
 `n = 25`.
 
-**This is B3 *applied*, and B3 made it worse.** *An earlier revision compared the void
-policy-(c) run's 0.250 / 0.333 / 0.787 against the pooled 0.155 / 0.420 / 0.510. Both sides
-of that comparison are `tau_frac`-pooled and it is **withdrawn under F4** — the void run's
-own figures were never broken out per cell, so the like-for-like comparison cannot be made
-from committed files.* What survives is the within-arm statement at the cell where the
+**This is B3 *applied*.** *(The "B3 made it worse" comparison that stood here is
+**removed**, not softened — both sides were `tau_frac`-pooled and the unrestricted run was
+never broken out per cell, so it cannot be made from committed files at all. Decision of
+2026-08-22.)* What survives is the within-arm statement at the cell where the
 evidence is strongest: with the active-subspace evaluation the arm is contained in **0 of
 50** campaigns at `tau_frac = 0.60, alpha = 0.50`. Restricting the arm to the four axes it
 actually varied — the registration's **primary**, most defensible policy — did not rescue
@@ -2904,6 +2907,8 @@ stated limit and Azzimonti et al. flag it themselves.
 
 The out-of-sample check in §5.10.2 quantifies the cost and it is **not uniform**: for the
 seven arms that vary all six factors the plug-in approximation is adequate at this budget
+(**six** of them at every level — see the withdrawal note below; `random` falls below nominal
+in one thin cell)
 (per-cell at `tau_frac = 0.60`: 0.60–1.00 / 0.92–1.00 / 0.97–1.00 against nominal 0.50 /
 0.80 / 0.95); for the screened arm it is not, and the failure is severe — 0 of 50, 12 of 50
 and 25 of 50 in the same cell. *The ranges and the `0.155 / 0.420 / 0.510` triple that stood
