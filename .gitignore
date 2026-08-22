@@ -257,6 +257,8 @@ COMMIT_MSG.txt
 !results/versionc-detector-heldout.json
 !results/e7-search-vs-id-rule-p.json
 !results/e7-oracle-best-fill.json
+!results/p8-certificate-families.json
+!results/p8-certificate-families.log
 !results/versionc-kills-s010.json
 !results/versionc-kills-s025.json
 !results/versionc-form1-s010.json

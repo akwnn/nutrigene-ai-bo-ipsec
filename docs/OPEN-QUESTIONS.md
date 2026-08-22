@@ -8786,3 +8786,80 @@ measurement", and that belongs in the record rather than in a memory.**
 | K-C4, K-C5, K-C8 | **MOOT** — §2 was never built |
 | K-C6 | **WOULD MISFIRE** as written (C1.2a) |
 | **K-C7** | **FIRED** — 0/50 both families |
+
+---
+
+## 📋 P8 — **SPADE's CERTIFICATE OFF HILL.** Registered before the runner exists.
+
+Joseph asked whether SPADE had been run everywhere, and the audit says **no, in the way that
+matters.** SPADE's *arms* appear in 17 committed files. SPADE's **certificate** — the
+conservative set, `alpha_star`, containment, the thing SPADE actually claims — appears on
+**`hill` only**:
+
+| study | families | certificate columns |
+|---|---|---|
+| `p2-versionb-gamma.json` | hill | 14 |
+| `versionc-form1-s025.json` | hill | 37 |
+| **`p6-families.json`** | hartmann6, levy, rosenbrock, ackley | **0** |
+| `p7-murphy.json` | hill | 0 |
+
+**Every cross-family result in this project tests SPADE's MAP.** `p6-families`' 60 columns
+are `auc*`, `auprc*`, `brier*`, `iou*`, `box_vol*`, `fi*` — no `ce_*`, no `alpha_star`, no
+`vorobev_*`. This is §25's gap, still open, and it is the largest one remaining.
+
+### What P8 runs
+
+`run_p2_versionb_gamma.score_campaign` is **family-agnostic** — it takes `orc`, `grid` and
+`truth` as arguments and only `build_campaign` is hill-specific. **P8 therefore edits
+nothing in P2** (no D15 exposure): it imports `score_campaign` read-only and feeds it family
+campaigns built by `run_p6_families.versionb_builder`, which is the construction `p6` already
+used for these arms.
+
+**Verified by probe before registering, not assumed:** on `levy`, d=6, σ=0.25, seed 0 the
+path produces **24 rows × 14 certificate columns** including `alpha_star`, `ce_contain_*`,
+`ce_empirical_*`. Campaign build 0.6 s; scoring **3.8 s at 512 draws, 33.8 s at 4,096**.
+
+| | |
+|---|---|
+| families | `hill`, `hartmann6`, `levy`, `rosenbrock`, `ackley` — **hill included deliberately** |
+| arms | `versionb`, `versionb_random`, `versionb_predictive`, `plate1_only` |
+| cell | d = 6, σ_rel = 0.25 — **exactly P2's cell**, so hill is a direct check |
+| seeds | 50 |
+| γ × τ_frac × α | P2's own `(0.50…0.99) × (0.60…0.95) × (0.50, 0.80, 0.95)` |
+| **draws** | **4,096** |
+| scale | 1,000 campaigns ≈ **9.4 h** |
+
+### 🔴 N_DRAWS = 4,096, NOT P2's 512 — and that is why hill is re-run
+
+**F3 registered that 512 draws is insufficient to estimate `CE_alpha` containment at
+γ ≥ 0.95** (§29): the §14 kill was an artefact of it, and a 1.5–3.5 pp selection bias
+survives even at 4,096. `run_p2_versionb_gamma.N_DRAWS` is **512**, so **every committed
+hill certificate number carries that artefact.**
+
+Running the families at 4,096 while comparing to hill at 512 would confound *family* with
+*draw count* — the exact confound this project spent Part IV isolating. **So hill is re-run
+at 4,096 inside P8**, and all five families are compared on one draw count. P8 does **not**
+overwrite `p2-versionb-gamma.json`; that file stands as the 512-draw record.
+
+### Registered gate
+
+The **hill** rows must reproduce `p2-versionb-gamma.json`'s **campaign-level** columns
+(`regret`, `n_wells`) at **\|Δ\| = 0** — the campaigns are seed-identical and any drift means
+the builder is not P2's. **The certificate columns are NOT gated against P2**, because they
+are *expected* to differ: different draw count is the whole point. Reporting a 4,096-draw
+containment as a gate failure against a 512-draw column would be publishing the correction
+as a defect.
+
+### Registered prediction, before any number exists
+
+**Containment at γ = 0.95 will be LOWER off hill than on it**, because §20 established the
+certifiability ceiling is ordered by max `tau_q` and the families differ sharply on it.
+**A cell falling below nominal is NOT a kill here** — §29 withdrew that reading. It is
+recorded, with its exact binomial tail (Erratum 21) and Holm across cells.
+
+**What P8 cannot settle:** it is one (d, σ) cell. σ = 0.10 and d = 8 remain open, and P8's
+result must not be stated as "SPADE's certificate generalises" — only as "at d=6, σ=0.25,
+across five families."
+
+`.gitignore` negation for `results/p8-certificate-families.json` goes in with this
+registration, before the file exists.
