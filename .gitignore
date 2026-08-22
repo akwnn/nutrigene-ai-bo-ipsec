@@ -226,3 +226,6 @@ COMMIT_MSG.txt
 # p6-ceiling-census: regenerates deterministically from the committed tau table in
 # about a second, but it is cited by the P6 registration decision BY PATH.
 !results/p6-ceiling-census.json
+
+# Q59 map re-score. Registered in OPEN-QUESTIONS before the runner existed.
+!results/q59-map-rescore.json

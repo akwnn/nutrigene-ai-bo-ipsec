@@ -8108,3 +8108,70 @@ mismatches on every shared key.**
 **File-wide: vote 150/480, strict 154/480. Non-hill 384 cells: 111/384 by BOTH tests.** The
 headline figure is unaffected, which is what makes this a disclosure fix rather than a
 correction — and the 4 rows are now visible instead of implicit.
+
+---
+
+# 📌 REGISTRATION · **Q59 MAP RE-SCORE — isolating screening from sub-box confinement**
+
+**Registered 2026-08-22, before `scripts/run_q59_map_rescore.py` exists.**
+
+## What the committed file already settles, and what it cannot
+
+`results/q59-hartmann-no-screen.json` carries **`doe_unscreened`** — the only classical arm in
+the repository with variation on **every** axis (a half-fraction face-centred CCD on all six
+coordinates, 47 runs + 1 confirmation = exactly 48). That is what makes it the only available
+way to isolate **screening** from **sub-box confinement**.
+
+**On regret it is already decisive, and it runs opposite to the intuition behind Task 7:**
+
+| σ | `doe_screened` rule_a | `doe_unscreened` rule_a | screen effect | Wilcoxon |
+|---|---|---|---|---|
+| 0.25 | 0.5623 | **0.7685** | **+0.2062** [0.1419, 0.2667] | 6.44e-05 |
+| 0.10 | 0.5428 | **0.7502** | **+0.2074** [0.1615, 0.2519] | 1.38e-05 |
+
+**The screen HELPS the classical arm on regret, by ~0.21 at both σ.** Removing it makes the arm
+worse, not better. So the screen is not why `doe` loses to BO on regret — it is why `doe` is not
+*further* behind. Part IV's claim is a **map** claim, and these are the two axes this project has
+found disagreeing at every previous opportunity (§13, D20, §23.2).
+
+**What the committed file CANNOT settle:** every arm in it carries only `rule_a` and
+`oracle_best`. **No design matrix, no posterior, no map metric.** The question Part IV raises —
+*does `doe`'s symmetric-difference failure survive when the classical arm does not screen?* —
+is not answerable from the file and requires regeneration.
+
+## Design
+
+Regenerate `doe_screened` and `doe_unscreened` at hartmann6, d=6, both σ, 25 seeds, through
+**`scripts/run_q59_hartmann_no_screen.py`'s own design code, imported, never reimplemented** —
+a second copy of the CCD construction would be a second experiment.
+
+Score both under **Part IV's metrics**: `auc_pred`, `auprc`, Brier, IoU, false inclusion,
+**type I / type II / symmetric difference**, `sup_err`, `grid_r2`, emptiness, and the ceiling
+flag — the same `map_row` path P6 uses, so the numbers are comparable to
+`results/p6-families.json` cell-for-cell.
+
+**Gate:** the regenerated `rule_a` and `oracle_best` must reproduce the committed Q59 columns at
+**|Δ| = 0 exactly**. Q59's own gate against `d20-rescore.json` is at `worst_abs_delta = 0.0`, so
+there is a committed column to hold this to and no excuse for a tolerance.
+
+## Registered decision rule — written before any number exists
+
+- **`doe_unscreened` still loses the symmetric difference to the spread arms** → screening is
+  **not** the mechanism; the classical arm's map failure is about the response-surface model,
+  not the 6→4 cut, and Part IV's caveat 1 is **discharged**.
+- **`doe_unscreened` closes the gap on the symmetric difference** → screening **is** the
+  mechanism, Part IV's headline is a screening result as claimed, and the confound was real.
+- **Either way the regret direction is already known** (the screen helps), so a map result that
+  runs the other way is the fourth independent instance of this project's map/regret split and
+  is reported as such.
+
+## What this cannot reach, stated rather than discovered later
+
+**d = 8 is arithmetically impossible.** A full second-order model needs `C(d+2,2)` terms — 28 at
+d=6, **45 at d=8** — and no face-centred CCD lands on 48 wells at d=8; the only design small
+enough carries 35 runs for a 45-term model, fewer observations than parameters. **An unscreened
+classical pipeline does not exist at d=8 within the shared budget.** That is not a limitation of
+this re-score; it is the reason the 6→4 screen exists at all, and it means **Part IV's d=8 cells
+can never have this confound isolated.**
+
+**Output:** `results/q59-map-rescore.json`, with its `.gitignore` negation added in this commit.
