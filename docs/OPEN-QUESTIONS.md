@@ -7359,3 +7359,301 @@ gamma = 0.50:   tau_frac 0.60  ->  +0.4333
 **τ_frac** attached, the **γ = 0.50 restriction is a feature and must not be described as
 cherry-picking**, and the 11-of-17 table is a comparison across mismatched thresholds rather than
 seventeen attempts at the same one.
+
+---
+
+# 📌 REGISTRATIONS AND DECISIONS · 2026-08-22
+
+## ⭐ DECISION 1 · **Ackley is IN for the map and OUT of every DoE contrast.**
+
+**Taken 2026-08-22, BEFORE the cross-family numbers existed.** The recorded ground is
+pre-existing: the screen evaluates the box centre as well as the CCD, so the DoE design hits
+ackley's exact optimum **7 times**. A contrast a design artefact decides is not a contrast.
+
+**It then emerged that ackley is the only family of four where `doe` wins** (mean rank 4.32 of
+9, 9 of 19 cell wins). **The ordering of decision and result is part of the registration**, and
+because the exclusion removes the single family favouring `doe`, the ackley column is
+**reported in full in every table rather than dropped**, labelled excluded. Every effect on
+ackley is below SESOI in any case.
+
+Ackley was previously unrunnable because its grid max is 0.410, below every `tau_frac`, so every
+metric came back `nan` — **a threshold property, not a family property.** It runs under `tau_q`.
+This also fixes Version C §3.3's scoring set.
+
+## ⭐ DECISION 2 · **The B3 subspace comparison is DROPPED, and the claim REMOVED.**
+
+Not softened. Both sides were `tau_frac`-pooled and the unrestricted run was never broken out
+per cell, so **the comparison cannot be made from committed files at all.** Removed at both
+sites — §5.10.2 and, more importantly, the site that asserted the same withdrawn comparison in
+the document's own voice **with no F4 marker** while every other site carried one. The `alpha*`
+half of that sentence is a different, unpooled quantity and survives. The surviving per-cell
+statement (`doe` contained in 0 of 50 at `tau_frac=0.60, alpha=0.50`) is load-bearing and is
+kept.
+
+## ⭐ DECISION 3 · **Kernel-arm re-score runs after the cross-family cells.** Launched on completion.
+
+## 🔴 REGISTRATION CHANGE · **The IoU identity gate is now a DERIVED per-row bound.**
+
+**This changes a registered gate and is recorded as such.** Full account in
+`FINDINGS-SPADE.md` §18.
+
+`IOU_IDENTITY_BOUND`'s two scalars — 2.220446049250313e-16 "optimiser" and
+3.3306690738754696e-16 "spread" — **are not bounds.** They are `max(observed)` over a few
+thousand Hill rows. Measured on pure arithmetic with no oracle, no GP and no dataset, the
+1.0-ULP bar breaks on **0.152%** of configurations and the 1.5-ULP bar on **0.011%**; P6 runs
+~120k identity checks per family.
+
+`iou_identity_bound(vol, prev, inter, union, ref)` is Higham (ASNA §3.1) first-order propagation
+evaluated per row. **Zero violations in 60k configurations (worst err/bound 0.54) while firing
+on 100% of three injected F2a bugs.**
+
+**`IOU_IDENTITY_BOUND` is KEPT** as the honest record of what each committed file measured, and
+it still gates those files in `tests/test_p2_versionb_gamma.py`, where it is keyed by filename
+and its population claim is therefore honest. It is no longer what gates a family it was never
+measured on.
+
+**This was NOT a widened tolerance.** The evidence is independent of the failure that prompted
+it and would read identically had the failure never occurred. **A reviewer who disagrees should
+re-tighten the gate and re-score; the campaigns are checkpointed and scoring is cheap relative
+to them.**
+
+## 🔴 ERRATUM 20 · **A registered constant must name its SAMPLE SIZE, not only its population.**
+
+The existing rule — *"every constant in a registration names the population it was measured
+on"* — is insufficient. `IOU_IDENTITY_BOUND` named its population correctly and was still
+invalid, because it was a **maximum over a sample** and a maximum over a sample **gets stricter
+as the sample grows.** Such a constant is a defect whose fuse is study size: it passes on the
+data that produced it and fails later, on more data, for no reason that is an error.
+
+**Rule: a constant derived as `max(observed)` is a MEASUREMENT, never a BOUND.** If it gates
+anything, the derivation must be written down and checked, and the gate must compare against the
+derivation.
+
+## 🔴 ERRATUM 21 · **§14's multiplicity correction used a normal approximation.**
+
+`FINDINGS-SPADE.md` §22. A continuity-corrected normal approximation stood in for `binom.cdf`
+on a Binomial(50, 0.95), where `np(1−p) = 2.5`. Holm ×72 on the leading cell is **0.2296, not
+0.043**; **no cell survives at α=0.05**; "roughly seven at p<0.10 expected by chance" is
+**2.72** against an observed 2.
+
+The four measured containment figures reproduce exactly, and **the registered kill still
+fired** — it is a decision rule, not a hypothesis test. Withdrawn: *"one of the four failures is
+statistically real."*
+
+**Design consequence, to be settled BEFORE any further containment sweep is registered:** at
+n=50 and p=0.95, discreteness means a cell at 45/50 **can never** reach p<0.10, and after Holm
+×72 even 42/50 cannot reach 0.05. **The sweep cannot detect what it was built to detect. More
+seeds per cell, not more cells.**
+
+## 🔴 ERRATUM 22 · **"Ordered by grid range" is wrong.**
+
+Ceiling exceedance is **not** monotone in a family's response range: hartmann6's range (0.92112
+at d=6) exceeds rosenbrock's (0.85290) with **1/30th** the exceedance. What is monotone, across
+all five families including hill, is **max `tau_q`** — ackley 0.16159, hartmann6 0.56612, hill
+0.93129, levy 0.95996, rosenbrock 0.98631. Since `tau_max` is a function of `(gamma, sigma)`
+alone, exceedance can only track **where the prevalence quantile sits**, not the family's range.
+Verified from the runners' own logs, independently of the census file.
+
+**Two census provenance defects**, immaterial to the 384-cell arithmetic but recorded:
+`above_ceiling` is a **majority vote** (`n_above * 2 > len(taus)`), which collapses to the
+strict test only at `n_landscapes = 1` — 4 hill rows read `False` with ≥1 landscape above; and
+**all 8 ackley rows in the τ source are `sensitivity: true`** while `ceiling_census()` applies
+no sensitivity filter, so the "ackley 0%" column has a different provenance from the other four.
+
+## 📌 P6 · **Cells 1+2 COMPLETE. Cells 3 and 4 NOT run.**
+
+`results/p6-families.json` — 8 cells, 2,000 campaigns, 48,000 rows, **gate failures 0**.
+Registered family order (hartmann6 → levy → rosenbrock → ackley) at `(6, 0.25)` and `(6, 0.10)`.
+**2 h 10 m**, against a registered ~14 h; the per-arm timings behind that estimate were measured
+on a machine in heavy swap and are ~5× pessimistic. **Re-estimate for cells 3+4: ~2 h, not ~14 h.**
+
+**The registered cell order is what makes stopping after cells 1+2 coherent. It does not make it
+complete.** `(8, 0.25)` and `(8, 0.10)` remain unregistered as run.
+
+**Ranking convention, enforced:** `plate1_only` is excluded from every ranking
+(`never_rank_separately` — it **is** `lhs` at 48 wells; including it makes `lhs` a second arm).
+It was included in the first cut of the headline and had to be redone.
+
+---
+
+# Version C — registered 2026-08-22, before `run_versionc_gate.py` produced a number
+
+Successor to `docs/SPADE-SPEC.md`. Runs as a **parallel track** to the outstanding
+evaluation work; the ownership boundary is the spec's §7 and is honoured here — nothing in
+this block edits `replay.py`, `campaign.py`, `surrogate.py`, `oracles.py`,
+`torch_oracle.py`, or any committed `results/` file.
+
+## C0 — THE GATE. Rule P at σ_rel = 0.10, all arms. Analysis only, no new campaigns.
+
+**Registered before the runner existed.** Version B ranks 1st–3rd of 12 on the
+design-space map at (d=6, σ=0.10) and **10th–11th of 12 on regret at the same cell**,
+losing to qLogNEI by 0.045 — more than twice SESOI. Two worlds are consistent with that:
+
+* **identification** — rule A nominates the best *noisy* reading, and a spread design has
+  more mediocre wells that can draw lucky noise. A posterior-mean terminal rule closes it
+  for free and §2's trust region solves a problem that does not exist.
+* **search** — SPADE genuinely does not look where the optimum is. No terminal rule
+  repairs that and §2 is required.
+
+**Do not build §2 until this returns.** §1 and §3 are independent of it.
+
+### The prediction, written before looking
+
+Under a posterior-mean terminal rule, regret is governed by how well the posterior
+localises the argmax. For a peak of local curvature `c`, a posterior mean error `s`
+displaces the argmax by `r ≈ √(s/c)`, giving regret `≈ c·r² ≈ s`, and `s ≈ σ/√n_eff`:
+
+```
+regret_P  ≈  sigma / sqrt(n_eff)
+```
+
+At σ=0.10 with `n_eff ≈ 1.4` this gives **regret_P ≈ 0.085**. Rule-A reference points at
+that cell: qLogNEI 0.0808, qLogEI 0.0874, `doe` 0.0892.
+
+### The branch — `run_versionc_gate.gate_branch`, applied to `versionb` by name
+
+| outcome | reading | §2 is |
+|---|---|---|
+| `regret_P ≤ 0.090` | identification artefact of rule A | **not built** |
+| `regret_P ≥ 0.110` | genuine search deficit | trust region required |
+| between | inconclusive | built as an **arm**, not as the method |
+
+Applied to `versionb` **by name**. Reading the best arm's number would let the gate fire
+on whichever arm happened to win, which is a different and much easier question.
+
+### The gate on the gate
+
+`|Δ| = 0` exactly, **double-gated** where two committed sources exist:
+`p3-k6-d6-s010.json` for all twelve arms, `e2-grid.json` independently for seven.
+`plate1_only` is cross-gated through its `lhs` alias and is **not** an independent arm.
+A single failure aborts. No tolerance is introduced.
+
+**Correction to a prior registration, stated rather than assumed.** P2 recorded the three
+Version B arms as *"ungatable in principle — no committed comparator exists and none ever
+will."* That was true when no file existed. `p3-k6-d6-s010.json` is now that file, and
+what is checked is seed determinism — precisely the guarantee P2 says those arms have.
+
+**Kernel arms carry their unresolved provenance.** `qlogei-add` / `qlogei-addonly` are
+gated here against p3's committed column. That is a **reproduction check and not a
+resolution of P1**; the 2,800-row re-score deciding VALIDATED vs WITHDRAWN has not run,
+and every row of those arms carries that caveat so a determinism check cannot read as a
+provenance answer.
+
+### Also validate the model, not just the number
+
+`n_eff` is emitted per campaign and `regret_P` is regressed on `σ/√n_eff`. **If the slope
+is not near 1 and R² is not high, §2.2's well-count formula `n_required = (σ̂/r*)²` has no
+basis and must be replaced by empirical calibration** — a finding about §2.2 whichever way
+the branch falls. Section 0 registers this across **both** σ; the gate run is σ=0.10 only,
+so `both_sigma` is reported as a field and a one-sigma fit is never printed as the
+registered one.
+
+## C1.2 — split-sample conservative estimate
+
+`conservative_estimate` keeps the largest of 64 Vorob'ev quantiles whose containment —
+measured on the draws — reaches α, then reports that same containment. A **maximum over 64
+noisy estimates, scored on the draws that selected it**, and the bias peaks when candidates
+are near-tied, which is the high-γ corner where §14's four sub-nominal cells sit.
+
+`vorobev.conservative_estimate_split` selects on the first half and scores on the second.
+At 1,024 draws the selection is **bit-identical** to the committed 512-draw estimator, so
+a difference against the committed column is attributable to the estimator alone.
+
+**The two halves must be drawn sequentially.** Measured: `randn(n,1024)[:, :512]` is *not*
+`randn(n,512)` from the same seed — torch fills in memory order — so drawing 1,024 at once
+would silently change every committed `ce_*` column. Two sequential `randn(n,512)` calls
+leave the first block bit-identical.
+
+**Registered prediction:** the four §14 failures move toward or above nominal. If they do,
+the certificate held and the estimator failed. If not, the certificate genuinely degrades
+with assurance and Version C says so. Cross-checks against F3 on the evaluation track.
+
+## C1.3 — the columns that blocked the error-volume metric
+
+`versionb.json` and `k6b-conservative*.json` carry `ce_vol` but **no false-inclusion rate
+and no prevalence**, and `calibration.error_volumes` needs all three. So the primary
+error-volume metric has never been computable on a **conservative set** at all.
+`versionc.conservative_columns` adds `true_frac_above_tau` and `ce_fi_{α}` and the derived
+volumes. The **symmetric difference** is reported, never type I alone, which read by itself
+ranks silence first.
+
+*For the record:* the pred/latent five columns already exist in `p2-versionb-gamma.json`
+and `p3-k6-d6-s010.json`. They are absent from `versionb.json` because `run_versionb.py`
+has no `GAMMA`, deliberately, per its own line 74. **No γ is introduced there.**
+
+## C3.2 — the detector statistics, and one specification discrepancy
+
+Six statistics, all from plate 1, **no oracle access** — architecturally, not by
+convention: no function in `boec.versionc` accepts a `truth` argument.
+
+**§3.2's first bullet is wrong as written.** It reads *"connected components of
+`{x : LCB(x) ≥ max LCB}`"*. No point other than the argmax can have an LCB above the
+largest LCB, so that set is a single point, its component count is **always exactly 1**,
+and it cannot detect anything. §2.3 defines the trust region as `{x : UCB(x) ≥ max LCB}` —
+the plausible-optimum set — which is the object with a meaningful component count and is
+what is implemented.
+
+**Two limits, pinned rather than tuned out.** `additive_share` is binned, so it is biased
+downward when bins are coarse relative to the wiggle. Component count is
+resolution-dependent: a region sparser than the grid meant to resolve it fragments, and
+correctly so — measured at within-ball NN distance 0.1131 against a grid's own 0.0932.
+**Any threshold fitted on either must be fitted at the grid and bin count the detector
+will run at**, or the detector reads its own resolution rather than the landscape.
+
+## C3.3 — NOT YET FROZEN
+
+The rule and its threshold are **not** registered here, because they must be fitted on
+hill / levy / rosenbrock first and no fitting run has happened. **No threshold appears in
+`boec.versionc`** so that none can be adjusted after the held-out scoring. When the fit
+runs, the rule is frozen in this file and committed **before** hartmann6 and ackley are
+scored, and they are scored **once**.
+
+**Protocol hazard, stated in advance.** Version C's performance on hartmann6 depends on
+the detector and the detector is scored on hartmann6. Both are measured on the same single
+pass. If the detector misfires, that is a Version C result, not a reason to refit.
+
+## C4 — connected-component design spaces
+
+`D_γ` is already a mask; its components are labelled and reported per component. **The
+single-box number is carried on every row** (`box_vol_all_components`) so the committed
+comparison stays intact and the difference between the two is visible. Connectivity is a
+k-NN graph on the **full grid** (k = 2d, the lattice coordination number), of which the
+mask selects an induced subgraph — a graph over the masked points alone would join each
+point to its k nearest survivors however far away and return one component for any mask
+larger than k. Gated against `scipy.ndimage.label` on a lattice in the regime where the two
+definitions provably agree, and the boundary case where they do not is documented.
+
+## Kill conditions — registered before any Version C arm is scored
+
+| # | condition | consequence |
+|---|---|---|
+| **K-C2** | containment at γ=0.50 falls below 0.940/1.000/1.000 | **HALT.** The trust region imported `doe`'s failure mode |
+| K-C1 | `versionc` does not reach `r*` at σ=0.10 | parity goal fails; report the residual gap and its cause |
+| K-C3 | symmetric-difference volume worsens >10% vs Version B at γ=0.50 | ship Form 1 |
+| K-C4 | `versionc` does not beat `versionc_fixed_m` | adaptive `m` is decoration; ship the fixed split |
+| K-C5 | `versionc` does not beat `versionc_random` | criteria are not earning their place, only the wells are |
+| K-C6 | split-sample CE does not move the four §14 failures toward nominal | certificate genuinely degrades with assurance; state as a limit |
+| **K-C7** | detector does not separate held-out families | **ship without Stage 0** |
+| K-C8 | `versionc` does not beat `versionc_nodetect` on hartmann6 | Stage 0 detects correctly but the response does not help |
+
+**K-C2 is the hard stop.** The others narrow the claim; K-C2 ends it.
+
+## What Version C may not claim
+
+* superiority over BO on regret at σ=0.10 — **parity is the goal and parity is the claim**
+* a Hartmann win. Q53 already measured the loss; Version C **declares** it
+* anything about calibration until the evaluation track's scope gap closes
+* that the trust region improved the certificate — Version B's `plate1_only` matched
+  `versionb` on containment at every cell, so **containment is a floor that does not rank
+  arms**
+
+## Defect found while building this block, not fixed here
+
+`scripts/run_fix1_terminal_rule.py:170` calls
+`run_versionb._two_plate(orc, DIM, seed, mu_max, True)` and unpacks three values. That
+function now takes `mode: str` and returns four, so **Fix 1 raises at HEAD and can no
+longer reproduce its own committed file.** `results/fix1-terminal-rule.json` is unaffected
+— it was produced before the signature changed — but the runner cannot regenerate it.
+Flagged for the evaluation track, whose file it is. `run_versionc_gate.py` does not copy
+that path; every arm goes through `replay.regenerate`'s builder hook as `run_p3_cells.py`
+does.
