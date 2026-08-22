@@ -1,0 +1,76 @@
+{
+ "sigma": 0.25,
+ "arm": "versionb",
+ "n_rows": 1200,
+ "kills": {
+  "K-C1": {
+   "kill": "K-C1",
+   "status": "NOT_AT_THIS_SIGMA",
+   "note": "K-C1 is registered at sigma=0.10"
+  },
+  "K-C2": {
+   "kill": "K-C2",
+   "fired": false,
+   "hard_stop": true,
+   "measured": {
+    "0.5": 0.94,
+    "0.8": 1.0,
+    "0.95": 1.0
+   },
+   "nominal": {
+    "0.5": 0.94,
+    "0.8": 1.0,
+    "0.95": 1.0
+   },
+   "population": "versionb.json, arm=versionb, tau_frac=0.60, sigma=0.25, n=50/50/22",
+   "failed_alphas": [],
+   "invariance_violated": false,
+   "note": "containment reproduces Version B exactly, as it structurally must"
+  },
+  "K-C3": {
+   "kill": "K-C3",
+   "fired": false,
+   "versionc": 0.358276,
+   "versionb": 0.358276,
+   "relative_change": 0.0,
+   "max_worsening": 0.1,
+   "invariance_violated": false,
+   "note": "symmetric difference reproduces Version B exactly, as it must -- Version B's value is the same column on the same campaigns, which is why this comparison is an identity check rather than a contrast"
+  },
+  "K-C4": {
+   "kill": "K-C4",
+   "status": "MOOT",
+   "fired": false,
+   "reason": "versionc_fixed_m splits 4 trust + 4 boundary and the TRUST REGION was never built -- C0 returned IDENTIFICATION_ARTEFACT",
+   "condition": "versionc does not beat versionc_fixed_m"
+  },
+  "K-C5": {
+   "kill": "K-C5",
+   "status": "MOOT",
+   "fired": false,
+   "reason": "at m=0, versionc_random IS versionb_random, already committed; the contrast is an arm against itself",
+   "condition": "versionc does not beat versionc_random"
+  },
+  "K-C6": {
+   "kill": "K-C6",
+   "status": "MISFIRES",
+   "fired": false,
+   "reason": "registered in C1.2a: the cross-fit returns a bit-identical set, so empirical containment CANNOT move. The kill would fire automatically and for the wrong reason. F3 resolved section 14 separately, by sweeping draws",
+   "condition": "split-sample CE does not move the four section-14 failures"
+  },
+  "K-C7": {
+   "kill": "K-C7",
+   "status": "FIRED",
+   "fired": false,
+   "reason": "FIRED. The one-shot held-out pass ran once against a rule frozen and committed at 95fca9c BEFORE hartmann6 or ackley was touched: 0 / 50 DECEPTIVE on both families, all four cells, Holm-adjusted tails 1.0. Not a near miss -- both held-out additive_share ranges sit NESTED INSIDE the fit range [0.1054, 0.8860]. C3.3b predicted this from the fit set alone, before the pass was spent. FINDINGS section 37",
+   "condition": "detector does not separate held-out families"
+  },
+  "K-C8": {
+   "kill": "K-C8",
+   "status": "MOOT",
+   "fired": false,
+   "reason": "with no detector gating, the two labels name the SAME CAMPAIGN",
+   "condition": "versionc does not beat versionc_nodetect on hartmann6"
+  }
+ }
+}
