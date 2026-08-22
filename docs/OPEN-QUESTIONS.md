@@ -8933,3 +8933,58 @@ outcome is reportable; neither is a kill.**
   is a limitation of this prediction, not of the families.**
 * **levy is partial at registration time** (26 of 50 seeds). Its 6/24 may move. The
   prediction is about `rosenbrock` and `ackley`, which are **untouched**.
+
+### 🔴 Erratum 33 — P8.1's primary metric is **n-DEPENDENT**, and I registered it anyway
+
+**Registered while `rosenbrock` is at 1 of 50 seeds and `ackley` is untouched.**
+
+**The defect.** *"Cells empty in all campaigns"* is **monotone decreasing in n**: a cell
+leaves the count the moment any one campaign is non-empty, so adding seeds can only ever
+shrink it. **`levy` was 6/24 at 26 seeds and is 2/24 at 50** — the number I published in §41
+as provisional moved by a factor of three purely because n grew. It was correctly labelled
+provisional; that is the only reason this is an erratum about a metric rather than about a
+published figure.
+
+The metric is **valid for comparing families at equal n**, and all five run at n = 50, so
+P8.1's P1 and P2 bars remain answerable exactly as written. But it is the wrong **primary**,
+and a reader comparing it against any future run at different n would be misled.
+
+**The n-stable replacement:** *mean fraction of campaigns with an empty α=0.95 set, averaged
+over the 24 cells.* It is a rate, not a count, and does not move with n.
+
+### 🔴 And on that metric, P8.1's P3 ordering **already looks wrong**
+
+| family | max `tau_q` | all-empty / 24 | **mean empty rate** |
+|---|---|---|---|
+| `rosenbrock` *(n=1, not adjudicable)* | 0.98631 | — | 0.5833 |
+| `levy` | 0.95996 | 2 / 24 | 0.6133 |
+| **`hill`** | 0.93129 | 6 / 24 | **0.5608** |
+| `hartmann6` | 0.56612 | 22 / 24 | **0.9900** |
+
+**`hill` has the LOWEST empty rate despite the LOWEST `tau_q` of those three.** The `tau_q`
+ordering separates `hartmann6` (0.99) from the other three by a mile, but **does not rank
+within the group that certifies at all** — 0.561, 0.583 and 0.613 are not ordered by
+`tau_q` and are barely ordered at all.
+
+### 🔒 P3 IS NOT AMENDED. A secondary prediction is added instead.
+
+**I have now seen three of five families, so amending P3 would be post-hoc for those three.**
+P3 stands exactly as registered at `c504558` and will be adjudicated as written, and I expect
+it to **fail**. Saying so before the data is the only thing that makes the expectation worth
+anything.
+
+What is still genuinely out-of-sample is `rosenbrock` and `ackley`, so:
+
+> **P4 (secondary, and still pre-registered for both unrun families): `tau_q` acts as a
+> THRESHOLD, not a rank.** `ackley` (max `tau_q` 0.16159) posts a mean empty rate **> 0.90**,
+> joining `hartmann6`; `rosenbrock` (0.98631) posts **< 0.70**, joining the certifying group.
+> **No claim is made about `rosenbrock`'s rank within that group** — P4 is falsified only by a
+> family landing on the wrong side of the gap, not by within-group order.
+
+**Falsified if** `ackley` < 0.90 or `rosenbrock` ≥ 0.70.
+
+**Why this is the more useful hypothesis:** a threshold that says *"this landscape is
+certifiable at all"* is actionable from the committed `p5` table before any campaign is run.
+A rank among certifiable families would be a weaker and, on the evidence above, an unsupported
+claim. **The reason to write it down now is that it was the original prediction's most likely
+failure mode, and reporting the failure mode after the fact is worth much less.**
