@@ -1,6 +1,6 @@
 """Version C §3.3 · **THE ONE-SHOT HELD-OUT SCORING PASS.** Runs exactly once.
 
-The rule was frozen and committed at `95fca9c` (corrected by Erratum 31 at `72c2a39`)
+The rule was frozen and committed at `b7dcc41` (corrected by Erratum 31 at `ba2e3ec`)
 **before this file existed**. This runner scores hartmann6 and ackley against that frozen
 rule and emits K-C7's verdict. It cannot be re-run to improve the answer.
 

@@ -118,7 +118,7 @@ KILLS = {
              "condition": "detector does not separate held-out families",
              "consequence": "ship without Stage 0 (section 3.6)",
              "reason": "FIRED. The one-shot held-out pass ran once against a rule frozen "
-                       "and committed at 95fca9c BEFORE hartmann6 or ackley was touched: "
+                       "and committed at b7dcc41 BEFORE hartmann6 or ackley was touched: "
                        "0 / 50 DECEPTIVE on both families, all four cells, Holm-adjusted "
                        "tails 1.0. Not a near miss -- both held-out additive_share ranges "
                        "sit NESTED INSIDE the fit range [0.1054, 0.8860]. C3.3b predicted "
@@ -257,9 +257,15 @@ def verdict(rows: list[dict], sigma: float, arm: str = "versionb") -> dict:
         out["kills"]["K-C3"] = {"kill": "K-C3", "status": "NO_COLUMN"}
 
     # --- the five settled ones, reported rather than skipped ----------------------------
+    # 🔴 `fired` is READ FROM `KILLS`, never hardcoded. It was hardcoded `False` here, and
+    # K-C7's entry says `fired: True` -- so the per-kill line printed `K-C7  FIRED` while
+    # the summary two lines later printed `No kill fired.` A reader who scans the summary,
+    # which is what a summary is for, would conclude Version C passed every kill on the
+    # same output that says one fired.
     for k in ("K-C4", "K-C5", "K-C6", "K-C7", "K-C8"):
         out["kills"][k] = {"kill": k, "status": KILLS[k]["status"],
-                           "fired": False, "reason": KILLS[k]["reason"],
+                           "fired": bool(KILLS[k].get("fired", False)),
+                           "reason": KILLS[k]["reason"],
                            "condition": KILLS[k]["condition"]}
     return out
 

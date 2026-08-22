@@ -55,8 +55,8 @@
   "K-C7": {
    "kill": "K-C7",
    "status": "FIRED",
-   "fired": false,
-   "reason": "FIRED. The one-shot held-out pass ran once against a rule frozen and committed at 95fca9c BEFORE hartmann6 or ackley was touched: 0 / 50 DECEPTIVE on both families, all four cells, Holm-adjusted tails 1.0. Not a near miss -- both held-out additive_share ranges sit NESTED INSIDE the fit range [0.1054, 0.8860]. C3.3b predicted this from the fit set alone, before the pass was spent. FINDINGS section 37",
+   "fired": true,
+   "reason": "FIRED. The one-shot held-out pass ran once against a rule frozen and committed at b7dcc41 BEFORE hartmann6 or ackley was touched: 0 / 50 DECEPTIVE on both families, all four cells, Holm-adjusted tails 1.0. Not a near miss -- both held-out additive_share ranges sit NESTED INSIDE the fit range [0.1054, 0.8860]. C3.3b predicted this from the fit set alone, before the pass was spent. FINDINGS section 37",
    "condition": "detector does not separate held-out families"
   },
   "K-C8": {

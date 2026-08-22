@@ -257,6 +257,10 @@ COMMIT_MSG.txt
 !results/versionc-detector-heldout.json
 !results/e7-search-vs-id-rule-p.json
 !results/e7-oracle-best-fill.json
+!results/versionc-kills-s010.json
+!results/versionc-kills-s025.json
+!results/versionc-form1-s010.json
+!results/versionc-form1-s025.json
 !results/e7-oracle-best-fill.log
 !results/versionc-detector-heldout.log
 !results/versionc-form1-s010.log
