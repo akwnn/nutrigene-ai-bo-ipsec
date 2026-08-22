@@ -218,13 +218,24 @@ def score_one(inst_id: str, seed: int, sigma: float, arms=ARMS,
     orc_t = BiphasicOracle(inst, sigma_rel=sigma, seed=seed)
     with torch.no_grad():
         truth = orc_t.truth(grid).reshape(-1).double()
-    active = torch.ones(DIM, dtype=torch.bool)
 
     rows: list[dict] = []
     for arm in arms:
         t0 = time.time()
         rec = _P3.regenerate_arm(inst_id, DIM, sigma, seed, arm)
         orc = BiphasicOracle(inst, sigma_rel=sigma, seed=seed)
+
+        # AMENDMENT B3, derived per arm exactly as `run_p3_cells.main` derives it. An arm
+        # that never varied a factor may not certify a range for it, so its region is
+        # evaluated on the ACTIVE SUBSPACE. Hardcoding all-ones here was the first version
+        # of this file and the gate caught it immediately: `doe` came back with
+        # `n_active` 6 against a committed 4 and `box_vol_pred` 0.0053 against 1.0. That
+        # is the gate doing its job, and it is why the base scoring is not reimplemented.
+        active = torch.zeros(DIM, dtype=torch.bool)
+        if rec.kept_factors is None:
+            active[:] = True
+        else:
+            active[list(rec.kept_factors)] = True
 
         # --- the committed K6 rows, from P3's OWN function -------------------------
         base_rows, _sens = _P3.score_k6_dual_tau(rec, orc, grid, truth, active)

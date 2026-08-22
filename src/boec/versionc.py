@@ -68,7 +68,7 @@ from torch import Tensor
 __all__ = ["additive_refit_residual_ratio", "additive_share",
            "ard_lengthscales", "ard_separation_ratio",
            "conservative_columns", "detector_statistics", "n_effective",
-           "plausible_optimum_mask"]
+           "plausible_optimum_mask", "split_joint_draws"]
 
 
 def ard_lengthscales(model) -> Tensor:
@@ -443,3 +443,41 @@ def additive_refit_residual_ratio(X: Tensor, Y: Tensor, Yvar: Tensor,
         pred = model.posterior(Xd).mean.reshape(-1).double()
     resid = float(((Yd.reshape(-1) - pred) ** 2).mean())
     return resid / sigma2
+
+
+def split_joint_draws(model, X: Tensor, n_draws: int = 512, seed: int = 0,
+                      jitter: float = 1e-8) -> tuple[Tensor, Tensor]:
+    """Two blocks of ``n_draws`` joint posterior samples, drawn **sequentially**.
+
+    Returns ``(selection_half, validation_half)``.
+
+    **The first half is bit-identical to
+    ``run_k6b_conservative.joint_draws(model, X, seed=seed)``**, and
+    ``tests/test_versionc.py`` asserts exactly that. It is the load-bearing property of
+    the whole Version C re-score: the cross-fit must change what is *reported* without
+    changing what was *selected*, so every committed ``ce_*`` column has to reproduce.
+
+    **Why this function exists rather than two calls to ``joint_draws``.** That function
+    builds a **fresh** generator per call, so calling it twice returns the identical
+    block -- two copies of one draw, which as a cross-fit is worse than useless because it
+    would silently report the circular number as if it were held out.
+
+    **And why not one block of ``2*n_draws``.** Measured: ``torch.randn(n, 1024)[:, :512]``
+    is **not** ``torch.randn(n, 512)`` from the same seed, because torch fills a tensor in
+    memory order. Drawing both halves at once would move every committed column.
+
+    The covariance construction -- same jitter, same Cholesky, same mean -- is
+    ``joint_draws``' arithmetic, reproduced rather than approximated.
+    """
+    with torch.no_grad():
+        post = model.posterior(X)
+        cov = post.mvn.covariance_matrix.double()
+        cov = cov + jitter * torch.eye(cov.shape[0], dtype=torch.double)
+        L = torch.linalg.cholesky(cov)
+        mean = post.mean.reshape(-1, 1).double()
+        g = torch.Generator().manual_seed(int(seed))
+        halves = []
+        for _ in range(2):
+            z = torch.randn(cov.shape[0], int(n_draws), generator=g, dtype=torch.double)
+            halves.append((mean + L @ z).T)
+    return halves[0], halves[1]
