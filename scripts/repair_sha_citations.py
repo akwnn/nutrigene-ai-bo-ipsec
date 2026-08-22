@@ -46,11 +46,18 @@ def build_map(before_file: Path, rng: str) -> dict[str, str]:
     """``{old_prefix: new_prefix}`` for every width in :data:`WIDTHS`."""
     before = [tok.strip() for tok in before_file.read_text().split() if tok.strip()]
     after = _rev_list(rng)
-    if len(before) != len(after):
+    if len(before) > len(after):
         raise SystemExit(
-            f"REFUSING: {len(before)} commits before the rewrite, {len(after)} after. "
-            f"A commit was dropped or added, so positional mapping is invalid. Rebuild "
-            f"the map from the rewrite tool's own commit map instead of guessing.")
+            f"REFUSING: {len(before)} commits before the rewrite, only {len(after)} after. "
+            f"Commits were DROPPED, so positional mapping is invalid. Rebuild the map from "
+            f"the rewrite tool's own commit map instead of guessing.")
+    if len(before) < len(after):
+        # The before-list was captured before some commits were made. `rev-list --reverse`
+        # is oldest-first and the rewrite preserves order, so the first len(before) entries
+        # still correspond one-to-one; the trailing extras simply were not captured.
+        print(f"note: before-list covers {len(before)} of {len(after)} commits "
+              f"(captured earlier); aligning on the common prefix")
+        after = after[:len(before)]
     mapping: dict[str, str] = {}
     for old, new in zip(before, after):
         if old == new:

@@ -21,3 +21,20 @@ HALT at hartmann6 d=6 sigma=0.25 (exit 1) -- registered kill or crash; see resul
 === ackley d=6 sigma=0.10  start 04:03:55
 === ackley d=6 sigma=0.10  done  04:21:47
 === cells 1+2 complete 04:21:47; run --merge next
+=== hartmann6 d=8 sigma=0.25  start 13:26:07
+=== hartmann6 d=8 sigma=0.25  done  13:54:30
+=== levy d=8 sigma=0.25  start 13:54:30
+=== levy d=8 sigma=0.25  done  14:18:26
+=== rosenbrock d=8 sigma=0.25  start 14:18:26
+=== rosenbrock d=8 sigma=0.25  done  14:37:26
+=== ackley d=8 sigma=0.25  start 14:37:26
+=== ackley d=8 sigma=0.25  done  14:56:50
+=== hartmann6 d=8 sigma=0.10  start 14:56:50
+=== hartmann6 d=8 sigma=0.10  done  15:20:22
+=== levy d=8 sigma=0.10  start 15:20:22
+=== levy d=8 sigma=0.10  done  15:40:34
+=== rosenbrock d=8 sigma=0.10  start 15:40:34
+=== rosenbrock d=8 sigma=0.10  done  15:56:07
+=== ackley d=8 sigma=0.10  start 15:56:07
+=== ackley d=8 sigma=0.10  done  16:13:35
+=== cells 1+2 complete 16:13:35; run --merge next
