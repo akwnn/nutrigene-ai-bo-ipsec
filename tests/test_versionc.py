@@ -11,6 +11,7 @@ import math
 
 import torch
 
+from boec.vorobev import conservative_estimate_split
 from boec.versionc import (additive_refit_residual_ratio, additive_share,
                           ard_lengthscales,
                           ard_separation_ratio, conservative_columns,
@@ -349,3 +350,37 @@ def test_additive_refit_residual_ratio_is_small_on_an_additive_surface():
     assert additive < interacting, (
         f"an additive surface must leave LESS unexplained by an additive kernel than a "
         f"pure three-way interaction does, got {additive:.4f} vs {interacting:.4f}")
+
+
+def test_the_cross_fit_CANNOT_move_empirical_containment():
+    """**The section 1.2 prediction is about a quantity the cross-fit cannot touch.**
+
+    Section 1.2 registers: *"the four section-14 failures move toward or above nominal."*
+    Those four failures are in **empirical** containment -- 0.900 / 0.840 / 0.880 / 0.900
+    against nominal 0.95, measured against known truth.
+
+    The cross-fit selects on the first half, which is bit-identical to the committed
+    512-draw estimator, so **it returns the identical set**. Empirical containment is a
+    function of (set, truth, theta) alone. Identical set, identical truth, identical
+    number. The cross-fit repairs the MODEL-INTERNAL containment and nothing else.
+
+    So K-C6 as written -- "split-sample CE does not move the four failures toward nominal
+    -> the certificate genuinely degrades with assurance" -- would fire automatically, and
+    for the wrong reason: not because the certificate degrades, but because the estimator
+    does not address that quantity at all.
+
+    What WOULD move empirical containment is selecting at a stricter alpha' chosen so the
+    cross-fit's honest estimate reaches alpha. That is a different estimator and is not
+    what section 1.2 specifies.
+    """
+    from boec.vorobev import conservative_estimate, empirical_containment
+
+    sel, val = _sel_val(n_pts=90)
+    truth = torch.linspace(0.45, 0.80, 90, dtype=torch.double)
+
+    committed = conservative_estimate(sel, 0.5, 0.95)
+    split_mask, _ = conservative_estimate_split(torch.cat([sel, val]), 0.5, 0.95)
+
+    assert torch.equal(committed, split_mask), "the cross-fit changed the selected set"
+    assert (empirical_containment(committed, truth, 0.5)
+            == empirical_containment(split_mask, truth, 0.5))

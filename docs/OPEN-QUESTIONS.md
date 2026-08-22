@@ -8022,3 +8022,48 @@ after Holm ×72. At n=50 there is no such threshold below 1.0: *nothing* is call
 
 All three figures are pinned in the test, including 180/200 asserted to **fail**, so the wrong
 number cannot return.
+
+## 🔴 C1.2a — the cross-fit CANNOT move §14's failures, and K-C6 as written would misfire
+
+**Found while reconciling C1.2 against the evaluation track's erratum 21. Proven, not
+estimated.**
+
+§1.2 registers: *"the four §14 failures move toward or above nominal. If they do, the
+certificate held and the estimator failed."* And K-C6: *"split-sample CE does not move the
+four §14 failures toward nominal → certificate genuinely degrades with assurance."*
+
+**Those four failures are in `ce_empirical` — empirical containment against known truth**
+(0.900 / 0.840 / 0.880 / 0.900 against nominal 0.95). The cross-fit selects on the first
+half, which is **bit-identical to the committed 512-draw estimator**, so it returns the
+**identical set**. Empirical containment is a function of `(set, truth, theta)` alone.
+Identical set, identical truth, **identical number**.
+
+> **The cross-fit repairs the model-internal containment and nothing else. It is
+> structurally incapable of moving §14's failures.**
+
+So **K-C6 would fire automatically and for the wrong reason** — not because the certificate
+degrades with assurance, but because the estimator does not address that quantity. A kill
+that cannot fail to fire tests nothing.
+
+**Two things follow, and they are separable.**
+
+1. **C1.2's own deliverable stands, restated honestly.** The cross-fit measures the
+   selection bias in `ce_contain`, which is real and was previously unmeasurable because
+   the number was circular. `ce_selection_bias_{α}` is that measurement. It is a statement
+   about the **estimator**, never about the certificate.
+2. **What would move `ce_empirical` is a different estimator** — selecting at a stricter
+   `α'` chosen so the cross-fit's honest estimate reaches `α`. That changes the mask and
+   therefore the empirical number. **It is not what §1.2 specifies and is not built here.**
+   If the §14 repair is wanted, that is the object to register.
+
+**And erratum 21 removes the effect this was aimed at anyway.** No §14 cell survives Holm
+×72 at α=0.05; 2.72 cells at p<0.10 were expected by chance against 2 observed. So the
+target of C1.2's prediction is **both unreachable by the estimator and not established as
+real**. Recorded rather than quietly dropped.
+
+**Power note, inherited from erratum 21.** At n=50 and p=0.95, `ce_empirical` moves in
+steps of 1/50 = **0.02**. The selection bias measured on a correlated synthetic fixture is
+**~0.003**. Even against the right quantity, a 50-campaign sweep could not resolve this
+effect. The evaluation track's redesigned F3 (draws × seeds, n=200) is the design that can,
+and **C1.2's re-score must run at that seed count or it repeats the defect erratum 21
+names.**
