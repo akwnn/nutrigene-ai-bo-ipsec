@@ -65,7 +65,10 @@ from __future__ import annotations
 import torch
 from torch import Tensor
 
-__all__ = ["ard_lengthscales", "conservative_columns", "n_effective"]
+__all__ = ["additive_refit_residual_ratio", "additive_share",
+           "ard_lengthscales", "ard_separation_ratio",
+           "conservative_columns", "detector_statistics", "n_effective",
+           "plausible_optimum_mask"]
 
 
 def ard_lengthscales(model) -> Tensor:
@@ -242,3 +245,192 @@ def conservative_columns(draws_sel: Tensor, draws_val: Tensor, truth_eval: Tenso
                                          - out[f"ce_split_contain_{a}"]) if n_ce \
             else float("nan")
     return out
+
+
+# ---------------------------------------------------------------------------
+# SECTION 3.2 -- THE REGIME-DETECTOR STATISTICS
+# ---------------------------------------------------------------------------
+#
+# Every function below is a STATISTIC. None is a rule and no threshold appears in this
+# file, because the rule is a registration: fitted on hill, levy and rosenbrock, frozen in
+# `docs/OPEN-QUESTIONS.md`, and scored ONCE on hartmann6 and ackley.
+#
+# ONE DISCREPANCY WITH THE SPECIFICATION, RECORDED RATHER THAN SILENTLY RESOLVED
+# ------------------------------------------------------------------------------
+# Section 3.2's first bullet reads "number of connected components of
+# `{x : LCB(x) >= max LCB}`". That set is satisfied by the argmax alone -- no other point
+# can have an LCB above the largest LCB -- so its component count is ALWAYS exactly 1 and
+# it cannot serve as a detector. Section 2.3 defines the trust region as
+# `{x : UCB(x) >= max LCB}`, the plausible-optimum set, which is the object with a
+# meaningful component count and is plainly what was meant. That is what is implemented.
+
+
+def plausible_optimum_mask(mean: Tensor, sd: Tensor, z: float = 1.96) -> Tensor:
+    """``{x : UCB(x) >= max LCB}`` -- the points not yet excluded as the optimum.
+
+    Section 2.3's trust region, and the set section 3.2 counts components of.
+
+    **Never empty.** The argmax of the LCB has ``UCB >= LCB``, so it always qualifies; a
+    detector that could be undefined cannot gate a budget.
+    """
+    m = torch.as_tensor(mean, dtype=torch.double).reshape(-1)
+    s = torch.as_tensor(sd, dtype=torch.double).reshape(-1).clamp_min(0.0)
+    return (m + z * s) >= float((m - z * s).max())
+
+
+def ard_separation_ratio(lengthscales: Tensor) -> float:
+    """``max(ls) / min(ls)`` -- how far the fit separates inert axes from active ones.
+
+    **A purely prior-driven fit gives exactly 1.0**, so departure from 1.0 is data. That
+    is the entire content of the statistic, and it is why the ratio is the reported form
+    rather than the raw lengthscales: the raw vector varies with ``d`` and with the noise
+    level, and a threshold fitted on it would not transfer between cells.
+    """
+    ls = torch.as_tensor(lengthscales, dtype=torch.double).reshape(-1)
+    if ls.numel() == 0 or bool((ls <= 0).any()):
+        raise ValueError(f"lengthscales must be positive and non-empty, got {ls.tolist()}")
+    return float(ls.max() / ls.min())
+
+
+def additive_share(values: Tensor, X: Tensor, n_bins: int = 20) -> float:
+    """Fraction of ``var(f)`` carried by the one-dimensional main effects.
+
+    A binned functional-ANOVA estimate: each main effect ``f_j(x_j) = E[f | x_j] - E[f]``
+    is estimated by averaging within ``n_bins`` equal-width bins of coordinate ``j``, and
+    the statistic is ``var(sum_j f_j) / var(f)``, **clamped to [0, 1]**.
+
+    **Why this contrast is the one the detector wants.** A sum of one-dimensional
+    functions puts all of its variance in the main effects and scores ~1. A pure product
+    term has no main effects on a centred design and scores ~0. "Smooth and
+    coordinate-wise unimodal" -- the property Q53 found separates the families SPADE ties
+    on from the ones it loses on -- is close to the first case, and deceptive multimodal
+    landscapes are close to the second.
+
+    **Binned rather than exact.** An exact decomposition needs the conditional
+    expectations, which for a GP posterior mean are not available in closed form over an
+    arbitrary design. The bin count is a resolution parameter and the estimate is biased
+    downward when bins are coarse relative to the wiggle, so any threshold fitted on this
+    must be fitted at the ``n_bins`` and grid the detector will run at -- the same
+    constraint `boec.designspace.connected_components` carries.
+
+    Returns ``0.0`` for a constant field, where the ratio is 0/0: a constant surface has
+    no variance to apportion, and ``nan`` would propagate into a mean as if it were data.
+    """
+    f = torch.as_tensor(values, dtype=torch.double).reshape(-1)
+    Xd = torch.as_tensor(X, dtype=torch.double).reshape(f.numel(), -1)
+    total = float(f.var(unbiased=False))
+    if total <= 0.0:
+        return 0.0
+    grand = f.mean()
+    additive = torch.zeros_like(f)
+    for j in range(Xd.shape[1]):
+        col = Xd[:, j]
+        lo, hi = float(col.min()), float(col.max())
+        width = (hi - lo) or 1.0
+        idx = (((col - lo) / width) * n_bins).long().clamp(0, n_bins - 1)
+        sums = torch.zeros(n_bins, dtype=torch.double).index_add_(0, idx, f)
+        counts = torch.zeros(n_bins, dtype=torch.double).index_add_(
+            0, idx, torch.ones_like(f))
+        means = torch.where(counts > 0, sums / counts.clamp_min(1.0), grand)
+        additive = additive + (means[idx] - grand)
+    return float(min(max(float(additive.var(unbiased=False)) / total, 0.0), 1.0))
+
+
+def detector_statistics(model, X: Tensor, bounds: Tensor, grid_n: int = 20_000,
+                        grid_seed: int = 0, z: float = 1.96,
+                        n_bins: int = 20) -> dict:
+    """Every section 3.2 statistic, from plate 1, with **no oracle access**.
+
+    Architectural rather than conventional: this function takes no ``truth`` argument, so
+    a scoring function cannot be wired into the detector's decision path by accident.
+
+    Returns a flat dict of statistics -- never a verdict. The rule that turns these into
+    UNIMODAL / DECEPTIVE is a registration, frozen before hartmann6 and ackley are scored
+    even once, and it deliberately does not live in code that could be edited after the
+    scoring run.
+    """
+    from boec.designspace import connected_components, gp_adapter, grid_neighbours
+    from boec.norms import sobol_grid
+
+    d = int(torch.as_tensor(bounds).shape[-1])
+    grid = sobol_grid(d, grid_n, seed=grid_seed)
+    mean, sd = gp_adapter(model).posterior_mean_and_sd(grid)
+
+    plausible = plausible_optimum_mask(mean, sd, z=z)
+    neighbours = grid_neighbours(grid)
+    _, n_comp = connected_components(plausible, grid, neighbours=neighbours)
+
+    # A local maximum of the posterior mean: no graph neighbour is higher. Restricted to
+    # the plausible region, and then required to clear the SECOND-highest UCB -- a peak
+    # that cannot beat the runner-up's optimistic bound is not a competing basin, it is
+    # the same basin's shoulder.
+    higher = mean[neighbours] > mean.unsqueeze(1)
+    is_peak = (~higher.any(dim=1)) & plausible
+    ucb = mean + z * sd
+    peak_idx = torch.nonzero(is_peak).reshape(-1)
+    if peak_idx.numel() >= 2:
+        top2 = torch.topk(ucb[peak_idx], 2).values
+        bar = float(top2[1])
+    else:
+        bar = float("-inf")
+    lcb = mean - z * sd
+    n_local_maxima = int((lcb[peak_idx] >= bar).sum()) if peak_idx.numel() else 0
+
+    ls = ard_lengthscales(model)
+    width = (torch.as_tensor(bounds)[1] - torch.as_tensor(bounds)[0]).double().reshape(-1)
+
+    return {
+        "n_components_plausible": n_comp,
+        "plausible_volume": float(plausible.double().mean()),
+        "n_peaks_raw": int(is_peak.sum()),
+        "n_local_maxima": n_local_maxima,
+        "additive_share": additive_share(mean, grid, n_bins=n_bins),
+        "ard_separation_ratio": ard_separation_ratio(ls),
+        "lengthscale_over_width": [float(v) for v in (ls / width)],
+        "lengthscales": [float(v) for v in ls],
+        "n_wells": int(torch.as_tensor(X).shape[0]),
+        "grid_n": grid_n, "grid_seed": grid_seed, "z": z, "n_bins": n_bins,
+    }
+
+
+def additive_refit_residual_ratio(X: Tensor, Y: Tensor, Yvar: Tensor,
+                                  bounds: Tensor) -> float:
+    """Residual variance after an **additive-only** refit, divided by ``sigma_hat^2``.
+
+    Section 3.2's sixth statistic, and the one that asks the question most directly: how
+    much of the response does a model with **no interaction terms at all** fail to
+    explain, measured in units of the noise it was told about.
+
+    ``~1`` means the additive kernel explained everything except the noise -- the
+    coordinate-wise picture is adequate. Large means real interaction structure the
+    additive model cannot hold, which is the deceptive case.
+
+    The additive kernel is this repository's own -- ``build_gp(..., kernel_structure=
+    "additive")``, a sum of ``d`` one-dimensional Materns -- so this statistic is fitted
+    by the same machinery that produced the ``qlogei-add`` arms rather than by a second
+    implementation whose disagreements would be untraceable.
+
+    ``sigma_hat^2`` is the **mean of the supplied ``Yvar``**, not a fitted noise level.
+    This repository's GP is handed ``train_Yvar`` as known and does not fit noise jointly
+    (the SPADE specification's Stage 2 asserted otherwise and was wrong about this repo),
+    so the denominator is a quantity the campaign already knows and the ratio does not
+    depend on an optimiser's willingness to trade noise against lengthscale.
+
+    In-sample residuals, deliberately: the detector runs on plate 1 with nothing held out,
+    so an out-of-sample version would need a split the budget cannot pay for. The number
+    is therefore optimistic in absolute terms and is only ever read as a **contrast**
+    between landscapes, which is how section 3.3 fits its threshold.
+    """
+    from boec.surrogate import build_gp
+
+    Xd = torch.as_tensor(X, dtype=torch.double)
+    Yd = torch.as_tensor(Y, dtype=torch.double).reshape(-1, 1)
+    Vd = torch.as_tensor(Yvar, dtype=torch.double).reshape(-1, 1)
+    sigma2 = float(Vd.mean())
+    if sigma2 <= 0.0:
+        raise ValueError("sigma_hat^2 must be positive to be a denominator")
+    model = build_gp(Xd, Yd, Vd, bounds, kernel_structure="additive")
+    with torch.no_grad():
+        pred = model.posterior(Xd).mean.reshape(-1).double()
+    resid = float(((Yd.reshape(-1) - pred) ** 2).mean())
+    return resid / sigma2
