@@ -91,9 +91,18 @@ difference. The committed file said so all along:
 | | ranking |
 |---|---|
 | simple regret | `doe` 0.0958 < `lhs` 0.1270 < qlogei-add < qlognei < qlogei < qlogei-addonly < sobol < random |
-| map quality (AUC) | varies by cell; **`doe` last in 22 of 24** |
+| map quality (AUC) | varies by cell; **`doe` last in 23 of 24** |
 
-**Zero of 24 cells agree with the regret ranking.**
+**Zero of the 18 rankable cells reproduce the regret ranking** — and per the caveat above,
+that count is descriptive only and is not evidence for anything.
+
+> **🔴 CORRECTED 2026-08-23.** This table read *"`doe` last in 22 of 24"* and the line below it
+> read *"Zero of 24 cells agree with the regret ranking."* **Both were wrong and each was wrong
+> in a different way.** Recomputed from `results/k6-analysis.json`: `doe` sits at rank index 7
+> of 8 — last — in **23** of 24 cells and at index 6 in the remaining one. **§24.3 already said
+> 23**, so the two sections contradicted each other; 23 is the figure the committed file
+> supports. And the "24" denominator is the one Erratum 23 replaced with **18 rankable** — the
+> correction had been applied to this section's heading and caveat but not to its body.
 
 **4.2a The cost of screening, isolated — the cleanest result in the study.**
 
@@ -111,6 +120,15 @@ is that `doe` screens 6→4 and confines its response-surface design to a sub-bo
 
 **Significant in 24 of 24**, favouring the unscreened arm. And it runs exactly opposite to
 regret, where `doe` **beats** `lhs` by **+0.0312 [+0.0133, +0.0491], p=0.0028**.
+
+> **🔴 PROVENANCE GAP, raised 2026-08-23 — this table is not reproducible from a committed
+> file.** `scripts/analyse_k6.py` sets `SPREAD, CLUSTERED = "doe", "qlogei"` and never
+> references `lhs`, so `k6-analysis.json`'s `spread_vs_clustered` field is **`doe − qlogei`**
+> (−0.0996 [−0.1241, −0.0744] at γ=0.50, τ_frac=0.60) and **not** the `lhs`-versus-`doe`
+> contrast printed above. No committed artefact carries these six rows. The claim may well be
+> right — the direction is corroborated by Q59's independent re-score (§26) — but a section
+> called *"the cleanest result in the study"* must name the file it came from. **Either commit
+> the runner that produces it or withdraw the table before it reaches a draft.**
 
 Two arms, one difference, a complete ranking reversal. **Screening buys the better single
 recipe and costs the ability to state a range for two of six factors** — which is what a

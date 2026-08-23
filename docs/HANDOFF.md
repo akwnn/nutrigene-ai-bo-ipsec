@@ -1,14 +1,25 @@
 # HANDOFF — resume point for the next session
 
-**Written 2026-08-22 (evening), superseding the 2026-08-22 afternoon version.**
-Read this first, then `docs/FINDINGS-SPADE.md` **Part IV (§18 onward)**, then Parts II–III.
+**Written 2026-08-22 (evening); §0 and §A1 updated 2026-08-23.**
+Read this first, then `docs/FINDINGS-SPADE.md` **Part V (§32 onward)**, then Part IV, then Parts II–III.
 
-> **⚠️ A RUN IS LIVE.** See §0. The previous handoff opened with "Nothing is running" and that
-> is no longer true. Check before launching anything.
+> **✅ NOTHING IS RUNNING, AND NOTHING IS BLOCKED.** Verified 2026-08-23: zero runner
+> processes alive. Every experimental dependency has landed. **What remains is the draft.**
 
 ---
 
-## 0. 🟢 RUNNING RIGHT NOW — do not launch a competing job
+## 0. ✅ COMPLETE — the runs this handoff was written to track
+
+> The text below is preserved as written on 2026-08-22 evening, when both runs were live.
+> **Both have since finished.** Do not treat the PIDs or ETAs as current.
+
+| run | state as of 2026-08-23 |
+|---|---|
+| **P8** — SPADE's certificate off hill | ✅ `COMPLETE` — `results/p8-certificate-families.json`, 24,000 rows, **0 gate failures** |
+| **Version C Form 1**, both σ | ✅ `COMPLETE` — 28,800 rows, gate clean, **all eight kills adjudicated, none fired** |
+| **P7** — Murphy calibration | ✅ `COMPLETE` — 12,000 rows, 10 arms |
+
+### Historical — the live-run notice as written on 2026-08-22
 
 ### P8 — SPADE's certificate off hill (started 2026-08-22 evening, ~10 h)
 
@@ -299,7 +310,15 @@ exists: the 0.0792 above. **Do not budget wells for it.**
 
 ## A. BLOCKED ON JOSEPH — one action, and it gates everything else
 
-### A1. 🔴🔴 **THE REPO HAS NEVER BEEN PUSHED. 55 commits are stranded.**
+### A1. ✅ **RESOLVED 2026-08-23 — the repo is pushed.**
+
+> The purge ran. `results/p6-families.json` is out of history and lives as 8 shards under
+> `results/p6-families/` plus `results/p6-families.meta.json`, read via
+> `scripts/load_p6_families.py`. 27 SHA citations were repaired at `7b72fef`, and
+> `main` now tracks `origin/main` cleanly. **The original problem statement is kept below
+> because the SHA-rewrite consequences it lists still explain why citations moved.**
+
+#### Historical — the blocker as written on 2026-08-22
 
 `results/p6-families.json` is **103.8 MB** against GitHub's **100 MB hard limit**, and an
 earlier **208.8 MB** version of the same file is also in unpushed history (added at
@@ -338,14 +357,18 @@ git push origin main
 K-C7 is **spent and fired**. The σ=0.10 γ-ladder question (Task 6.1) still needs a
 registration decision — P7's `SIGMA = 0.25` is deliberately hardcoded.
 
-## B. RUNNING RIGHT NOW
+## B. ✅ NO RUNS OUTSTANDING
 
-| pid | what | state |
-|---|---|---|
-| — | `run_versionc_form1.py` both σ | **DONE** — 28,800 rows, gate clean, kills adjudicated |
+| what | state |
+|---|---|
+| `run_versionc_form1.py` both σ | **DONE** — 28,800 rows, gate clean |
+| `analyse_versionc_form1.py` (`8a67741`) | **DONE** — K-C1, K-C2 (hard stop) and K-C3 all adjudicated, **none fired** |
+| P8 certificate off hill | **DONE** — 24,000 rows, 0 gate failures |
 
-When it lands, **`analyse_versionc_form1.py` (the other agent's, `8a67741`) decides K-C1,
-K-C2 (the hard stop) and K-C3.** That is the last data dependency before drafting.
+**The last data dependency before drafting is discharged.** Carry the two qualifications from
+`FINDINGS-SPADE.md` §44.4 with any Version C number: K-C1's registered bar mixes estimands, so
+the verdict is **parity and not a win**; K-C2 and K-C3 pass **structurally** rather than
+evidentially, because a re-score reproduces its own source by construction.
 
 ## C. DONE THIS SESSION — do not redo
 
