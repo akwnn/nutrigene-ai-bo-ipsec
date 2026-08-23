@@ -110,8 +110,8 @@ ANALYSIS_REL = "scripts/analyse_final_spade_benchmark.py"
 ARTEFACT_REL = {
     "ledger": "results/final-spade-kill-ledger.json",
     "feasibility": "results/final-spade-feasibility.json",
-    "benchmark": "results/final-spade-benchmark.json",
-    "certificates": "results/final-spade-certificates.json",
+    "benchmark": "results/final-spade-primary.json",
+    "certificates": "results/final-spade-certificate.json",
     "manifest": "results/final-spade-manifest.json",
 }
 

@@ -12,6 +12,8 @@
 
 ## 1. What was frozen before results
 
+**Condition: all** · **terminal rule: n/a (registration inventory)** · **n: n/a**
+
 | frozen | where | commit |
 |---|---|---|
 | the three SPADE arms `m0`/`m4`/`m8`, local rule **L1** | spec §3.1–3.2 | `c4f58d3` |
@@ -119,9 +121,18 @@ certificate scores exactly 0 — and is never emitted without its partner.
 
 **`NOT RUN`** for campaigns; feasibility complete (§4).
 
-Known limits going in: hartmann6 and ackley are structurally unfavourable (§37, §41), and
-**ackley is a pre-declared EXCEPTION** — §41 records SPADE certifying **nothing in 1,200
-campaigns** there.
+Known limits going in, by condition id:
+
+| condition | family | class | why |
+|---|---|---|---|
+| **S1** | ackley | **EXCEPTION** (pre-declared) | centre-point optimum advantages classical designs; §41 records SPADE certifying **nothing in 1,200 campaigns** on this family |
+| C3 / C4 | hartmann6 | ROBUSTNESS | multimodal; §37/§42 predict SPADE struggles |
+| S2 / S3 | levy / rosenbrock | ROBUSTNESS | §41 records both under-covering at γ=0.99 |
+| C1 | hill σ=0.25 | ROBUSTNESS | pilot non-empty certificates **0 of 20** at α=0.95 — certificates go empty |
+| **C2** | hill σ=0.10 | **TARGET** | the only TARGET cell in the registered matrix; pilot non-empty **11 of 20** at α=0.95 |
+
+**S1 is reported, not dropped.** A pre-declared exception that vanishes from the write-up is
+the suppression spec §9.5 forbids.
 
 ## 11. Sobol, BO and DoE comparison
 
