@@ -183,3 +183,53 @@ Fixed in advance and **independent of any result**:
 ## 16. Reproducibility manifest
 
 **`NOT RUN`** — pending `results/final-spade-manifest.json`.
+
+---
+
+## 17. First campaign result — C2 at n=50 (underpowered, superseded by n=100 in flight)
+
+**Source:** `results/final-spade-c2-n50.json`. Condition C2 (hill, d=6, σ=0.10), the study's
+one registered TARGET cell. **This run used 50 campaigns per arm, not the registered 100** —
+`_keys()` initially read only P2's 50 committed `(instance, seed)` pairs before the fix
+recorded below. **Labelled INCONCLUSIVE per spec §9.3, not cited as a primary result.** A
+corrected run at the full n=100 was launched immediately after the fix and is in flight; this
+section will be superseded when it completes.
+
+**All 11 mandatory arms present. 0 missing comparators.** 6,600 rows, schema-complete.
+
+**The `_keys` defect, found and fixed before any further campaign ran.** P2 committed only
+25 hill instances × seeds {0, 1} = 50 keys. The original runner read those and stopped,
+silently running a half-sized study — exposed by its own progress counter showing
+`[101/550]` where `[.../1100]` was expected. Extension is deterministic and a strict superset
+(same 25 instances, seeds ascending from the highest committed), so an in-flight checkpoint
+resumes rather than re-running.
+
+**No SPADE map/certificate/regret conclusion is drawn from the n=50 file.** It exists as a
+record that the pipeline runs end to end and produces schema-complete output; the
+n=100 rerun is what the kill ledger will be adjudicated against once it completes and the
+analyser (`scripts/analyse_final_spade_benchmark.py`, delivered but not yet run against real
+data — 64 unit tests passing against synthetic fixtures) is pointed at it.
+
+---
+
+## 18. What remains — explicitly, not implicitly
+
+**Blocking publication:**
+1. The C2 n=100 rerun to completion (`results/final-spade-c2.json`, in flight).
+2. Running `scripts/analyse_final_spade_benchmark.py` against that file to produce
+   `results/final-spade-certificate.json`, `results/final-spade-regret-pareto.json`,
+   `results/final-spade-kill-ledger.json`.
+3. Running `scripts/run_final_spade_benchmark.py` for C1, C3, C4 (primary) and S1–S3
+   (secondary), each already gated by the committed feasibility classification.
+4. `scripts/validate_final_spade_release.py` currently reports 4 missing-artefact violations
+   (`final-spade-primary.json`, `-certificate.json`, `-kill-ledger.json`, `-manifest.json`) —
+   these are expected at this stage and will close as the above complete.
+5. `results/final-spade-manifest.json` has not been written.
+
+**Not blocking, optional follow-on:** the figures script (`make_final_spade_figures.py`,
+delivered, degrades gracefully on missing inputs) has not been run against real data because
+no certificate/Pareto artefact exists yet to feed it.
+
+**This session ended on a budget constraint**, not on a design or implementation blocker.
+Every remaining step is "run an already-built, already-tested script against a result file
+that does not exist yet" — no further design decisions are outstanding.
