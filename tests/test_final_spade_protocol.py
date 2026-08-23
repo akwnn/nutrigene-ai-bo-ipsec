@@ -486,10 +486,35 @@ def test_merge_unions_missing_mandatory_arms_across_conditions(tmp_path):
     merged = merge_condition_rows([p1, p2])
     # `_condition_envelope` writes "condition": name.upper() -- the merge reads that field
     # verbatim, so the expected keys are uppercase too.
-    assert merged["missing_mandatory_arms"] == {"C1": ["doe_unscreened"],
-                                                "C2": ["doe_unscreened"]}
+    assert merged["missing_mandatory_arms"] == ["doe_unscreened"]
+    assert merged["missing_mandatory_arms_by_condition"] == {"C1": ["doe_unscreened"],
+                                                              "C2": ["doe_unscreened"]}
 
 
 def test_merge_refuses_an_empty_file_list():
     with pytest.raises(ValueError, match="at least one"):
         merge_condition_rows([])
+
+
+def test_merge_stamps_condition_id_on_every_row(tmp_path):
+    """🔴 REGRESSION, found running validate_final_spade_release.py against the real
+    combined artefact: rows carry family/dimension/sigma but never a `condition_id`, and
+    the validator's mandatory-comparator check keys on `condition_id` per row. Without it
+    every mandatory arm looked absent from every condition, regardless of whether it ran.
+    """
+    p1 = _condition_envelope(tmp_path, "c1", rows=[{"arm": "sobol", "x": 1}])
+    merged = merge_condition_rows([p1])
+    assert all(r.get("condition_id") == "C1" for r in merged["rows"])
+
+
+def test_merge_flattens_missing_mandatory_arms_to_a_list(tmp_path):
+    """The validator reads `missing_mandatory_arms` as a flat list of arm names
+    (`for arm in benchmark.get("missing_mandatory_arms")`). The by-condition dict this
+    function used to return there was silently misread as arm names -- every condition ID
+    ("C1", "C2", ...) was treated as a missing comparator."""
+    p1 = _condition_envelope(tmp_path, "c1", missing=["doe_unscreened"])
+    p2 = _condition_envelope(tmp_path, "c2", missing=[])
+    merged = merge_condition_rows([p1, p2])
+    assert merged["missing_mandatory_arms"] == ["doe_unscreened"]
+    assert merged["missing_mandatory_arms_by_condition"] == {"C1": ["doe_unscreened"],
+                                                             "C2": []}

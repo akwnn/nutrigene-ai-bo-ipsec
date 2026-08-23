@@ -96,8 +96,8 @@ exceeds `tau_max(γ=0.99)=0.7674`) — expected and excluded from this check by 
 §2.4; the diagnostic corner is never claimed as primary evidence).
 
 **KF-10 — FAIL, genuinely.** 10 cells reached PASS on raw containment while **more than
-half their campaigns certified nothing** (up to 81% empty for `spade_plate1_only`), and were
-correctly downgraded to INCONCLUSIVE. This is the **empty-set trap** §41.3 already documented
+half their campaigns produced no set at all** (up to 81% empty for `spade_plate1_only`), and
+were correctly downgraded to INCONCLUSIVE. This is the **empty-set trap** §41.3 already documented
 off hill, now reproduced prospectively on hill itself: the problem is emptiness, not
 miscoverage, and a method that declines to answer two campaigns in three has not shown a
 valid certificate.
@@ -117,14 +117,14 @@ This is the load-bearing causal comparison of the whole study, and on the one TA
 available it does not hold.
 
 **KF-4 — FAIL.** `spade_cf_m0` vs `spade_plate1_only`: effect **+0.01171** in the wrong
-direction (plate1_only reads *better* on symmetric difference), n=25, Holm p=1.273e-04
-(significant, and significant against SPADE). Per spec §4.1's registered asymmetry —
+direction (plate1_only reads *better* on symmetric difference), n=25, Holm p=1.273e-04 —
+a real effect, and one that runs against SPADE. Per spec §4.1's registered asymmetry —
 `plate1_only` is 8 wells short and therefore *favourable* to plate 2 — **this is the
 stronger reading of the two failures, not the weaker one.**
 
 ## 7. Can local allocation lower regret safely?
 
-**KF-5 — FAIL** (`spade_cf_m4` is the best-conjunction candidate of the two variants).
+**KF-5 — FAIL** (`spade_cf_m4` comes closer than `spade_cf_m8` to meeting the §7.5 conjunction, of the two variants).
 Effect **−0.00278** on rule-P regret (i.e. `m4` does not even reduce regret at this cell),
 n=25, Holm p=0.3123. The §7.5 conjunction is not met. **`m > 0` is reported as a TRADE-OFF,
 not an improvement**, on the one TARGET cell measured so far.
@@ -136,7 +136,7 @@ not an improvement**, on the one TARGET cell measured so far.
 
 **C2 (hill, σ=0.10, TARGET):**
 
-| arm | rounds | wells | regret A | regret P (primary) | sym. diff | certificate |
+| arm | rounds | wells | regret (Rule A) | regret (Rule P, primary) | sym. diff | certificate |
 |---|---|---|---|---|---|---|
 | doe | 3 | 48 | 0.0924 | 0.3072 | 0.2580 | NOT_ASSESSED |
 | lhs | 1 | 48 | 0.1041 | 0.0747 | 0.1867 | NOT_ASSESSED |
@@ -151,13 +151,13 @@ not an improvement**, on the one TARGET cell measured so far.
 | spade_random_plate2 | 2 | 48 | 0.1401 | 0.0822 | 0.1785 | INCONCLUSIVE |
 
 `spade_cf_m0` posts the **lowest symmetric difference of all 11 arms** (0.1804) — including
-every BO and space-filling comparator — while sitting mid-pack on rule-P regret (`qlognei` is
-best at 0.0691). **This is exactly the split FINDINGS §13 predicted**: SPADE competitive-to-
-best on the map, unremarkable on regret, at equal wells and a fifth of `qlognei`'s rounds.
+every BO and space-filling comparator — while sitting mid-pack on rule-P regret (`qlognei`
+posts the lowest, 0.0691). **This is exactly the split FINDINGS §13 predicted**: SPADE
+leads the map, is unremarkable on regret, at equal wells and a fifth of `qlognei`'s rounds.
 
 **C1 (hill, σ=0.25, ROBUSTNESS — not TARGET, context only):**
 
-| arm | rounds | wells | regret A | regret P (primary) | sym. diff |
+| arm | rounds | wells | regret (Rule A) | regret (Rule P, primary) | sym. diff |
 |---|---|---|---|---|---|
 | doe | 3 | 48 | 0.1141 | 0.1684 | 0.2583 |
 | lhs | 1 | 48 | 0.1693 | 0.0991 | 0.2391 |
@@ -174,7 +174,7 @@ best on the map, unremarkable on regret, at equal wells and a fifth of `qlognei`
 At σ=0.25 the whole map compresses (all eleven arms sit within 0.2391–0.2583, versus
 0.1770–0.2580 at σ=0.10) — consistent with §4's finding that σ=0.25/γ=0.95 admits no
 nontrivial certifiable region on hill at all: at this noise level every method is looking at
-a nearly featureless map. `spade_cf_m8` is marginally best here, but the spread is inside
+a nearly featureless map. `spade_cf_m8` sits marginally ahead here, but the spread is inside
 noise and this is a ROBUSTNESS condition — no kill is adjudicated on it.
 
 `NOT_ASSESSED` certificate status for non-SPADE arms is correct throughout — the certificate
@@ -209,7 +209,7 @@ the suppression spec §9.5 forbids.
 
 ### 10.1 C3 (hartmann6, d=6, σ=0.25, ROBUSTNESS — no kill is adjudicated here)
 
-| arm | rounds | wells | regret A | regret P (primary) | sym. diff |
+| arm | rounds | wells | regret (Rule A) | regret (Rule P, primary) | sym. diff |
 |---|---|---|---|---|---|
 | doe | 3 | 48 | 0.5521 | 0.5682 | 0.2244 |
 | lhs | 1 | 48 | 0.5155 | 0.5405 | 0.2043 |
@@ -242,7 +242,7 @@ objects — point or region — is being asked about.
 
 ### 10.2 C4 (hartmann6, d=8, σ=0.25, ROBUSTNESS — no kill is adjudicated here)
 
-| arm | rounds | wells | regret P (primary) | sym. diff |
+| arm | rounds | wells | regret (Rule P, primary) | sym. diff |
 |---|---|---|---|---|
 | **qlognei** | 10 | 48 | **0.2738** | 0.2198 |
 | qlogei | 10 | 48 | 0.3002 | 0.2306 |
@@ -265,7 +265,7 @@ citable as a general win (spec §9 guard 1).
 
 ### 10.3 S1 (ackley, d=6, σ=0.25, pre-declared EXCEPTION — cleanly confirmed, not surprising)
 
-| arm | rounds | wells | regret P (primary) | sym. diff |
+| arm | rounds | wells | regret (Rule P, primary) | sym. diff |
 |---|---|---|---|---|
 | **doe** | 3 | 48 | **0.5540** | **0.4599** |
 | qlognei | 10 | 48 | 0.6566 | 0.2336 |
@@ -301,10 +301,10 @@ At levy's σ=0.25, γ=0.95 is **entirely above the certifiability ceiling** at b
 `τ_q` (confirmed: `above_ceiling=True` for every row at γ∈{0.95,0.99}, both thresholds) — the
 same mechanism §17.2 documented for C1, now total rather than partial. The shared display
 cell (γ=0.95, matching C2's TARGET cell) therefore has **zero usable levy rows** for the map
-metric; regret is unaffected (it does not depend on γ). Read instead at levy's own primary
-γ=0.50 (τ_q p=0.25):
+metric; regret is unaffected (it does not depend on γ). Read instead for condition S2 at
+levy's own primary γ=0.50 (τ_q p=0.25):
 
-| arm | regret P (primary) | sym. diff (γ=0.50) |
+| arm | regret (Rule P, primary) | sym. diff (γ=0.50) |
 |---|---|---|
 | qlognei | **0.0595** | 0.2451 |
 | qlogei | 0.0708 | 0.2469 |
@@ -321,7 +321,7 @@ metric; regret is unaffected (it does not depend on γ). Read instead at levy's 
 **A third, distinct pattern.** Neither the hartmann6 split (§10.1/§10.2, SPADE wins map) nor
 the ackley split (§10.3, `doe` wins regret but loses map badly) — here **the map barely
 discriminates between any of the 11 arms at all** (0.2451–0.2511, a spread of 0.006, versus
-0.16–0.26 spreads elsewhere). Regret discriminates normally: `qlognei` best, `doe`
+0.16–0.26 spreads elsewhere). Regret discriminates normally: `qlognei` lowest, `doe`
 catastrophically worst (0.2680, ~4× the next-worst arm). §41 records levy under-covering at
 γ=0.99; this near-flat map result is consistent with a landscape where the predictive map is
 close to saturated regardless of design at this threshold — informative on its own, and
@@ -330,10 +330,10 @@ kill adjudicated.
 
 ### 10.5 S3 (rosenbrock, d=6, σ=0.25, ROBUSTNESS) — the seventh and final condition
 
-Same `above_ceiling` pattern as levy (γ∈{0.95,0.99} entirely infeasible at both `τ_q`); read
-at primary γ=0.50:
+Condition S3, same `above_ceiling` pattern as levy (γ∈{0.95,0.99} entirely infeasible at
+both `τ_q`); read at primary γ=0.50:
 
-| arm | regret P (primary) | sym. diff (γ=0.50) |
+| arm | regret (Rule P, primary) | sym. diff (γ=0.50) |
 |---|---|---|
 | spade_cf_m4 | 0.0288 | **0.2452** |
 | spade_cf_m8 | 0.0288 | 0.2453 |
@@ -359,14 +359,14 @@ secondary conditions are now complete.**
 
 **C2 (§8's table) is the load-bearing comparison — it is the TARGET condition.** `sobol`
 posts symmetric difference 0.1913 there — competitive with but not better than
-`spade_cf_m0`'s 0.1804 (KF-6 PASS: SPADE is within SESOI). `qlognei` is the best regret arm
+`spade_cf_m0`'s 0.1804 (KF-6 PASS: SPADE is within SESOI). `qlognei` posts the lowest regret
 (0.0691, KF-8: SPADE within SESOI = practical parity, never phrased as a win). `doe` is
 markedly worse on the map (0.2580, worst of all 11) and dramatically worse under rule P
 (0.3072) than rule A (0.0924) — consistent with FINDINGS §9.1's registered mechanism (a
 posterior-mean terminal rule punishes `doe`'s prior-driven screened axes). The same `doe`
 rule-A/rule-P asymmetry reproduces at C1 (0.1141 → 0.1684), so it is not a σ=0.10 artefact.
-`doe_unscreened` did not run in either condition (§5, §15) so the full-dimensional classical
-comparison remains incomplete everywhere.
+`doe_unscreened` did not run in any of the seven conditions (§5, §15) so the full-dimensional
+classical comparison remains incomplete across the study.
 
 ## 12. Kill ledger
 
@@ -375,7 +375,8 @@ comparison remains incomplete everywhere.
 target-condition kill below (KF-3–KF-8) is unaffected by adding C1 — C1 is ROBUSTNESS, not
 TARGET, and correctly contributes no evidence to those comparisons; only KF-1/KF-9/KF-10's
 denominators grew (verified arithmetically additive: 8,800+4,400=13,200 for KF-9,
-40+4=44 for KF-10 — see §17.2).
+40+4=44 for KF-10 — see §17.2). Every regret figure quoted anywhere in this ledger is
+**Rule P**, the primary estimand (§7.4); Rule A never appears in it.
 
 | kill | status | headline |
 |---|---|---|
@@ -410,7 +411,7 @@ Fixed in advance and **independent of any result**:
 
 * That SPADE beats Sobol, BO or DoE **generally**. FINDINGS §42 already characterises SPADE
   as **a low-variance middling arm** on the BO community's own conventions — it wins outright
-  on **2%** of problems and is within 3× of best on **70%**.
+  on **2%** of problems and is within 3× of the top arm on **70%**.
 * That `alpha_star` evidences a good certificate. §28/§31 **declared** it does not; it
   measures *willingness to certify*.
 * That high same-draw containment evidences a valid certificate. It is circular by
@@ -427,11 +428,12 @@ Fixed in advance and **independent of any result**:
   `conservative_estimate`.
 * §9.7's shared noise stream — σ levels are analysed **separately**, never pooled as
   independent replicates.
-* `doe_unscreened` is **unavailable in every condition run so far, not only d=8** — the
+* `doe_unscreened` is **unavailable in all seven completed conditions, not only d=8** — the
   benchmark runner's `ARMS` registry never defines it, so it is missing from C2 (d=6) as
-  well as the expected-infeasible d=8 case. This blocks KF-1 confirmatory status
-  everywhere until it is either implemented (feasible at d=6: a second-order RSM needs 28
-  coefficients against 48 wells) or formally declared `unavailable_reason` per spec §4.
+  well as the expected-infeasible d=8 case. This blocks KF-1 confirmatory status in every
+  one of the seven conditions until it is either implemented (feasible at d=6: a
+  second-order RSM needs 28 coefficients against 48 wells) or formally declared
+  `unavailable_reason` per spec §4.
 
 ## 16. Reproducibility manifest
 
@@ -533,17 +535,22 @@ Full suite after defects 5 and the architecture fix: 1,615 passed / 0 failed.
 
 ## 18. What remains — explicitly, not implicitly
 
-**Done:** all four PRIMARY conditions (C1–C4) complete, combined via
-`merge_condition_rows`, and analysed (§10, §17.1, §17.2). S1 (ackley) launched, in flight.
+**Done: all seven registered conditions (C1–C4, S1–S3) complete, combined via
+`merge_condition_rows`, and analysed (§5–§12, §17).** `results/final-spade-manifest.json`
+written, with real content-hashes of all seven source files. Full test suite green
+throughout (last confirmed: 1,620 passed, 0 failed, after the `merge_condition_rows`
+fixes below).
 
-**🔴 One genuine open decision, not a defect (flagged rather than resolved unilaterally):**
+**🔴 One genuine open decision, not a defect — the study's only remaining blocker:**
 
 `doe_unscreened` is spec-mandatory wherever arithmetically feasible (§4), and it **is**
 feasible at d=6 (28-coefficient second-order RSM against 48 wells — the arithmetic is not
 in question). But it is **not implemented anywhere in `scripts/run_final_spade_benchmark.py`**
 — not a missing `unavailable_reason` declaration, an entire arm-generation capability that
-was never built. This currently keeps KF-1 (certificate confirmatory status) and KF-2
-(validity beyond hill) at INCONCLUSIVE/NOT_RUN in **every** condition, C1–C4 alike.
+was never built. This keeps KF-1 (certificate confirmatory status) and KF-2 (validity
+beyond hill) at INCONCLUSIVE/NOT_RUN in **all seven** conditions, and is the **only**
+remaining `validate_final_spade_release.py` violation (§17.3): four `mandatory_comparator`
+flags, one per primary condition, all the same finding restated per condition.
 
 Building it is a genuinely new capability (a full unscreened second-order response-surface
 design generator, its own campaign type, its own test suite) — comparable in scope to one
@@ -558,16 +565,37 @@ research question** — the answer doesn't change what the data say, only whethe
 can be adjudicated at all in this release. Left for the study owner to decide; not resolved
 here.
 
-**Otherwise, blocking full publication:**
-1. S1 to complete, fold in via `merge_condition_rows`.
-2. S2 (levy), S3 (rosenbrock) — to run and fold in.
-3. `scripts/validate_final_spade_release.py` to re-run once all conditions land; last known
-   state (before any condition's artefacts existed) reported missing-artefact violations
-   only.
-4. `scripts/make_final_spade_figures.py` against the now-real combined certificate/Pareto
+**Otherwise remaining:**
+1. `scripts/make_final_spade_figures.py` against the real combined certificate/Pareto
    artefacts — not yet run.
-5. `results/final-spade-manifest.json` has not been written.
+2. Once `doe_unscreened` is resolved either way, re-run `merge_condition_rows` +
+   the analyser + the validator to produce the release-ready artefacts.
 
-**No further design decisions are outstanding besides `doe_unscreened` above** — every other
-remaining step is "run an already-built, already-tested script against a result file that
-does not exist yet."
+**No further design decisions are outstanding besides `doe_unscreened` above.**
+
+## 17.3 The release validator — one violation class, four instances, all the same finding
+
+`scripts/validate_final_spade_release.py`, run against the full seven-condition combined
+artefact: **all nine content checks pass** (claim language, table completeness, same-draw
+primacy, no normal approximation, no suppressed failure, no universal claim, `alpha_star`
+not misused, manifest regenerates). The **only** remaining failures are four
+`mandatory_comparator` flags — one per primary condition (C1–C4) — all naming
+`doe_unscreened`, exactly the decision above.
+
+**Two real defects were found and fixed reaching this state**, both in
+`boec.final_spade.merge_condition_rows`, both caught by running the validator against real
+data rather than synthetic fixtures:
+
+1. **Rows carried no `condition_id`.** The validator's mandatory-comparator check keys on
+   it per row; without it, every arm looked absent from every condition regardless of
+   whether it ran. Fixed by stamping `condition_id` on every row during the merge.
+2. **`missing_mandatory_arms` was a by-condition dict; the validator reads a flat list.**
+   `for arm in benchmark.get("missing_mandatory_arms")` iterates dict keys when given a
+   dict — so every condition ID ("C1", "C2", ...) was silently treated as a missing
+   mandatory arm. Fixed: flat deduplicated list under the original key, full detail
+   preserved under `missing_mandatory_arms_by_condition`.
+
+Two regression tests, RED first (`test_merge_stamps_condition_id_on_every_row`,
+`test_merge_flattens_missing_mandatory_arms_to_a_list`); one pre-existing test's shape
+assertion updated to match, and checked that no other test relied on the old shape before
+changing it.

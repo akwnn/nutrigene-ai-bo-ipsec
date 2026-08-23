@@ -481,17 +481,32 @@ def merge_condition_rows(paths) -> dict:
         raise ValueError(f"registration_commit mismatch across files: {sorted(commits)}")
 
     rows: list = []
-    missing: dict = {}
+    missing_by_cond: dict = {}
+    missing_flat: list = []
     gate_failures: list = []
     code_commits: list = []
     for path, payload in zip(paths, payloads):
         cond = payload.get("condition") or _Path(path).stem
-        rows.extend(payload.get("rows", []))
-        missing[cond] = payload.get("missing_mandatory_arms", [])
+        # 🔴 REGRESSION, fixed. Rows carried family/dimension/sigma but never a
+        # `condition_id`, and validate_final_spade_release.py's mandatory-comparator
+        # check keys on `condition_id` per row -- without it every arm looked absent from
+        # every condition regardless of whether it ran.
+        for r in payload.get("rows", []):
+            r.setdefault("condition_id", cond)
+            rows.append(r)
+        cond_missing = payload.get("missing_mandatory_arms", [])
+        missing_by_cond[cond] = cond_missing
+        missing_flat.extend(a for a in cond_missing if a not in missing_flat)
         gate_failures.extend(payload.get("gate_failures", []))
         code_commits.append(payload.get("code_commit"))
 
     return {"study_id": study_ids.pop(), "registration_commit": commits.pop(),
             "code_commits": code_commits, "source_files": [str(p) for p in paths],
-            "missing_mandatory_arms": missing, "gate_failures": gate_failures,
-            "rows": rows}
+            # 🔴 REGRESSION, fixed. The validator reads this as a FLAT list of arm names
+            # (`for arm in benchmark.get("missing_mandatory_arms")`); the by-condition dict
+            # this used to return here was silently misread as arm names, so every
+            # condition ID ("C1", "C2", ...) was treated as a missing mandatory comparator.
+            # The by-condition detail is kept, under its own key, for diagnosis.
+            "missing_mandatory_arms": missing_flat,
+            "missing_mandatory_arms_by_condition": missing_by_cond,
+            "gate_failures": gate_failures, "rows": rows}
