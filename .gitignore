@@ -293,3 +293,5 @@ COMMIT_MSG.txt
 # Version C section 4's registered prediction, and its verdict. Small (~1 MB) but cited by
 # FINDINGS by path, and results/* ignores .json by default.
 !results/versionc-components-family.json
+# The BO-convention metrics and the selection-bias correlations. Cited by FINDINGS by path.
+!results/versionc-conventions.json
