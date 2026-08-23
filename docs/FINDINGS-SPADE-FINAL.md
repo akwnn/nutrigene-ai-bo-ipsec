@@ -131,7 +131,10 @@ not an improvement**, on the one TARGET cell measured so far.
 
 ## 8. Map quality versus regret: Pareto results
 
-**Source:** `results/final-spade-regret-pareto.json`, C2 only.
+**Source:** `results/final-spade-regret-pareto.json`, combined C1+C2 via
+`merge_condition_rows` (spec §15's artefacts are singular; see §17.2).
+
+**C2 (hill, σ=0.10, TARGET):**
 
 | arm | rounds | wells | regret A | regret P (primary) | sym. diff | certificate |
 |---|---|---|---|---|---|---|
@@ -151,8 +154,31 @@ not an improvement**, on the one TARGET cell measured so far.
 every BO and space-filling comparator — while sitting mid-pack on rule-P regret (`qlognei` is
 best at 0.0691). **This is exactly the split FINDINGS §13 predicted**: SPADE competitive-to-
 best on the map, unremarkable on regret, at equal wells and a fifth of `qlognei`'s rounds.
-`NOT_ASSESSED` certificate status for non-SPADE arms is correct — the certificate machinery
-is SPADE-specific; other arms report map/regret only.
+
+**C1 (hill, σ=0.25, ROBUSTNESS — not TARGET, context only):**
+
+| arm | rounds | wells | regret A | regret P (primary) | sym. diff |
+|---|---|---|---|---|---|
+| doe | 3 | 48 | 0.1141 | 0.1684 | 0.2583 |
+| lhs | 1 | 48 | 0.1693 | 0.0991 | 0.2391 |
+| qlogei | 10 | 48 | 0.1757 | 0.1317 | 0.2520 |
+| qlognei | 10 | 48 | 0.1858 | 0.1380 | 0.2530 |
+| random | 1 | 48 | 0.2358 | 0.1234 | 0.2547 |
+| sobol | 1 | 48 | 0.1639 | 0.1221 | 0.2504 |
+| **spade_cf_m0** | 2 | 48 | 0.1737 | 0.1126 | **0.2415** |
+| spade_cf_m4 | 2 | 48 | 0.1765 | 0.1069 | 0.2409 |
+| spade_cf_m8 | 2 | 48 | 0.1765 | 0.1065 | **0.2398** |
+| spade_plate1_only | 1 | 40 | 0.1802 | 0.1123 | 0.2412 |
+| spade_random_plate2 | 2 | 48 | 0.1802 | 0.1194 | 0.2411 |
+
+At σ=0.25 the whole map compresses (all eleven arms sit within 0.2391–0.2583, versus
+0.1770–0.2580 at σ=0.10) — consistent with §4's finding that σ=0.25/γ=0.95 admits no
+nontrivial certifiable region on hill at all: at this noise level every method is looking at
+a nearly featureless map. `spade_cf_m8` is marginally best here, but the spread is inside
+noise and this is a ROBUSTNESS condition — no kill is adjudicated on it.
+
+`NOT_ASSESSED` certificate status for non-SPADE arms is correct throughout — the certificate
+machinery is SPADE-specific; other arms report map/regret only.
 
 ## 9. Calibration and refinement
 
@@ -164,36 +190,44 @@ volume is never reported alone.
 
 ## 10. Cross-family, noise and dimension scope
 
-**`NOT RUN`** for campaigns; feasibility complete (§4).
+**C1 + C2 done (both hill). C3/C4 (hartmann6) in flight; S1–S3 `NOT RUN`.**
+Feasibility complete for all seven (§4).
 
 Known limits going in, by condition id:
 
-| condition | family | class | why |
-|---|---|---|---|
-| **S1** | ackley | **EXCEPTION** (pre-declared) | centre-point optimum advantages classical designs; §41 records SPADE certifying **nothing in 1,200 campaigns** on this family |
-| C3 / C4 | hartmann6 | ROBUSTNESS | multimodal; §37/§42 predict SPADE struggles |
-| S2 / S3 | levy / rosenbrock | ROBUSTNESS | §41 records both under-covering at γ=0.99 |
-| C1 | hill σ=0.25 | ROBUSTNESS | pilot non-empty certificates **0 of 20** at α=0.95 — certificates go empty |
-| **C2** | hill σ=0.10 | **TARGET** | the only TARGET cell in the registered matrix; pilot non-empty **11 of 20** at α=0.95 |
+| condition | family | class | status | why |
+|---|---|---|---|---|
+| **S1** | ackley | **EXCEPTION** (pre-declared) | NOT RUN | centre-point optimum advantages classical designs; §41 records SPADE certifying **nothing in 1,200 campaigns** on this family |
+| C3 | hartmann6 d=6 | ROBUSTNESS | **running** | multimodal; §37/§42 predict SPADE struggles |
+| C4 | hartmann6 d=8 | ROBUSTNESS | NOT RUN | `doe_unscreened` expected unavailable (§15) |
+| S2 / S3 | levy / rosenbrock | ROBUSTNESS | NOT RUN | §41 records both under-covering at γ=0.99 |
+| C1 | hill σ=0.25 | ROBUSTNESS | **done** (§8) | pilot non-empty certificates **0 of 20** at α=0.95 — certificates go empty; σ=0.25 map compresses to a near-featureless band (§8) |
+| **C2** | hill σ=0.10 | **TARGET** | **done** (§5–9) | the only TARGET cell in the registered matrix; pilot non-empty **11 of 20** at α=0.95 |
 
 **S1 is reported, not dropped.** A pre-declared exception that vanishes from the write-up is
 the suppression spec §9.5 forbids.
 
 ## 11. Sobol, BO and DoE comparison
 
-**C2 only (§8's table).** `sobol` posts symmetric difference 0.1913 — competitive with but
-not better than `spade_cf_m0`'s 0.1804 (KF-6 PASS: SPADE is within SESOI). `qlognei` is the
-best regret arm (0.0691, KF-8: SPADE within SESOI = practical parity, never phrased as a
-win). `doe` is markedly worse on the map (0.2580, worst of all 11) and dramatically worse
-under rule P (0.3072) than rule A (0.0924) — consistent with FINDINGS §9.1's registered
-mechanism (a posterior-mean terminal rule punishes `doe`'s prior-driven screened axes).
-`doe_unscreened` did not run (§5 above) so the full-dimensional classical comparison is
-incomplete.
+**C2 (§8's table) is the load-bearing comparison — it is the TARGET condition.** `sobol`
+posts symmetric difference 0.1913 there — competitive with but not better than
+`spade_cf_m0`'s 0.1804 (KF-6 PASS: SPADE is within SESOI). `qlognei` is the best regret arm
+(0.0691, KF-8: SPADE within SESOI = practical parity, never phrased as a win). `doe` is
+markedly worse on the map (0.2580, worst of all 11) and dramatically worse under rule P
+(0.3072) than rule A (0.0924) — consistent with FINDINGS §9.1's registered mechanism (a
+posterior-mean terminal rule punishes `doe`'s prior-driven screened axes). The same `doe`
+rule-A/rule-P asymmetry reproduces at C1 (0.1141 → 0.1684), so it is not a σ=0.10 artefact.
+`doe_unscreened` did not run in either condition (§5, §15) so the full-dimensional classical
+comparison remains incomplete everywhere.
 
 ## 12. Kill ledger
 
-**C2 only, adjudicated at map cell (τ_q p=0.25, γ=0.95, α=0.95).** Source:
-`results/final-spade-kill-ledger.json`.
+**C1 + C2 combined via `merge_condition_rows`, adjudicated at map cell
+(τ_q p=0.25, γ=0.95, α=0.95).** Source: `results/final-spade-kill-ledger.json`. Every
+target-condition kill below (KF-3–KF-8) is unaffected by adding C1 — C1 is ROBUSTNESS, not
+TARGET, and correctly contributes no evidence to those comparisons; only KF-1/KF-9/KF-10's
+denominators grew (verified arithmetically additive: 8,800+4,400=13,200 for KF-9,
+40+4=44 for KF-10 — see §17.2).
 
 | kill | status | headline |
 |---|---|---|
@@ -292,27 +326,82 @@ unit tests written against synthetic fixtures, all fixed with a regression test 
 
 Every fix has a git commit naming the defect, a regression test written and watched RED
 before the fix, and (for defects 3–4) hand-verified arithmetic checked before any code
-changed. Full suite: 1,610 passed / 0 failed after defects 1–2; 1,610 passed after 3–4 pending
-final confirmation.
+changed. Full suite: 1,611 passed / 0 failed after defects 1–4.
+
+## 17.1 C1 (n=100) COMPLETE — a fifth defect, found immediately after C2's
+
+**Source:** `results/final-spade-c1.json` (13,200 rows, all 11 mandatory arms). Running it
+through the analyser surfaced two more defects, in the same session, before either could
+reach a committed artefact:
+
+5. **Primary γ is σ-DEPENDENT (Erratum 1), and `GAMMAS_PRIMARY` was a flat constant.**
+   `certificate_report`'s `gamma_role` and KF-9's row filter both used
+   `GAMMAS_PRIMARY = (0.50, 0.95)` regardless of a row's own `sigma`. At σ=0.25 (C1),
+   γ=0.95 is registered **diagnostic**, not primary (§4's finding: its ceiling sits at
+   ~71% prevalence on hill, so treating it as primary evidence would test the ceiling, not
+   the method). The flat constant would have wrongly admitted C1's γ=0.95 cells to F-CERT
+   and to KF-9's feasibility check. Added `is_primary_gamma(sigma, gamma)`, sourced from
+   the same `GAMMAS_BY_SIGMA` the feasibility gate and benchmark runner already used —
+   nothing forced this module to agree with the other two until a test compared them.
+   Five regression tests, RED first; nine pre-existing tests broke as a direct, verified
+   consequence (their default fixture, σ=0.25/γ=0.95, was exactly the corner now correctly
+   reclassified) and were updated to a σ-invariant default (γ=0.50) rather than the
+   assertions being loosened.
+
+## 17.2 🔴 The artefact-naming architecture, misread for two conditions running
+
+**Found immediately after fixing defect 5**, before committing: running the analyser
+against C1 **overwrote C2's already-committed certificate/pareto/kill-ledger** under the
+same three fixed filenames spec §15 names in the singular. Caught by `git status` showing
+the modification before it was committed; `git checkout` restored C2's version with nothing
+lost.
+
+This is not a bug in the analyser — spec §15's artefacts are singular **because the kill
+ledger is one document, not one per condition**: KF-2 ("does validity extend beyond hill")
+can only be answered from a **single analysis pass that contains both hill and hartmann6
+rows**, and no amount of re-analysing a hill-only file answers it. Running the analyser
+once per condition and overwriting the same filenames each time does not accumulate
+evidence toward that; it destroys the previous condition's contribution.
+
+**Fix:** `boec.final_spade.merge_condition_rows(paths)` — combines completed conditions'
+raw row files into one envelope, refusing (not silently pooling) a `study_id` or
+`registration_commit` mismatch across files. `results/final-spade-{certificate,
+regret-pareto,kill-ledger}.json` are now the analysis of `merge_condition_rows(["C1",
+"C2"])`, not of C2 alone. Verified arithmetically additive before trusting the combined
+run (§10/§12): KF-9's denominator 13,200 = C2-alone's 8,800 + C1-alone's 4,400 exactly;
+KF-10's count 44 = 40 + 4 exactly; every TARGET-condition kill (KF-3–KF-8) is
+byte-identical to the C2-only numbers, confirming C1 (ROBUSTNESS) correctly contributes
+nothing to comparisons scoped to the TARGET condition.
+
+**Going forward:** every subsequent condition (C3, C4, S1–S3) is combined via
+`merge_condition_rows` with all prior completed conditions before each analysis pass —
+never analysed alone once C1+C2 exist, and never appended without regenerating the full
+combined file from the raw per-condition sources (so a later `git checkout` recovery, as
+happened here, is always possible without losing any condition's contribution).
+
+Full suite after defects 5 and the architecture fix: 1,615 passed / 0 failed.
 
 ---
 
 ## 18. What remains — explicitly, not implicitly
 
-**Done:** C1 launched (background, in flight). C2 complete and analysed.
+**Done:** C1 and C2 complete, combined via `merge_condition_rows`, and analysed (§17.1,
+§17.2). C3 (hartmann6, d=6) launched, in flight.
 
 **Blocking full publication:**
-1. C1 (hill, σ=0.25) to complete, then analyse.
-2. C3 (hartmann6, d=6), C4 (hartmann6, d=8) — primary — to run and analyse.
+1. C3 to complete, then re-run `merge_condition_rows(["C1","C2","C3"])` + the analyser —
+   never analyse a new condition alone once others exist (§17.2).
+2. C4 (hartmann6, d=8) — primary — to run and fold in the same way.
 3. S1 (ackley, pre-declared EXCEPTION), S2 (levy), S3 (rosenbrock) — secondary — to run and
-   analyse, only after all primary conditions are complete per spec §5.3.
+   fold in, only after all primary conditions are complete per spec §5.3.
 4. **`doe_unscreened` is not implemented in the benchmark runner at all** (§15) — this
    currently blocks KF-1 confirmatory status in every condition, not only d=8. Needs either
    implementation (feasible at d=6: 28-coefficient second-order RSM against 48 wells) or a
    formal `unavailable_reason` declaration per spec §4.
 5. `scripts/validate_final_spade_release.py` to re-run once all conditions land; last known
-   state (before C2's artefacts existed) reported missing-artefact violations only.
-6. `scripts/make_final_spade_figures.py` against the now-real C2 certificate/Pareto
+   state (before any condition's artefacts existed) reported missing-artefact violations
+   only.
+6. `scripts/make_final_spade_figures.py` against the now-real combined certificate/Pareto
    artefacts — not yet run.
 7. `results/final-spade-manifest.json` has not been written.
 
@@ -320,4 +409,3 @@ final confirmation.
 already-built, already-tested script against a result file that does not exist yet," except
 item 4, which needs either an implementation or a declared-unavailable decision (not a
 research question; the arithmetic above already answers feasibility at d=6).
-that does not exist yet" — no further design decisions are outstanding.
