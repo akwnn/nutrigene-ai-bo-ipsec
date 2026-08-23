@@ -181,3 +181,145 @@ Three adjustments, each recorded now rather than discovered later:
 ---
 
 *(Log continues as the work proceeds. Sections below are appended in execution order.)*
+
+---
+
+## Part 2 · What was built, and in what order
+
+Execution followed the brief's §19 ordering. Every production file was written **test-first**:
+the failing test was written, run, and *watched to fail* before the implementation existed.
+The commit graph shows this — each implementation commit names the RED it was written
+against.
+
+### 2.1 The registration, frozen first
+
+`docs/SPADE-FINAL-SPEC.md`, committed at **`c4f58d3`**, before any runner file existed. It
+freezes: the three SPADE arms and local rule L1, the two causal controls, the mandatory
+13-arm registry, the pre-run regime classifier and its numeric bars, the condition matrix,
+`N_DRAWS = 4096` with a cross-fit split, the four Holm families, ten kill-ledger items with
+their firing conditions, and the broad-paper conjunction.
+
+Three choices in it are worth restating because they are the ones a reviewer should attack:
+
+| choice | why it is not arbitrary |
+|---|---|
+| L1's trust region is the **ARD ball of radius 1** | That is literally `n_effective`'s bound (`src/boec/versionc.py:91`) — the statistic §9.3 identified as governing the identification gap. The radius is *inherited from a registered formula*, not tuned. A test measures that every local well increments `n_eff`, rather than asserting it. |
+| `x̂` is a **grid argmax**, not a continuous optimiser | §4.1 records that this project's one non-reproducible path was a post-hoc L-BFGS-B locator with 20 restarts. A grid argmax over a seeded Sobol set is bitwise reproducible. |
+| Certificate maths is **reused**, not reimplemented | `conservative_estimate_split` and `conservative_columns` already exist and are tested. A parallel implementation would create two sources of truth for the primary safety endpoint — the exact defect §9.5 and §14 punished this project for. |
+
+### 2.2 The code, and what each test pins
+
+| file | tests | the property it exists to pin |
+|---|---|---|
+| `src/boec/final_spade.py` · `local_wells` | 10 | every local well lands inside the ARD ball; `n_eff` rises by exactly `m`; bitwise determinism; `m=0` returns nothing so `m0` *is* the boundary arm; short balls report rather than silently shrink; **the signature exposes no `truth`, `model` or `oracle`** |
+| `src/boec/final_spade.py` · `classify_regime` | 9 | above-ceiling → INFEASIBLE; feasibility read on the **worst** primary γ; degenerate prevalence at both ends; pre-declared EXCEPTION beats TARGET; **the signature exposes no arm outcome** |
+| `src/boec/final_spade.py` · `threshold_facts`, `ROW_SCHEMA` | 6 | τ is a fraction, never absolute; prevalence arithmetic; cross-fit and same-draw are **separate columns** and a combined `containment` field is forbidden |
+| `src/boec/final_spade.py` · `spade_plate2` | 13 | equal plate-2 budget at every `m`; **`m4`'s boundary wells are a prefix of `m0`'s**; `m0` is *bit-identical* (`torch.equal`) to plain `batch_lse`; short-ball fallback restores the full budget |
+
+**Total new tests: 38, all green. Full suite: 1,408 passing, 0 failing.**
+
+### 2.3 🔴 A test of mine was wrong, and the code was right
+
+`test_prevalence_is_the_true_grid_fraction_at_or_above_tau` asserted `601/1001` and failed.
+I checked the arithmetic before touching either side: `linspace(0,1,1001)` puts exactly `0.6`
+at index 600, so indices 600–1000 qualify — **401**, not 601. I had counted from the wrong
+end of the ramp.
+
+This is the same defect §5 records for the first `tau_max` test, which hardcoded the textbook
+`z = 1.645` against a module using the exact inverse-normal CDF. Recorded here rather than
+quietly corrected, and the fixed test now also asserts `truth[600] == 0.6`, because 401 is
+only the right answer if `linspace` hits the endpoint exactly.
+
+### 2.4 A defect in my own runner, caught before it ran
+
+The first draft of `run_final_spade_benchmark.py` computed the type I / type II error volumes
+by hand and left a **dead line that assigned `type_i` twice**. Replaced with
+`boec.calibration.error_volumes` — the registered Azzimonti & Ginsbourger derivation, already
+validated against the committed `iou_pred` column, and already what `conservative_columns`
+uses for the certificate. Two derivations of one quantity inside one runner is the
+"two sources of truth" defect again.
+
+---
+
+## Part 3 · 🔴🔴 THE FEASIBILITY GATE FIRED — and it caught a defect in my own registration
+
+**This is the most important result so far, and it is a result about the study design, not
+about SPADE.**
+
+`results/final-spade-feasibility.json`, 14 cells, 7 conditions × 2 thresholds, 20-campaign
+plate-1 pilot each.
+
+### 3.1 What came back
+
+```
+ X C1  hill        d=6 s=0.25  tf=0.60  tau=0.6000 prev=0.7069 ne=0.20  INFEASIBLE
+ X C1  hill        d=6 s=0.25  tf=0.75  tau=0.7500 prev=0.2792 ne=0.00  INFEASIBLE
+    C2  hill       d=6 s=0.10  tf=0.60  tau=0.6000 prev=0.7069 ne=1.00  ROBUSTNESS
+ ** C2  hill       d=6 s=0.10  tf=0.75  tau=0.7500 prev=0.2792 ne=0.85  TARGET
+ X C3  hartmann6   d=6 s=0.25  tf=0.60  tau=0.6000 prev=0.0080 ne=0.00  INFEASIBLE
+ X C4  hartmann6   d=8 s=0.25  tf=0.60  tau=0.6000 prev=0.0076 ne=0.00  INFEASIBLE
+ X S1  ackley      d=6 s=0.25  tf=0.60  tau=0.6000 prev=0.0000 ne=0.00  INFEASIBLE
+ X S2  levy        d=6 s=0.25  tf=0.60  tau=0.6000 prev=0.8575 ne=0.40  INFEASIBLE
+ X S3  rosenbrock  d=6 s=0.25  tf=0.60  tau=0.6000 prev=0.9555 ne=0.35  INFEASIBLE
+```
+
+**12 of 14 INFEASIBLE. 1 TARGET. 1 ROBUSTNESS.** Including **C1 — the continuity condition,
+the single point in this entire project where SPADE's certificate has ever been measured.**
+
+### 3.2 The cause, verified rather than guessed
+
+```
+tau_max(gamma=0.95, sigma_rel=0.25) = 1 - 1.6449 x 0.25 = 0.5888
+```
+
+The registered thresholds were `τ_f ∈ {0.60, 0.75}`. **Both sit above 0.5888.**
+
+**This is §4.5's defect, recurring, and I committed it.** §4.5 records an earlier draft of
+this project registering absolute thresholds {0.70, 0.80, 0.85, 0.90} with *all four above
+the ceiling* — every arm would have certified nothing and the table would have been zeros,
+read inevitably as a method failure. I re-made the same mistake in a different
+parameterisation, one document after quoting the warning.
+
+**The gate existed to catch exactly this, ran before any campaign, and caught it.** No
+compute was spent on unevaluable cells. That is the system working as designed, and it is the
+strongest single argument for the brief's insistence that feasibility be committed first.
+
+### 3.3 Two further findings the gate produced for free
+
+**(a) `τ_frac` equalises nothing across families.** Measured true prevalence at `τ_f = 0.60`:
+
+| family | ackley | hartmann6 | hill | levy | rosenbrock |
+|---|---|---|---|---|---|
+| prevalence | **0.0000** | 0.0080 | 0.7069 | 0.8575 | **0.9555** |
+
+A common `τ_frac` poses a **completely different question** on each family. This reproduces
+§9.8's finding prospectively and independently.
+
+**(b) A statement about assurance and noise, not about any method.** At `σ_rel = 0.25` the
+ceiling 0.5888 corresponds to a true prevalence of ≈ 0.71 on hill. So **every** threshold
+certifiable at `γ = 0.95` and that noise level describes a region covering **more than 70% of
+the box**.
+
+> **At 25% relative noise, γ = 0.95 admits no *nontrivial* certifiable region on the primary
+> oracle.** No method can fix this; it is the ceiling, and it is reportable in its own right.
+
+### 3.4 The amendment — Erratum 1, registered before any arm result existed
+
+Two changes, both adopting machinery this project **already registered and committed**:
+
+1. **The threshold estimand becomes `tau_q`** — P5's per-family prevalence quantile (§9.8),
+   read from the committed `results/p5-tau-quantile.json` and **never recomputed**, at
+   `p ∈ {0.10, 0.25}`. This puts true prevalence inside the TARGET band `[0.05, 0.60]`
+   **by construction on every family**, which is precisely what `tau_q` was built for.
+2. **Primary `γ` becomes σ-dependent:** `γ = 0.95` at `σ = 0.10`; `γ = 0.50` at `σ = 0.25`,
+   with `γ = 0.95` retained there as a reported diagnostic. Forced by §3.3(b) — insisting on
+   γ = 0.95 at σ = 0.25 would test the ceiling rather than the method.
+
+**What the amendment may not be used for.** It changes *which cells are evaluable*. It relaxes
+**no** decision rule, SESOI, Holm family, or kill condition. No arm outcome existed when it
+was written, and that is checkable from the commit graph:
+`results/final-spade-primary.json` did not exist at the erratum's commit.
+
+**Consequence for scope, recorded now rather than discovered in the write-up:** the study's
+high-assurance (γ = 0.95) evidence can only come from **σ = 0.10**. Any σ = 0.25 certificate
+claim is a **γ = 0.50 claim** and every table must say so.

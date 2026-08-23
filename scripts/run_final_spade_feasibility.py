@@ -95,9 +95,19 @@ CONDITIONS = (
      "exception": None, "why": "candidate for the §5.3 levy-or-rosenbrock slot"},
 )
 
-TAU_FRACS = (0.60, 0.75)
-GAMMAS_PRIMARY = (0.50, 0.95)
-GAMMA_DIAGNOSTIC = 0.99
+#: 🔴 ERRATUM 1. Was `TAU_FRACS = (0.60, 0.75)` as fractions of mu_max. At sigma=0.25 the
+#: gamma=0.95 ceiling is 0.5888 and BOTH sat above it, so 12 of 14 cells returned
+#: INFEASIBLE -- §4.5's defect, recurring. The estimand is now `tau_q`, P5's per-family
+#: prevalence quantile, read from the COMMITTED table and never recomputed here.
+TAU_QS = (0.10, 0.25)
+TAU_TABLE = ROOT / "results" / "p5-tau-quantile.json"
+
+#: 🔴 ERRATUM 1. Primary gamma is sigma-dependent, because at sigma=0.25 the 0.95 ceiling
+#: (0.5888) sits at a true prevalence of ~0.71 on hill: EVERY threshold certifiable there
+#: describes a region covering >70% of the box, so insisting on gamma=0.95 would test the
+#: ceiling rather than the method. gamma=0.95 is retained as a reported diagnostic.
+GAMMAS_BY_SIGMA = {0.25: (0.50,), 0.10: (0.50, 0.95)}
+GAMMAS_DIAGNOSTIC = (0.95, 0.99)
 
 N_PLATE1 = 40
 PILOT_N = 20
@@ -129,6 +139,24 @@ def _oracle(family: str, instance: str, dim: int, sigma: float, seed: int):
     return family_evaluator(family, dim, sigma, seed)
 
 
+def committed_tau_q(family: str, dim: int, p: float, instance: str | None) -> float:
+    """The COMMITTED `tau_q`. Raises rather than recomputing a cell the table lacks.
+
+    Recomputing would let this study's threshold drift from the one P5 registered and P6
+    was scored at, and the drift would be invisible. §9.8's gate on that table was
+    `worst |achieved prevalence - p| = 0.000e+00` -- exact -- and it stays that way only if
+    the number is read, never re-derived.
+    """
+    d = json.loads(TAU_TABLE.read_text())
+    for r in d["rows"]:
+        if (r["family"] == family and r["dim"] == dim and r["p"] == p
+                and (instance is None or r.get("instance") in (None, instance))):
+            return float(r["tau_q"])
+    raise SystemExit(
+        f"no committed tau_q for family={family!r} d={dim} p={p} in {TAU_TABLE.name}; "
+        "this study reads that table and does not recompute it (Erratum 1)")
+
+
 def _mu_max(family: str, instance: str, dim: int) -> float:
     """`UnitScaled` puts every non-hill family's optimum at exactly 1.0."""
     if family == "hill":
@@ -141,7 +169,7 @@ def pilot(cond: dict, grid: torch.Tensor, X_sub: torch.Tensor) -> dict:
     tau_frac, plus the per-campaign values so the summary is auditable."""
     family, dim, sigma = cond["family"], cond["dim"], cond["sigma"]
     bounds = unit_bounds(dim)
-    straddle, nonempty = [], {tf: [] for tf in TAU_FRACS}
+    straddle, nonempty = [], {p_: [] for p_ in TAU_QS}
 
     for instance, seed in _keys(family, PILOT_N):
         orc = _oracle(family, instance, dim, sigma, seed)
@@ -166,17 +194,19 @@ def pilot(cond: dict, grid: torch.Tensor, X_sub: torch.Tensor) -> dict:
             z = torch.randn(cov.shape[0], PILOT_DRAWS, generator=g, dtype=torch.double)
             draws = (post.mean.reshape(-1, 1).double() + L @ z).T
 
-        for tf in TAU_FRACS:
-            ce = conservative_estimate(draws, tf * mu_max, PILOT_ALPHA)
-            nonempty[tf].append(bool(int(ce.sum()) > 0))
+        for p_ in TAU_QS:
+            tau = committed_tau_q(family, dim, p_,
+                                  instance if family == "hill" else None)
+            ce = conservative_estimate(draws, tau, PILOT_ALPHA)
+            nonempty[p_].append(bool(int(ce.sum()) > 0))
 
         del model, draws
 
     return {"n_pilot": len(straddle),
             "boundary_frac_mean": float(sum(straddle) / len(straddle)),
             "boundary_frac_per_campaign": straddle,
-            "nonempty_rate": {str(tf): sum(v) / len(v) for tf, v in nonempty.items()},
-            "nonempty_count": {str(tf): int(sum(v)) for tf, v in nonempty.items()},
+            "nonempty_rate": {str(k): sum(v) / len(v) for k, v in nonempty.items()},
+            "nonempty_count": {str(k): int(sum(v)) for k, v in nonempty.items()},
             "pilot_draws": PILOT_DRAWS, "pilot_alpha": PILOT_ALPHA}
 
 
@@ -184,7 +214,7 @@ def main() -> None:
     t0 = time.time()
     head, rows = _head(), []
     print(f"{STUDY_ID} · feasibility gate · registration {REGISTRATION_COMMIT}")
-    print(f"{len(CONDITIONS)} conditions x {len(TAU_FRACS)} tau_frac · pilot n={PILOT_N} "
+    print(f"{len(CONDITIONS)} conditions x {len(TAU_QS)} tau_q · pilot n={PILOT_N} "
           f"at {PILOT_DRAWS} draws, alpha={PILOT_ALPHA}\n")
 
     for cond in CONDITIONS:
@@ -199,17 +229,25 @@ def main() -> None:
 
         p = pilot(cond, grid, X_sub)
 
-        for tf in TAU_FRACS:
-            facts = threshold_facts(tf, mu_max, sigma,
-                                    GAMMAS_PRIMARY + (GAMMA_DIAGNOSTIC,), truth)
-            # The classifier sees ONLY the primary gammas: gamma=0.99 is a registered
-            # diagnostic (spec §2), and letting a diagnostic corner decide feasibility
-            # would exclude cells the study never claimed there.
-            primary_ceilings = {g: facts["tau_max_by_gamma"][g] for g in GAMMAS_PRIMARY}
+        gammas_primary = GAMMAS_BY_SIGMA[sigma]
+        all_gammas = tuple(sorted(set(gammas_primary) | set(GAMMAS_DIAGNOSTIC)))
+
+        for p_q in TAU_QS:
+            tau = committed_tau_q(family, dim, p_q,
+                                  instance if family == "hill" else None)
+            # threshold_facts is driven by a FRACTION; tau_q is an absolute level, so it
+            # is expressed as tau/mu_max here. That returns tau_raw == tau exactly and
+            # leaves the tested function untouched.
+            facts = threshold_facts(tau / mu_max, mu_max, sigma, all_gammas, truth)
+            facts["tau_q_p"] = p_q
+            facts["tau_definition_detail"] = (
+                f"tau_q at p={p_q}, read from {TAU_TABLE.name} (Erratum 1); "
+                "NOT recomputed here")
+            primary_ceilings = {g: facts["tau_max_by_gamma"][g] for g in gammas_primary}
             cls, reason = classify_regime(
                 tau=facts["tau_raw"], tau_max_by_gamma=primary_ceilings,
                 prevalence=facts["true_prevalence"],
-                nonempty_rate=p["nonempty_rate"][str(tf)],
+                nonempty_rate=p["nonempty_rate"][str(p_q)],
                 boundary_frac=p["boundary_frac_mean"],
                 structural_exception=cond["exception"])
 
@@ -217,13 +255,13 @@ def main() -> None:
                    "code_commit": head, "condition_id": cond["id"], "tier": cond["tier"],
                    "why_included": cond["why"], "family": family, "dimension": dim,
                    "sigma": sigma, "mu_max": mu_max,
-                   "tau_definition": "tau = tau_frac * mu_max (FRACTION, never absolute)",
+                   "tau_definition": "tau_q -- per-family prevalence quantile (Erratum 1)",
                    **facts,
                    "tau_max_primary": primary_ceilings,
-                   "gammas_primary": list(GAMMAS_PRIMARY),
-                   "gamma_diagnostic": GAMMA_DIAGNOSTIC,
-                   "expected_nonempty_rate": p["nonempty_rate"][str(tf)],
-                   "nonempty_count": p["nonempty_count"][str(tf)],
+                   "gammas_primary": list(gammas_primary),
+                   "gammas_diagnostic": list(GAMMAS_DIAGNOSTIC),
+                   "expected_nonempty_rate": p["nonempty_rate"][str(p_q)],
+                   "nonempty_count": p["nonempty_count"][str(p_q)],
                    "boundary_frac": p["boundary_frac_mean"],
                    "pilot": {k: v for k, v in p.items()
                              if k != "boundary_frac_per_campaign"},
@@ -232,9 +270,10 @@ def main() -> None:
             rows.append(row)
             flag = {"TARGET": "**", "EXCEPTION": " !", "INFEASIBLE": " X"}.get(cls, "  ")
             print(f"{flag} {cond['id']:<3} {family:<11} d={dim} s={sigma:<5} "
-                  f"tf={tf:<5} tau={facts['tau_raw']:.4f} "
-                  f"ceil={facts['tau_max_worst']:.4f} prev={facts['true_prevalence']:.4f} "
-                  f"ne={p['nonempty_rate'][str(tf)]:.2f} "
+                  f"p={p_q:<5} tau={facts['tau_raw']:.4f} "
+                  f"ceil={min(primary_ceilings.values()):.4f} "
+                  f"prev={facts['true_prevalence']:.4f} "
+                  f"ne={p['nonempty_rate'][str(p_q)]:.2f} "
                   f"bnd={p['boundary_frac_mean']:.4f}  {cls}")
 
     counts: dict[str, int] = {}
@@ -249,9 +288,9 @@ def main() -> None:
         "environment": {"python": platform.python_version(),
                         "torch": torch.__version__, "platform": platform.platform()},
         "config": {"conditions": [c["id"] for c in CONDITIONS],
-                   "tau_fracs": list(TAU_FRACS),
-                   "gammas_primary": list(GAMMAS_PRIMARY),
-                   "gamma_diagnostic": GAMMA_DIAGNOSTIC,
+                   "tau_qs": list(TAU_QS),
+                   "gammas_by_sigma": {str(k): list(v) for k, v in GAMMAS_BY_SIGMA.items()},
+                   "gammas_diagnostic": list(GAMMAS_DIAGNOSTIC),
                    "pilot_n": PILOT_N, "pilot_draws": PILOT_DRAWS,
                    "pilot_alpha": PILOT_ALPHA, "n_plate1": N_PLATE1,
                    "grid_n": GRID_N, "subset_n": SUBSET_N, "grid_seed": GRID_SEED,

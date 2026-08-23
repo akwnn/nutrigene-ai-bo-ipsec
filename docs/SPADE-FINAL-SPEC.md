@@ -422,4 +422,66 @@ overwriting historical committed artefacts.
 
 ## 12. Errata
 
-*(Numbered amendments appended here, each committed before the result it affects. None yet.)*
+### 🔴 Erratum 1 — I registered thresholds above the ceiling, and the gate caught it
+
+**Committed before any campaign ran and before any arm result exists.**
+Evidence: `results/final-spade-feasibility.json` at code commit `f3b2b3f`.
+
+**The defect.** §5.2 registered `τ_f ∈ {0.60, 0.75}` as fractions of `μ_max`, with `γ = 0.95`
+primary. At `σ_rel = 0.25` the certifiability ceiling is
+
+```
+tau_max(gamma=0.95, sigma_rel=0.25) = 1 - 1.6449 * 0.25 = 0.5888
+```
+
+**Both registered thresholds sit above it.** The gate returned **INFEASIBLE for 12 of 14
+planned cells**, including **C1 — the continuity condition, the single point where SPADE's
+certificate has ever been measured.**
+
+This is **§4.5's defect, recurring, committed by me.** §4.5 records an earlier draft of this
+project registering absolute thresholds {0.70, 0.80, 0.85, 0.90} with *all four above the
+ceiling*, so every arm would have certified nothing and the published table would have been
+zeros. I re-made the same mistake in a different parameterisation. **The gate existed
+precisely to catch it, ran before any campaign, and caught it.** That is the system working,
+and it is recorded as a defect rather than smoothed over.
+
+**A second, independent finding the gate produced.** `τ_frac` does not equalise anything
+across families. Measured in this run, true prevalence at `τ_f = 0.60`:
+
+| family | ackley | hartmann6 | hill | levy | rosenbrock |
+|---|---|---|---|---|---|
+| prevalence | **0.0000** | 0.0080 | 0.7069 | 0.8575 | **0.9555** |
+
+A common `τ_frac` therefore poses a **completely different question** on each family. This is
+§9.8's finding reproduced prospectively.
+
+**And a finding about the noise level itself, not about any method.** At `σ_rel = 0.25` the
+ceiling 0.5888 corresponds to a true prevalence of ≈ 0.71 on hill. So **every** threshold
+certifiable at `γ = 0.95` and that noise level describes a region covering more than 70% of
+the box. **At 25% relative noise, γ = 0.95 admits no *nontrivial* certifiable region on the
+primary oracle.** That is a statement about assurance and noise, and it is reportable in its
+own right.
+
+**The amendment.** Two changes, both adopting machinery this project already registered and
+committed rather than inventing anything:
+
+1. **The threshold estimand becomes `tau_q`** — the per-family prevalence quantile of P5
+   (§9.8), read from the **committed** `results/p5-tau-quantile.json`, never recomputed.
+   **`p ∈ {0.10, 0.25}`**, both already in that committed table. This puts true prevalence
+   in the TARGET band `[0.05, 0.60]` **by construction on every family**, which is exactly
+   what `tau_q` was built for. `τ_frac` is not deleted — it is simply not this study's
+   estimand.
+2. **The primary `γ` becomes σ-dependent:** `γ = 0.95` at `σ_rel = 0.10`; `γ = 0.50` at
+   `σ_rel = 0.25`, with `γ = 0.95` retained there as a **reported diagnostic**. Forced by
+   the arithmetic above: at σ=0.25 there is no nontrivial threshold below the 0.95 ceiling,
+   so insisting on γ=0.95 there would test nothing but the ceiling.
+
+**What this amendment may not be used for.** It changes *which cells are evaluable*. It does
+**not** relax any decision rule, SESOI, Holm family, or kill condition, and no arm outcome
+existed when it was written. If a later reader suspects it was chosen to flatter SPADE, the
+check is that it was committed at a point where `results/final-spade-primary.json` did not
+exist — verifiable from the commit graph.
+
+**Consequence for scope, stated now:** the study's high-assurance (`γ = 0.95`) evidence will
+come from `σ = 0.10`. Any `σ = 0.25` certificate claim is a `γ = 0.50` claim and must say so
+in every table.
