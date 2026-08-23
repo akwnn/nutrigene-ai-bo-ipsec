@@ -190,22 +190,54 @@ volume is never reported alone.
 
 ## 10. Cross-family, noise and dimension scope
 
-**C1 + C2 done (both hill). C3/C4 (hartmann6) in flight; S1–S3 `NOT RUN`.**
-Feasibility complete for all seven (§4).
+**C1, C2, C3 done. C4 in flight; S1–S3 `NOT RUN`.** Feasibility complete for all seven (§4).
 
 Known limits going in, by condition id:
 
 | condition | family | class | status | why |
 |---|---|---|---|---|
 | **S1** | ackley | **EXCEPTION** (pre-declared) | NOT RUN | centre-point optimum advantages classical designs; §41 records SPADE certifying **nothing in 1,200 campaigns** on this family |
-| C3 | hartmann6 d=6 | ROBUSTNESS | **running** | multimodal; §37/§42 predict SPADE struggles |
-| C4 | hartmann6 d=8 | ROBUSTNESS | NOT RUN | `doe_unscreened` expected unavailable (§15) |
+| C3 | hartmann6 d=6 | ROBUSTNESS | **done** (§10.1) | multimodal; §37/§42 predict SPADE struggles |
+| C4 | hartmann6 d=8 | ROBUSTNESS | **running** | `doe_unscreened` expected unavailable (§15) |
 | S2 / S3 | levy / rosenbrock | ROBUSTNESS | NOT RUN | §41 records both under-covering at γ=0.99 |
 | C1 | hill σ=0.25 | ROBUSTNESS | **done** (§8) | pilot non-empty certificates **0 of 20** at α=0.95 — certificates go empty; σ=0.25 map compresses to a near-featureless band (§8) |
 | **C2** | hill σ=0.10 | **TARGET** | **done** (§5–9) | the only TARGET cell in the registered matrix; pilot non-empty **11 of 20** at α=0.95 |
 
 **S1 is reported, not dropped.** A pre-declared exception that vanishes from the write-up is
 the suppression spec §9.5 forbids.
+
+### 10.1 C3 (hartmann6, d=6, σ=0.25, ROBUSTNESS — no kill is adjudicated here)
+
+| arm | rounds | wells | regret A | regret P (primary) | sym. diff |
+|---|---|---|---|---|---|
+| doe | 3 | 48 | 0.5521 | 0.5682 | 0.2244 |
+| lhs | 1 | 48 | 0.5155 | 0.5405 | 0.2043 |
+| **qlogei** | 10 | 48 | 0.2988 | 0.2832 | 0.2283 |
+| **qlognei** | 10 | 48 | 0.2685 | **0.2443** | 0.2163 |
+| random | 1 | 48 | 0.4999 | 0.4489 | 0.1993 |
+| sobol | 1 | 48 | 0.4935 | 0.4608 | 0.1899 |
+| spade_cf_m0 | 2 | 48 | 0.4863 | 0.4221 | **0.1848** |
+| **spade_cf_m4** | 2 | 48 | 0.4818 | 0.4129 | **0.1815** |
+| spade_cf_m8 | 2 | 48 | 0.4768 | 0.3647 | 0.1836 |
+| spade_plate1_only | 1 | 40 | 0.5249 | 0.4977 | 0.2100 |
+| spade_random_plate2 | 2 | 48 | 0.5021 | 0.4687 | 0.1994 |
+
+**A genuine surprise, reported precisely rather than rounded to the predicted answer.** On
+regret, `qlognei`/`qlogei` dominate as expected (1st/2nd, 0.2443/0.2832 — a wide margin
+over everything else, consistent with §37's mechanism: BO commits to one basin and resolves
+it, the correct strategy when 48 wells cannot resolve hartmann6's several basins). **But on
+symmetric difference — the primary map scalar — the three SPADE arms take 1st, 2nd and 3rd
+of 11**, ahead of `sobol` (4th) and far ahead of `qlognei` (9th) and `qlogei` (worst, 11th).
+
+This is the opposite of a clean confirmation of §37/§42's prediction that SPADE "struggles"
+on hartmann6 — that prediction is about **regret**, and it holds there exactly. On the **map**
+it does not hold at all. **This condition is ROBUSTNESS, not TARGET, so no kill is
+adjudicated on it and no publication claim may cite this as SPADE "beating" BO on
+hartmann6** (spec §9 guard 1) — but the split between the two objects, already the central
+finding of the whole project (§13 et al.), reproduces on a family it was never registered as
+holding for, and the direction is worth flagging precisely rather than smoothing into either
+"SPADE struggles here" or "SPADE wins here": it depends entirely on which of the two
+objects — point or region — is being asked about.
 
 ## 11. Sobol, BO and DoE comparison
 
