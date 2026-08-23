@@ -172,8 +172,36 @@ BO_ARMS = ("qlognei", "qlogei")
 
 #: Spec §2. gamma=0.99 is registered as DIAGNOSTIC ONLY. A diagnostic corner carrying a
 #: confirmatory verdict would be a fifth Holm family invented after the fact.
-GAMMAS_PRIMARY = (0.50, 0.95)
+#:
+#: 🔴 REGRESSION, fixed before running C1 (hill, sigma=0.25) through this analyser.
+#: PRIMARY GAMMA IS SIGMA-DEPENDENT (spec §12 Erratum 1), and a single flat tuple cannot
+#: express that: at sigma=0.25, gamma=0.95's ceiling (tau_max=0.5888) sits at a true
+#: prevalence of ~0.71 on hill, so EVERY certifiable threshold there covers more than 70%
+#: of the box -- Erratum 1's own reasoning is that treating gamma=0.95 as primary evidence
+#: at sigma=0.25 would test the ceiling, not the method. `GAMMAS_PRIMARY = (0.50, 0.95)`
+#: applied everywhere would mark those sigma=0.25/gamma=0.95 cells "primary" and admit them
+#: to F-CERT -- exactly the corner Erratum 1 excludes. Feasibility gate and benchmark
+#: runner already encode this correctly as `GAMMAS_BY_SIGMA`; this module did not, and
+#: nothing forced the two to agree until a test compared them.
+GAMMAS_BY_SIGMA = {0.25: (0.50,), 0.10: (0.50, 0.95)}
 GAMMA_DIAGNOSTIC = 0.99
+
+
+def is_primary_gamma(sigma: float, gamma: float) -> bool:
+    """Is ``gamma`` primary evidence AT THIS ROW'S OWN SIGMA (Erratum 1)?
+
+    Never call with a flat gamma-only check again -- that is the exact defect this
+    function replaces. An unrecognised sigma raises rather than silently defaulting,
+    because a silent default of "not primary" would quietly demote a real primary cell to
+    diagnostic (dropping it from F-CERT and every confirmatory count), and a default of
+    "primary" would do the opposite -- both wrong in a way a passing test could hide.
+    """
+    for s, gammas in GAMMAS_BY_SIGMA.items():
+        if abs(float(sigma) - s) < 1e-9:
+            return any(abs(float(gamma) - g) < 1e-12 for g in gammas)
+    raise KeyError(
+        f"sigma={sigma} has no registered primary-gamma set "
+        f"(known: {sorted(GAMMAS_BY_SIGMA)}); this is a wiring error, not a case to guess")
 
 #: Spec §5.2. The four primary conditions, keyed as `family-d{dim}-s{sigma}`. §5.3's
 #: secondary conditions are robustness/context and "may not carry a confirmatory endpoint",
@@ -690,8 +718,8 @@ def certificate_report(rows: list, *, allow_partial: bool = False,
         counts = containment_cell(sub, alpha=alpha, tau_frac=tf, gamma=gamma)
         infeasible = any(bool(r.get("above_ceiling")) for r in sub) or any(
             str(r.get("regime_class")) == "INFEASIBLE" for r in sub)
-        gamma_role = "primary" if any(abs(gamma - g) < 1e-12 for g in GAMMAS_PRIMARY) \
-            else "diagnostic"
+        sigma_of_cell = float(sub[0]["sigma"])
+        gamma_role = "primary" if is_primary_gamma(sigma_of_cell, gamma) else "diagnostic"
         cells.append({
             "cell_id": cell_id(arm, cond, tf, gamma, alpha),
             "arm": arm, "condition": cond, "tau_frac": tf,
@@ -770,7 +798,8 @@ def certificate_report(rows: list, *, allow_partial: bool = False,
         "config": {"sesoi": SESOI, "nonempty_floor": NONEMPTY_FLOOR,
                    "empty_rate_ceiling": EMPTY_RATE_CEILING,
                    "empty_policy": EMPTY_POLICY,
-                   "gammas_primary": list(GAMMAS_PRIMARY),
+                   "gammas_primary_by_sigma": {str(k): list(v)
+                                              for k, v in GAMMAS_BY_SIGMA.items()},
                    "gamma_diagnostic": GAMMA_DIAGNOSTIC,
                    "primary_conditions": list(PRIMARY_CONDITIONS)},
         "verdicts_withheld": bool(allow_partial),
@@ -1477,19 +1506,19 @@ def kill_ledger(rows: list, certificate: dict, pareto: dict, *,
     kills["KF-8"] = _kf8(rows, targets)
 
     # ---- KF-9 --------------------------------------------------------------------------
-    # 🔴 REGRESSION, fixed. `primary_rows` filtered by primary CONDITION only, so a row at
-    # the registered DIAGNOSTIC gamma (0.99) inside an otherwise-primary condition was
-    # treated identically to a primary-gamma one. Spec names gamma=0.99 "a pre-registered
-    # stress diagnostic" and Erratum 1 already anticipates and reports exactly this case at
-    # sigma=0.25 ("gamma=0.95 admits no nontrivial certifiable region... a statement about
-    # assurance and noise that no method can fix") -- the same logic applies to gamma=0.99
-    # wherever it exceeds the ceiling. Spec §10's actual KF-9 wording is "any PLANNED cell",
-    # and the diagnostic gamma was never one of the cells feasibility classification (which
-    # spec §5.1/Erratum 1 restrict to GAMMAS_PRIMARY) was planned or gated on. Found via
-    # tests/test_final_spade_statistics.py::test_kf9_does_not_fire_on_an_above_ceiling_row_at_the_DIAGNOSTIC_gamma.
+    # 🔴 REGRESSION, fixed in two stages. Originally `primary_rows` filtered by primary
+    # CONDITION only, so a row at the registered DIAGNOSTIC gamma (0.99) inside an
+    # otherwise-primary condition was treated identically to a primary-gamma one -- fixed
+    # by requiring gamma in GAMMAS_PRIMARY too. But that flat tuple was itself wrong before
+    # running C1 (hill, sigma=0.25): primary gamma is SIGMA-DEPENDENT (Erratum 1) --
+    # gamma=0.95 is diagnostic at sigma=0.25, not primary, for exactly the reason gamma=0.99
+    # is diagnostic everywhere ("a statement about assurance and noise that no method can
+    # fix", not a planned cell that should have been excluded pre-run). Both stages found
+    # via tests/test_final_spade_statistics.py::test_kf9_does_not_fire_on_an_above_ceiling_row_at_the_DIAGNOSTIC_gamma
+    # and ::test_kf9_respects_sigma_dependent_primary_gamma_too.
     primary_rows = [r for r in live_rows(rows)
                     if condition_key(r) in PRIMARY_CONDITIONS
-                    and any(abs(float(r["gamma"]) - g) < 1e-12 for g in GAMMAS_PRIMARY)]
+                    and is_primary_gamma(float(r["sigma"]), float(r["gamma"]))]
     breached = [r for r in primary_rows if r.get("above_ceiling")]
     kills["KF-9"] = _kill(
         "KF-9", "FAIL" if breached else ("PASS" if primary_rows else "NOT_RUN"),

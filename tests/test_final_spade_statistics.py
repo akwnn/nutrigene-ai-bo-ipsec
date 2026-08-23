@@ -92,7 +92,12 @@ def _row(**over) -> dict:
         "arm": "spade_cf_m0", "arm_family": "SPADE",
         "total_wells": 48, "plate1_wells": 40, "plate2_wells": 8, "rounds": 2,
         "m_local": 0, "m_local_short": False,
-        "terminal_rule": "both", "gamma": 0.95, "alpha": 0.95,
+        # gamma=0.50: the one primary gamma common to BOTH sigma levels under Erratum 1's
+        # sigma-dependent GAMMAS_BY_SIGMA. A default of 0.95 would silently be diagnostic
+        # at this fixture's default sigma=0.25, taking every un-overridden fixture out of
+        # F-CERT -- exactly the bug test_gamma_role_is_sigma_dependent_not_a_flat_constant
+        # exists to catch.
+        "terminal_rule": "both", "gamma": 0.50, "alpha": 0.95,
         "tau_definition": "tau = tau_frac * mu_max", "tau_raw": 0.60,
         "tau_frac_or_quantile": 0.60, "tau_max": 0.80, "above_ceiling": False,
         "true_prevalence": 0.30,
@@ -421,7 +426,7 @@ def test_a_declared_unavailable_arm_contributes_no_measurements():
     rows = _cell_rows("sobol", n_nonempty=4, symmetric_difference_pred=0.4)
     rows.append(_row(arm="sobol", unavailable_reason="declared", instance_seed=99,
                      symmetric_difference_pred=0.0))
-    means = A.arm_means(rows, "symmetric_difference_pred", tau_frac=0.60, gamma=0.95,
+    means = A.arm_means(rows, "symmetric_difference_pred", tau_frac=0.60, gamma=0.50,
                         alpha=0.95)
     assert means["sobol"] == pytest.approx(0.4)
 
@@ -518,7 +523,7 @@ def test_an_empty_certificate_scores_type_i_exactly_zero():
     """The mechanism, before the refusal. §9.4: "type I volume read alone ranks silence
     first -- an arm certifying the empty set scores exactly 0"."""
     silent = _cell_rows("spade_cf_m8", n_nonempty=0, n_empty=10)
-    means = A.arm_means(silent, "type_i_volume_pred", tau_frac=0.60, gamma=0.95,
+    means = A.arm_means(silent, "type_i_volume_pred", tau_frac=0.60, gamma=0.50,
                         alpha=0.95)
     assert means["spade_cf_m8"] == 0.0
 
@@ -530,7 +535,7 @@ def test_ranking_on_type_i_volume_alone_is_refused():
     rows = _cell_rows("spade_cf_m0", n_nonempty=10, type_i_volume_pred=0.05)
     rows += _cell_rows("spade_cf_m8", n_nonempty=0, n_empty=10)
     with pytest.raises(A.TypeIOnlyRanking, match="silence"):
-        A.rank_arms(rows, "type_i_volume_pred", tau_frac=0.60, gamma=0.95, alpha=0.95)
+        A.rank_arms(rows, "type_i_volume_pred", tau_frac=0.60, gamma=0.50, alpha=0.95)
 
 
 def test_the_primary_map_scalar_is_the_symmetric_difference_and_it_ranks_silence_last():
@@ -540,7 +545,7 @@ def test_the_primary_map_scalar_is_the_symmetric_difference_and_it_ranks_silence
     rows += _cell_rows("spade_cf_m8", n_nonempty=0, n_empty=10)
 
     assert A.PRIMARY_MAP_SCALAR == "symmetric_difference_pred"
-    ranked = A.rank_arms(rows, A.PRIMARY_MAP_SCALAR, tau_frac=0.60, gamma=0.95, alpha=0.95)
+    ranked = A.rank_arms(rows, A.PRIMARY_MAP_SCALAR, tau_frac=0.60, gamma=0.50, alpha=0.95)
     assert ranked[0]["arm"] == "spade_cf_m0"
     assert ranked[-1]["arm"] == "spade_cf_m8"
 
@@ -916,6 +921,67 @@ def test_kf9_does_not_fire_on_an_above_ceiling_row_at_the_DIAGNOSTIC_gamma():
         "a gamma=0.99 diagnostic row above ceiling must not fail KF-9 -- it is an "
         "expected, already-registered fact about the diagnostic corner (Erratum 1), not a "
         "feasibility-gate protocol breach")
+
+
+def test_gamma_role_is_sigma_dependent_not_a_flat_constant():
+    """🔴 REGRESSION, found before running C1 (hill, sigma=0.25) through the analyser.
+
+    Erratum 1 (spec §12) makes primary gamma SIGMA-dependent: gamma=0.95 is primary at
+    sigma=0.10, but at sigma=0.25 it is a reported DIAGNOSTIC only, because the ceiling
+    there (tau_max(gamma=0.95, sigma=0.25)=0.5888) sits at a true prevalence of ~0.71 on
+    hill -- every certifiable threshold covers more than 70% of the box, so insisting on
+    gamma=0.95 there tests the ceiling rather than the method.
+
+    `certificate_report`'s `gamma_role` used a FLAT `GAMMAS_PRIMARY = (0.50, 0.95)` with no
+    sigma awareness, so a sigma=0.25 cell at gamma=0.95 was marked "primary" and entered
+    the F-CERT confirmatory family -- exactly the corner Erratum 1 says must NOT be primary
+    evidence at that noise level.
+    """
+    rows = _cell_rows(sigma=0.25, gamma=0.95, tau_frac_or_quantile=0.25)
+    cert = A.certificate_report(rows)
+    cell = next(c for c in cert["cells"] if c["gamma"] == 0.95)
+    assert cell["gamma_role"] == "diagnostic", (
+        "gamma=0.95 at sigma=0.25 must be diagnostic per Erratum 1, not primary")
+
+    rows_010 = _cell_rows(sigma=0.10, gamma=0.95, tau_frac_or_quantile=0.25)
+    cert_010 = A.certificate_report(rows_010)
+    cell_010 = next(c for c in cert_010["cells"] if c["gamma"] == 0.95)
+    assert cell_010["gamma_role"] == "primary", (
+        "gamma=0.95 at sigma=0.10 IS primary per Erratum 1 -- the fix must not blanket-"
+        "demote 0.95 everywhere, only at sigma=0.25")
+
+
+def test_gamma_050_is_primary_at_every_sigma():
+    """gamma=0.50 is the one primary gamma common to both sigma levels (Erratum 1)."""
+    for sigma in (0.10, 0.25):
+        rows = _cell_rows(sigma=sigma, gamma=0.50, tau_frac_or_quantile=0.25)
+        cert = A.certificate_report(rows)
+        cell = next(c for c in cert["cells"] if c["gamma"] == 0.50)
+        assert cell["gamma_role"] == "primary", f"gamma=0.50 must be primary at sigma={sigma}"
+
+
+def test_gamma_099_is_always_diagnostic_regardless_of_sigma():
+    for sigma in (0.10, 0.25):
+        rows = _cell_rows(sigma=sigma, gamma=0.99, tau_frac_or_quantile=0.25)
+        cert = A.certificate_report(rows)
+        cell = next(c for c in cert["cells"] if c["gamma"] == 0.99)
+        assert cell["gamma_role"] == "diagnostic"
+
+
+def test_kf9_respects_sigma_dependent_primary_gamma_too():
+    """The KF-9 fix from the prior pass filtered on the flat GAMMAS_PRIMARY constant. A
+    sigma=0.25 row above ceiling at gamma=0.95 must be excluded from KF-9 exactly as a
+    gamma=0.99 row is -- both are diagnostic-only at that sigma."""
+    rows = _full_comparator_condition(sigma=0.25)
+    rows += _cell_rows("spade_cf_m0", n_nonempty=12, n_contained=0, above_ceiling=True,
+                       sigma=0.25, gamma=0.95, tau_frac_or_quantile=0.85,
+                       regime_class="ROBUSTNESS")
+    cert = A.certificate_report(rows)
+    ledger = A.kill_ledger(rows, cert, A.regret_pareto_report(rows, certificate=cert))
+
+    assert ledger["kills"]["KF-9"]["status"] == "PASS", (
+        "a gamma=0.95 row above ceiling at sigma=0.25 is the registered diagnostic corner "
+        "(Erratum 1), not a feasibility-gate protocol breach")
 
 
 def test_kf10_fires_exactly_when_a_pass_was_downgraded():

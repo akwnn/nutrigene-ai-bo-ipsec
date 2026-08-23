@@ -420,3 +420,78 @@ def row_above_ceiling(tau_raw: float, gamma: float, tau_max_by_gamma: dict) -> b
             f"(keys: {sorted(tau_max_by_gamma)}); a missing gamma is a wiring error, not "
             "an implicit 'feasible'")
     return bool(float(tau_raw) >= float(ceiling))
+
+
+def merge_condition_rows(paths) -> dict:
+    """Combine multiple per-condition raw-row files into one envelope for the analyser.
+
+    ------------------------------------------------------------------------------
+    WHY THIS EXISTS
+    ------------------------------------------------------------------------------
+
+    ``scripts/analyse_final_spade_benchmark.py`` writes to three FIXED, singular paths
+    (``final-spade-certificate.json``, ``-regret-pareto.json``, ``-kill-ledger.json``) --
+    named that way in the frozen spec §15 because the study's kill ledger is a single
+    document, not one per condition. **KF-2 needs hill and hartmann6 rows in the SAME
+    analysis** to answer "does certificate validity extend beyond hill" at all; it cannot
+    be answered from a hill-only file no matter how many times that file is re-analysed.
+
+    Running the analyser once per condition's raw file therefore does not accumulate
+    evidence -- it **overwrites** the previous condition's committed artefact under the
+    same name, discovered running C1 immediately after C2 had already been committed
+    under those exact filenames. This function is the fix: combine every completed
+    condition's rows first, and analyse the union exactly once.
+
+    ------------------------------------------------------------------------------
+    WHAT IT GUARDS
+    ------------------------------------------------------------------------------
+
+    Every input file must share the same ``study_id`` and ``registration_commit``. A
+    mismatch on either is refused rather than silently pooled -- combining files from two
+    different studies, or a pre- and post-erratum registration, would mix incompatible
+    threshold definitions into one kill ledger without any visible sign that it happened.
+
+    Args:
+        paths: condition raw-row files, in the order their rows should appear in the
+            merged output. Order is preserved because some downstream diagnostics print
+            "first offending row" and a stable order makes that reproducible.
+
+    Returns:
+        ``{"study_id", "registration_commit", "code_commits": [...], "rows": [...],
+        "missing_mandatory_arms": {condition: [...]}, "gate_failures": [...]}`` -- shaped
+        for direct use as ``analyse_final_spade_benchmark.py --file``'s input.
+
+    Raises:
+        ValueError: on an empty ``paths``, or a ``study_id``/``registration_commit``
+            mismatch between files.
+    """
+    import json
+    from pathlib import Path as _Path
+
+    paths = list(paths)
+    if not paths:
+        raise ValueError("merge_condition_rows needs at least one file")
+
+    payloads = [json.loads(_Path(p).read_text()) for p in paths]
+    study_ids = {p.get("study_id") for p in payloads}
+    if len(study_ids) > 1:
+        raise ValueError(f"study_id mismatch across files: {sorted(study_ids)}")
+    commits = {p.get("registration_commit") for p in payloads}
+    if len(commits) > 1:
+        raise ValueError(f"registration_commit mismatch across files: {sorted(commits)}")
+
+    rows: list = []
+    missing: dict = {}
+    gate_failures: list = []
+    code_commits: list = []
+    for path, payload in zip(paths, payloads):
+        cond = payload.get("condition") or _Path(path).stem
+        rows.extend(payload.get("rows", []))
+        missing[cond] = payload.get("missing_mandatory_arms", [])
+        gate_failures.extend(payload.get("gate_failures", []))
+        code_commits.append(payload.get("code_commit"))
+
+    return {"study_id": study_ids.pop(), "registration_commit": commits.pop(),
+            "code_commits": code_commits, "source_files": [str(p) for p in paths],
+            "missing_mandatory_arms": missing, "gate_failures": gate_failures,
+            "rows": rows}
