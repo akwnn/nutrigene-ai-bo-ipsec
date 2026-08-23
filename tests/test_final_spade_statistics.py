@@ -987,3 +987,45 @@ def test_the_analyser_never_writes_over_the_file_it_was_asked_to_read(tmp_path):
                                "rows": _full_comparator_condition()}))
     with pytest.raises(A.RefusedOverwrite):
         A.write_reports(_full_comparator_condition(), out_dir=tmp_path, source=src)
+
+
+def test_write_reports_honours_an_explicit_map_cell_on_a_multi_cell_run(tmp_path):
+    """🔴 REGRESSION. `write_reports` calls `kill_ledger(rows, cert, pareto,
+    allow_partial=..., envelope=...)` without forwarding `map_cell`, even though
+    `kill_ledger`'s own signature accepts one and `_family_contrasts` needs it to avoid
+    `_sole_map_cell`'s multi-cell `InvalidPooling` raise.
+
+    Found running the real pipeline against C2 (11 arms x 6 (tau_frac, gamma, alpha)
+    cells): `--map-cell 0.25,0.95,0.95` was accepted by argparse and threaded through
+    `regret_pareto_report` correctly, but `kill_ledger` was still called with no
+    `map_cell` at all, so it fell back to `_sole_map_cell` and raised on a run that had
+    just been told explicitly which cell to use. The CLI flag existed and did nothing.
+
+    None of the 64 pre-existing tests caught this because `_full_comparator_condition`
+    builds rows in exactly ONE (tau_frac, gamma, alpha) cell, so `_sole_map_cell` never
+    had anything to disambiguate and `map_cell=None` was silently correct by accident.
+    This fixture spans two cells specifically so the fallback path is forced to fire.
+    """
+    cell_a = _full_comparator_condition(tau_frac_or_quantile=0.25, gamma=0.95, alpha=0.95)
+    cell_b = _full_comparator_condition(tau_frac_or_quantile=0.25, gamma=0.50, alpha=0.80)
+    rows = cell_a + cell_b
+
+    paths = A.write_reports(rows, out_dir=tmp_path, map_cell=(0.25, 0.95, 0.95),
+                            envelope={"study_id": "spade-final-2026-08-23",
+                                      "registration_commit": "c4f58d3",
+                                      "code_commit": "0000000"})
+
+    ledger_path = next(p for p in paths if "kill-ledger" in p)
+    ledger = json.loads(Path(ledger_path).read_text())
+    assert ledger["kills"]["KF-6"]["status"] in ("PASS", "FAIL", "INCONCLUSIVE"), (
+        "kill_ledger must have actually adjudicated KF-6 (a map-metric kill) rather than "
+        "raising InvalidPooling on the explicitly-named cell")
+
+    pareto_path = next(p for p in paths if "regret-pareto" in p)
+    pareto = json.loads(Path(pareto_path).read_text())
+    # `map_cell` rides on every per-arm entry, not at the payload's top level -- checked
+    # against the actual writer (line ~1135) rather than assumed.
+    entries = pareto["entries"] if "entries" in pareto else pareto.get("rows", [])
+    assert entries, "regret-pareto artefact produced no entries"
+    for e in entries:
+        assert e["map_cell"] == {"tau_frac": 0.25, "gamma": 0.95, "alpha": 0.95}

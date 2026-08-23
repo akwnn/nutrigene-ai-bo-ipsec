@@ -378,3 +378,49 @@ def test_the_schema_records_crossfit_and_same_draw_as_SEPARATE_fields():
     assert "crossfit_containment" in ROW_SCHEMA
     assert "same_draw_containment" in ROW_SCHEMA
     assert "containment" not in ROW_SCHEMA
+
+
+# ===========================================================================
+# Per-row `above_ceiling` -- must be evaluated at THIS row's own gamma
+# ===========================================================================
+
+from boec.final_spade import row_above_ceiling  # noqa: E402
+
+
+def test_row_above_ceiling_uses_the_rows_OWN_gamma_not_the_worst_of_the_condition():
+    """🔴 REGRESSION, found running C2 through the analyser: KF-9 flagged 6,600 of 13,200
+    rows as above-ceiling, when only 2,200 (p=0.10, gamma=0.99 -- the registered
+    DIAGNOSTIC corner) actually are.
+
+    The benchmark runner copied a single condition-level `above_ceiling` flag onto every
+    row regardless of that row's own `gamma`. That flag was computed in the feasibility
+    gate over the UNION of primary and diagnostic gammas (so it could warn that a
+    threshold goes above ceiling at the gamma=0.99 diagnostic even though it is fine at
+    the primary gammas) -- correct as a CONDITION-level fact, wrong as a PER-ROW one: a
+    gamma=0.50 row inherited "True" from a threshold that only breaches the ceiling at
+    gamma=0.99.
+
+    tau=0.8284 (hill, sigma=0.10, tau_q p=0.10): tau_max(gamma=0.50)=1.0000,
+    tau_max(gamma=0.95)=0.8355, tau_max(gamma=0.99)=0.7674. Above ceiling ONLY at 0.99.
+    """
+    tau_max_by_gamma = {0.50: 1.0000, 0.95: 0.8355, 0.99: 0.7674}
+    tau_raw = 0.8284
+    assert row_above_ceiling(tau_raw, 0.50, tau_max_by_gamma) is False
+    assert row_above_ceiling(tau_raw, 0.95, tau_max_by_gamma) is False
+    assert row_above_ceiling(tau_raw, 0.99, tau_max_by_gamma) is True
+
+
+def test_row_above_ceiling_accepts_string_keyed_gamma_dicts():
+    """JSON round-trips dict keys as strings; `tau_max_by_gamma` read back from a
+    committed feasibility file has string keys, and the runner must not silently miss
+    a match because of that."""
+    tau_max_by_gamma = {"0.5": 1.0, "0.95": 0.8355, "0.99": 0.7674}
+    assert row_above_ceiling(0.8284, 0.99, tau_max_by_gamma) is True
+    assert row_above_ceiling(0.8284, 0.5, tau_max_by_gamma) is False
+
+
+def test_row_above_ceiling_raises_on_an_unlisted_gamma_rather_than_defaulting():
+    """A missing gamma is a wiring error, not an implicit 'feasible'. Silently defaulting
+    to False would hide exactly the class of bug this function exists to fix."""
+    with pytest.raises(KeyError):
+        row_above_ceiling(0.60, 0.777, {0.50: 1.0, 0.95: 0.8355})

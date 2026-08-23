@@ -1559,7 +1559,12 @@ def _kf5(rows: list, certificate: dict, targets: list, families: dict,
     best = None
     for cond in targets:
         sub = [r for r in _assessable(rows) if condition_key(r) == cond]
-        tf, gamma, alpha = _sole_map_cell(sub)
+        # 🔴 REGRESSION, fixed alongside the write_reports/main() wiring bug: this
+        # function's OWN signature already accepted `map_cell` but never read it, calling
+        # `_sole_map_cell(sub)` unconditionally. On a multi-cell run that raises
+        # InvalidPooling even after `kill_ledger` was fixed to forward `map_cell` in --
+        # the fix at the caller was necessary but not sufficient.
+        tf, gamma, alpha = map_cell or _sole_map_cell(sub)
         for arm in variants:
             if arm not in {r["arm"] for r in sub}:
                 continue
@@ -1705,8 +1710,13 @@ def write_reports(rows: list, *, out_dir: Path, envelope: dict | None = None,
     cert = certificate_report(rows, allow_partial=allow_partial, envelope=envelope)
     pareto = regret_pareto_report(rows, certificate=cert, map_cell=map_cell,
                                   allow_partial=allow_partial, envelope=envelope)
+    # 🔴 REGRESSION, fixed: `map_cell` was silently dropped here. `kill_ledger` accepts
+    # it and needs it for `_family_contrasts`'s own `_sole_map_cell` fallback, so a run
+    # spanning more than one (tau_frac, gamma, alpha) cell raised InvalidPooling even
+    # after the caller had named the cell explicitly via --map-cell. See
+    # tests/test_final_spade_statistics.py::test_write_reports_honours_an_explicit_map_cell_on_a_multi_cell_run.
     ledger = kill_ledger(rows, cert, pareto, allow_partial=allow_partial,
-                         envelope=envelope)
+                         envelope=envelope, map_cell=map_cell)
 
     out_dir.mkdir(parents=True, exist_ok=True)
     for p, payload in zip(paths, (cert, pareto, ledger), strict=True):
@@ -1809,7 +1819,7 @@ def main() -> None:
     pareto = regret_pareto_report(rows, certificate=cert, map_cell=map_cell,
                                   allow_partial=args.allow_partial, envelope=envelope)
     ledger = kill_ledger(rows, cert, pareto, allow_partial=args.allow_partial,
-                         envelope=envelope)
+                         envelope=envelope, map_cell=map_cell)
 
     print(f"{RULE}\n  {payload.get('study_id', STUDY_ID)} · registration "
           f"{payload.get('registration_commit', REGISTRATION_COMMIT)} · code "

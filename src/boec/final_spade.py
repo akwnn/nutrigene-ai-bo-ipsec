@@ -380,3 +380,43 @@ def spade_plate2(adapter, cand: Tensor, X1: Tensor, theta: float, n_plate2: int,
     if int(X_loc.shape[0]) == 0:
         return X_bnd, diag
     return torch.cat([X_loc, X_bnd]), diag
+
+
+def row_above_ceiling(tau_raw: float, gamma: float, tau_max_by_gamma: dict) -> bool:
+    """Is ``tau_raw`` at or above the certifiability ceiling **at this row's own gamma**?
+
+    🔴 **REGRESSION this function replaces.** The benchmark runner originally copied a
+    single condition-level ``above_ceiling`` flag onto every row regardless of that row's
+    own ``gamma``. That flag is correct as a *condition*-level fact -- the feasibility
+    gate computes it over the union of primary and diagnostic gammas, so it can warn that
+    a threshold breaches the ceiling at the gamma=0.99 diagnostic even when it is fine at
+    the primary gammas -- but wrong as a *per-row* one: a gamma=0.50 row inherited "True"
+    from a threshold that only breaches the ceiling three gammas away.
+
+    Found running C2 (hill, sigma=0.10) through the analyser: KF-9 flagged 6,600 of
+    13,200 rows as above-ceiling, when only the 2,200 at ``(tau_q_p=0.10, gamma=0.99)``
+    actually are. §4.5's rule -- no method certifies above ``tau_max`` at any budget, so
+    this must be excluded before it is read as a method failure -- only holds if the
+    exclusion is evaluated at the gamma the row was actually scored at.
+
+    Args:
+        tau_raw: the row's raw threshold.
+        gamma: the row's own point-level confidence, never the condition's worst.
+        tau_max_by_gamma: ``{gamma: tau_max}``, possibly JSON-round-tripped with string
+            keys (a committed feasibility file always has them). Both key types are
+            tried; a genuinely missing gamma raises rather than defaulting to "feasible",
+            because a silent default would hide exactly this class of bug again.
+
+    Raises:
+        KeyError: if ``gamma`` (as float or as its string form) is not a key.
+    """
+    if gamma in tau_max_by_gamma:
+        ceiling = tau_max_by_gamma[gamma]
+    elif str(gamma) in tau_max_by_gamma:
+        ceiling = tau_max_by_gamma[str(gamma)]
+    else:
+        raise KeyError(
+            f"gamma={gamma} has no entry in tau_max_by_gamma "
+            f"(keys: {sorted(tau_max_by_gamma)}); a missing gamma is a wiring error, not "
+            "an implicit 'feasible'")
+    return bool(float(tau_raw) >= float(ceiling))
