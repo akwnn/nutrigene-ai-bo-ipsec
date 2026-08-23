@@ -1,0 +1,314 @@
+{
+ "study_id": "spade-final-2026-08-23",
+ "registration_commit": "c4f58d3",
+ "code_commit": "4a0e273a0ce240e962ccc7465564afef2a31f2e7",
+ "artefact": "results/final-spade-regret-pareto.json",
+ "axes": [
+  "regret_rule_p",
+  "symmetric_difference_pred"
+ ],
+ "axes_note": "both axes are lower-is-better. The map axis is the SYMMETRIC DIFFERENCE and never type I alone -- \u00a79.4: type I read alone ranks silence first, because an arm certifying the empty set scores exactly 0",
+ "primary_terminal_rule": "P",
+ "excluded_infeasible_rows": 2200,
+ "excluded_note": "above-ceiling and INFEASIBLE rows are excluded from the map and regret analyses: \u00a74.5 makes that a property of the threshold, never a method failure. KF-9 still counts them",
+ "verdicts_withheld": false,
+ "rows": [
+  {
+   "arm": "doe",
+   "condition": "hill-d6-s0.1",
+   "regime_class": [
+    "ROBUSTNESS",
+    "TARGET"
+   ],
+   "map_cell": {
+    "tau_frac": 0.25,
+    "gamma": 0.95,
+    "alpha": 0.95
+   },
+   "regret": {
+    "A": 0.09241974145677449,
+    "P": 0.30721606297957843
+   },
+   "primary_rule": "P",
+   "regret_rule_note": "both rules are reported for every arm; comparing one arm's rule A against another's rule P is a protocol violation (spec \u00a77.4, FINDINGS \u00a743.1)",
+   "symmetric_difference": 0.2579785,
+   "type_i_volume": 0.029258000000000003,
+   "type_ii_volume": 0.2287205,
+   "rounds": 3,
+   "wells": 48,
+   "certificate_status": "NOT_ASSESSED",
+   "pareto_nondominated": false,
+   "unit": "n25"
+  },
+  {
+   "arm": "lhs",
+   "condition": "hill-d6-s0.1",
+   "regime_class": [
+    "ROBUSTNESS",
+    "TARGET"
+   ],
+   "map_cell": {
+    "tau_frac": 0.25,
+    "gamma": 0.95,
+    "alpha": 0.95
+   },
+   "regret": {
+    "A": 0.10414534918990564,
+    "P": 0.07473930670081265
+   },
+   "primary_rule": "P",
+   "regret_rule_note": "both rules are reported for every arm; comparing one arm's rule A against another's rule P is a protocol violation (spec \u00a77.4, FINDINGS \u00a743.1)",
+   "symmetric_difference": 0.1867035,
+   "type_i_volume": 0.0515835,
+   "type_ii_volume": 0.13512000000000002,
+   "rounds": 1,
+   "wells": 48,
+   "certificate_status": "NOT_ASSESSED",
+   "pareto_nondominated": true,
+   "unit": "n25"
+  },
+  {
+   "arm": "qlogei",
+   "condition": "hill-d6-s0.1",
+   "regime_class": [
+    "ROBUSTNESS",
+    "TARGET"
+   ],
+   "map_cell": {
+    "tau_frac": 0.25,
+    "gamma": 0.95,
+    "alpha": 0.95
+   },
+   "regret": {
+    "A": 0.09997634738234266,
+    "P": 0.07909727044377524
+   },
+   "primary_rule": "P",
+   "regret_rule_note": "both rules are reported for every arm; comparing one arm's rule A against another's rule P is a protocol violation (spec \u00a77.4, FINDINGS \u00a743.1)",
+   "symmetric_difference": 0.207909,
+   "type_i_volume": 0.010067499999999998,
+   "type_ii_volume": 0.19784150000000003,
+   "rounds": 10,
+   "wells": 48,
+   "certificate_status": "NOT_ASSESSED",
+   "pareto_nondominated": false,
+   "unit": "n25"
+  },
+  {
+   "arm": "qlognei",
+   "condition": "hill-d6-s0.1",
+   "regime_class": [
+    "ROBUSTNESS",
+    "TARGET"
+   ],
+   "map_cell": {
+    "tau_frac": 0.25,
+    "gamma": 0.95,
+    "alpha": 0.95
+   },
+   "regret": {
+    "A": 0.08742058451054692,
+    "P": 0.06909107022675262
+   },
+   "primary_rule": "P",
+   "regret_rule_note": "both rules are reported for every arm; comparing one arm's rule A against another's rule P is a protocol violation (spec \u00a77.4, FINDINGS \u00a743.1)",
+   "symmetric_difference": 0.2134885,
+   "type_i_volume": 0.011695500000000003,
+   "type_ii_volume": 0.20179299999999997,
+   "rounds": 10,
+   "wells": 48,
+   "certificate_status": "NOT_ASSESSED",
+   "pareto_nondominated": true,
+   "unit": "n25"
+  },
+  {
+   "arm": "random",
+   "condition": "hill-d6-s0.1",
+   "regime_class": [
+    "ROBUSTNESS",
+    "TARGET"
+   ],
+   "map_cell": {
+    "tau_frac": 0.25,
+    "gamma": 0.95,
+    "alpha": 0.95
+   },
+   "regret": {
+    "A": 0.13704731653455887,
+    "P": 0.09046285744655803
+   },
+   "primary_rule": "P",
+   "regret_rule_note": "both rules are reported for every arm; comparing one arm's rule A against another's rule P is a protocol violation (spec \u00a77.4, FINDINGS \u00a743.1)",
+   "symmetric_difference": 0.20502900000000002,
+   "type_i_volume": 0.0556155,
+   "type_ii_volume": 0.14941349999999998,
+   "rounds": 1,
+   "wells": 48,
+   "certificate_status": "NOT_ASSESSED",
+   "pareto_nondominated": false,
+   "unit": "n25"
+  },
+  {
+   "arm": "sobol",
+   "condition": "hill-d6-s0.1",
+   "regime_class": [
+    "ROBUSTNESS",
+    "TARGET"
+   ],
+   "map_cell": {
+    "tau_frac": 0.25,
+    "gamma": 0.95,
+    "alpha": 0.95
+   },
+   "regret": {
+    "A": 0.12973001795766514,
+    "P": 0.08547615037153257
+   },
+   "primary_rule": "P",
+   "regret_rule_note": "both rules are reported for every arm; comparing one arm's rule A against another's rule P is a protocol violation (spec \u00a77.4, FINDINGS \u00a743.1)",
+   "symmetric_difference": 0.1913060000000001,
+   "type_i_volume": 0.035036,
+   "type_ii_volume": 0.15627000000000002,
+   "rounds": 1,
+   "wells": 48,
+   "certificate_status": "NOT_ASSESSED",
+   "pareto_nondominated": false,
+   "unit": "n25"
+  },
+  {
+   "arm": "spade_cf_m0",
+   "condition": "hill-d6-s0.1",
+   "regime_class": [
+    "ROBUSTNESS",
+    "TARGET"
+   ],
+   "map_cell": {
+    "tau_frac": 0.25,
+    "gamma": 0.95,
+    "alpha": 0.95
+   },
+   "regret": {
+    "A": 0.14259101174339972,
+    "P": 0.08436354358562963
+   },
+   "primary_rule": "P",
+   "regret_rule_note": "both rules are reported for every arm; comparing one arm's rule A against another's rule P is a protocol violation (spec \u00a77.4, FINDINGS \u00a743.1)",
+   "symmetric_difference": 0.18041400000000002,
+   "type_i_volume": 0.0411715,
+   "type_ii_volume": 0.13924250000000002,
+   "rounds": 2,
+   "wells": 48,
+   "certificate_status": "INCONCLUSIVE",
+   "pareto_nondominated": false,
+   "unit": "n25"
+  },
+  {
+   "arm": "spade_cf_m4",
+   "condition": "hill-d6-s0.1",
+   "regime_class": [
+    "ROBUSTNESS",
+    "TARGET"
+   ],
+   "map_cell": {
+    "tau_frac": 0.25,
+    "gamma": 0.95,
+    "alpha": 0.95
+   },
+   "regret": {
+    "A": 0.1402537919072088,
+    "P": 0.08713992114981722
+   },
+   "primary_rule": "P",
+   "regret_rule_note": "both rules are reported for every arm; comparing one arm's rule A against another's rule P is a protocol violation (spec \u00a77.4, FINDINGS \u00a743.1)",
+   "symmetric_difference": 0.17704499999999995,
+   "type_i_volume": 0.03931200000000001,
+   "type_ii_volume": 0.137733,
+   "rounds": 2,
+   "wells": 48,
+   "certificate_status": "INCONCLUSIVE",
+   "pareto_nondominated": true,
+   "unit": "n25"
+  },
+  {
+   "arm": "spade_cf_m8",
+   "condition": "hill-d6-s0.1",
+   "regime_class": [
+    "ROBUSTNESS",
+    "TARGET"
+   ],
+   "map_cell": {
+    "tau_frac": 0.25,
+    "gamma": 0.95,
+    "alpha": 0.95
+   },
+   "regret": {
+    "A": 0.13850850177721258,
+    "P": 0.08350109679438267
+   },
+   "primary_rule": "P",
+   "regret_rule_note": "both rules are reported for every arm; comparing one arm's rule A against another's rule P is a protocol violation (spec \u00a77.4, FINDINGS \u00a743.1)",
+   "symmetric_difference": 0.1796745,
+   "type_i_volume": 0.041410999999999996,
+   "type_ii_volume": 0.13826350000000004,
+   "rounds": 2,
+   "wells": 48,
+   "certificate_status": "INCONCLUSIVE",
+   "pareto_nondominated": false,
+   "unit": "n25"
+  },
+  {
+   "arm": "spade_plate1_only",
+   "condition": "hill-d6-s0.1",
+   "regime_class": [
+    "ROBUSTNESS",
+    "TARGET"
+   ],
+   "map_cell": {
+    "tau_frac": 0.25,
+    "gamma": 0.95,
+    "alpha": 0.95
+   },
+   "regret": {
+    "A": 0.14259101174339972,
+    "P": 0.08631756891998096
+   },
+   "primary_rule": "P",
+   "regret_rule_note": "both rules are reported for every arm; comparing one arm's rule A against another's rule P is a protocol violation (spec \u00a77.4, FINDINGS \u00a743.1)",
+   "symmetric_difference": 0.19212849999999995,
+   "type_i_volume": 0.0614595,
+   "type_ii_volume": 0.130669,
+   "rounds": 1,
+   "wells": 40,
+   "certificate_status": "INCONCLUSIVE",
+   "pareto_nondominated": false,
+   "unit": "n25"
+  },
+  {
+   "arm": "spade_random_plate2",
+   "condition": "hill-d6-s0.1",
+   "regime_class": [
+    "ROBUSTNESS",
+    "TARGET"
+   ],
+   "map_cell": {
+    "tau_frac": 0.25,
+    "gamma": 0.95,
+    "alpha": 0.95
+   },
+   "regret": {
+    "A": 0.1400690767054253,
+    "P": 0.08219544728274608
+   },
+   "primary_rule": "P",
+   "regret_rule_note": "both rules are reported for every arm; comparing one arm's rule A against another's rule P is a protocol violation (spec \u00a77.4, FINDINGS \u00a743.1)",
+   "symmetric_difference": 0.17853199999999994,
+   "type_i_volume": 0.04633399999999999,
+   "type_ii_volume": 0.13219799999999998,
+   "rounds": 2,
+   "wells": 48,
+   "certificate_status": "INCONCLUSIVE",
+   "pareto_nondominated": true,
+   "unit": "n25"
+  }
+ ]
+}

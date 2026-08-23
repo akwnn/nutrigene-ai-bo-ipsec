@@ -889,6 +889,35 @@ def test_kf9_fails_when_an_above_ceiling_cell_reached_the_analysis():
     assert "ceiling" in ledger["kills"]["KF-9"]["interpretation"].lower()
 
 
+def test_kf9_does_not_fire_on_an_above_ceiling_row_at_the_DIAGNOSTIC_gamma():
+    """🔴 REGRESSION, found running C2 through the analyser: KF-9 flagged 2,200 rows at
+    gamma=0.99 (the registered diagnostic corner, spec §2.4/§12 Erratum 1) as a feasibility
+    protocol breach.
+
+    Spec names gamma=0.99 "a pre-registered STRESS DIAGNOSTIC", never claimed as primary
+    evidence, and Erratum 1 already anticipates and reports exactly this case at sigma=0.25:
+    "gamma=0.95 admits no nontrivial certifiable region... a statement about assurance and
+    noise that no method can fix." The same logic applies to gamma=0.99 wherever it exceeds
+    the ceiling: it is an ALREADY-REGISTERED, EXPECTED fact about the diagnostic corner, not
+    a "planned cell that should have been excluded pre-run" (spec §10's actual KF-9 wording).
+
+    The bug: `primary_rows = [... condition_key(r) in PRIMARY_CONDITIONS]` filters by
+    primary CONDITION only. `GAMMAS_PRIMARY` already exists in this module (used for
+    `gamma_role` elsewhere) but was never applied here, so a diagnostic-gamma row in an
+    otherwise-primary condition was treated identically to a primary-gamma one.
+    """
+    rows = _full_comparator_condition()
+    rows += _cell_rows("spade_cf_m0", n_nonempty=12, n_contained=0, above_ceiling=True,
+                       gamma=0.99, tau_frac_or_quantile=0.85, regime_class="ROBUSTNESS")
+    cert = A.certificate_report(rows)
+    ledger = A.kill_ledger(rows, cert, A.regret_pareto_report(rows, certificate=cert))
+
+    assert ledger["kills"]["KF-9"]["status"] == "PASS", (
+        "a gamma=0.99 diagnostic row above ceiling must not fail KF-9 -- it is an "
+        "expected, already-registered fact about the diagnostic corner (Erratum 1), not a "
+        "feasibility-gate protocol breach")
+
+
 def test_kf10_fires_exactly_when_a_pass_was_downgraded():
     rows = [r for r in _full_comparator_condition() if r["arm"] != "spade_cf_m0"]
     rows += _cell_rows("spade_cf_m0", n_nonempty=12, n_contained=12, n_empty=20)

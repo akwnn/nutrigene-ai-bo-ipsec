@@ -1,0 +1,278 @@
+{
+ "study_id": "spade-final-2026-08-23",
+ "registration_commit": "c4f58d3",
+ "code_commit": "4a0e273a0ce240e962ccc7465564afef2a31f2e7",
+ "artefact": "results/final-spade-kill-ledger.json",
+ "verdicts_withheld": false,
+ "status_semantics": {
+  "PASS": "the registered claim survives",
+  "FAIL": "the claim does not survive; the registered consequence applies",
+  "INCONCLUSIVE": "the design cannot answer it here",
+  "NOT_RUN": "the arms or cells it needs are absent -- NOT a pass (\u00a735.2)",
+  "MOOT": "settled elsewhere; the contrast is not defined"
+ },
+ "target_primary_conditions": [
+  "hill-d6-s0.1"
+ ],
+ "broad_paper_condition": "spec \u00a710.1: the broad SPADE-method paper is supportable only if ALL of the seven conditions hold. If any fails the paper claim NARROWS -- it is never hidden",
+ "kills": {
+  "KF-1": {
+   "id": "KF-1",
+   "claim": "SPADE's certificate is valid prospectively under cross-fit",
+   "fires_when": "any primary F-CERT cell demonstrably below nominal after exact test + Holm",
+   "status": "INCONCLUSIVE",
+   "effect": null,
+   "ci": null,
+   "p": null,
+   "p_adjusted": null,
+   "sesoi": 0.02,
+   "sesoi_comparison": "SESOI = 0.02; not applicable to this kill",
+   "denominator": 60,
+   "source": {
+    "artefact": "results/final-spade-certificate.json",
+    "key": "cells[].confirmatory"
+   },
+   "interpretation": "no cell is confirmatory: every one is below the evidence floor of 10, outside the frozen F-CERT family, or sits in a condition missing a mandatory comparator (spec \u00a74)"
+  },
+  "KF-2": {
+   "id": "KF-2",
+   "claim": "Certificate validity extends beyond hill d=6 sigma=0.25",
+   "fires_when": "C3/C4 INCONCLUSIVE or FAIL -> the claim narrows to hill",
+   "status": "NOT_RUN",
+   "effect": null,
+   "ci": null,
+   "p": null,
+   "p_adjusted": null,
+   "sesoi": 0.02,
+   "sesoi_comparison": "SESOI = 0.02; not applicable to this kill",
+   "denominator": null,
+   "source": {
+    "artefact": "results/final-spade-certificate.json",
+    "key": "cells[condition in hartmann6]"
+   },
+   "interpretation": "no confirmatory cell in hartmann6 d=6 or d=8, so the study carries no evidence beyond the single historical hill condition and the claim narrows to hill (\u00a710.1 item 2)"
+  },
+  "KF-3": {
+   "id": "KF-3",
+   "claim": "Targeted plate 2 earns its complexity",
+   "fires_when": "m0 does not beat random_plate2 by >=SESOI on symmetric difference in any TARGET condition",
+   "status": "FAIL",
+   "effect": -0.0018820000000000009,
+   "ci": [
+    -0.006238224999999998,
+    0.0026081874999999964
+   ],
+   "p": 0.4107651710510254,
+   "p_adjusted": 0.4107651710510254,
+   "sesoi": 0.02,
+   "sesoi_comparison": "effect -0.00188 against SESOI 0.02 in hill-d6-s0.1",
+   "denominator": 25,
+   "source": {
+    "artefact": "results/final-spade-regret-pareto.json",
+    "key": "rows[arm=spade_cf_m0,condition=hill-d6-s0.1].symmetric_difference"
+   },
+   "interpretation": "targeted plate-2 SUR did not demonstrate value beyond random second-plate wells. Spec \u00a77.3's registered consequence applies: the mechanistic claim comes out of the paper. This is THE load-bearing causal comparison of the study",
+   "holm_family": "F-BOUND",
+   "holm_family_size": 2,
+   "holm_member": "spade_cf_m0 vs spade_random_plate2 @ hill-d6-s0.1",
+   "per_condition": {
+    "hill-d6-s0.1": {
+     "effect": -0.0018820000000000009,
+     "p": 0.4107651710510254,
+     "p_adjusted": 0.4107651710510254,
+     "units_disagree": false
+    }
+   },
+   "units_disagree": false
+  },
+  "KF-4": {
+   "id": "KF-4",
+   "claim": "Plate 2 does anything at all",
+   "fires_when": "m0 does not beat plate1_only on symmetric difference",
+   "status": "FAIL",
+   "effect": 0.0117145,
+   "ci": [
+    0.007429837499999992,
+    0.015644412500000007
+   ],
+   "p": 6.365776062011719e-05,
+   "p_adjusted": 0.00012731552124023438,
+   "sesoi": 0.02,
+   "sesoi_comparison": "effect +0.01171 against SESOI 0.02 in hill-d6-s0.1",
+   "denominator": 25,
+   "source": {
+    "artefact": "results/final-spade-regret-pareto.json",
+    "key": "rows[arm=spade_cf_m0,condition=hill-d6-s0.1].symmetric_difference"
+   },
+   "interpretation": "plate 2 does not improve the map over plate 1 alone. Note the asymmetry spec \u00a74.1 requires: plate1_only is budget-short by 8 wells, so it is a rounds/wells reference and NOT an equal-well comparator -- this failure is the stronger reading of the two, not the weaker one",
+   "holm_family": "F-BOUND",
+   "holm_family_size": 2,
+   "holm_member": "spade_cf_m0 vs spade_plate1_only @ hill-d6-s0.1",
+   "per_condition": {
+    "hill-d6-s0.1": {
+     "effect": 0.0117145,
+     "p": 6.365776062011719e-05,
+     "p_adjusted": 0.00012731552124023438,
+     "units_disagree": false
+    }
+   },
+   "units_disagree": false
+  },
+  "KF-5": {
+   "id": "KF-5",
+   "claim": "m>0 lowers regret safely",
+   "fires_when": "the \u00a77.5 conjunction is unmet -> trade-off, not an improvement",
+   "status": "FAIL",
+   "effect": -0.0027763775641876155,
+   "ci": [
+    -0.007611598878443308,
+    0.002124458251760016
+   ],
+   "p": 0.312333345413208,
+   "p_adjusted": 0.312333345413208,
+   "sesoi": 0.02,
+   "sesoi_comparison": "rule-P regret reduction -0.00278 against SESOI 0.02",
+   "denominator": 25,
+   "source": {
+    "artefact": "results/final-spade-regret-pareto.json",
+    "key": "rows[arm=spade_cf_m4,condition=hill-d6-s0.1].regret.P"
+   },
+   "interpretation": "spade_cf_m4 does not meet the full \u00a77.5 conjunction in hill-d6-s0.1, so m>0 is reported as a TRADE-OFF and not as an improvement. A regret reduction that damages the certificate is not a SPADE improvement",
+   "clauses": {
+    "regret_reduced_by_sesoi": false,
+    "map_not_worse_by_more_than_0.02": true,
+    "calibration_not_worse_by_more_than_0.005": true,
+    "certificate_retained": false
+   },
+   "holm_family": "F-ALLOC",
+   "terminal_rule": "P"
+  },
+  "KF-6": {
+   "id": "KF-6",
+   "claim": "SPADE is competitive with Sobol on the map in TARGET regimes",
+   "fires_when": "sobol beats m0 by >SESOI in a TARGET condition",
+   "status": "PASS",
+   "effect": 0.010891999999999999,
+   "ci": [
+    0.005969112499999999,
+    0.01566185
+   ],
+   "p": 0.00028705596923828125,
+   "p_adjusted": 0.00028705596923828125,
+   "sesoi": 0.02,
+   "sesoi_comparison": "effect +0.01089 against SESOI 0.02 in hill-d6-s0.1",
+   "denominator": 25,
+   "source": {
+    "artefact": "results/final-spade-regret-pareto.json",
+    "key": "rows[arm=spade_cf_m0,condition=hill-d6-s0.1].symmetric_difference"
+   },
+   "interpretation": "SPADE is within SESOI of Sobol on the symmetric difference in the TARGET regime, which is competitiveness and is never phrased as a win (\u00a79 publication guard 1)",
+   "holm_family": "F-MAP",
+   "holm_family_size": 3,
+   "holm_member": "spade_cf_m0 vs sobol @ hill-d6-s0.1",
+   "per_condition": {
+    "hill-d6-s0.1": {
+     "effect": 0.010891999999999999,
+     "p": 0.00028705596923828125,
+     "p_adjusted": 0.00028705596923828125,
+     "units_disagree": false
+    }
+   },
+   "units_disagree": false
+  },
+  "KF-7": {
+   "id": "KF-7",
+   "claim": "SPADE is competitive with qLogNEI on the map in TARGET regimes",
+   "fires_when": "qlognei beats m0 by >SESOI in a TARGET condition",
+   "status": "PASS",
+   "effect": 0.0330745,
+   "ci": [
+    0.028139912499999996,
+    0.038435375
+   ],
+   "p": 5.960464477539063e-08,
+   "p_adjusted": 1.7881393432617188e-07,
+   "sesoi": 0.02,
+   "sesoi_comparison": "effect +0.03307 against SESOI 0.02 in hill-d6-s0.1",
+   "denominator": 25,
+   "source": {
+    "artefact": "results/final-spade-regret-pareto.json",
+    "key": "rows[arm=spade_cf_m0,condition=hill-d6-s0.1].symmetric_difference"
+   },
+   "interpretation": "SPADE is within SESOI of qLogNEI on the symmetric difference in the TARGET regime, which is competitiveness and is never phrased as a win (\u00a79 publication guard 1)",
+   "holm_family": "F-MAP",
+   "holm_family_size": 3,
+   "holm_member": "spade_cf_m0 vs qlognei @ hill-d6-s0.1",
+   "per_condition": {
+    "hill-d6-s0.1": {
+     "effect": 0.0330745,
+     "p": 5.960464477539063e-08,
+     "p_adjusted": 1.7881393432617188e-07,
+     "units_disagree": false
+    }
+   },
+   "units_disagree": false
+  },
+  "KF-8": {
+   "id": "KF-8",
+   "claim": "Regret is at practical parity under a common terminal rule",
+   "fires_when": "m0 - best BO regret > SESOI under rule P",
+   "status": "PASS",
+   "effect": 0.015272473358876977,
+   "ci": [
+    0.008158484480851545,
+    0.02230523400744078
+   ],
+   "p": 0.0007149577140808105,
+   "p_adjusted": null,
+   "sesoi": 0.02,
+   "sesoi_comparison": "gap +0.01527 against SESOI 0.02",
+   "denominator": 25,
+   "source": {
+    "artefact": "results/final-spade-regret-pareto.json",
+    "key": "rows[arm=spade_cf_m0,condition=hill-d6-s0.1].regret.P"
+   },
+   "interpretation": "SPADE is within SESOI of qlognei under a common terminal rule. That is PARITY and \u00a711 prohibits calling practical parity a superiority win -- \u00a743.1 is this project doing it once already",
+   "bar_arm": "qlognei",
+   "terminal_rule": "P",
+   "estimand_note": "both sides are rule P. \u00a743.1: the registered r* bar was a rule A column and the mixed comparison had to be withdrawn",
+   "units_disagree": false
+  },
+  "KF-9": {
+   "id": "KF-9",
+   "claim": "The study's cells are feasible",
+   "fires_when": "any planned cell with tau >= tau_max reached the analysis",
+   "status": "PASS",
+   "effect": 0,
+   "ci": null,
+   "p": null,
+   "p_adjusted": null,
+   "sesoi": 0.02,
+   "sesoi_comparison": "a count, not an effect size; SESOI does not apply",
+   "denominator": 8800,
+   "source": {
+    "artefact": "results/final-spade-certificate.json",
+    "key": "cells[].infeasible"
+   },
+   "interpretation": "every analysed primary-gamma cell sits below the certifiability ceiling, as the pre-run feasibility gate requires"
+  },
+  "KF-10": {
+   "id": "KF-10",
+   "claim": "Empty-set degeneracy does not explain a pass",
+   "fires_when": "any PASS cell with empty rate > 0.50",
+   "status": "FAIL",
+   "effect": 10,
+   "ci": null,
+   "p": null,
+   "p_adjusted": null,
+   "sesoi": 0.02,
+   "sesoi_comparison": "empty-rate ceiling 50%; SESOI does not apply to a degeneracy guard",
+   "denominator": 40,
+   "source": {
+    "artefact": "results/final-spade-certificate.json",
+    "key": "cells[].downgraded_by"
+   },
+   "interpretation": "10 cell(s) reached PASS on containment while certifying nothing in more than half their campaigns, and were downgraded to INCONCLUSIVE. \u00a741.3 records the same failure mode off hill: the problem is emptiness, not miscoverage -- and an empty certificate is vacuously contained"
+  }
+ }
+}

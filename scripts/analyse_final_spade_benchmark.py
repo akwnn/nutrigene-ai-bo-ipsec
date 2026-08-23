@@ -1477,7 +1477,19 @@ def kill_ledger(rows: list, certificate: dict, pareto: dict, *,
     kills["KF-8"] = _kf8(rows, targets)
 
     # ---- KF-9 --------------------------------------------------------------------------
-    primary_rows = [r for r in live_rows(rows) if condition_key(r) in PRIMARY_CONDITIONS]
+    # 🔴 REGRESSION, fixed. `primary_rows` filtered by primary CONDITION only, so a row at
+    # the registered DIAGNOSTIC gamma (0.99) inside an otherwise-primary condition was
+    # treated identically to a primary-gamma one. Spec names gamma=0.99 "a pre-registered
+    # stress diagnostic" and Erratum 1 already anticipates and reports exactly this case at
+    # sigma=0.25 ("gamma=0.95 admits no nontrivial certifiable region... a statement about
+    # assurance and noise that no method can fix") -- the same logic applies to gamma=0.99
+    # wherever it exceeds the ceiling. Spec §10's actual KF-9 wording is "any PLANNED cell",
+    # and the diagnostic gamma was never one of the cells feasibility classification (which
+    # spec §5.1/Erratum 1 restrict to GAMMAS_PRIMARY) was planned or gated on. Found via
+    # tests/test_final_spade_statistics.py::test_kf9_does_not_fire_on_an_above_ceiling_row_at_the_DIAGNOSTIC_gamma.
+    primary_rows = [r for r in live_rows(rows)
+                    if condition_key(r) in PRIMARY_CONDITIONS
+                    and any(abs(float(r["gamma"]) - g) < 1e-12 for g in GAMMAS_PRIMARY)]
     breached = [r for r in primary_rows if r.get("above_ceiling")]
     kills["KF-9"] = _kill(
         "KF-9", "FAIL" if breached else ("PASS" if primary_rows else "NOT_RUN"),
@@ -1485,13 +1497,17 @@ def kill_ledger(rows: list, certificate: dict, pareto: dict, *,
         comparison="a count, not an effect size; SESOI does not apply",
         artefact=CERTIFICATE_ARTEFACT, source_key="cells[].infeasible",
         interpretation=(
-            f"{len(breached)} primary row(s) sit at or above the certifiability ceiling and "
-            "reached the analyser. §4.5: no method certifies above tau_max at any budget, "
-            "so these cells must be excluded BEFORE campaigns run. A zero scored there is a "
-            "property of the threshold and reading it as a method failure is precisely the "
-            "error the pre-run feasibility gate exists to stop" if breached else
-            "every analysed primary cell sits below the certifiability ceiling, as the "
-            "pre-run feasibility gate requires"))
+            f"{len(breached)} primary-gamma row(s) sit at or above the certifiability "
+            "ceiling and reached the analyser. §4.5: no method certifies above tau_max at "
+            "any budget, so these cells must be excluded BEFORE campaigns run. A zero "
+            "scored there is a property of the threshold and reading it as a method "
+            "failure is precisely the error the pre-run feasibility gate exists to stop. "
+            "(Diagnostic gamma=0.99 rows are excluded from this check: spec names it a "
+            "stress diagnostic never claimed as primary evidence, and Erratum 1 already "
+            "registers that it may exceed the ceiling as a fact about noise and assurance, "
+            "not a protocol breach.)" if breached else
+            "every analysed primary-gamma cell sits below the certifiability ceiling, as "
+            "the pre-run feasibility gate requires"))
 
     # ---- KF-10 -------------------------------------------------------------------------
     downgraded = [c for c in cells if c.get("downgraded_by") == "KF-10"]
