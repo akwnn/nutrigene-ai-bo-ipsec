@@ -295,6 +295,39 @@ answer" on this family. Where SPADE *does* answer, its map score is competitive 
 conditional on answering. **This condition needed no defect fix and produced no surprises**;
 it did exactly what it was pre-registered to do.
 
+### 10.4 S2 (levy, d=6, σ=0.25, ROBUSTNESS) — a third pattern: the map does not discriminate at all
+
+At levy's σ=0.25, γ=0.95 is **entirely above the certifiability ceiling** at both registered
+`τ_q` (confirmed: `above_ceiling=True` for every row at γ∈{0.95,0.99}, both thresholds) — the
+same mechanism §17.2 documented for C1, now total rather than partial. The shared display
+cell (γ=0.95, matching C2's TARGET cell) therefore has **zero usable levy rows** for the map
+metric; regret is unaffected (it does not depend on γ). Read instead at levy's own primary
+γ=0.50 (τ_q p=0.25):
+
+| arm | regret P (primary) | sym. diff (γ=0.50) |
+|---|---|---|
+| qlognei | **0.0595** | 0.2451 |
+| qlogei | 0.0708 | 0.2469 |
+| spade_cf_m8 | 0.0764 | 0.2475 |
+| spade_cf_m4 | 0.0829 | 0.2478 |
+| spade_random_plate2 | 0.0726 | 0.2481 |
+| sobol | 0.0727 | 0.2481 |
+| lhs | 0.0760 | 0.2482 |
+| spade_cf_m0 | 0.0747 | 0.2482 |
+| random | 0.0663 | 0.2490 |
+| spade_plate1_only | 0.0756 | 0.2497 |
+| **doe** | **0.2680** | 0.2511 |
+
+**A third, distinct pattern.** Neither the hartmann6 split (§10.1/§10.2, SPADE wins map) nor
+the ackley split (§10.3, `doe` wins regret but loses map badly) — here **the map barely
+discriminates between any of the 11 arms at all** (0.2451–0.2511, a spread of 0.006, versus
+0.16–0.26 spreads elsewhere). Regret discriminates normally: `qlognei` best, `doe`
+catastrophically worst (0.2680, ~4× the next-worst arm). §41 records levy under-covering at
+γ=0.99; this near-flat map result is consistent with a landscape where the predictive map is
+close to saturated regardless of design at this threshold — informative on its own, and
+recorded rather than smoothed into either of the other two families' stories. ROBUSTNESS, no
+kill adjudicated.
+
 ## 11. Sobol, BO and DoE comparison
 
 **C2 (§8's table) is the load-bearing comparison — it is the TARGET condition.** `sobol`

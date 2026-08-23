@@ -27,7 +27,7 @@
    "p_adjusted": null,
    "sesoi": 0.02,
    "sesoi_comparison": "SESOI = 0.02; not applicable to this kill",
-   "denominator": 300,
+   "denominator": 360,
    "source": {
     "artefact": "results/final-spade-certificate.json",
     "key": "cells[].confirmatory"
