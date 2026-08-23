@@ -541,10 +541,26 @@ def check_no_normal_approximation(analysis: str | None,
 # ==========================================================================
 
 def _rows(obj: dict | None, key: str = "rows") -> list[dict]:
+    """Rows or cells, each carrying an explicit ``condition_id``.
+
+    The benchmark runner takes ``--condition`` and records it **once, in the
+    envelope**; the analyser's certificate cells call the field ``condition``.
+    Both are reasonable, and neither gives a row the key these checks group by.
+    Reconstructing it here rather than asking either to change keeps the artefact
+    the record — but it has to be reconstructed, because a check that grouped by a
+    missing key would find every condition complete by finding only one.
+    """
     if not obj:
         return []
     v = obj.get(key) or obj.get("cells") or obj.get("entries") or []
-    return [r for r in v if isinstance(r, dict)]
+    env_cond = obj.get("condition")
+    out = []
+    for r in v:
+        if not isinstance(r, dict):
+            continue
+        cid = r.get("condition_id") or r.get("condition") or env_cond
+        out.append({**r, "condition_id": str(cid)} if cid else dict(r))
+    return out
 
 
 def check_no_suppressed_failures(findings: str | None, ledger: dict | None,
@@ -744,6 +760,16 @@ def check_mandatory_comparators(benchmark: dict | None,
                 f"mandatory arm {arm!r} has no rows in primary condition {cid} and no "
                 "structured unavailable_reason — §4 makes a missing comparator a hard "
                 "failure that blocks any primary conclusion, not an absence"))
+
+    # The runner computes this itself and prints a warning. A warning on a console
+    # nobody kept is not a gate, so the recorded value is re-read here and given
+    # the exit code §13.6 says it has.
+    for arm in benchmark.get("missing_mandatory_arms") or []:
+        out.append(Violation(
+            "mandatory_comparator", "§4 (§13.6)",
+            str(benchmark.get("condition", benchmark.get("source_files", "benchmark"))),
+            f"the benchmark artefact records {arm!r} in 'missing_mandatory_arms' — it "
+            "was neither run nor given an unavailable_reason"))
     return out
 
 
@@ -859,11 +885,36 @@ def load_release(root: Path, *, pre_release: bool = False) -> Release:
         else:
             rel.missing.append(path)
     for attr, path in ARTEFACT_REL.items():
-        p = root / path
-        if p.is_file():
-            setattr(rel, attr, json.loads(p.read_text()))
-        else:
+        stem = path[:-len(".json")]
+        # `run_final_spade_benchmark.py` takes --condition and writes one file per
+        # condition, so a release may hold `final-spade-primary-C1.json` .. `-C4`
+        # rather than one file. Reading only the bare name would audit one
+        # condition and report the other three as complete by never seeing them.
+        paths = sorted({*root.glob(f"{stem}.json"), *root.glob(f"{stem}-*.json")})
+        if not paths:
             rel.missing.append(path)
+            continue
+        merged: dict = {}
+        rows, cells = [], []
+        for p in paths:
+            obj = json.loads(p.read_text())
+            if not isinstance(obj, dict):
+                continue
+            cond = obj.get("condition")
+            merged = {**{k: v for k, v in obj.items() if k not in ("rows", "cells")},
+                      **merged}
+            for key, sink in (("rows", rows), ("cells", cells)):
+                for item in obj.get(key) or []:
+                    if not isinstance(item, dict):
+                        continue
+                    cid = item.get("condition_id") or item.get("condition") or cond
+                    sink.append({**item, "condition_id": str(cid)} if cid else dict(item))
+        if rows:
+            merged["rows"] = rows
+        if cells:
+            merged["cells"] = cells
+        merged["source_files"] = [str(p.relative_to(root)) for p in paths]
+        setattr(rel, attr, merged)
     return rel
 
 

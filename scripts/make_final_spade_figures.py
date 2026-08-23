@@ -84,8 +84,8 @@ OUT_DIR = RESULTS / "figures" / "final-spade"
 #: Every file this module is allowed to open. A test asserts the shape of these
 #: names, so a future edit cannot quietly widen the module's reach.
 ARTEFACTS = {
-    "benchmark": "final-spade-benchmark.json",
-    "certificates": "final-spade-certificates.json",
+    "benchmark": "final-spade-primary.json",
+    "certificates": "final-spade-certificate.json",
     "feasibility": "final-spade-feasibility.json",
     "kill_ledger": "final-spade-kill-ledger.json",
     "manifest": "final-spade-manifest.json",
@@ -126,6 +126,14 @@ ARM_FAMILY_FALLBACK = {
     "doe_unscreened": "classical RSM",
 }
 
+#: `scripts/run_final_spade_benchmark.py` writes the short names. Mapped rather
+#: than renamed at the source: the artefact is the record, and a figure script
+#: that edits the record to suit its own legend is doing the wrong repair.
+FAMILY_ALIAS = {"spade-ctrl": "SPADE control", "spade control": "SPADE control",
+                "spade_control": "SPADE control", "classical": "classical RSM",
+                "classical rsm": "classical RSM", "spade": "SPADE", "bo": "BO",
+                "space-filling": "space-filling", "space filling": "space-filling"}
+
 
 @dataclass
 class Rendered:
@@ -141,13 +149,82 @@ class Rendered:
 # Reading
 # --------------------------------------------------------------------------
 
+def _stamp(item: dict, envelope_condition) -> dict:
+    """Give a row or cell an explicit ``condition_id``.
+
+    ``run_final_spade_benchmark.py`` writes **one file per condition** and records
+    the condition once, in the envelope, not on every row; the analyser's
+    certificate cells call the same field ``condition``. Neither is wrong — but a
+    figure that groups by a key half the artefacts do not carry would silently
+    collapse four conditions into one panel, which is the pooling §8.2 hard-fails
+    on. So the key is reconstructed here, from the envelope or from the cell's own
+    geometry, and never assumed.
+    """
+    cid = item.get("condition_id") or item.get("condition") or envelope_condition
+    if not cid and item.get("family"):
+        cid = (f"{item.get('family')} d={item.get('dimension')} "
+               f"σ={item.get('sigma')}")
+    return {**item, "condition_id": str(cid)} if cid else dict(item)
+
+
 def _read(results_dir: Path, key: str) -> dict | None:
-    p = Path(results_dir) / ARTEFACTS[key]
-    if not p.is_file():
+    """One artefact, merged across ``<stem>.json`` and any ``<stem>-*.json``.
+
+    The benchmark runner takes ``--condition`` and writes a file per condition, so
+    a release may hold ``final-spade-primary-C1.json`` … ``-C4.json`` rather than
+    one file. Reading only the bare name would draw one condition and skip three
+    without saying so.
+    """
+    stem = ARTEFACTS[key][:-len(".json")]
+    d = Path(results_dir)
+    paths = sorted({*d.glob(f"{stem}.json"), *d.glob(f"{stem}-*.json")})
+    if not paths:
         print(f"SKIP  {ARTEFACTS[key]} — absent; every figure that needs it is "
               f"skipped rather than drawn from substituted values")
         return None
-    return json.loads(p.read_text())
+    merged: dict = {}
+    rows, cells = [], []
+    for p in paths:
+        obj = json.loads(p.read_text())
+        if not isinstance(obj, dict):
+            continue
+        cond = obj.get("condition")
+        merged = {**{k: v for k, v in obj.items() if k not in ("rows", "cells")},
+                  **merged}
+        rows += [_stamp(r, cond) for r in obj.get("rows") or [] if isinstance(r, dict)]
+        cells += [_stamp(c, cond) for c in obj.get("cells") or [] if isinstance(c, dict)]
+    if rows:
+        merged["rows"] = rows
+    if cells:
+        merged["cells"] = cells
+    merged["source_files"] = [p.name for p in paths]
+    return merged
+
+
+def _cell(c: dict) -> dict:
+    """A certificate cell flattened.
+
+    `analyse_final_spade_benchmark.py` nests the primary estimate under
+    ``crossfit`` and the diagnostic under ``same_draw``, each carrying its own
+    ``role``. That nesting is a good decision — it makes the primary/diagnostic
+    split structural rather than a naming convention — so it is read as written
+    and flattened here rather than asked to change.
+    """
+    cf = c.get("crossfit") if isinstance(c.get("crossfit"), dict) else {}
+    sd = c.get("same_draw") if isinstance(c.get("same_draw"), dict) else {}
+
+    def pick(flat, nested, src):
+        v = c.get(flat)
+        return src.get(nested) if v is None else v
+
+    return {**c,
+            "crossfit_rate": pick("crossfit_rate", "proportion", cf),
+            "crossfit_x": pick("crossfit_x", "x", cf),
+            "crossfit_n": pick("crossfit_n", "n", cf),
+            "ci_lo": pick("ci_lo", "ci_lo", cf), "ci_hi": pick("ci_hi", "ci_hi", cf),
+            "same_draw_rate": pick("same_draw_rate", "proportion", sd),
+            "same_draw_x": pick("same_draw_x", "x", sd),
+            "same_draw_n": pick("same_draw_n", "n", sd)}
 
 
 def _rows(obj: dict | None, *keys: str) -> list[dict]:
@@ -156,7 +233,8 @@ def _rows(obj: dict | None, *keys: str) -> list[dict]:
     for k in keys or ("rows",):
         v = obj.get(k)
         if isinstance(v, list):
-            return [r for r in v if isinstance(r, dict)]
+            items = [r for r in v if isinstance(r, dict)]
+            return [_cell(r) for r in items] if k == "cells" else items
     return []
 
 
@@ -171,7 +249,10 @@ def _mean(rows: Sequence[dict], key: str) -> float | None:
 
 
 def _family(r: dict) -> str:
-    return str(r.get("arm_family") or ARM_FAMILY_FALLBACK.get(str(r.get("arm")), "other"))
+    raw = r.get("arm_family")
+    if raw:
+        return FAMILY_ALIAS.get(str(raw).strip().lower(), str(raw))
+    return ARM_FAMILY_FALLBACK.get(str(r.get("arm")), "other")
 
 
 def _by(rows: Sequence[dict], key: str) -> dict:
@@ -182,7 +263,17 @@ def _by(rows: Sequence[dict], key: str) -> dict:
 
 
 def _terminal_rules(rows: Sequence[dict]) -> str:
+    """What the caption says about the terminal rule.
+
+    The runner writes ``terminal_rule = "both"`` because each row carries both
+    ``regret_rule_a`` and ``regret_rule_p``. Spelling that out matters: §7.4 makes
+    rule P the primary estimand and rule A a required robustness outcome, and
+    §43.1 records a claim withdrawn for comparing one arm's rule A against
+    another's rule P. "both" alone would let a reader assume the figure chose.
+    """
     rules = sorted({str(r.get("terminal_rule")) for r in rows if r.get("terminal_rule")})
+    if rules == ["both"]:
+        return "A and P both recorded per row; rule P is the primary estimand (§7.4)"
     return "/".join(rules) if rules else "n/a"
 
 

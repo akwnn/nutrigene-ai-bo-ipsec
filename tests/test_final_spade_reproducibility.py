@@ -20,7 +20,7 @@ fires on nothing, and only the pair of tests distinguishes them.
 WHY EVERYTHING HERE IS SYNTHETIC
 ------------------------------------------------------------------------------
 
-**The final study has not run.** ``results/final-spade-benchmark.json``,
+**The final study has not run.** ``results/final-spade-primary.json``,
 ``-certificates.json``, ``-kill-ledger.json``, ``-manifest.json`` and
 ``docs/FINDINGS-SPADE-FINAL.md`` do not exist yet. Tests that waited for them
 would be written after the results were visible, which is the exact ordering the
@@ -99,7 +99,7 @@ def clean_ledger() -> dict:
         {"id": f"KF-{i}", "claim": f"registered claim {i}", "status": "PASS",
          "effect": 0.01, "interval": [-0.01, 0.03], "p": 0.4, "p_adjusted": 0.9,
          "sesoi_comparison": "inside SESOI", "denominator": 100,
-         "source_artefact": "results/final-spade-benchmark.json", "source_key": "rows"}
+         "source_artefact": "results/final-spade-primary.json", "source_key": "rows"}
         for i in range(1, 11)]}
 
 
@@ -216,8 +216,8 @@ def write_release(root: Path, *, findings: str = CLEAN_FINDINGS, ledger=None,
     (root / "scripts" / "analyse_final_spade_benchmark.py").write_text(src)
     for name, obj in (("kill-ledger", ledger or clean_ledger()),
                       ("feasibility", feasibility or clean_feasibility()),
-                      ("benchmark", benchmark or clean_benchmark()),
-                      ("certificates", certificates or clean_certificates())):
+                      ("primary", benchmark or clean_benchmark()),
+                      ("certificate", certificates or clean_certificates())):
         (root / "results" / f"final-spade-{name}.json").write_text(json.dumps(obj))
     man = manifest if manifest is not None else clean_manifest(
         root, {"scripts/analyse_final_spade_benchmark.py": src})
@@ -813,7 +813,7 @@ def test_pre_release_mode_skips_absent_artefacts_without_passing_them(tmp_path):
     satisfied, or it gets written after the results exist -- which is the failure
     mode the whole registration is built against."""
     write_release(tmp_path)
-    (tmp_path / "results" / "final-spade-benchmark.json").unlink()
+    (tmp_path / "results" / "final-spade-primary.json").unlink()
     r = subprocess.run([sys.executable, str(VALIDATOR_PATH), "--root", str(tmp_path),
                         "--pre-release"], capture_output=True, text=True)
     assert r.returncode == 0
@@ -842,8 +842,8 @@ def artefact_dir(tmp_path: Path) -> Path:
     d.mkdir(parents=True, exist_ok=True)
     for name, obj in (("kill-ledger", clean_ledger()),
                       ("feasibility", clean_feasibility()),
-                      ("benchmark", clean_benchmark()),
-                      ("certificates", clean_certificates())):
+                      ("primary", clean_benchmark()),
+                      ("certificate", clean_certificates())):
         (d / f"final-spade-{name}.json").write_text(json.dumps(obj))
     return d
 
@@ -874,17 +874,17 @@ def test_every_figure_is_written_from_synthetic_artefacts(tmp_path):
 
 def test_a_missing_artefact_skips_the_figure_with_a_message(tmp_path, capsys):
     d = artefact_dir(tmp_path)
-    (d / "final-spade-certificates.json").unlink()
+    (d / "final-spade-certificate.json").unlink()
     out = figs.make_all_figures(d, tmp_path / "fig")
     assert out["crossfit_containment"] is None
     assert out["same_draw_vs_crossfit"] is None
     assert out["pareto"] is not None, "the pareto figure does not need certificates"
     printed = capsys.readouterr().out
-    assert "SKIP" in printed and "final-spade-certificates.json" in printed
+    assert "SKIP" in printed and "final-spade-certificate.json" in printed
 
 
 def test_no_figure_invents_data_when_its_artefact_is_absent(tmp_path):
-    for name in ("benchmark", "certificates", "feasibility"):
+    for name in ("primary", "certificate", "feasibility"):
         d = artefact_dir(tmp_path / name)
         (d / f"final-spade-{name}.json").unlink()
         figs.make_all_figures(d, tmp_path / name / "fig")  # must not raise
@@ -959,3 +959,149 @@ def test_the_tau_max_figure_shows_excluded_cells_rather_than_dropping_them(tmp_p
     out = figs.make_all_figures(d, tmp_path / "fig")
     assert out["threshold_feasibility"].encoding["excluded_shown"] is True
     assert out["threshold_feasibility"].encoding["n_excluded"] == 1
+
+
+# ==========================================================================
+# 12. The shapes the OTHER scripts actually write
+# ==========================================================================
+#
+# Everything above uses a flat, condition-stamped fixture. The two producers do
+# not write that shape, and the difference is not cosmetic:
+#
+#   * `run_final_spade_benchmark.py` takes --condition and records the condition
+#     ONCE, in the envelope. Its rows carry no `condition_id`, its `arm_family`
+#     values are the short forms ("SPADE-ctrl", "classical"), and its
+#     `terminal_rule` is the literal string "both" because each row carries both
+#     regrets;
+#   * `analyse_final_spade_benchmark.py` nests the primary estimate under
+#     `crossfit` and the diagnostic under `same_draw`, each with its own `role`,
+#     and calls the condition `condition`.
+#
+# A consumer that grouped by a key half the artefacts do not carry would collapse
+# four conditions into one and report it as complete. These are the tests that
+# say it does not.
+
+
+def runner_shape_primary(condition: str = "C1") -> dict:
+    """`run_final_spade_benchmark.py`'s envelope, as it actually writes it."""
+    rows = []
+    for i, arm in enumerate(MANDATORY[:11]):          # the runner has no doe_unscreened
+        short = {"SPADE control": "SPADE-ctrl", "classical RSM": "classical"}
+        rows.append({
+            "study_id": "spade-final-2026-08-23", "arm": arm,
+            "arm_family": short.get(ARM_FAMILY[arm], ARM_FAMILY[arm]),
+            "family": "hill", "dimension": 6, "sigma": 0.25,
+            "instance_seed": 0, "campaign_seed": i, "rounds": ARM_ROUNDS[arm],
+            "regime_class": "TARGET", "terminal_rule": "both",
+            "gamma": 0.95, "alpha": 0.95, "tau_frac_or_quantile": 0.60,
+            "regret_rule_a": 0.12 + 0.01 * i, "regret_rule_p": 0.10 + 0.01 * i,
+            "symmetric_difference_pred": 0.30 - 0.01 * i,
+            "type_i_volume_pred": 0.10, "type_ii_volume_pred": 0.20 - 0.01 * i,
+            "murphy_calibration": 0.02 + 0.001 * i,
+            "murphy_refinement": 0.15 - 0.002 * i,
+            "crossfit_containment": 0.96, "same_draw_containment": 0.98,
+            "rankable": True, "unavailable_reason": None, "exclusion_reason": None,
+            "gate_status": "ok"})
+    return {"study_id": "spade-final-2026-08-23", "condition": condition,
+            "condition_spec": {"family": "hill", "dim": 6, "sigma": 0.25},
+            "config": {"n_campaigns": 100}, "missing_mandatory_arms": [],
+            "gate_failures": [], "rows": rows}
+
+
+def analyser_shape_certificate(condition: str = "C1") -> dict:
+    """`analyse_final_spade_benchmark.py`'s nested cells, as it actually writes them."""
+    cells = []
+    for arm in ("spade_cf_m0", "spade_cf_m4", "spade_cf_m8"):
+        for alpha in (0.80, 0.95):
+            cells.append({
+                "cell_id": f"{arm}|{condition}|0.60|0.95|{alpha}", "arm": arm,
+                "condition": condition, "tau_frac": 0.60, "gamma": 0.95,
+                "gamma_role": "primary", "alpha": alpha, "primary_condition": True,
+                "infeasible": False, "primary_estimator": "crossfit",
+                "crossfit": {"role": "primary", "column": "crossfit_containment",
+                             "x": 96, "n": 100, "proportion": 0.96,
+                             "ci_lo": 0.9007, "ci_hi": 0.9892, "ci_level": 0.95,
+                             "ci_method": "Clopper-Pearson", "exact_p": 0.63,
+                             "tail": "lower", "p_holm": 1.0},
+                "same_draw": {"role": "diagnostic", "column": "same_draw_containment",
+                              "x": 98, "n": 100, "proportion": 0.98},
+                "same_draw_minus_crossfit": 0.02, "n_total": 100, "n_nonempty": 100,
+                "n_empty": 0, "empty_rate": 0.0, "verdict": "PASS"})
+    return {"study_id": "spade-final-2026-08-23", "cells": cells}
+
+
+def real_shape_dir(tmp_path: Path, conditions=("C1", "C2")) -> Path:
+    """One primary file PER CONDITION, the way the runner writes them."""
+    d = tmp_path / "results"
+    d.mkdir(parents=True, exist_ok=True)
+    for cond in conditions:
+        (d / f"final-spade-primary-{cond}.json").write_text(
+            json.dumps(runner_shape_primary(cond)))
+    (d / "final-spade-certificate.json").write_text(
+        json.dumps(analyser_shape_certificate()))
+    (d / "final-spade-feasibility.json").write_text(json.dumps(clean_feasibility()))
+    (d / "final-spade-kill-ledger.json").write_text(json.dumps(clean_ledger()))
+    return d
+
+
+def test_figures_read_the_runners_envelope_level_condition(tmp_path):
+    """The rows carry no condition_id at all. Two per-condition files must produce
+    two panels, not one pooled panel — §8.2 hard-fails on pooling conditions."""
+    out = figs.make_all_figures(real_shape_dir(tmp_path), tmp_path / "fig")
+    cap = out["pareto"].caption
+    assert "C1" in cap and "C2" in cap, cap
+    assert out["murphy"] is not None and out["causal_controls"] is not None
+
+
+def test_figures_read_the_runners_short_family_names(tmp_path):
+    """`SPADE-ctrl` and `classical` must land on the same hues as the long forms,
+    or two arms of one family get two colours and the legend stops meaning
+    anything."""
+    assert figs._family({"arm_family": "SPADE-ctrl"}) == "SPADE control"
+    assert figs._family({"arm_family": "classical"}) == "classical RSM"
+    for fam in set(figs.ARM_FAMILY_FALLBACK.values()) | set(figs.FAMILY_ALIAS.values()):
+        assert fam in figs.FAMILY_COLOUR, f"{fam} has no colour"
+
+
+def test_terminal_rule_both_is_spelled_out_not_left_as_both(tmp_path):
+    """§7.4: rule P is the primary estimand and rule A a required robustness
+    outcome. A caption reading 'terminal rule both' lets a reader assume the
+    figure chose one, and §43.1 is what happens when the reader assumes wrong."""
+    out = figs.make_all_figures(real_shape_dir(tmp_path), tmp_path / "fig")
+    cap = out["causal_controls"].caption
+    assert "rule P" in cap and "§7.4" in cap, cap
+
+
+def test_figures_read_the_analysers_nested_certificate_cells(tmp_path):
+    """crossfit.proportion / same_draw.proportion, not flat columns."""
+    out = figs.make_all_figures(real_shape_dir(tmp_path), tmp_path / "fig")
+    r = out["crossfit_containment"]
+    assert r is not None and "96/100" in " ".join(r.annotations)
+    assert out["same_draw_vs_crossfit"] is not None
+
+
+def test_the_validator_reads_per_condition_primary_files(tmp_path):
+    """Four conditions in four files must be audited as four, not as whichever one
+    happens to be named `final-spade-primary.json`."""
+    write_release(tmp_path)
+    (tmp_path / "results" / "final-spade-primary.json").unlink()
+    for cond in ("C1", "C2", "C3"):
+        (tmp_path / "results" / f"final-spade-primary-{cond}.json").write_text(
+            json.dumps(runner_shape_primary(cond)))
+    rel = val.load_release(tmp_path)
+    assert rel.benchmark is not None
+    assert {r["condition_id"] for r in val._rows(rel.benchmark)} == {"C1", "C2", "C3"}
+    # C4 has no file at all, so every mandatory arm is missing there.
+    out = val.check_mandatory_comparators(rel.benchmark, rel.feasibility)
+    assert {v.location for v in out} >= {"C4"}
+
+
+def test_the_runners_own_missing_mandatory_arms_record_is_a_violation(tmp_path):
+    """The runner computes this and prints a warning. A warning on a console
+    nobody kept is not a gate — §13.6 gives it an exit code."""
+    bench = runner_shape_primary("C1")
+    bench["missing_mandatory_arms"] = ["doe_unscreened"]
+    feas = {"rows": [r for r in clean_feasibility()["rows"]
+                     if r["condition_id"] == "C1"]}
+    out = val.check_mandatory_comparators(bench, feas)
+    assert "doe_unscreened" in " ".join(v.detail for v in out)
