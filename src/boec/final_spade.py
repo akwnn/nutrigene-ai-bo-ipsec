@@ -58,10 +58,30 @@ from __future__ import annotations
 import torch
 from torch import Tensor
 
-__all__ = ["LOCAL_RADIUS", "local_wells"]
+__all__ = ["DEGENERATE_HI", "DEGENERATE_LO", "LOCAL_RADIUS", "MIN_BOUNDARY_FRAC",
+           "MIN_NONEMPTY_RATE", "TARGET_PREVALENCE", "classify_regime", "local_wells"]
 
 #: ``n_effective``'s bound, inherited. See the module docstring -- not a tuning knob.
 LOCAL_RADIUS = 1.0
+
+# --------------------------------------------------------------------------
+# The frozen bars of the pre-run regime classifier -- spec §5.1, commit c4f58d3.
+# Every one of these was written down before any final-study number existed.
+# --------------------------------------------------------------------------
+
+#: Outside this the true region is degenerate and nothing is assessable either way.
+DEGENERATE_LO, DEGENERATE_HI = 0.01, 0.99
+#: A TARGET cell's true region is neither nearly-empty nor nearly-the-whole-box. The upper
+#: bar is the one that matters: §14's reading is that at gamma=0.99, tau_frac=0.60 the true
+#: set covers 0.99916 of the box, so certifying it is nearly free. That is the EASY corner
+#: and calling it a target would flatter every arm.
+TARGET_PREVALENCE = (0.05, 0.60)
+#: Below this the containment denominator is too thin for the cell to carry the central
+#: claim -- KF-10, and §4.8's "cells with n=1-8 are excluded from claims".
+MIN_NONEMPTY_RATE = 0.50
+#: The straddle band plate 2 exists to resolve. With no band there is nothing for the
+#: mechanism under test to do, so a win there would not be evidence for it.
+MIN_BOUNDARY_FRAC = 0.05
 
 
 def local_wells(cand: Tensor, mean: Tensor, X1: Tensor, lengthscales: Tensor, m: int,
@@ -170,3 +190,78 @@ def local_wells(cand: Tensor, mean: Tensor, X1: Tensor, lengthscales: Tensor, m:
     diag.update({"m_placed": int(X_loc.shape[0]),
                  "m_local_short": bool(n_in_ball < int(m))})
     return X_loc, diag
+
+
+def classify_regime(tau: float, tau_max_by_gamma: dict, prevalence: float,
+                    nonempty_rate: float, boundary_frac: float,
+                    structural_exception: str | None = None) -> tuple[str, str]:
+    """The pre-run regime class for one planned condition, and the reason for it.
+
+    Registered in ``docs/SPADE-FINAL-SPEC.md`` §5.1. Returns one of ``TARGET``,
+    ``ROBUSTNESS``, ``EXCEPTION``, ``INFEASIBLE`` with a human-readable reason that goes
+    into ``results/final-spade-feasibility.json`` verbatim.
+
+    **This function takes no arm outcome of any kind**, and a test asserts that of its
+    signature. The fraud it exists to prevent is relabelling a cell ``TARGET`` after its
+    results are known, at which point ``TARGET`` silently comes to mean "where SPADE won".
+    Every argument is computable before a single final-study campaign runs: three from
+    oracle geometry, two from the frozen 20-campaign plate-1 pilot.
+
+    **The order of the branches is itself registered**, and only one ordering is honest:
+
+    1. ``INFEASIBLE`` first, because an above-ceiling threshold is a property of the
+       *threshold*. §4.5: no method certifies above ``tau_max`` at any budget, ever. Scoring
+       an arm there and calling the zero a failure is the error the whole check exists to
+       stop.
+    2. ``EXCEPTION`` **before** ``TARGET``, so a condition pre-declared as structurally
+       unfavourable cannot be promoted once its pilot numbers look agreeable. §41 records
+       ackley certifying nothing in 1,200 campaigns; it is declared in advance and stays
+       declared.
+    3. ``TARGET`` only on the full conjunction.
+    4. ``ROBUSTNESS`` otherwise -- feasible and informative, but it may not carry the
+       central claim.
+
+    Args:
+        tau: the raw threshold.
+        tau_max_by_gamma: ``{gamma: tau_max}`` over the **primary** gammas. Feasibility is
+            decided on the *worst* of them: gamma=0.50 gives ``tau_max`` = 1.0 exactly
+            (z=0), so testing only that corner would pass every threshold, and §9.8 records
+            that gamma=0.50 is clean **by construction**.
+        prevalence: true fraction of the grid above ``tau``.
+        nonempty_rate: pilot fraction of campaigns producing a non-empty certificate.
+        boundary_frac: pilot fraction of the grid inside the straddle band after plate 1.
+        structural_exception: a pre-declared reason SPADE is not expected to win here, or
+            ``None``. Declaring one **after** seeing results is a protocol violation.
+    """
+    worst_gamma = min(tau_max_by_gamma, key=lambda g: tau_max_by_gamma[g])
+    ceiling = float(tau_max_by_gamma[worst_gamma])
+    if float(tau) >= ceiling:
+        return ("INFEASIBLE",
+                f"tau={tau:.4f} is at or above the certifiability ceiling "
+                f"tau_max={ceiling:.4f} at gamma={worst_gamma}; no method certifies there "
+                "at any budget, so this is a property of the threshold and not a method "
+                "failure")
+    if not (DEGENERATE_LO <= float(prevalence) <= DEGENERATE_HI):
+        return ("INFEASIBLE",
+                f"true prevalence {prevalence:.5f} is degenerate (outside "
+                f"[{DEGENERATE_LO}, {DEGENERATE_HI}]); no valid non-empty certificate is "
+                "meaningfully assessable")
+    if structural_exception:
+        return ("EXCEPTION",
+                f"pre-declared structural exception: {structural_exception}")
+
+    lo, hi = TARGET_PREVALENCE
+    fails = []
+    if not (lo <= float(prevalence) <= hi):
+        fails.append(f"prevalence {prevalence:.4f} outside the nontrivial band [{lo}, {hi}]")
+    if float(nonempty_rate) < MIN_NONEMPTY_RATE:
+        fails.append(f"pilot non-empty rate {nonempty_rate:.4f} < {MIN_NONEMPTY_RATE}")
+    if float(boundary_frac) < MIN_BOUNDARY_FRAC:
+        fails.append(f"pilot boundary fraction {boundary_frac:.4f} < {MIN_BOUNDARY_FRAC}")
+
+    if fails:
+        return ("ROBUSTNESS", "feasible but not a target regime: " + "; ".join(fails))
+    return ("TARGET",
+            f"feasible (tau={tau:.4f} < tau_max={ceiling:.4f} at gamma={worst_gamma}), "
+            f"prevalence {prevalence:.4f} in [{lo}, {hi}], pilot non-empty rate "
+            f"{nonempty_rate:.4f}, pilot boundary fraction {boundary_frac:.4f}")

@@ -207,3 +207,93 @@ def test_a_width_mismatch_raises_rather_than_broadcasting():
 
     with pytest.raises(ValueError, match="width|lengthscale"):
         local_wells(cand, mean, X1, _lengthscales(d + 1), m=2)
+
+
+# ===========================================================================
+# The pre-run regime classifier -- spec §5.1
+# ===========================================================================
+#
+# The classifier exists to make one specific fraud impossible: relabelling a cell
+# TARGET after its results are known. It therefore takes only quantities computable
+# BEFORE any final-study arm runs -- geometry, prevalence, and a plate-1 pilot -- and
+# it takes no arm outcome of any kind.
+
+from boec.final_spade import classify_regime  # noqa: E402
+
+
+def _feasible_kw(**over):
+    kw = {"tau": 0.5, "tau_max_by_gamma": {0.50: 1.0, 0.95: 0.80},
+          "prevalence": 0.30, "nonempty_rate": 0.80, "boundary_frac": 0.20,
+          "structural_exception": None}
+    kw.update(over)
+    return kw
+
+
+def test_a_threshold_above_the_ceiling_at_any_primary_gamma_is_infeasible():
+    """§4.5's ceiling. No method certifies above `tau_max` at any budget, ever, so this is
+    a property of the threshold and NOT a method failure."""
+    cls, reason = classify_regime(**_feasible_kw(tau=0.90))
+    assert cls == "INFEASIBLE"
+    assert "ceiling" in reason.lower() or "tau_max" in reason.lower()
+
+
+def test_infeasibility_is_decided_on_the_WORST_primary_gamma_not_the_best():
+    """gamma=0.50 gives tau_max = 1.0 exactly (z=0), so testing only the easy corner would
+    pass every threshold. §9.8 records that gamma=0.50 is clean BY CONSTRUCTION."""
+    cls, _ = classify_regime(**_feasible_kw(tau=0.85,
+                                           tau_max_by_gamma={0.50: 1.0, 0.95: 0.80}))
+    assert cls == "INFEASIBLE"
+
+
+def test_a_degenerate_region_is_infeasible_at_both_ends():
+    for prev in (0.005, 0.995):
+        cls, reason = classify_regime(**_feasible_kw(prevalence=prev))
+        assert cls == "INFEASIBLE", f"prevalence {prev} should be degenerate"
+        assert "degenerate" in reason.lower() or "prevalence" in reason.lower()
+
+
+def test_a_feasible_nontrivial_well_bounded_cell_is_TARGET():
+    cls, _ = classify_regime(**_feasible_kw())
+    assert cls == "TARGET"
+
+
+def test_a_predeclared_structural_exception_beats_TARGET():
+    """The ordering that stops a pre-declared exception being promoted after the fact.
+    §41 records ackley certifying NOTHING in 1,200 campaigns; it is declared EXCEPTION in
+    advance and must stay one even if its pilot numbers look agreeable."""
+    cls, reason = classify_regime(
+        **_feasible_kw(structural_exception="centre-point optimum advantages classical designs"))
+    assert cls == "EXCEPTION"
+    assert "centre-point" in reason
+
+
+def test_a_mostly_empty_certificate_cannot_be_TARGET():
+    """§13.9/KF-10. If most certificates are empty the containment denominator is thin and
+    the cell cannot carry the central claim."""
+    cls, _ = classify_regime(**_feasible_kw(nonempty_rate=0.20))
+    assert cls == "ROBUSTNESS"
+
+
+def test_no_boundary_uncertainty_left_after_plate_one_cannot_be_TARGET():
+    """Plate 2 exists to resolve the straddle band. If there is no band, there is nothing
+    for the mechanism under test to do, and a win there would not be evidence for it."""
+    cls, _ = classify_regime(**_feasible_kw(boundary_frac=0.01))
+    assert cls == "ROBUSTNESS"
+
+
+def test_a_region_covering_most_of_the_box_is_not_TARGET_even_though_it_is_feasible():
+    """§14's reading: at gamma=0.99, tau_frac=0.60 the true set covers 0.99916 of the box,
+    so certifying it is nearly free. That is the EASY corner, and calling it a target would
+    flatter every arm."""
+    cls, _ = classify_regime(**_feasible_kw(prevalence=0.85))
+    assert cls == "ROBUSTNESS"
+
+
+def test_the_classifier_accepts_no_arm_outcome():
+    """The architectural guard again. A classifier that CAN see an arm's result eventually
+    does, and then TARGET means 'where SPADE won'."""
+    import inspect
+
+    names = set(inspect.signature(classify_regime).parameters)
+    for forbidden in ("regret", "containment", "arm", "auc", "sym_diff", "result", "rows"):
+        assert forbidden not in names, f"classifier exposes {forbidden!r}"
