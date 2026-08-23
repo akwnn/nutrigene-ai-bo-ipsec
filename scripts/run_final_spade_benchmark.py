@@ -73,7 +73,7 @@ from boec.calibration import error_volumes, murphy_decomposition     # noqa: E40
 from boec.designspace import (brier_and_auc, gp_adapter, iou,        # noqa: E402
                               false_inclusion_rate,
                               predictive_probability_map)
-from boec.final_spade import ROW_SCHEMA, spade_plate2                # noqa: E402
+from boec.final_spade import ROW_SCHEMA, row_above_ceiling, spade_plate2  # noqa: E402
 from boec.lse import exclusion_radius                                # noqa: E402
 from boec.metrics import grid_screened_argmax                        # noqa: E402
 from boec.norms import sobol_grid                                    # noqa: E402
@@ -348,7 +348,15 @@ def score(cond: dict, instance: str, arm: str, seed: int, grid, X_sub, truth,
                     "tau_definition": "tau_q -- per-family prevalence quantile (Erratum 1)",
                     "tau_raw": theta, "tau_frac_or_quantile": p_q,
                     "tau_max": reg.get("tau_max_by_gamma", {}).get(str(gamma)),
-                    "above_ceiling": reg.get("above_ceiling"),
+                    # 🔴 REGRESSION, fixed. Was `reg.get("above_ceiling")` -- a single
+                    # CONDITION-level flag (computed over the union of primary and
+                    # diagnostic gammas) copied onto every row regardless of that row's
+                    # own gamma. Found via KF-9 flagging 6,600 of 13,200 C2 rows as
+                    # above-ceiling when only the 2,200 at gamma=0.99 (the registered
+                    # diagnostic) actually are. See boec.final_spade.row_above_ceiling
+                    # and tests/test_final_spade_protocol.py::test_row_above_ceiling_*.
+                    "above_ceiling": row_above_ceiling(
+                        theta, gamma, reg.get("tau_max_by_gamma", {})),
                     "true_prevalence": prevalence,
                     "rankable": True,
                     "empty_predictive_region": bool(vol == 0.0),
