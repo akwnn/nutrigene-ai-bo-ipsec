@@ -2457,9 +2457,9 @@ its Stage 0 does not work. §35's *"eight registered, zero adjudicated"* is no l
 
 ## 38. VERSION C FORM 1 — the re-score. **Both sigma committed, all eight kills adjudicated.**
 
-`results/versionc-form1-s010.json` and `-s025.json` — **14,400 rows each**, 12 arms x 50 keys
+`results/versionc-form1-s010.json` and `results/versionc-form1-s025.json` — **14,400 rows each**, 12 arms x 50 keys
 x 24 (gamma, tau_frac) cells, **GATE CLEAN at |delta| = 0** across all 20 committed K6
-columns at both sigma. Verdicts in `results/versionc-kills-s010.json` / `-s025.json`.
+columns at both sigma. Verdicts in `results/versionc-kills-s010.json` and `results/versionc-kills-s025.json`.
 **Zero new wells.**
 
 ### 38.1 What was actually run
@@ -2992,3 +2992,76 @@ scoring changes cannot be validated by re-scoring the campaigns they were design
 
 ---
 
+---
+
+## 44. VERSION C — the index. Where every number, file and runner lives.
+
+**Version C spans nine sections of this document and eleven result files.** This section is
+the map; it contains **no new result**. If a Version C number is quoted anywhere, its
+provenance is in the table below.
+
+### 44.1 The sections, in reading order
+
+| § | what it establishes | status |
+|---|---|---|
+| **32** | **C0, THE GATE.** The σ=0.10 regret deficit is an **identification artefact** of rule A. `versionb` rule-P regret **0.0792** against a registered branch at 0.090 → **§2 was never built** | result |
+| 35 | the kill ledger when it was still unadjudicated — *superseded by §38.2* | superseded |
+| **37** | **K-C7 FIRED.** The detector separates nothing: **0/50** on both held-out families, against a rule frozen before either was touched | result |
+| **38** | **FORM 1, the re-score.** Both σ, 14,400 rows each, gate clean at \|Δ\| = 0, **eight kills adjudicated** | result |
+| **42** | **the BO conventions.** Mean rank + performance profile, both rules. D20's reversal **as a rank**; SPADE characterised as **low-variance middling** | result |
+| **43** | **THE LOOPHOLE AUDIT.** Three claims fail, including my own headline | 🔴 corrections |
+| 29, 31, 36 | other tracks' work that Version C depends on (F3, α\*, E7) | context |
+
+### 44.2 The result files — every one, and which § reads it
+
+| file | size | § | contents |
+|---|---|---|---|
+| `results/versionc-gate-s010.json` | 0.7 MB | **32** | C0's gate. 600 rows, 12 arms × 50 keys, double-gated |
+| `results/versionc-gate-analysis.json` | 4 kB | **32** | per-arm rule A vs rule P, Holm, the `n_eff` regression |
+| `results/versionc-detector-fit.json` | 0.1 MB | **37** | §3.2 fitting set, 150 rows, hill/levy/rosenbrock **only** |
+| `results/versionc-detector-boundary.json` | 8 kB | **37** | the frozen one-class rule |
+| `results/versionc-detector-heldout.json` | 0.1 MB | **37** | the **one-shot** pass. 100 campaigns, hartmann6 + ackley |
+| `results/versionc-form1-s010.json` | **49.2 MB** | **38** | the re-score at σ=0.10, 14,400 rows |
+| `results/versionc-form1-s025.json` | **45.3 MB** | **38** | the re-score at σ=0.25, 14,400 rows |
+| `results/versionc-kills-s010.json` | 4 kB | **38** | the verdict at σ=0.10 — K-C1, K-C3 |
+| `results/versionc-kills-s025.json` | 4 kB | **38** | the verdict at σ=0.25 — **K-C2, the hard stop** |
+| `results/versionc-components-family.json` | 0.4 MB | **43.2** | §4's prediction, hill vs hartmann6, 1,200 rows |
+| `results/versionc-conventions.json` | 32 kB | **42** | mean rank, performance profile, bias correlations |
+
+### 44.3 The code
+
+| file | what it does |
+|---|---|
+| `src/boec/versionc.py` | `n_effective`, `ard_lengthscales`, `conservative_columns`, `split_joint_draws`, the six detector statistics |
+| `src/boec/vorobev.py` | `conservative_estimate_split` — the cross-fit CE (§1.2) |
+| `src/boec/designspace.py` | `connected_components`, `component_report`, `grid_neighbours` (§4) |
+| `scripts/run_versionc_gate.py` | C0 — rule P at σ=0.10, double-gated |
+| `scripts/run_versionc_form1.py` | the re-score. Calls `run_p3_cells.score_k6_dual_tau`, **imported not copied** |
+| `scripts/run_versionc_detector.py` / `_heldout.py` | the fitting set, and the one-shot pass |
+| `scripts/run_versionc_components_family.py` | §4's prediction on the discriminating family |
+| `scripts/analyse_versionc_form1.py` | **the adjudicator.** Without it the re-score decides nothing |
+| `scripts/analyse_versionc_gate.py` / `_detector.py` / `_conventions.py` | the other three analyses |
+
+**Eleven test files, `tests/test_versionc*.py`.** Every runner and analyser was written
+test-first, and the tests caught **six** defects before any of them ran — listed in §43 and
+in the commit messages.
+
+### 44.4 🔴 Read these three before quoting any Version C number
+
+1. **§43.1 — K-C1's bar mixes estimands.** `r*` = 0.0808 is a **rule A** column; Version C's
+   0.0792 is **rule P**. Like-for-like the gap is **+0.0165**, inside SESOI. **The claim is
+   parity, not a win.**
+2. **§38.3 — K-C2 and K-C3 pass *structurally*, not evidentially.** Both are built from
+   columns gated at \|Δ\| = 0 and **could not have moved**. A pass is not an independent
+   re-test of the certificate; **F3 (§29) is what re-tested it.**
+3. **§43.5 — Version C has never been run as a method.** Every number is **Version B's wells
+   scored under Version C's rules**. No claim here is evidence that a lab running Version C
+   prospectively would see these numbers.
+
+### 44.5 What is NOT run, and why
+
+| | why |
+|---|---|
+| **P3 at d = 8** | `e2-grid-d8` exists but **`versionb` was never run at d=8**, so the SPADE arms would be **ungatable**. A multi-hour run producing ungated numbers |
+| **regret against budget** | needs per-round checkpoints. A terminal re-score cannot produce them — that means re-running campaigns, not re-scoring them |
+| **C0 at σ = 0.25** | would close the registered **two-σ** `n_eff` regression; §32.1 currently reports one σ and says so |
