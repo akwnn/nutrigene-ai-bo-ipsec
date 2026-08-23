@@ -333,3 +333,50 @@ ROW_SCHEMA = (
     # gating
     "gate_status", "exclusion_reason", "unavailable_reason",
 )
+
+
+def spade_plate2(adapter, cand: Tensor, X1: Tensor, theta: float, n_plate2: int, m: int,
+                 lengthscales: Tensor, *, exclude: float = 0.1,
+                 sigma: Tensor | None = None) -> tuple[Tensor, dict]:
+    """The full plate-2 batch for ``spade_cf_m{m}``: ``m`` local wells then the rest on
+    the boundary.
+
+    **Local wells come first in the returned tensor**, so a stored ``plate2_X`` can be
+    split at ``diag["m_placed"]`` without ambiguity.
+
+    ------------------------------------------------------------------------------
+    THE NESTING, AND WHY IT IS THE POINT
+    ------------------------------------------------------------------------------
+
+    The boundary remainder is chosen by the **identical** :func:`boec.lse.batch_lse` call
+    ``m0`` uses, at ``q = n_plate2 - m``, and it is **not** told about the local wells.
+    That is deliberate and is what the registration says: *"all remaining Plate-2 wells
+    [use] exactly the same boundary-targeting rule as spade_cf_m0."*
+
+    Because ``batch_lse`` is greedy with exclusion, a call at ``q=4`` returns precisely the
+    first four picks of a call at ``q=8``. So ``m4``'s boundary wells are a **prefix** of
+    ``m0``'s, the three arms are nested, and the difference between them is attributable to
+    the *substituted* wells rather than to a re-planned boundary batch. Telling
+    ``batch_lse`` to avoid the local wells would break that nesting and confound KF-5 with
+    a second, unregistered change.
+
+    Returns:
+        ``(X2, diag)`` with ``X2`` of shape ``(n_plate2, d)``. ``diag`` carries L1's
+        diagnostics plus ``n_boundary``. When the ARD ball cannot supply ``m`` wells the
+        shortfall goes to the boundary rule, ``m_local_short`` is ``True``, and the budget
+        is still exactly ``n_plate2`` -- an ``m8`` arm must never silently become an ``m2``.
+    """
+    from boec.lse import batch_lse
+
+    mean, _sd = adapter.posterior_mean_and_sd(cand)
+    X_loc, diag = local_wells(cand, mean, X1, lengthscales, m)
+    n_boundary = int(n_plate2) - int(X_loc.shape[0])
+    diag["n_boundary"] = n_boundary
+
+    if n_boundary <= 0:
+        return X_loc, diag
+
+    X_bnd = batch_lse(adapter, cand, theta, n_boundary, exclude=exclude, sigma=sigma)
+    if int(X_loc.shape[0]) == 0:
+        return X_bnd, diag
+    return torch.cat([X_loc, X_bnd]), diag
