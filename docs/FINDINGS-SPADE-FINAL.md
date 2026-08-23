@@ -190,15 +190,16 @@ volume is never reported alone.
 
 ## 10. Cross-family, noise and dimension scope
 
-**C1, C2, C3 done. C4 in flight; S1–S3 `NOT RUN`.** Feasibility complete for all seven (§4).
+**All four PRIMARY conditions (C1–C4) done.** S1 (ackley) running; S2/S3 `NOT RUN`.
+Feasibility complete for all seven (§4).
 
 Known limits going in, by condition id:
 
 | condition | family | class | status | why |
 |---|---|---|---|---|
-| **S1** | ackley | **EXCEPTION** (pre-declared) | NOT RUN | centre-point optimum advantages classical designs; §41 records SPADE certifying **nothing in 1,200 campaigns** on this family |
+| **S1** | ackley | **EXCEPTION** (pre-declared) | **running** | centre-point optimum advantages classical designs; §41 records SPADE certifying **nothing in 1,200 campaigns** on this family |
 | C3 | hartmann6 d=6 | ROBUSTNESS | **done** (§10.1) | multimodal; §37/§42 predict SPADE struggles |
-| C4 | hartmann6 d=8 | ROBUSTNESS | **running** | `doe_unscreened` expected unavailable (§15) |
+| C4 | hartmann6 d=8 | ROBUSTNESS | **done** (§10.2) | `doe_unscreened` not implemented (§15/§18 — a scoped decision, not a defect) |
 | S2 / S3 | levy / rosenbrock | ROBUSTNESS | NOT RUN | §41 records both under-covering at γ=0.99 |
 | C1 | hill σ=0.25 | ROBUSTNESS | **done** (§8) | pilot non-empty certificates **0 of 20** at α=0.95 — certificates go empty; σ=0.25 map compresses to a near-featureless band (§8) |
 | **C2** | hill σ=0.10 | **TARGET** | **done** (§5–9) | the only TARGET cell in the registered matrix; pilot non-empty **11 of 20** at α=0.95 |
@@ -238,6 +239,29 @@ finding of the whole project (§13 et al.), reproduces on a family it was never 
 holding for, and the direction is worth flagging precisely rather than smoothing into either
 "SPADE struggles here" or "SPADE wins here": it depends entirely on which of the two
 objects — point or region — is being asked about.
+
+### 10.2 C4 (hartmann6, d=8, σ=0.25, ROBUSTNESS — no kill is adjudicated here)
+
+| arm | rounds | wells | regret P (primary) | sym. diff |
+|---|---|---|---|---|
+| **qlognei** | 10 | 48 | **0.2738** | 0.2198 |
+| qlogei | 10 | 48 | 0.3002 | 0.2306 |
+| spade_cf_m8 | 2 | 48 | 0.4054 | 0.1950 |
+| spade_cf_m4 | 2 | 48 | 0.4300 | **0.1883** |
+| spade_cf_m0 | 2 | 48 | 0.4454 | 0.1908 |
+| spade_random_plate2 | 2 | 48 | 0.4540 | 0.2117 |
+| random | 1 | 48 | 0.4664 | 0.2066 |
+| lhs | 1 | 48 | 0.4687 | 0.2049 |
+| sobol | 1 | 48 | 0.4796 | 0.2006 |
+| spade_plate1_only | 1 | 40 | 0.5399 | 0.2253 |
+| doe | 3 | 48 | 0.6391 | 0.2507 |
+
+**§10.1's split reproduces exactly at d=8.** `qlognei`/`qlogei` again 1st/2nd on regret by a
+wide margin; the three SPADE arms again 1st, 2nd and 3rd of 11 on symmetric difference, ahead
+of `sobol` (4th). The dimension increase does not change which object each method family
+wins — regret favours committed single-basin search, the map favours SPADE's two-round
+region estimate, at both d=6 and d=8. Still ROBUSTNESS, still no kill adjudicated, still not
+citable as a general win (spec §9 guard 1).
 
 ## 11. Sobol, BO and DoE comparison
 
@@ -417,27 +441,41 @@ Full suite after defects 5 and the architecture fix: 1,615 passed / 0 failed.
 
 ## 18. What remains — explicitly, not implicitly
 
-**Done:** C1 and C2 complete, combined via `merge_condition_rows`, and analysed (§17.1,
-§17.2). C3 (hartmann6, d=6) launched, in flight.
+**Done:** all four PRIMARY conditions (C1–C4) complete, combined via
+`merge_condition_rows`, and analysed (§10, §17.1, §17.2). S1 (ackley) launched, in flight.
 
-**Blocking full publication:**
-1. C3 to complete, then re-run `merge_condition_rows(["C1","C2","C3"])` + the analyser —
-   never analyse a new condition alone once others exist (§17.2).
-2. C4 (hartmann6, d=8) — primary — to run and fold in the same way.
-3. S1 (ackley, pre-declared EXCEPTION), S2 (levy), S3 (rosenbrock) — secondary — to run and
-   fold in, only after all primary conditions are complete per spec §5.3.
-4. **`doe_unscreened` is not implemented in the benchmark runner at all** (§15) — this
-   currently blocks KF-1 confirmatory status in every condition, not only d=8. Needs either
-   implementation (feasible at d=6: 28-coefficient second-order RSM against 48 wells) or a
-   formal `unavailable_reason` declaration per spec §4.
-5. `scripts/validate_final_spade_release.py` to re-run once all conditions land; last known
+**🔴 One genuine open decision, not a defect (flagged rather than resolved unilaterally):**
+
+`doe_unscreened` is spec-mandatory wherever arithmetically feasible (§4), and it **is**
+feasible at d=6 (28-coefficient second-order RSM against 48 wells — the arithmetic is not
+in question). But it is **not implemented anywhere in `scripts/run_final_spade_benchmark.py`**
+— not a missing `unavailable_reason` declaration, an entire arm-generation capability that
+was never built. This currently keeps KF-1 (certificate confirmatory status) and KF-2
+(validity beyond hill) at INCONCLUSIVE/NOT_RUN in **every** condition, C1–C4 alike.
+
+Building it is a genuinely new capability (a full unscreened second-order response-surface
+design generator, its own campaign type, its own test suite) — comparable in scope to one
+of the earlier build phases, not a bug fix. Declaring it `unavailable_reason` instead would
+be dishonest in the other direction: the spec explicitly distinguishes "infeasible, declare
+so" from "feasible, do the work" (§11 prohibits "fabricating `doe_unscreened` ... where it
+is not budget-feasible" — the mirror mistake, declaring it unavailable where it **is**
+feasible, is not listed but is equally a misrepresentation of the arithmetic already done).
+
+**This is the one point in the study where implement-vs-defer is a scope decision, not a
+research question** — the answer doesn't change what the data say, only whether KF-1/KF-2
+can be adjudicated at all in this release. Left for the study owner to decide; not resolved
+here.
+
+**Otherwise, blocking full publication:**
+1. S1 to complete, fold in via `merge_condition_rows`.
+2. S2 (levy), S3 (rosenbrock) — to run and fold in.
+3. `scripts/validate_final_spade_release.py` to re-run once all conditions land; last known
    state (before any condition's artefacts existed) reported missing-artefact violations
    only.
-6. `scripts/make_final_spade_figures.py` against the now-real combined certificate/Pareto
+4. `scripts/make_final_spade_figures.py` against the now-real combined certificate/Pareto
    artefacts — not yet run.
-7. `results/final-spade-manifest.json` has not been written.
+5. `results/final-spade-manifest.json` has not been written.
 
-**No further design decisions are outstanding** — every remaining step is "run an
-already-built, already-tested script against a result file that does not exist yet," except
-item 4, which needs either an implementation or a declared-unavailable decision (not a
-research question; the arithmetic above already answers feasibility at d=6).
+**No further design decisions are outstanding besides `doe_unscreened` above** — every other
+remaining step is "run an already-built, already-tested script against a result file that
+does not exist yet."

@@ -27,7 +27,7 @@
    "p_adjusted": null,
    "sesoi": 0.02,
    "sesoi_comparison": "SESOI = 0.02; not applicable to this kill",
-   "denominator": 180,
+   "denominator": 240,
    "source": {
     "artefact": "results/final-spade-certificate.json",
     "key": "cells[].confirmatory"
@@ -249,7 +249,7 @@
    "p_adjusted": null,
    "sesoi": 0.02,
    "sesoi_comparison": "a count, not an effect size; SESOI does not apply",
-   "denominator": 17600,
+   "denominator": 22000,
    "source": {
     "artefact": "results/final-spade-certificate.json",
     "key": "cells[].infeasible"
@@ -261,18 +261,18 @@
    "claim": "Empty-set degeneracy does not explain a pass",
    "fires_when": "any PASS cell with empty rate > 0.50",
    "status": "FAIL",
-   "effect": 16,
+   "effect": 18,
    "ci": null,
    "p": null,
    "p_adjusted": null,
    "sesoi": 0.02,
    "sesoi_comparison": "empty-rate ceiling 50%; SESOI does not apply to a degeneracy guard",
-   "denominator": 54,
+   "denominator": 64,
    "source": {
     "artefact": "results/final-spade-certificate.json",
     "key": "cells[].downgraded_by"
    },
-   "interpretation": "16 cell(s) reached PASS on containment while certifying nothing in more than half their campaigns, and were downgraded to INCONCLUSIVE. \u00a741.3 records the same failure mode off hill: the problem is emptiness, not miscoverage -- and an empty certificate is vacuously contained"
+   "interpretation": "18 cell(s) reached PASS on containment while certifying nothing in more than half their campaigns, and were downgraded to INCONCLUSIVE. \u00a741.3 records the same failure mode off hill: the problem is emptiness, not miscoverage -- and an empty certificate is vacuously contained"
   }
  }
 }
