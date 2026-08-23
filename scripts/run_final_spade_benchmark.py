@@ -69,7 +69,7 @@ import torch
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
-from boec.calibration import murphy_decomposition                    # noqa: E402
+from boec.calibration import error_volumes, murphy_decomposition     # noqa: E402
 from boec.designspace import (brier_and_auc, gp_adapter, iou,        # noqa: E402
                               false_inclusion_rate,
                               predictive_probability_map)
@@ -183,6 +183,8 @@ def spade_builder(m: int | None, mode: str, design_theta: float):
     The plate-1 design, the candidate set and the GP are **identical** across all three, so
     the arms differ in exactly the registered quantity and nothing else.
     """
+    captured: dict = {}
+
     def builder(orc, dim: int, seed: int):
         bounds = unit_bounds(dim)
         X1 = static_design(bounds, "lhs", N_PLATE1, seed)
@@ -197,14 +199,20 @@ def spade_builder(m: int | None, mode: str, design_theta: float):
         else:
             cand = sobol_grid(dim, CAND_N, seed=seed)
             ad = gp_adapter(model)
-            X2, _diag = spade_plate2(ad, cand, X1, design_theta, N_PLATE2,
-                                     int(m), ard_lengthscales(model),
-                                     exclude=exclusion_radius(model))
+            X2, diag = spade_plate2(ad, cand, X1, design_theta, N_PLATE2,
+                                    int(m), ard_lengthscales(model),
+                                    exclude=exclusion_radius(model))
+            # ROW_SCHEMA carries `m_local_short`; discarding it here would make an m8 arm
+            # that silently ran short indistinguishable from one that did not.
+            captured.update(m_local_short=bool(diag["m_local_short"]),
+                            m_placed=int(diag["m_placed"]),
+                            n_in_ball=int(diag["n_in_ball"]))
         Y2, V2 = orc.evaluate(X2)
         del model
         gc.collect()
         return (torch.cat([X1, X2]), torch.cat([Y1, Y2]), torch.cat([V1, V2]), None, None)
 
+    builder.captured = captured
     return builder
 
 
@@ -219,11 +227,11 @@ def build(cond: dict, instance: str, arm: str, seed: int):
     if arm.startswith("spade_"):
         mode = ("plate1" if arm == "spade_plate1_only"
                 else "random" if arm == "spade_random_plate2" else "lse")
-        return regenerate(instance, dim, sigma, seed, arm,
-                          builder=spade_builder(spec["m"], mode,
-                                                float(cond["by_tau"][DESIGN_TAU_Q]["tau_raw"])),
-                          **fam_kw)
-    return regenerate(instance, dim, sigma, seed, arm, **fam_kw)
+        b = spade_builder(spec["m"], mode,
+                          float(cond["by_tau"][DESIGN_TAU_Q]["tau_raw"]))
+        rec = regenerate(instance, dim, sigma, seed, arm, builder=b, **fam_kw)
+        return rec, dict(b.captured)
+    return regenerate(instance, dim, sigma, seed, arm, **fam_kw), {}
 
 
 def score(cond: dict, instance: str, arm: str, seed: int, grid, X_sub, truth,
@@ -235,7 +243,7 @@ def score(cond: dict, instance: str, arm: str, seed: int, grid, X_sub, truth,
     spec = ARMS[arm]
 
     orc_t = _oracle(family, instance, dim, sigma, seed)   # scoring oracle, own stream
-    rec = build(cond, instance, arm, seed)
+    rec, alloc = build(cond, instance, arm, seed)
     model = build_gp(rec.X, rec.Y, rec.Yvar, bounds)
     ad = gp_adapter(model)
 
@@ -309,7 +317,7 @@ def score(cond: dict, instance: str, arm: str, seed: int, grid, X_sub, truth,
                     "confirmation_wells": 0, "rounds": spec["rounds"],
                     "adaptive_decisions": spec["rounds"] - 1,
                     "model_fits": spec["rounds"], "m_local": spec["m"],
-                    "m_local_short": None, "n_effective": n_eff,
+                    "m_local_short": alloc.get("m_local_short"), "n_effective": n_eff,
                     "terminal_rule": "both", "gamma": gamma, "alpha": alpha,
                     "tau_definition": "tau_q -- per-family prevalence quantile (Erratum 1)",
                     "tau_raw": theta, "tau_frac_or_quantile": p_q,
@@ -433,7 +441,7 @@ def main() -> None:
                    "selection_draws": N_DRAWS_HALF, "evaluation_draws": N_DRAWS_HALF,
                    "grid_n": GRID_N, "subset_n": SUBSET_N, "grid_seed": GRID_SEED,
                    "n_plate1": N_PLATE1, "n_plate2": N_PLATE2, "budget": BUDGET,
-                   "design_tau_frac": DESIGN_TAU_FRAC, "cand_n": CAND_N},
+                   "design_tau_q": DESIGN_TAU_Q, "cand_n": CAND_N},
         "schema": list(ROW_SCHEMA),
         "missing_mandatory_arms": missing,
         "gate_failures": [],
