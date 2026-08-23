@@ -265,3 +265,71 @@ def classify_regime(tau: float, tau_max_by_gamma: dict, prevalence: float,
             f"feasible (tau={tau:.4f} < tau_max={ceiling:.4f} at gamma={worst_gamma}), "
             f"prevalence {prevalence:.4f} in [{lo}, {hi}], pilot non-empty rate "
             f"{nonempty_rate:.4f}, pilot boundary fraction {boundary_frac:.4f}")
+
+
+def threshold_facts(tau_frac: float, mu_max: float, sigma_rel: float, gammas,
+                    truth: Tensor) -> dict:
+    """Everything about one condition's threshold that is knowable before any arm runs.
+
+    Returns ``tau_frac``, ``tau_raw``, ``tau_max_by_gamma``, ``worst_gamma``,
+    ``tau_max_worst``, ``above_ceiling`` and ``true_prevalence`` -- the exact inputs
+    :func:`classify_regime` consumes, plus the provenance a row needs.
+
+    **tau is a FRACTION of ``mu_max``, never an absolute number.** §4.5 records why: an
+    earlier registration of this project used absolute thresholds {0.70, 0.80, 0.85, 0.90}
+    and **all four sat above the ceiling**, so every arm would have certified nothing and
+    the published table would have been zeros. The re-parameterisation is not a convenience
+    -- Amendment C2's algebra makes ``theta = tau_frac * mu_max`` exact for every gamma, so
+    the fraction is the natural coordinate for the object.
+    """
+    from boec.designspace import tau_max as _tau_max
+
+    tau_raw = float(tau_frac) * float(mu_max)
+    by_gamma = {float(g): float(_tau_max(float(g), float(sigma_rel), float(mu_max)))
+                for g in gammas}
+    worst = min(by_gamma, key=lambda g: by_gamma[g])
+    t = torch.as_tensor(truth, dtype=torch.double).reshape(-1)
+    return {"tau_frac": float(tau_frac), "tau_raw": tau_raw,
+            "tau_max_by_gamma": by_gamma, "worst_gamma": worst,
+            "tau_max_worst": by_gamma[worst],
+            "above_ceiling": bool(tau_raw >= by_gamma[worst]),
+            "true_prevalence": float((t >= tau_raw).double().mean())}
+
+
+#: The raw-row contract, frozen with the registration. §14 of the brief.
+#:
+#: **No final result claim may rely on a field that is not here**, and a test asserts the
+#: required set rather than trusting the list. ``same_draw_containment`` and
+#: ``crossfit_containment`` are deliberately SEPARATE columns that never collapse into one
+#: ``containment``: §29.3 measured them differing by up to 3.5 points, and the protocol's
+#: whole value is that the difference stays visible in every row rather than being resolved
+#: once in an analysis nobody re-reads.
+ROW_SCHEMA = (
+    # provenance
+    "study_id", "registration_commit", "code_commit", "timestamp", "git_hash",
+    "environment_fingerprint",
+    # condition
+    "family", "dimension", "sigma", "instance_seed", "campaign_seed",
+    "noise_stream_seed", "regime_class",
+    # arm and budget -- wells and rounds on SEPARATE axes, spec §4.1/§4.2
+    "arm", "arm_family", "total_wells", "plate1_wells", "plate2_wells",
+    "confirmation_wells", "rounds", "adaptive_decisions", "model_fits", "m_local",
+    "m_local_short", "n_effective",
+    # threshold and assurance
+    "terminal_rule", "gamma", "alpha", "tau_definition", "tau_raw",
+    "tau_frac_or_quantile", "tau_max", "above_ceiling", "true_prevalence",
+    # certificate -- cross-fit primary, same-draw diagnostic, denominators preserved
+    "rankable", "empty_predictive_region", "nonempty_certificate", "posterior_draws",
+    "selection_draws", "evaluation_draws", "draw_split_seed", "selected_quantile",
+    "candidate_quantile_count", "same_draw_containment", "crossfit_containment",
+    "empirical_containment", "certificate_volume",
+    # regret -- BOTH rules, always, spec §7.4
+    "regret_rule_a", "regret_rule_p", "oracle_best_regret",
+    "identification_gap_rule_a", "identification_gap_rule_p",
+    # map quality -- symmetric difference primary, AUC secondary
+    "symmetric_difference_pred", "type_i_volume_pred", "type_ii_volume_pred",
+    "brier", "murphy_calibration", "murphy_refinement", "auc_pred", "iou_pred",
+    "false_inclusion_pred",
+    # gating
+    "gate_status", "exclusion_reason", "unavailable_reason",
+)

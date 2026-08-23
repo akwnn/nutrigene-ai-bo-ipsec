@@ -297,3 +297,84 @@ def test_the_classifier_accepts_no_arm_outcome():
     names = set(inspect.signature(classify_regime).parameters)
     for forbidden in ("regret", "containment", "arm", "auc", "sym_diff", "result", "rows"):
         assert forbidden not in names, f"classifier exposes {forbidden!r}"
+
+
+# ===========================================================================
+# Threshold derivation and prevalence -- the inputs the classifier consumes
+# ===========================================================================
+
+from boec.final_spade import ROW_SCHEMA, threshold_facts  # noqa: E402
+
+
+def test_tau_is_derived_from_mu_max_and_the_fraction_never_stated_absolutely():
+    """§4.5. An earlier draft of this project registered ABSOLUTE thresholds
+    {0.70, 0.80, 0.85, 0.90} and all four sat above the ceiling -- every arm would have
+    certified nothing and the table would have been zeros. tau is a FRACTION of mu_max."""
+    truth = torch.linspace(0.0, 1.0, 1001, dtype=torch.double)
+    facts = threshold_facts(tau_frac=0.60, mu_max=1.0, sigma_rel=0.25,
+                            gammas=(0.50, 0.95), truth=truth)
+    assert facts["tau_raw"] == pytest.approx(0.60)
+    assert facts["tau_frac"] == 0.60
+
+
+def test_prevalence_is_the_true_grid_fraction_at_or_above_tau():
+    truth = torch.linspace(0.0, 1.0, 1001, dtype=torch.double)
+    facts = threshold_facts(tau_frac=0.60, mu_max=1.0, sigma_rel=0.25,
+                            gammas=(0.50, 0.95), truth=truth)
+    # 401 of 1001 points sit at or above 0.60 on a uniform ramp: index 600 holds exactly
+    # 0.6 (asserted below, because it is only true because linspace hits the endpoint
+    # exactly), so indices 600..1000 inclusive qualify.
+    #
+    # 🔴 This assertion read `601 / 1001` when first written and FAILED. The test was
+    # wrong and the code was right -- the same defect FINDINGS §5 records for the first
+    # `tau_max` test, which hardcoded the textbook z=1.645 against a module using the exact
+    # inverse-normal CDF. Recorded rather than quietly corrected.
+    assert float(truth[600]) == 0.6
+    assert facts["true_prevalence"] == pytest.approx(401 / 1001, abs=1e-9)
+
+
+def test_tau_max_falls_as_gamma_rises_and_is_exactly_mu_max_at_gamma_half():
+    """§9.8: gamma=0.50 gives z=0 so tau_max = mu_max EXACTLY. That is why the classifier
+    reads the worst gamma and not this one."""
+    truth = torch.linspace(0.0, 1.0, 101, dtype=torch.double)
+    facts = threshold_facts(tau_frac=0.60, mu_max=1.0, sigma_rel=0.25,
+                            gammas=(0.50, 0.95, 0.99), truth=truth)
+    tm = facts["tau_max_by_gamma"]
+    assert tm[0.50] == pytest.approx(1.0)
+    assert tm[0.95] < tm[0.50]
+    assert tm[0.99] < tm[0.95]
+
+
+def test_above_ceiling_is_flagged_on_the_facts_not_left_to_the_caller():
+    truth = torch.linspace(0.0, 1.0, 101, dtype=torch.double)
+    facts = threshold_facts(tau_frac=0.95, mu_max=1.0, sigma_rel=0.25,
+                            gammas=(0.50, 0.95), truth=truth)
+    assert facts["above_ceiling"] is True
+
+
+def test_the_row_schema_carries_every_field_the_registration_requires():
+    """§14 of the brief. No final result claim may rely on a field that does not exist in
+    saved raw results, so the schema is asserted rather than trusted."""
+    required = {
+        "study_id", "registration_commit", "code_commit", "family", "dimension", "sigma",
+        "instance_seed", "campaign_seed", "arm", "arm_family", "regime_class",
+        "total_wells", "plate1_wells", "plate2_wells", "rounds", "m_local",
+        "terminal_rule", "gamma", "alpha", "tau_raw", "tau_max", "above_ceiling",
+        "true_prevalence", "nonempty_certificate", "posterior_draws", "selection_draws",
+        "evaluation_draws", "draw_split_seed", "same_draw_containment",
+        "crossfit_containment", "regret_rule_a", "regret_rule_p",
+        "symmetric_difference_pred", "type_i_volume_pred", "type_ii_volume_pred",
+        "brier", "murphy_calibration", "murphy_refinement", "auc_pred",
+        "gate_status", "git_hash",
+    }
+    missing = required - set(ROW_SCHEMA)
+    assert not missing, f"schema is missing required fields: {sorted(missing)}"
+
+
+def test_the_schema_records_crossfit_and_same_draw_as_SEPARATE_fields():
+    """They must never collapse into one 'containment' column. §29.3 measured them
+    differing by up to 3.5 points, and the whole point of the protocol is that the
+    difference is visible in every row."""
+    assert "crossfit_containment" in ROW_SCHEMA
+    assert "same_draw_containment" in ROW_SCHEMA
+    assert "containment" not in ROW_SCHEMA
