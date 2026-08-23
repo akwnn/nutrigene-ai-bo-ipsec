@@ -190,14 +190,14 @@ volume is never reported alone.
 
 ## 10. Cross-family, noise and dimension scope
 
-**All four PRIMARY conditions (C1–C4) done.** S1 (ackley) running; S2/S3 `NOT RUN`.
+**All four PRIMARY conditions (C1–C4) done. S1 (ackley) done.** S2/S3 running/`NOT RUN`.
 Feasibility complete for all seven (§4).
 
 Known limits going in, by condition id:
 
 | condition | family | class | status | why |
 |---|---|---|---|---|
-| **S1** | ackley | **EXCEPTION** (pre-declared) | **running** | centre-point optimum advantages classical designs; §41 records SPADE certifying **nothing in 1,200 campaigns** on this family |
+| **S1** | ackley | **EXCEPTION** (pre-declared) | **done** (§10.3) | centre-point optimum advantages classical designs; §41 records SPADE certifying **nothing in 1,200 campaigns** on this family |
 | C3 | hartmann6 d=6 | ROBUSTNESS | **done** (§10.1) | multimodal; §37/§42 predict SPADE struggles |
 | C4 | hartmann6 d=8 | ROBUSTNESS | **done** (§10.2) | `doe_unscreened` not implemented (§15/§18 — a scoped decision, not a defect) |
 | S2 / S3 | levy / rosenbrock | ROBUSTNESS | NOT RUN | §41 records both under-covering at γ=0.99 |
@@ -262,6 +262,38 @@ of `sobol` (4th). The dimension increase does not change which object each metho
 wins — regret favours committed single-basin search, the map favours SPADE's two-round
 region estimate, at both d=6 and d=8. Still ROBUSTNESS, still no kill adjudicated, still not
 citable as a general win (spec §9 guard 1).
+
+### 10.3 S1 (ackley, d=6, σ=0.25, pre-declared EXCEPTION — cleanly confirmed, not surprising)
+
+| arm | rounds | wells | regret P (primary) | sym. diff |
+|---|---|---|---|---|
+| **doe** | 3 | 48 | **0.5540** | **0.4599** |
+| qlognei | 10 | 48 | 0.6566 | 0.2336 |
+| qlogei | 10 | 48 | 0.6865 | 0.2401 |
+| sobol | 1 | 48 | 0.7321 | 0.2383 |
+| random | 1 | 48 | 0.7474 | 0.2389 |
+| lhs | 1 | 48 | 0.7488 | 0.2389 |
+| spade_random_plate2 | 2 | 48 | 0.7508 | 0.2389 |
+| spade_cf_m8 | 2 | 48 | 0.7549 | 0.2370 |
+| spade_cf_m4 | 2 | 48 | 0.7582 | 0.2355 |
+| spade_cf_m0 | 2 | 48 | 0.7601 | 0.2386 |
+| spade_plate1_only | 1 | 40 | 0.7670 | 0.2407 |
+
+**Unlike §10.1/§10.2, this is a clean confirmation of the pre-declared reasoning, not a
+surprise.** `doe` wins regret decisively (0.5540, a full 0.10 clear of second place) —
+exactly the mechanism the exception was declared for: ackley's optimum sits at the domain
+centre, and a classical center-point design finds it almost by construction. But `doe` is by
+far the **worst** arm on the map (0.4599, nearly double every other arm's 0.23–0.24 band) —
+its screened, centre-heavy design cannot describe the acceptable region away from that one
+point.
+
+**SPADE's certificates are empty 83–90% of the time on average across its five arms**
+(`spade_cf_m0` 83.2%, `spade_cf_m4` 83.5%, `spade_cf_m8` 85.5%, `spade_plate1_only` 89.5%,
+`spade_random_plate2` 86.5%), directly reproducing §41's finding that SPADE "declines to
+answer" on this family. Where SPADE *does* answer, its map score is competitive (2nd–5th of
+11, behind only `qlognei`) — but the emptiness itself is the finding, not the score
+conditional on answering. **This condition needed no defect fix and produced no surprises**;
+it did exactly what it was pre-registered to do.
 
 ## 11. Sobol, BO and DoE comparison
 
