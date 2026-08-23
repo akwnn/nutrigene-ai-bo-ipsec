@@ -169,7 +169,15 @@ def pilot(cond: dict, grid: torch.Tensor, X_sub: torch.Tensor) -> dict:
     tau_frac, plus the per-campaign values so the summary is auditable."""
     family, dim, sigma = cond["family"], cond["dim"], cond["sigma"]
     bounds = unit_bounds(dim)
-    straddle, nonempty = [], {p_: [] for p_ in TAU_QS}
+    # 🔴 DEFECT FOUND AND FIXED, first feasibility re-run. The straddle band was measured
+    # once per campaign at `0.75 * mu_max` -- a leftover from the tau_frac parameterisation
+    # Erratum 1 replaced. Under `tau_q` the actual threshold on hartmann6 at p=0.25 is
+    # 0.0971, so a band measured at 0.75 sat far outside the data and returned
+    # `boundary_frac = 0.0000` on hartmann6 and ackley. That is not "no boundary
+    # uncertainty"; it is the band measured at the wrong threshold, and it would have
+    # pushed both families out of TARGET for a reason that was an artefact of my own code.
+    # The band is now computed PER tau_q, at the threshold actually being classified.
+    straddle, nonempty = {p_: [] for p_ in TAU_QS}, {p_: [] for p_ in TAU_QS}
 
     for instance, seed in _keys(family, PILOT_N):
         orc = _oracle(family, instance, dim, sigma, seed)
@@ -180,10 +188,6 @@ def pilot(cond: dict, grid: torch.Tensor, X_sub: torch.Tensor) -> dict:
         ad = gp_adapter(model)
 
         mean_g, sd_g = ad.posterior_mean_and_sd(grid)
-        # The straddle band at the DESIGN threshold -- what plate 2 exists to resolve.
-        theta_design = 0.75 * mu_max
-        straddle.append(float(((mean_g - theta_design).abs()
-                               <= STRADDLE_Z * sd_g).double().mean()))
 
         with torch.no_grad():
             post = model.posterior(X_sub)
@@ -197,14 +201,18 @@ def pilot(cond: dict, grid: torch.Tensor, X_sub: torch.Tensor) -> dict:
         for p_ in TAU_QS:
             tau = committed_tau_q(family, dim, p_,
                                   instance if family == "hill" else None)
+            # The straddle band AT THIS THRESHOLD -- what plate 2 exists to resolve.
+            straddle[p_].append(
+                float(((mean_g - tau).abs() <= STRADDLE_Z * sd_g).double().mean()))
             ce = conservative_estimate(draws, tau, PILOT_ALPHA)
             nonempty[p_].append(bool(int(ce.sum()) > 0))
 
         del model, draws
 
-    return {"n_pilot": len(straddle),
-            "boundary_frac_mean": float(sum(straddle) / len(straddle)),
-            "boundary_frac_per_campaign": straddle,
+    return {"n_pilot": len(next(iter(nonempty.values()))),
+            "boundary_frac_mean": {str(k): float(sum(v) / len(v))
+                                   for k, v in straddle.items()},
+            "boundary_frac_per_campaign": {str(k): v for k, v in straddle.items()},
             "nonempty_rate": {str(k): sum(v) / len(v) for k, v in nonempty.items()},
             "nonempty_count": {str(k): int(sum(v)) for k, v in nonempty.items()},
             "pilot_draws": PILOT_DRAWS, "pilot_alpha": PILOT_ALPHA}
@@ -248,7 +256,7 @@ def main() -> None:
                 tau=facts["tau_raw"], tau_max_by_gamma=primary_ceilings,
                 prevalence=facts["true_prevalence"],
                 nonempty_rate=p["nonempty_rate"][str(p_q)],
-                boundary_frac=p["boundary_frac_mean"],
+                boundary_frac=p["boundary_frac_mean"][str(p_q)],
                 structural_exception=cond["exception"])
 
             row = {"study_id": STUDY_ID, "registration_commit": REGISTRATION_COMMIT,
@@ -262,7 +270,7 @@ def main() -> None:
                    "gammas_diagnostic": list(GAMMAS_DIAGNOSTIC),
                    "expected_nonempty_rate": p["nonempty_rate"][str(p_q)],
                    "nonempty_count": p["nonempty_count"][str(p_q)],
-                   "boundary_frac": p["boundary_frac_mean"],
+                   "boundary_frac": p["boundary_frac_mean"][str(p_q)],
                    "pilot": {k: v for k, v in p.items()
                              if k != "boundary_frac_per_campaign"},
                    "regime_class": cls, "classification_reason": reason,
@@ -274,7 +282,7 @@ def main() -> None:
                   f"ceil={min(primary_ceilings.values()):.4f} "
                   f"prev={facts['true_prevalence']:.4f} "
                   f"ne={p['nonempty_rate'][str(p_q)]:.2f} "
-                  f"bnd={p['boundary_frac_mean']:.4f}  {cls}")
+                  f"bnd={p['boundary_frac_mean'][str(p_q)]:.4f}  {cls}")
 
     counts: dict[str, int] = {}
     for r in rows:

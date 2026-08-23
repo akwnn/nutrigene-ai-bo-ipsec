@@ -295,3 +295,25 @@ COMMIT_MSG.txt
 !results/versionc-components-family.json
 # The BO-convention metrics and the selection-bias correlations. Cited by FINDINGS by path.
 !results/versionc-conventions.json
+
+# EXCEPTION — the final study's DECISION artefacts, for the E2-grid reason above.
+#
+# `scripts/run_final_spade_benchmark.py` reads `final-spade-feasibility.json` BY PATH and
+# hard-exits without it: the regime class a campaign is scored under must be the one frozen
+# before campaigns ran, and a runner that fell back to recomputing it could disagree with
+# the gate invisibly. While that file is untracked, two clones can hold two different
+# condition matrices under one filename and every run passes in both — precisely the defect
+# that put a -0.0708 from B's machine into the record as an independent recomputation of
+# A's -0.0595.
+#
+# The kill ledger, certificate table and manifest are committed for the same reason: they
+# are the adjudication, they are small, and a pre-registered study whose verdicts live only
+# in untracked files cannot be audited against its own registration.
+#
+# The RAW row files (`final-spade-c*.json`, ~10^4 rows each) stay ignored — they are bulk
+# run output and regenerable from the committed runner plus the manifest's seeds.
+!results/final-spade-feasibility.json
+!results/final-spade-certificate.json
+!results/final-spade-regret-pareto.json
+!results/final-spade-kill-ledger.json
+!results/final-spade-manifest.json

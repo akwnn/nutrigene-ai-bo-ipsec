@@ -94,12 +94,19 @@ REGISTRATION_COMMIT = "c4f58d3"
 
 N_PLATE1, N_PLATE2, BUDGET = 40, 8, 48
 CAND_N = 4096
-DESIGN_TAU_FRAC = 0.75
+#: 🔴 ERRATUM 1. Plate 2's LSE criterion targets ONE threshold; scoring still spans both.
+#: `tau_q` at p=0.25 is the moderate target, mirroring the original `DESIGN_TAU_FRAC=0.75`
+#: arrangement. An arm that re-planned its boundary batch per scoring threshold would be a
+#: different arm at each one, and the contrast would not be between designs.
+DESIGN_TAU_Q = 0.25
 GRID_N, SUBSET_N, GRID_SEED = 20_000, 2_000, 0
 #: 2048 PER HALF -- 4,096 total. See the module docstring; 512 is a known artefact.
 N_DRAWS_HALF = 2048
-TAU_FRACS = (0.60, 0.75)
-GAMMAS = (0.50, 0.95, 0.99)          # 0.99 is the registered DIAGNOSTIC, spec §2.4
+TAU_QS = (0.10, 0.25)
+TAU_TABLE = ROOT / "results" / "p5-tau-quantile.json"
+#: 🔴 ERRATUM 1. gamma=0.95 is PRIMARY only at sigma=0.10; at sigma=0.25 the 0.95 ceiling
+#: sits at prevalence ~0.71 on hill, so it would test the ceiling and not the method.
+GAMMAS = (0.50, 0.95, 0.99)
 ALPHAS = (0.80, 0.95)
 N_RESTARTS, RAW_SAMPLES, LOCATOR_SEED = 10, 512, 0
 
@@ -145,8 +152,9 @@ def conditions() -> dict[str, dict]:
         out.setdefault(r["condition_id"], {
             "family": r["family"], "dim": r["dimension"], "sigma": r["sigma"],
             "tier": r["tier"], "mu_max": r["mu_max"], "by_tau": {}})
-        out[r["condition_id"]]["by_tau"][r["tau_frac"]] = {
+        out[r["condition_id"]]["by_tau"][r["tau_q_p"]] = {
             "tau_raw": r["tau_raw"], "regime_class": r["regime_class"],
+            "gammas_primary": r["gammas_primary"],
             "above_ceiling": r["above_ceiling"], "true_prevalence": r["true_prevalence"],
             "tau_max_by_gamma": r["tau_max_by_gamma"]}
     return out
@@ -166,7 +174,7 @@ def _oracle(family: str, instance: str, dim: int, sigma: float, seed: int):
     return family_evaluator(family, dim, sigma, seed)
 
 
-def spade_builder(m: int | None, mode: str, mu_max: float):
+def spade_builder(m: int | None, mode: str, design_theta: float):
     """``builder(orc, dim, seed) -> (X, Y, Yvar, kept, held)`` for one SPADE arm.
 
     ``mode`` is ``"lse"`` (the m-allocation arms), ``"random"`` (the causal control) or
@@ -189,7 +197,7 @@ def spade_builder(m: int | None, mode: str, mu_max: float):
         else:
             cand = sobol_grid(dim, CAND_N, seed=seed)
             ad = gp_adapter(model)
-            X2, _diag = spade_plate2(ad, cand, X1, DESIGN_TAU_FRAC * mu_max, N_PLATE2,
+            X2, _diag = spade_plate2(ad, cand, X1, design_theta, N_PLATE2,
                                      int(m), ard_lengthscales(model),
                                      exclude=exclusion_radius(model))
         Y2, V2 = orc.evaluate(X2)
@@ -212,7 +220,8 @@ def build(cond: dict, instance: str, arm: str, seed: int):
         mode = ("plate1" if arm == "spade_plate1_only"
                 else "random" if arm == "spade_random_plate2" else "lse")
         return regenerate(instance, dim, sigma, seed, arm,
-                          builder=spade_builder(spec["m"], mode, cond["mu_max"]),
+                          builder=spade_builder(spec["m"], mode,
+                                                float(cond["by_tau"][DESIGN_TAU_Q]["tau_raw"])),
                           **fam_kw)
     return regenerate(instance, dim, sigma, seed, arm, **fam_kw)
 
@@ -255,9 +264,9 @@ def score(cond: dict, instance: str, arm: str, seed: int, grid, X_sub, truth,
             return grid_mean, grid_sd
 
     rows: list[dict] = []
-    for tf in TAU_FRACS:
-        theta = tf * mu_max
-        reg = regime_by_tau.get(tf, {})
+    for p_q in TAU_QS:
+        reg = regime_by_tau.get(p_q, {})
+        theta = float(reg["tau_raw"])      # the COMMITTED tau_q, never recomputed
         cols = conservative_columns(draws_sel, draws_val, truth_sub, theta, alphas=ALPHAS)
 
         p = predictive_probability_map(_M(), grid, theta, sigma_pred)
@@ -302,8 +311,8 @@ def score(cond: dict, instance: str, arm: str, seed: int, grid, X_sub, truth,
                     "model_fits": spec["rounds"], "m_local": spec["m"],
                     "m_local_short": None, "n_effective": n_eff,
                     "terminal_rule": "both", "gamma": gamma, "alpha": alpha,
-                    "tau_definition": "tau = tau_frac * mu_max",
-                    "tau_raw": theta, "tau_frac_or_quantile": tf,
+                    "tau_definition": "tau_q -- per-family prevalence quantile (Erratum 1)",
+                    "tau_raw": theta, "tau_frac_or_quantile": p_q,
                     "tau_max": reg.get("tau_max_by_gamma", {}).get(str(gamma)),
                     "above_ceiling": reg.get("above_ceiling"),
                     "true_prevalence": prevalence,
@@ -419,7 +428,7 @@ def main() -> None:
         "generated": time.strftime("%Y-%m-%dT%H:%M:%S"),
         "condition": args.condition, "condition_spec": cond,
         "config": {"arms": list(arms), "n_campaigns": len(keys),
-                   "tau_fracs": list(TAU_FRACS), "gammas": list(GAMMAS),
+                   "tau_qs": list(TAU_QS), "gammas": list(GAMMAS),
                    "alphas": list(ALPHAS), "n_draws": 2 * N_DRAWS_HALF,
                    "selection_draws": N_DRAWS_HALF, "evaluation_draws": N_DRAWS_HALF,
                    "grid_n": GRID_N, "subset_n": SUBSET_N, "grid_seed": GRID_SEED,

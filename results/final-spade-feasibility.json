@@ -1,0 +1,886 @@
+{
+ "study_id": "spade-final-2026-08-23",
+ "registration_commit": "c4f58d3",
+ "code_commit": "4832403d5cdf839cf4825788845732fb2c61165a",
+ "generated": "2026-08-23T19:15:18",
+ "elapsed_s": 95.5,
+ "environment": {
+  "python": "3.11.15",
+  "torch": "2.13.0",
+  "platform": "macOS-15.7.4-arm64-arm-64bit"
+ },
+ "config": {
+  "conditions": [
+   "C1",
+   "C2",
+   "C3",
+   "C4",
+   "S1",
+   "S2",
+   "S3"
+  ],
+  "tau_qs": [
+   0.1,
+   0.25
+  ],
+  "gammas_by_sigma": {
+   "0.25": [
+    0.5
+   ],
+   "0.1": [
+    0.5,
+    0.95
+   ]
+  },
+  "gammas_diagnostic": [
+   0.95,
+   0.99
+  ],
+  "pilot_n": 20,
+  "pilot_draws": 1024,
+  "pilot_alpha": 0.95,
+  "n_plate1": 40,
+  "grid_n": 20000,
+  "subset_n": 2000,
+  "grid_seed": 0,
+  "straddle_z": 1.96
+ },
+ "pilot_draws_note": "1024 draws, NOT the study's 4096. These are PLANNING statistics read against coarse bars and must never appear in a containment table -- see the module docstring.",
+ "counts": {
+  "ROBUSTNESS": 11,
+  "TARGET": 1,
+  "EXCEPTION": 2
+ },
+ "rows": [
+  {
+   "study_id": "spade-final-2026-08-23",
+   "registration_commit": "c4f58d3",
+   "code_commit": "4832403d5cdf839cf4825788845732fb2c61165a",
+   "condition_id": "C1",
+   "tier": "primary",
+   "why_included": "continuity -- the one point where SPADE's certificate has ever been measured",
+   "family": "hill",
+   "dimension": 6,
+   "sigma": 0.25,
+   "mu_max": 1.0,
+   "tau_definition": "tau_q -- per-family prevalence quantile (Erratum 1)",
+   "tau_frac": 0.8283530298139377,
+   "tau_raw": 0.8283530298139377,
+   "tau_max_by_gamma": {
+    "0.5": 1.0,
+    "0.95": 0.5887865933,
+    "0.99": 0.4184130315
+   },
+   "worst_gamma": 0.99,
+   "tau_max_worst": 0.4184130315,
+   "above_ceiling": true,
+   "true_prevalence": 0.1,
+   "tau_q_p": 0.1,
+   "tau_definition_detail": "tau_q at p=0.1, read from p5-tau-quantile.json (Erratum 1); NOT recomputed here",
+   "tau_max_primary": {
+    "0.5": 1.0
+   },
+   "gammas_primary": [
+    0.5
+   ],
+   "gammas_diagnostic": [
+    0.95,
+    0.99
+   ],
+   "expected_nonempty_rate": 0.0,
+   "nonempty_count": 0,
+   "boundary_frac": 0.4685524999999999,
+   "pilot": {
+    "n_pilot": 20,
+    "boundary_frac_mean": {
+     "0.1": 0.4685524999999999,
+     "0.25": 0.7243525
+    },
+    "nonempty_rate": {
+     "0.1": 0.0,
+     "0.25": 0.0
+    },
+    "nonempty_count": {
+     "0.1": 0,
+     "0.25": 0
+    },
+    "pilot_draws": 1024,
+    "pilot_alpha": 0.95
+   },
+   "regime_class": "ROBUSTNESS",
+   "classification_reason": "feasible but not a target regime: pilot non-empty rate 0.0000 < 0.5",
+   "structural_exception": null
+  },
+  {
+   "study_id": "spade-final-2026-08-23",
+   "registration_commit": "c4f58d3",
+   "code_commit": "4832403d5cdf839cf4825788845732fb2c61165a",
+   "condition_id": "C1",
+   "tier": "primary",
+   "why_included": "continuity -- the one point where SPADE's certificate has ever been measured",
+   "family": "hill",
+   "dimension": 6,
+   "sigma": 0.25,
+   "mu_max": 1.0,
+   "tau_definition": "tau_q -- per-family prevalence quantile (Erratum 1)",
+   "tau_frac": 0.761187051308358,
+   "tau_raw": 0.761187051308358,
+   "tau_max_by_gamma": {
+    "0.5": 1.0,
+    "0.95": 0.5887865933,
+    "0.99": 0.4184130315
+   },
+   "worst_gamma": 0.99,
+   "tau_max_worst": 0.4184130315,
+   "above_ceiling": true,
+   "true_prevalence": 0.25,
+   "tau_q_p": 0.25,
+   "tau_definition_detail": "tau_q at p=0.25, read from p5-tau-quantile.json (Erratum 1); NOT recomputed here",
+   "tau_max_primary": {
+    "0.5": 1.0
+   },
+   "gammas_primary": [
+    0.5
+   ],
+   "gammas_diagnostic": [
+    0.95,
+    0.99
+   ],
+   "expected_nonempty_rate": 0.0,
+   "nonempty_count": 0,
+   "boundary_frac": 0.7243525,
+   "pilot": {
+    "n_pilot": 20,
+    "boundary_frac_mean": {
+     "0.1": 0.4685524999999999,
+     "0.25": 0.7243525
+    },
+    "nonempty_rate": {
+     "0.1": 0.0,
+     "0.25": 0.0
+    },
+    "nonempty_count": {
+     "0.1": 0,
+     "0.25": 0
+    },
+    "pilot_draws": 1024,
+    "pilot_alpha": 0.95
+   },
+   "regime_class": "ROBUSTNESS",
+   "classification_reason": "feasible but not a target regime: pilot non-empty rate 0.0000 < 0.5",
+   "structural_exception": null
+  },
+  {
+   "study_id": "spade-final-2026-08-23",
+   "registration_commit": "c4f58d3",
+   "code_commit": "4832403d5cdf839cf4825788845732fb2c61165a",
+   "condition_id": "C2",
+   "tier": "primary",
+   "why_included": "main TARGET candidate -- \u00a713 has SPADE 1st-3rd of 12 on the map here",
+   "family": "hill",
+   "dimension": 6,
+   "sigma": 0.1,
+   "mu_max": 1.0,
+   "tau_definition": "tau_q -- per-family prevalence quantile (Erratum 1)",
+   "tau_frac": 0.8283530298139377,
+   "tau_raw": 0.8283530298139377,
+   "tau_max_by_gamma": {
+    "0.5": 1.0,
+    "0.95": 0.8355146373,
+    "0.99": 0.7673652126
+   },
+   "worst_gamma": 0.99,
+   "tau_max_worst": 0.7673652126,
+   "above_ceiling": true,
+   "true_prevalence": 0.1,
+   "tau_q_p": 0.1,
+   "tau_definition_detail": "tau_q at p=0.1, read from p5-tau-quantile.json (Erratum 1); NOT recomputed here",
+   "tau_max_primary": {
+    "0.5": 1.0,
+    "0.95": 0.8355146373
+   },
+   "gammas_primary": [
+    0.5,
+    0.95
+   ],
+   "gammas_diagnostic": [
+    0.95,
+    0.99
+   ],
+   "expected_nonempty_rate": 0.4,
+   "nonempty_count": 8,
+   "boundary_frac": 0.535865,
+   "pilot": {
+    "n_pilot": 20,
+    "boundary_frac_mean": {
+     "0.1": 0.535865,
+     "0.25": 0.7605475
+    },
+    "nonempty_rate": {
+     "0.1": 0.4,
+     "0.25": 0.55
+    },
+    "nonempty_count": {
+     "0.1": 8,
+     "0.25": 11
+    },
+    "pilot_draws": 1024,
+    "pilot_alpha": 0.95
+   },
+   "regime_class": "ROBUSTNESS",
+   "classification_reason": "feasible but not a target regime: pilot non-empty rate 0.4000 < 0.5",
+   "structural_exception": null
+  },
+  {
+   "study_id": "spade-final-2026-08-23",
+   "registration_commit": "c4f58d3",
+   "code_commit": "4832403d5cdf839cf4825788845732fb2c61165a",
+   "condition_id": "C2",
+   "tier": "primary",
+   "why_included": "main TARGET candidate -- \u00a713 has SPADE 1st-3rd of 12 on the map here",
+   "family": "hill",
+   "dimension": 6,
+   "sigma": 0.1,
+   "mu_max": 1.0,
+   "tau_definition": "tau_q -- per-family prevalence quantile (Erratum 1)",
+   "tau_frac": 0.761187051308358,
+   "tau_raw": 0.761187051308358,
+   "tau_max_by_gamma": {
+    "0.5": 1.0,
+    "0.95": 0.8355146373,
+    "0.99": 0.7673652126
+   },
+   "worst_gamma": 0.99,
+   "tau_max_worst": 0.7673652126,
+   "above_ceiling": false,
+   "true_prevalence": 0.25,
+   "tau_q_p": 0.25,
+   "tau_definition_detail": "tau_q at p=0.25, read from p5-tau-quantile.json (Erratum 1); NOT recomputed here",
+   "tau_max_primary": {
+    "0.5": 1.0,
+    "0.95": 0.8355146373
+   },
+   "gammas_primary": [
+    0.5,
+    0.95
+   ],
+   "gammas_diagnostic": [
+    0.95,
+    0.99
+   ],
+   "expected_nonempty_rate": 0.55,
+   "nonempty_count": 11,
+   "boundary_frac": 0.7605475,
+   "pilot": {
+    "n_pilot": 20,
+    "boundary_frac_mean": {
+     "0.1": 0.535865,
+     "0.25": 0.7605475
+    },
+    "nonempty_rate": {
+     "0.1": 0.4,
+     "0.25": 0.55
+    },
+    "nonempty_count": {
+     "0.1": 8,
+     "0.25": 11
+    },
+    "pilot_draws": 1024,
+    "pilot_alpha": 0.95
+   },
+   "regime_class": "TARGET",
+   "classification_reason": "feasible (tau=0.7612 < tau_max=0.8355 at gamma=0.95), prevalence 0.2500 in [0.05, 0.6], pilot non-empty rate 0.5500, pilot boundary fraction 0.7605",
+   "structural_exception": null
+  },
+  {
+   "study_id": "spade-final-2026-08-23",
+   "registration_commit": "c4f58d3",
+   "code_commit": "4832403d5cdf839cf4825788845732fb2c61165a",
+   "condition_id": "C3",
+   "tier": "primary",
+   "why_included": "cross-family stress -- \u00a737/\u00a742 predict SPADE struggles",
+   "family": "hartmann6",
+   "dimension": 6,
+   "sigma": 0.25,
+   "mu_max": 1.0,
+   "tau_definition": "tau_q -- per-family prevalence quantile (Erratum 1)",
+   "tau_frac": 0.2192860684241591,
+   "tau_raw": 0.2192860684241591,
+   "tau_max_by_gamma": {
+    "0.5": 1.0,
+    "0.95": 0.5887865933,
+    "0.99": 0.4184130315
+   },
+   "worst_gamma": 0.99,
+   "tau_max_worst": 0.4184130315,
+   "above_ceiling": false,
+   "true_prevalence": 0.1,
+   "tau_q_p": 0.1,
+   "tau_definition_detail": "tau_q at p=0.1, read from p5-tau-quantile.json (Erratum 1); NOT recomputed here",
+   "tau_max_primary": {
+    "0.5": 1.0
+   },
+   "gammas_primary": [
+    0.5
+   ],
+   "gammas_diagnostic": [
+    0.95,
+    0.99
+   ],
+   "expected_nonempty_rate": 0.0,
+   "nonempty_count": 0,
+   "boundary_frac": 0.026037499999999998,
+   "pilot": {
+    "n_pilot": 20,
+    "boundary_frac_mean": {
+     "0.1": 0.026037499999999998,
+     "0.25": 0.55147
+    },
+    "nonempty_rate": {
+     "0.1": 0.0,
+     "0.25": 0.45
+    },
+    "nonempty_count": {
+     "0.1": 0,
+     "0.25": 9
+    },
+    "pilot_draws": 1024,
+    "pilot_alpha": 0.95
+   },
+   "regime_class": "ROBUSTNESS",
+   "classification_reason": "feasible but not a target regime: pilot non-empty rate 0.0000 < 0.5; pilot boundary fraction 0.0260 < 0.05",
+   "structural_exception": null
+  },
+  {
+   "study_id": "spade-final-2026-08-23",
+   "registration_commit": "c4f58d3",
+   "code_commit": "4832403d5cdf839cf4825788845732fb2c61165a",
+   "condition_id": "C3",
+   "tier": "primary",
+   "why_included": "cross-family stress -- \u00a737/\u00a742 predict SPADE struggles",
+   "family": "hartmann6",
+   "dimension": 6,
+   "sigma": 0.25,
+   "mu_max": 1.0,
+   "tau_definition": "tau_q -- per-family prevalence quantile (Erratum 1)",
+   "tau_frac": 0.09705520441675031,
+   "tau_raw": 0.09705520441675031,
+   "tau_max_by_gamma": {
+    "0.5": 1.0,
+    "0.95": 0.5887865933,
+    "0.99": 0.4184130315
+   },
+   "worst_gamma": 0.99,
+   "tau_max_worst": 0.4184130315,
+   "above_ceiling": false,
+   "true_prevalence": 0.25,
+   "tau_q_p": 0.25,
+   "tau_definition_detail": "tau_q at p=0.25, read from p5-tau-quantile.json (Erratum 1); NOT recomputed here",
+   "tau_max_primary": {
+    "0.5": 1.0
+   },
+   "gammas_primary": [
+    0.5
+   ],
+   "gammas_diagnostic": [
+    0.95,
+    0.99
+   ],
+   "expected_nonempty_rate": 0.45,
+   "nonempty_count": 9,
+   "boundary_frac": 0.55147,
+   "pilot": {
+    "n_pilot": 20,
+    "boundary_frac_mean": {
+     "0.1": 0.026037499999999998,
+     "0.25": 0.55147
+    },
+    "nonempty_rate": {
+     "0.1": 0.0,
+     "0.25": 0.45
+    },
+    "nonempty_count": {
+     "0.1": 0,
+     "0.25": 9
+    },
+    "pilot_draws": 1024,
+    "pilot_alpha": 0.95
+   },
+   "regime_class": "ROBUSTNESS",
+   "classification_reason": "feasible but not a target regime: pilot non-empty rate 0.4500 < 0.5",
+   "structural_exception": null
+  },
+  {
+   "study_id": "spade-final-2026-08-23",
+   "registration_commit": "c4f58d3",
+   "code_commit": "4832403d5cdf839cf4825788845732fb2c61165a",
+   "condition_id": "C4",
+   "tier": "primary",
+   "why_included": "dimension stress -- doe_unscreened expected unavailable",
+   "family": "hartmann6",
+   "dimension": 8,
+   "sigma": 0.25,
+   "mu_max": 1.0,
+   "tau_definition": "tau_q -- per-family prevalence quantile (Erratum 1)",
+   "tau_frac": 0.2163139086957016,
+   "tau_raw": 0.2163139086957016,
+   "tau_max_by_gamma": {
+    "0.5": 1.0,
+    "0.95": 0.5887865933,
+    "0.99": 0.4184130315
+   },
+   "worst_gamma": 0.99,
+   "tau_max_worst": 0.4184130315,
+   "above_ceiling": false,
+   "true_prevalence": 0.1,
+   "tau_q_p": 0.1,
+   "tau_definition_detail": "tau_q at p=0.1, read from p5-tau-quantile.json (Erratum 1); NOT recomputed here",
+   "tau_max_primary": {
+    "0.5": 1.0
+   },
+   "gammas_primary": [
+    0.5
+   ],
+   "gammas_diagnostic": [
+    0.95,
+    0.99
+   ],
+   "expected_nonempty_rate": 0.0,
+   "nonempty_count": 0,
+   "boundary_frac": 0.0295425,
+   "pilot": {
+    "n_pilot": 20,
+    "boundary_frac_mean": {
+     "0.1": 0.0295425,
+     "0.25": 0.4685125
+    },
+    "nonempty_rate": {
+     "0.1": 0.0,
+     "0.25": 0.2
+    },
+    "nonempty_count": {
+     "0.1": 0,
+     "0.25": 4
+    },
+    "pilot_draws": 1024,
+    "pilot_alpha": 0.95
+   },
+   "regime_class": "ROBUSTNESS",
+   "classification_reason": "feasible but not a target regime: pilot non-empty rate 0.0000 < 0.5; pilot boundary fraction 0.0295 < 0.05",
+   "structural_exception": null
+  },
+  {
+   "study_id": "spade-final-2026-08-23",
+   "registration_commit": "c4f58d3",
+   "code_commit": "4832403d5cdf839cf4825788845732fb2c61165a",
+   "condition_id": "C4",
+   "tier": "primary",
+   "why_included": "dimension stress -- doe_unscreened expected unavailable",
+   "family": "hartmann6",
+   "dimension": 8,
+   "sigma": 0.25,
+   "mu_max": 1.0,
+   "tau_definition": "tau_q -- per-family prevalence quantile (Erratum 1)",
+   "tau_frac": 0.09716077828239578,
+   "tau_raw": 0.09716077828239578,
+   "tau_max_by_gamma": {
+    "0.5": 1.0,
+    "0.95": 0.5887865933,
+    "0.99": 0.4184130315
+   },
+   "worst_gamma": 0.99,
+   "tau_max_worst": 0.4184130315,
+   "above_ceiling": false,
+   "true_prevalence": 0.25,
+   "tau_q_p": 0.25,
+   "tau_definition_detail": "tau_q at p=0.25, read from p5-tau-quantile.json (Erratum 1); NOT recomputed here",
+   "tau_max_primary": {
+    "0.5": 1.0
+   },
+   "gammas_primary": [
+    0.5
+   ],
+   "gammas_diagnostic": [
+    0.95,
+    0.99
+   ],
+   "expected_nonempty_rate": 0.2,
+   "nonempty_count": 4,
+   "boundary_frac": 0.4685125,
+   "pilot": {
+    "n_pilot": 20,
+    "boundary_frac_mean": {
+     "0.1": 0.0295425,
+     "0.25": 0.4685125
+    },
+    "nonempty_rate": {
+     "0.1": 0.0,
+     "0.25": 0.2
+    },
+    "nonempty_count": {
+     "0.1": 0,
+     "0.25": 4
+    },
+    "pilot_draws": 1024,
+    "pilot_alpha": 0.95
+   },
+   "regime_class": "ROBUSTNESS",
+   "classification_reason": "feasible but not a target regime: pilot non-empty rate 0.2000 < 0.5",
+   "structural_exception": null
+  },
+  {
+   "study_id": "spade-final-2026-08-23",
+   "registration_commit": "c4f58d3",
+   "code_commit": "4832403d5cdf839cf4825788845732fb2c61165a",
+   "condition_id": "S1",
+   "tier": "secondary",
+   "why_included": "the known exception, reported rather than hidden",
+   "family": "ackley",
+   "dimension": 6,
+   "sigma": 0.25,
+   "mu_max": 1.0,
+   "tau_definition": "tau_q -- per-family prevalence quantile (Erratum 1)",
+   "tau_frac": 0.0856142343278546,
+   "tau_raw": 0.0856142343278546,
+   "tau_max_by_gamma": {
+    "0.5": 1.0,
+    "0.95": 0.5887865933,
+    "0.99": 0.4184130315
+   },
+   "worst_gamma": 0.99,
+   "tau_max_worst": 0.4184130315,
+   "above_ceiling": false,
+   "true_prevalence": 0.1,
+   "tau_q_p": 0.1,
+   "tau_definition_detail": "tau_q at p=0.1, read from p5-tau-quantile.json (Erratum 1); NOT recomputed here",
+   "tau_max_primary": {
+    "0.5": 1.0
+   },
+   "gammas_primary": [
+    0.5
+   ],
+   "gammas_diagnostic": [
+    0.95,
+    0.99
+   ],
+   "expected_nonempty_rate": 0.0,
+   "nonempty_count": 0,
+   "boundary_frac": 0.09154999999999999,
+   "pilot": {
+    "n_pilot": 20,
+    "boundary_frac_mean": {
+     "0.1": 0.09154999999999999,
+     "0.25": 0.691935
+    },
+    "nonempty_rate": {
+     "0.1": 0.0,
+     "0.25": 0.0
+    },
+    "nonempty_count": {
+     "0.1": 0,
+     "0.25": 0
+    },
+    "pilot_draws": 1024,
+    "pilot_alpha": 0.95
+   },
+   "regime_class": "EXCEPTION",
+   "classification_reason": "pre-declared structural exception: centre-point optimum advantages classical designs; \u00a741 records SPADE certifying NOTHING in 1,200 campaigns on this family",
+   "structural_exception": "centre-point optimum advantages classical designs; \u00a741 records SPADE certifying NOTHING in 1,200 campaigns on this family"
+  },
+  {
+   "study_id": "spade-final-2026-08-23",
+   "registration_commit": "c4f58d3",
+   "code_commit": "4832403d5cdf839cf4825788845732fb2c61165a",
+   "condition_id": "S1",
+   "tier": "secondary",
+   "why_included": "the known exception, reported rather than hidden",
+   "family": "ackley",
+   "dimension": 6,
+   "sigma": 0.25,
+   "mu_max": 1.0,
+   "tau_definition": "tau_q -- per-family prevalence quantile (Erratum 1)",
+   "tau_frac": 0.06302221708100417,
+   "tau_raw": 0.06302221708100417,
+   "tau_max_by_gamma": {
+    "0.5": 1.0,
+    "0.95": 0.5887865933,
+    "0.99": 0.4184130315
+   },
+   "worst_gamma": 0.99,
+   "tau_max_worst": 0.4184130315,
+   "above_ceiling": false,
+   "true_prevalence": 0.25,
+   "tau_q_p": 0.25,
+   "tau_definition_detail": "tau_q at p=0.25, read from p5-tau-quantile.json (Erratum 1); NOT recomputed here",
+   "tau_max_primary": {
+    "0.5": 1.0
+   },
+   "gammas_primary": [
+    0.5
+   ],
+   "gammas_diagnostic": [
+    0.95,
+    0.99
+   ],
+   "expected_nonempty_rate": 0.0,
+   "nonempty_count": 0,
+   "boundary_frac": 0.691935,
+   "pilot": {
+    "n_pilot": 20,
+    "boundary_frac_mean": {
+     "0.1": 0.09154999999999999,
+     "0.25": 0.691935
+    },
+    "nonempty_rate": {
+     "0.1": 0.0,
+     "0.25": 0.0
+    },
+    "nonempty_count": {
+     "0.1": 0,
+     "0.25": 0
+    },
+    "pilot_draws": 1024,
+    "pilot_alpha": 0.95
+   },
+   "regime_class": "EXCEPTION",
+   "classification_reason": "pre-declared structural exception: centre-point optimum advantages classical designs; \u00a741 records SPADE certifying NOTHING in 1,200 campaigns on this family",
+   "structural_exception": "centre-point optimum advantages classical designs; \u00a741 records SPADE certifying NOTHING in 1,200 campaigns on this family"
+  },
+  {
+   "study_id": "spade-final-2026-08-23",
+   "registration_commit": "c4f58d3",
+   "code_commit": "4832403d5cdf839cf4825788845732fb2c61165a",
+   "condition_id": "S2",
+   "tier": "secondary",
+   "why_included": "candidate for the \u00a75.3 levy-or-rosenbrock slot",
+   "family": "levy",
+   "dimension": 6,
+   "sigma": 0.25,
+   "mu_max": 1.0,
+   "tau_definition": "tau_q -- per-family prevalence quantile (Erratum 1)",
+   "tau_frac": 0.903458192777464,
+   "tau_raw": 0.903458192777464,
+   "tau_max_by_gamma": {
+    "0.5": 1.0,
+    "0.95": 0.5887865933,
+    "0.99": 0.4184130315
+   },
+   "worst_gamma": 0.99,
+   "tau_max_worst": 0.4184130315,
+   "above_ceiling": true,
+   "true_prevalence": 0.1,
+   "tau_q_p": 0.1,
+   "tau_definition_detail": "tau_q at p=0.1, read from p5-tau-quantile.json (Erratum 1); NOT recomputed here",
+   "tau_max_primary": {
+    "0.5": 1.0
+   },
+   "gammas_primary": [
+    0.5
+   ],
+   "gammas_diagnostic": [
+    0.95,
+    0.99
+   ],
+   "expected_nonempty_rate": 0.0,
+   "nonempty_count": 0,
+   "boundary_frac": 0.5301549999999999,
+   "pilot": {
+    "n_pilot": 20,
+    "boundary_frac_mean": {
+     "0.1": 0.5301549999999999,
+     "0.25": 0.6720625
+    },
+    "nonempty_rate": {
+     "0.1": 0.0,
+     "0.25": 0.0
+    },
+    "nonempty_count": {
+     "0.1": 0,
+     "0.25": 0
+    },
+    "pilot_draws": 1024,
+    "pilot_alpha": 0.95
+   },
+   "regime_class": "ROBUSTNESS",
+   "classification_reason": "feasible but not a target regime: pilot non-empty rate 0.0000 < 0.5",
+   "structural_exception": null
+  },
+  {
+   "study_id": "spade-final-2026-08-23",
+   "registration_commit": "c4f58d3",
+   "code_commit": "4832403d5cdf839cf4825788845732fb2c61165a",
+   "condition_id": "S2",
+   "tier": "secondary",
+   "why_included": "candidate for the \u00a75.3 levy-or-rosenbrock slot",
+   "family": "levy",
+   "dimension": 6,
+   "sigma": 0.25,
+   "mu_max": 1.0,
+   "tau_definition": "tau_q -- per-family prevalence quantile (Erratum 1)",
+   "tau_frac": 0.8483448105817618,
+   "tau_raw": 0.8483448105817618,
+   "tau_max_by_gamma": {
+    "0.5": 1.0,
+    "0.95": 0.5887865933,
+    "0.99": 0.4184130315
+   },
+   "worst_gamma": 0.99,
+   "tau_max_worst": 0.4184130315,
+   "above_ceiling": true,
+   "true_prevalence": 0.25,
+   "tau_q_p": 0.25,
+   "tau_definition_detail": "tau_q at p=0.25, read from p5-tau-quantile.json (Erratum 1); NOT recomputed here",
+   "tau_max_primary": {
+    "0.5": 1.0
+   },
+   "gammas_primary": [
+    0.5
+   ],
+   "gammas_diagnostic": [
+    0.95,
+    0.99
+   ],
+   "expected_nonempty_rate": 0.0,
+   "nonempty_count": 0,
+   "boundary_frac": 0.6720625,
+   "pilot": {
+    "n_pilot": 20,
+    "boundary_frac_mean": {
+     "0.1": 0.5301549999999999,
+     "0.25": 0.6720625
+    },
+    "nonempty_rate": {
+     "0.1": 0.0,
+     "0.25": 0.0
+    },
+    "nonempty_count": {
+     "0.1": 0,
+     "0.25": 0
+    },
+    "pilot_draws": 1024,
+    "pilot_alpha": 0.95
+   },
+   "regime_class": "ROBUSTNESS",
+   "classification_reason": "feasible but not a target regime: pilot non-empty rate 0.0000 < 0.5",
+   "structural_exception": null
+  },
+  {
+   "study_id": "spade-final-2026-08-23",
+   "registration_commit": "c4f58d3",
+   "code_commit": "4832403d5cdf839cf4825788845732fb2c61165a",
+   "condition_id": "S3",
+   "tier": "secondary",
+   "why_included": "candidate for the \u00a75.3 levy-or-rosenbrock slot",
+   "family": "rosenbrock",
+   "dimension": 6,
+   "sigma": 0.25,
+   "mu_max": 1.0,
+   "tau_definition": "tau_q -- per-family prevalence quantile (Erratum 1)",
+   "tau_frac": 0.9517136507897269,
+   "tau_raw": 0.9517136507897269,
+   "tau_max_by_gamma": {
+    "0.5": 1.0,
+    "0.95": 0.5887865933,
+    "0.99": 0.4184130315
+   },
+   "worst_gamma": 0.99,
+   "tau_max_worst": 0.4184130315,
+   "above_ceiling": true,
+   "true_prevalence": 0.1,
+   "tau_q_p": 0.1,
+   "tau_definition_detail": "tau_q at p=0.1, read from p5-tau-quantile.json (Erratum 1); NOT recomputed here",
+   "tau_max_primary": {
+    "0.5": 1.0
+   },
+   "gammas_primary": [
+    0.5
+   ],
+   "gammas_diagnostic": [
+    0.95,
+    0.99
+   ],
+   "expected_nonempty_rate": 0.0,
+   "nonempty_count": 0,
+   "boundary_frac": 0.6968975,
+   "pilot": {
+    "n_pilot": 20,
+    "boundary_frac_mean": {
+     "0.1": 0.6968975,
+     "0.25": 0.753455
+    },
+    "nonempty_rate": {
+     "0.1": 0.0,
+     "0.25": 0.0
+    },
+    "nonempty_count": {
+     "0.1": 0,
+     "0.25": 0
+    },
+    "pilot_draws": 1024,
+    "pilot_alpha": 0.95
+   },
+   "regime_class": "ROBUSTNESS",
+   "classification_reason": "feasible but not a target regime: pilot non-empty rate 0.0000 < 0.5",
+   "structural_exception": null
+  },
+  {
+   "study_id": "spade-final-2026-08-23",
+   "registration_commit": "c4f58d3",
+   "code_commit": "4832403d5cdf839cf4825788845732fb2c61165a",
+   "condition_id": "S3",
+   "tier": "secondary",
+   "why_included": "candidate for the \u00a75.3 levy-or-rosenbrock slot",
+   "family": "rosenbrock",
+   "dimension": 6,
+   "sigma": 0.25,
+   "mu_max": 1.0,
+   "tau_definition": "tau_q -- per-family prevalence quantile (Erratum 1)",
+   "tau_frac": 0.9132195995718719,
+   "tau_raw": 0.9132195995718719,
+   "tau_max_by_gamma": {
+    "0.5": 1.0,
+    "0.95": 0.5887865933,
+    "0.99": 0.4184130315
+   },
+   "worst_gamma": 0.99,
+   "tau_max_worst": 0.4184130315,
+   "above_ceiling": true,
+   "true_prevalence": 0.25,
+   "tau_q_p": 0.25,
+   "tau_definition_detail": "tau_q at p=0.25, read from p5-tau-quantile.json (Erratum 1); NOT recomputed here",
+   "tau_max_primary": {
+    "0.5": 1.0
+   },
+   "gammas_primary": [
+    0.5
+   ],
+   "gammas_diagnostic": [
+    0.95,
+    0.99
+   ],
+   "expected_nonempty_rate": 0.0,
+   "nonempty_count": 0,
+   "boundary_frac": 0.753455,
+   "pilot": {
+    "n_pilot": 20,
+    "boundary_frac_mean": {
+     "0.1": 0.6968975,
+     "0.25": 0.753455
+    },
+    "nonempty_rate": {
+     "0.1": 0.0,
+     "0.25": 0.0
+    },
+    "nonempty_count": {
+     "0.1": 0,
+     "0.25": 0
+    },
+    "pilot_draws": 1024,
+    "pilot_alpha": 0.95
+   },
+   "regime_class": "ROBUSTNESS",
+   "classification_reason": "feasible but not a target regime: pilot non-empty rate 0.0000 < 0.5",
+   "structural_exception": null
+  }
+ ]
+}
