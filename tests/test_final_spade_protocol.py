@@ -424,3 +424,72 @@ def test_row_above_ceiling_raises_on_an_unlisted_gamma_rather_than_defaulting():
     to False would hide exactly the class of bug this function exists to fix."""
     with pytest.raises(KeyError):
         row_above_ceiling(0.60, 0.777, {0.50: 1.0, 0.95: 0.8355})
+
+
+# ===========================================================================
+# Multi-condition combination -- the analyser's artefacts are SINGULAR
+# (final-spade-certificate.json, not one per condition), and KF-2 explicitly
+# needs hill AND hartmann6 rows in the SAME analysis to answer "does validity
+# extend beyond hill". Running the analyser once per condition and writing to
+# the same fixed filenames each time silently overwrites the prior condition's
+# committed artefact -- found running C1 immediately after C2.
+# ===========================================================================
+
+from boec.final_spade import merge_condition_rows  # noqa: E402
+
+
+def _condition_envelope(tmp_path, name, study_id="spade-final-2026-08-23",
+                        registration_commit="c4f58d3", rows=None,
+                        missing=None):
+    import json
+    p = tmp_path / f"final-spade-{name}.json"
+    p.write_text(json.dumps({
+        "study_id": study_id, "registration_commit": registration_commit,
+        "code_commit": "abc123", "condition": name.upper(),
+        "missing_mandatory_arms": missing or [],
+        "gate_failures": [],
+        "rows": rows if rows is not None else [{"arm": "spade_cf_m0", "condition_id": name}],
+    }))
+    return p
+
+
+def test_merge_concatenates_rows_from_every_condition_file(tmp_path):
+    p1 = _condition_envelope(tmp_path, "c1", rows=[{"arm": "sobol", "x": 1}])
+    p2 = _condition_envelope(tmp_path, "c2", rows=[{"arm": "sobol", "x": 2},
+                                                   {"arm": "doe", "x": 3}])
+    merged = merge_condition_rows([p1, p2])
+    assert len(merged["rows"]) == 3
+    assert merged["rows"][0]["x"] == 1 and merged["rows"][2]["x"] == 3
+
+
+def test_merge_raises_on_a_study_id_mismatch_across_files(tmp_path):
+    """Combining files from two different studies would silently pool unrelated
+    registrations into one kill ledger. A wiring error, not a case to guess through."""
+    p1 = _condition_envelope(tmp_path, "c1", study_id="spade-final-2026-08-23")
+    p2 = _condition_envelope(tmp_path, "c2", study_id="some-other-study")
+    with pytest.raises(ValueError, match="study_id"):
+        merge_condition_rows([p1, p2])
+
+
+def test_merge_raises_on_a_registration_commit_mismatch_across_files(tmp_path):
+    """The same guard for the registration commit -- combining a pre-Erratum-1 file with
+    a post-Erratum-1 file would silently mix two different threshold definitions."""
+    p1 = _condition_envelope(tmp_path, "c1", registration_commit="c4f58d3")
+    p2 = _condition_envelope(tmp_path, "c2", registration_commit="0000000")
+    with pytest.raises(ValueError, match="registration_commit"):
+        merge_condition_rows([p1, p2])
+
+
+def test_merge_unions_missing_mandatory_arms_across_conditions(tmp_path):
+    p1 = _condition_envelope(tmp_path, "c1", missing=["doe_unscreened"])
+    p2 = _condition_envelope(tmp_path, "c2", missing=["doe_unscreened"])
+    merged = merge_condition_rows([p1, p2])
+    # `_condition_envelope` writes "condition": name.upper() -- the merge reads that field
+    # verbatim, so the expected keys are uppercase too.
+    assert merged["missing_mandatory_arms"] == {"C1": ["doe_unscreened"],
+                                                "C2": ["doe_unscreened"]}
+
+
+def test_merge_refuses_an_empty_file_list():
+    with pytest.raises(ValueError, match="at least one"):
+        merge_condition_rows([])
