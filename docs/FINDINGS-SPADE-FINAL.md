@@ -328,6 +328,33 @@ close to saturated regardless of design at this threshold — informative on its
 recorded rather than smoothed into either of the other two families' stories. ROBUSTNESS, no
 kill adjudicated.
 
+### 10.5 S3 (rosenbrock, d=6, σ=0.25, ROBUSTNESS) — the seventh and final condition
+
+Same `above_ceiling` pattern as levy (γ∈{0.95,0.99} entirely infeasible at both `τ_q`); read
+at primary γ=0.50:
+
+| arm | regret P (primary) | sym. diff (γ=0.50) |
+|---|---|---|
+| spade_cf_m4 | 0.0288 | **0.2452** |
+| spade_cf_m8 | 0.0288 | 0.2453 |
+| sobol | **0.0278** | 0.2466 |
+| spade_random_plate2 | 0.0272 | 0.2468 |
+| spade_cf_m0 | 0.0319 | 0.2464 |
+| qlognei | 0.0419 | 0.2471 |
+| spade_plate1_only | 0.0285 | 0.2473 |
+| lhs | 0.0308 | 0.2482 |
+| qlogei | 0.0375 | 0.2486 |
+| random | 0.0314 | 0.2491 |
+| doe | 0.0526 | 0.2494 |
+
+**Even flatter than levy** (0.2452–0.2494, spread 0.004) on the map, and — unlike levy — no
+catastrophic regret outlier: every arm sits in 0.027–0.053. SPADE arms and `sobol` cluster at
+the front on both axes; `doe` is worst on both, mildly rather than dramatically. §41 pairs
+levy and rosenbrock together as both under-covering at γ=0.99, and both now show the same
+"map does not discriminate at this σ/γ" signature prospectively. ROBUSTNESS, no kill
+adjudicated. **This is the seventh and final registered condition — all primary and
+secondary conditions are now complete.**
+
 ## 11. Sobol, BO and DoE comparison
 
 **C2 (§8's table) is the load-bearing comparison — it is the TARGET condition.** `sobol`
