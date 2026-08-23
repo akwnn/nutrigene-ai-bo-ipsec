@@ -161,11 +161,37 @@ def conditions() -> dict[str, dict]:
 
 
 def _keys(family: str, n: int) -> list[tuple]:
-    if family == "hill":
-        ks = sorted({(r["instance"], r["seed"]) for r in
-                     json.loads(P2_COMMITTED.read_text())["rows"]})
-        return ks[:n]
-    return [(family, s) for s in range(n)]
+    """``n`` campaign keys. `hill` is an ENSEMBLE keyed by hashed instance ids.
+
+    🔴 **P2 committed only 50 hill keys** -- 25 instances x seeds {0, 1} -- and the spec
+    registered **100** campaigns per arm. Reading P2's keys alone therefore silently
+    delivered a **half-sized study**, which the runner's own progress counter exposed
+    (`[101/550]` where 1100 was expected). Recorded rather than quietly accepted: a sample
+    size that shrinks because of where the keys came from is exactly the "do not silently
+    reduce" case spec §6 legislates for.
+
+    Beyond the committed 50 the extension is **deterministic and a strict superset**: the
+    same 25 instances, seeds ascending from the highest committed one. The committed keys
+    stay FIRST and in their original order, so a checkpoint written before this change
+    resumes cleanly instead of re-running.
+    """
+    if family != "hill":
+        return [(family, s) for s in range(n)]
+
+    committed = sorted({(r["instance"], r["seed"]) for r in
+                        json.loads(P2_COMMITTED.read_text())["rows"]})
+    if n <= len(committed):
+        return committed[:n]
+
+    instances = sorted({k[0] for k in committed})
+    out, seed = list(committed), max(k[1] for k in committed) + 1
+    while len(out) < n:
+        for inst in instances:
+            if len(out) >= n:
+                break
+            out.append((inst, seed))
+        seed += 1
+    return out[:n]
 
 
 def _oracle(family: str, instance: str, dim: int, sigma: float, seed: int):
