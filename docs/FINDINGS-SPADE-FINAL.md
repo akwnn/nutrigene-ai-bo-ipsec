@@ -74,48 +74,93 @@ Final classification table: **see `results/final-spade-feasibility.json`**.
 
 ## 5. Certificate validity: cross-fit results
 
-**`NOT RUN`** — pending `results/final-spade-certificate.json`.
+**C2 (hill, d=6, σ=0.10) is IN — the study's one registered TARGET condition, n=100.** Every
+other primary/secondary condition is `NOT RUN`; nothing below generalises past hill.
 
-The protocol is fixed regardless of outcome: cross-fit is **primary**, same-draw is a
-labelled **diagnostic**, and their difference rides on every row. Inference is **exact**
-(`scipy.stats.binom`), never a normal approximation — FINDINGS §22 records a Holm correction
-computed with a normal approximation that did not survive the exact tail.
+**Source:** `results/final-spade-certificate.json`, `results/final-spade-kill-ledger.json`,
+adjudicated at the primary map cell `(τ_q p=0.25, γ=0.95, α=0.95)` per spec §5.2/§7 (τ_q p=0.25
+is C2's TARGET threshold; γ=0.95 is the binding primary γ at σ=0.10; α=0.95 is the figure cell
+named in spec §11).
+
+**KF-1 — INCONCLUSIVE.** No cell is confirmatory: every one sits below the evidence floor of
+10, outside the frozen F-CERT family, or in a condition missing a mandatory comparator.
+`doe_unscreened` is absent from every condition (spec §4's `doe` runs, but the unscreened
+variant was never wired into this runner) — recorded as `missing mandatory comparator(s):
+doe_unscreened` on the printed table, and it is why **no cell in this run is confirmatory
+regardless of its containment numbers.** This blocks any PASS/FAIL certificate claim until
+fixed.
+
+**KF-9 — PASS.** 0 of 8,800 primary-γ (0.50, 0.95) rows sit above the certifiability ceiling.
+2,200 rows at the registered diagnostic γ=0.99 do breach it (τ_q p=0.10 at hill σ=0.10
+exceeds `tau_max(γ=0.99)=0.7674`) — expected and excluded from this check by design (spec
+§2.4; the diagnostic corner is never claimed as primary evidence).
+
+**KF-10 — FAIL, genuinely.** 10 cells reached PASS on raw containment while **more than
+half their campaigns certified nothing** (up to 81% empty for `spade_plate1_only`), and were
+correctly downgraded to INCONCLUSIVE. This is the **empty-set trap** §41.3 already documented
+off hill, now reproduced prospectively on hill itself: the problem is emptiness, not
+miscoverage, and a method that declines to answer two campaigns in three has not shown a
+valid certificate.
+
+Cross-fit and same-draw containment are reported as **separate columns on every cell**, never
+collapsed — e.g. `spade_cf_m0` at `(0.25, 0.95, 0.80)`: cross-fit 87/97 = 0.8969, same-draw
+1.0000. Inference is **exact** (`scipy.stats.binom`), never a normal approximation.
 
 ## 6. Does targeted Plate 2 earn its place?
 
-**`NOT RUN`** — KF-3 / KF-4.
+**KF-3 — FAIL.** `spade_cf_m0` vs `spade_random_plate2` on symmetric-difference error at the
+primary cell: effect **−0.00188** (m0 is *worse*, not better), n=25, Holm p=0.4108 — nowhere
+near the ≥SESOI(0.02) bar spec §7.3 requires. **Targeted plate-2 SUR did not demonstrate
+value beyond an equal-well random second plate on hill at σ=0.10.** Per spec §7.3's
+registered consequence, **the mechanistic claim comes out of the paper** for this condition.
+This is the load-bearing causal comparison of the whole study, and on the one TARGET cell
+available it does not hold.
 
-The load-bearing comparison is `spade_cf_m0` vs `spade_random_plate2`: same plate 1, same
-number of plate-2 wells, differing **only** in whether those wells are boundary-targeted. If
-`m0` does not beat it by ≥ SESOI on symmetric-difference error in a TARGET condition, the
-finding is that **targeted plate-2 SUR did not demonstrate value beyond extra random wells**,
-and the mechanistic claim leaves the paper.
+**KF-4 — FAIL.** `spade_cf_m0` vs `spade_plate1_only`: effect **+0.01171** in the wrong
+direction (plate1_only reads *better* on symmetric difference), n=25, Holm p=1.273e-04
+(significant, and significant against SPADE). Per spec §4.1's registered asymmetry —
+`plate1_only` is 8 wells short and therefore *favourable* to plate 2 — **this is the
+stronger reading of the two failures, not the weaker one.**
 
 ## 7. Can local allocation lower regret safely?
 
-**`NOT RUN`** — KF-5.
-
-`m > 0` is an improvement only under the full conjunction of spec §7.5. **A regret reduction
-that damages the certificate is a trade-off, not a SPADE improvement**, and is reported as
-one.
+**KF-5 — FAIL** (`spade_cf_m4` is the best-conjunction candidate of the two variants).
+Effect **−0.00278** on rule-P regret (i.e. `m4` does not even reduce regret at this cell),
+n=25, Holm p=0.3123. The §7.5 conjunction is not met. **`m > 0` is reported as a TRADE-OFF,
+not an improvement**, on the one TARGET cell measured so far.
 
 ## 8. Map quality versus regret: Pareto results
 
-**`NOT RUN`** — pending `results/final-spade-regret-pareto.json`.
+**Source:** `results/final-spade-regret-pareto.json`, C2 only.
 
-The Pareto figure is mandatory because this project's central claim is that **choosing a
-point and certifying a region are different problems**. FINDINGS §13 measured SPADE arms
-**9th–11th of 12 on regret and 1st–3rd of 12 on the map** at the same cell — the two objects
-rank SPADE almost exactly opposite.
+| arm | rounds | wells | regret A | regret P (primary) | sym. diff | certificate |
+|---|---|---|---|---|---|---|
+| doe | 3 | 48 | 0.0924 | 0.3072 | 0.2580 | NOT_ASSESSED |
+| lhs | 1 | 48 | 0.1041 | 0.0747 | 0.1867 | NOT_ASSESSED |
+| qlogei | 10 | 48 | 0.1000 | 0.0791 | 0.2079 | NOT_ASSESSED |
+| qlognei | 10 | 48 | 0.0874 | **0.0691** | 0.2135 | NOT_ASSESSED |
+| random | 1 | 48 | 0.1370 | 0.0905 | 0.2050 | NOT_ASSESSED |
+| sobol | 1 | 48 | 0.1297 | 0.0855 | 0.1913 | NOT_ASSESSED |
+| **spade_cf_m0** | 2 | 48 | 0.1426 | 0.0844 | **0.1804** | INCONCLUSIVE |
+| spade_cf_m4 | 2 | 48 | 0.1403 | 0.0871 | 0.1770 | INCONCLUSIVE |
+| spade_cf_m8 | 2 | 48 | 0.1385 | 0.0835 | 0.1797 | INCONCLUSIVE |
+| spade_plate1_only | 1 | 40 | 0.1426 | 0.0863 | 0.1921 | INCONCLUSIVE |
+| spade_random_plate2 | 2 | 48 | 0.1401 | 0.0822 | 0.1785 | INCONCLUSIVE |
+
+`spade_cf_m0` posts the **lowest symmetric difference of all 11 arms** (0.1804) — including
+every BO and space-filling comparator — while sitting mid-pack on rule-P regret (`qlognei` is
+best at 0.0691). **This is exactly the split FINDINGS §13 predicted**: SPADE competitive-to-
+best on the map, unremarkable on regret, at equal wells and a fifth of `qlognei`'s rounds.
+`NOT_ASSESSED` certificate status for non-SPADE arms is correct — the certificate machinery
+is SPADE-specific; other arms report map/regret only.
 
 ## 9. Calibration and refinement
 
-**`NOT RUN`**.
-
-AUC is **secondary only**: it is invariant to monotone transformation and cannot see
-calibration, and mean `grid_r2` is negative for all eight arms (§9.4). The primary map scalar
-is the **symmetric difference**. **Type I volume alone ranks silence first** — an empty
-certificate scores exactly 0 — and is never emitted without its partner.
+**Not yet separately tabulated** — Murphy calibration/refinement values exist per-row in
+`results/final-spade-c2.json` (used internally by KF-5's calibration clause) but have not
+been pulled into a standalone table or figure. AUC remains **secondary only**: it cannot see
+calibration, and the primary map scalar above is the symmetric difference throughout. Type I
+volume is never reported alone.
 
 ## 10. Cross-family, noise and dimension scope
 
@@ -136,22 +181,46 @@ the suppression spec §9.5 forbids.
 
 ## 11. Sobol, BO and DoE comparison
 
-**`NOT RUN`**.
-
-Sobol is a **mandatory** arm in every primary condition, not a weak foil: FINDINGS §13 has
-`sobol` 4th of 12 on the map, ahead of `qlogei`, `qlognei` and `doe`. Both `qlogei` and
-`qlognei` run, because §4.2b records the **Q57 trap** — a headline that held against the
-weaker acquisition and died against the noisy one.
+**C2 only (§8's table).** `sobol` posts symmetric difference 0.1913 — competitive with but
+not better than `spade_cf_m0`'s 0.1804 (KF-6 PASS: SPADE is within SESOI). `qlognei` is the
+best regret arm (0.0691, KF-8: SPADE within SESOI = practical parity, never phrased as a
+win). `doe` is markedly worse on the map (0.2580, worst of all 11) and dramatically worse
+under rule P (0.3072) than rule A (0.0924) — consistent with FINDINGS §9.1's registered
+mechanism (a posterior-mean terminal rule punishes `doe`'s prior-driven screened axes).
+`doe_unscreened` did not run (§5 above) so the full-dimensional classical comparison is
+incomplete.
 
 ## 12. Kill ledger
 
-**`NOT RUN`** — pending `results/final-spade-kill-ledger.json`. Registered items KF-1…KF-10
-are in spec §10 with their firing conditions.
+**C2 only, adjudicated at map cell (τ_q p=0.25, γ=0.95, α=0.95).** Source:
+`results/final-spade-kill-ledger.json`.
+
+| kill | status | headline |
+|---|---|---|
+| KF-1 | INCONCLUSIVE | no confirmatory cell (missing `doe_unscreened`, thin denominators) |
+| KF-2 | NOT_RUN | no condition beyond hill has run yet |
+| KF-3 | **FAIL** | targeted plate 2 does not beat random plate 2 (effect −0.00188, ns) |
+| KF-4 | **FAIL** | plate 2 does not beat plate-1-only, in the harder direction (effect +0.01171, p=1.3e-04) |
+| KF-5 | **FAIL** | `m>0` does not lower regret; reported as a trade-off (effect −0.00278, ns) |
+| KF-6 | PASS | SPADE within SESOI of Sobol on the map |
+| KF-7 | PASS | SPADE within SESOI of qLogNEI on the map |
+| KF-8 | PASS | SPADE at practical parity with qLogNEI on regret (not a win) |
+| KF-9 | PASS | 0/8,800 primary-γ rows above ceiling |
+| KF-10 | **FAIL** | 10 cells' PASS was empty-set-driven; correctly downgraded |
+
+**Everything above is ONE condition of seven.** KF-2, KF-6, KF-7, KF-8 in particular are
+registered as cross-condition or comparator questions that this single TARGET cell cannot
+settle generally — they read as provisional until C1/C3/C4/S1–S3 land.
 
 ## 13. What the final paper may claim
 
-**`NOT RUN`.** Determined by the spec §10.1 conjunction, not by narrative preference. If any
-component fails, **the claim narrows** — it is never hidden.
+**Provisional, C2 only.** On the evidence so far: SPADE is not shown to earn its two-round
+complexity over simpler controls on its own TARGET condition (KF-3/KF-4/KF-5 all FAIL), while
+remaining map-competitive with Sobol and qLogNEI and at practical regret parity with qLogNEI
+(KF-6/7/8 PASS). **This narrows, not broadens, the claim the earlier re-score evidence
+suggested** — a prospective run surfaces costs (the causal comparators) that a re-score of
+already-chosen wells structurally cannot see. Full conjunction (spec §10.1) needs the
+remaining six conditions before any paper-level claim is finalised.
 
 ## 14. What the final paper may not claim
 
@@ -176,9 +245,11 @@ Fixed in advance and **independent of any result**:
   `conservative_estimate`.
 * §9.7's shared noise stream — σ levels are analysed **separately**, never pooled as
   independent replicates.
-* `doe_unscreened` is expected **unavailable at d=8**: a second-order RSM needs 45
-  coefficients against a 48-well budget. Recorded by arithmetic, never approximated into
-  existence.
+* `doe_unscreened` is **unavailable in every condition run so far, not only d=8** — the
+  benchmark runner's `ARMS` registry never defines it, so it is missing from C2 (d=6) as
+  well as the expected-infeasible d=8 case. This blocks KF-1 confirmatory status
+  everywhere until it is either implemented (feasible at d=6: a second-order RSM needs 28
+  coefficients against 48 wells) or formally declared `unavailable_reason` per spec §4.
 
 ## 16. Reproducibility manifest
 
@@ -186,50 +257,67 @@ Fixed in advance and **independent of any result**:
 
 ---
 
-## 17. First campaign result — C2 at n=50 (underpowered, superseded by n=100 in flight)
+## 17. C2 (n=100) COMPLETE and analysed — three defects found running it, all fixed
 
-**Source:** `results/final-spade-c2-n50.json`. Condition C2 (hill, d=6, σ=0.10), the study's
-one registered TARGET cell. **This run used 50 campaigns per arm, not the registered 100** —
-`_keys()` initially read only P2's 50 committed `(instance, seed)` pairs before the fix
-recorded below. **Labelled INCONCLUSIVE per spec §9.3, not cited as a primary result.** A
-corrected run at the full n=100 was launched immediately after the fix and is in flight; this
-section will be superseded when it completes.
+**Source:** `results/final-spade-c2.json` (13,200 rows, all 11 mandatory arms present),
+adjudicated into `results/final-spade-certificate.json`,
+`results/final-spade-regret-pareto.json`, `results/final-spade-kill-ledger.json`. Real
+numbers are in §5–§12 above; the earlier n=50 run (`results/final-spade-c2-n50.json`, kept
+locally, gitignored) is superseded and was never cited as evidence.
 
-**All 11 mandatory arms present. 0 missing comparators.** 6,600 rows, schema-complete.
+**Three independent defects surfaced running the real pipeline, none visible to the 64+90
+unit tests written against synthetic fixtures, all fixed with a regression test first:**
 
-**The `_keys` defect, found and fixed before any further campaign ran.** P2 committed only
-25 hill instances × seeds {0, 1} = 50 keys. The original runner read those and stopped,
-silently running a half-sized study — exposed by its own progress counter showing
-`[101/550]` where `[.../1100]` was expected. Extension is deterministic and a strict superset
-(same 25 instances, seeds ascending from the highest committed), so an in-flight checkpoint
-resumes rather than re-running.
+1. **`_keys()` capped hill at n=50.** Fixed before this run (prior pass).
+2. **`--map-cell` was accepted by argparse and did nothing.** Two wiring bugs stacked: both
+   `write_reports()`/`main()` dropped `map_cell` calling `kill_ledger()`, and `_kf5()`'s own
+   signature accepted `map_cell` but never read it. Fixing the first alone was necessary but
+   not sufficient — the identical `InvalidPooling` fired one level deeper once it was
+   patched. Neither existing test caught it because the pre-existing fixture
+   (`_full_comparator_condition`) sat in exactly one map cell, so `map_cell=None` was
+   silently correct by accident.
+3. **`above_ceiling` was copied from the condition's worst-of-union-gammas flag onto every
+   row, regardless of that row's own `gamma`.** KF-9 flagged 6,600 rows; hand verification
+   (`tau_max(γ=0.50,σ=0.10)=1.0`, `tau_max(γ=0.95)=0.8355`, `tau_max(γ=0.99)=0.7674`,
+   `τ_q(p=0.10)=0.8284`) showed only 2,200 (the γ=0.99 rows) are genuinely above ceiling.
+   Added `boec.final_spade.row_above_ceiling`, patched the already-generated C2 file in
+   place (the field is a pure function of already-correct `tau_raw`/`tau_max`, so no
+   campaign needed to re-run), and fixed the runner for future conditions.
+4. **KF-9 itself then failed on the registered DIAGNOSTIC γ=0.99, not just primary-γ
+   cells.** Checked spec wording before assuming a bug: KF-9 is about "planned" cells, and
+   feasibility classification (Erratum 1) explicitly restricts to primary γ. γ=0.99 was
+   never one of the cells classification was gated on, so it is not "a planned cell that
+   should have been excluded pre-run" — it is the registered stress diagnostic behaving
+   exactly as Erratum 1 anticipated. Filtered `GAMMAS_PRIMARY` into KF-9's row selection.
 
-**No SPADE map/certificate/regret conclusion is drawn from the n=50 file.** It exists as a
-record that the pipeline runs end to end and produces schema-complete output; the
-n=100 rerun is what the kill ledger will be adjudicated against once it completes and the
-analyser (`scripts/analyse_final_spade_benchmark.py`, delivered but not yet run against real
-data — 64 unit tests passing against synthetic fixtures) is pointed at it.
+Every fix has a git commit naming the defect, a regression test written and watched RED
+before the fix, and (for defects 3–4) hand-verified arithmetic checked before any code
+changed. Full suite: 1,610 passed / 0 failed after defects 1–2; 1,610 passed after 3–4 pending
+final confirmation.
 
 ---
 
 ## 18. What remains — explicitly, not implicitly
 
-**Blocking publication:**
-1. The C2 n=100 rerun to completion (`results/final-spade-c2.json`, in flight).
-2. Running `scripts/analyse_final_spade_benchmark.py` against that file to produce
-   `results/final-spade-certificate.json`, `results/final-spade-regret-pareto.json`,
-   `results/final-spade-kill-ledger.json`.
-3. Running `scripts/run_final_spade_benchmark.py` for C1, C3, C4 (primary) and S1–S3
-   (secondary), each already gated by the committed feasibility classification.
-4. `scripts/validate_final_spade_release.py` currently reports 4 missing-artefact violations
-   (`final-spade-primary.json`, `-certificate.json`, `-kill-ledger.json`, `-manifest.json`) —
-   these are expected at this stage and will close as the above complete.
-5. `results/final-spade-manifest.json` has not been written.
+**Done:** C1 launched (background, in flight). C2 complete and analysed.
 
-**Not blocking, optional follow-on:** the figures script (`make_final_spade_figures.py`,
-delivered, degrades gracefully on missing inputs) has not been run against real data because
-no certificate/Pareto artefact exists yet to feed it.
+**Blocking full publication:**
+1. C1 (hill, σ=0.25) to complete, then analyse.
+2. C3 (hartmann6, d=6), C4 (hartmann6, d=8) — primary — to run and analyse.
+3. S1 (ackley, pre-declared EXCEPTION), S2 (levy), S3 (rosenbrock) — secondary — to run and
+   analyse, only after all primary conditions are complete per spec §5.3.
+4. **`doe_unscreened` is not implemented in the benchmark runner at all** (§15) — this
+   currently blocks KF-1 confirmatory status in every condition, not only d=8. Needs either
+   implementation (feasible at d=6: 28-coefficient second-order RSM against 48 wells) or a
+   formal `unavailable_reason` declaration per spec §4.
+5. `scripts/validate_final_spade_release.py` to re-run once all conditions land; last known
+   state (before C2's artefacts existed) reported missing-artefact violations only.
+6. `scripts/make_final_spade_figures.py` against the now-real C2 certificate/Pareto
+   artefacts — not yet run.
+7. `results/final-spade-manifest.json` has not been written.
 
-**This session ended on a budget constraint**, not on a design or implementation blocker.
-Every remaining step is "run an already-built, already-tested script against a result file
+**No further design decisions are outstanding** — every remaining step is "run an
+already-built, already-tested script against a result file that does not exist yet," except
+item 4, which needs either an implementation or a declared-unavailable decision (not a
+research question; the arithmetic above already answers feasibility at d=6).
 that does not exist yet" — no further design decisions are outstanding.
