@@ -41,6 +41,25 @@ def test_doe_arm_reproduces_committed_regret_exactly():
         )
 
 
+def test_doe_unscreened_dispatches_and_keeps_every_factor():
+    """`doe_unscreened` has no committed column (spec §4's mandatory comparator was never
+    run before this study), so there is nothing to gate on exactly -- only that `regenerate`
+    actually dispatches to it and that it varied every factor, unlike `doe`."""
+    row = _primary_rows("doe")[0]
+    rec = regenerate(row["instance"], row["dim"], row["sigma"], row["seed"], "doe_unscreened")
+    assert isinstance(rec, CampaignRecord)
+    assert rec.X.shape == (48, 6)
+    assert rec.kept_factors == tuple(range(6))
+    assert rec.dropped_held_at == {}
+
+
+def test_doe_unscreened_raises_at_d8_rather_than_running_with_zero_centre_points():
+    """§4: a missing arm is a structured absence, not a silent one -- `regenerate` must let
+    this propagate rather than swallow it, so the caller can record `unavailable_reason`."""
+    with pytest.raises(ValueError, match="centre"):
+        regenerate("hartmann6", 8, 0.25, 0, "doe_unscreened", family="hartmann6")
+
+
 def test_unknown_arm_raises_rather_than_guessing():
     with pytest.raises(ValueError, match="unknown arm"):
         regenerate("ce7334da318bc5e5", 6, 0.25, 0, "not_an_arm")

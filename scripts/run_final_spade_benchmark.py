@@ -73,6 +73,7 @@ from boec.calibration import error_volumes, murphy_decomposition     # noqa: E40
 from boec.designspace import (brier_and_auc, gp_adapter, iou,        # noqa: E402
                               false_inclusion_rate,
                               predictive_probability_map)
+from boec.doe import UNSCREENED_N_CENTRE                             # noqa: E402
 from boec.final_spade import ROW_SCHEMA, row_above_ceiling, spade_plate2  # noqa: E402
 from boec.lse import exclusion_radius                                # noqa: E402
 from boec.metrics import grid_screened_argmax                        # noqa: E402
@@ -124,6 +125,7 @@ ARMS: dict[str, dict] = {
     "qlognei":             {"fam": "BO",           "rounds": 10, "m": None, "wells": 48},
     "qlogei":              {"fam": "BO",           "rounds": 10, "m": None, "wells": 48},
     "doe":                 {"fam": "classical",    "rounds": 3, "m": None, "wells": 48},
+    "doe_unscreened":      {"fam": "classical",    "rounds": 1, "m": None, "wells": 48},
 }
 
 
@@ -420,16 +422,44 @@ def main() -> None:
     head, dirty = _head(), _dirty()
 
     keys = _keys(cond["family"], args.limit)
-    done = set()
+    done, declared_unavailable = set(), set()
     if ckpt.exists():
         for line in ckpt.read_text().splitlines():
             if line.strip():
                 r = json.loads(line)
-                done.add((r["instance_seed"], r["campaign_seed"], r["arm"]))
+                if r.get("unavailable_reason"):
+                    declared_unavailable.add(r["arm"])
+                else:
+                    done.add((r["instance_seed"], r["campaign_seed"], r["arm"]))
+
+    # §4: `doe_unscreened` is mandatory OR a structured `unavailable_reason` -- never a
+    # silent absence. At a dimension with no feasible centre-point budget (see
+    # boec.doe.UNSCREENED_N_CENTRE) no campaign can be run at all, so this is decided once
+    # per condition, before any campaign, rather than caught per-seed 100 times over.
+    unavailable_arms = {a for a in arms
+                        if a == "doe_unscreened" and dim not in UNSCREENED_N_CENTRE}
+    arms_to_run = tuple(a for a in arms if a not in unavailable_arms)
+    with ckpt.open("a") as fh:
+        for arm in sorted(unavailable_arms - declared_unavailable):
+            fh.write(json.dumps({
+                "study_id": STUDY_ID, "registration_commit": REGISTRATION_COMMIT,
+                "code_commit": head, "timestamp": time.strftime("%Y-%m-%dT%H:%M:%S"),
+                "condition": args.condition, "family": cond["family"],
+                "dimension": dim, "sigma": cond["sigma"],
+                "instance_seed": None, "campaign_seed": None,
+                "arm": arm, "arm_family": ARMS[arm]["fam"],
+                "gate_status": "unavailable", "exclusion_reason": None,
+                "unavailable_reason": (
+                    f"d={dim} has no feasible centre-point budget for the unscreened CCD "
+                    f"(spec §4): the registered factorial+axial fraction leaves zero runs "
+                    "for the centre replicates a CCD needs to estimate noise, so no "
+                    "campaign was run at this dimension."),
+            }) + "\n")
+            print(f"⚠️  {arm} declared unavailable at d={dim}: see 'unavailable_reason'")
 
     print(f"{STUDY_ID} · {args.condition} · {cond['family']} d={dim} "
           f"sigma={cond['sigma']} · tier={cond['tier']}")
-    print(f"{len(arms)} arms x {len(keys)} campaigns · draws={2*N_DRAWS_HALF} "
+    print(f"{len(arms_to_run)} arms x {len(keys)} campaigns · draws={2*N_DRAWS_HALF} "
           f"(split {N_DRAWS_HALF}/{N_DRAWS_HALF}) · grid={GRID_N}")
     print(f"regime by tau_frac: "
           f"{ {k: v['regime_class'] for k, v in cond['by_tau'].items()} }")
@@ -439,7 +469,7 @@ def main() -> None:
         print("⚠️  working tree dirty; code_commit is not a faithful fingerprint")
     print()
 
-    total, t0, n_done = len(arms) * len(keys), time.time(), 0
+    total, t0, n_done = len(arms_to_run) * len(keys), time.time(), 0
     with ckpt.open("a") as fh:
         for instance, seed in keys:
             # Truth is built once per (instance, seed) and shared across arms -- it is a
@@ -448,7 +478,7 @@ def main() -> None:
             with torch.no_grad():
                 truth = orc_t.truth(grid).reshape(-1).double()
                 truth_sub = orc_t.truth(X_sub).reshape(-1).double()
-            for arm in arms:
+            for arm in arms_to_run:
                 n_done += 1
                 if (instance, seed, arm) in done:
                     continue

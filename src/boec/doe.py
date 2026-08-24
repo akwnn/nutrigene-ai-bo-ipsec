@@ -68,7 +68,10 @@ from boec.designs import central_composite, scale_to_box, screening_design
 from boec.metrics import over_prediction_at_constrained_argmax
 from boec.rsm import fit_second_order
 
-__all__ = ["HOLD_POLICIES", "STAGE1_FRACTION", "DoEResult", "run_doe_arm"]
+__all__ = [
+    "HOLD_POLICIES", "STAGE1_FRACTION", "UNSCREENED_FRACTION", "UNSCREENED_N_CENTRE",
+    "DoEResult", "run_doe_arm", "run_doe_unscreened_arm",
+]
 
 #: Q15 (T2). Where screened-out factors sit during stage 2. ``"best_stage1"`` is the
 #: pre-registered primary; ``"zero"`` is the declared sensitivity. Registered before
@@ -374,6 +377,148 @@ def run_doe_arm(
         stage2_bounds=sub_bounds,
         search_bounds=search,
         stationary_kind=fit.stationary_point(sub_bounds).kind,
+    )
+
+
+#: The mandatory comparator (spec §4): a full-dimensional second-order design, no
+#: screening stage. Registered only where the CCD's own factorial + axial points
+#: leave room for the centre replicates a CCD needs to estimate noise -- see
+#: :data:`UNSCREENED_N_CENTRE`. ``n_derived=1`` at d=6 gives the half-fraction CCD;
+#: the same table entry does not exist at d=8 on purpose (see below).
+UNSCREENED_FRACTION: dict[int, int] = {6: 1, 8: 3}
+
+#: Centre replicates for the unscreened arm, registered per dimension so a caller
+#: can never derive it from the budget after the fact -- exactly the asymmetry
+#: :data:`STAGE1_FRACTION` guards against. At d=6, the half-fraction factorial (32)
+#: plus axial (12) leaves 4 of the 48-well budget for centre + confirmation; 3 go
+#: to the centre replicates and 1 to stage 4.
+#:
+#: **d=8 has no entry.** The next resolution down, ``n_derived=3``, gives 32
+#: factorial + 16 axial = 48 -- the entire budget -- with nothing left for a
+#: single centre point, let alone the confirmation run. A CCD that cannot
+#: estimate its own noise is not the same procedure as the d=6 arm, so
+#: :func:`run_doe_unscreened_arm` raises there rather than running with
+#: ``n_centre=0``.
+UNSCREENED_N_CENTRE: dict[int, int] = {6: 3}
+
+
+def run_doe_unscreened_arm(
+    evaluator,
+    bounds: Tensor,
+    *,
+    truth,
+    budget: int = 48,
+    seed: int = 0,
+    n_centre: int | None = None,
+    n_derived: int | None = None,
+) -> DoEResult:
+    """Run the full-dimensional response-surface arm: one CCD, then measure its optimum.
+
+    The mandatory comparator spec §4 calls for wherever arithmetically feasible: no
+    screening stage, every factor kept, a single central-composite design across the
+    whole space, fit, and its predicted optimum measured exactly like stage 4 of
+    :func:`run_doe_arm`.
+
+    Args:
+        evaluator: anything with ``evaluate(X) -> (Y, Yvar)``.
+        bounds: ``(2, d)`` the full space, in coded units.
+        truth: the **noiseless** oracle, ``(n, d) -> (n, 1)``. Scoring only.
+        budget: total measurements. Must equal the registered design size plus one
+            confirmation run, exactly as :func:`run_doe_arm` requires for its split.
+        seed: fixes the confirmation search.
+        n_centre: centre replicates. ``None`` reads :data:`UNSCREENED_N_CENTRE`,
+            registered per dimension so the budget closes exactly. A dimension
+            absent from the table raises rather than running with zero centre
+            points.
+        n_derived: how aggressive a fraction the CCD's factorial takes. ``None``
+            reads :data:`UNSCREENED_FRACTION`.
+
+    Returns:
+        A :class:`DoEResult` with ``kept_factors`` equal to every factor and
+        ``dropped_held_at`` empty.
+
+    Raises:
+        ValueError: if the dimension has no registered fraction or centre-point
+            count, or if the budget does not match the registered design exactly.
+    """
+    d = int(bounds.shape[1])
+
+    if n_derived is None:
+        if d not in UNSCREENED_FRACTION:
+            raise ValueError(
+                f"no registered unscreened fraction for d={d}; known: "
+                f"{sorted(UNSCREENED_FRACTION)}. Guessing one would produce a "
+                "campaign that runs, fits, and returns a plausible recipe on a "
+                "budget that no longer matches the other arms in this study."
+            )
+        n_derived = UNSCREENED_FRACTION[d]
+
+    if n_centre is None:
+        if d not in UNSCREENED_N_CENTRE:
+            raise ValueError(
+                f"d={d} has no feasible centre-point budget for the unscreened "
+                f"arm: the {n_derived}-fraction factorial plus its axial points "
+                f"already reach {budget} runs, leaving zero for the centre "
+                "replicates a CCD needs to estimate noise. This is not the same "
+                "procedure as the d=6 arm and must not run silently."
+            )
+        n_centre = UNSCREENED_N_CENTRE[d]
+
+    design = central_composite(d, n_centre=n_centre, n_derived=n_derived, face_centred=True)
+    n_design = design.points.shape[0]
+    if n_design + 1 != budget:
+        raise ValueError(
+            f"budget {budget} does not split: the unscreened design is {n_design} "
+            f"runs and confirmation is 1, totalling {n_design + 1}. This arm is "
+            f"only registered for a {n_design + 1}-well budget at d={d}; spending "
+            "a different number would make it incomparable to the other arms."
+        )
+
+    X_design = scale_to_box(design.coded, bounds)
+    Y_design, _ = evaluator.evaluate(X_design)
+
+    kept = tuple(range(d))
+    held: dict[int, float] = {}
+
+    # --- fit, and ask where the best recipe is -- no screening, no local box ---
+    fit = fit_second_order(X_design, Y_design)
+    op = over_prediction_at_constrained_argmax(fit.predict, truth, bounds, seed=seed)
+    x_full = op.x_argmax
+
+    tol = 1e-9
+    inside = bool(
+        torch.all(op.x_argmax >= bounds[0] - tol)
+        and torch.all(op.x_argmax <= bounds[1] + tol)
+    )
+    on_edge = bool(
+        torch.any((op.x_argmax - bounds[0]).abs() < 1e-6)
+        or torch.any((op.x_argmax - bounds[1]).abs() < 1e-6)
+    )
+
+    # --- MEASURE IT ----------------------------------------------------------
+    Yc, _ = evaluator.evaluate(x_full.unsqueeze(0))
+    confirmation_y = float(Yc)
+
+    observed = np.concatenate([Y_design.double().numpy().ravel(), [confirmation_y]])
+    X_all = torch.cat([X_design, x_full.unsqueeze(0)])
+    truth_all = truth(X_all).double().numpy().ravel()
+    return DoEResult(
+        curve=np.maximum.accumulate(observed),
+        curve_true=np.maximum.accumulate(truth_all),
+        X_visited=X_all,
+        Y_visited=torch.from_numpy(observed).reshape(-1, 1),
+        n_stage1=0, n_stage2=n_design,
+        kept_factors=kept, dropped_held_at=held, hold_dropped_at="best_stage1",
+        n_derived_stage1=int(n_derived),
+        confirmation_x=x_full,
+        predicted_y=op.y_predicted,
+        confirmation_y=confirmation_y,
+        over_prediction=op.over_prediction,
+        confirmation_inside_stage2=inside,
+        confirmation_on_stage2_boundary=on_edge,
+        stage2_bounds=bounds,
+        search_bounds=bounds,
+        stationary_kind=fit.stationary_point(bounds).kind,
     )
 
 

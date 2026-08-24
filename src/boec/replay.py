@@ -100,7 +100,7 @@ from torch import Tensor
 
 from boec.campaign import Campaign, CampaignConfig
 from boec.diagnostics import reported_best_curve
-from boec.doe import run_doe_arm
+from boec.doe import run_doe_arm, run_doe_unscreened_arm
 from boec.optimizers import AcqConfig
 from boec.oracles import (Ackley, Embedded, Hartmann6, Levy, Rosenbrock, UnitScaled,
                           load_ensemble)
@@ -129,7 +129,9 @@ Q_BATCH = 4
 N_ORDERINGS = 20
 
 #: Arms whose acquisition never calls an optimiser, so exact equality is the right bar.
-DETERMINISTIC_ARMS = ("doe",)
+#: `doe_unscreened` (spec §4's mandatory no-screening comparator) joins `doe` here for the
+#: same reason: both fit a design and measure ITS predicted optimum, with no adaptive step.
+DETERMINISTIC_ARMS = ("doe", "doe_unscreened")
 #: Arms routed through multi-start L-BFGS-B. Q54 measured that path at ~1e-06, not exact.
 OPTIMISED_ARMS = ("qlogei", "qlognei")
 #: Q30's post-hoc kernel arms, needed by K6 (Amendment A1). Same acquisition, other kernel.
@@ -292,7 +294,13 @@ def regenerate(instance: str, dim: int, sigma: float, seed: int, arm: str, *,
         Y, Yvar = orc.evaluate(X)
         kept = held = None
     elif arm in DETERMINISTIC_ARMS:
-        r = run_doe_arm(orc, bounds, truth=orc.truth, budget=BUDGET, seed=seed)
+        # `doe_unscreened` raises ValueError at dimensions with no feasible centre-point
+        # budget (d=8 -- see boec.doe.UNSCREENED_N_CENTRE). That is not caught here: the
+        # caller (the benchmark runner) is the one that knows how to record a structured
+        # `unavailable_reason` instead of a campaign, and letting it propagate is what makes
+        # that distinction visible rather than silently producing a campaign at d=8.
+        runner = run_doe_unscreened_arm if arm == "doe_unscreened" else run_doe_arm
+        r = runner(orc, bounds, truth=orc.truth, budget=BUDGET, seed=seed)
         X, Y = r.X_visited, r.Y_visited
         # Recomputed from the STORED Y, never by re-evaluating -- see module docstring.
         Yvar = torch.from_numpy(
