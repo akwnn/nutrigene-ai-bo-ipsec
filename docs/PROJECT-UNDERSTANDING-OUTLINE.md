@@ -4,6 +4,35 @@
 
 **Purpose.** This is the orientation document to read before drafting the manuscript. It explains what the project represents, what was implemented, how the synthetic data were constructed, why each cited paper is used, what the experiments actually show, and where the evidence stops. It is an outline of the whole project, not a manuscript draft and not a claim that wet-lab validation has occurred.
 
+> **Central thesis:** A matched number of wells does not, by itself, define a fair BO-versus-RSM comparison. The apparent winner also depends on the final selection rule, confirmation protocol, permitted extrapolation, and whether cost is counted in wells or experimental rounds.
+
+## How to use this guide
+
+- **Understand the project:** Sections 1–6 explain the biological problem, cited literature, synthetic data, and code architecture.
+- **Prepare the manuscript:** Sections 7–15 provide terminology, Methods, Results, figures, claims, Discussion, and reviewer risks.
+- **Check publication readiness:** Sections 16–18 list unresolved work, project-owner decisions, references, and artifact provenance.
+
+## Quick navigation
+
+1. [Project explanation](#1-project-explanation-for-biology-researchers)
+2. [Biological motivation](#2-biological-motivation-and-laboratory-translation)
+3. [Research framing](#3-research-framing)
+4. [Citation-purpose map](#4-what-was-cited-and-why)
+5. [Synthetic-data construction](#5-how-the-synthetic-data-were-made)
+6. [Code and experiment architecture](#6-core-project-architecture)
+7. [Biology-first glossary](#7-concept-glossary-biology-first-formal-meaning-second)
+8. [Methods outline](#8-manuscript-ready-methods-outline)
+9. [Results storyline](#9-results-storyline-organized-by-laboratory-questions)
+10. [Figure plan](#10-three-figure-main-paper-storyline)
+11. [Ranked results](#11-ranked-result-inventory)
+12. [Claims and boundaries](#12-claims-and-boundaries)
+13. [Discussion outline](#13-biology-focused-discussion-outline)
+14. [Reviewer risks](#14-reviewer-risk-audit)
+15. [Manuscript structure](#15-recommended-manuscript-outline)
+16. [Readiness and unresolved work](#16-current-readiness-and-unresolved-work)
+17. [Questions for the project owner](#17-highest-value-questions-for-the-project-owner)
+18. [References and evidence trail](#18-primary-references-and-project-evidence-trail)
+
 **Evidence labels used throughout**
 
 - **Source-verified:** checked against a cited paper or primary documentation.
@@ -60,7 +89,7 @@
 
 **Why it matters in this project:** The same stored campaigns favor DoE under a single noisy-readout choice, favor BO under a naïve unconstrained model choice, and are largely tied under in-region or top-three-confirmation choices.
 
-**Formal definition:** A mapping \(L(D,M)\rightarrow \hat{x}\) from observed data \(D\), and optionally fitted model \(M\), to the final recommended input \(\hat{x}\).
+**Formal definition:** A mapping $L(D,M)\rightarrow \hat{x}$ from observed data $D$, and optionally fitted model $M$, to the final recommended input $\hat{x}$.
 
 ---
 
@@ -68,8 +97,8 @@
 
 ## 2.1 Laboratory workflow represented
 
-1. **Choose factors.** Biologically, these could be medium components, ECM proteins, cytokines, or process variables. Computationally, a recipe is a vector \(x\in[0,1]^d\). The code uses six or eight coded coordinates, not executable protein concentrations.
-2. **Limit the combinations.** A full grid grows exponentially: five levels for six factors require \(5^6=15{,}625\) conditions. The benchmark fixes the principal budget at 48 evaluations.
+1. **Choose factors.** Biologically, these could be medium components, ECM proteins, cytokines, or process variables. Computationally, a recipe is a vector $x\in[0,1]^d$. The code uses six or eight coded coordinates, not executable protein concentrations.
+2. **Limit the combinations.** A full grid grows exponentially: five levels for six factors require $5^6=15{,}625$ conditions. The benchmark fixes the principal budget at 48 evaluations.
 3. **Spend wells and rounds.** Each evaluated point is treated as one well-equivalent condition. A round is a batch chosen before observing that batch; it represents a plate cycle or decision cycle, not necessarily one physical plate in every laboratory.
 4. **Observe an assay.** A hidden deterministic function supplies the underlying response, and simulated error changes the measured response. This is a simplified assay model, without explicit donors, batches, plate positions, failed wells, or cell-state drift.
 5. **Adapt or follow a plan.** BO uses earlier measurements to choose later points. The two-stage classical workflow follows a screen with a central composite design. Space-filling controls distribute wells without adapting.
@@ -80,14 +109,14 @@
 
 | Laboratory concept | Computational representation | Implemented? | Important limitation |
 |---|---|---:|---|
-| Biological formulation | Point \(x\) in a coded \([0,1]^d\) space | Yes | Coordinates are nominal; no validated concentration mapping |
-| Assay result | Observed response \(y\) | Yes | Abstract simulated readout, not a named assay unit |
-| True biological response | Latent function \(f(x)\) | Yes, synthetically | Known only because the landscape is constructed |
+| Biological formulation | Point $x$ in a coded $[0,1]^d$ space | Yes | Coordinates are nominal; no validated concentration mapping |
+| Assay result | Observed response $y$ | Yes | Abstract simulated readout, not a named assay unit |
+| True biological response | Latent function $f(x)$ | Yes, synthetically | Known only because the landscape is constructed |
 | Assay variability | Multiplicative and additive Gaussian error | Yes | Does not separate biological, technical, batch, or plate-position variance |
 | Experimental condition | One function evaluation or well-equivalent | Yes | Replicate structure is not biological replication |
 | Plate cycle | Batch/experimental round | Yes | Calendar duration and physical plate layout are not modeled |
-| Carry-forward formulation | Terminal recommendation \(\hat{x}\) | Yes | Several incompatible rules are compared |
-| Acceptable formulation range | Thresholded design space \(\{x:f(x)\ge\tau\}\) | Yes, extension | Certificate behavior is family-dependent and incompletely validated |
+| Carry-forward formulation | Terminal recommendation $\hat{x}$ | Yes | Several incompatible rules are compared |
+| Acceptable formulation range | Thresholded design space $\{x:f(x)\ge\tau\}$ | Yes, extension | Certificate behavior is family-dependent and incompletely validated |
 | Reagent and labor burden | No direct representation | No | Wells and rounds are only proxies |
 | Donor/batch effects | Hierarchical or blocked noise | No | Limits biological realism |
 | Missing/failed wells | Missing observations | No | Every scheduled synthetic evaluation returns a value |
@@ -160,39 +189,56 @@ This section is the citation-purpose map. A paper should be cited only for the r
 
 ## 5.1 The essential answer
 
-No synthetic table was generated by fitting Hall et al.'s measurements. Instead, the code first constructs a hidden mathematical response surface \(f(x)\), then lets every experimental method choose coordinates \(x\), and finally generates an assay-like reading \(y\) by perturbing \(f(x)\) with random error. Because the true surface is known, the project can score whether the formulation selected by a noisy campaign is genuinely close to the hidden optimum.
+No synthetic table was generated by fitting Hall et al.'s measurements. Instead, the code first constructs a hidden mathematical response surface $f(x)$, then lets every experimental method choose coordinates $x$, and finally generates an assay-like reading $y$ by perturbing $f(x)$ with random error. Because the true surface is known, the project can score whether the formulation selected by a noisy campaign is genuinely close to the hidden optimum.
 
 ## 5.2 Step-by-step construction of the primary Hill benchmark
 
-1. **Create a coded factor space.** Use \(d=6\) or \(d=8\) continuous coordinates scaled to \([0,1]\). These do not carry physical units.
+1. **Create a coded factor space.** Use $d=6$ or $d=8$ continuous coordinates scaled to $[0,1]$. These do not carry physical units.
 2. **Choose important factors.** Randomly select four active coordinates at both dimensions. They carry 90% of the total response weight; the remaining two or four coordinates carry 10% and act as nuisance factors. This isolates the difficulty of identifying important variables as dimension grows.
-3. **Draw a preferred level for each factor.** Candidate factor peaks are drawn from \(x_i^*\sim U(0.25,0.55)\), subject to later feasibility and acceptance filtering. The accepted ensemble is therefore not exactly uniform; its reported mean is about 0.340.
-4. **Draw Hill steepness.** Draw \(n_i\sim U(1,3)\), again subject to filtering. These values control how sharply the response rises and falls.
-5. **Construct a biphasic factor response.** For factor \(i\), combine an activating Hill term and an inhibitory Hill term:
+3. **Draw a preferred level for each factor.** Candidate factor peaks are drawn from $x_i^*\sim U(0.25,0.55)$, subject to later feasibility and acceptance filtering. The accepted ensemble is therefore not exactly uniform; its reported mean is about 0.340.
+4. **Draw Hill steepness.** Draw $n_i\sim U(1,3)$, again subject to filtering. These values control how sharply the response rises and falls.
+5. **Construct a biphasic factor response.** For factor $i$, combine an activating Hill term and an inhibitory Hill term:
 
-   \[
-   h_i(x_i)=\frac{x_i^{n_i}}{EC50_i^{n_i}+x_i^{n_i}},\qquad
-   g_i(x_i)=\frac{1}{1+(x_i/IC50_i)^{n_i}}.
-   \]
+   $$
+   h_i(x_i)=\frac{x_i^{n_i}}{\mathrm{EC}_{50,i}^{n_i}+x_i^{n_i}},
+   \qquad
+   g_i(x_i)=\frac{1}{1+\left(x_i/\mathrm{IC}_{50,i}\right)^{n_i}}.
+   $$
 
-   Their peak occurs exactly at \(x_i^*=\sqrt{EC50_i\,IC50_i}\). The product is normalized so its peak equals one.
-6. **Set the width of the useful window.** The ratio \(r_i=IC50_i/EC50_i\) is obtained by inverting a chosen depth parameter, then clipped to \([2,8]\). This controls how broad the rise-and-fall response is.
+   Their peak occurs exactly at $x_i^*=\sqrt{\mathrm{EC}_{50,i}\mathrm{IC}_{50,i}}$. The product is normalized so its peak equals one.
+6. **Set the width of the useful window.** The ratio $r_i=\mathrm{IC}_{50,i}/\mathrm{EC}_{50,i}$ is obtained by inverting a chosen depth parameter, then clipped to $[2,8]$. This controls how broad the rise-and-fall response is.
 7. **Weight the factors.** Random positive weights are normalized so the four active factors account for 0.90 of total weight and the inactive factors for 0.10.
-8. **Add sparse interactions.** Roughly \(\lceil d/2\rceil\) factor pairs receive peak-modulation coefficients drawn from \(U(-1,1)\). These interactions shift conditional peak locations. The mechanism is plausible as a generic representation of interacting ingredients; its numeric magnitude is a project choice.
+8. **Add sparse interactions.** Roughly $\lceil d/2\rceil$ factor pairs receive peak-modulation coefficients drawn from $U(-1,1)$. These interactions shift conditional peak locations. The mechanism is plausible as a generic representation of interacting ingredients; its numeric magnitude is a project choice.
 9. **Find the actual multivariate optimum.** Numerical optimization accounts for the interactions; the vector of marginal peaks alone is not assumed to be the final optimum.
-10. **Accept only sufficiently identifiable landscapes.** Stored v8 ensemble sidecars have true optimum-to-active-boundary depth at least about 0.1083, chosen as \(3(0.25)/\sqrt{48}\). This avoids benchmarks whose optimum is indistinguishable from a boundary at the primary noise/budget scale. Rejection and factor-level resampling alter the nominal parameter distributions and must be disclosed.
+10. **Accept only sufficiently identifiable landscapes.** Stored v8 ensemble sidecars have true optimum-to-active-boundary depth at least about 0.1083, chosen as $3(0.25)/\sqrt{48}$. This avoids benchmarks whose optimum is indistinguishable from a boundary at the primary noise/budget scale. Rejection and factor-level resampling alter the nominal parameter distributions and must be disclosed.
 11. **Freeze the landscape ensemble.** The main factorial uses 25 landscapes per dimension, although the committed ensemble contains additional instances for other experiments. Each landscape is evaluated with two algorithmic seeds; those two runs are averaged before inference.
 12. **Generate observations only when a method evaluates a point.** The observation model is
 
-   \[
-   y=f(x)(1+\epsilon)+\eta,\qquad
-   \epsilon\sim N(0,\sigma_{rel}^2),\quad
-   \eta\sim N(0,0.01^2),
-   \]
+   $$
+   y=f(x)(1+\epsilon)+\eta,
+   \qquad
+   \epsilon\sim\mathcal{N}\!\left(0,\sigma_{\mathrm{rel}}^2\right),
+   \qquad
+   \eta\sim\mathcal{N}\!\left(0,0.01^2\right).
+   $$
 
-   with \(\sigma_{rel}=0.25\) as the higher-noise primary condition and 0.10 as a lower-noise sensitivity condition.
-13. **Give the GP an observation-variance estimate without revealing truth.** The plug-in variance is \(y^2\sigma_{rel}^2+0.01^2\), floored at the additive term. It uses observed \(y\), not hidden \(f(x)\).
+   with $\sigma_{\mathrm{rel}}=0.25$ as the higher-noise primary condition and 0.10 as a lower-noise sensitivity condition.
+13. **Give the GP an observation-variance estimate without revealing truth.** The plug-in variance is $y^2\sigma_{\mathrm{rel}}^2+0.01^2$, floored at the additive term. It uses observed $y$, not hidden $f(x)$.
 14. **Score recommendations using the hidden surface.** A selected recipe is evaluated noiselessly against the known global maximum. This is possible only in simulation.
+
+### Symbol key for the benchmark equations
+
+| Symbol | Meaning in the model | Laboratory interpretation |
+|---|---|---|
+| $x_i$ | Coded level of factor $i$ | Concentration setting for one formulation component |
+| $n_i$ | Hill exponent | Steepness of the factor's rise-and-fall response |
+| $\mathrm{EC}_{50,i}$ | Half-activation scale | Level at which activation becomes substantial |
+| $\mathrm{IC}_{50,i}$ | Half-inhibition scale | Level at which inhibition becomes substantial |
+| $f(x)$ | Noise-free latent response | Repeat-average performance of formulation $x$ in the simulator |
+| $y$ | Observed response | One assay-like measurement |
+| $\epsilon$ | Relative random error | Variation proportional to response magnitude |
+| $\eta$ | Additive random error | Baseline measurement noise |
+| $\sigma_{\mathrm{rel}}$ | Relative-noise standard deviation | Higher- or lower-noise benchmark setting |
 
 ## 5.3 Evidence classification for every synthetic ingredient
 
@@ -201,10 +247,10 @@ No synthetic table was generated by fitting Hall et al.'s measurements. Instead,
 | Six factors, then four retained | 6→4 | Structurally inspired by Hall et al. | Does not assign Hall's protein identities to coded axes |
 | Eight-factor condition | 8→4 active plus nuisance factors | Project choice | Tests dimension/nuisance burden, not a published eight-factor assay |
 | Biphasic Hill form | Activating × inhibitory Hill response | Standard functional family | Generic biological shape, not an estimated mechanism |
-| Peak range | \(U(0.25,0.55)\) before filtering | Project choice | Accepted distribution is truncated |
-| Hill exponent | \(U(1,3)\) before filtering | Project choice | Not fitted to dose-response data |
+| Peak range | $U(0.25,0.55)$ before filtering | Project choice | Accepted distribution is truncated |
+| Hill exponent | $U(1,3)$ before filtering | Project choice | Not fitted to dose-response data |
 | Active share | Four factors carry 90% | Project choice | Sparse importance is planted |
-| Interaction coefficients | \(U(-1,1)\) on sparse pairs | Project choice | Signs and magnitudes are not biological estimates |
+| Interaction coefficients | $U(-1,1)$ on sparse pairs | Project choice | Signs and magnitudes are not biological estimates |
 | Relative noise | 0.25 and 0.10 | Project choice | Must be called benchmark noise, not realistic assay CV |
 | Additive noise | 0.01 | Project choice | Avoids zero variance near zero response |
 | Depth threshold | Stored ensemble approximately ≥0.1083 | Project choice tied to budget/noise | Selects easier-to-identify interior optima |
@@ -242,13 +288,13 @@ Biological question
 | Project component | Biology translation | Computational operation | Output | Likely paper section |
 |---|---|---|---|---|
 | Landscape generator | Unknown formulation-response biology | Sample and accept Hill-like functions | Frozen oracle instances and sidecars | Methods: benchmark |
-| `src/boec/torch_oracle.py` | Assay instrument interface | Return noisy \(y\) and variance estimate | Observation tensors | Methods: response/noise |
+| `src/boec/torch_oracle.py` | Assay instrument interface | Return noisy $y$ and variance estimate | Observation tensors | Methods: response/noise |
 | `src/boec/campaign.py` | Adaptive plate campaign | Opening design, model fit, batched proposals, checkpoints | Visited points and observations | Methods: BO |
 | `src/boec/optimizers.py` and surrogate modules | Provisional response map | GP fitting and qLogEI/qLogNEI acquisition | Proposed batch/model posterior | Methods: BO |
 | `src/boec/doe.py` | Screen, optimize, confirm | Resolution-IV screen, four-factor CCD, quadratic, confirmation | 48-well DoE campaign | Methods: classical arm |
 | `src/boec/rsm.py` | Fitted classical response map | Second-order regression, stationary/ridge handling | Model recommendation/diagnostics | Methods: RSM |
 | Space-filling designs | Nonadaptive broad sampling | LHS, Sobol', random designs | One-shot 48-point campaigns | Controls |
-| Diagnostic locators | Different carry-forward rules | Noisy argmax, tested-best, model maximum, ridge, confirmation | Final \(\hat{x}\) | Methods: terminal rules |
+| Diagnostic locators | Different carry-forward rules | Noisy argmax, tested-best, model maximum, ridge, confirmation | Final $\hat{x}$ | Methods: terminal rules |
 | `src/boec/metrics.py`, diagnostics | Distance from true best | Regret, identification gap, overprediction | Per-campaign scores | Outcomes |
 | `src/boec/designspace.py`, `vorobev.py`, `versionc.py`, `final_spade.py` | Map acceptable operating region | Threshold exceedance maps and certificates | AUC, symmetric difference, containment/refinement | Separate design-space section/paper |
 | `scripts/run_*.py` | Registered analyses | Execute experiments and write artifacts | JSON/CSV/log result files | Reproducibility |
@@ -298,7 +344,7 @@ The entries below deliberately connect each computational term to a laboratory d
 
 **Why it matters in this project:** A method can look good because of where it samples or because of what model is fitted afterward; Q34/Q45 separates those effects.
 
-**Formal definition:** A fitted function or probability distribution \(M\) approximating an expensive latent function \(f\) from data \(D=\{(x_i,y_i)\}\).
+**Formal definition:** A fitted function or probability distribution $M$ approximating an expensive latent function $f$ from data $D=\{(x_i,y_i)\}$.
 
 ### Gaussian process
 
@@ -308,7 +354,7 @@ The entries below deliberately connect each computational term to a laboratory d
 
 **Why it matters in this project:** BO uses the GP's uncertainty to decide where to test, and model-based terminal rules use its posterior mean to recommend a formulation.
 
-**Formal definition:** A probability distribution over functions such that finite collections of function values are jointly Gaussian; conditioning on data yields posterior mean \(\mu(x)\) and covariance \(k_D(x,x')\).
+**Formal definition:** A probability distribution over functions such that finite collections of function values are jointly Gaussian; conditioning on data yields posterior mean $\mu(x)$ and covariance $k_D(x,x')$.
 
 ### Acquisition function
 
@@ -318,7 +364,7 @@ The entries below deliberately connect each computational term to a laboratory d
 
 **Why it matters in this project:** It defines the adaptive sampling behavior but not the final carry-forward rule. Conflating those two rules causes incorrect claims.
 
-**Formal definition:** A function \(a(x;D)\) of the surrogate posterior whose maximizer supplies the next query or batch.
+**Formal definition:** A function $a(x;D)$ of the surrogate posterior whose maximizer supplies the next query or batch.
 
 ### Expected improvement and noisy expected improvement
 
@@ -328,17 +374,17 @@ The entries below deliberately connect each computational term to a laboratory d
 
 **Why it matters in this project:** qLogEI is the named BO arm and qLogNEI is co-primary under noise. qLogNEI improves identification but does not remove the higher-noise DoE lead under single-readout selection.
 
-**Formal definition:** \(EI(x)=\mathbb{E}[(f(x)-f_{best})_+]\). NEI integrates improvement over the posterior uncertainty in latent values at observed and candidate points. `qLog` denotes a numerically stable logarithmic batch implementation.
+**Formal definition:** $\operatorname{EI}(x)=\mathbb{E}\!\left[(f(x)-f_{\mathrm{best}})_+\right]$. NEI integrates improvement over the posterior uncertainty in latent values at observed and candidate points. `qLog` denotes a numerically stable logarithmic batch implementation.
 
 ### Latent response and observation noise
 
 **Plain-language meaning:** The latent response is the underlying repeat-average performance of a formulation; observation noise is the variation in an individual measured assay value around it.
 
-**Laboratory analogy:** \(f(x)\) is the response expected over ideal repeated assays, while \(y\) is what one particular well reports.
+**Laboratory analogy:** $f(x)$ is the response expected over ideal repeated assays, while $y$ is what one particular well reports.
 
-**Why it matters in this project:** Algorithms see \(y\), but simulation can score against \(f\). The Gaussian perturbation is not evidence about real biological variability.
+**Why it matters in this project:** Algorithms see $y$, but simulation can score against $f$. The Gaussian perturbation is not evidence about real biological variability.
 
-**Formal definition:** \(y=f(x)(1+\epsilon)+\eta\), with independent Gaussian relative and additive errors in this benchmark.
+**Formal definition:** $y=f(x)(1+\epsilon)+\eta$, with independent Gaussian relative and additive errors in this benchmark.
 
 ### Simple regret and cumulative regret
 
@@ -348,7 +394,17 @@ The entries below deliberately connect each computational term to a laboratory d
 
 **Why it matters in this project:** The project is primarily about a final recipe or map, so simple regret is the point-optimization outcome. Cumulative regret is not a headline outcome and should not be introduced as if analyzed.
 
-**Formal definition:** For maximization, simple regret is \(r=f(x^*)-f(\hat{x})\); with normalized \(f(x^*)=1\), \(r=1-f(\hat{x})\). Cumulative regret through \(T\) is \(R_T=\sum_{t=1}^T[f(x^*)-f(x_t)]\).
+**Formal definition:** For maximization, simple regret is
+
+$$
+r=f(x^*)-f(\hat{x}).
+$$
+
+When $f(x^*)=1$, this becomes $r=1-f(\hat{x})$. Cumulative regret through $T$ is
+
+$$
+R_T=\sum_{t=1}^{T}\left[f(x^*)-f(x_t)\right].
+$$
 
 ### Search quality and identification error
 
@@ -358,7 +414,13 @@ The entries below deliberately connect each computational term to a laboratory d
 
 **Why it matters in this project:** Roughly 55–73% of the higher-noise measured-value gap is attributed to identification rather than where the procedures searched.
 
-**Formal definition:** Search regret is \(r_{search}=f(x^*)-\max_{x_i\in D}f(x_i)\). Identification error is \(f(x_{tested-best})-f(\hat{x}_{selected})\), equivalently measured-selection regret minus search regret.
+**Formal definition:** Search regret is
+
+$$
+r_{\mathrm{search}}=f(x^*)-\max_{x_i\in D}f(x_i).
+$$
+
+Identification error is $f(x_{\mathrm{tested\text{-}best}})-f(\hat{x}_{\mathrm{selected}})$, equivalently measured-selection regret minus search regret.
 
 ### Hidden tested-best
 
@@ -368,7 +430,7 @@ The entries below deliberately connect each computational term to a laboratory d
 
 **Why it matters in this project:** It isolates search from recognition but is not an implementable laboratory rule.
 
-**Formal definition:** \(\arg\max_{x_i\in D}f(x_i)\), scored with latent \(f\).
+**Formal definition:** $\displaystyle \arg\max_{x_i\in D}f(x_i)$, scored with latent $f$.
 
 ### Measured-value argmax
 
@@ -378,7 +440,7 @@ The entries below deliberately connect each computational term to a laboratory d
 
 **Why it matters in this project:** It is the stored E2 primary “best observed” rule and favors DoE at higher noise. It evaluates search plus identification, not search alone.
 
-**Formal definition:** \(\hat{x}=x_{\arg\max_i y_i}\), then score \(f(\hat{x})\).
+**Formal definition:** $\displaystyle \hat{x}=x_{\arg\max_i y_i}$, then score $f(\hat{x})$.
 
 ### Model, posterior-mean, and visited-point recommendations
 
@@ -388,7 +450,7 @@ The entries below deliberately connect each computational term to a laboratory d
 
 **Why it matters in this project:** These rules answer a different question from choosing the largest assay reading and can reverse or erase the ranking.
 
-**Formal definition:** Continuous model recommendation \(\hat{x}=\arg\max_{x\in\mathcal X}\hat f(x)\); visited posterior-mean recommendation \(\hat{x}=\arg\max_{x_i\in D}\mu(x_i)\).
+**Formal definition:** Continuous model recommendation $\displaystyle \hat{x}=\arg\max_{x\in\mathcal X}\hat f(x)$; visited posterior-mean recommendation $\displaystyle \hat{x}=\arg\max_{x_i\in D}\mu(x_i)$.
 
 ### Unconstrained versus in-region/ridge recommendation
 
@@ -398,7 +460,7 @@ The entries below deliberately connect each computational term to a laboratory d
 
 **Why it matters in this project:** The apparent 0.27–0.36 BO advantage is mostly an invalid-saddle/extrapolation diagnostic. With an in-region rule, three of four cells are null.
 
-**Formal definition:** Unconstrained \(\arg\max_{x\in[0,1]^d}\hat f(x)\); constrained/ridge optimization over a learned design region or fixed-radius path using canonical RSM analysis.
+**Formal definition:** Unconstrained $\displaystyle \arg\max_{x\in[0,1]^d}\hat f(x)$; constrained/ridge optimization over a learned design region or fixed-radius path using canonical RSM analysis.
 
 ### Confirmation protocol
 
@@ -408,7 +470,7 @@ The entries below deliberately connect each computational term to a laboratory d
 
 **Why it matters in this project:** Adding three confirmation wells changes the primary DoE-minus-BO contrast from −0.0595 to −0.0009, a null result under the registered test.
 
-**Formal definition:** A terminal policy that allocates additional evaluations to candidates selected from the completed campaign and maps their new observations to \(\hat{x}\).
+**Formal definition:** A terminal policy that allocates additional evaluations to candidates selected from the completed campaign and maps their new observations to $\hat{x}$.
 
 ### Screening
 
@@ -448,7 +510,7 @@ The entries below deliberately connect each computational term to a laboratory d
 
 **Why it matters in this project:** At 48 wells, BO uses about ten rounds, DoE three stages/rounds, and one-shot GP one. A well-count claim is not a calendar-time claim.
 
-**Formal definition:** Evaluation cost \(N=|D|\); round cost is the number of adaptive batches with points chosen jointly before observing that batch.
+**Formal definition:** Evaluation cost is $N=\lvert D\rvert$; round cost is the number of adaptive batches with points chosen jointly before observing that batch.
 
 ### D-efficiency
 
@@ -458,7 +520,7 @@ The entries below deliberately connect each computational term to a laboratory d
 
 **Why it matters in this project:** The CCD can be D-efficient in its own subregion even when its map of the entire global box is poor. D-efficiency is not optimization regret.
 
-**Formal definition:** A determinant-based measure derived from the information matrix \(X^TX\), usually normalized relative to a reference design.
+**Formal definition:** A determinant-based measure derived from the information matrix $X^{\mathsf T}X$, usually normalized relative to a reference design.
 
 ### Design space
 
@@ -468,7 +530,7 @@ The entries below deliberately connect each computational term to a laboratory d
 
 **Why it matters in this project:** A method can find a strong recipe yet map the acceptable region badly; the arm ranking changes when the deliverable changes.
 
-**Formal definition:** \(A_\tau=\{x\in\mathcal X:f(x)\ge\tau\}\), or a probabilistic/certified estimate of that excursion set.
+**Formal definition:** $A_\tau=\{x\in\mathcal X:f(x)\ge\tau\}$, or a probabilistic/certified estimate of that excursion set.
 
 ### Calibration, refinement, and containment
 
@@ -478,7 +540,7 @@ The entries below deliberately connect each computational term to a laboratory d
 
 **Why it matters in this project:** SPADE is strong on map/refinement in the retrospective program but mid-field on calibration; high-confidence containment fails on Levy/Rosenbrock and is declined on Ackley/Hartmann6.
 
-**Formal definition:** Calibration compares nominal and empirical probabilistic coverage; refinement measures sharpness or informativeness conditional on validity; containment evaluates \(P(\hat A\subseteq A_\tau)\) or its finite-sample analogue.
+**Formal definition:** Calibration compares nominal and empirical probabilistic coverage; refinement measures sharpness or informativeness conditional on validity; containment evaluates $P(\hat A\subseteq A_\tau)$ or its finite-sample analogue.
 
 ### Synthetic benchmark and wet-lab validation
 
@@ -503,7 +565,7 @@ The entries below deliberately connect each computational term to a laboratory d
 
 ## 8.2 Formulation space and oracle ensemble
 
-- Analyze \(d\in\{6,8\}\) on \([0,1]^d\).
+- Analyze $d\in\{6,8\}$ on $[0,1]^d$.
 - Hold the number of dominant factors at four in both dimensions; sample the active subset per landscape.
 - Allocate 90% of total factor weight to active coordinates.
 - Construct biphasic peak-normalized Hill factors and sparse peak-modulation interactions.
@@ -513,8 +575,8 @@ The entries below deliberately connect each computational term to a laboratory d
 
 ## 8.3 Response and assay model
 
-- Define latent \(f(x)\), normalize its maximum to approximately one, and define observed \(y=f(x)(1+\epsilon)+\eta\).
-- Use \(\sigma_{rel}\in\{0.25,0.10\}\) and \(\sigma_{add}=0.01\).
+- Define latent $f(x)$, normalize its maximum to approximately one, and define observed $y=f(x)(1+\epsilon)+\eta$.
+- Use $\sigma_{\mathrm{rel}}\in\{0.25,0.10\}$ and $\sigma_{\mathrm{add}}=0.01$.
 - Call these higher- and lower-noise benchmark conditions.
 - Do not label either as a biological coefficient of variation: the digitized Hall box plots combine several sources of variation and are not the same estimand.
 - Explain the plug-in observation variance and that it avoids access to hidden truth.
@@ -523,7 +585,7 @@ The entries below deliberately connect each computational term to a laboratory d
 
 | Procedure | Laboratory action | Implementation | Strength | Limitation |
 |---|---|---|---|---|
-| qLogEI BO | Run opening wells; iteratively choose batches of four | \(n_0=2d+2\), then q=4 to N=48; GP plus qLogEI | Adaptive exploitation/exploration | ~10 rounds; EI does not define terminal selection |
+| qLogEI BO | Run opening wells; iteratively choose batches of four | $n_0=2d+2$, then $q=4$ to $N=48$; GP plus qLogEI | Adaptive exploitation/exploration | ~10 rounds; EI does not define terminal selection |
 | qLogNEI BO | Same, acknowledging incumbent uncertainty | Stored co-primary noisy acquisition | Better aligned with noisy observations | Still model- and prior-dependent |
 | DoE/RSM | Screen, retain four, run CCD, fit quadratic, confirm | 20 screening wells + 27 CCD wells + 1 confirmation | Interpretable staged workflow; concentrated local design | Dropped-factor map loss; quadratic can be saddle/rank-deficient |
 | Sequential RSM | Relocate after steepest ascent | Screen → CCD → ascent → recenter to N≤200 | Fair long-run classical comparator | Implemented only at d=6 cost curves |
@@ -544,7 +606,7 @@ The entries below deliberately connect each computational term to a laboratory d
 | Confirm top three | Re-run three candidates and decide from confirmation | Shortlist quality plus confirmation | This implementation discards original readings |
 | Posterior mean at visited points | Model re-ranks tested wells | Denoised identification | Sensitive to model calibration |
 
-The paper must define a primary terminal rule before interpreting a method comparison. “Best observed” is too ambiguous unless it says whether “best” means largest \(y\) or largest hidden \(f\) among visited points.
+The paper must define a primary terminal rule before interpreting a method comparison. “Best observed” is too ambiguous unless it says whether “best” means largest $y$ or largest hidden $f$ among visited points.
 
 ## 8.6 Outcomes
 
@@ -557,9 +619,9 @@ The paper must define a primary terminal rule before interpreting a method compa
 
 ## 8.7 Replication and statistics
 
-- The main 2×2 factorial is \(d\in\{6,8\}\times\sigma\in\{0.25,0.10\}\).
-- The registered primary cell is d=6, \(\sigma=0.25\), N=48.
-- Each cell uses 25 hidden landscapes and two algorithmic seeds per landscape. Average the two seeds first; inferential \(n=25\), not 50.
+- The main 2×2 factorial is $d\in\{6,8\}\times\sigma\in\{0.25,0.10\}$.
+- The registered primary cell is $d=6$, $\sigma=0.25$, $N=48$.
+- Each cell uses 25 hidden landscapes and two algorithmic seeds per landscape. Average the two seeds first; inferential $n=25$, not 50.
 - Pair procedures on the same landscape so landscape difficulty cancels in the contrast.
 - Use the Wilcoxon signed-rank test to ask whether paired differences are systematically shifted without assuming normality.
 - Use instance bootstrap intervals to quantify effect magnitude and uncertainty.
@@ -572,7 +634,7 @@ The paper must define a primary terminal rule before interpreting a method compa
 
 ## Question 1: Which procedure physically tests better conditions?
 
-“Finds” must mean the hidden tested-best point, not the well with the largest noisy reading. At the primary d=6, \(\sigma=0.25\) cell, hidden tested-best regret is 0.0597 for DoE, 0.0755 for qLogEI, and 0.0834 for qLogNEI. The DoE-minus-qLogEI search contrast is −0.0158 (p=0.0067), much smaller than its measured-value contrast. Thus the classical campaign searches somewhat better in this cell, but most of the apparent single-readout advantage arises later, when the campaign identifies a winner.
+“Finds” must mean the hidden tested-best point, not the well with the largest noisy reading. At the primary $d=6$, $\sigma=0.25$ cell, hidden tested-best regret is 0.0597 for DoE, 0.0755 for qLogEI, and 0.0834 for qLogNEI. The DoE-minus-qLogEI search contrast is −0.0158 ($p=0.0067$), much smaller than its measured-value contrast. Thus the classical campaign searches somewhat better in this cell, but most of the apparent single-readout advantage arises later, when the campaign identifies a winner.
 
 This truth-based score is available only in simulation. A laboratory would need replicate or confirmation data to estimate it.
 
@@ -602,7 +664,7 @@ At N=48, qLogEI uses an opening design followed by adaptive batches—about ten 
 
 Long-run d=6 campaigns extend to 200 wells. Once the classical arm is allowed to perform steepest ascent and relocate, it matches qLogEI on measured-value arrival: no BO-versus-DoE arrival contrast survives Holm over all 26 tests. The defined well ratios under this rule are 0.73–1.02, so no meaningful well-count saving is demonstrated. Under naïve unconstrained model recommendation, BO can answer earlier, but that partly reflects that the classical pipeline cannot fit its intended model until enough wells have accrued and still uses the problematic locator.
 
-One-shot GP is stable in 20/22 evaluated cells across five design draws. At \(\sigma=0.25\) under model recommendation it beats ten-round qLogEI at several targets in one round. This does not generalize to deceptive surfaces and should be interpreted as evidence that adaptive rounds are not automatically valuable on a smooth Hill family.
+One-shot GP is stable in 20/22 evaluated cells across five design draws. At $\sigma=0.25$ under model recommendation it beats ten-round qLogEI at several targets in one round. This does not generalize to deceptive surfaces and should be interpreted as evidence that adaptive rounds are not automatically valuable on a smooth Hill family.
 
 ## Question 6: Does the terminal-rule result generalize across landscapes?
 
@@ -621,14 +683,14 @@ The design-space program also exposes internal RSM diagnostics: the reported cla
 
 SPADE is a two-plate spread-and-refine protocol intended to map a threshold-defined design space, not just identify one optimum. Retrospective scoring makes it first on map quality and refinement at two rounds, with point regret at parity under a posterior-mean rule. Its calibration is only mid-field (fifth to seventh of nine), and its certificate is not broadly portable.
 
-Certificate containment holds on the project's Hill family, falls below nominal at \(\gamma=0.99\) for Levy and Rosenbrock (three of 64 cells survive Holm correction), and is declined entirely on Ackley and Hartmann6. This leaves Hill—the project's own constructed family—as the only family both willing to certify and calibrated.
+Certificate containment holds on the project's Hill family, falls below nominal at $\gamma=0.99$ for Levy and Rosenbrock (three of 64 cells survive Holm correction), and is declined entirely on Ackley and Hartmann6. This leaves Hill—the project's own constructed family—as the only family both willing to certify and calibrated.
 
 The separately registered prospective SPADE-method study contains 92,400 rows across seven conditions and narrows the claim further:
 
 - Boundary-targeted plate 2 does not beat random placement of the same number of wells: effect −0.001882, p=0.4108.
 - Plate 2 versus plate 1 alone improves the score by +0.0117145 (adjusted p=0.000127), but the improvement is below the prespecified 0.02 smallest effect of interest.
-- The local-allocation trade-off does not support a positive \(m>0\) rule.
-- The map is competitive/parity in the sole target Hill d=6, \(\sigma=0.10\) condition, but the certificate verdict is inconclusive.
+- The local-allocation trade-off does not support a positive $m>0$ rule.
+- The map is competitive/parity in the sole target Hill $d=6$, $\sigma=0.10$ condition, but the certificate verdict is inconclusive.
 - The mandatory `doe_unscreened` comparator was never implemented, leaving KF-2 NOT_RUN; a not-run kill is not a pass.
 
 The single-recipe and design-space programs should be separated in the manuscript or, preferably, into two papers. Combining their metrics into one claim would hide that they score different deliverables and have different evidence status.
@@ -643,7 +705,7 @@ The single-recipe and design-space programs should be separated in the manuscrip
 
 **Visual design:** Paired point/interval plot with the same Hill campaigns re-scored under hidden tested-best, measured-value argmax, unconstrained recommendation, in-region/ridge recommendation, and top-three confirmation. Use DoE-minus-BO regret; label negative as DoE better and positive as BO better.
 
-**Suggested panels:** (A) d=6, \(\sigma=0.25\) primary contrasts; (B) four-cell heat map; (C) search versus identification decomposition; (D) confirmation protocol schematic.
+**Suggested panels:** (A) $d=6$, $\sigma=0.25$ primary contrasts; (B) four-cell heat map; (C) search versus identification decomposition; (D) confirmation protocol schematic.
 
 **Caption draft:** “Identical matched-budget campaigns yield different BO-versus-DoE conclusions when only the terminal carry-forward rule changes. Single-readout selection favors DoE, naïve unconstrained model recommendation favors BO, and supported or confirmed selection is null at the primary cell.”
 
@@ -657,7 +719,7 @@ The single-recipe and design-space programs should be separated in the manuscrip
 
 **Visual design:** Regret/hit-probability curves versus cumulative wells beside the same curves versus rounds.
 
-**Suggested panels:** (A) measured-value arrival versus wells; (B) versus rounds; (C) hit probability \(P(T\le N)\); (D) one-shot GP versus sequential qLogEI and sequential RSM.
+**Suggested panels:** (A) measured-value arrival versus wells; (B) versus rounds; (C) hit probability $P(T\le N)$; (D) one-shot GP versus sequential qLogEI and sequential RSM.
 
 **Caption draft:** “Equal well budgets hide different sequential burdens. Walking RSM and qLogEI have similar measured-value arrival through 200 wells, whereas one-shot designs use fewer decision rounds on the smooth Hill benchmark.”
 
@@ -724,7 +786,7 @@ All numerical results in rows 1–11 are artifact-derived synthetic results. Non
 | “Bayesian optimization beats RSM by 0.3.” | Driven by an invalid unconstrained saddle locator | “Naïve full-box quadratic maximization performed poorly; the gap largely disappeared with an in-region/ridge recommendation.” |
 | “BO saves experiments.” | Walking RSM matches measured-value arrival; rounds differ | “No well-count saving was demonstrated under measured-value arrival; the methods use different numbers of decision rounds.” |
 | “The benchmark models endothelial differentiation.” | Factor labels and parameters were not fitted | “The benchmark is structurally inspired by a six-to-four-factor ECM workflow and uses generic Hill-like responses.” |
-| “The 25% noise level is realistic.” | It is an abstract Gaussian parameter, not an estimated assay variance | “\(\sigma_{rel}=0.25\) is the prespecified higher-noise benchmark condition.” |
+| “The 25% noise level is realistic.” | It is an abstract Gaussian parameter, not an estimated assay variance | “$\sigma_{\mathrm{rel}}=0.25$ is the prespecified higher-noise benchmark condition.” |
 | “A null result proves the methods equivalent.” | Non-significance is not equivalence | “No difference was demonstrated under the stated test, sample, and protocol.” |
 | “SPADE provides a calibrated design-space certificate.” | Holds only on Hill; fails/declines elsewhere | “The certificate was calibrated on Hill but did not generalize across the four external families.” |
 | “SPADE's targeted second plate improves the map.” | Prospective targeted-vs-random test failed | “A second plate was evaluated, but boundary targeting did not outperform random placement at equal well count.” |
