@@ -660,3 +660,59 @@ screen-then-replan step), regret A 0.1470 vs. 0.0924 (worse), regret P 0.2862 vs
 
 **Validator: 9 of 9 checks pass, 0 violations (§17.3).** `scripts/
 make_final_spade_figures.py` and `docs/SPADE-FOR-RESEARCHERS.md` remain (§18).
+
+## 19. The KF-3 follow-up (`spade-kf3-followup-2026-08-24`) — both mechanisms FAIL
+
+Full registration: `docs/SPADE-KF3-FOLLOWUP-SPEC.md`. KF-3's FAIL (§17: targeted plate-2 SUR
+does not beat random) left three candidate explanations conflated — a misaligned acquisition
+proxy, batch clustering, or a genuine budget/power limit. This follow-up isolates the first
+two into independently-registered arms against the same `spade_random_plate2` control,
+reusing its already-committed 100-campaign data at C2 and C3 rather than re-running it.
+
+**`spade_cf_erroraware`** (a Bect et al.-style SUR criterion targeting expected
+symmetric-difference reduction directly, `boec.vorobev.vorobev_deviation` on a small
+truth-free acquisition-time grid — never the certificate's own `X_sub`) and
+**`spade_cf_diverse_batch`** (unchanged straddle-score criterion, repulsion-penalized
+selection replacing hard exclusion) were both built test-first, with two errata caught before
+any code ran: the first `EV(x)` recipe would have scored fantasies against ground truth
+(Erratum 1), and the diversity kernel hardcoded a constant that must be read live from the
+fitted model (Erratum 2). A firewalled timing pilot (5 campaigns, wall-clock only, outcome
+columns routed to a file never opened) measured `spade_cf_erroraware` at 346.3 s/campaign —
+every automatic cost-reduction rung exceeded the pre-declared 2-hour ceiling, so per the
+registration's own rule the ladder stopped and the study owner was consulted rather than
+auto-selecting a compound n/SESOI cut. The resolution (Erratum 3): cut the candidate
+shortlist and fantasy count (`K_ERR` 64→32, `K_FANTASY` 8→4, a 4× refit reduction verified
+against the implementation) rather than `n` or SESOI — a resolution/approximation-quality
+tradeoff on `EV(x)` itself, not a power reduction on the hypothesis test.
+
+**KF-3b — `spade_cf_erroraware` — FAIL.** C2: effect +0.00146 (worse than random, its
+interval spans zero, p_holm=0.49). C3: effect **−0.00825**, CI [−0.0145, −0.0019] excludes
+zero, p_holm=0.0067 — a real, non-null improvement over random, but well short of the
+registered SESOI (0.02).
+
+**KF-3c — `spade_cf_diverse_batch` — FAIL.** C2: effect +0.00342 (worse than random, its
+interval spans zero, p_holm=0.17), and its cross-fit containment cell downgrades from
+`spade_random_plate2`'s PASS at all three primary gammas. C3: effect **−0.01722**, CI
+[−0.0233, −0.0112] excludes zero far more sharply, p_holm=2.2e-06 — the closest either
+mechanism comes to the bar, still short of −0.02.
+
+**One defect caught and fixed before trusting either number.** The analyser's first pass used
+`paired_contrast`'s `n25` unit (seeds averaged within instance) unconditionally, which
+collapses to `n=1` for any family condition — hartmann6 (C3) is one fixed landscape, not a
+25-instance ensemble like hill, so instance-averaging discarded all 100 campaigns down to a
+single point and reported a trivially non-significant p=1.0 with a zero-width CI, masking
+the real C3 effects above entirely. Fixed by detecting the degeneracy (`n25["n"] <= 1`) and
+falling back to `n50` (the real per-campaign paired count), locked in by a regression test
+(`tests/test_analyse_kf3_followup.py`) before either arm's C3 result was trusted.
+
+**KF-3d: MOOT.** Neither KF-3b nor KF-3c passed individually, so the combined arm
+(`spade_cf_erroraware_diverse`) is not built — exactly the registered gate, and the
+registered useful negative result: KF-3's original FAIL is not explained by a fixable proxy
+or clustering defect. Both replacement mechanisms show a real, small, sub-SESOI effect
+concentrated at the harder cross-family condition (C3) and essentially nothing at the
+original TARGET condition (C2) — consistent with candidate explanation 3 from the
+registration (§1): eight wells in six dimensions may simply be too few for *any* criterion
+to separate itself from random by a practically meaningful margin, and the "break-even
+well count" question (§11's unequal-budget appendix) was never run.
+
+Source: `scripts/analyse_kf3_followup.py`, `results/kf3-followup-analysis.json`.

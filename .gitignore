@@ -317,3 +317,8 @@ COMMIT_MSG.txt
 !results/final-spade-regret-pareto.json
 !results/final-spade-kill-ledger.json
 !results/final-spade-manifest.json
+
+# spade-kf3-followup-2026-08-24: same convention -- the small derived verdict, not the raw
+# per-arm-per-condition campaign files (kf3-followup-c*-spade_cf_*.json/.ckpt.jsonl, bulk,
+# regenerable).
+!results/kf3-followup-analysis.json
