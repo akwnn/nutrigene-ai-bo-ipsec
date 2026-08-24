@@ -53,7 +53,7 @@ separate registered test of new, separate arms.
 |---|---|
 | `EV(x)` | expected reduction in the model's own `vorobev_deviation` (posterior symmetric-difference ambiguity) from adding candidate `x`, under the current posterior — **never** computed from ground truth (§2.1, Erratum 1) |
 | `λ` | repulsion weight in the diversity-penalized batch score (§2.2) |
-| `k_ARD(x, x')` | `exp(−‖(x − x′)/ℓ‖₂²)`, the same ARD lengthscales `ℓ = ard_lengthscales(model)` L1 already uses |
+| `k_bw(x, x')` | `exp(−ln(2) · (‖x − x′‖₂ / bandwidth)²)` — the repulsion kernel, `bandwidth = exclusion_radius(model)` (§2.2, Erratum 2; corrected from an earlier ARD-normalized `k_ARD` that did not compose with a scalar bandwidth) |
 | `K_ERR` | size of the randomly-subsampled candidate shortlist scored by `EV` (frozen: **64**) |
 | `K_FANTASY` | number of fantasy draws averaged per candidate (frozen: **8**) |
 | `X_er` | `EV(x)`'s own 200-point scoring grid, distinct from the certificate's `X_sub` (frozen: `EV_SCORING_N=200`, Erratum 1) |
@@ -140,13 +140,20 @@ delivers, and a harder-to-unit-test one. The frozen mechanism:
 **`spade_cf_diverse_batch`'s selection rule**, given the *same* `straddle_score(mean, sd,
 theta)` `spade_cf_m0` uses (unchanged — this arm isolates *batch selection only*):
 
-1. `bandwidth = exclude = 0.1` — the **same** exclusion radius already registered for
-   `spade_cf_m0`'s `batch_lse` call (`src/boec/lse.py`), reused so the new mechanism operates
-   at the same registered spatial scale rather than a new, untested one.
+1. `bandwidth = exclusion_radius(model)` — **corrected by Erratum 2 (§12) to call the actual
+   function**, not a hardcoded `0.1`. `exclusion_radius` (`src/boec/lse.py`) is a quarter of
+   the *live* fitted model's median ARD lengthscale, read fresh per campaign — `0.1` is only
+   its fallback for a model missing the expected attributes. Hardcoding it would silently
+   diverge from what `spade_cf_m0` actually uses on every real campaign, where the fitted
+   lengthscale is essentially never exactly `0.1`.
 2. Greedily select `q = 8` wells maximizing, at each step:
-   `straddle_score(x) − λ · max_{x' in already-picked} k_ARD(x, x')`, with the ARD
-   lengthscales scaled so `k_ARD` at distance `bandwidth` equals `0.5` (a fixed half-max
-   convention, not a free parameter).
+   `straddle_score(x) − λ · exp(−ln(2) · (‖x − x'‖₂ / bandwidth)²)` maximized over already-picked
+   `x'` — **plain Euclidean distance scaled by the scalar `bandwidth`**, not the ARD-normalized
+   `k_ARD(x, x')` originally written here (§12 Erratum 2: a scalar bandwidth and a
+   per-dimension ARD-normalized kernel do not compose without a second, unregistered
+   reconciliation step, so the kernel is defined directly in raw-distance terms instead). The
+   `ln(2)` constant is exactly what makes the penalty equal `0.5` at `‖x − x'‖₂ = bandwidth`
+   (`exp(−ln 2) = 0.5`) — the half-max convention, now dimensionally consistent.
 3. `λ = 1.0` — frozen. A pick directly on top of an already-chosen well is penalized by one
    full unit of straddle score (effectively excluded, matching the qualitative behaviour of
    the original hard exclusion), decaying smoothly rather than admitting any point outside a
@@ -159,8 +166,8 @@ its own registered spatial scale." A reader must not treat either as an optimize
 hyperparameter.
 
 **`spade_cf_erroraware_diverse` (gated, §4)** combines §2.1's criterion with §2.2's selection
-rule: greedy on the 64-candidate shortlist maximizing `EV(x) − λ · max k_ARD(x, x')`, same
-`λ`.
+rule: greedy on the 64-candidate shortlist maximizing `EV(x) − λ · max_{x' in already-picked}
+k_bw(x, x')`, same `λ` and `bandwidth`.
 
 ---
 
@@ -470,3 +477,31 @@ bars, the arm's name, or anything about §3's pilot protocol other than confirmi
 model still centers on the GP-refit count (§3's own arithmetic is unaffected, since `X_er` is
 cheap enough that the Cholesky cost is negligible next to `K_ERR × K_FANTASY` refits at
 `n=200`). No test, no implementation, and no campaign existed when this was found.
+
+### 🔴 Erratum 2 — §2.2's exclusion radius was hardcoded, and its kernel did not compose
+
+**Committed before any test or implementation of §2.2 existed.**
+
+**The defect, part one.** §2.2 step 1 wrote `bandwidth = exclude = 0.1`. `exclusion_radius`
+(`src/boec/lse.py`) is **not** a constant — it is a quarter of the *live* fitted model's
+median ARD lengthscale, computed fresh per campaign; `0.1` is only its fallback for a model
+missing the expected kernel attributes. Hardcoding it would have made `spade_cf_diverse_batch`
+operate at a spatial scale that silently diverges from `spade_cf_m0`'s actual, per-campaign
+exclusion radius on every real campaign (the fitted lengthscale is essentially never exactly
+`0.1`) — precisely the untethered-constant failure mode `exclusion_radius`'s own docstring
+cites this project's prior defect (D8) for.
+
+**The defect, part two.** Step 2 combined a **scalar** `bandwidth` with `k_ARD`, a
+**per-dimension ARD-normalized** kernel (`exp(−‖(x−x′)/ℓ‖₂²)`, `ℓ` a length-`d` vector). A
+scalar distance and a vector-normalized one do not compose into "distance `bandwidth` implies
+kernel value `0.5`" without a second, unregistered reconciliation step that was never
+specified.
+
+**The fix.** `bandwidth = exclusion_radius(model)`, called for real, per campaign — not a
+literal. The repulsion kernel is redefined directly in raw Euclidean distance,
+`k_bw(x, x') = exp(−ln(2) · (‖x − x'‖₂ / bandwidth)²)`, which is dimensionally consistent by
+construction and still satisfies the registered half-max convention exactly
+(`k_bw = 0.5` at `‖x − x'‖₂ = bandwidth`, since `exp(−ln 2) = 0.5`). §2.2 and the §2 definitions
+table are already updated in place above. This does not change `λ = 1.0`, the greedy
+selection procedure, or anything about §7's decision rules. No test, implementation, or
+campaign existed when this was found.
