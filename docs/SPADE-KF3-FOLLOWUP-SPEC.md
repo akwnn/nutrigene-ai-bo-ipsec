@@ -51,11 +51,13 @@ separate registered test of new, separate arms.
 
 | symbol | meaning |
 |---|---|
-| `EV(x)` | expected reduction in symmetric-difference error volume from adding candidate `x` to the design, under the current posterior (§2.1) |
+| `EV(x)` | expected reduction in the model's own `vorobev_deviation` (posterior symmetric-difference ambiguity) from adding candidate `x`, under the current posterior — **never** computed from ground truth (§2.1, Erratum 1) |
 | `λ` | repulsion weight in the diversity-penalized batch score (§2.2) |
 | `k_ARD(x, x')` | `exp(−‖(x − x′)/ℓ‖₂²)`, the same ARD lengthscales `ℓ = ard_lengthscales(model)` L1 already uses |
 | `K_ERR` | size of the randomly-subsampled candidate shortlist scored by `EV` (frozen: **64**) |
 | `K_FANTASY` | number of fantasy draws averaged per candidate (frozen: **8**) |
+| `X_er` | `EV(x)`'s own 200-point scoring grid, distinct from the certificate's `X_sub` (frozen: `EV_SCORING_N=200`, Erratum 1) |
+| `EV_N_DRAWS` | joint posterior draws used inside `EV(x)`, on `X_er` only (frozen: **128**, Erratum 1) |
 
 ### 2.1 `EV(x)` — expected symmetric-difference reduction (a Bect et al. 2012-style SUR criterion)
 
@@ -64,13 +66,37 @@ estimation (stepwise uncertainty reduction, "SUR"), not an invented heuristic �
 it targets the *exact* quantity §7.2 of the frozen spec scores SPADE on, unlike the straddle
 score, which targets point-level margin.
 
-**Frozen procedure, given the plate-1 (or plate-1 + already-picked plate-2) model, the frozen
-scoring subset `X_sub` (`boec.norms.sobol_grid(dim, SUBSET_N=2000, seed=GRID_SEED)` — the same
-2,000-point subset `conservative_columns` already scores symmetric difference on, reused
-rather than re-derived), and a candidate `x`:**
+**Corrected by Erratum 1 (§12) before any implementation — see there for why.** `EV(x)` is
+computed **entirely from the model's own posterior, never from ground truth**, using
+`boec.vorobev.vorobev_deviation` — "expected symmetric-difference volume between the random
+set and its expectation," the model-internal analogue of the study's outcome metric, already
+implemented and validated elsewhere in this project.
 
-1. Compute `mean(x), sd(x) = model.posterior_mean_and_sd(x)`.
-2. Draw `K_FANTASY = 8` fantasy outcomes, deterministically:
+**`EV(x)` runs on its own small scoring grid, `X_er`, distinct from the certificate's
+2,000-point `X_sub`.** `vorobev_deviation` needs a **joint** posterior (a Cholesky
+factorization of an `n × n` covariance matrix, `O(n³)`), and doing that at `n=2000` per
+fantasy per candidate would make the factorization, not the GP refit, the dominant cost.
+`X_er = sobol_grid(dim, EV_SCORING_N=200, seed=GRID_SEED)` — a fixed 200-point Sobol subset,
+its own frozen seed, distinct from and never substituted for `X_sub`.
+
+**`EV(x)` is an acquisition-time-only quantity. It is never reported as, and never confused
+with, this study's outcome metric.** After plate 2 is chosen, `spade_cf_erroraware` is scored
+by the **same, unmodified, full-fidelity** pipeline as every other arm — 4,096 draws, the
+2,000-point `X_sub`, `conservative_columns`, `error_volumes` — exactly as the frozen spec's
+§7.2/§2.1 require. §2.1 here describes what plate 2's *selection* optimizes, not how any arm's
+*result* is measured.
+
+Given the plate-1 (or plate-1 + already-picked plate-2) model and a candidate `x`:
+
+1. Draw `EV_N_DRAWS = 128` joint posterior samples on `X_er` (`split_joint_draws(model, X_er,
+   n_draws=128, seed=seed)[0]` — reusing the **first** half of the existing cross-fit joint-draw
+   machinery rather than a new sampler; the second half is unused here, since this is not a
+   cross-fit quantity). **128, not 4,096:** this is a subordinate, acquisition-time estimate
+   scored on a 200-point grid, not the study's primary certificate — a tenth of the primary
+   draw count is a deliberately reduced, explicitly named fidelity, not an oversight.
+2. `deviation_before = vorobev_deviation(draws, theta)`.
+3. Compute `mean(x), sd(x) = model.posterior_mean_and_sd(x)`.
+4. Draw `K_FANTASY = 8` fantasy outcomes, deterministically:
    `y_k = mean(x) + sd(x) * Phi_inv((k - 0.5) / K_FANTASY)` for `k = 1..8` — a fixed
    quantile ladder, not a random draw, so `EV(x)` is bitwise reproducible given a seed and
    does not add a second source of Monte Carlo noise on top of the certificate's own draws.
@@ -78,18 +104,17 @@ rather than re-derived), and a candidate `x`:**
    `EV(x)` is a **quantile-quadrature approximation of the expectation**, not a Monte Carlo
    estimate — it has no sampling-error confidence interval of its own, and must not be
    described as one in any later methods writeup.
-3. For each `y_k`, refit the GP via `build_gp` (`src/boec/surrogate.py`) on the design plus
+5. For each `y_k`, refit the GP via `build_gp` (`src/boec/surrogate.py`) on the design plus
    `(x, y_k)` — the **same** surrogate constructor every arm in the frozen study uses, not a
    new conditioning implementation. A full refit is slower than an analytic rank-1 update, and
    is the deliberate choice: a new closed-form GP-conditioning function would be a second
    surrogate-inference implementation in a project that has twice been burned by a second
    source of truth for a shared quantity (`docs/FINDINGS-SPADE-FINAL.md` §4.5).
-4. Score the fantasy-updated posterior on `X_sub` with `boec.designspace.predictive_probability_map`
-   and `boec.calibration.error_volumes` — **the same functions the certificate and every
-   committed symmetric-difference number already use** — to get `sd_after_k` (post-fantasy
-   symmetric difference).
-5. `EV(x) = sd_before − mean_k(sd_after_k)`, where `sd_before` is the symmetric difference of
-   the model *before* adding `x`. Higher is better (more expected error-volume removed).
+6. Draw `EV_N_DRAWS = 128` joint posterior samples on the **same** `X_er` from the
+   fantasy-updated model (same procedure as step 1, same seed — only the model changed), and
+   compute `deviation_after_k = vorobev_deviation(draws_k, theta)`.
+7. `EV(x) = deviation_before − mean_k(deviation_after_k)`. Higher is better (more expected
+   ambiguity removed).
 
 **Candidate shortlist, and why it is a criterion-blind subsample, not a straddle prefilter.**
 Computing `EV` on all 4,096 plate-2 candidates is not tractable at this budget. The shortlist
@@ -407,4 +432,41 @@ explain a targeting effect"), not folded into §11.1's numbers.
 
 ## 12. Errata
 
-*(none yet — this document is frozen as of first commit)*
+### 🔴 Erratum 1 — `EV(x)` as first registered would have used ground truth during acquisition
+
+**Committed before any test, any code, or any campaign for this follow-up exists.**
+
+**The defect.** §2.1's first-registered recipe scored each fantasy-updated posterior with
+`boec.designspace.predictive_probability_map` and `boec.calibration.error_volumes`.
+`error_volumes(vol, fi, prevalence)` requires `prevalence` and `fi` (false-inclusion rate),
+both computed **against the true oracle values**. Using them inside plate-2's acquisition
+step would mean `spade_cf_erroraware` chooses where to sample by consulting ground truth at
+unobserved locations — exactly what §3.1's Local Rule L1 (`docs/SPADE-FINAL-SPEC.md` §3.2)
+already forbids by construction, and exactly the failure mode its architectural
+guard (a `truth`-free function signature) exists to make structurally impossible elsewhere in
+this project. As first registered, `spade_cf_erroraware` would have been comparable to
+nothing — a method that peeks is not the method under test.
+
+**The fix.** `EV(x)` is redefined to use `boec.vorobev.vorobev_deviation(draws, theta)` —
+"expected symmetric-difference volume between the random set and its expectation," computed
+purely from the model's own joint posterior draws. It is the model-internal analogue of the
+study's outcome metric, requires no ground truth, and is already implemented and validated
+elsewhere in this project (`src/boec/vorobev.py`) — reused, not invented, consistent with the
+project's standing avoidance of a second source of truth for a shared quantity.
+
+**A second, dependent correction found while fixing the first.** `vorobev_deviation` needs
+**joint** posterior samples, which cost `O(n³)` in grid size to draw (a Cholesky
+factorization). Scoring on the certificate's full 2,000-point `X_sub` per fantasy per
+candidate would make that factorization, not the GP refit, dominate §3's already-flagged
+compute cost. `EV(x)` therefore gets its **own** small, named grid (`X_er`, `EV_SCORING_N=200`)
+and its own reduced draw count (`EV_N_DRAWS=128`) — both frozen, both explicitly distinct
+from and never substituted for the certificate's registered `X_sub`/`4096` draws, which still
+score every arm's actual reported result unchanged.
+
+**What this changes and what it does not.** It changes §2.1's implementation steps and the
+definitions table (§2) — both already updated in place above, not left as a stale original
+beside a patch. **It does not change** §7.1's decision rule, SESOI, calibration/certificate
+bars, the arm's name, or anything about §3's pilot protocol other than confirming the cost
+model still centers on the GP-refit count (§3's own arithmetic is unaffected, since `X_er` is
+cheap enough that the Cholesky cost is negligible next to `K_ERR × K_FANTASY` refits at
+`n=200`). No test, no implementation, and no campaign existed when this was found.
