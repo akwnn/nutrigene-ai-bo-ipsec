@@ -1,1022 +1,810 @@
-# Project Understanding Outline
+# SPADE: A Publication-Ready Project and Manuscript Outline
 
-## From a laboratory formulation problem to a computational benchmark and a paper
+## Proposed title
 
-**Purpose.** This is the orientation document to read before drafting the manuscript. It explains what the project represents, what was implemented, how the synthetic data were constructed, why each cited paper is used, what the experiments actually show, and where the evidence stops. It is an outline of the whole project, not a manuscript draft and not a claim that wet-lab validation has occurred.
+**From Optimal Recipes to Assured Operating Regions: A Two-Round Strategy for Design-Space Learning under Limited Experimental Budgets**
 
-> **Central thesis:** A matched number of wells does not, by itself, define a fair BO-versus-RSM comparison. The apparent winner also depends on the final selection rule, confirmation protocol, permitted extrapolation, and whether cost is counted in wells or experimental rounds.
+Alternative computational title: **SPADE: Two-Round Learning of Acceptable Formulation Regions with Point-Optimization Parity**
 
-## How to use this guide
-
-- **Understand the project:** Sections 1–6 explain the biological problem, cited literature, synthetic data, and code architecture.
-- **Prepare the manuscript:** Sections 7–15 provide terminology, Methods, Results, figures, claims, Discussion, and reviewer risks.
-- **Check publication readiness:** Sections 16–18 list unresolved work, project-owner decisions, references, and artifact provenance.
-
-## Quick navigation
-
-1. [Project explanation](#1-project-explanation-for-biology-researchers)
-2. [Biological motivation](#2-biological-motivation-and-laboratory-translation)
-3. [Research framing](#3-research-framing)
-4. [Citation-purpose map](#4-what-was-cited-and-why)
-5. [Synthetic-data construction](#5-how-the-synthetic-data-were-made)
-6. [Code and experiment architecture](#6-core-project-architecture)
-7. [Biology-first glossary](#7-concept-glossary-biology-first-formal-meaning-second)
-8. [Methods outline](#8-manuscript-ready-methods-outline)
-9. [Results storyline](#9-results-storyline-organized-by-laboratory-questions)
-10. [Figure plan](#10-three-figure-main-paper-storyline)
-11. [Ranked results](#11-ranked-result-inventory)
-12. [Claims and boundaries](#12-claims-and-boundaries)
-13. [Discussion outline](#13-biology-focused-discussion-outline)
-14. [Reviewer risks](#14-reviewer-risk-audit)
-15. [Manuscript structure](#15-recommended-manuscript-outline)
-16. [Readiness and unresolved work](#16-current-readiness-and-unresolved-work)
-17. [Questions for the project owner](#17-highest-value-questions-for-the-project-owner)
-18. [References and evidence trail](#18-primary-references-and-project-evidence-trail)
-
-**Evidence labels used throughout**
-
-- **Source-verified:** checked against a cited paper or primary documentation.
-- **Artifact-derived:** calculated from committed code, data, or result files in this repository.
-- **Project choice:** invented or selected for this benchmark; not a fact about biology.
-- **Interpretation:** a reasoned explanation of an artifact-derived result.
-- **Unresolved:** missing, internally inconsistent, or not yet independently verified.
+Alternative biology-facing title: **Beyond the Best Well: Learning Reliable Formulation Windows with Two Experimental Rounds**
 
 ---
 
-# 1. Project explanation for biology researchers
+## How to use this document
 
-## 1.1 The project in a few sentences
+This document is the main writing blueprint for the paper. It explains the scientific problem, the biological interpretation, the synthetic-data construction, the algorithms, the implementation, the statistical design, the complete result hierarchy, the cited literature and its purpose, and the proposed figure program. Its sections are written in manuscript-ready prose so that a scientific writer can convert them into a full draft without reconstructing the project from scripts or historical experiment notes.
 
-**For a biology researcher.** Imagine optimizing a cell-culture medium or extracellular-matrix coating when only 48 wells are available. One strategy plans a screening and response-surface experiment in advance; another uses results from earlier wells to decide which formulations to test next. This project simulates those campaigns and shows that the apparent winner can change depending on how the laboratory chooses the final formulation: the highest single assay reading, the best condition after confirmation, or a point recommended by a fitted model.
+The paper should be SPADE-first. The earlier Bayesian-optimization-versus-response-surface experiments remain essential, but their role is to demonstrate why optimizing one nominated recipe is an incomplete objective when the laboratory needs a defensible operating region. The prospective SPADE study is the principal evidence for method-level performance. Retrospective re-scoring and diagnostic experiments supply motivation, mechanism, and scope.
 
-**For a computational researcher.** This is a paired, matched-budget benchmark of batch Bayesian optimization (BO) and classical design of experiments/response-surface methodology (DoE/RSM) on constructed six- and eight-dimensional Hill-like landscapes. It separates sampling design, surrogate class, and terminal locator; distinguishes search from identification; evaluates wells and sequential rounds separately; and extends the evaluation from a single optimum to design-space mapping.
-
-**One-sentence thesis.** A matched number of evaluations does not define a unique BO-versus-RSM comparison, because the terminal decision rule, permitted extrapolation, confirmation procedure, and unit of cost can materially change the conclusion.
-
-**Laboratory problem represented.** A researcher must use a limited number of wells and plate cycles to choose either one multi-factor formulation for follow-up or a reliable region of acceptable formulations despite noisy measurements.
-
-**What the codebase does.** It generates known synthetic response landscapes, runs multiple experimental-design procedures against identical landscapes and budgets, applies different final selection rules to the same campaigns, and scores the choices against hidden ground truth.
-
-**What the project does not claim.** It does not demonstrate that either method improves endothelial differentiation, cell-culture media, or any real assay; it does not fit a six-dimensional biological response from Hall et al.; and its Gaussian noise, factor labels, and interaction magnitudes must not be presented as validated cellular biology.
-
-## 1.2 Central concepts at first use
-
-### Bayesian optimization
-
-**Plain-language meaning:** An adaptive experimental strategy that learns from completed measurements and uses a model to choose the next promising conditions.
-
-**Laboratory analogy:** Run an opening plate, fit a provisional map of assay response, then choose the next four wells because they are predicted to be good or informative.
-
-**Why it matters in this project:** BO spreads its 48 wells across about ten decision rounds. It may use wells efficiently, but it requires repeated plate-to-model-to-plate cycles.
-
-**Formal definition:** Sequential optimization of an expensive black-box function using a probabilistic surrogate and an acquisition function to select new query points.
-
-### Design of experiments and response-surface methodology
-
-**Plain-language meaning:** DoE chooses an organized set of factor combinations; RSM fits a low-order mathematical surface to those results and uses it to guide optimization.
-
-**Laboratory analogy:** First screen six ingredients to retain four, then run a central composite design around the promising region, fit a quadratic surface, and test its proposed optimum.
-
-**Why it matters in this project:** The classical comparator is a concrete 20 + 27 + 1 well workflow, not a generic label. Its fairness depends on how its fitted quadratic is interpreted when it is a saddle or points outside the fitted region.
-
-**Formal definition:** DoE is planned selection of experimental inputs for estimable effects; RSM models a response, commonly with a second-order polynomial, and uses canonical, ridge, or sequential analyses to locate improving regions.
-
-### Terminal decision rule
-
-**Plain-language meaning:** The rule used after the experimental budget is spent to choose the formulation that will be carried forward.
-
-**Laboratory analogy:** The final choice might be the well with the highest reading, the best of three confirmed candidates, or a formulation predicted by a fitted model.
-
-**Why it matters in this project:** The same stored campaigns favor DoE under a single noisy-readout choice, favor BO under a naïve unconstrained model choice, and are largely tied under in-region or top-three-confirmation choices.
-
-**Formal definition:** A mapping $L(D,M)\rightarrow \hat{x}$ from observed data $D$, and optionally fitted model $M$, to the final recommended input $\hat{x}$.
+One analysis is deliberately withheld. The causal comparison intended to isolate the value of boundary-targeted second-round placement is being corrected. The present outline does not quote its current estimate, interval, probability value, or verdict, and it does not use that comparison to support either a positive or negative claim. The method description still explains how SPADE chooses boundary-focused wells because that is part of the implemented protocol. The performance of that targeting rule must be inserted only after the corrected analysis has been frozen and independently verified.
 
 ---
 
-# 2. Biological motivation and laboratory translation
+# 1. Manuscript-level summary
 
-## 2.1 Laboratory workflow represented
+## 1.1 Draft abstract
 
-1. **Choose factors.** Biologically, these could be medium components, ECM proteins, cytokines, or process variables. Computationally, a recipe is a vector $x\in[0,1]^d$. The code uses six or eight coded coordinates, not executable protein concentrations.
-2. **Limit the combinations.** A full grid grows exponentially: five levels for six factors require $5^6=15{,}625$ conditions. The benchmark fixes the principal budget at 48 evaluations.
-3. **Spend wells and rounds.** Each evaluated point is treated as one well-equivalent condition. A round is a batch chosen before observing that batch; it represents a plate cycle or decision cycle, not necessarily one physical plate in every laboratory.
-4. **Observe an assay.** A hidden deterministic function supplies the underlying response, and simulated error changes the measured response. This is a simplified assay model, without explicit donors, batches, plate positions, failed wells, or cell-state drift.
-5. **Adapt or follow a plan.** BO uses earlier measurements to choose later points. The two-stage classical workflow follows a screen with a central composite design. Space-filling controls distribute wells without adapting.
-6. **Choose a deliverable.** The laboratory may want one recipe or an operating region where many recipes exceed a threshold. These are different scientific products and require different metrics.
-7. **Make the final decision.** A single high reading, a model peak, a posterior mean, or confirmation can nominate different recipes from exactly the same measurements.
+Multicomponent biological formulations are commonly optimized by selecting a single condition with a high measured or model-predicted response. That formulation-centric objective is insufficient when experimental handoff requires an operating region: a set of compositions expected to satisfy a prespecified performance threshold despite limited data and assay noise. We developed SPADE, a two-round, 48-well strategy that begins with a 40-point space-filling design, fits a heteroscedastic Gaussian-process surrogate, and allocates eight additional wells to reduce uncertainty near the estimated acceptance boundary before constructing a probabilistic design-space map and a conservative excursion-set certificate.
 
-## 2.2 Translation table
+We evaluated SPADE in a preregistered computer experiment using synthetic six- and eight-factor response landscapes, matched 48-well budgets, and comparators spanning one-shot space-filling designs, batch Bayesian optimization, screened response-surface methodology, and a full-dimensional unscreened central-composite design where arithmetically feasible. The primary target condition was a six-factor biphasic Hill landscape under lower benchmark noise. The primary map outcome was normalized symmetric-difference error between the estimated and true acceptable regions; point performance was evaluated by simple regret under a common posterior-mean terminal rule.
 
-| Laboratory concept | Computational representation | Implemented? | Important limitation |
-|---|---|---:|---|
-| Biological formulation | Point $x$ in a coded $[0,1]^d$ space | Yes | Coordinates are nominal; no validated concentration mapping |
-| Assay result | Observed response $y$ | Yes | Abstract simulated readout, not a named assay unit |
-| True biological response | Latent function $f(x)$ | Yes, synthetically | Known only because the landscape is constructed |
-| Assay variability | Multiplicative and additive Gaussian error | Yes | Does not separate biological, technical, batch, or plate-position variance |
-| Experimental condition | One function evaluation or well-equivalent | Yes | Replicate structure is not biological replication |
-| Plate cycle | Batch/experimental round | Yes | Calendar duration and physical plate layout are not modeled |
-| Carry-forward formulation | Terminal recommendation $\hat{x}$ | Yes | Several incompatible rules are compared |
-| Acceptable formulation range | Thresholded design space $\{x:f(x)\ge\tau\}$ | Yes, extension | Certificate behavior is family-dependent and incompletely validated |
-| Reagent and labor burden | No direct representation | No | Wells and rounds are only proxies |
-| Donor/batch effects | Hierarchical or blocked noise | No | Limits biological realism |
-| Missing/failed wells | Missing observations | No | Every scheduled synthetic evaluation returns a value |
+In the target condition, all three SPADE allocation variants had lower mean design-space error than every non-SPADE comparator reported here, with symmetric-difference errors of 0.1770–0.1804. The registered primary SPADE arm achieved 0.1804, compared with 0.1867 for Latin hypercube sampling, 0.1913 for Sobol sampling, 0.2079 for qLogEI, 0.2135 for qLogNEI, 0.2496 for unscreened classical design, and 0.2580 for screened response-surface methodology. qLogNEI produced the lowest point regret, 0.0691, whereas primary SPADE achieved 0.0844. The mean gap of 0.0153 fell within the prespecified 0.02 practical-equivalence margin, although its interval extended slightly beyond that margin. SPADE required two experimental decision rounds, compared with ten for batch Bayesian optimization at the same 48-well budget.
 
-## 2.3 What is realistic and what is simplified
+The distinction between point and region objectives reproduced on multimodal Hartmann landscapes: Bayesian optimization achieved lower point regret, whereas SPADE variants achieved lower map error at both six and eight dimensions. Certificate evidence was narrower than mapping performance. Prospective cross-fit containment was not shown to fall below nominal on the Hill benchmark, but the weakest confirmatory cell had only 13 non-empty certificates and a wide interval. Cross-family prospective evidence was not uniformly conclusive, and an independent five-family analysis found high-assurance under-coverage on Levy and Rosenbrock landscapes while SPADE frequently declined to certify on Ackley and Hartmann landscapes.
 
-The realistic structure is the decision problem: multiple continuous factors, too few wells for a full grid, noisy readouts, staged experiments, and a required final carry-forward decision. The mathematical landscape has biologically familiar rise-and-fall dose responses and sparse important factors. The numerical parameter ranges, interaction magnitudes, noise distribution, and acceptance rules are project-authored choices. The benchmark therefore tests decision procedures under controlled conditions; it does not estimate the behavior of a real cell system.
+These findings establish SPADE as a promising certification-first experimental strategy rather than a universally superior optimizer. Its strongest supported contribution is efficient estimation of acceptable formulation regions with practical point-regret parity and substantially fewer decision rounds in the registered target regime. Wet-lab validation, complete cross-family calibration, reproducible release of the raw prospective artifacts, and a corrected evaluation of boundary-targeted allocation remain necessary before broader claims are justified.
+
+## 1.2 Draft significance statement
+
+Experimental optimization is usually judged by the best recipe it produces, but many laboratories need a robust window of acceptable recipes rather than one nominal optimum. This project shows that point quality and operating-region quality can rank the same experimental campaigns in opposite orders. SPADE directly targets the second deliverable. Under a fixed 48-well budget, it generated leading design-space maps in two experimental rounds while remaining practically close to ten-round Bayesian optimization on the best predicted recipe. The work also demonstrates why a sharp map, a calibrated probability model, and a valid certificate are related but non-equivalent claims.
+
+## 1.3 Central thesis
+
+The central claim is not that SPADE wins every optimization problem. The defensible claim is narrower and more useful:
+
+> When the experimental deliverable is an acceptable formulation region rather than one best formulation, a two-round spread-and-refine strategy can produce a stronger design-space map than point-focused or classical comparators while retaining practical point-regret parity in a prespecified target regime.
+
+The paper has three linked contributions. First, it demonstrates that the scientific object being optimized—one point or an entire acceptable set—can reverse method rankings. Second, it introduces and prospectively evaluates a two-round workflow designed around the set-estimation objective. Third, it separates map accuracy, probabilistic calibration, and conservative certification, showing that success on one does not prove the others.
 
 ---
 
-# 3. Research framing
+# 2. Introduction
 
-## 3.1 Problem, questions, and hypothesis
+## 2.1 Biological and experimental problem
 
-**Biological problem.** A formulation campaign must turn a small, noisy collection of wells into a defensible next condition or operating range.
+Optimizing cell-culture media, extracellular-matrix compositions, bioprocess conditions, or multicomponent formulations requires searching a continuous space that grows exponentially with the number of controllable factors. A modest grid of five levels across six ingredients already contains $5^6=15{,}625$ combinations, far beyond the capacity of a typical experimental campaign. Laboratories therefore use structured design of experiments, response-surface methodology, Bayesian optimization, or space-filling designs to choose a small set of informative conditions.
 
-**Computational problem.** Compare adaptive BO with structured DoE/RSM while holding the hidden landscape and evaluation budget fixed, then determine which part of the result comes from sampling, modeling, final selection, or scoring.
+Most optimizer studies compress the final result to one formulation. The method is rewarded if its nominated point lies near the unknown optimum. This is appropriate when the laboratory wants one carry-forward recipe and can reproduce it precisely. It is not sufficient when manufacturing variability, biological heterogeneity, formulation tolerances, or regulatory expectations require an operating region within which many recipes remain acceptable. A high-performing point can coexist with a poor map of the surrounding formulation space, and a method that accurately maps an acceptable region need not locate the global optimum most efficiently.
 
-**Why it matters experimentally.** A method that samples useful conditions but identifies the wrong one after a noisy readout may fail at handoff. Conversely, a method that proposes a mathematically impressive point outside the region it learned may fail on confirmation. Well count alone also hides the cost of waiting for repeated adaptive rounds.
+This distinction is central to quality-by-design thinking. A design space is not merely a wide confidence interval around one optimum. It is a subset of the factor space associated with an explicit performance threshold and an explicit level of uncertainty. Establishing such a region requires broad spatial information, calibrated uncertainty, and an honest accounting of cases in which the data support no non-empty certified region.
 
-**Why a naïve comparison is misleading.** “BO” and “RSM” each describe families of workflows. Studies differ in factor screening, budgets, acquisition functions, model classes, final recommendations, confirmation, and whether cost means conditions or rounds. Changing any of these can change the estimand.
+## 2.2 Why conventional BO-versus-DoE comparisons are difficult to interpret
 
-**Main research question.** Under identical 48-well campaigns on the same constructed landscapes, does the BO-versus-DoE conclusion depend on how the final formulation is selected?
+Bayesian optimization and response-surface methodology are not single algorithms. A complete workflow includes the sampling design, fitted surrogate, acquisition or relocation rule, experimental budget, number of adaptive rounds, and final selection rule. Published studies vary across all of these components. Some compare executed workflows at equal experiment counts; others compare an adaptive campaign with a predicted full-factorial or standard-DoE requirement; some nominate the largest measured response; others nominate a posterior-mean optimum or a response-surface stationary point.
 
-**Secondary questions.** How much of a difference is search versus identification? Does a quadratic fail because of its sampling design, surrogate class, or locator? What changes with assay noise, nuisance dimensions, sequential relocation, one-shot designs, other landscape families, and design-space rather than point optimization?
+The repository's matched-campaign experiments show why these distinctions matter. On identical synthetic landscapes and equal 48-well budgets, the apparent winner changes when the final formulation is selected by a single noisy observation, a fitted model, an in-region rule, or confirmation. The procedures can physically test similarly good recipes yet differ substantially in whether the terminal rule recognizes them. Consequently, a claim that one method “finds better formulations” may actually combine search, identification, extrapolation, and final decision policy.
 
-**Central hypothesis.** Method ranking is conditional on the terminal rule: single-readout selection, unconstrained model extrapolation, in-region recommendation, and confirmation need not produce the same winner.
+These results motivate a more fundamental change in objective. If the laboratory wants an operating region, point regret should not remain the only score. The acceptable set must be estimated and compared directly with the truth available in simulation.
 
-**Practical question for a biology reader.** Given the laboratory's true carry-forward protocol and cost structure, which experimental workflow should be compared—and what evidence is needed before trusting its recommendation?
+## 2.3 SPADE as the response to that gap
 
-## 3.2 Novelty audit
+SPADE is a two-round, 48-well strategy for learning an acceptable formulation region. It spends 40 wells on broad coverage of all factors, fits a Gaussian-process model with known plug-in observation variance, then allocates eight wells to regions that are both uncertain and near the decision threshold. The final model produces a posterior probability map, a conservative excursion set, an inscribed factor-range box, and a setpoint inside that box.
 
-| Proposed claim | Already established? | Evidence here | Safe biology-friendly framing |
+The method is therefore evaluated on several distinct objects. Symmetric-difference error measures whether the estimated acceptable region has the correct geometry. Murphy calibration and refinement describe the reliability and sharpness of the probability map. Cross-fit containment evaluates whether the conservative set is contained in the true acceptable region at the stated assurance level. Simple regret measures the quality of one model-selected formulation. Wells and rounds measure different experimental costs.
+
+## 2.4 Study questions
+
+The paper should state the following questions explicitly.
+
+1. Does changing the deliverable from one recipe to an acceptable region reorder the compared methods?
+2. In the registered target condition, how accurately does SPADE estimate the acceptable region relative to Bayesian optimization, classical response-surface workflows, and one-shot space-filling designs?
+3. Does SPADE preserve practically competitive point performance under a common terminal rule, and how many experimental rounds does it require?
+4. Does the point-versus-region distinction persist across noise levels, dimensions, and landscape families?
+5. Are SPADE's probability maps calibrated and sharp, and does the conservative certificate attain its nominal containment without relying on empty-set degeneracy?
+6. Which parts of the proposed allocation strategy are supported, which are trade-offs, and which analyses remain unresolved?
+
+## 2.5 Intended novelty
+
+The novelty is not that Bayesian optimization can optimize biological formulations, that response-surface methods exist, or that synthetic optimizer benchmarks exist. The contribution is the controlled separation of experimental deliverables and decision components. The same project measures point regret, region error, probability calibration, certificate containment, wells, and rounds; it evaluates a region-first method prospectively; and it reports negative, inconclusive, infeasible, and empty-set outcomes rather than allowing a single favorable metric to stand in for all of them.
+
+---
+
+# 3. Literature and citation-purpose map
+
+The manuscript should cite each source for a defined role. Contextual precedent must not be converted into evidence for this project's synthetic results.
+
+| Source | Purpose in the paper | What it supports | What it does not support |
 |---|---|---|---|
-| BO can optimize biological formulations | Yes | Context only | BO is an established adaptive strategy in media and culture optimization |
-| BO-versus-DoE comparisons exist | Yes | Rummukainen, Lapierre, Ndahiro | This project standardizes budget and landscape to isolate comparison choices |
-| Synthetic optimizer benchmarks exist | Yes | Context only | The contribution is the factorial interpretation, not the existence of a benchmark |
-| Best measured point differs from model recommendation | Conceptually yes | Explicit same-campaign re-scoring | The potentially new result is a winner reversal on identical campaigns |
-| Sampling design, surrogate, and locator can be separated | Components known | Q34/Q45/Q35 factorial decomposition | The project quantifies their separate contributions within one matched benchmark |
-| A single noisy readout can confound search and identification | Known statistical issue | Q55/Q57 quantify 55–73% | The contribution is a paired decomposition of the observed method gap |
-| Confirmation can change the ranking | Plausible, not broadly novel alone | Q58: primary gap becomes null | A laboratory-plausible three-candidate confirmation removes this benchmark's lead |
-| One recipe and a design space are different deliverables | Established in quality-by-design | K6/P6–P8 show rank reordering | Scoring an operating region can reverse arm-level conclusions from point regret |
-| SPADE is a generally superior design-space method | Not supported | Prospective study has failed and unrun kills | SPADE is an exploratory two-round protocol with a narrowed, family-specific claim |
+| Hall, Lin and Ogle (2025) | Biological motivation and workflow inspiration | A six-factor extracellular-matrix screen followed by a four-factor response-surface experiment in endothelial differentiation; a real setting where multicomponent design and confirmation matter | Fitting of this project's Hill landscapes, protein-specific parameters, or wet-lab validation of SPADE |
+| Box and Wilson (1951); Box and Draper; Myers and colleagues | Classical experimental-design background | Sequential response-surface methodology, steepest ascent, canonical analysis, ridge analysis, and the principle that design and model interpretation are inseparable | Superiority of the specific classical arm used here |
+| Jones, Schonlau and Welch (1998) | Bayesian-optimization foundation | Efficient global optimization and expected improvement | Empirical superiority in this benchmark or biological system |
+| Frazier (2018) | Accessible BO methodology | Gaussian-process surrogates, acquisition functions, and sequential decision making | Evidence for the observed numerical results |
+| Bryan (2005) and level-set-estimation literature | Second-round acquisition background | Straddle-style prioritization of uncertain points near a level-set boundary | Demonstrated value of the current boundary-targeting implementation; that analysis is reserved |
+| Chevalier and co-workers; Azzimonti and co-workers | Excursion-set and conservative-estimation methodology | Vorob'ev quantiles, joint containment, and conservative excursion sets | Cross-family validity of this implementation without empirical checks |
+| Gneiting and Raftery (2007) | Probabilistic-evaluation framework | Proper scoring and the need to distinguish calibration from sharpness | Proof that SPADE is calibrated |
+| ICH Q8 and quality-by-design literature | Regulatory and design-space context | The practical importance of operating regions rather than isolated optima | Regulatory qualification of the synthetic certificate |
+| Rummukainen and colleagues (2024) | Closest equal-budget executed precedent | A pilot-scale adaptive-versus-traditional comparison at the same experiment count | A universal conclusion that BO cannot save experiments |
+| Narayanan and colleagues (2025) | Biological relevance of adaptive media optimization | BO-guided cell-culture media development and reported reductions relative to predicted or conventional DoE requirements | An equal-budget executed defeat of DoE under this paper's estimands |
+| Lapierre and colleagues (2025) | Executed multicycle media optimization | Batch BO compared with a screened CCD/RSM workflow in microbial media optimization | Isolation of sampling, surrogate, and terminal-rule effects |
+| Ndahiro and colleagues (2025) | Constraint-aware mammalian-media optimization | Integration of Bayesian optimization and thermodynamic constraints in a wet-lab setting | Representation of solution thermodynamics in this unconstrained synthetic benchmark |
+| Gisperg and colleagues (2025) | Field review | Vocabulary and the broader status of BO in bioprocess engineering | Primary evidence for individual experimental studies |
+| Kanda and colleagues (2022) | Scale of robotic biological search | The logistical importance of adaptive experimentation in large cell-culture spaces | A direct BO-versus-RSM comparison |
+
+The final manuscript should recheck bibliographic metadata and quotation-level statements against the primary PDFs before submission. The paper should not use a review when the original experimental article is available, and it should not imply that Hall et al.'s experimental values generated the synthetic response surfaces.
 
 ---
 
-# 4. What was cited, and why
+# 4. Methods
 
-This section is the citation-purpose map. A paper should be cited only for the role listed here; contextual precedent must not be turned into evidence for this project's result.
+## 4.1 Study design and evidence bodies
 
-| Source | What it establishes | Why this project cites it | What it must not be used to claim |
-|---|---|---|---|
-| **Hall, Lin & Ogle (2025), Scientific Reports, DOI 10.1038/s41598-025-09256-9** | Six-factor ECM screen followed by four-factor on-face central composite design for iPSC-to-endothelial differentiation; CD31/DAPI readout; fitted model overpredicted a nominated optimum | Structural biological inspiration for factor count, 6→4 screening, the project's staged budget logic, and a real confirmation failure; source of digitized auxiliary data | That the synthetic Hill surface was fitted to their data, that its parameters are protein-specific, or that the project's exact 20+27+1 split is a source-verified Hall run count |
-| **Box & Wilson (1951)** and **Box & Draper / Myers et al.** | Foundations and standard practice of sequential RSM, steepest ascent, canonical and ridge analysis | Defines a fair classical comparator and supports the warning that an unconstrained saddle peak is not proper RSM | That every modern DoE implementation must use one exact pipeline |
-| **Jones, Schonlau & Welch (1998)** | Efficient global optimization and expected improvement | Foundational reference for EI-based BO | Evidence that EI is superior in this biological problem |
-| **Frazier (2018)** | Tutorial treatment of BO, Gaussian processes, and acquisition functions | Accessible formal background | Empirical support for this project's numerical conclusions |
-| **Rummukainen et al. (2024), Heliyon, DOI 10.1016/j.heliyon.2024.e24484** | Executed equal-budget pilot comparison: 15 Box–Behnken versus 5+10 adaptive BO experiments; no experiment-count reduction | Closest precedent for a matched-budget executed BO-versus-DoE comparison and for noisy EI/posterior-mean selection | A general proof that BO never saves experiments |
-| **Narayanan et al. (2025), Nature Communications, DOI 10.1038/s41467-025-61113-5** | BO-guided cell-culture media development and large reported experiment reductions relative to predicted/conventional DoE requirements | Shows practical biological relevance and why “fewer experiments” is an important claim | An executed equal-budget DoE defeat; its denominator is not the same estimand as this benchmark |
-| **Lapierre et al. (2025), JCTB, DOI 10.1002/jctb.7860** | Multi-cycle batch BO for microbial growth-media optimization compared with a CCD/RSM workflow after screening | Executed media precedent and example of whole-workflow comparisons | That sampling design, factor set, model, and terminal rule were independently randomized |
-| **Ndahiro et al. (2025), iScience, DOI 10.1016/j.isci.2025.112944** | Mammalian biomanufacturing media BO with thermodynamic constraints and equal-count comparison | Demonstrates real wet-lab, constraint-aware BO relevance | That this unconstrained synthetic benchmark includes solution thermodynamics |
-| **Gisperg et al. (2025), Biotechnology and Bioengineering** | Review of BO in bioprocess engineering | Field context and vocabulary | Primary evidence for a result originally reported by Rummukainen or another study |
-| **Kanda et al. (2022), eLife, DOI 10.7554/eLife.77007** | Robotic search of an enormous cell-culture condition space | Concrete example of the scale and logistical value of adaptive experimentation | A direct BO-versus-RSM comparator for this project |
-| **Gneiting & Raftery (2007)** | Proper scoring rules and probabilistic forecast evaluation | Basis for calibration-oriented design-space metrics | Proof that this project's certificate is calibrated |
+The project contains two related but distinct evidence bodies. The first is a point-optimization benchmark in which stored Bayesian-optimization, response-surface, and space-filling campaigns were re-evaluated under multiple terminal decision rules and later scored as design-space maps. This program establishes the terminal-rule problem, the point-versus-region reversal, and diagnostic mechanisms.
 
-**Citation cautions already discovered.** Picheny (2013) was not verified as support for the project's search-versus-identification distinction. Nguyen et al. (2017) discusses an incumbent inside acquisition computation, not the final laboratory recommendation, and should not be described as a contrary terminal-selection result. The Collagen IV high concentration in Hall et al. is internally inconsistent between Results and Methods; do not assert whether the nominated optimum exceeded that tested range. The repository's source audit also leaves the exact 23-run/25-run/~48-condition reconciliation unresolved, so present 20+27+1 as the benchmark's matched-budget implementation rather than an exact published count unless the source tables are reconciled.
+The second is the prospective study `spade-final-2026-08-23`. Its condition matrix, endpoints, target-regime definition, statistical families, practical-effect thresholds, feasibility rules, publication guards, and kill conditions were frozen before the final runners produced results. SPADE allocations were generated live from their plate-one fits rather than applied retrospectively to pre-existing wells. This prospective study supplies the main method-level evidence.
+
+The two programs should never be pooled as if they were one experiment. Retrospective results motivate and interpret the prospective study; prospective results govern claims about SPADE as an executed method.
+
+## 4.2 Formulation space and latent response
+
+A formulation is represented by a coded vector
+
+$$
+x=(x_1,\ldots,x_d)\in[0,1]^d,
+$$
+
+where $d=6$ or $d=8$. The coordinates may be interpreted as ingredient levels or process settings, but they have no validated mapping to physical concentrations. The primary biological scenario is structurally inspired by a six-factor extracellular-matrix optimization problem. The eight-dimensional condition adds nuisance coordinates to test the cost of dimensions that contribute little or nothing to the response.
+
+The principal latent response is a constructed biphasic Hill landscape. Each factor contributes an activating and an inhibitory component,
+
+$$
+h_i(x_i)=\frac{x_i^{n_i}}{\mathrm{EC}_{50,i}^{n_i}+x_i^{n_i}},
+$$
+
+$$
+g_i(x_i)=\frac{1}{1+\left(x_i/\mathrm{IC}_{50,i}\right)^{n_i}}.
+$$
+
+Their normalized product creates a rise-and-fall response with an interior marginal peak at
+
+$$
+x_i^*=\sqrt{\mathrm{EC}_{50,i}\mathrm{IC}_{50,i}}.
+$$
+
+The multivariate function combines weighted factor contributions with sparse pairwise interactions. Four coordinates receive 90% of the total marginal weight, while the remaining coordinates receive 10%. Interaction coefficients alter conditional peak locations, so the vector of marginal optima is not assumed to be the true joint optimum. Numerical optimization identifies and stores the global optimum of every accepted landscape.
+
+The nominal generator draws marginal peaks from $U(0.25,0.55)$, Hill exponents from $U(1,3)$, and sparse interaction coefficients from $U(-1,1)$ before acceptance filtering. These distributions are project choices, not estimates from biological data. Acceptance rules remove surfaces with poorly identifiable or boundary-adjacent optima. Because of this rejection process, the retained parameter distribution is not identical to the nominal sampling distribution and must be described as a filtered ensemble.
+
+## 4.3 How the synthetic observations were generated
+
+The project did not fit a synthetic table to Hall et al.'s measurements. It first generated and froze a hidden mathematical response surface $f(x)$. Each method then chose which coordinates to evaluate, exactly as an experimental strategy would choose formulations. An assay-like observation was produced only when a method evaluated a point.
+
+The observation model was
+
+$$
+y(x)=f(x)(1+\epsilon)+\eta,
+$$
+
+with
+
+$$
+\epsilon\sim\mathcal N(0,\sigma_{\mathrm{rel}}^2),
+\qquad
+\eta\sim\mathcal N(0,0.01^2).
+$$
+
+The relative-noise levels were $\sigma_{\mathrm{rel}}=0.10$ and $0.25$. They are lower- and higher-noise benchmark settings, not empirically estimated assay coefficients of variation. The additive term prevents the observation variance from collapsing near a zero response. The Gaussian process received the plug-in observation variance
+
+$$
+\widehat{\operatorname{Var}}(y\mid x)=y(x)^2\sigma_{\mathrm{rel}}^2+0.01^2,
+$$
+
+subject to the implemented numerical floor. This variance uses the observed response and does not reveal the hidden value $f(x)$ to the optimizer.
+
+Because the latent function is known in simulation, every final recommendation and estimated region can be scored against ground truth. This is the primary advantage of the synthetic design. It is also the principal limitation: the benchmark tests decision procedures under controlled mathematical conditions rather than validating a biological formulation.
+
+## 4.4 External landscape families
+
+Hartmann6, Ackley, Levy, and Rosenbrock functions were added to test whether the Hill results depended on one geometry. Hartmann supplies multimodality and competing basins. Ackley was declared an exception before scoring because its center-point optimum favors center-heavy classical designs and because earlier work showed that SPADE often declines to certify. Levy and Rosenbrock provide additional smooth but geometrically distinct robustness conditions.
+
+The prospective matrix contained seven conditions: Hill at $d=6$ and both noise levels; Hartmann at $d=6$ and $d=8$ under higher noise; and Ackley, Levy, and Rosenbrock at $d=6$ under higher noise. Only Hill at $d=6$, $\sigma_{\mathrm{rel}}=0.10$ satisfied the frozen criteria for the `TARGET` regime. The remaining conditions were robustness or predeclared exception settings and cannot independently license universal superiority claims.
+
+## 4.5 Experimental methods and budgets
+
+All principal comparisons used a maximum of 48 evaluated conditions. The number of adaptive decision rounds differed substantially.
+
+| Method | Experimental design | Wells | Rounds | Primary purpose |
+|---|---|---:|---:|---|
+| SPADE primary and allocation variants | 40-point LHS followed by an eight-point model-directed second round | 48 | 2 | Design-space mapping and certification |
+| SPADE plate-one reference | 40-point LHS only | 40 | 1 | Quantify what the additional round contributes; not equal-well |
+| Latin hypercube | One-shot space-filling design | 48 | 1 | Broad nonadaptive coverage |
+| Sobol | One-shot low-discrepancy design | 48 | 1 | Broad nonadaptive coverage |
+| Uniform random | One-shot random design | 48 | 1 | Nonadaptive control |
+| qLogEI | Opening design followed by batched expected improvement | 48 | 10 | Point-focused Bayesian optimization |
+| qLogNEI | Same schedule with noisy expected improvement | 48 | 10 | Noise-aware point-focused Bayesian optimization |
+| Screened DoE/RSM | 20-run screen, 27-run four-factor face-centered CCD, one confirmation | 48 | 3 | Classical staged optimization |
+| Unscreened DoE/RSM | Full-dimensional CCD where feasible | 48 | 1 | Isolate screening and model effects |
+
+The unscreened design uses a full-dimensional central composite design. At six factors, the implemented design uses 47 design points within the 48-well limit and fits the same type of second-order model used by the classical pipeline. At eight factors, the factorial and axial points consume the budget before the center replicates needed for a valid CCD can be included. The arm is therefore recorded as structurally unavailable rather than silently omitted or fabricated.
+
+## 4.6 SPADE implementation
+
+SPADE as actually measured differs from the earliest concept document. It does not use the proposed 49-point orthogonal-array LHS, triplicate anchors, day-zero covariate correction, or a working landscape-regime detector. The executed protocol is the following two-round method.
+
+### Plate one: broad coverage
+
+Plate one contains 40 Latin-hypercube points spanning all $d$ factors. No factor is screened out. A Matérn-$5/2$ automatic-relevance-determination Gaussian process is fit to the observations using the plug-in observation variances described above. Varying every factor is essential because the intended deliverable is a design-space map; a factor removed by screening cannot receive a defensible operating range.
+
+### Plate two: uncertainty reduction near the decision surface
+
+The current implementation evaluates a straddle score over a 4,096-point Sobol candidate set,
+
+$$
+a_{\mathrm{straddle}}(x)=1.96s(x)-\left|\mu(x)-\theta\right|,
+$$
+
+where $\mu(x)$ and $s(x)$ are the posterior mean and standard deviation and $\theta$ is the working response threshold used for acquisition. Large values identify locations that are uncertain and plausibly near the estimated level-set boundary. Eight points are selected greedily. A Chebyshev exclusion radius derived from the median ARD length scale prevents the batch from collapsing into one neighborhood.
+
+After the second round, one Gaussian process is refit to all 48 observations. The second-round wells are new locations, not replicate confirmations of plate-one points. The current causal analysis intended to determine whether this boundary-focused allocation is better than its matched control is reserved pending correction and is not reported in this outline.
+
+### Allocation variants
+
+The prospective study included `m0`, `m4`, and `m8` variants. The primary `m0` arm devotes all eight second-round wells to the region-learning objective. Positive-$m$ variants reserve part or all of the second round for locally exploitative allocation intended to improve the final point recommendation. An allocation variant is counted as an improvement only if it reduces Rule-P regret by at least 0.02, does not worsen map error by more than 0.02, does not worsen calibration by more than 0.005, and retains acceptable certificate behavior.
+
+## 4.7 Point estimand and terminal rules
+
+Simple regret evaluates the quality of one nominated formulation,
+
+$$
+r(\widehat x)=f(x^*)-f(\widehat x).
+$$
+
+All stored Hill functions are normalized so that $f(x^*)=1$, giving $r=1-f(\widehat x)$. Lower regret is better.
+
+Rule A selects the evaluated point with the highest noisy observed value. Rule P selects the point favored by the fitted model's posterior mean. The prospective paper uses Rule P as the primary point estimand because it compares model-based terminal decisions under one common rule. Rule A remains a required robustness result. A Rule-A value for one method must never be compared with a Rule-P value for another as if they were the same estimand.
+
+The retrospective program also evaluated hidden tested-best, unconstrained model optima, in-region recommendations, replication, and top-three confirmation. Hidden tested-best is an oracle-only diagnostic of search quality. The others are alternative laboratory decision protocols and are used to demonstrate terminal-rule sensitivity.
+
+## 4.8 Design-space estimands
+
+For a performance threshold $\tau$, the true acceptable region is
+
+$$
+A_\tau=\left\{x\in\mathcal X:f(x)\geq\tau\right\}.
+$$
+
+The fitted model supplies an exceedance-probability map
+
+$$
+p_\tau(x)=\Pr\!\left(Y(x)\geq\tau\mid D\right).
+$$
+
+At probability threshold $\gamma$, the estimated region is
+
+$$
+\widehat A_{\tau,\gamma}=\left\{x:p_\tau(x)\geq\gamma\right\}.
+$$
+
+The primary map error is the normalized symmetric-difference volume,
+
+$$
+E_{\Delta}=\frac{\mu\!\left(\widehat A_{\tau,\gamma}\triangle A_\tau\right)}{\mu(\mathcal X)},
+$$
+
+where $\triangle$ denotes points belonging to one set but not the other and $\mu$ denotes design-space volume. This measure combines false inclusion and false exclusion. Type-I volume is never interpreted alone because an empty predicted set obtains zero false-inclusion volume while providing no useful answer.
+
+AUC, intersection over union, false-inclusion rate, Brier score, Murphy calibration, and Murphy refinement are secondary or supporting outcomes. AUC measures ranking but cannot detect monotonic miscalibration. The Murphy decomposition used in the project is
+
+$$
+\operatorname{Brier}=\operatorname{calibration}-\operatorname{refinement}+\operatorname{uncertainty}.
+$$
+
+Lower calibration error is better; higher refinement indicates sharper separation of probabilities.
+
+## 4.9 Conservative certificate
+
+SPADE constructs a conservative excursion set using posterior joint draws and Vorob'ev quantiles. Candidate sets are selected using one half of 4,096 draws and evaluated using the other half. This cross-fit prevents the same Monte Carlo draws from both choosing and validating the set.
+
+For a requested containment level $\alpha$, the target property is
+
+$$
+\Pr\!\left(C_{\alpha}\subseteq A_\tau\mid D\right)\geq\alpha.
+$$
+
+The primary empirical check asks whether the reported set is actually contained in the known true region across independent synthetic campaigns. Empty certificates are excluded from both the numerator and denominator of containment. They are reported separately because an empty set is vacuously contained but scientifically uninformative.
+
+The certificate is conservative conditional on the fitted model and plug-in hyperparameters. Hyperparameter uncertainty is not integrated into the guarantee. Consequently, empirical coverage must accompany every certificate claim.
+
+## 4.10 Feasibility ceiling
+
+For multiplicative noise and a response normalized to a maximum of one, a threshold may become impossible to certify at a high probability level even with perfect knowledge. The approximate ceiling is
+
+$$
+\tau_{\max}(\gamma,\sigma_{\mathrm{rel}})=1-z_\gamma\sigma_{\mathrm{rel}},
+$$
+
+where $z_\gamma$ is the standard-normal quantile. At $\gamma=0.95$ and $\sigma_{\mathrm{rel}}=0.25$, this ceiling is approximately 0.5888. Thresholds at or above the ceiling are properties of the requested assurance level, not failures of a method. They must be excluded before method comparison.
+
+The original threshold-fraction plan placed most conditions above this ceiling. A preregistered erratum replaced those thresholds with condition-specific response quantiles and sigma-dependent primary probability levels before final outcomes were analyzed. The paper should present this as a protocol correction caught by the feasibility gate.
+
+## 4.11 Prospective condition classification
+
+A condition was eligible for the target regime only if the threshold was certifiable at both primary probability levels, the true acceptable-set prevalence lay between 0.05 and 0.60, at least half of pilot plate-one campaigns were expected to produce a non-empty certificate, and at least 5% of the grid remained in the posterior straddle band. Classification used oracle geometry and a frozen 20-campaign pilot, never final method performance.
+
+Only Hill at $d=6$, $\sigma_{\mathrm{rel}}=0.10$ met these criteria. Hill at higher noise, both Hartmann settings, Levy, and Rosenbrock were robustness conditions. Ackley was a predeclared exception.
+
+## 4.12 Replication, pairing, and inference
+
+The prospective benchmark used 100 campaigns per arm per condition. Hill campaigns were organized around 25 stored landscape instances with repeated campaign seeds. Paired method contrasts were evaluated on matched instances and seeds. The default inferential unit for paired outcomes was the landscape-level aggregate, $n=25$, with the seed-level unit also reported and a direction-disagreement guard.
+
+Wilcoxon signed-rank tests governed directional decisions for paired contrasts. Paired bootstrap intervals quantified effect magnitude. The smallest effect of scientific interest was 0.02 for simple regret and symmetric-difference error. Certificate proportions used exact binomial tails and Clopper–Pearson intervals; normal approximations were prohibited. Holm correction was applied within four frozen families covering certificate cells, plate/allocation contrasts, allocation variants, and map comparators.
+
+The non-empty evidence floor for a certificate cell was 10. Failure to reject sub-nominal coverage is not proof of validity, especially when the denominator is close to that floor.
+
+## 4.13 Implementation and reproducibility architecture
+
+The primary implementation is organized around the following modules.
+
+| File or component | Responsibility |
+|---|---|
+| `src/boec/oracles.py` and stored sidecars | Generate and record synthetic Hill landscapes |
+| `src/boec/torch_oracle.py` | Return noisy observations and plug-in variances |
+| `src/boec/campaign.py` and optimizer modules | Run adaptive BO campaigns |
+| `src/boec/doe.py` and `src/boec/rsm.py` | Run screened and unscreened classical designs and fit second-order surfaces |
+| `src/boec/lse.py` | Compute straddle scores and select diversified second-round points |
+| `src/boec/designspace.py` | Build probability maps, connected regions, and inscribed boxes |
+| `src/boec/vorobev.py` | Construct conservative excursion sets |
+| `src/boec/versionc.py` | Split posterior draws and compute cross-fit certificate quantities |
+| `src/boec/final_spade.py` | Define prospective conditions, merging, and final-study helpers |
+| `scripts/run_final_spade_benchmark.py` | Execute condition-level prospective campaigns |
+| `scripts/analyse_final_spade_benchmark.py` | Compute map, regret, certificate, and registered decision artifacts |
+| `scripts/validate_final_spade_release.py` | Enforce publication guards and release completeness |
+
+The manifest records the study identifier, registration commit, code commit, package versions, seed policy, configuration, and hashes of the seven source condition files. The reported combined dataset contains 99,601 rows: 92,400 original prospective rows, 7,200 unscreened-DoE rows, and one structured declaration that the unscreened arm is unavailable at eight factors.
+
+The committed decision artifacts are present, but the raw condition files and `final-spade-primary.json` are ignored and absent from a fresh checkout. A local execution of the release validator therefore cannot reproduce the repository's reported all-green audit and returns blocking missing-artifact violations. The targeted final-SPADE, reproducibility, statistics, and unscreened-DoE tests pass 173 of 173 in the configured Python 3.11 environment. The manuscript must distinguish passing implementation tests from a fully self-contained reproducible release.
 
 ---
 
-# 5. How the synthetic data were made
+# 5. Results
 
-## 5.1 The essential answer
+## 5.1 Point optimization does not determine design-space quality
 
-No synthetic table was generated by fitting Hall et al.'s measurements. Instead, the code first constructs a hidden mathematical response surface $f(x)$, then lets every experimental method choose coordinates $x$, and finally generates an assay-like reading $y$ by perturbing $f(x)$ with random error. Because the true surface is known, the project can score whether the formulation selected by a noisy campaign is genuinely close to the hidden optimum.
+The retrospective benchmark established the conceptual premise of the paper. At $d=6$ and higher noise, the staged classical arm achieved mean measured-value regret of approximately 0.0958, compared with 0.1553 for qLogEI and 0.1532 for qLogNEI. Hidden tested-best regret was much closer: approximately 0.0597 for the classical arm, 0.0755 for qLogEI, and 0.0834 for qLogNEI. Thus, much of the measured-value difference arose after the methods had already evaluated their points; it reflected identification under noisy observations rather than search alone.
 
-## 5.2 Step-by-step construction of the primary Hill benchmark
+Changing the terminal rule changed the ranking. Under an unconstrained model optimum, the fitted quadratic frequently extrapolated to an unsupported boundary point and produced a large apparent BO advantage. On the Hill program, the classical stationary point was a saddle in 200 of 200 diagnostic runs. Restricting the recommendation to the learned region largely removed the extreme difference. Confirming the top three candidates on the same campaigns reduced the primary classical-versus-BO gap to approximately $-0.0009$, which was treated as null.
 
-1. **Create a coded factor space.** Use $d=6$ or $d=8$ continuous coordinates scaled to $[0,1]$. These do not carry physical units.
-2. **Choose important factors.** Randomly select four active coordinates at both dimensions. They carry 90% of the total response weight; the remaining two or four coordinates carry 10% and act as nuisance factors. This isolates the difficulty of identifying important variables as dimension grows.
-3. **Draw a preferred level for each factor.** Candidate factor peaks are drawn from $x_i^*\sim U(0.25,0.55)$, subject to later feasibility and acceptance filtering. The accepted ensemble is therefore not exactly uniform; its reported mean is about 0.340.
-4. **Draw Hill steepness.** Draw $n_i\sim U(1,3)$, again subject to filtering. These values control how sharply the response rises and falls.
-5. **Construct a biphasic factor response.** For factor $i$, combine an activating Hill term and an inhibitory Hill term:
+When the same campaigns were evaluated as acceptable regions, the ordering changed again. At $d=6$, $\sigma_{\mathrm{rel}}=0.10$, historical SPADE variants ranked first through third on map AUC while lying near the bottom on measured-value regret; the screened classical arm placed last on map AUC despite competitive point performance. Across Hill cells, the classical arm was last on map quality in 23 of 24 cells. This was the key observation that justified a prospective region-first study.
 
-   $$
-   h_i(x_i)=\frac{x_i^{n_i}}{\mathrm{EC}_{50,i}^{n_i}+x_i^{n_i}},
-   \qquad
-   g_i(x_i)=\frac{1}{1+\left(x_i/\mathrm{IC}_{50,i}\right)^{n_i}}.
-   $$
+The paper should use these results as motivation rather than as the final SPADE claim: the scientific deliverable determines which method appears successful.
 
-   Their peak occurs exactly at $x_i^*=\sqrt{\mathrm{EC}_{50,i}\mathrm{IC}_{50,i}}$. The product is normalized so its peak equals one.
-6. **Set the width of the useful window.** The ratio $r_i=\mathrm{IC}_{50,i}/\mathrm{EC}_{50,i}$ is obtained by inverting a chosen depth parameter, then clipped to $[2,8]$. This controls how broad the rise-and-fall response is.
-7. **Weight the factors.** Random positive weights are normalized so the four active factors account for 0.90 of total weight and the inactive factors for 0.10.
-8. **Add sparse interactions.** Roughly $\lceil d/2\rceil$ factor pairs receive peak-modulation coefficients drawn from $U(-1,1)$. These interactions shift conditional peak locations. The mechanism is plausible as a generic representation of interacting ingredients; its numeric magnitude is a project choice.
-9. **Find the actual multivariate optimum.** Numerical optimization accounts for the interactions; the vector of marginal peaks alone is not assumed to be the final optimum.
-10. **Accept only sufficiently identifiable landscapes.** Stored v8 ensemble sidecars have true optimum-to-active-boundary depth at least about 0.1083, chosen as $3(0.25)/\sqrt{48}$. This avoids benchmarks whose optimum is indistinguishable from a boundary at the primary noise/budget scale. Rejection and factor-level resampling alter the nominal parameter distributions and must be disclosed.
-11. **Freeze the landscape ensemble.** The main factorial uses 25 landscapes per dimension, although the committed ensemble contains additional instances for other experiments. Each landscape is evaluated with two algorithmic seeds; those two runs are averaged before inference.
-12. **Generate observations only when a method evaluates a point.** The observation model is
+## 5.2 Registered target condition: SPADE produced the leading design-space maps
 
-   $$
-   y=f(x)(1+\epsilon)+\eta,
-   \qquad
-   \epsilon\sim\mathcal{N}\!\left(0,\sigma_{\mathrm{rel}}^2\right),
-   \qquad
-   \eta\sim\mathcal{N}\!\left(0,0.01^2\right).
-   $$
+The registered target condition was the six-factor Hill landscape at $\sigma_{\mathrm{rel}}=0.10$. Both map error and regret are lower-is-better. The table below reports condition means from the committed prospective Pareto artifact. The matched boundary-targeting control is omitted because its analysis is reserved pending correction.
 
-   with $\sigma_{\mathrm{rel}}=0.25$ as the higher-noise primary condition and 0.10 as a lower-noise sensitivity condition.
-13. **Give the GP an observation-variance estimate without revealing truth.** The plug-in variance is $y^2\sigma_{\mathrm{rel}}^2+0.01^2$, floored at the additive term. It uses observed $y$, not hidden $f(x)$.
-14. **Score recommendations using the hidden surface.** A selected recipe is evaluated noiselessly against the known global maximum. This is possible only in simulation.
+| Method | Wells | Rounds | Rule-P regret | Symmetric-difference error |
+|---|---:|---:|---:|---:|
+| SPADE m4 | 48 | 2 | 0.0871 | **0.1770** |
+| SPADE m8 | 48 | 2 | 0.0835 | **0.1797** |
+| **SPADE m0, registered primary** | **48** | **2** | **0.0844** | **0.1804** |
+| Latin hypercube | 48 | 1 | 0.0747 | 0.1867 |
+| Sobol | 48 | 1 | 0.0855 | 0.1913 |
+| SPADE plate one only | 40 | 1 | 0.0863 | 0.1921 |
+| Uniform random | 48 | 1 | 0.0905 | 0.2050 |
+| qLogEI | 48 | 10 | 0.0791 | 0.2079 |
+| qLogNEI | 48 | 10 | **0.0691** | 0.2135 |
+| Unscreened DoE/RSM | 48 | 1 | 0.2862 | 0.2496 |
+| Screened DoE/RSM | 48 | 3 | 0.3072 | 0.2580 |
 
-### Symbol key for the benchmark equations
+The three SPADE allocation variants occupied the leading map range, 0.1770–0.1804. The primary m0 arm had lower map error than every BO, screened or unscreened classical, and one-shot space-filling comparator. Against qLogNEI, the target-specific difference favoring m0 was 0.0331, with a Holm-adjusted probability of approximately $1.8\times10^{-7}$. This finding supports lower map error in the registered target condition, not universal superiority across landscapes.
 
-| Symbol | Meaning in the model | Laboratory interpretation |
+The target result also shows that SPADE's advantage is not simply a better point optimizer. qLogNEI achieved the lowest Rule-P regret, 0.0691, while primary SPADE achieved 0.0844. The mean gap was 0.0153 with a bootstrap interval of approximately 0.0082–0.0223. The registered decision rule classified the mean gap as practical parity because it was below the 0.02 margin; the interval extends slightly beyond that margin, so the paper should describe parity cautiously rather than implying proven equivalence.
+
+The operational contrast is important. SPADE used two decision rounds; qLogNEI and qLogEI used ten. At equal wells, SPADE therefore reached its map result with one fifth as many plate-to-model decision cycles. Calendar-time superiority is plausible but not directly measured because the project did not attach days, labor, or turnaround time to a round.
+
+## 5.3 The second round improved the map modestly relative to plate one
+
+The 40-well plate-one reference produced symmetric-difference error of 0.1921, whereas the 48-well primary SPADE arm produced 0.1804. The paired improvement was 0.0117, with a bootstrap interval of approximately 0.0074–0.0156 and Holm-adjusted $p\approx1.3\times10^{-4}$. This is a statistically detectable reduction in map error, but it is smaller than the prespecified 0.02 smallest effect of interest.
+
+The correct interpretation is that the additional eight wells and second model fit improved the target-condition map modestly, but the observed gain did not reach the project's threshold for a practically meaningful improvement. The plate-one arm is also eight wells short, so this comparison combines the effects of additional observations and an additional round. It does not establish which second-round acquisition policy is responsible. The separate causal allocation analysis remains reserved.
+
+## 5.4 Local exploitative allocation did not safely improve the primary point decision
+
+The m4 and m8 variants were intended to test whether reserving second-round capacity for local exploitation could improve the nominated point without sacrificing the map or certificate. The m4 arm produced Rule-P regret of 0.0871 compared with 0.0844 for m0, a deterioration of approximately 0.0028 rather than the required 0.02 improvement. The paired interval crossed zero and the registered test was not significant. The full conjunction also required preserved map error, calibration, and certificate behavior. It was not met.
+
+The paper should report positive-$m$ allocation as a trade-off experiment, not an improvement. Numerically, m4 produced the lowest target-condition map error, but that fact cannot be converted into a general allocation claim because the variant failed its prespecified multi-outcome rule.
+
+## 5.5 The point-versus-region split reproduced on Hartmann landscapes
+
+Hartmann supplied the strongest cross-family replication of the paper's central distinction. At six dimensions, qLogNEI and qLogEI achieved Rule-P regrets of 0.2443 and 0.2832, clearly ahead of primary SPADE at 0.4221. Map error reversed the ordering: SPADE m4, m8, and m0 achieved 0.1815, 0.1836, and 0.1848, ahead of Sobol at 0.1899, qLogNEI at 0.2163, and qLogEI at 0.2283.
+
+At eight dimensions, qLogNEI and qLogEI again led point regret at 0.2738 and 0.3002. SPADE m4, m0, and m8 led map error at 0.1883, 0.1908, and 0.1950, compared with 0.2006 for Sobol, 0.2198 for qLogNEI, and 0.2306 for qLogEI.
+
+These are robustness results, not confirmatory target-regime wins. Their importance is conceptual: the same family-level split reproduced at two dimensions. Bayesian optimization committed its budget to resolving promising basins and nominated better points; SPADE retained broader spatial information and estimated the acceptable region more accurately.
+
+## 5.6 Ackley confirmed the predeclared exception
+
+Ackley's optimum lies at the center of the domain, favoring center-point classical designs. Screened DoE/RSM achieved the best Rule-P regret, 0.5540, compared with 0.6566 for qLogNEI and approximately 0.7601 for primary SPADE. Its map error, however, was 0.4599, almost twice the 0.23–0.24 range of most other methods. Thus, a design could locate the privileged center point while providing a poor account of the acceptable region.
+
+SPADE's conservative sets were empty in roughly 83–90% of campaigns across its variants. This is not a calibration failure because a method that produces no set makes no non-vacuous containment claim. It is a practical failure to answer. The exception therefore illustrates two independent limits: point success can coexist with map failure, and conservative certification may legitimately decline when the data do not support a reliable region.
+
+## 5.7 Levy and Rosenbrock showed that some map cells are intrinsically uninformative
+
+At higher noise, the registered high-probability map cells for Levy and Rosenbrock exceeded the certifiability ceiling. Their condition-specific primary probability level was therefore $\gamma=0.50$. At that level, Levy map errors lay in a narrow 0.2451–0.2511 range, and Rosenbrock map errors lay in a still narrower 0.2452–0.2494 range. These cells barely discriminated among methods.
+
+Point regret remained informative on Levy: qLogNEI achieved 0.0595, whereas screened and unscreened classical designs were substantially worse. Rosenbrock showed modest regret spread, approximately 0.027–0.053, with SPADE, Sobol, and the plate-one reference near the front.
+
+These conditions should not be forced into a winner narrative. They show that threshold choice, noise, and landscape prevalence can compress map metrics until method differences are practically negligible. This is part of the paper's methodological contribution: feasibility and discriminability must be established before interpreting a map comparison.
+
+## 5.8 SPADE produced sharp maps but not the best-calibrated probabilities retrospectively
+
+In the retrospective five-family Murphy analysis, primary SPADE achieved the highest AUC, 0.7583, and the highest refinement, approximately 0.0151. Its calibration error, approximately 0.0359, ranked in the lower half of the nonclassical arms. Sobol achieved the lowest calibration error, 0.0289, and the lowest Brier score. The screened classical arm's calibration error was 0.2296, more than five times the next-worst arm, and it also ranked last on refinement.
+
+The correct statement is that SPADE generated the sharpest probability separation in that analysis but did not generate the most reliable probabilities. AUC alone would have ranked SPADE first and hidden the calibration result. The main paper should therefore report calibration and refinement together and avoid language implying that a sharp design-space map is automatically well calibrated.
+
+The prospective final study contains per-row Murphy values, but its findings document does not yet provide a complete standalone calibration table. The paper should not invent a prospective calibration ranking. It may report the retrospective decomposition as supporting evidence and state that a final prospective calibration table must be generated from the raw condition artifacts before submission.
+
+## 5.9 Hill certificate evidence was encouraging but underpowered at the weakest cell
+
+The prospective Hill certificate kill passed under its registered rule because no confirmatory cell was demonstrably below nominal after exact inference and Holm correction. The weakest confirmatory cell was 11 contained sets among 13 non-empty certificates, or 0.8462 against nominal 0.80. Its exact interval was approximately 0.546–0.981, and its Holm-adjusted probability was 1.0.
+
+This is a failure to demonstrate under-coverage, not proof of validity. The denominator is only three above the non-empty evidence floor, and the interval contains values far below nominal. The manuscript should use language such as “not shown to fall below nominal on Hill under the prospective cross-fit analysis” and should never replace it with “validated,” “guaranteed,” or “proved calibrated.”
+
+Cross-fit and same-draw containment must be shown separately. Same-draw estimates were often larger because the same Monte Carlo information influenced both selection and evaluation. Historical draw-sweep experiments showed that 512 posterior draws were insufficient at high assurance; 4,096 draws and cross-fitting reduced the estimator artifact.
+
+## 5.10 Certificate scope did not extend cleanly beyond Hill
+
+The prospective cross-family certificate rule required every confirmatory Hartmann cell to be clean. That condition was not met because some cells were inconclusive even though the worst Hartmann containment proportion itself was above its nominal level. The registered consequence is to narrow the certificate claim to Hill rather than declare a demonstrated cross-family coverage failure from that prospective study.
+
+An independent retrospective five-family certificate program provides stronger evidence about the limitation. At 4,096 draws, Hill had no cell significantly below nominal. Levy and Rosenbrock under-covered at $\gamma=0.99$ in three of 64 scored cells after Holm correction: Levy achieved 34/49 containment at one threshold and 37/48 at another, while Rosenbrock achieved 37/50. Ackley and Hartmann usually produced empty certificates and therefore declined to answer.
+
+Taken together, the evidence supports a Hill-scoped statement: the certificate has not been shown to fail on Hill under the implemented cross-fit analysis, but it is not established as a portable guarantee across landscape families. Off Hill, the dominant failure can be either high-assurance miscoverage or non-vacuity.
+
+## 5.11 Empty-set and feasibility guards materially changed the interpretation
+
+Eight of 44 certificate cells initially satisfied their raw containment rule while producing empty sets in more than half of campaigns. They were correctly downgraded to inconclusive. This guard prevents vacuous containment from being reported as certificate success.
+
+The final ledger also recorded 4,400 of 23,600 primary-probability rows at or above the certifiability ceiling. These rows reflect thresholds that no method can certify under the requested noise and assurance. They should have been excluded before entering the analyzer. This is a protocol-feasibility failure rather than a method-performance failure.
+
+These results deserve a dedicated methods-and-results paragraph because they are broadly relevant. A conservative set method can appear perfectly safe by returning nothing, and a benchmark can appear universally difficult by requesting an impossible threshold. Non-empty denominators and feasibility ceilings are therefore primary scientific quantities, not implementation details.
+
+## 5.12 Full-dimensional DoE did not rescue the classical map
+
+The newly implemented unscreened six-factor central-composite arm allowed the project to test whether the classical map deficit was caused only by screening. In the target condition, unscreened DoE improved symmetric-difference error from 0.2580 to 0.2496 and improved Rule-P regret from 0.3072 to 0.2862, but it remained far behind the SPADE and space-filling map results. At higher-noise Hill, the screened arm led the unscreened arm on both regret rules. The comparison therefore varied by terminal rule and condition.
+
+Retrospective Hartmann re-scoring had already shown that turning off screening closed only about one fifth to one quarter of the classical arm's map deficit relative to spread designs. The full prospective comparison reinforces the interpretation that screening is not the sole mechanism; the combination of a low-order response surface, concentrated geometry, and terminal recommendation also matters.
+
+At eight dimensions, a full second-order CCD with center replication could not fit within 48 wells. The unscreened arm is structurally unavailable there. This is not missing data; it exposes a real budget constraint of full-dimensional classical response-surface design.
+
+## 5.13 Classical-arm diagnostics explain why point and map performance diverged
+
+The retrospective diagnostic program evaluated the classical workflow using criteria from the response-surface literature itself. Its pooled 48-well six-factor design was rank-deficient in 50 of 50 campaigns because the screened factors were pinned after stage one and resolution-IV interaction aliases remained in the pooled design. Its stage-two four-factor design was locally estimable, but the resulting model described only a restricted subregion while being used to make statements about the full six-factor box.
+
+The fitted quadratic overpredicted the confirmation response in 25 of 25 campaigns at both noise levels. Approximately half of the predicted optima exceeded the true global maximum of the synthetic landscape, every stationary point was classified as a saddle, and the confirmation well never improved on the best point already visited. The lack-of-fit test had only two pure-error degrees of freedom. Pooling replicate information already paid for by the screen increased detection of lack of fit at lower noise from 8/25 to 24/25 without adding wells.
+
+These diagnostics should not be used to dismiss response-surface methodology generally. They identify weaknesses of the implemented screened pipeline and demonstrate why canonical analysis, ridge analysis, replication, and sequential relocation are necessary components of a fair classical workflow.
+
+## 5.14 Round count changes the practical comparison
+
+One-shot space-filling designs use one decision round, SPADE uses two, screened DoE/RSM uses three, and the 48-well batch-BO arms use ten. Equal wells therefore do not imply equal experimental latency. A two-round method may be attractive when assays require days of incubation or manual analysis between batches, even if a ten-round method achieves slightly better point regret.
+
+The repository contains longer-run cost experiments through 200 wells for selected point-optimization arms, but it does not contain a complete prospective regret-against-budget curve for SPADE. The main paper may report the fixed-budget round counts exactly. It should not claim a measured fivefold reduction in calendar time or overall cost without a schedule, cost model, or per-round SPADE performance curve.
+
+---
+
+# 6. Registered claim-evidence matrix
+
+The paper should translate internal kill identifiers into scientific statements. The current boundary-targeting contrast is reserved and must remain absent from this matrix until corrected.
+
+| Scientific statement | Status for this manuscript | Evidence and interpretation |
 |---|---|---|
-| $x_i$ | Coded level of factor $i$ | Concentration setting for one formulation component |
-| $n_i$ | Hill exponent | Steepness of the factor's rise-and-fall response |
-| $\mathrm{EC}_{50,i}$ | Half-activation scale | Level at which activation becomes substantial |
-| $\mathrm{IC}_{50,i}$ | Half-inhibition scale | Level at which inhibition becomes substantial |
-| $f(x)$ | Noise-free latent response | Repeat-average performance of formulation $x$ in the simulator |
-| $y$ | Observed response | One assay-like measurement |
-| $\epsilon$ | Relative random error | Variation proportional to response magnitude |
-| $\eta$ | Additive random error | Baseline measurement noise |
-| $\sigma_{\mathrm{rel}}$ | Relative-noise standard deviation | Higher- or lower-noise benchmark setting |
-
-## 5.3 Evidence classification for every synthetic ingredient
-
-| Component | Value | Evidence status | Interpretation limit |
-|---|---:|---|---|
-| Six factors, then four retained | 6→4 | Structurally inspired by Hall et al. | Does not assign Hall's protein identities to coded axes |
-| Eight-factor condition | 8→4 active plus nuisance factors | Project choice | Tests dimension/nuisance burden, not a published eight-factor assay |
-| Biphasic Hill form | Activating × inhibitory Hill response | Standard functional family | Generic biological shape, not an estimated mechanism |
-| Peak range | $U(0.25,0.55)$ before filtering | Project choice | Accepted distribution is truncated |
-| Hill exponent | $U(1,3)$ before filtering | Project choice | Not fitted to dose-response data |
-| Active share | Four factors carry 90% | Project choice | Sparse importance is planted |
-| Interaction coefficients | $U(-1,1)$ on sparse pairs | Project choice | Signs and magnitudes are not biological estimates |
-| Relative noise | 0.25 and 0.10 | Project choice | Must be called benchmark noise, not realistic assay CV |
-| Additive noise | 0.01 | Project choice | Avoids zero variance near zero response |
-| Depth threshold | Stored ensemble approximately ≥0.1083 | Project choice tied to budget/noise | Selects easier-to-identify interior optima |
-| Replication | 25 landscapes × 2 algorithmic seeds | Benchmark replication | Not biological or technical replicate wells |
-
-## 5.4 Important implementation inconsistency to resolve
-
-The committed v8 ensemble sidecars and `docs/oracle_defensibility.md` describe a true-depth threshold of approximately 0.1083. The current `SamplerConfig` default in `src/boec/oracles.py` is `accept_floor = 0.045`, while retaining `formula_prefloor = 0.120`. This does not change already stored landscapes, whose sidecars show minima near 0.1086–0.1111, but it means regenerating from current defaults may not reproduce the documented ensemble-selection rule. Before publication, either restore the generation default used for the committed ensemble or document the exact generation configuration outside the mutable default and add a reproducibility test.
-
-## 5.5 Real data in the repository
-
-- **Digitized Hall/Ogle data:** 47 condition medians from published figures are used only in auxiliary analyses. They do not identify a six-dimensional latent surface, and a replay analysis is underpowered (reported minimum detectable effect 0.68).
-- **In-house flow-cytometry files:** present but not optimizer-ready; unsigned CD31 percentages are excluded pending biological sign-off. They do not support the paper's computational conclusions.
-- **Therefore:** the main results are synthetic. Published data provide motivation and limited plausibility checks, not validation.
+| Primary SPADE has lower target-regime map error than the named BO and classical comparators | Supported, target-specific | m0 error 0.1804; qLogEI 0.2079; qLogNEI 0.2135; unscreened DoE 0.2496; screened DoE 0.2580 |
+| SPADE is competitive with Sobol in the target regime | Supported | m0 is numerically lower by 0.0109, inside the 0.02 practical margin |
+| SPADE is practically close to the best BO point decision under Rule P | Supported cautiously | Mean regret gap 0.0153 is inside the 0.02 margin; interval extends to approximately 0.0223 |
+| A second round improves on the 40-well plate-one map by a practically meaningful amount | Not supported at the registered magnitude | Improvement 0.0117 is statistically detectable but below the 0.02 threshold |
+| Positive-$m$ allocation safely improves regret without sacrificing map or certificate behavior | Not supported | m4 regret is 0.0028 worse than m0 and the full conjunction is unmet |
+| Prospective Hill containment is demonstrably below nominal | Not observed | No confirmatory Hill cell failed the exact Holm-adjusted rule; weakest denominator is only 13 |
+| The certificate is established beyond Hill | Not supported | Prospective Hartmann evidence is not uniformly clean; independent cross-family study identifies under-coverage or non-vacuity failures |
+| Empty certificates do not explain apparent containment success | Not supported in all cells | Eight of 44 raw passing cells exceeded 50% emptiness and were downgraded |
+| Every analyzed primary threshold was feasible | Not supported | 4,400 of 23,600 rows reached the analyzer at or above the certifiability ceiling |
+| Boundary-focused second-round placement is better or worse than its matched control | **Reserved** | Corrected causal analysis is pending; no present estimate or verdict may be quoted |
 
 ---
 
-# 6. Core project architecture
+# 7. Main figure program
 
-## 6.1 End-to-end flow
+## Figure 1. From one best recipe to an acceptable operating region
 
-Biological question
-→ coded formulation space
-→ constructed latent response
-→ noisy assay-like observation
-→ experimental procedure
-→ fitted surrogate/response surface
-→ terminal selection rule
-→ regret or design-space metric
-→ paired statistical comparison
-→ scoped laboratory interpretation.
+**Scientific question.** What different experimental deliverable does SPADE target, and how does its two-round workflow produce it?
 
-## 6.2 Component map
+**Panel A** should show a simplified two-factor response surface with one optimum marked and a threshold-defined acceptable region shaded. The illustration must state that real experiments use six or eight dimensions and that the two-dimensional surface is explanatory only.
 
-| Project component | Biology translation | Computational operation | Output | Likely paper section |
-|---|---|---|---|---|
-| Landscape generator | Unknown formulation-response biology | Sample and accept Hill-like functions | Frozen oracle instances and sidecars | Methods: benchmark |
-| `src/boec/torch_oracle.py` | Assay instrument interface | Return noisy $y$ and variance estimate | Observation tensors | Methods: response/noise |
-| `src/boec/campaign.py` | Adaptive plate campaign | Opening design, model fit, batched proposals, checkpoints | Visited points and observations | Methods: BO |
-| `src/boec/optimizers.py` and surrogate modules | Provisional response map | GP fitting and qLogEI/qLogNEI acquisition | Proposed batch/model posterior | Methods: BO |
-| `src/boec/doe.py` | Screen, optimize, confirm | Resolution-IV screen, four-factor CCD, quadratic, confirmation | 48-well DoE campaign | Methods: classical arm |
-| `src/boec/rsm.py` | Fitted classical response map | Second-order regression, stationary/ridge handling | Model recommendation/diagnostics | Methods: RSM |
-| Space-filling designs | Nonadaptive broad sampling | LHS, Sobol', random designs | One-shot 48-point campaigns | Controls |
-| Diagnostic locators | Different carry-forward rules | Noisy argmax, tested-best, model maximum, ridge, confirmation | Final $\hat{x}$ | Methods: terminal rules |
-| `src/boec/metrics.py`, diagnostics | Distance from true best | Regret, identification gap, overprediction | Per-campaign scores | Outcomes |
-| `src/boec/designspace.py`, `vorobev.py`, `versionc.py`, `final_spade.py` | Map acceptable operating region | Threshold exceedance maps and certificates | AUC, symmetric difference, containment/refinement | Separate design-space section/paper |
-| `scripts/run_*.py` | Registered analyses | Execute experiments and write artifacts | JSON/CSV/log result files | Reproducibility |
-| `docs/OPEN-QUESTIONS.md`, specs | Preregistration/decision history | Lock questions, bars, and interpretations | Audit trail | Supplement |
+**Panel B** should contrast point optimization with region learning. Point optimization returns one $\widehat x$ and is scored by regret. Region learning returns $\widehat A_{\tau,\gamma}$ and is scored by symmetric difference, calibration, and containment.
 
-## 6.3 Repository reading order
+**Panel C** should depict SPADE's 40-point Latin-hypercube plate, Gaussian-process fit, eight-point uncertainty-reduction plate, 48-point refit, probability map, conservative set, inscribed box, and setpoint. It may illustrate boundary-focused acquisition as the implemented method but must not imply that its causal value has already been established.
 
-1. Read this document for the project model.
-2. Read `docs/RESEARCH-SUMMARY.md` for the current manuscript-scale argument and numerical results.
-3. Read `docs/oracle_defensibility.md` for the synthetic construction and biological provenance.
-4. Read `docs/METHODS.md` and the configuration files for implementation detail.
-5. Read `docs/CLAIMS.md` with caution: it records corrections and historical claims, so later corrections take precedence.
-6. Read `docs/FINDINGS-SPADE-FINAL.md` and `docs/SPADE-SPEC.md` separately from the point-optimization story.
-7. Use result JSON/CSV files as the numerical source of truth and scripts/tests as the computational source of truth.
+**Visual encoding.** Use one color for observed plate-one points, a second for plate-two points, a probability gradient for the map, a solid contour for the estimated region, and hatching for the conservative set.
 
-## 6.4 Scientific work program behind the paper
+**Draft caption.** *SPADE changes the experimental target from one nominal optimum to a threshold-defined operating region. Forty space-filling observations provide broad coverage of all factors. A Gaussian-process surrogate guides eight second-round observations toward uncertain portions of the estimated decision surface. The refitted model produces an exceedance-probability map, a conservative excursion set, an inscribed factor-range box, and a setpoint. The diagram is schematic; the causal value of the present boundary-targeting rule is under corrected analysis and is not inferred here.*
 
-The repository contains many internal experiment identifiers. They are audit labels, not separate manuscript contributions. The paper should group them by the biological question they answer.
+**Supported conclusion.** SPADE is a defined, two-round workflow for region estimation.
 
-| Internal work | What was done | Scientific purpose | Status in paper |
-|---|---|---|---|
-| **E2** | Ran matched 48-well BO and staged DoE campaigns on the four d×noise cells | Establish the primary comparison under measured-value selection | Core confirmatory dataset |
-| **E4 and related diagnostics** | Measured extrapolation, overprediction, discrimination, coverage, and oracle depth | Test whether model confidence or geometry warns about unsupported recommendations | Supporting diagnostic |
-| **Q34 / Q35 / Q45** | Re-scored terminal locators and crossed DoE/BO sampling points with polynomial/GP models | Separate design, surrogate, and locator effects | Core mechanistic contribution |
-| **Q42** | Repeated the comparison on Levy, Rosenbrock, Hartmann6, and Ackley families | Test whether the Hill result is landscape-specific | Robustness/exploratory |
-| **Q52–Q54** | Compared one-shot spread designs and repeated over five design draws | Ask whether adaptivity itself earns its extra rounds | Secondary |
-| **Q55 / Q57** | Stored hidden tested-best for both arms and added qLogNEI | Separate search from identification and use a noise-aware acquisition | Core secondary/co-primary |
-| **Q56** | Extended d=6 to 200 wells with relocating sequential RSM | Make the long-run cost comparator fair | Core cost analysis |
-| **Q58** | Replayed fixed campaigns under replicate, top-three-confirmation, and posterior-mean picks | Test laboratory selection sensitivity | Core secondary result |
-| **Q59** | Turned off screening where arithmetically feasible | Test whether screening explains point or map results | Robustness; replay currently needs resolution |
-| **K6 / P6–P8** | Re-scored stored campaigns as threshold-defined design-space maps and certificates | Contrast one best recipe with an acceptable operating region | Separate extension |
-| **Version C / final SPADE** | Registered and ran a prospective two-plate method study across seven conditions | Test SPADE as a method rather than a retrospective score | Narrowed/unfinished extension |
+**Prohibited interpretation.** The diagram does not show that boundary-targeted acquisition outperforms alternative placement.
 
-The logic is therefore: establish the reversal → explain it → make both comparators fairer → test alternative laboratory decisions → test other landscapes → only then change the deliverable from a point to a map.
+## Figure 2. Point regret and design-space error reorder the methods
+
+**Scientific question.** Does the method that nominates the best point also produce the best acceptable-region map?
+
+**Panel A** should plot mean Rule-P regret against symmetric-difference error for the target Hill condition. Each point represents a method; point size may encode wells and outline style may encode rounds. The three SPADE allocation variants should be visually grouped. The matched boundary-targeting control should be withheld until its corrected analysis is complete.
+
+**Panel B** should show the same two outcomes for Hartmann at six dimensions, and **Panel C** at eight dimensions. The axes must retain the same lower-is-better direction. Arrows or quadrant shading may identify “strong point/weak map” and “strong map/weaker point” regions without calling either universally superior.
+
+**Panel D** should show method-family rank on point regret beside rank on map error across the three informative conditions. A slope chart will make the rank reversal visually immediate.
+
+**Draft caption.** *Point optimization and acceptable-region estimation rank the same method families differently. In the registered Hill target condition, SPADE variants occupy the leading map-error range while qLogNEI attains the lowest Rule-P regret. The split reproduces on six- and eight-dimensional Hartmann landscapes: batch BO resolves stronger terminal points, whereas SPADE retains a more accurate estimate of the acceptable set. All comparisons use 48 wells except the explicitly labeled 40-well plate-one reference; robustness conditions do not license universal superiority claims.*
+
+**Supported conclusion.** Point and region objectives are empirically non-equivalent across multiple landscapes.
+
+**Prohibited interpretation.** Do not say that SPADE is the best optimizer or that BO cannot map design spaces.
+
+## Figure 3. Target-condition performance in map error, regret, and experimental rounds
+
+**Scientific question.** What does SPADE gain and what does it trade in the registered target regime?
+
+**Panel A** should present paired mean symmetric-difference error with 95% bootstrap intervals for SPADE m0/m4/m8, Sobol, LHS, random, qLogEI, qLogNEI, screened DoE, unscreened DoE, and the 40-well plate-one reference. Lower values should appear higher or farther left consistently.
+
+**Panel B** should present Rule-P regret for the same methods. A bracket between m0 and qLogNEI should show the 0.0153 mean gap and the 0.02 practical margin, with the interval crossing the margin clearly visible.
+
+**Panel C** should compare wells and rounds. All equal-budget methods should align at 48 wells, while round counts should show one for one-shot designs, two for SPADE, three for screened DoE, and ten for BO.
+
+**Panel D** should compare primary SPADE with the 40-well plate-one reference: 0.1804 versus 0.1921 map error, improvement 0.0117, interval 0.0074–0.0156, with the 0.02 smallest effect marked. This panel addresses the value of the additional observations without attributing that value to a particular acquisition rule.
+
+**Draft caption.** *SPADE's target-regime advantage is strongest for the design-space map, not the terminal point. Primary SPADE achieved symmetric-difference error 0.1804 and Rule-P regret 0.0844 in two rounds. qLogNEI achieved lower regret, 0.0691, but higher map error, 0.2135, in ten rounds. The mean regret gap was inside the prespecified 0.02 practical margin, although its interval extended slightly beyond that boundary. Adding the second round improved map error over the 40-well plate-one reference by 0.0117, a statistically detectable but sub-threshold effect.*
+
+**Supported conclusion.** SPADE offers a map-first trade-off with practical mean regret proximity and fewer decision rounds.
+
+**Prohibited interpretation.** Do not claim proven equivalence, calendar-time savings, or causal superiority of boundary targeting.
+
+## Figure 4. Sharpness, calibration, non-vacuity, and certificate scope
+
+**Scientific question.** Does a strong map imply a reliable probability model or a valid conservative certificate?
+
+**Panel A** should plot retrospective Murphy calibration against refinement for the modeled arms. SPADE should appear high in refinement but mid-field in calibration; Sobol should appear strongest in calibration; screened DoE should appear as the outlier with poor calibration.
+
+**Panel B** should show prospective cross-fit containment and exact intervals for Hill confirmatory cells, with nominal assurance lines and non-empty denominators printed beside every estimate.
+
+**Panel C** should show the percentage of empty certificates by family. Ackley and Hartmann should be visually distinguished as “declines to certify,” not scored as successful containment.
+
+**Panel D** should summarize cross-family high-assurance outcomes: Hill not shown below nominal, Levy and Rosenbrock under-covering in the independent $\gamma=0.99$ analysis, and Ackley/Hartmann predominantly empty. A compact status matrix is preferable to a winner plot.
+
+**Draft caption.** *Map discrimination, probability calibration, and conservative containment are distinct properties. SPADE produced the highest retrospective refinement but not the lowest calibration error. Prospective Hill containment was not shown below nominal, although the weakest confirmatory estimate relied on 13 non-empty certificates and had a wide exact interval. Off Hill, high-assurance under-coverage occurred on Levy and Rosenbrock in an independent cross-family analysis, whereas Ackley and Hartmann frequently produced no non-empty certificate. Empty sets are reported separately and never counted as containment successes.*
+
+**Supported conclusion.** SPADE's mapping result is stronger and broader than its current certificate evidence.
+
+**Prohibited interpretation.** Do not describe Hill failure to reject as proof of validity or treat empty certificates as conservative successes.
 
 ---
 
-# 7. Concept glossary: biology first, formal meaning second
+# 8. Main tables and supplementary program
 
-The entries below deliberately connect each computational term to a laboratory decision. Confusing the terms changes what the results mean.
+## Table 1. Methods and experimental budgets
 
-### Surrogate model
+Use the method table in Section 4.5, expanded with surrogate, acquisition, terminal rule, screening status, and whether design-space certification is defined. This table should make clear that equal wells do not mean equal rounds and that the 40-well plate-one arm is not an equal-budget comparator.
 
-**Plain-language meaning:** A mathematical approximation of the response across tested and untested formulations.
+## Table 2. Registered target-condition estimates
 
-**Laboratory analogy:** A contour plot fitted from a limited plate, used to estimate what might happen between measured wells.
+Use the numerical table in Section 5.2, adding paired intervals and adjusted probability values for the registered contrasts. Do not insert the boundary-targeting control until the corrected analysis is finalized.
 
-**Why it matters in this project:** A method can look good because of where it samples or because of what model is fitted afterward; Q34/Q45 separates those effects.
+## Table 3. Cross-family claim scope
 
-**Formal definition:** A fitted function or probability distribution $M$ approximating an expensive latent function $f$ from data $D=\{(x_i,y_i)\}$.
+Report each condition's family, dimension, noise level, regime class, primary probability level, map-error range, leading point method, leading map family, certificate non-vacuity, and whether the result is confirmatory, robustness, or exception evidence.
 
-### Gaussian process
+## Table 4. Claim-evidence matrix
 
-**Plain-language meaning:** A surrogate that gives both a predicted mean response and uncertainty at each formulation.
+Use Section 6 as the basis. Replace internal kill identifiers with scientific language in the main paper. The complete machine-readable kill ledger can appear in the supplement after the reserved analysis is corrected.
 
-**Laboratory analogy:** A response map whose shading becomes more uncertain far from measured wells.
+## Supplementary figures
 
-**Why it matters in this project:** BO uses the GP's uncertainty to decide where to test, and model-based terminal rules use its posterior mean to recommend a formulation.
+1. Terminal-rule reversal on identical campaigns: hidden tested-best, noisy argmax, posterior mean, unconstrained model optimum, in-region recommendation, and top-three confirmation.
+2. Search-versus-identification decomposition across noise and acquisition functions.
+3. Quadratic stationary-point diagnostics, including saddle classification and confirmation overprediction.
+4. Long-run point-regret curves through 200 wells, shown separately against wells and decision rounds.
+5. Complete per-family point-versus-map scatterplots for Hill, Hartmann, Ackley, Levy, and Rosenbrock.
+6. Screened versus unscreened DoE at six dimensions, including the arithmetic reason the unscreened design is unavailable at eight dimensions.
+7. Murphy calibration, refinement, Brier score, and AUC for every retrospective arm.
+8. Draw-count sensitivity for conservative-set containment at 512, 1,024, 2,048, and 4,096 posterior draws.
+9. Certificate non-empty rates and exact containment intervals for every family and assurance cell.
+10. Feasibility-ceiling diagnostic showing which threshold/probability combinations are mathematically un-certifiable.
 
-**Formal definition:** A probability distribution over functions such that finite collections of function values are jointly Gaussian; conditioning on data yields posterior mean $\mu(x)$ and covariance $k_D(x,x')$.
-
-### Acquisition function
-
-**Plain-language meaning:** A numerical priority score for deciding which untested formulation to measure next.
-
-**Laboratory analogy:** A plate-planning rule balancing a condition that already looks promising with one that could teach the model something important.
-
-**Why it matters in this project:** It defines the adaptive sampling behavior but not the final carry-forward rule. Conflating those two rules causes incorrect claims.
-
-**Formal definition:** A function $a(x;D)$ of the surrogate posterior whose maximizer supplies the next query or batch.
-
-### Expected improvement and noisy expected improvement
-
-**Plain-language meaning:** Expected improvement (EI) prioritizes conditions expected to improve on the current reference; noisy EI accounts for uncertainty about which earlier condition is truly best.
-
-**Laboratory analogy:** EI asks which next well is most likely to beat the incumbent. Noisy EI acknowledges that the incumbent itself may owe its rank to assay noise.
-
-**Why it matters in this project:** qLogEI is the named BO arm and qLogNEI is co-primary under noise. qLogNEI improves identification but does not remove the higher-noise DoE lead under single-readout selection.
-
-**Formal definition:** $\operatorname{EI}(x)=\mathbb{E}\!\left[(f(x)-f_{\mathrm{best}})_+\right]$. NEI integrates improvement over the posterior uncertainty in latent values at observed and candidate points. `qLog` denotes a numerically stable logarithmic batch implementation.
-
-### Latent response and observation noise
-
-**Plain-language meaning:** The latent response is the underlying repeat-average performance of a formulation; observation noise is the variation in an individual measured assay value around it.
-
-**Laboratory analogy:** $f(x)$ is the response expected over ideal repeated assays, while $y$ is what one particular well reports.
-
-**Why it matters in this project:** Algorithms see $y$, but simulation can score against $f$. The Gaussian perturbation is not evidence about real biological variability.
-
-**Formal definition:** $y=f(x)(1+\epsilon)+\eta$, with independent Gaussian relative and additive errors in this benchmark.
-
-### Simple regret and cumulative regret
-
-**Plain-language meaning:** Simple regret asks how far the final selected formulation is from the best possible formulation. Cumulative regret asks how much performance was lost across all wells along the way.
-
-**Laboratory analogy:** Simple regret evaluates the recipe carried forward; cumulative regret would penalize every suboptimal culture used during learning.
-
-**Why it matters in this project:** The project is primarily about a final recipe or map, so simple regret is the point-optimization outcome. Cumulative regret is not a headline outcome and should not be introduced as if analyzed.
-
-**Formal definition:** For maximization, simple regret is
-
-$$
-r=f(x^*)-f(\hat{x}).
-$$
-
-When $f(x^*)=1$, this becomes $r=1-f(\hat{x})$. Cumulative regret through $T$ is
-
-$$
-R_T=\sum_{t=1}^{T}\left[f(x^*)-f(x_t)\right].
-$$
-
-### Search quality and identification error
-
-**Plain-language meaning:** Search quality asks whether the campaign physically tested a good formulation. Identification error asks whether the end-of-campaign rule correctly recognized that good formulation.
-
-**Laboratory analogy:** A plate may contain an excellent well, yet a noisier neighbor may have the highest measured signal and be carried forward instead.
-
-**Why it matters in this project:** Roughly 55–73% of the higher-noise measured-value gap is attributed to identification rather than where the procedures searched.
-
-**Formal definition:** Search regret is
-
-$$
-r_{\mathrm{search}}=f(x^*)-\max_{x_i\in D}f(x_i).
-$$
-
-Identification error is $f(x_{\mathrm{tested\text{-}best}})-f(\hat{x}_{\mathrm{selected}})$, equivalently measured-selection regret minus search regret.
-
-### Hidden tested-best
-
-**Plain-language meaning:** The truly best condition among all wells that were physically tested, known only to the simulator.
-
-**Laboratory analogy:** The well a laboratory would have chosen if it knew every condition's noise-free repeat-average response.
-
-**Why it matters in this project:** It isolates search from recognition but is not an implementable laboratory rule.
-
-**Formal definition:** $\displaystyle \arg\max_{x_i\in D}f(x_i)$, scored with latent $f$.
-
-### Measured-value argmax
-
-**Plain-language meaning:** Choose the tested well with the highest observed assay value.
-
-**Laboratory analogy:** Rank one plate by a single fluorescence or titer reading and carry forward the top well without confirmation.
-
-**Why it matters in this project:** It is the stored E2 primary “best observed” rule and favors DoE at higher noise. It evaluates search plus identification, not search alone.
-
-**Formal definition:** $\displaystyle \hat{x}=x_{\arg\max_i y_i}$, then score $f(\hat{x})$.
-
-### Model, posterior-mean, and visited-point recommendations
-
-**Plain-language meaning:** A model recommendation chooses a formulation because a fitted surface predicts it will perform well; a posterior-mean-at-visited rule restricts this choice to formulations already tested.
-
-**Laboratory analogy:** Trust the contour-map maximum anywhere in the allowed recipe box, or use the model only to re-rank wells that were actually run.
-
-**Why it matters in this project:** These rules answer a different question from choosing the largest assay reading and can reverse or erase the ranking.
-
-**Formal definition:** Continuous model recommendation $\displaystyle \hat{x}=\arg\max_{x\in\mathcal X}\hat f(x)$; visited posterior-mean recommendation $\displaystyle \hat{x}=\arg\max_{x_i\in D}\mu(x_i)$.
-
-### Unconstrained versus in-region/ridge recommendation
-
-**Plain-language meaning:** An unconstrained rule allows the fitted model to recommend any point in the global factor box. An in-region or ridge rule limits the recommendation to a region supported by the experimental design and follows improving paths when no fitted interior maximum exists.
-
-**Laboratory analogy:** Extrapolate a quadratic from a small local plate to an untested corner, versus remain within the region actually mapped or deliberately relocate the design.
-
-**Why it matters in this project:** The apparent 0.27–0.36 BO advantage is mostly an invalid-saddle/extrapolation diagnostic. With an in-region rule, three of four cells are null.
-
-**Formal definition:** Unconstrained $\displaystyle \arg\max_{x\in[0,1]^d}\hat f(x)$; constrained/ridge optimization over a learned design region or fixed-radius path using canonical RSM analysis.
-
-### Confirmation protocol
-
-**Plain-language meaning:** Additional measurements used to choose among shortlisted formulations before commitment.
-
-**Laboratory analogy:** Re-run the three highest-ranked candidate recipes on new wells and choose using the confirmation readings.
-
-**Why it matters in this project:** Adding three confirmation wells changes the primary DoE-minus-BO contrast from −0.0595 to −0.0009, a null result under the registered test.
-
-**Formal definition:** A terminal policy that allocates additional evaluations to candidates selected from the completed campaign and maps their new observations to $\hat{x}$.
-
-### Screening
-
-**Plain-language meaning:** A first-stage experiment used to decide which factors appear important enough for detailed optimization.
-
-**Laboratory analogy:** Test six ECM components in a fractional factorial pattern, retain four, and hold the others at selected levels.
-
-**Why it matters in this project:** Screening concentrates the later CCD but prevents the method from mapping dropped factors. On Hartmann6, removing the screen worsens point optimization, so it was helping rather than handicapping DoE there.
-
-**Formal definition:** A designed experiment estimating main effects or low-order effects with fewer runs than a full factorial, followed by factor selection.
-
-### Central composite design
-
-**Plain-language meaning:** A structured set of center, factorial/face, and axial-like points used to fit curvature.
-
-**Laboratory analogy:** Arrange wells at deliberate combinations around a promising center so a quadratic response surface can be estimated.
-
-**Why it matters in this project:** The four-factor face-centered CCD uses 27 wells in stage 2 and defines the region in which the quadratic has direct support.
-
-**Formal definition:** A second-order response-surface design combining factorial or fractional-factorial points, axial points, and center replicates.
-
-### Steepest ascent and sequential relocation
-
-**Plain-language meaning:** Move the next experimental region in the direction where the current fitted model predicts improvement, then fit again.
-
-**Laboratory analogy:** Rather than repeat the same plate around the old center, shift the next plate toward the most promising concentration direction.
-
-**Why it matters in this project:** The long-run fair classical arm uses screen → CCD → steepest ascent → recentering. Under measured-value arrival it matches qLogEI, eliminating the earlier well-saving claim.
-
-**Formal definition:** Sequential RSM follows the gradient of a first- or second-order fitted model until improvement stops, then relocates the design and refits.
-
-### Experimental budget, well count, and experimental-round count
-
-**Plain-language meaning:** Budget is the resource cap; wells count physical conditions, whereas rounds count how many times results must be observed before choosing the next batch.
-
-**Laboratory analogy:** Two methods may both consume 48 wells, but one needs one plate decision and another needs ten sequential plate cycles.
-
-**Why it matters in this project:** At 48 wells, BO uses about ten rounds, DoE three stages/rounds, and one-shot GP one. A well-count claim is not a calendar-time claim.
-
-**Formal definition:** Evaluation cost is $N=\lvert D\rvert$; round cost is the number of adaptive batches with points chosen jointly before observing that batch.
-
-### D-efficiency
-
-**Plain-language meaning:** How efficiently a design estimates model coefficients within the model and region it was built for.
-
-**Laboratory analogy:** Whether the planned wells give a statistically well-spread basis for estimating a quadratic response surface.
-
-**Why it matters in this project:** The CCD can be D-efficient in its own subregion even when its map of the entire global box is poor. D-efficiency is not optimization regret.
-
-**Formal definition:** A determinant-based measure derived from the information matrix $X^{\mathsf T}X$, usually normalized relative to a reference design.
-
-### Design space
-
-**Plain-language meaning:** A region of formulations expected to meet a performance threshold, not one predicted best recipe.
-
-**Laboratory analogy:** A robust operating window for ingredient concentrations that tolerates routine variation.
-
-**Why it matters in this project:** A method can find a strong recipe yet map the acceptable region badly; the arm ranking changes when the deliverable changes.
-
-**Formal definition:** $A_\tau=\{x\in\mathcal X:f(x)\ge\tau\}$, or a probabilistic/certified estimate of that excursion set.
-
-### Calibration, refinement, and containment
-
-**Plain-language meaning:** Calibration asks whether stated confidence is honest; refinement asks whether the certified region is usefully narrow rather than vague; containment asks whether the claimed region truly lies inside the acceptable region at the promised rate.
-
-**Laboratory analogy:** If a method labels recipes “99% safe,” calibration checks whether that promise holds, refinement checks whether it certifies more than a tiny conservative patch, and containment checks how often its proposed window avoids bad formulations.
-
-**Why it matters in this project:** SPADE is strong on map/refinement in the retrospective program but mid-field on calibration; high-confidence containment fails on Levy/Rosenbrock and is declined on Ackley/Hartmann6.
-
-**Formal definition:** Calibration compares nominal and empirical probabilistic coverage; refinement measures sharpness or informativeness conditional on validity; containment evaluates $P(\hat A\subseteq A_\tau)$ or its finite-sample analogue.
-
-### Synthetic benchmark and wet-lab validation
-
-**Plain-language meaning:** A synthetic benchmark is a controlled simulated system with known truth. Wet-lab validation tests a preregistered method using actual biological samples and measurements.
-
-**Laboratory analogy:** A flight simulator can compare pilot procedures under known conditions; it cannot prove that a new aircraft works until physical testing.
-
-**Why it matters in this project:** Almost every strong numerical conclusion is about the benchmark. Digitized published plots are auxiliary, and in-house data are excluded.
-
-**Formal definition:** A benchmark samples or fixes functions from a known generative family and evaluates algorithms against known targets; validation estimates performance prospectively in the intended empirical domain.
+The boundary-targeting comparison must not appear in the supplementary program until corrected. When restored, it should receive its own preregistered causal-analysis figure rather than being hidden among broad performance panels.
 
 ---
 
-# 8. Manuscript-ready Methods outline
+# 9. Discussion
 
-## 8.1 Biological scenario represented
+## 9.1 Primary interpretation
 
-- Frame the task as optimizing a multicomponent formulation under a limited well and round budget.
-- State that Hall et al.'s six-factor ECM study supplies structural inspiration only: six factors, four retained after screening, a response-surface stage, and a tested prediction that underperformed.
-- State immediately that the latent responses are constructed Hill-like functions and not fitted endothelial responses.
-- Explain that coded axes could represent concentrations but are not mapped to Collagen I, Collagen IV, Laminin 411, fibronectin, or other physical ingredients.
+The study supports a change in how formulation-optimization methods are evaluated. A laboratory that needs one high-performing recipe should compare confirmed terminal decisions under a common rule. A laboratory that needs a robust operating window should score the acceptable region directly. The two objectives are not interchangeable, and the same experimental design can be strong on one while weak on the other.
 
-## 8.2 Formulation space and oracle ensemble
+SPADE was designed for the region objective. In the single registered target regime, its three allocation variants produced the lowest map-error range, while the primary arm retained a mean point-regret gap within the prespecified practical margin relative to qLogNEI. This performance required two experimental rounds rather than ten. The Hartmann results show that the point-versus-region distinction is not restricted to the Hill generator: BO consistently nominated better points, whereas SPADE consistently mapped the acceptable region more accurately.
 
-- Analyze $d\in\{6,8\}$ on $[0,1]^d$.
-- Hold the number of dominant factors at four in both dimensions; sample the active subset per landscape.
-- Allocate 90% of total factor weight to active coordinates.
-- Construct biphasic peak-normalized Hill factors and sparse peak-modulation interactions.
-- Numerically locate each true optimum and accept landscapes with sufficient optimum-to-boundary depth.
-- Freeze and version oracle instances, parameter sidecars, seeds, and audit summaries.
-- Disclose acceptance-induced truncation and the current `accept_floor` reproducibility inconsistency.
+## 9.2 What the paper contributes methodologically
 
-## 8.3 Response and assay model
+The paper's most general contribution is its evaluation framework. It separates search from identification, terminal rule from acquisition function, map accuracy from probability calibration, and certificate containment from non-vacuity. It also treats feasibility as part of the scientific design. A threshold above the certifiability ceiling is excluded rather than scored as a method failure; an empty set is reported rather than counted as a perfect conservative answer.
 
-- Define latent $f(x)$, normalize its maximum to approximately one, and define observed $y=f(x)(1+\epsilon)+\eta$.
-- Use $\sigma_{\mathrm{rel}}\in\{0.25,0.10\}$ and $\sigma_{\mathrm{add}}=0.01$.
-- Call these higher- and lower-noise benchmark conditions.
-- Do not label either as a biological coefficient of variation: the digitized Hall box plots combine several sources of variation and are not the same estimand.
-- Explain the plug-in observation variance and that it avoids access to hidden truth.
+This framework is valuable beyond SPADE. Many optimizer benchmarks reward the largest observed value and stop. The project shows that this can confound the quality of sampled conditions with winner's-curse identification, while a model optimum can introduce extrapolation failures unrelated to the sampling design. Similarly, a high AUC can coexist with mediocre calibration, and nominal containment can be vacuous if the method rarely returns a set.
 
-## 8.4 Experimental procedures
+## 9.3 Interpretation of the second round and allocation variants
 
-| Procedure | Laboratory action | Implementation | Strength | Limitation |
-|---|---|---|---|---|
-| qLogEI BO | Run opening wells; iteratively choose batches of four | $n_0=2d+2$, then $q=4$ to $N=48$; GP plus qLogEI | Adaptive exploitation/exploration | ~10 rounds; EI does not define terminal selection |
-| qLogNEI BO | Same, acknowledging incumbent uncertainty | Stored co-primary noisy acquisition | Better aligned with noisy observations | Still model- and prior-dependent |
-| DoE/RSM | Screen, retain four, run CCD, fit quadratic, confirm | 20 screening wells + 27 CCD wells + 1 confirmation | Interpretable staged workflow; concentrated local design | Dropped-factor map loss; quadratic can be saddle/rank-deficient |
-| Sequential RSM | Relocate after steepest ascent | Screen → CCD → ascent → recenter to N≤200 | Fair long-run classical comparator | Implemented only at d=6 cost curves |
-| LHS/Sobol'/random | Spread all wells without learning between plates | One-shot space-filling designs | Broad coverage, one round | No adaptive targeting |
-| One-shot GP | Spread wells once, then fit GP | Five LHS design draws analyzed | Separates adaptivity from flexible modeling | Performance depends on design draw and landscape smoothness |
-| Crossed design/surrogate arms | Refit GP on DoE points or polynomial on BO points | Q34/Q45 factorial cells | Identifies mechanism | Diagnostic rather than a deployable protocol |
+The observed second-round gain over the 40-well plate-one reference was real but smaller than the declared meaningful-effect threshold. This indicates that much of SPADE's map performance may already arise from broad plate-one coverage, with the additional observations providing a modest refinement. The comparison does not identify which acquisition policy caused the gain because it changes both sample count and round count.
 
-## 8.5 Terminal rules
+The positive-$m$ variants did not satisfy the preregistered conjunction for safe point improvement. This result argues against assuming that local exploitation can be added without compromising a region-first objective. It also illustrates the value of conjunctive method criteria: the lowest point estimate on one metric is not automatically an improvement if calibration or certificate requirements fail.
 
-| Terminal rule | Laboratory interpretation | What it measures | Main risk |
-|---|---|---|---|
-| Hidden tested-best | Omniscient best well on the plate | Search only | Impossible in a real lab |
-| Measured-value argmax | Carry forward largest single reading | Search + noisy identification | Winner's curse/misidentification |
-| Continuous model recommendation | Make the recipe maximizing fitted mean | Model-supported optimization | Model misspecification |
-| Unconstrained quadratic/GP | Permit any point in global box | Extrapolative model performance | Unsupported boundary/corner recommendation |
-| In-region/ridge | Restrict to learned region or canonical ridge path | Supported classical recommendation | May miss distant optimum |
-| Replicate selection | Re-measure selected candidate(s) | Robustness to assay noise | Consumes extra wells; exact aggregation matters |
-| Confirm top three | Re-run three candidates and decide from confirmation | Shortlist quality plus confirmation | This implementation discards original readings |
-| Posterior mean at visited points | Model re-ranks tested wells | Denoised identification | Sensitive to model calibration |
+The boundary-targeting causal question remains open in this manuscript. No interpretation should be added until the corrected analysis fixes the underlying issue, regenerates the affected artifacts, and passes the same claim-language and release checks as the other prospective results.
 
-The paper must define a primary terminal rule before interpreting a method comparison. “Best observed” is too ambiguous unless it says whether “best” means largest $y$ or largest hidden $f$ among visited points.
+## 9.4 Why certificate claims are narrower than map claims
 
-## 8.6 Outcomes
+Map error is an empirical geometry score. The certificate is a probabilistic safety claim conditional on a fitted model. The latter is harder. It depends on posterior calibration, joint-draw estimation, non-empty evidence, assurance level, and threshold feasibility. The project found strong map results in settings where the conservative certificate was inconclusive or empty. This is not a contradiction; it is evidence that mapping and certifying are different levels of claim.
 
-- **Point optimization:** simple regret of the selected formulation.
-- **Search:** regret of the hidden tested-best condition.
-- **Identification:** difference between selected-condition regret and tested-best regret.
-- **Cost:** curves and hitting probabilities versus wells and versus rounds; calendar time, labor, and reagent costs are not directly modeled.
-- **Model diagnostics:** saddle status, extrapolation distance, overprediction, rank, predictive coverage, and D-efficiency.
-- **Design-space outcomes:** map AUC/symmetric difference, calibration, refinement, containment, and certificate behavior.
+The Hill results are encouraging but not definitive. Failure to reject under-coverage with 13 non-empty certificates does not establish a guarantee. Cross-family results further restrict the scope. A strong paper should present this limitation as a scientific result: the current certificate is family-dependent, and the dominant failure mode changes from miscoverage to declining to answer.
 
-## 8.7 Replication and statistics
+## 9.5 Practical guidance for experimental laboratories
 
-- The main 2×2 factorial is $d\in\{6,8\}\times\sigma\in\{0.25,0.10\}$.
-- The registered primary cell is $d=6$, $\sigma=0.25$, $N=48$.
-- Each cell uses 25 hidden landscapes and two algorithmic seeds per landscape. Average the two seeds first; inferential $n=25$, not 50.
-- Pair procedures on the same landscape so landscape difficulty cancels in the contrast.
-- Use the Wilcoxon signed-rank test to ask whether paired differences are systematically shifted without assuming normality.
-- Use instance bootstrap intervals to quantify effect magnitude and uncertainty.
-- “Null” means no demonstrated difference under the stated protocol/test. It does not prove equality; an equivalence claim needs a prespecified margin and test.
-- Apply Holm correction to declared families of multiple comparisons; report effect and interval before p-value.
+The experimental deliverable should be specified before choosing a method. If the goal is one formulation, the protocol should include an explicit confirmation rule and compare methods on held-out biological performance. If the goal is an operating window, all relevant factors must remain varied, probability calibration must be evaluated, and conditions inside and near the estimated boundary must be tested prospectively.
+
+Round count should be budgeted alongside wells. Adaptive methods are attractive when feedback is rapid and automation is available. A one- or two-round strategy may be preferable when every adaptive cycle requires several days, a cell expansion step, a donor batch, or extensive image analysis. The present project quantifies rounds but not calendar time, labor, or reagent cost, so these trade-offs must be measured in a wet-lab study.
+
+## 9.6 Relation to classical RSM and Bayesian optimization
+
+The paper should avoid a simplistic SPADE-versus-BO-versus-DoE hierarchy. Each method emphasizes a different experimental object. BO is strong when the task is to resolve one promising basin and nominate a high-performing point. Broad space-filling and SPADE-style designs retain more information about the whole domain. Classical response surfaces can be efficient and interpretable when their model is locally adequate and their canonical, ridge, replication, and sequential safeguards are used.
+
+The implemented screened classical pipeline performed poorly on full-domain mapping and failed several internal diagnostics, but this does not invalidate RSM as a field. It shows that a staged screen-and-local-quadratic workflow should not be treated as a full-factor design-space map without additional evidence.
+
+## 9.7 Biological limitations
+
+The main study is a computer experiment. No cell culture, differentiation, media, or bioprocess campaign was optimized prospectively. The factor labels are nominal, the response surfaces were not fitted to Hall et al.'s data, and the noise parameters were not estimated from biological replicate measurements.
+
+The simulator omits donor and batch hierarchy, plate-position effects, reagent-lot variation, cell-state drift, missing wells, assay censoring, solubility, osmolarity, toxicity, composition constraints, multiple competing endpoints, and calendar-time costs. Algorithmic campaign seeds are not biological replicates. The limited mathematical families do not span the full geometry of biological systems.
+
+The current Gaussian-process certificate is conditional on plug-in hyperparameters and does not propagate hyperparameter uncertainty. The target regime was selected by a frozen geometry-based pilot, which protects against outcome-based relabeling but still means the positive claim applies to one prespecified class rather than all possible landscapes.
+
+## 9.8 Reproducibility limitations
+
+The committed summary and decision artifacts are sufficient to audit many central numbers, and the targeted implementation tests are green. They are not sufficient to recreate the full prospective release from a fresh clone because the raw per-condition JSON files and the merged primary file are ignored and absent. The manifest hashes point to those missing files. The paper must not claim complete computational reproducibility until the raw artifacts are archived in an accessible repository or regenerated deterministically and the release validator passes from a clean checkout.
+
+Earlier narrative documents are append-only research records and contain superseded sections. In particular, early portions of `FINDINGS-SPADE-FINAL.md` predate the unscreened comparator and contain incorrect interpretations of the target table and plate-one contrast. Numerical claims should be regenerated from the current JSON artifacts, not copied from those early paragraphs.
+
+## 9.9 Required wet-lab validation
+
+A realistic validation should use a tractable six-factor formulation system with continuous safe ranges, a stable primary assay, and a one- to three-day turnaround. SPADE, qLogNEI, and a properly implemented classical sequential RSM workflow should receive the same formulation-well budget. Wells should be randomized across plate positions and blocked by biological batch or donor. Shared controls should appear on every plate.
+
+The point endpoint should be the held-out biological performance of each method's preregistered carry-forward formulation after confirmation in new biological batches. The region endpoint should sample formulations randomly from the predicted interior, near the estimated boundary, and just outside the region. The study should estimate empirical false inclusion, false exclusion, and containment against replicate-mean responses. Empty certificates must remain explicit outcomes.
+
+A smallest effect of scientific interest should be stated in biological units before the first plate. The analysis should report formulation wells, replicate wells, confirmation wells, experimental rounds, elapsed calendar time, reagent cost, failed wells, and variance components separately. The boundary-targeting analysis should be corrected computationally before deciding whether it merits a dedicated wet-lab ablation.
 
 ---
 
-# 9. Results storyline organized by laboratory questions
+# 10. Claims, prohibited overclaims, and reviewer responses
 
-## Question 1: Which procedure physically tests better conditions?
+## 10.1 Strongest defensible claims
 
-“Finds” must mean the hidden tested-best point, not the well with the largest noisy reading. At the primary $d=6$, $\sigma=0.25$ cell, hidden tested-best regret is 0.0597 for DoE, 0.0755 for qLogEI, and 0.0834 for qLogNEI. The DoE-minus-qLogEI search contrast is −0.0158 ($p=0.0067$), much smaller than its measured-value contrast. Thus the classical campaign searches somewhat better in this cell, but most of the apparent single-readout advantage arises later, when the campaign identifies a winner.
+1. Point optimization and acceptable-region estimation produce different and reproducibly reordered method rankings.
+2. In the registered six-factor, lower-noise Hill target regime, SPADE variants achieved the leading symmetric-difference map errors among the compared modeled workflows.
+3. Primary SPADE's mean Rule-P regret gap from qLogNEI was within the prespecified 0.02 practical margin, with an interval that extended slightly beyond the margin.
+4. SPADE used two experimental decision rounds at 48 wells, compared with ten for the batch-BO comparators.
+5. The point-versus-region split reproduced descriptively on six- and eight-dimensional Hartmann landscapes.
+6. SPADE's retrospective probability maps were sharp but not best calibrated; map quality cannot substitute for calibration.
+7. Prospective Hill certificate cells were not shown to under-cover, but the evidence was thin and does not prove validity.
+8. Certificate portability beyond Hill is not established; off-Hill failures include both high-assurance under-coverage and declining to certify.
+9. Turning off classical screening did not rescue the classical design-space map, and full-dimensional CCD became arithmetically unavailable at eight factors under the 48-well budget.
 
-This truth-based score is available only in simulation. A laboratory would need replicate or confirmation data to estimate it.
+## 10.2 Statements that must not appear
 
-## Question 2: Which procedure selects the better condition from noisy measurements?
+| Unsafe statement | Required replacement |
+|---|---|
+| “SPADE is the best optimizer.” | “SPADE produced leading map accuracy in the registered target regime while qLogNEI produced lower point regret.” |
+| “SPADE beats BO.” | Name the outcome, condition, comparator, terminal rule, and round count. |
+| “SPADE is proven equivalent on regret.” | “The mean gap was within the 0.02 margin, but its interval extended slightly beyond the margin.” |
+| “SPADE's certificate is valid.” | “No prospective Hill confirmatory cell was demonstrably below nominal; the weakest cell had 13 non-empty certificates and a wide interval.” |
+| “The certificate generalizes.” | “Cross-family validity was not established.” |
+| “Empty certificates are conservative successes.” | “The method declined to certify; emptiness was excluded from containment.” |
+| “SPADE reduced experimental cost fivefold.” | “SPADE used two decision rounds versus ten at equal wells; calendar time and cost were not measured.” |
+| “The synthetic model represents endothelial biology.” | “The benchmark is structurally inspired by a formulation problem but was not fitted to endothelial data.” |
+| “The screened classical failure proves RSM is unsuitable.” | “The implemented screened pipeline failed full-domain diagnostics; standard RSM safeguards were not fully represented at the fixed budget.” |
+| Any current statement that boundary targeting worked or failed | “The causal boundary-targeting comparison is reserved pending corrected analysis.” |
 
-Under measured-value argmax at the higher-noise setting, DoE has lower regret than qLogEI by 0.0595 at d=6 and 0.0284 at d=8. Against qLogNEI, the primary difference remains −0.0574. At d=6, the qLogEI campaign's measured-selection regret is 0.1553 even though its hidden tested-best regret is 0.0755; DoE's corresponding values are 0.0958 and 0.0597.
+## 10.3 Anticipated reviewer criticisms
 
-The interpretation is not simply “DoE searches better.” The single noisy readout has trouble identifying which of BO's clustered, similarly promising wells is truly best. The decomposition attributes approximately 55–73% of the higher-noise measured-value gap to identification. qLogNEI identifies its own best well more often than qLogEI (22% versus 8% at the primary cell) but does not remove the DoE lead under that terminal rule.
+**“The result is synthetic.”** Agree. State this in the title, abstract, and first Methods paragraph if the target journal requires it. The contribution is controlled method evaluation and claim separation, not biological validation.
 
-## Question 3: What happens when the final choice comes from a fitted model?
+**“Only one target regime supports the main claim.”** Agree and frame the claim accordingly. Use Hartmann as descriptive robustness of the point-versus-region split, not as a second confirmatory target.
 
-When the GP and quadratic are each optimized naïvely over the full global box, BO appears better by 0.27–0.36 in all four Hill cells. At the primary cell, quadratic-recommendation regret is 0.4163 and GP-recommendation regret is 0.1232, a DoE-minus-BO gap of +0.2931.
+**“The certificate pass is underpowered.”** Report the 11/13 denominator and exact interval. Avoid binary pass language in the narrative.
 
-That large number is a diagnostic, not a fair headline comparison of mature methods. The quadratic has a saddle in 200/200 Hill runs; maximizing a saddle over a box pushes the answer to a face or corner beyond the local design region. The primary unconstrained-minus-constrained DoE penalty is +0.2995. Under an in-region/ridge recommendation, the primary difference is −0.0063 (p=0.56), and three of four cells are null.
+**“AUC and refinement flatter SPADE while calibration does not.”** Present the Murphy decomposition in the main paper. This strengthens rather than weakens the work because it prevents a one-metric claim.
 
-The design × surrogate × locator decomposition explains the mechanism. A GP fitted to DoE points strongly improves over a quadratic fitted to those same points (primary difference −0.2171). A quadratic fitted to BO points behaves differently from one fitted to the CCD. Sampling geometry, surrogate flexibility, and locator are therefore separable causes.
+**“The classical comparator is unfair.”** Present both screened and unscreened versions, the long-run relocating RSM analysis, in-region terminal rules, and the diagnostic limitations of the implemented fixed-budget pipeline.
 
-## Question 4: Does confirmation change the conclusion?
+**“The method may only be a good space-filling design.”** Report the plate-one comparison and its sub-SESOI second-round gain. Do not make a causal claim about the boundary-targeting policy until the corrected analysis is complete.
 
-Yes, for the protocol actually tested. The campaign data are held fixed, the top three candidates are re-measured, and the final choice is made from the confirmation reading alone. This adds three wells. The primary qLogEI regret becomes 0.1446 and DoE regret 0.1437; DoE-minus-BO is −0.0009 with interval [−0.0263,+0.0253] and Wilcoxon p=0.92.
-
-This is a biologically plausible demonstration that the terminal protocol is part of the treatment. It is not proof that every confirmation design creates a tie. In particular, averaging original and confirmation readings was not run, and this protocol paradoxically makes the DoE selection worse because it discards an already informative first reading.
-
-## Question 5: How should experimental cost be counted?
-
-At N=48, qLogEI uses an opening design followed by adaptive batches—about ten rounds. DoE uses three stages: screen, CCD, and confirmation. A one-shot GP or space-filling design uses one selection round. These methods can have equal wells but very different incubation, readout, modeling, and replanning cycles.
-
-Long-run d=6 campaigns extend to 200 wells. Once the classical arm is allowed to perform steepest ascent and relocate, it matches qLogEI on measured-value arrival: no BO-versus-DoE arrival contrast survives Holm over all 26 tests. The defined well ratios under this rule are 0.73–1.02, so no meaningful well-count saving is demonstrated. Under naïve unconstrained model recommendation, BO can answer earlier, but that partly reflects that the classical pipeline cannot fit its intended model until enough wells have accrued and still uses the problematic locator.
-
-One-shot GP is stable in 20/22 evaluated cells across five design draws. At $\sigma=0.25$ under model recommendation it beats ten-round qLogEI at several targets in one round. This does not generalize to deceptive surfaces and should be interpreted as evidence that adaptive rounds are not automatically valuable on a smooth Hill family.
-
-## Question 6: Does the terminal-rule result generalize across landscapes?
-
-- **Levy and Rosenbrock:** reproduce the qualitative reversal—DoE under measured-value argmax, BO under naïve unconstrained model recommendation, and mostly null under constrained recommendation.
-- **Hartmann6:** BO leads under every terminal rule. Removing the d=6 screen makes DoE worse by about 0.206–0.207, so the BO lead is not caused by unfairly dropping active factors.
-- **Ackley:** contains a center/void advantage that lets the classical design hit a special point; it is not a clean comparison of general optimization skill and should remain diagnostic.
-- **Conclusion:** landscape class matters. No universal winner is supported.
-
-## Question 7: What changes when the deliverable is an acceptable region?
-
-Point regret and map quality answer different biological questions. In the Hill K6 re-score, `doe` is first on point regret but last on map AUC in 23/24 cells. Across external families it is symmetric-difference-worst in 36/92 cells. Screening concentrates wells to find one recipe but leaves dropped dimensions poorly characterized.
-
-The design-space program also exposes internal RSM diagnostics: the reported classical fit is rank-deficient in 50/50 campaigns, overpredicts its confirmation in 25/25, and has calibration error 0.2296 versus 0.0289–0.0443 for the other arms—5.2 times worse than the nearest comparator.
-
-### SPADE as a separate extension
-
-SPADE is a two-plate spread-and-refine protocol intended to map a threshold-defined design space, not just identify one optimum. Retrospective scoring makes it first on map quality and refinement at two rounds, with point regret at parity under a posterior-mean rule. Its calibration is only mid-field (fifth to seventh of nine), and its certificate is not broadly portable.
-
-Certificate containment holds on the project's Hill family, falls below nominal at $\gamma=0.99$ for Levy and Rosenbrock (three of 64 cells survive Holm correction), and is declined entirely on Ackley and Hartmann6. This leaves Hill—the project's own constructed family—as the only family both willing to certify and calibrated.
-
-The separately registered prospective SPADE-method study contains 92,400 rows across seven conditions and narrows the claim further:
-
-- Boundary-targeted plate 2 does not beat random placement of the same number of wells: effect −0.001882, p=0.4108.
-- Plate 2 versus plate 1 alone improves the score by +0.0117145 (adjusted p=0.000127), but the improvement is below the prespecified 0.02 smallest effect of interest.
-- The local-allocation trade-off does not support a positive $m>0$ rule.
-- The map is competitive/parity in the sole target Hill $d=6$, $\sigma=0.10$ condition, but the certificate verdict is inconclusive.
-- The mandatory `doe_unscreened` comparator was never implemented, leaving KF-2 NOT_RUN; a not-run kill is not a pass.
-
-The single-recipe and design-space programs should be separated in the manuscript or, preferably, into two papers. Combining their metrics into one claim would hide that they score different deliverables and have different evidence status.
+**“The release is not reproducible.”** Agree with the current fresh-clone limitation and archive the raw condition files before submission. Do not soften the validator failure into an advisory note.
 
 ---
 
-# 10. Three-figure main-paper storyline
-
-## Figure 1: Same 48 wells, different final decisions
-
-**Biological question:** If the laboratory has already run the campaign, does its carry-forward protocol change which method appears better?
-
-**Visual design:** Paired point/interval plot with the same Hill campaigns re-scored under hidden tested-best, measured-value argmax, unconstrained recommendation, in-region/ridge recommendation, and top-three confirmation. Use DoE-minus-BO regret; label negative as DoE better and positive as BO better.
-
-**Suggested panels:** (A) $d=6$, $\sigma=0.25$ primary contrasts; (B) four-cell heat map; (C) search versus identification decomposition; (D) confirmation protocol schematic.
-
-**Caption draft:** “Identical matched-budget campaigns yield different BO-versus-DoE conclusions when only the terminal carry-forward rule changes. Single-readout selection favors DoE, naïve unconstrained model recommendation favors BO, and supported or confirmed selection is null at the primary cell.”
-
-**Main conclusion:** The terminal decision rule defines the comparison.
-
-**Does not prove:** That DoE or BO is universally superior, or that all confirmation protocols eliminate differences.
-
-## Figure 2: Cost in two currencies
-
-**Biological question:** Does a method save wells, plate cycles, or both?
-
-**Visual design:** Regret/hit-probability curves versus cumulative wells beside the same curves versus rounds.
-
-**Suggested panels:** (A) measured-value arrival versus wells; (B) versus rounds; (C) hit probability $P(T\le N)$; (D) one-shot GP versus sequential qLogEI and sequential RSM.
-
-**Caption draft:** “Equal well budgets hide different sequential burdens. Walking RSM and qLogEI have similar measured-value arrival through 200 wells, whereas one-shot designs use fewer decision rounds on the smooth Hill benchmark.”
-
-**Main conclusion:** Cost claims require both well and round units.
-
-**Does not prove:** Calendar-time, labor, reagent, or equipment savings, which were not measured.
-
-## Figure 3: Why the model-based ranking reverses
-
-**Biological question:** Why can the fitted response surface nominate a poor untested recipe?
-
-**Visual design:** A two-dimensional slice through a representative campaign, showing sampled wells, true surface, quadratic contours, GP mean, the quadratic stationary point, allowed design region, ridge/in-region recommendation, and hidden optimum.
-
-**Suggested panels:** (A) DoE sampling region; (B) saddle/canonical diagnostic; (C) unconstrained boundary nomination; (D) constrained/ridge and GP nominations.
-
-**Caption draft:** “The large unconstrained BO advantage is driven mainly by maximizing saddle-shaped quadratic fits outside their learned region. Canonical diagnosis and in-region/ridge recommendation remove most of the gap.”
-
-**Main conclusion:** Locator validity, not only sampling quality, causes the reversal.
-
-**Does not prove:** That quadratic RSM is inherently invalid; proper sequential and ridge procedures are part of classical RSM.
-
-## Optional Figure 4 or separate paper: One recipe versus an operating region
-
-Use an identical campaign to show the best selected point and the inferred acceptable region. Contrast point regret, symmetric difference, calibration, refinement, and containment. Given the prospective failed kills and missing comparator, the cleaner choice is a separate design-space paper or a clearly labeled exploratory section.
-
----
-
-# 11. Ranked result inventory
-
-| Rank | Biology-facing result | Comparison and metric | Numerical evidence | Interpretation | Category | Placement |
-|---:|---|---|---|---|---|---|
-| 1 | The carry-forward rule changes the apparent winner | Same Hill campaigns; simple regret | Primary: −0.0595 measured choice, +0.2931 naïve model, −0.0063 in-region | Ranking is not a property of method acronyms alone | Confirmatory + diagnostic | Main text/Fig. 1 |
-| 2 | Confirmation removes the primary single-readout lead | qLogEI vs DoE, top-three confirmation | −0.0009 [−0.0263,+0.0253], p=0.92 | Laboratory protocol can dominate benchmark ranking | Secondary/registered | Main text/Fig. 1 |
-| 3 | Most higher-noise lead is identification, not search | Tested-best versus measured argmax | 55–73%; primary search gap −0.0158 vs measured −0.0595 | Finding a good well and recognizing it are different tasks | Secondary | Main text |
-| 4 | The large model-based BO advantage is an extrapolation diagnostic | Unconstrained versus in-region quadratic | Saddle 200/200; penalty +0.2995; in-region null 3/4 | Do not treat naïve saddle maximization as fair RSM | Diagnostic | Main text/Fig. 3 |
-| 5 | qLogNEI does not remove the higher-noise conclusion | DoE vs qLogNEI | Measured gap −0.0574; qLogNEI identification 22% vs qLogEI 8% | Correct acquisition choice improves recognition but not the main verdict | Secondary/co-primary | Main text |
-| 6 | Well count and round count give different cost stories | qLogEI, sequential RSM, one-shot GP | 48 wells: ~10, 3, and 1 rounds; measured-value well ratios 0.73–1.02 | Equal wells do not mean equal laboratory cycles | Secondary | Main text/Fig. 2 |
-| 7 | No universal landscape winner exists | Hill/Levy/Rosenbrock/Hartmann6/Ackley | Hartmann6 favors BO under all rules; Levy/Rosenbrock reverse | Conclusions are conditional on response geometry | Robustness/exploratory | Main + supplement |
-| 8 | Sampling, model, and locator are separately measurable | Crossed design × surrogate analyses | GP-on-DoE minus polynomial-on-DoE −0.2171 primary | Whole-workflow comparisons cannot assign mechanism | Secondary/diagnostic | Main or supplement |
-| 9 | Point optimization and map construction reorder methods | `doe` point regret vs map metrics | Last map AUC 23/24 Hill cells; symmetric-difference worst 36/92 | Best recipe is not a reliable operating region | Secondary extension | Separate section/paper |
-| 10 | Classical map diagnostics reveal severe fit problems | RSM self-diagnostics | Rank-deficient 50/50; overpredicts 25/25; calibration 5.2× worse | Map claims require estimability and calibration checks | Diagnostic | Design-space paper |
-| 11 | SPADE's broad mechanism is not prospectively supported | Targeted vs random second plate | −0.001882, p=0.4108 | Its distinctive boundary targeting lacks evidence | Unsupported broad claim | Design-space limitations |
-| 12 | Published biological data do not validate the optimizer ranking | Digitized Hall replay | MDE 0.68; null | Main conclusions remain synthetic | Needs further data | Limitations |
-
-All numerical results in rows 1–11 are artifact-derived synthetic results. None is a direct biological treatment effect.
-
----
-
-# 12. Claims and boundaries
-
-## 12.1 Strongest defensible claims
-
-1. On a frozen constructed Hill ensemble with 48 matched evaluations, changing only the terminal rule reverses or erases the BO-versus-DoE conclusion.
-2. Under higher benchmark noise, the DoE lead from selecting the largest single observed value is mostly an identification effect; a three-candidate confirmation protocol removes that primary-cell difference.
-3. The large advantage of GP over a naïvely optimized quadratic is mainly caused by extrapolative maximization of saddle-shaped fits and is not a fair summary of classical RSM with canonical/ridge safeguards.
-4. Sampling design, surrogate class, and final locator contribute separately and can be measured on crossed versions of the same campaigns.
-5. Well count, experimental-round count, single-recipe regret, and design-space map quality are distinct outcomes that can rank procedures differently.
-
-## 12.2 Overclaims and safer replacements
-
-| Overclaim | Why too strong | Safer wording |
-|---|---|---|
-| “DoE beats Bayesian optimization.” | True only under specified cells and terminal rules | “Under measured-value argmax at higher benchmark noise, sequential DoE had lower regret than qLogEI/qLogNEI on the Hill ensemble.” |
-| “Bayesian optimization beats RSM by 0.3.” | Driven by an invalid unconstrained saddle locator | “Naïve full-box quadratic maximization performed poorly; the gap largely disappeared with an in-region/ridge recommendation.” |
-| “BO saves experiments.” | Walking RSM matches measured-value arrival; rounds differ | “No well-count saving was demonstrated under measured-value arrival; the methods use different numbers of decision rounds.” |
-| “The benchmark models endothelial differentiation.” | Factor labels and parameters were not fitted | “The benchmark is structurally inspired by a six-to-four-factor ECM workflow and uses generic Hill-like responses.” |
-| “The 25% noise level is realistic.” | It is an abstract Gaussian parameter, not an estimated assay variance | “$\sigma_{\mathrm{rel}}=0.25$ is the prespecified higher-noise benchmark condition.” |
-| “A null result proves the methods equivalent.” | Non-significance is not equivalence | “No difference was demonstrated under the stated test, sample, and protocol.” |
-| “SPADE provides a calibrated design-space certificate.” | Holds only on Hill; fails/declines elsewhere | “The certificate was calibrated on Hill but did not generalize across the four external families.” |
-| “SPADE's targeted second plate improves the map.” | Prospective targeted-vs-random test failed | “A second plate was evaluated, but boundary targeting did not outperform random placement at equal well count.” |
-| “The benchmark uses biological replicates.” | Replicates are landscapes/seeds, not specimens/wells | “The benchmark uses paired simulated landscapes and algorithmic seeds.” |
-
-## 12.3 Mandatory scope statement
-
-The manuscript should state in the abstract, Methods, and Discussion that this is a computational benchmark. The response surfaces are biologically inspired but constructed; noise is abstract rather than estimated from raw replicate assays; measured-value argmax is one possible laboratory rule; unconstrained quadratic maximization is not synonymous with classical RSM; the design-space and single-recipe studies are separate evidence bodies; and a null result is not proof of identical performance.
-
----
-
-# 13. Biology-focused Discussion outline
-
-## 13.1 What this means for experimental planning
-
-1. **Start with the deliverable.** If the goal is one formulation, point regret and a confirmation plan are appropriate. If the goal is a robust operating window, map quality and containment must be evaluated directly.
-2. **Prespecify the carry-forward rule.** A highest single reading, replicated mean, confirmed shortlist, posterior mean, and untested model peak are different experimental protocols.
-3. **Separate finding from recognizing.** If assay noise is material, allocate wells to replication or confirmation rather than assuming a better sampler will identify the correct well.
-4. **Diagnose model recommendations.** For quadratic RSM, inspect canonical form, rank, design region, and confirmation performance before trusting a stationary point.
-5. **Budget rounds as well as wells.** Adaptive methods trade decision cycles for information. Whether that is worthwhile depends on incubation time, assay turnaround, automation, and the ability to run plates in parallel.
-6. **Match flexibility to geometry.** Smooth, low-effective-dimensional systems may not need many adaptive rounds; deceptive or multimodal systems may.
-
-## 13.2 Why published comparisons can appear contradictory
-
-Narayanan et al.'s reduction relative to predicted standard-DoE requirements, Rummukainen et al.'s equal-budget no-saving result, and Lapierre/Ndahiro's executed workflow comparisons answer different questions. Their denominators, screening procedures, factor sets, model constraints, acquisitions, final picks, and experimental systems differ. The correct synthesis is not that one paper invalidates another; it is that an efficiency claim must name its counterfactual and terminal rule.
-
-A comparison of complete workflows is valuable for deployment, but it cannot say which component caused the difference. This benchmark complements such studies by crossing sampling design, surrogate, and locator while holding the hidden landscape fixed.
-
-## 13.3 Practical laboratory decision guide
-
-| Laboratory situation | Recommended comparison/protocol | Reason | Caveat |
-|---|---|---|---|
-| One recipe, noisy assay | Compare confirmed shortlist performance | Avoids single-well winner's curse | Specify how original and confirmation readings are combined |
-| One recipe, cheap rapid feedback | Batch BO versus sequential RSM | Both can adapt and relocate | Report wells and rounds |
-| One recipe, slow multi-day assay | One-shot spread design + flexible model | Reduces sequential delays | May be fragile on deceptive landscapes |
-| Quadratic fit has a saddle | Canonical/ridge analysis and relocation | Full-box peak is unsupported | Do not label boundary maximum “the RSM optimum” |
-| Many nuisance factors | Include screening and unscreened sensitivity where feasible | Screening may concentrate useful wells | Dropped dimensions cannot be mapped |
-| Goal is an operating window | Score excursion-set/map quality and containment | Point regret cannot validate a range | Requires calibration on external/real systems |
-| High biological heterogeneity | Model donor/batch effects and replicate hierarchy | Gaussian iid noise is inadequate | Increases sample and analysis burden |
-| Reagent or safety constraints | Constrained designs/acquisitions | Avoid infeasible recipes | Not represented in the primary benchmark |
-
-## 13.4 Biology limitations
-
-- No prospective wet-lab optimization campaign.
-- No fitted mechanistic or empirical cellular response surface.
-- No biological replicates in the experimental sense; the two seeds are computational repeats.
-- Noise does not separately represent technical replicate error, biological replicate variation, donor/batch variation, or plate-to-plate drift.
-- No plate-position effects, edge effects, evaporation, reagent lots, incubation timing, or instrument drift.
-- No failed wells, missing values, censoring, limits of detection, or image-analysis failures.
-- No formulation feasibility, solubility, osmolarity, toxicity, or compositional constraints unless present in a separate configuration.
-- No cell-state drift or nonstationary biology across rounds.
-- No cost model for labor, calendar time, robotics, or reagent volumes.
-- Only a small set of mathematical benchmark families; these do not span real biological response geometries.
-- The main response is single-objective; real studies may balance yield, phenotype, viability, and robustness.
-
-## 13.5 Realistic future biological validation
-
-**System.** Use a tractable multicomponent media or ECM optimization with six continuous factors, a stable phenotype assay, and sufficient prior evidence to define safe concentration ranges. A system with one- to three-day turnaround is preferable before attempting a long differentiation protocol.
-
-**Design.** Pre-register at least two workflows: (1) screen → four-factor CCD → canonical/ridge recommendation and (2) GP-qLogNEI batch BO. Give both the same condition-well budget and comparable replicate/confirmation budget. If a third arm is feasible, use a one-shot space-filling GP to isolate the value of adaptivity.
-
-**Blocking and replication.** Randomize conditions across plate positions; block by biological batch/donor and plate; include shared controls on every plate; use technical replicate wells only where their estimand is clear. Model the biological batch as the inferential unit rather than treating all wells as independent.
-
-**Responses.** Choose one primary continuous endpoint in advance, such as viable cell yield, phenotype-positive area, or product titer. Record secondary viability and quality endpoints but avoid redefining the optimum after results are seen.
-
-**Terminal rule.** Pre-register a shortlist rule and confirm the top three candidates from each method in new biological batches. Define whether selection uses confirmation alone or a hierarchical combination of all readings; the latter is likely more efficient but was not tested in this repository.
-
-**Primary endpoint.** Latent/replicate-mean performance of each method's confirmed carry-forward formulation in held-out biological batches. Use the same held-out batches for paired comparison.
-
-**Success threshold.** Specify a smallest effect of scientific interest in biological units before running the campaign. If the question is equivalence/noninferiority, power and test that claim directly.
-
-**Analysis.** Compare paired held-out performance with effect intervals; estimate variance components; report failed wells; test sensitivity to plate/batch adjustment; and report condition wells, replicate wells, confirmation wells, rounds, and elapsed calendar time separately.
-
-**Design-space validation.** Only after point-selection validation, preregister a separate threshold and test containment on randomly selected formulations from inside and near the proposed region. Do not validate a map solely at its predicted optimum.
-
----
-
-# 14. Reviewer-risk audit
-
-| Likely critique | Why a biology reviewer may raise it | Current evidence | Manuscript response | Additional work needed |
-|---|---|---|---|---|
-| Biological relevance is indirect | No real cells generated main outcomes | Hall-inspired structure; auxiliary digitized data | Say “constructed benchmark” early and repeatedly | Prospective wet-lab study |
-| Hill benchmark is tuned to the conclusion | Parameters and acceptance are project choices | Frozen versioned ensemble; external families | Publish full generator, sidecars, acceptance audit, sensitivities | Resolve threshold/default mismatch; add preregistered external families if needed |
-| Noise is biologically unrealistic | iid Gaussian errors omit hierarchy and drift | Higher/lower noise sensitivity only | Call it benchmark noise, not assay CV | Estimate variance components from raw replicates; simulate heteroscedastic/batch effects |
-| RSM comparator is unfair | Naïve saddle maximization is not standard practice | In-region/ridge and sequential relocation analyses | Lead with fair classical rule; present unconstrained result as diagnostic | Ensure long-run model locator is ridge/in-region if making model-based cost claim |
-| BO comparator uses wrong acquisition | Observations are noisy | qLogNEI co-primary | Report qLogEI and qLogNEI together | Verify replay drift before release |
-| Seeds are called replicates | Could imply biological replication | Analysis averages two seeds within 25 landscapes | Use “algorithmic seeds,” never biological replicates | Wet-lab hierarchical replication |
-| Terminal rules look post hoc | Many re-scorings could invite selection | Open-question/registration history; same campaigns | State hierarchy and dates; show all rules | Freeze final estimands in manuscript protocol |
-| Statistical n is inflated | 50 runs are not independent | Tests cluster/average to n=25 | Explain paired landscape unit | Audit every table/script for instance clustering |
-| Multiple comparisons | Many Q/E/P experiments and cells | Holm used in declared families | Distinguish confirmatory, secondary, exploratory | Produce one final multiplicity map |
-| Generalization is weak | Only constructed function families | Levy/Rosenbrock/Hartmann6/Ackley checks | Claim landscape dependence, not universality | Real systems and more preregistered benchmark classes |
-| One-shot result is design-lucky | One design draw can dominate | Five-draw Q54, stable 20/22 | Report draw variability | Expand only if central to final paper |
-| Design-space story overclaims | Retrospective wins conflict with prospective kills | 92,400-row prospective study, failures disclosed | Separate evidence bodies and narrow claim | Implement `doe_unscreened`; external calibration; likely separate paper |
-| Reproducibility is incomplete | Current tests and release validator fail | Artifacts/checkpoints extensive but not clean | Do not claim release-ready | Fix replay drift, missing manifest inputs, and release artifact |
-| Novelty is overstated | BO/DoE comparisons and terminal distinctions exist | Adversarial novelty audit | Claim same-campaign reversal and factorial decomposition | Final literature re-read from primary PDFs |
-
----
-
-# 15. Recommended manuscript outline
-
-## Abstract
-
-- Laboratory problem and matched 48-well budget.
-- Constructed Hill benchmark, not wet-lab data.
-- Primary same-campaign terminal-rule reversal.
-- Search/identification and confirmation result.
-- Wells-versus-rounds conclusion.
-- Scope limitation and no universal winner.
+# 11. Recommended manuscript structure
 
 ## Introduction
 
-1. Expensive formulation experiments and exponential design spaces.
-2. Planned DoE/RSM and adaptive BO as two laboratory workflows.
-3. Existing wet-lab and matched-budget evidence, with denominators clarified.
-4. Missing comparison: same campaigns separated into sampling, surrogate, and terminal decision.
-5. Study questions and preregistered primary cell.
+The Introduction should move from the experimental burden of multicomponent formulation spaces to the distinction between a best recipe and an acceptable region. It should review BO, RSM, and quality-by-design precedent, explain why whole-workflow comparisons confound sampling and terminal decisions, and end with the six study questions in Section 2.4. SPADE should be introduced only after the reader understands why point regret is insufficient.
 
 ## Methods
 
-1. Biological scenario and Hall-derived structural inspiration.
-2. Synthetic Hill ensemble generation and acceptance.
-3. Observation/noise model.
-4. BO, qLogEI, qLogNEI, DoE/RSM, sequential relocation, and controls.
-5. Terminal decision rules and confirmation.
-6. Point, identification, cost, and diagnostic outcomes.
-7. Pairing, bootstrap intervals, Wilcoxon tests, and multiplicity.
-8. Reproducibility: versions, seeds, artifact provenance.
+The Methods should follow Sections 4.1–4.13 in order: evidence bodies; synthetic landscapes; observation model; external families; comparators and budgets; SPADE implementation; point and region estimands; cross-fit certificate; feasibility; target classification; statistics; and software provenance. The boundary-targeting acquisition may be defined technically, but its current causal result must not appear.
 
 ## Results
 
-1. Same campaigns reverse ranking under different terminal rules.
-2. Identification explains most of the higher-noise single-readout lead.
-3. Saddle extrapolation explains the giant naïve model gap.
-4. In-region/ridge and top-three confirmation erase the primary difference.
-5. Wells and rounds give different efficiency conclusions.
-6. Landscape-family checks reject a universal ranking.
-7. Put detailed design-space work in a clearly separate exploratory section or another manuscript.
+The Results should follow the scientific logic rather than repository chronology. Begin with terminal-rule and point-versus-region reordering. Present the target-condition SPADE map, regret, and round results next. Then present the modest plate-two gain and the unsuccessful positive-$m$ allocation. Follow with Hartmann robustness, Ackley exception, Levy/Rosenbrock non-discrimination, probability calibration, certificate scope, feasibility and empty-set guards, unscreened DoE, and classical diagnostics.
 
 ## Discussion
 
-1. Terminal protocol is part of experimental design.
-2. Finding, identifying, and confirming are distinct laboratory tasks.
-3. Classical RSM must include its canonical/ridge/sequential safeguards.
-4. Efficiency claims require an explicit denominator and cost unit.
-5. Practical selection guide.
-6. Synthetic and biological limitations.
-7. Prospective wet-lab validation.
+The Discussion should lead with the difference between point and region deliverables, then explain SPADE's map-first trade-off, the distinction between sharpness and reliability, and the limitations of certificate portability. It should close with practical experimental guidance, computational-release requirements, and a preregistered wet-lab validation design.
 
 ---
 
-# 16. Current readiness and unresolved work
+# 12. Evidence provenance and writing controls
 
-## 16.1 What is already strong
+## 12.1 Numerical source hierarchy
 
-- Frozen paired campaigns and extensive result artifacts.
-- Explicit separation of terminal rules on the same data.
-- qLogNEI co-primary sensitivity.
-- Sequential relocating RSM comparator.
-- Crossed design × surrogate × locator decomposition.
-- Confirmation re-score and cross-family robustness.
-- Honest prospective kill ledger for the design-space extension.
+The numerical source of truth is, in order:
 
-## 16.2 What currently blocks a reproducible release
+1. `results/final-spade-regret-pareto.json` for prospective point and map means.
+2. `results/final-spade-certificate.json` for prospective containment, emptiness, feasibility, and cross-fit details.
+3. `results/final-spade-kill-ledger.json` for registered decisions, interpreted alongside the sign convention in the analysis code.
+4. `results/final-spade-manifest.json` for configuration, provenance, seed policy, and source hashes.
+5. Retrospective committed result artifacts for terminal-rule, calibration, RSM-diagnostic, cross-family, and draw-sweep findings.
+6. The latest corrective sections of `docs/FINDINGS-SPADE-FINAL.md` and `docs/SPADE-FOR-RESEARCHERS.md` for interpretation.
 
-As of 2026-08-24, the full test run reports 1,614 passed and 8 failed. The failures include extremely small numerical drift in several exact comparisons, one P7 map-gate tolerance failure, and larger adaptive replay mismatches in Q42/Q59. The large replay differences must be explained or corrected before treating all committed adaptive artifacts as reproducible under the present environment.
+Early narrative sections and `docs/RESEARCH-SUMMARY.md` contain stale statements about the unscreened comparator, certificate status, kill counts, and target-arm ranking. They may help reconstruct history but must not be quoted as current results.
 
-The final SPADE release validator reports nine violations: the missing `results/final-spade-primary.json`, a prose self-reference involving `alpha_star`, and seven absent per-condition manifest source files. In addition, `doe_unscreened` is a required but unimplemented comparator in the prospective study.
+## 12.2 Boundary-targeting hold rule
 
-The oracle generator's current default depth threshold conflicts with the stored v8 ensemble documentation, as described in Section 5.4. This is a separate provenance issue even if existing artifacts remain unchanged.
+Until the corrected analysis is committed, the paper outline and manuscript must not include the existing targeted-versus-control effect, confidence interval, probability value, kill status, or prose interpretation. The only allowed statements are that SPADE's implemented acquisition focuses on uncertain portions of the estimated level-set boundary and that the causal value of this policy is reserved pending corrected analysis.
 
-## 16.3 Before manuscript submission
+When the correction lands, it must update the raw condition artifacts, merged primary artifact, Pareto analysis, kill ledger, findings document, researcher guide, figure source, and release manifest together. The restored result should be inserted only after the validator passes from a clean checkout and the sign convention is independently checked against arm means.
 
-1. Decide whether the paper is the terminal-rule benchmark only or includes design-space work.
-2. Resolve all adaptive replay failures and document environment/version sensitivity.
-3. Repair or explicitly scope the SPADE release validator if SPADE is included.
-4. Resolve the oracle-generation threshold provenance and test exact ensemble regeneration.
-5. Verify every final number directly from its committed artifact and produce one source table.
-6. Re-read cited primary PDFs and correct bibliographic metadata.
-7. Freeze confirmatory/secondary/exploratory labels and the multiplicity families.
-8. Ensure every use of “replicate,” “best observed,” “RSM,” “cost,” and “noise” is qualified.
-9. Decide whether any real biological data can be released and interpreted; otherwise keep them out of the evidentiary chain.
+## 12.3 Publication-readiness checklist
 
----
-
-# 17. Highest-value questions for the project owner
-
-1. Is the primary audience experimental biologists choosing a formulation workflow, computational-methods reviewers, or an equal mix? This determines how much mathematical detail stays in the main text.
-2. Is the manuscript's deliverable one best recipe, an acceptable design space, or two separate papers? The current evidence strongly favors separating them.
-3. Which results are formally confirmatory after all revisions: measured-value argmax and in-region recommendation only, or is top-three confirmation also confirmatory?
-4. Is the intended headline the terminal-rule reversal, the search-versus-identification decomposition, or the design × surrogate × locator mechanism? One should lead and the others should support it.
-5. Should the primary BO comparator be qLogNEI because the benchmark is noisy, with qLogEI as historical/named sensitivity, or retain the current co-primary presentation?
-6. What exact oracle configuration generated `biphasic-hill-v8+82f6db7c8f77`, and why does the current `accept_floor` default differ from the stored minimum-depth rule?
-7. Will the eight current test failures be fixed by regenerating environment-sensitive artifacts, loosening justified numerical tolerances, or correcting a behavioral regression? This must be decided before final result citation.
-8. Will `doe_unscreened` be implemented and the SPADE release completed, or will SPADE be removed from this paper?
-9. Are the in-house flow-cytometry data biologically signed off, sufficiently replicated, and releasable? If not, should they be omitted entirely rather than mentioned as pending validation?
-10. What wet-lab validation is realistically planned, and which exact terminal rule will be preregistered before the first plate?
+- Archive or regenerate all seven raw prospective condition files and `final-spade-primary.json`.
+- Run the release validator from a clean checkout and obtain all nine checks with zero violations.
+- Generate the prospective Murphy calibration/refinement table from authoritative raw rows.
+- Correct and independently verify the boundary-targeting analysis before inserting it anywhere.
+- Reconcile the oracle generator's mutable acceptance default with the frozen stored ensemble configuration.
+- Verify every central number against its committed JSON key.
+- Re-read primary PDFs and finalize the bibliography, author lists, page numbers, and exact claims.
+- Freeze the final confirmatory, robustness, exception, and exploratory labels.
+- Produce the four main figures with consistent lower-is-better axes and non-empty denominators.
+- Ensure every use of “best,” “validated,” “calibrated,” “significant,” “equivalent,” “cost,” “replicate,” and “design space” carries its required scope.
+- State prominently that the project is synthetic and has not validated a biological formulation.
+- Pre-register the wet-lab terminal rule, confirmation plan, biological effect threshold, and region-validation sampling design before experimental deployment.
 
 ---
 
-# 18. Primary references and project evidence trail
+# 13. Core references and internal evidence trail
 
-## Core external references
+## 13.1 External references to verify in the final bibliography
 
-- Hall ML, Lin W-H, Ogle BM. “Optimizing extracellular matrix for endothelial differentiation using a design of experiments approach.” *Scientific Reports* 15, 24479 (2025). https://doi.org/10.1038/s41598-025-09256-9
-- Box GEP, Wilson KB. “On the Experimental Attainment of Optimum Conditions.” *Journal of the Royal Statistical Society: Series B* 13 (1951). https://doi.org/10.1111/j.2517-6161.1951.tb00067.x
-- Jones DR, Schonlau M, Welch WJ. “Efficient Global Optimization of Expensive Black-Box Functions.” *Journal of Global Optimization* 13 (1998). https://doi.org/10.1023/A:1008306431147
-- Frazier PI. “A Tutorial on Bayesian Optimization.” arXiv:1807.02811 (2018). https://arxiv.org/abs/1807.02811
-- Rummukainen M, et al. “Traditional or adaptive design of experiments? A pilot-scale comparison on wood delignification.” *Heliyon* 10, e24484 (2024). https://doi.org/10.1016/j.heliyon.2024.e24484
-- Narayanan H, et al. “Accelerating cell culture media development using Bayesian optimization-based iterative experimental design.” *Nature Communications* 16, 6055 (2025). https://doi.org/10.1038/s41467-025-61113-5
-- Lapierre A, et al. “Multi-cycle high-throughput growth media optimization using batch Bayesian optimization.” *Journal of Chemical Technology & Biotechnology* 100, 1571–1583 (2025). https://doi.org/10.1002/jctb.7860
-- Ndahiro RK, et al. “Integration of Bayesian optimization and solution thermodynamics to optimize media design for mammalian biomanufacturing.” *iScience* 28, 112944 (2025). https://doi.org/10.1016/j.isci.2025.112944
-- Gisperg F, et al. “Bayesian Optimization in Bioprocess Engineering—Where Do We Stand Today?” *Biotechnology and Bioengineering* 122, 1313–1325 (2025). https://doi.org/10.1002/bit.28960
-- Kanda GN, et al. “Robotic search for optimal cell culture in regenerative medicine.” *eLife* 11, e77007 (2022). https://doi.org/10.7554/eLife.77007
-- Gneiting T, Raftery AE. “Strictly Proper Scoring Rules, Prediction, and Estimation.” *Journal of the American Statistical Association* 102 (2007). https://doi.org/10.1198/016214506000001437
+- Hall ML, Lin W-H, Ogle BM. “Optimizing extracellular matrix for endothelial differentiation using a design of experiments approach.” *Scientific Reports* 15, 24479 (2025). DOI: 10.1038/s41598-025-09256-9.
+- Box GEP, Wilson KB. “On the Experimental Attainment of Optimum Conditions.” *Journal of the Royal Statistical Society: Series B* 13 (1951). DOI: 10.1111/j.2517-6161.1951.tb00067.x.
+- Jones DR, Schonlau M, Welch WJ. “Efficient Global Optimization of Expensive Black-Box Functions.” *Journal of Global Optimization* 13 (1998). DOI: 10.1023/A:1008306431147.
+- Frazier PI. “A Tutorial on Bayesian Optimization.” arXiv:1807.02811 (2018).
+- Rummukainen M, et al. “Traditional or adaptive design of experiments? A pilot-scale comparison on wood delignification.” *Heliyon* 10, e24484 (2024). DOI: 10.1016/j.heliyon.2024.e24484.
+- Narayanan H, et al. “Accelerating cell culture media development using Bayesian optimization-based iterative experimental design.” *Nature Communications* 16, 6055 (2025). DOI: 10.1038/s41467-025-61113-5.
+- Lapierre A, et al. “Multi-cycle high-throughput growth media optimization using batch Bayesian optimization.” *Journal of Chemical Technology & Biotechnology* 100, 1571–1583 (2025). DOI: 10.1002/jctb.7860.
+- Ndahiro RK, et al. “Integration of Bayesian optimization and solution thermodynamics to optimize media design for mammalian biomanufacturing.” *iScience* 28, 112944 (2025). DOI: 10.1016/j.isci.2025.112944.
+- Gisperg F, et al. “Bayesian Optimization in Bioprocess Engineering—Where Do We Stand Today?” *Biotechnology and Bioengineering* 122, 1313–1325 (2025). DOI: 10.1002/bit.28960.
+- Kanda GN, et al. “Robotic search for optimal cell culture in regenerative medicine.” *eLife* 11, e77007 (2022). DOI: 10.7554/eLife.77007.
+- Gneiting T, Raftery AE. “Strictly Proper Scoring Rules, Prediction, and Estimation.” *Journal of the American Statistical Association* 102 (2007). DOI: 10.1198/016214506000001437.
 
-## Primary internal evidence
+The final bibliography must also include the exact Bryan, Chevalier, Azzimonti, Vorob'ev-set, Murphy-decomposition, and ICH Q8 sources used by the method section after their primary PDFs and metadata are rechecked.
 
-| Question | Primary repository evidence |
+## 13.2 Internal evidence map
+
+| Paper component | Primary repository evidence |
 |---|---|
-| Main benchmark and current narrative | `docs/RESEARCH-SUMMARY.md` |
-| Synthetic construction and biological defensibility | `docs/oracle_defensibility.md`, `src/boec/oracles.py`, `data/oracles/biphasic-hill-v8+82f6db7c8f77/` |
-| BO campaign implementation | `src/boec/campaign.py`, `src/boec/optimizers.py`, `configs/experiment/e2.yaml` |
-| DoE/RSM implementation | `src/boec/doe.py`, `src/boec/rsm.py` |
-| Main matched-budget results | `results/e2-grid.json` and dimension/noise shards |
-| Search/identification and qLogNEI | Q55/Q57 artifacts referenced in `docs/RESEARCH-SUMMARY.md` |
-| Confirmation | Q58 artifacts referenced in `docs/RESEARCH-SUMMARY.md` |
-| Sequential RSM and cost | Q56 artifacts and `results/figures/cost-curves.html` |
-| Cross-family robustness | `results/q42-*`, `results/q59-*` |
-| Design-space retrospective program | `results/k6-analysis.json`, `results/p6-families/`, P7/P8 artifacts |
-| Prospective SPADE study | `docs/SPADE-SPEC.md`, `docs/FINDINGS-SPADE-FINAL.md`, `results/final-spade-*.json` |
-| Source checking | `docs/source_verification.md`, `docs/pdf_crosscheck.md` |
+| Frozen prospective design | `docs/SPADE-FINAL-SPEC.md` |
+| Latest prospective narrative and corrections | `docs/FINDINGS-SPADE-FINAL.md`, especially Section 17.4 |
+| Researcher-facing method explanation | `docs/SPADE-FOR-RESEARCHERS.md` |
+| Target point/map table | `results/final-spade-regret-pareto.json` |
+| Certificate and non-vacuity table | `results/final-spade-certificate.json` |
+| Registered decisions | `results/final-spade-kill-ledger.json` |
+| Study provenance | `results/final-spade-manifest.json` |
+| Feasibility and target classification | `results/final-spade-feasibility.json` |
+| Prospective implementation | `src/boec/final_spade.py`, `scripts/run_final_spade_benchmark.py` |
+| Prospective analysis | `scripts/analyse_final_spade_benchmark.py` |
+| Synthetic Hill construction | `docs/oracle_defensibility.md`, `src/boec/oracles.py`, frozen oracle sidecars |
+| BO implementation | `src/boec/campaign.py`, optimizer and surrogate modules |
+| Classical implementation | `src/boec/doe.py`, `src/boec/rsm.py` |
+| Retrospective point findings | `docs/RESEARCH-SUMMARY.md` interpreted through later corrections and committed Q/E artifacts |
+| Retrospective design-space findings | `docs/FINDINGS-SPADE.md`, K6/P6/P7/P8 and Version-C artifacts |
+| Release checks | `scripts/validate_final_spade_release.py`, final-SPADE tests |
 
-**Final writing rule:** every sentence in the manuscript should be traceable to one of four things—a primary source, a committed artifact, a declared project choice, or an explicitly labeled interpretation. If it cannot be traced, it is not ready to publish.
+**Final writing rule:** every manuscript sentence must trace to a primary source, a committed artifact, a declared design choice, or an explicitly labeled interpretation. If it cannot be traced, it is not ready for publication.
