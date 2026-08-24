@@ -940,19 +940,44 @@ before you commit the plate, not after.
 
 Ordered roughly by how much they should change what you do.
 
-### 9.1 Version C has never been run prospectively as a method
+### 9.1 Version C *has* now been run prospectively — and the mechanism claim narrows
 
-**The single most important caveat in this document.**
+**Updated after `spade-final-2026-08-23`, the study this caveat used to warn was missing.**
 
-> Every number in §32, §38, §40 and §42 is **Version B's wells scored under Version C's
-> rules.** The three scoring changes cannot be validated by re-scoring the campaigns they
-> were designed against, and **no claim in the repository is evidence that a lab running
-> Version C prospectively would see these numbers** (§43.5).
+Everything in this document up to this section describes the **re-scored programme**:
+Version B's wells (already chosen) scored under Version C's rules (cross-fit certificate,
+both terminal rules, sigma-dependent primary gamma). That re-scoring cannot validate an
+**allocation** claim, because the allocation already happened before the rules were applied.
+
+A separate, pre-registered study closes that gap. `spade-final-2026-08-23` ran SPADE **as a
+method**: `spade_cf_m0`/`m4`/`m8` chosen live from a live plate-1 fit, a causal
+`spade_random_plate2` control, `doe_unscreened` finally built as the mandatory no-screening
+comparator, seven conditions, 92,400+ rows, a ten-item kill ledger with numeric bars
+committed before any runner file existed. Full record: `docs/FINDINGS-SPADE-FINAL.md`
+§5–§18, especially §17.4.
+
+**Four of the ten registered kills failed, and the registered rule is that the method claim
+narrows rather than being withheld:**
+
+* **KF-3 FAIL — the load-bearing one.** Targeted plate-2 SUR (`spade_cf_m0`) does **not**
+  beat placing the same 8 wells at random: −0.0019 [−0.0062, +0.0026], p = 0.41. This is a
+  live, causal, prospectively-run test of exactly the suspicion §9.3 raises from re-scored
+  data below — and it confirms it. **The claim narrows from "SPADE works" to "a second plate
+  helps slightly, and the mechanism that was supposed to make it help is unsupported."**
+* **KF-4 FAIL.** Plate 2 does beat plate-1-only (+0.0117, p_adj = 1.3e-04), but by less than
+  the declared SESOI of 0.02.
+* **KF-5 FAIL.** `m > 0` does not lower regret safely — a trade-off, not an improvement
+  (−0.0028, p = 0.31).
+* **KF-2 FAIL.** The certificate is not shown to extend beyond hill: the hartmann6
+  (beyond-hill) confirmatory cells are not uniformly clean, so the validity claim narrows to
+  hill. KF-1 (validity *on* hill) **passes**.
 
 Related: K-C2 (the hard stop) and K-C3 pass **structurally, not evidentially** — Version C's
 selected sets are bit-identical to Version B's and both quantities are built from columns
 gated at |Δ| = 0. They *could not have moved*, and they did not. A pass there is not an
-independent re-test of the certificate (§38.3, §44.4).
+independent re-test of the certificate (§38.3, §44.4). The prospective study above is the
+independent re-test, and where it disagrees with a re-scored estimate, trust the prospective
+study — it is the only one of the two that could have come out the other way.
 
 ### 9.2 The certificate's cross-family coverage is one dimension and one noise level
 
@@ -965,6 +990,11 @@ certificate outside hill: five families, **d=6, σ_rel=0.25 only.** The whole cr
 certificate result exists at d=8 (§44.5).
 
 ### 9.3 Plate 2 has not been shown to earn its place
+
+**This is no longer just a re-scored suspicion — §9.1 above reports the prospective,
+causal confirmation (KF-3 FAIL): targeted plate-2 placement does not beat random placement
+of the same 8 wells.** The re-scored evidence below is what raised the suspicion first, and
+is left in place as the earlier, independent line of evidence pointing the same way.
 
 This is uncomfortable and the repository says so plainly.
 

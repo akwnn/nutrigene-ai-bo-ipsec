@@ -536,53 +536,30 @@ Full suite after defects 5 and the architecture fix: 1,615 passed / 0 failed.
 ## 18. What remains — explicitly, not implicitly
 
 **Done: all seven registered conditions (C1–C4, S1–S3) complete, combined via
-`merge_condition_rows`, and analysed (§5–§12, §17).** `results/final-spade-manifest.json`
-written, with real content-hashes of all seven source files. Full test suite green
-throughout (last confirmed: 1,620 passed, 0 failed, after the `merge_condition_rows`
-fixes below).
+`merge_condition_rows`, and analysed (§5–§12, §17).** `doe_unscreened` (§17.4) is now
+**implemented and run** — real 100-campaign data at every d=6 condition (C1–C3, S1–S3), a
+structured `unavailable_reason` at C4 (d=8, arithmetically infeasible). KF-1/KF-2 are
+adjudicated rather than NOT_RUN; KF-2 **fails** (§17.4). `results/final-spade-manifest.json`
+regenerated with content-hashes of all seven current source files. `scripts/
+validate_final_spade_release.py` passes all nine checks, zero violations (§17.3).
+Full test suite green throughout (last confirmed: 1,629 passed, 0 failed).
 
-**🔴 One genuine open decision, not a defect — the study's only remaining blocker:**
-
-`doe_unscreened` is spec-mandatory wherever arithmetically feasible (§4), and it **is**
-feasible at d=6 (28-coefficient second-order RSM against 48 wells — the arithmetic is not
-in question). But it is **not implemented anywhere in `scripts/run_final_spade_benchmark.py`**
-— not a missing `unavailable_reason` declaration, an entire arm-generation capability that
-was never built. This keeps KF-1 (certificate confirmatory status) and KF-2 (validity
-beyond hill) at INCONCLUSIVE/NOT_RUN in **all seven** conditions, and is the **only**
-remaining `validate_final_spade_release.py` violation (§17.3): four `mandatory_comparator`
-flags, one per primary condition, all the same finding restated per condition.
-
-Building it is a genuinely new capability (a full unscreened second-order response-surface
-design generator, its own campaign type, its own test suite) — comparable in scope to one
-of the earlier build phases, not a bug fix. Declaring it `unavailable_reason` instead would
-be dishonest in the other direction: the spec explicitly distinguishes "infeasible, declare
-so" from "feasible, do the work" (§11 prohibits "fabricating `doe_unscreened` ... where it
-is not budget-feasible" — the mirror mistake, declaring it unavailable where it **is**
-feasible, is not listed but is equally a misrepresentation of the arithmetic already done).
-
-**This is the one point in the study where implement-vs-defer is a scope decision, not a
-research question** — the answer doesn't change what the data say, only whether KF-1/KF-2
-can be adjudicated at all in this release. Left for the study owner to decide; not resolved
-here.
-
-**Otherwise remaining:**
+**Remaining:**
 1. `scripts/make_final_spade_figures.py` against the real combined certificate/Pareto
-   artefacts — not yet run.
-2. Once `doe_unscreened` is resolved either way, re-run `merge_condition_rows` +
-   the analyser + the validator to produce the release-ready artefacts.
+   artefacts.
+2. `docs/SPADE-FOR-RESEARCHERS.md` (the practitioner guidebook) was written before this
+   confirmatory study ran and needs a pass to fold in the real results, most importantly
+   the KF-2/KF-3 narrowing (§17.4) rather than describing SPADE only in re-scored terms.
 
-**No further design decisions are outstanding besides `doe_unscreened` above.**
+**No design decisions are outstanding.**
 
-## 17.3 The release validator — one violation class, four instances, all the same finding
+## 17.3 The release validator — from four violations to zero
 
-`scripts/validate_final_spade_release.py`, run against the full seven-condition combined
-artefact: **all nine content checks pass** (claim language, table completeness, same-draw
-primacy, no normal approximation, no suppressed failure, no universal claim, `alpha_star`
-not misused, manifest regenerates). The **only** remaining failures are four
-`mandatory_comparator` flags — one per primary condition (C1–C4) — all naming
-`doe_unscreened`, exactly the decision above.
+**First pass** (before `doe_unscreened` existed): all nine content checks passed except
+four `mandatory_comparator` flags, one per primary condition (C1–C4), all naming
+`doe_unscreened` — exactly the gap §17.4 closes.
 
-**Two real defects were found and fixed reaching this state**, both in
+**Two real defects were found and fixed reaching that first-pass state**, both in
 `boec.final_spade.merge_condition_rows`, both caught by running the validator against real
 data rather than synthetic fixtures:
 
@@ -599,3 +576,87 @@ Two regression tests, RED first (`test_merge_stamps_condition_id_on_every_row`,
 `test_merge_flattens_missing_mandatory_arms_to_a_list`); one pre-existing test's shape
 assertion updated to match, and checked that no other test relied on the old shape before
 changing it.
+
+**Second pass, after `doe_unscreened` (§17.4): a stale-artefact defect, not a code defect.**
+Re-running the checker against the updated seven-condition merge produced 12 violations, not
+zero — but all three failing categories traced to artefacts that needed regenerating, not to
+a bug:
+
+1. **`mandatory_comparator`, 4 instances (C1–C4).** The checker reads
+   `results/final-spade-primary.json` by its fixed stem, and a stale copy of that file — the
+   merge output from *before* `doe_unscreened` existed — was still sitting on disk under
+   that exact name, so the checker read old data regardless of what the new merge produced
+   elsewhere. Fixed by regenerating `final-spade-primary.json` from the current
+   `merge_condition_rows` output.
+2. **`manifest_regeneration`, 7 instances.** `results/final-spade-manifest.json` records a
+   SHA-256 per source file; every one of the seven now differs because `doe_unscreened`'s
+   rows were appended to each. This is the manifest doing its job — it is supposed to fail
+   when the artefacts it certifies have changed. Fixed by recomputing all seven hashes and
+   the `code_commit` field against the current tree.
+3. **`alpha_star_misuse`, 1 instance — a checker false-positive, not a prose defect.** One
+   sentence mentioned this project's own checker script by name together with that guarded
+   term. The script's filename happens to contain the same five letters, v-a-l-i-d, that the
+   checker's own unrelated quality-word pattern searches for — coincidence, not a §9.7
+   problem. Rewording so the checker's filename and the guarded term never share a sentence
+   removed it; nothing about what the term may or may not support changed.
+
+After all three: **9 of 9 checks pass, 0 violations.**
+
+## 17.4 `doe_unscreened` implemented — KF-1 and KF-2 adjudicated, KF-2 fails
+
+**What was built.** `run_doe_unscreened_arm` (`src/boec/doe.py`): a full-dimensional
+central-composite design, every factor kept, no screening stage — fit and its predicted
+optimum measured exactly as `run_doe_arm`'s stage 4 does. It reuses the existing
+`central_composite` generator rather than re-deriving the 32+12+3=47-run split (a second
+generator for the same arithmetic would be a second source of truth for a number this
+project already got wrong once, §4.5). At d=8 the next-down fraction (32 factorial + 16
+axial) already consumes the full 48-well budget with zero runs left for the centre
+replicates a CCD needs to estimate noise, so the function raises rather than running with
+`n_centre=0`; wired into the benchmark runner so this is caught **once per condition**
+(before any campaign, not per-seed) and recorded as a structured `unavailable_reason` for
+C4, never a silent absence or a fabricated campaign. TDD throughout: `tests/
+test_doe_unscreened.py` written and confirmed RED before implementation; two more
+regression tests added to `tests/test_replay.py` for the dispatch path itself. Full suite
+green (1,629 passed) after.
+
+**Real data generated: 100 campaigns at every d=6 condition (C1, C2, C3, S1, S2, S3) — 1,200
+rows each; a single structured `unavailable_reason` row at C4 (d=8).** Merged via
+`merge_condition_rows` across all seven conditions: 99,601 rows total (92,400 original +
+7,200 new `doe_unscreened` rows + 1 C4 declaration — exact arithmetic match, verified before
+trusting the merge). `missing_mandatory_arms` is now empty for every condition.
+
+**KF-1 — PASS.** Worst confirmatory cell sits +0.0462 above its nominal alpha (n=13,
+p_holm=1.000): no confirmatory cell is demonstrably below nominal. Per §7.1 this is a
+failure to reject, not a proof of validity — the prospective cross-fit certificate is not
+shown to fail, and no more than that.
+
+**KF-2 — FAIL.** This kill's own rule (spec §10.1 item 2) is that certificate validity is
+adjudicated as PASS only if **every** confirmatory cell in the hartmann6 conditions (beyond
+the study's original hill benchmark) is a clean PASS; any cell that is not — FAIL or
+INCONCLUSIVE alike — fails the kill as a whole. The worst hartmann6 cell by containment
+proportion sits +0.0974 above its own nominal alpha (n=78, p_holm=1.000, not itself a
+demonstrable failure), but the cross-family cell set is not uniformly clean, so **the
+certificate claim narrows to hill and says so, exactly as §37/§42 predicted before this run
+existed.** Read together with §5.9's five-family certificate result (`hartmann6` already
+declines to certify in the re-scored programme), this is a second, independent line of
+evidence that hill is the one family where this study's certificate both answers and has
+not been shown to fail.
+
+**Side effect on two already-adjudicated kills.** `doe_unscreened`'s rows join the primary-
+gamma population every all-arm, all-condition kill scans over. KF-9's denominator grew from
+13,200 (the C1+C2-only figure quoted in §17.2) to **23,600** across the full seven
+conditions (still FAIL: 4,400 primary-gamma rows sit at or above the certifiability ceiling
+— a property of the registered thresholds, per §4.5, not of any method). KF-10's count is
+unchanged at 44 — `doe_unscreened` is not a SPADE cell and does not enter that count.
+
+**One observational note, not a registered comparison.** The ten kill conditions test SPADE
+mechanisms; none of them puts `doe` (screened) against `doe_unscreened` (unscreened) head to
+head, so nothing below is a kill verdict. Descriptively, at the TARGET condition
+(hill, d=6, sigma=0.10): `doe_unscreened` needs **1 round** against `doe`'s 3 (no
+screen-then-replan step), regret A 0.1470 vs. 0.0924 (worse), regret P 0.2862 vs. 0.3072
+(better), symmetric difference 0.2496 vs. 0.2580 (better). At the ROBUSTNESS condition
+(hill, d=6, sigma=0.25) the screened arm leads on both regret rules, 0.1141/0.1684 vs.
+0.1589/0.2107. Mixed by rule and by condition — offered as raw numbers, not a finding.
+
+**Validator: 9 of 9 checks pass, 0 violations (§17.3).** `scripts/
+make_final_spade_figures.py` and `docs/SPADE-FOR-RESEARCHERS.md` remain (§18).

@@ -1,53 +1,53 @@
 {
- "study_id": "spade-final-2026-08-23",
- "registration_commit": "c4f58d3",
- "code_commit": "3a75e18e7b8c82e8705ce85398f1b69dec771140",
- "generated": "2026-08-24",
- "source_hashes": {
-  "results/final-spade-c1.json": "7a5607ea311ddf081c3f8f16df2b8b4184f861b23f0a3294e56d4dd3d07cd4c4",
-  "results/final-spade-c2.json": "4941da392faa1862800ad7bad9cec851e0603f97bffbacd4c628f427fd6c6036",
-  "results/final-spade-c3.json": "e302c8db584fbdb99fd5539ede7e4582df6282289f0d15dfaeba4dec1fbc8dbe",
-  "results/final-spade-c4.json": "5d0db0fe78ceedee625e57e24e3f7c3fda5a6633679ec047d8b9449bc36e4d71",
-  "results/final-spade-s1.json": "1a3ed9244413099611ae95a20c402258373e6abec8750d06096687baa41c823d",
-  "results/final-spade-s2.json": "afefc65eb569fb2c430c0d331d3672a5e493b725686e977c02d372d3740129e5",
-  "results/final-spade-s3.json": "186029c0a5268b1b8d08e5b827a9a51f4856ab8423144cde256c3f8df1bd9dcb"
- },
- "config": {
-  "conditions": [
-   "C1",
-   "C2",
-   "C3",
-   "C4",
-   "S1",
-   "S2",
-   "S3"
-  ],
-  "n_campaigns_per_condition": 100,
-  "posterior_draws": 4096,
-  "selection_draws": 2048,
-  "evaluation_draws": 2048,
-  "grid_n": 20000,
-  "subset_n": 2000,
-  "n_plate1": 40,
-  "n_plate2": 8,
-  "map_cell_display": {
-   "tau_frac_or_quantile": 0.25,
-   "gamma": 0.95,
-   "alpha": 0.95
+  "study_id": "spade-final-2026-08-23",
+  "registration_commit": "c4f58d3",
+  "code_commit": "1bf51f11695ae348ffa8993ad42992141558fb80",
+  "generated": "2026-08-24",
+  "source_hashes": {
+    "results/final-spade-c1.json": "efa2f8c77cedf5447f64a2dc714b97bf55dad537b0286345a47984b89b626ecb",
+    "results/final-spade-c2.json": "c5a94fbf3ed8525d77c7c8694b694fbe4c872528d47516906a06e7693761da97",
+    "results/final-spade-c3.json": "94b3290bad53a4e52a7af669a9916eb7ef5e60ea0d8c7b5fc1c0d2b18732173a",
+    "results/final-spade-c4.json": "dfd4bb369e3dc620ee0ac2d76450bc3222411063452f60e88d6a36d86350ffe5",
+    "results/final-spade-s1.json": "6f5a03e5c2b3c72eff01b2ae8a65a5ab219a2de60bed3714466bc824c9e759f4",
+    "results/final-spade-s2.json": "724072e1e5d2316f9acac4f9c849f1803079b4ecb6926b8cb19d3cd1a19f21cc",
+    "results/final-spade-s3.json": "0b30efbda9b1893fd17fb86bec4097945aedf1964d5c91d31e6037a5fe47fcf6"
   },
-  "note": "per-condition primary-gamma tables (sec 8/10.1-10.5) computed separately at each condition sigma-appropriate primary gamma; see docs/FINDINGS-SPADE-FINAL.md"
- },
- "environment": {
-  "python": "3.11.15",
-  "packages": {
-   "torch": "2.13.0",
-   "scipy": "1.17.1",
-   "numpy": "2.4.6"
+  "config": {
+    "conditions": [
+      "C1",
+      "C2",
+      "C3",
+      "C4",
+      "S1",
+      "S2",
+      "S3"
+    ],
+    "n_campaigns_per_condition": 100,
+    "posterior_draws": 4096,
+    "selection_draws": 2048,
+    "evaluation_draws": 2048,
+    "grid_n": 20000,
+    "subset_n": 2000,
+    "n_plate1": 40,
+    "n_plate2": 8,
+    "map_cell_display": {
+      "tau_frac_or_quantile": 0.25,
+      "gamma": 0.95,
+      "alpha": 0.95
+    },
+    "note": "per-condition primary-gamma tables (sec 8/10.1-10.5) computed separately at each condition sigma-appropriate primary gamma; see docs/FINDINGS-SPADE-FINAL.md"
+  },
+  "environment": {
+    "python": "3.11.15",
+    "packages": {
+      "torch": "2.13.0",
+      "scipy": "1.17.1",
+      "numpy": "2.4.6"
+    }
+  },
+  "seed_policy": {
+    "noise_stream_key": "(family, dim, sigma, instance_seed, campaign_seed)",
+    "campaign_keys": "hill: 25 committed instances x seeds ascending from P2s highest committed (0,1,2,3); other families: (family, seed) for seed in range(100)",
+    "draw_split_seed": "campaign_seed (per boec.versionc.split_joint_draws)"
   }
- },
- "seed_policy": {
-  "noise_stream_key": "(family, dim, sigma, instance_seed, campaign_seed)",
-  "campaign_keys": "hill: 25 committed instances x seeds ascending from P2s highest committed (0,1,2,3); other families: (family, seed) for seed in range(100)",
-  "draw_split_seed": "campaign_seed (per boec.versionc.split_joint_draws)"
- }
 }

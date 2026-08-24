@@ -20,37 +20,43 @@
    "id": "KF-1",
    "claim": "SPADE's certificate is valid prospectively under cross-fit",
    "fires_when": "any primary F-CERT cell demonstrably below nominal after exact test + Holm",
-   "status": "INCONCLUSIVE",
-   "effect": null,
-   "ci": null,
-   "p": null,
-   "p_adjusted": null,
+   "status": "PASS",
+   "effect": 0.0461538461538461,
+   "ci": [
+    0.5455289443234423,
+    0.9807933280174715
+   ],
+   "p": 0.7663537790975998,
+   "p_adjusted": 1.0,
    "sesoi": 0.02,
-   "sesoi_comparison": "SESOI = 0.02; not applicable to this kill",
-   "denominator": 420,
+   "sesoi_comparison": "SESOI does not govern a containment proportion; the registered bar is the nominal alpha=0.8, and the worst confirmatory cell sits +0.0462 from it",
+   "denominator": 13,
    "source": {
     "artefact": "results/final-spade-certificate.json",
-    "key": "cells[].confirmatory"
+    "key": "cells[cell_id=spade_cf_m4|hill-d6-s0.25|tf0.25|g0.5|a0.8]"
    },
-   "interpretation": "no cell is confirmatory: every one is below the evidence floor of 10, outside the frozen F-CERT family, or sits in a condition missing a mandatory comparator (spec \u00a74)"
+   "interpretation": "no confirmatory cell is demonstrably below nominal across 44 cells. This is a failure to reject, not a proof of validity (\u00a77.1) -- \u00a722 measured what this design can and cannot detect"
   },
   "KF-2": {
    "id": "KF-2",
    "claim": "Certificate validity extends beyond hill d=6 sigma=0.25",
    "fires_when": "C3/C4 INCONCLUSIVE or FAIL -> the claim narrows to hill",
-   "status": "NOT_RUN",
-   "effect": null,
-   "ci": null,
-   "p": null,
-   "p_adjusted": null,
+   "status": "FAIL",
+   "effect": 0.09743589743589742,
+   "ci": [
+    0.8078725425815965,
+    0.9546690502212429
+   ],
+   "p": 0.9930556846725205,
+   "p_adjusted": 1.0,
    "sesoi": 0.02,
-   "sesoi_comparison": "SESOI = 0.02; not applicable to this kill",
-   "denominator": null,
+   "sesoi_comparison": "nominal alpha=0.8; SESOI does not apply",
+   "denominator": 78,
    "source": {
     "artefact": "results/final-spade-certificate.json",
-    "key": "cells[condition in hartmann6]"
+    "key": "cells[cell_id=spade_plate1_only|hartmann6-d6-s0.25|tf0.25|g0.5|a0.8]"
    },
-   "interpretation": "no confirmatory cell in hartmann6 d=6 or d=8, so the study carries no evidence beyond the single historical hill condition and the claim narrows to hill (\u00a710.1 item 2)"
+   "interpretation": "cross-family evidence is not clean, so the certificate claim narrows to hill and says so (\u00a710.1 item 2). \u00a737/\u00a742 predicted SPADE would struggle off hill; a narrowing here is the registered outcome, not a surprise"
   },
   "KF-3": {
    "id": "KF-3",
@@ -242,37 +248,37 @@
    "id": "KF-9",
    "claim": "The study's cells are feasible",
    "fires_when": "any planned cell with tau >= tau_max reached the analysis",
-   "status": "PASS",
-   "effect": 0,
+   "status": "FAIL",
+   "effect": 4400,
    "ci": null,
    "p": null,
    "p_adjusted": null,
    "sesoi": 0.02,
    "sesoi_comparison": "a count, not an effect size; SESOI does not apply",
-   "denominator": 22000,
+   "denominator": 23600,
    "source": {
     "artefact": "results/final-spade-certificate.json",
     "key": "cells[].infeasible"
    },
-   "interpretation": "every analysed primary-gamma cell sits below the certifiability ceiling, as the pre-run feasibility gate requires"
+   "interpretation": "4400 primary-gamma row(s) sit at or above the certifiability ceiling and reached the analyser. \u00a74.5: no method certifies above tau_max at any budget, so these cells must be excluded BEFORE campaigns run. A zero scored there is a property of the threshold and reading it as a method failure is precisely the error the pre-run feasibility gate exists to stop. (Diagnostic gamma=0.99 rows are excluded from this check: spec names it a stress diagnostic never claimed as primary evidence, and Erratum 1 already registers that it may exceed the ceiling as a fact about noise and assurance, not a protocol breach.)"
   },
   "KF-10": {
    "id": "KF-10",
    "claim": "Empty-set degeneracy does not explain a pass",
    "fires_when": "any PASS cell with empty rate > 0.50",
    "status": "FAIL",
-   "effect": 18,
+   "effect": 8,
    "ci": null,
    "p": null,
    "p_adjusted": null,
    "sesoi": 0.02,
    "sesoi_comparison": "empty-rate ceiling 50%; SESOI does not apply to a degeneracy guard",
-   "denominator": 64,
+   "denominator": 44,
    "source": {
     "artefact": "results/final-spade-certificate.json",
     "key": "cells[].downgraded_by"
    },
-   "interpretation": "18 cell(s) reached PASS on containment while certifying nothing in more than half their campaigns, and were downgraded to INCONCLUSIVE. \u00a741.3 records the same failure mode off hill: the problem is emptiness, not miscoverage -- and an empty certificate is vacuously contained"
+   "interpretation": "8 cell(s) reached PASS on containment while certifying nothing in more than half their campaigns, and were downgraded to INCONCLUSIVE. \u00a741.3 records the same failure mode off hill: the problem is emptiness, not miscoverage -- and an empty certificate is vacuously contained"
   }
  }
 }
