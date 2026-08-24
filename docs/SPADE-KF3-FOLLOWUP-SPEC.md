@@ -505,3 +505,48 @@ construction and still satisfies the registered half-max convention exactly
 table are already updated in place above. This does not change `λ = 1.0`, the greedy
 selection procedure, or anything about §7's decision rules. No test, implementation, or
 campaign existed when this was found.
+
+### 🔴 Erratum 3 — §3.2's pilot fired its terminal branch; `K_ERR` cut instead of rung 3
+
+**Committed after the firewalled pilot ran, citing only its timing log — no outcome from
+either `spade_cf_erroraware` or `spade_cf_diverse_batch` existed or was consulted when this
+was written.**
+
+**The trigger.** The 5-campaign pilot (§3.1) measured a mean of **346.3 s/campaign**
+(293.5, 351.6, 338.4, 248.3, 499.6). Extrapolated per §3.2: rung 0 (registered) **19.24 h**;
+rung 1 (`K_FANTASY=4`) **9.62 h**; rung 2 (`K_FANTASY=4`, `n=75`) **7.21 h**; rung 3
+(`K_FANTASY=4`, `n=50`, SESOI→0.03) **4.81 h**. All four exceed the 2-hour bar. Per §3.2's own
+rule, this is the terminal branch: no further automatic cut, study owner consulted.
+
+**The decision: `K_ERR` cut alongside `K_FANTASY`, rung 3 (`n`/SESOI) rejected.** Rung 3
+changes two things relative to the registered configuration at once — `n` halved *and* SESOI
+widened — which is exactly the compound-change failure mode §3.2 was built to avoid at every
+earlier rung. Accepting it would leave KF-3b's eventual FAIL, if it fails, ambiguous between
+"the mechanism doesn't work" and "the test was underpowered." Instead: **`K_ERR` reduced from
+64 to 32** — the candidate-shortlist size scored by `EV(x)` at each greedy step, not a
+statistical-power parameter. `n=100` and SESOI=0.02 are **unchanged from the original
+registration.**
+
+**Cost model, verified against the implementation rather than assumed.**
+`select_erroraware_batch` scores the full shortlist at each of the 8 greedy plate-2 steps, so
+total GP refits per campaign are exactly `K_ERR × K_FANTASY × N_PLATE2`: `64 × 8 × 8 = 4096`
+at the registered settings, `32 × 4 × 8 = 1024` at the revised ones — a 4× reduction,
+matching the combined `K_FANTASY` (rung 1's already-registered 2×) and the new `K_ERR` cut
+(a further 2×). At the pilot's measured rate this extrapolates to **~4.81 h** for the full
+`n=100` across both C2 and C3 — the same wall-clock as rung 3, without touching `n` or
+SESOI. No new pilot was run to confirm this: the cost model is linear and multiplicative in
+`K_ERR`, `K_FANTASY`, and `n` (stated in §3.2 and unchanged here), so the existing pilot's
+measured rate is recomputed under new constants, not guessed at.
+
+**What this changes and what it does not.** `K_ERR=32` and `K_FANTASY=4` apply to
+`spade_cf_erroraware` and, if it is built, `spade_cf_erroraware_diverse` — §3.2's existing
+inheritance rule. **It does not change** §7.1's decision rule, SESOI, the calibration/
+certificate bars, or the sample size. This is a resolution/approximation-quality tradeoff on
+`EV(x)`'s own estimate — a smaller shortlist and a coarser fantasy ladder search less
+thoroughly per well — reportable plainly as a limitation of the `EV(x)` approximation if
+KF-3b's result is later scrutinized, and distinct in kind from a power reduction on the
+hypothesis test itself.
+
+**`spade_cf_diverse_batch` is unaffected by any of this** and proceeds at the full registered
+`n=100`, C2 and C3, unchanged — it has no fantasy-refit cost and was never gated on this
+erratum.
