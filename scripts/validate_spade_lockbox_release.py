@@ -11,6 +11,8 @@ import tempfile
 from collections.abc import Mapping, Sequence
 from pathlib import Path
 
+from scripts import analyse_spade_lockbox as confirmatory
+
 
 ROOT = Path(__file__).resolve().parents[1]
 ARMS = ("spade", "sobol48", "qlognei48")
@@ -46,6 +48,16 @@ def _violation(violations: list[str], message: str) -> None:
 def collect_release_violations(*, manifest: Mapping[str, object], selection: Mapping[str, object], analysis: Mapping[str, object], rows: Mapping[str, Sequence[Mapping[str, object]]], actual_hashes: Mapping[str, str]) -> list[str]:
     """Return every independently detectable release violation, never fail fast."""
     violations: list[str] = []
+    if not isinstance(manifest, Mapping):
+        _violation(violations, "manifest schema violation"); manifest = {}
+    if not isinstance(selection, Mapping):
+        _violation(violations, "selection schema violation"); selection = {}
+    if not isinstance(analysis, Mapping):
+        _violation(violations, "analysis schema violation"); analysis = {}
+    if not isinstance(rows, Mapping):
+        _violation(violations, "raw row mapping schema violation"); rows = {}
+    if not isinstance(actual_hashes, Mapping):
+        _violation(violations, "actual hash mapping schema violation"); actual_hashes = {}
     if manifest.get("status") != "COMPLETE": _violation(violations, "lockbox manifest is not COMPLETE")
     sample_size = manifest.get("sample_size")
     if isinstance(sample_size, bool) or not isinstance(sample_size, int) or sample_size != LOCKBOX_SAMPLE_SIZE:
@@ -53,7 +65,15 @@ def collect_release_violations(*, manifest: Mapping[str, object], selection: Map
     if selection.get("status") != "SELECTED": _violation(violations, "premature lockbox without selected protocol")
     if manifest.get("lockbox_started_before_selection_commit") is True:
         _violation(violations, "premature lockbox before selection commit")
-    if manifest.get("source_dirty") is not False or any(row.get("source_dirty") is not False for shard in rows.values() for row in shard):
+    valid_rows: list[Mapping[str, object]] = []
+    for filename, shard_rows in rows.items():
+        if not isinstance(filename, str) or not isinstance(shard_rows, Sequence) or isinstance(shard_rows, (str, bytes)):
+            _violation(violations, "raw row schema violation"); continue
+        for row in shard_rows:
+            if not isinstance(row, Mapping):
+                _violation(violations, "raw row schema violation"); continue
+            valid_rows.append(row)
+    if manifest.get("source_dirty") is not False or any(row.get("source_dirty") is not False for row in valid_rows):
         _violation(violations, "dirty source SHA or row")
     protocol = manifest.get("protocol_digest")
     if protocol != selection.get("study_protocol_digest") or not _digest(protocol):
@@ -77,6 +97,8 @@ def collect_release_violations(*, manifest: Mapping[str, object], selection: Map
             continue
         if item.get("raw_sha256") != actual_hashes[filename]: _violation(violations, "raw shard hash mismatch")
         for row in rows[filename]:
+            if not isinstance(row, Mapping):
+                _violation(violations, "raw row schema violation"); continue
             key3 = (row.get("family"), row.get("instance_seed"), row.get("campaign_seed"))
             identity = (*key3, row.get("arm"))
             if identity in all_keys: _violation(violations, "duplicate campaign key")
@@ -99,6 +121,27 @@ def collect_release_violations(*, manifest: Mapping[str, object], selection: Map
     expected_key_arms = {(family, key, 0, arm) for family in LOCKBOX_FAMILIES for key in range(LOCKBOX_SAMPLE_SIZE) for arm in ARMS}
     if all_keys != expected_key_arms:
         _violation(violations, "missing campaign key or unregistered campaign key")
+    all_rows = valid_rows
+    provenance = {
+        "protocol_digest": manifest.get("protocol_digest"),
+        "spec_digest": manifest.get("spec_digest"),
+        "config_digest": manifest.get("config_digest"),
+        "generator_digest": manifest.get("generator_digest"),
+        "generator_manifest_sha256": manifest.get("generator_manifest_sha256"),
+        "source_commit": manifest.get("source_commit"),
+        "environment": all_rows[0].get("environment") if all_rows else None,
+    }
+    try:
+        recomputed = confirmatory.analyse_lockbox_rows(all_rows, execution_mode="REGISTERED", provenance=provenance)
+    except (TypeError, ValueError) as exc:
+        _violation(violations, f"recomputed registered analysis invalid: {exc}")
+        recomputed = None
+    if recomputed is not None and (
+        analysis.get("families") != recomputed["families"]
+        or analysis.get("overall_verdict") != recomputed["overall_verdict"]
+        or analysis.get("permissible_claim") != recomputed["permissible_claim"]
+    ):
+        _violation(violations, "analysis disagrees with recomputed registered bounds or denominators")
     families = analysis.get("families")
     expected_endpoints = {
         "map_noninferiority": "upper",

@@ -108,14 +108,52 @@ def _score(row: Mapping[str, object], name: str) -> float:
     return float(value)
 
 
-def analyse_lockbox_rows(rows: Sequence[Mapping[str, object]], *, bootstrap_replicates: int = BOOTSTRAP_REPLICATES, bootstrap_seed: int = 2_026_08_25) -> dict[str, object]:
+def _registered_row_contract(rows: Sequence[Mapping[str, object]], provenance: Mapping[str, object]) -> None:
+    required_provenance = {"protocol_digest", "spec_digest", "config_digest", "generator_digest", "generator_manifest_sha256", "source_commit", "environment"}
+    if set(provenance) != required_provenance:
+        raise ValueError("registered analysis provenance schema drift")
+    expected_keys = {(family, key, 0, arm) for family in LOCKBOX_FAMILIES for key in range(350) for arm in ARMS}
+    actual_keys = set()
+    for row in rows:
+        if not isinstance(row, Mapping) or row.get("schema") != "boec-spade-study-row-v1":
+            raise ValueError("registered analysis requires validated study rows")
+        identity = (row.get("family"), row.get("instance_seed"), row.get("campaign_seed"), row.get("arm"))
+        if identity in actual_keys:
+            raise ValueError("registered analysis has duplicate campaign key")
+        actual_keys.add(identity)
+        if row.get("budget") != 48 or row.get("terminal_rule") != "P" or row.get("source_dirty") is not False:
+            raise ValueError("registered analysis row budget/rule/source drift")
+        for field in ("protocol_digest", "spec_digest", "config_digest", "source_commit"):
+            if row.get(field) != provenance[field]:
+                raise ValueError("registered analysis row provenance mismatch")
+        parent = row.get("parent_artifacts")
+        if not isinstance(parent, Mapping) or parent.get("generator") != provenance["generator_digest"] or parent.get("generator_manifest") != provenance["generator_manifest_sha256"]:
+            raise ValueError("registered analysis row parent provenance mismatch")
+        if row.get("environment") != provenance["environment"]:
+            raise ValueError("registered analysis common environment mismatch")
+        score = row.get("scores")
+        if not isinstance(score, Mapping) or score.get("budget") != 48 or score.get("terminal_rule") != "P" or score.get("execution_mode") != "REGISTERED":
+            raise ValueError("registered analysis score contract drift")
+    if actual_keys != expected_keys or len(rows) != len(expected_keys):
+        raise ValueError("registered analysis requires exactly all four frozen families and 350 complete paired keys")
+
+
+def analyse_lockbox_rows(rows: Sequence[Mapping[str, object]], *, bootstrap_replicates: int = BOOTSTRAP_REPLICATES, bootstrap_seed: int = 2_026_08_25, execution_mode: str = "REGISTERED", provenance: Mapping[str, object] | None = None) -> dict[str, object]:
     """Compute the primary intersection-union verdict without pooling families."""
     by_family: dict[str, object] = {}
     pooled_rows: list[Mapping[str, object]] = []
     present = {row.get("family") for row in rows}
-    families = tuple(family for family in LOCKBOX_FAMILIES if family in present)
-    if not families:
-        raise ValueError("no registered lockbox family rows supplied")
+    if execution_mode not in {"REGISTERED", "TEST_ONLY"}:
+        raise ValueError("analysis execution mode is invalid")
+    if execution_mode == "REGISTERED":
+        if provenance is None:
+            raise ValueError("registered analysis requires immutable provenance")
+        _registered_row_contract(rows, provenance)
+        families = LOCKBOX_FAMILIES
+    else:
+        families = tuple(family for family in LOCKBOX_FAMILIES if family in present)
+        if not families:
+            raise ValueError("no registered lockbox family rows supplied")
     for family_index, family in enumerate(families):
         groups = _family_rows(rows, family)
         ordered = [groups[key] for key in sorted(groups)]
@@ -142,8 +180,8 @@ def analyse_lockbox_rows(rows: Sequence[Mapping[str, object]], *, bootstrap_repl
         by_family[family] = {"map_noninferiority": validity, "regret_noninferiority": regret, "certificate_willingness": willingness, "certificate_validity": containment}
         pooled_rows.extend(spade)
     all_pass = all(endpoint["verdict"] == "PASS" for endpoints in by_family.values() for endpoint in endpoints.values())
-    verdict = "PASS" if all_pass else "FAIL"
-    return {"schema": SCHEMA, "families": by_family, "overall_verdict": verdict, "permissible_claim": PERMISSIBLE_PASS_CLAIM if verdict == "PASS" else PERMISSIBLE_FAIL_CLAIM, "primary_rule": "intersection_union_all_endpoints_in_every_family", "secondary": {"pooled": {"row_count": len(pooled_rows), "does_not_change_primary": True, "label": "secondary descriptive pooled analysis only"}}}
+    verdict = "PASS" if all_pass and execution_mode == "REGISTERED" else "FAIL"
+    return {"schema": SCHEMA, "execution_mode": execution_mode, "provenance": dict(provenance or {}), "families": by_family, "overall_verdict": verdict, "permissible_claim": PERMISSIBLE_PASS_CLAIM if verdict == "PASS" else PERMISSIBLE_FAIL_CLAIM, "primary_rule": "intersection_union_all_endpoints_in_every_family", "secondary": {"pooled": {"row_count": len(pooled_rows), "does_not_change_primary": True, "label": "secondary descriptive pooled analysis only"}}}
 
 
 def main(argv: Sequence[str] | None = None) -> int:

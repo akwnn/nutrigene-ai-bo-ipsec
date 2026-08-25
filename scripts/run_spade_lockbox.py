@@ -29,7 +29,7 @@ sys.path.insert(0, str(ROOT / "src"))
 from boec.lockbox_oracles import LOCKBOX_FAMILIES, make_lockbox_oracle  # noqa: E402
 from boec.seedbook import IndexedGaussianNoise, derive_seed  # noqa: E402
 from boec.spade import SpadeConfig, run_qlognei48, run_sobol48, run_spade  # noqa: E402
-from boec.spade_study import SealedOracleHarness, build_study_row, controlled_tau, score_campaign, write_jsonl_gzip  # noqa: E402
+from boec.spade_study import SealedOracleHarness, _validate_rows, build_study_row, controlled_tau, score_campaign, write_jsonl_gzip  # noqa: E402
 from boec.torch_oracle import TorchEvaluator  # noqa: E402
 
 
@@ -38,6 +38,20 @@ LOCKBOX_SAMPLE_SIZE = 350
 STUDY_ROOT_SEED = 2_026_08_25
 SIGMA_REL, SIGMA_ADD, GAMMA, ALPHA, Q_TAU = .10, .01, .95, .95, .75
 MANIFEST_SCHEMA = "boec-spade-lockbox-shard-v1"
+MERGED_MANIFEST_SCHEMA = "boec-spade-lockbox-manifest-v1"
+GENERATOR_FREEZE_SHA256 = "2bf6d6d51e22d8d6faa117f6ac701675b929c40b8a034435bb83ae6011493bcd"
+GENERATOR_FREEZE_PARENT_COMMIT = "d1fab2c2099926945e399f741ccc79123a539066"
+SHARD_MANIFEST_FIELDS = frozenset({
+    "schema", "status", "family", "start", "stop", "sample_size", "expected_rows",
+    "row_count", "complete", "raw_file", "raw_sha256", "protocol_digest",
+    "spec_digest", "config_digest", "generator_digest", "generator_manifest_sha256",
+    "source_commit", "source_dirty", "selected_protocol_sha256", "command_args",
+})
+MERGED_MANIFEST_FIELDS = frozenset({
+    "schema", "status", "sample_size", "raw_shards", "protocol_digest", "spec_digest",
+    "config_digest", "generator_digest", "generator_manifest_sha256", "source_commit",
+    "source_dirty", "selected_protocol_sha256", "command_args",
+})
 _CONFIG_PATH = Path("configs/experiment/spade-joint.yaml")
 _SPEC_PATH = Path("docs/superpowers/specs/2026-08-25-spade-joint-protocol-design.md")
 _GENERATOR_PATH = Path("src/boec/lockbox_oracles.py")
@@ -104,12 +118,30 @@ def validate_resume_payload(payload: Mapping[str, object], *, metadata: Mapping[
     if not isinstance(rows, list) or payload.get("row_count") != len(rows) or payload.get("row_chain_head") != _row_chain_head(rows):
         raise ValueError("resume checkpoint row hash-chain mismatch")
     _validate_resume_rows(rows, family=family, start=start, stop=stop)
-    return [dict(row) for row in rows]
+    protocol = metadata.get("protocol_digest")
+    if not isinstance(protocol, str):
+        raise ValueError("resume metadata protocol schema drift")
+    try:
+        validated = _validate_rows(rows, protocol)
+    except (TypeError, ValueError) as exc:
+        raise ValueError(f"resume rows violate boec-spade-study-row-v1: {exc}") from exc
+    for row in validated:
+        if row["source_dirty"] is not False or any(row[field] != metadata[field] for field in ("protocol_digest", "spec_digest", "config_digest", "source_commit")):
+            raise ValueError("resume row provenance drift")
+        parents = row["parent_artifacts"]
+        if parents.get("generator") != metadata.get("generator_digest") or parents.get("generator_manifest") != metadata.get("generator_manifest_sha256"):
+            raise ValueError("resume row parent provenance drift")
+    return [dict(row) for row in validated]
 
 
 def _allowed_generated_path(path: str) -> bool:
-    name = path.replace("\\", "/").rsplit("/", 1)[-1]
-    return name.startswith("spade-lockbox-") or name == "spade-selected-protocol.json"
+    """Permit only exact registered generated names directly below results/."""
+    normalized = path.replace("\\", "/")
+    if not normalized.startswith("results/") or "/" in normalized.removeprefix("results/"):
+        return False
+    name = normalized.removeprefix("results/")
+    import re
+    return bool(re.fullmatch(r"spade-lockbox-(?:[a-z_]+-\d{3}-\d{3}\.jsonl\.gz(?:\.(?:sha256|manifest\.json|resume\.json))?|manifest\.json|analysis\.json|release\.json)", name) or name == "spade-selected-protocol.json")
 
 
 def git_state(repo_root: Path = ROOT) -> tuple[str, bool]:
@@ -129,10 +161,11 @@ def registered_metadata(repo_root: Path = ROOT) -> dict[str, object]:
     protocol_digest = hashlib.sha256(_canonical_json(protocol).encode()).hexdigest()
     if protocol_digest != digests.get("protocol_payload_sha256"):
         raise ValueError("configured study protocol digest mismatch")
-    metadata = {"study_protocol_digest": protocol_digest, "spec_digest": _sha256(spec_path), "config_digest": _sha256(config_path), "generator_digest": _sha256(generator_path)}
+    metadata = {"protocol_digest": protocol_digest, "spec_digest": _sha256(spec_path), "config_digest": _sha256(config_path), "generator_digest": _sha256(generator_path)}
     if metadata["spec_digest"] != digests.get("spec_sha256") or metadata["generator_digest"] != digests.get("lockbox_oracles_source_sha256"):
         raise ValueError("frozen source digest mismatch")
     metadata["source_commit"], metadata["source_dirty"] = git_state(repo_root)
+    metadata["generator_manifest_sha256"] = _sha256(repo_root / _GENERATOR_MANIFEST)
     return metadata
 
 
@@ -158,8 +191,11 @@ def _load_generator_freeze(repo_root: Path) -> dict[str, object]:
         manifest = json.loads(path.read_text())
     except (OSError, json.JSONDecodeError) as exc:
         raise ValueError("frozen lockbox generator manifest is missing or invalid") from exc
-    if not isinstance(manifest, dict) or manifest.get("status") != "FROZEN_UNOPENED" or tuple(manifest.get("families", ())) != LOCKBOX_FAMILIES:
+    expected = {"schema", "status", "frozen_date", "freeze_parent_commit", "dimension", "domain", "families", "instance_keys", "seed_derivation", "normalization", "generator_definitions", "digests"}
+    if _sha256(path) != GENERATOR_FREEZE_SHA256 or not isinstance(manifest, dict) or set(manifest) != expected or manifest.get("schema") != "boec-spade-lockbox-generator-manifest-v1" or manifest.get("status") != "FROZEN_UNOPENED" or manifest.get("freeze_parent_commit") != GENERATOR_FREEZE_PARENT_COMMIT or tuple(manifest.get("families", ())) != LOCKBOX_FAMILIES:
         raise ValueError("lockbox generator manifest must remain FROZEN_UNOPENED")
+    if manifest.get("digests", {}).get("lockbox_oracles_source_sha256") != _sha256(repo_root / _GENERATOR_PATH):
+        raise ValueError("lockbox generator manifest digest drift")
     return manifest
 
 
@@ -177,8 +213,9 @@ def validate_lockbox_access(*, repo_root: Path = ROOT, selected_path: Path | Non
     _, dirty = git_state(repo_root)
     if dirty or metadata.get("source_dirty"):
         raise ValueError("lockbox access refuses a dirty source tree")
-    for field in ("study_protocol_digest", "spec_digest", "config_digest", "generator_digest"):
-        if selected.get(field) != metadata.get(field):
+    for field in ("protocol_digest", "spec_digest", "config_digest", "generator_digest", "generator_manifest_sha256"):
+        selected_field = "study_protocol_digest" if field == "protocol_digest" else field
+        if selected.get(selected_field) != metadata.get(field):
             raise ValueError(f"selected protocol {field} digest mismatch")
     if selected.get("selected_template_protocol_digest") != _selected_template_digest(selected):
         raise ValueError("selected protocol canonical configuration digest mismatch")
@@ -188,7 +225,7 @@ def validate_lockbox_access(*, repo_root: Path = ROOT, selected_path: Path | Non
     freeze = _load_generator_freeze(repo_root)
     selected_commit = str(selected.get("source_commit", ""))
     freeze_commit = str(freeze.get("freeze_parent_commit", ""))
-    if not _is_ancestor(repo_root, freeze_commit, selected_commit):
+    if freeze_commit != GENERATOR_FREEZE_PARENT_COMMIT or not _is_ancestor(repo_root, freeze_commit, selected_commit):
         raise ValueError("selected protocol is older than the generator freeze commit")
     if not _is_ancestor(repo_root, selected_commit, metadata["source_commit"]):
         raise ValueError("selected protocol commit is not reachable from the clean source")
@@ -258,7 +295,7 @@ def _campaign_rows(family: str, key: int, selected: Mapping[str, object], metada
             campaign = run_qlognei48(evaluator, torch.stack([torch.zeros(6), torch.ones(6)]).double(), root_seed=root_seed, tau=threshold.tau)
         score = score_campaign(campaign, threshold.tau, harness.scorer(), sigma_rel=SIGMA_REL, sigma_add=SIGMA_ADD, gamma=GAMMA, alpha=ALPHA, scoring_seed=scoring_seed)
         seeds = {"noise": noise_seed, "threshold": threshold_seed, "scoring": scoring_seed, "opening_design": derive_seed(root_seed, "opening_design"), "candidate_menu": derive_seed(root_seed, "adaptive_candidate_menu"), "ivr_reference": derive_seed(root_seed, "ivr_reference_grid"), "terminal_grid": derive_seed(scoring_seed, "terminal_rule_p_grid"), "map_grid": derive_seed(scoring_seed, "probability_map_grid"), "certificate_grid": derive_seed(scoring_seed, "certificate_grid"), "certificate_draws": derive_seed(scoring_seed, "certificate_joint_draws")}
-        yield build_study_row(score, study_protocol_digest=metadata["study_protocol_digest"], spec_digest=metadata["spec_digest"], config_digest=metadata["config_digest"], source_commit=metadata["source_commit"], source_dirty=False, command_args=command_args, parent_artifacts={"spec": metadata["spec_digest"], "config": metadata["config_digest"], "generator": metadata["generator_digest"]}, family=family, instance_seed=key, campaign_seed=0, root_seed=root_seed, derived_seeds=seeds)
+        yield build_study_row(score, study_protocol_digest=metadata["protocol_digest"], spec_digest=metadata["spec_digest"], config_digest=metadata["config_digest"], source_commit=metadata["source_commit"], source_dirty=False, command_args=command_args, parent_artifacts={"spec": metadata["spec_digest"], "config": metadata["config_digest"], "generator": metadata["generator_digest"], "generator_manifest": metadata["generator_manifest_sha256"]}, family=family, instance_seed=key, campaign_seed=0, root_seed=root_seed, derived_seeds=seeds)
 
 
 def run_lockbox_shard(*, family: str, start: int, stop: int, output: str | Path, limit: int | None = None, smoke: bool = False, repo_root: Path = ROOT, command_args: Sequence[str] = ()) -> dict[str, object]:
@@ -283,18 +320,20 @@ def run_lockbox_shard(*, family: str, start: int, stop: int, output: str | Path,
     if len(rows) != (stop - start) * len(LOCKBOX_ARMS):
         raise RuntimeError("lockbox shard is incomplete; every requested key needs all three arms")
     staging = destination.with_name(f".{destination.name}.promotion")
-    digest = write_jsonl_gzip(staging, rows, protocol_digest=metadata["study_protocol_digest"])
+    digest = write_jsonl_gzip(staging, rows, protocol_digest=metadata["protocol_digest"])
     destination.parent.mkdir(parents=True, exist_ok=True); os.replace(staging, destination)
     Path(f"{staging}.sha256").unlink(missing_ok=True)
     Path(f"{destination}.sha256").write_text(f"{digest}  {destination.name}\n")
     manifest = {"schema": MANIFEST_SCHEMA, "status": "COMPLETE", "family": family, "start": start, "stop": stop, "sample_size": LOCKBOX_SAMPLE_SIZE, "expected_rows": (stop-start)*3, "row_count": len(rows), "complete": True, "raw_file": destination.name, "raw_sha256": digest, **metadata, "selected_protocol_sha256": _sha256(repo_root / "results/spade-selected-protocol.json"), "command_args": list(command_args)}
+    if set(manifest) != SHARD_MANIFEST_FIELDS:
+        raise RuntimeError("lockbox shard manifest schema drift")
     _atomic_json(Path(f"{destination}.manifest.json"), manifest)
     return manifest
 
 
 def merge_lockbox_manifests(manifest_paths: Sequence[str | Path], *, output: str | Path, metadata: Mapping[str, object]) -> dict[str, object]:
     """Hash and merge complete shard sidecars without loading outcome rows."""
-    expected_metadata = {"study_protocol_digest", "spec_digest", "config_digest", "generator_digest", "source_commit", "source_dirty"}
+    expected_metadata = {"protocol_digest", "spec_digest", "config_digest", "generator_digest", "generator_manifest_sha256", "source_commit", "source_dirty", "selected_protocol_sha256", "command_args"}
     if set(metadata) != expected_metadata or metadata["source_dirty"] is not False:
         raise ValueError("final lockbox manifest requires clean complete metadata")
     output_path = Path(output)
@@ -305,8 +344,7 @@ def merge_lockbox_manifests(manifest_paths: Sequence[str | Path], *, output: str
             shard = json.loads(Path(manifest_path).read_text())
         except (OSError, json.JSONDecodeError) as exc:
             raise ValueError("lockbox shard manifest is missing or invalid") from exc
-        required = {"schema", "status", "family", "start", "stop", "sample_size", "expected_rows", "row_count", "complete", "raw_file", "raw_sha256", *expected_metadata}
-        if not isinstance(shard, dict) or set(shard) != required or shard.get("schema") != MANIFEST_SCHEMA or shard.get("status") != "COMPLETE" or shard.get("complete") is not True:
+        if not isinstance(shard, dict) or set(shard) != SHARD_MANIFEST_FIELDS or shard.get("schema") != MANIFEST_SCHEMA or shard.get("status") != "COMPLETE" or shard.get("complete") is not True:
             raise ValueError("lockbox shard manifest schema or completion drift")
         family, start, stop = shard.get("family"), shard.get("start"), shard.get("stop")
         if family not in LOCKBOX_FAMILIES or isinstance(start, bool) or isinstance(stop, bool) or not isinstance(start, int) or not isinstance(stop, int) or not 0 <= start < stop <= LOCKBOX_SAMPLE_SIZE:
@@ -335,7 +373,9 @@ def merge_lockbox_manifests(manifest_paths: Sequence[str | Path], *, output: str
         if cursor != LOCKBOX_SAMPLE_SIZE:
             raise ValueError("lockbox manifests are incomplete")
     shards.sort(key=lambda item: (item["family"], item["start"], item["stop"]))
-    final = {"schema": "boec-spade-lockbox-manifest-v1", "status": "COMPLETE", "sample_size": LOCKBOX_SAMPLE_SIZE, "raw_shards": shards, **dict(metadata)}
+    final = {"schema": MERGED_MANIFEST_SCHEMA, "status": "COMPLETE", "sample_size": LOCKBOX_SAMPLE_SIZE, "raw_shards": shards, **dict(metadata)}
+    if set(final) != MERGED_MANIFEST_FIELDS:
+        raise RuntimeError("lockbox merged manifest schema drift")
     _atomic_json(output_path, final)
     return final
 

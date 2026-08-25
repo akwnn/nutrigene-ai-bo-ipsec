@@ -23,10 +23,11 @@ def _selection() -> dict:
         "schema": "boec-spade-selected-protocol-v1",
         "status": "SELECTED",
         "source_commit": SOURCE,
-        "study_protocol_digest": PROTOCOL,
+        "protocol_digest": PROTOCOL,
         "spec_digest": SPEC,
         "config_digest": CONFIG,
         "generator_digest": GENERATOR,
+        "generator_manifest_sha256": "c" * 64,
         "selected_canonical_config": {"opening": 44, "policy": "fixed_hybrid"},
         "selected_template_protocol_digest": "b" * 64,
     }
@@ -42,6 +43,7 @@ def clean_access(monkeypatch, tmp_path):
         "spec_digest": SPEC,
         "config_digest": CONFIG,
         "generator_digest": GENERATOR,
+        "generator_manifest_sha256": "c" * 64,
         "source_commit": SOURCE,
         "source_dirty": False,
     }
@@ -50,7 +52,7 @@ def clean_access(monkeypatch, tmp_path):
     monkeypatch.setattr(lockbox, "_committed_file_hash", lambda *_: hashlib.sha256(selected.read_bytes()).hexdigest())
     monkeypatch.setattr(lockbox, "_is_ancestor", lambda *_: True)
     monkeypatch.setattr(lockbox, "_selected_template_digest", lambda _: "b" * 64)
-    monkeypatch.setattr(lockbox, "_load_generator_freeze", lambda _: {"freeze_parent_commit": SOURCE})
+    monkeypatch.setattr(lockbox, "_load_generator_freeze", lambda _: {"freeze_parent_commit": lockbox.GENERATOR_FREEZE_PARENT_COMMIT})
     return tmp_path, selected
 
 
@@ -102,20 +104,33 @@ def test_registered_path_refuses_limit_and_shard_contract_is_exact():
 
 
 def test_resume_payload_rejects_a_corrupted_or_incomplete_arm_set():
-    metadata = {"study_protocol_digest": PROTOCOL, "spec_digest": SPEC, "config_digest": CONFIG, "generator_digest": GENERATOR, "source_commit": SOURCE, "source_dirty": False}
+    metadata = {"protocol_digest": PROTOCOL, "spec_digest": SPEC, "config_digest": CONFIG, "generator_digest": GENERATOR, "generator_manifest_sha256": "c" * 64, "source_commit": SOURCE, "source_dirty": False}
     payload = lockbox.make_resume_payload(
         family="soft_plateau", start=0, stop=1, raw_file="scratch.jsonl.gz",
         rows=[{"family": "soft_plateau", "instance_seed": 0, "campaign_seed": 0, "arm": arm} for arm in lockbox.LOCKBOX_ARMS],
         metadata=metadata,
     )
-    assert lockbox.validate_resume_payload(payload, metadata=metadata, family="soft_plateau", start=0, stop=1, raw_file="scratch.jsonl.gz")
+    with pytest.raises(ValueError, match="study-row"):
+        lockbox.validate_resume_payload(payload, metadata=metadata, family="soft_plateau", start=0, stop=1, raw_file="scratch.jsonl.gz")
     payload["rows"].pop()
     with pytest.raises(ValueError, match="hash-chain|all three|incomplete"):
         lockbox.validate_resume_payload(payload, metadata=metadata, family="soft_plateau", start=0, stop=1, raw_file="scratch.jsonl.gz")
 
 
+def test_resume_rejects_rows_without_full_study_schema_before_promotion():
+    metadata = {"protocol_digest": PROTOCOL, "spec_digest": SPEC, "config_digest": CONFIG, "generator_digest": GENERATOR, "generator_manifest_sha256": "c" * 64, "source_commit": SOURCE, "source_dirty": False}
+    payload = {
+        "schema": "boec-spade-lockbox-resume-v1", "family": "soft_plateau", "start": 0,
+        "stop": 1, "raw_file": "scratch.jsonl.gz", "metadata": metadata, "row_count": 3,
+        "rows": [{"family": "soft_plateau", "instance_seed": 0, "campaign_seed": 0, "arm": arm} for arm in lockbox.LOCKBOX_ARMS],
+    }
+    payload["row_chain_head"] = lockbox._row_chain_head(payload["rows"])
+    with pytest.raises(ValueError, match="study-row|schema"):
+        lockbox.validate_resume_payload(payload, metadata=metadata, family="soft_plateau", start=0, stop=1, raw_file="scratch.jsonl.gz")
+
+
 def test_final_manifest_requires_complete_non_overlapping_shards(tmp_path):
-    metadata = {"study_protocol_digest": PROTOCOL, "spec_digest": SPEC, "config_digest": CONFIG, "generator_digest": GENERATOR, "source_commit": SOURCE, "source_dirty": False}
+    metadata = {"protocol_digest": PROTOCOL, "spec_digest": SPEC, "config_digest": CONFIG, "generator_digest": GENERATOR, "generator_manifest_sha256": "c" * 64, "source_commit": SOURCE, "source_dirty": False, "selected_protocol_sha256": "b" * 64, "command_args": []}
     paths = []
     for family in lockbox.LOCKBOX_FAMILIES:
         raw = tmp_path / f"spade-lockbox-{family}-000-350.jsonl.gz"
@@ -179,7 +194,7 @@ def _rows(
 
 def test_confirmatory_analysis_is_per_family_and_rejects_43_of_50_containment():
     rows = _rows("toroidal_rastrigin", contained=43)
-    result = analysis.analyse_lockbox_rows(rows, bootstrap_replicates=1000, bootstrap_seed=7)
+    result = analysis.analyse_lockbox_rows(rows, execution_mode="TEST_ONLY", bootstrap_replicates=1000, bootstrap_seed=7)
     endpoint = result["families"]["toroidal_rastrigin"]["certificate_validity"]
     assert endpoint["denominator"] == 50
     assert endpoint["verdict"] == "FAIL"
@@ -189,7 +204,7 @@ def test_confirmatory_analysis_is_per_family_and_rejects_43_of_50_containment():
 def test_empty_certificates_fail_and_pooling_cannot_rescue_a_family():
     failed = _rows("toroidal_rastrigin", answers=0, contained=0)
     passed = _rows("soft_plateau")
-    result = analysis.analyse_lockbox_rows(failed + passed, bootstrap_replicates=1000, bootstrap_seed=9)
+    result = analysis.analyse_lockbox_rows(failed + passed, execution_mode="TEST_ONLY", bootstrap_replicates=1000, bootstrap_seed=9)
     assert result["families"]["toroidal_rastrigin"]["certificate_validity"]["denominator"] == 0
     assert result["families"]["toroidal_rastrigin"]["certificate_willingness"]["verdict"] == "FAIL"
     assert result["overall_verdict"] == "FAIL"
@@ -198,8 +213,27 @@ def test_empty_certificates_fail_and_pooling_cannot_rescue_a_family():
 
 def test_superiority_claims_require_a_strictly_negative_upper_bound():
     rows = _rows("curved_ridge", map_delta=0.0, regret_delta=0.0)
-    result = analysis.analyse_lockbox_rows(rows, bootstrap_replicates=1000, bootstrap_seed=11)
+    result = analysis.analyse_lockbox_rows(rows, execution_mode="TEST_ONLY", bootstrap_replicates=1000, bootstrap_seed=11)
     family = result["families"]["curved_ridge"]
     assert family["map_noninferiority"]["verdict"] == "PASS"
     assert family["map_noninferiority"]["superiority"] is False
     assert family["regret_noninferiority"]["superiority"] is False
+
+
+def test_registered_analysis_rejects_partial_or_unknown_key_grid():
+    with pytest.raises(ValueError, match="exactly|350|frozen families|immutable provenance"):
+        analysis.analyse_lockbox_rows(
+            _rows("soft_plateau"), execution_mode="REGISTERED", bootstrap_replicates=17
+        )
+    test_only = analysis.analyse_lockbox_rows(
+        _rows("soft_plateau"), execution_mode="TEST_ONLY", bootstrap_replicates=17
+    )
+    assert test_only["overall_verdict"] == "FAIL"
+
+
+def test_shard_schema_and_merged_schema_share_protocol_and_provenance_keys():
+    assert lockbox.SHARD_MANIFEST_FIELDS <= lockbox.MERGED_MANIFEST_FIELDS | {"family", "start", "stop", "expected_rows", "row_count", "complete", "raw_file", "raw_sha256"}
+    assert "protocol_digest" in lockbox.SHARD_MANIFEST_FIELDS
+    assert "study_protocol_digest" not in lockbox.MERGED_MANIFEST_FIELDS
+    assert "selected_protocol_sha256" in lockbox.SHARD_MANIFEST_FIELDS
+    assert "command_args" in lockbox.SHARD_MANIFEST_FIELDS
