@@ -151,6 +151,20 @@ def test_final_manifest_requires_complete_non_overlapping_shards(tmp_path):
         lockbox.merge_lockbox_manifests(paths, output=tmp_path / "second.json", metadata=metadata)
 
 
+def test_merge_keeps_distinct_shard_command_args(tmp_path):
+    metadata = {"protocol_digest": PROTOCOL, "spec_digest": SPEC, "config_digest": CONFIG, "generator_digest": GENERATOR, "generator_manifest_sha256": "c" * 64, "source_commit": SOURCE, "source_dirty": False, "selected_protocol_sha256": "b" * 64, "command_args": []}
+    paths = []
+    for index, family in enumerate(lockbox.LOCKBOX_FAMILIES):
+        raw = tmp_path / f"spade-lockbox-{family}-000-350.jsonl.gz"
+        raw.write_bytes(family.encode()); digest = hashlib.sha256(raw.read_bytes()).hexdigest()
+        (tmp_path / f"{raw.name}.sha256").write_text(f"{digest}  {raw.name}\n")
+        shard = {"schema": lockbox.MANIFEST_SCHEMA, "status": "COMPLETE", "family": family, "start": 0, "stop": 350, "sample_size": 350, "expected_rows": 1050, "row_count": 1050, "complete": True, "raw_file": raw.name, "raw_sha256": digest, **metadata, "command_args": ["--family", family, "--out", str(raw), str(index)]}
+        path = tmp_path / f"{raw.name}.manifest.json"; path.write_text(json.dumps(shard)); paths.append(path)
+    merged = lockbox.merge_lockbox_manifests(paths, output=tmp_path / "merged.json", metadata=metadata)
+    expected = {family: ["--family", family, "--out", str(tmp_path / f"spade-lockbox-{family}-000-350.jsonl.gz"), str(index)] for index, family in enumerate(lockbox.LOCKBOX_FAMILIES)}
+    assert {item["family"]: item["command_args"] for item in merged["raw_shards"]} == expected
+
+
 def test_runner_source_cannot_depend_on_development_outcome_metrics():
     lockbox.assert_no_development_metric_dependency()
 
@@ -232,7 +246,7 @@ def test_registered_analysis_rejects_partial_or_unknown_key_grid():
 
 
 def test_shard_schema_and_merged_schema_share_protocol_and_provenance_keys():
-    assert lockbox.SHARD_MANIFEST_FIELDS <= lockbox.MERGED_MANIFEST_FIELDS | {"family", "start", "stop", "expected_rows", "row_count", "complete", "raw_file", "raw_sha256"}
+    assert lockbox.SHARD_MANIFEST_FIELDS <= lockbox.MERGED_MANIFEST_FIELDS | {"family", "start", "stop", "expected_rows", "row_count", "complete", "raw_file", "raw_sha256", "command_args"}
     assert "protocol_digest" in lockbox.SHARD_MANIFEST_FIELDS
     assert "study_protocol_digest" not in lockbox.MERGED_MANIFEST_FIELDS
     assert "selected_protocol_sha256" in lockbox.SHARD_MANIFEST_FIELDS

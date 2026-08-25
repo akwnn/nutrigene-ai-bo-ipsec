@@ -50,7 +50,7 @@ SHARD_MANIFEST_FIELDS = frozenset({
 MERGED_MANIFEST_FIELDS = frozenset({
     "schema", "status", "sample_size", "raw_shards", "protocol_digest", "spec_digest",
     "config_digest", "generator_digest", "generator_manifest_sha256", "source_commit",
-    "source_dirty", "selected_protocol_sha256", "command_args",
+    "source_dirty", "selected_protocol_sha256",
 })
 _CONFIG_PATH = Path("configs/experiment/spade-joint.yaml")
 _SPEC_PATH = Path("docs/superpowers/specs/2026-08-25-spade-joint-protocol-design.md")
@@ -194,7 +194,15 @@ def _load_generator_freeze(repo_root: Path) -> dict[str, object]:
     expected = {"schema", "status", "frozen_date", "freeze_parent_commit", "dimension", "domain", "families", "instance_keys", "seed_derivation", "normalization", "generator_definitions", "digests"}
     if _sha256(path) != GENERATOR_FREEZE_SHA256 or not isinstance(manifest, dict) or set(manifest) != expected or manifest.get("schema") != "boec-spade-lockbox-generator-manifest-v1" or manifest.get("status") != "FROZEN_UNOPENED" or manifest.get("freeze_parent_commit") != GENERATOR_FREEZE_PARENT_COMMIT or tuple(manifest.get("families", ())) != LOCKBOX_FAMILIES:
         raise ValueError("lockbox generator manifest must remain FROZEN_UNOPENED")
-    if manifest.get("digests", {}).get("lockbox_oracles_source_sha256") != _sha256(repo_root / _GENERATOR_PATH):
+    digests = manifest.get("digests")
+    expected_digests = {
+        "lockbox_oracles_source_sha256": _sha256(repo_root / _GENERATOR_PATH),
+        "spade_study_source_sha256": _sha256(repo_root / "src/boec/spade_study.py"),
+        "spec_sha256": _sha256(repo_root / _SPEC_PATH),
+        "config_file_sha256": _sha256(repo_root / _CONFIG_PATH),
+        "protocol_payload_sha256": registered_metadata(repo_root)["protocol_digest"],
+    }
+    if not isinstance(digests, Mapping) or any(digests.get(key) != value for key, value in expected_digests.items()):
         raise ValueError("lockbox generator manifest digest drift")
     return manifest
 
@@ -333,8 +341,8 @@ def run_lockbox_shard(*, family: str, start: int, stop: int, output: str | Path,
 
 def merge_lockbox_manifests(manifest_paths: Sequence[str | Path], *, output: str | Path, metadata: Mapping[str, object]) -> dict[str, object]:
     """Hash and merge complete shard sidecars without loading outcome rows."""
-    expected_metadata = {"protocol_digest", "spec_digest", "config_digest", "generator_digest", "generator_manifest_sha256", "source_commit", "source_dirty", "selected_protocol_sha256", "command_args"}
-    if set(metadata) != expected_metadata or metadata["source_dirty"] is not False:
+    expected_metadata = {"protocol_digest", "spec_digest", "config_digest", "generator_digest", "generator_manifest_sha256", "source_commit", "source_dirty", "selected_protocol_sha256"}
+    if set(metadata) not in (expected_metadata, expected_metadata | {"command_args"}) or metadata["source_dirty"] is not False:
         raise ValueError("final lockbox manifest requires clean complete metadata")
     output_path = Path(output)
     shards: list[dict[str, object]] = []
@@ -363,7 +371,7 @@ def merge_lockbox_manifests(manifest_paths: Sequence[str | Path], *, output: str
         if sidecar.read_text(encoding="ascii").split() != [shard["raw_sha256"], raw_file]:
             raise ValueError("lockbox shard raw SHA-256 sidecar mismatch")
         ranges[family].append((start, stop))
-        shards.append({"family": family, "start": start, "stop": stop, "raw_file": raw_file, "raw_sha256": shard["raw_sha256"], "manifest_file": Path(manifest_path).name, "manifest_sha256": _sha256(Path(manifest_path))})
+        shards.append({"family": family, "start": start, "stop": stop, "raw_file": raw_file, "raw_sha256": shard["raw_sha256"], "command_args": shard["command_args"], "manifest_file": Path(manifest_path).name, "manifest_sha256": _sha256(Path(manifest_path))})
     for family, intervals in ranges.items():
         cursor = 0
         for start, stop in sorted(intervals):
@@ -373,7 +381,7 @@ def merge_lockbox_manifests(manifest_paths: Sequence[str | Path], *, output: str
         if cursor != LOCKBOX_SAMPLE_SIZE:
             raise ValueError("lockbox manifests are incomplete")
     shards.sort(key=lambda item: (item["family"], item["start"], item["stop"]))
-    final = {"schema": MERGED_MANIFEST_SCHEMA, "status": "COMPLETE", "sample_size": LOCKBOX_SAMPLE_SIZE, "raw_shards": shards, **dict(metadata)}
+    final = {"schema": MERGED_MANIFEST_SCHEMA, "status": "COMPLETE", "sample_size": LOCKBOX_SAMPLE_SIZE, "raw_shards": shards, **{field: metadata[field] for field in expected_metadata}}
     if set(final) != MERGED_MANIFEST_FIELDS:
         raise RuntimeError("lockbox merged manifest schema drift")
     _atomic_json(output_path, final)

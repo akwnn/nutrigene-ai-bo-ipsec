@@ -88,6 +88,7 @@ DATASET_ROLE = "DEVELOPMENT"
 _CONFIG_PATH = Path("configs/experiment/spade-joint.yaml")
 _SPEC_PATH = Path("docs/superpowers/specs/2026-08-25-spade-joint-protocol-design.md")
 _GENERATOR_PATH = Path("src/boec/lockbox_oracles.py")
+_GENERATOR_MANIFEST_PATH = Path("results/spade-lockbox-generator-manifest.json")
 _SIGMA_REL = 0.10
 _SIGMA_ADD = 0.01
 _GAMMA = 0.95
@@ -119,6 +120,7 @@ _MANIFEST_FIELDS = frozenset(
         "spec_digest",
         "config_digest",
         "generator_digest",
+        "generator_manifest_sha256",
         "source_commit",
         "source_dirty",
         "raw_file",
@@ -363,7 +365,8 @@ def registered_metadata(repo_root: Path = ROOT) -> dict[str, object]:
     config_path = repo_root / _CONFIG_PATH
     spec_path = repo_root / _SPEC_PATH
     generator_path = repo_root / _GENERATOR_PATH
-    for path in (config_path, spec_path, generator_path):
+    generator_manifest_path = repo_root / _GENERATOR_MANIFEST_PATH
+    for path in (config_path, spec_path, generator_path, generator_manifest_path):
         if not path.is_file():
             raise ValueError(f"required frozen artifact is missing: {path}")
     config = yaml.safe_load(config_path.read_text(encoding="utf-8"))
@@ -386,6 +389,7 @@ def registered_metadata(repo_root: Path = ROOT) -> dict[str, object]:
         "spec_digest": spec_digest,
         "config_digest": _sha256(config_path),
         "generator_digest": generator_digest,
+        "generator_manifest_sha256": _sha256(generator_manifest_path),
         "source_commit": source_commit,
         "source_dirty": source_dirty,
     }
@@ -459,6 +463,7 @@ def make_shard_manifest(
         "spec_digest": metadata["spec_digest"],
         "config_digest": metadata["config_digest"],
         "generator_digest": metadata["generator_digest"],
+        "generator_manifest_sha256": metadata["generator_manifest_sha256"],
         "source_commit": metadata["source_commit"],
         "source_dirty": metadata["source_dirty"],
         "raw_file": raw_file,
@@ -515,6 +520,7 @@ def validate_shard_manifest(
         "spec_digest",
         "config_digest",
         "generator_digest",
+        "generator_manifest_sha256",
         "raw_sha256",
         "resume_sha256",
         "row_chain_head",
@@ -898,6 +904,7 @@ def run_development_shard(
         "spec_digest",
         "config_digest",
         "generator_digest",
+        "generator_manifest_sha256",
         "source_commit",
         "source_dirty",
     }

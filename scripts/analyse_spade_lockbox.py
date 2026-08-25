@@ -184,13 +184,41 @@ def analyse_lockbox_rows(rows: Sequence[Mapping[str, object]], *, bootstrap_repl
     return {"schema": SCHEMA, "execution_mode": execution_mode, "provenance": dict(provenance or {}), "families": by_family, "overall_verdict": verdict, "permissible_claim": PERMISSIBLE_PASS_CLAIM if verdict == "PASS" else PERMISSIBLE_FAIL_CLAIM, "primary_rule": "intersection_union_all_endpoints_in_every_family", "secondary": {"pooled": {"row_count": len(pooled_rows), "does_not_change_primary": True, "label": "secondary descriptive pooled analysis only"}}}
 
 
+def analyse_merged_manifest(manifest_path: Path) -> dict[str, object]:
+    """Read only hash-validated raw shards named by a completed merged manifest."""
+    from boec.spade_study import read_jsonl_gzip
+    try:
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        raise ValueError("merged lockbox manifest is invalid") from exc
+    required = {"schema", "status", "sample_size", "raw_shards", "protocol_digest", "spec_digest", "config_digest", "generator_digest", "generator_manifest_sha256", "source_commit", "source_dirty", "selected_protocol_sha256"}
+    if not isinstance(manifest, Mapping) or set(manifest) != required or manifest.get("schema") != "boec-spade-lockbox-manifest-v1" or manifest.get("status") != "COMPLETE" or manifest.get("source_dirty") is not False or manifest.get("sample_size") != 350:
+        raise ValueError("merged lockbox manifest schema/provenance drift")
+    shards = manifest.get("raw_shards")
+    if not isinstance(shards, list):
+        raise ValueError("merged lockbox manifest has invalid shards")
+    rows: list[dict[str, object]] = []
+    for shard in shards:
+        if not isinstance(shard, Mapping) or not isinstance(shard.get("raw_file"), str) or not isinstance(shard.get("raw_sha256"), str):
+            raise ValueError("merged lockbox manifest shard schema drift")
+        raw = manifest_path.parent / shard["raw_file"]
+        actual = hashlib.sha256(raw.read_bytes()).hexdigest() if raw.is_file() else None
+        if actual != shard["raw_sha256"]:
+            raise ValueError("merged lockbox raw hash mismatch")
+        rows.extend(read_jsonl_gzip(raw, protocol_digest=str(manifest["protocol_digest"])))
+    if not rows:
+        raise ValueError("merged lockbox manifest has no rows")
+    provenance = {field: manifest[field] for field in ("protocol_digest", "spec_digest", "config_digest", "generator_digest", "generator_manifest_sha256", "source_commit")}
+    provenance["environment"] = rows[0]["environment"]
+    return analyse_lockbox_rows(rows, execution_mode="REGISTERED", provenance=provenance)
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--rows", required=True, type=Path)
+    parser.add_argument("--manifest", required=True, type=Path)
     parser.add_argument("--out", default=ROOT / "results" / "spade-lockbox-analysis.json", type=Path)
     args = parser.parse_args(argv)
-    rows = json.loads(args.rows.read_text(encoding="utf-8"))
-    report = analyse_lockbox_rows(rows)
+    report = analyse_merged_manifest(args.manifest)
     _atomic_json(args.out, report)
     print(_canonical_json(report))
     return 0 if report["overall_verdict"] == "PASS" else 2

@@ -837,6 +837,7 @@ def selection_payload_from_shards(
         "spec_digest": metadata["spec_digest"],
         "config_digest": metadata["config_digest"],
         "generator_digest": metadata["generator_digest"],
+        "generator_manifest_sha256": metadata["generator_manifest_sha256"],
         "development_artifacts": artifacts,
         "analysis_file": "spade-development-analysis.json",
         "analysis_sha256": analysis_sha,

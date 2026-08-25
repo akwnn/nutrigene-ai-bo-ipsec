@@ -20,6 +20,7 @@ SPEC = "e" * 64
 CONFIG = "f" * 64
 GENERATOR = "a" * 64
 SOURCE = "1" * 40
+GENERATOR_MANIFEST = "b" * 64
 
 
 def _candidate_protocol(arm_id: str, root_seed: int) -> str:
@@ -281,6 +282,15 @@ def test_frozen_development_grid_is_exact_and_common_keyed():
     }
 
 
+def test_registered_metadata_binds_the_frozen_generator_manifest():
+    root = Path(__file__).resolve().parents[1]
+    metadata = runner.registered_metadata(root)
+    manifest = root / "results" / "spade-lockbox-generator-manifest.json"
+    assert metadata["generator_manifest_sha256"] == hashlib.sha256(
+        manifest.read_bytes()
+    ).hexdigest()
+
+
 @pytest.mark.parametrize("family", runner.DEVELOPMENT_FAMILIES)
 def test_real_development_threshold_path_accepts_every_registered_family(family):
     instance_seed, campaign_seed = runner.development_campaign_key(family, 0)
@@ -341,6 +351,7 @@ def test_grid_rejects_tenth_candidate_missing_arm_and_heldout_role(complete_rows
             "spec_digest": SPEC,
             "config_digest": CONFIG,
             "generator_digest": GENERATOR,
+            "generator_manifest_sha256": GENERATOR_MANIFEST,
             "source_commit": SOURCE,
             "source_dirty": False,
         },
@@ -359,6 +370,7 @@ def test_smoke_shard_is_scratch_only_marked_and_resumable(tmp_path, monkeypatch)
         "spec_digest": SPEC,
         "config_digest": CONFIG,
         "generator_digest": GENERATOR,
+        "generator_manifest_sha256": GENERATOR_MANIFEST,
         "source_commit": SOURCE,
         "source_dirty": False,
     }
@@ -643,6 +655,7 @@ def _write_complete_shards(tmp_path: Path, rows: list[dict]) -> list[Path]:
         "spec_digest": SPEC,
         "config_digest": CONFIG,
         "generator_digest": GENERATOR,
+        "generator_manifest_sha256": GENERATOR_MANIFEST,
         "source_commit": SOURCE,
         "source_dirty": False,
     }
@@ -693,6 +706,7 @@ def test_selected_artifact_is_hash_bound_and_fail_closed(tmp_path, complete_rows
         "spec_digest": SPEC,
         "config_digest": CONFIG,
         "generator_digest": GENERATOR,
+        "generator_manifest_sha256": GENERATOR_MANIFEST,
         "source_commit": SOURCE,
         "source_dirty": False,
     }
@@ -718,6 +732,7 @@ def test_selected_artifact_is_hash_bound_and_fail_closed(tmp_path, complete_rows
     assert selected["spec_digest"] == SPEC
     assert selected["config_digest"] == CONFIG
     assert selected["generator_digest"] == GENERATOR
+    assert selected["generator_manifest_sha256"] == GENERATOR_MANIFEST
     assert len(selected["development_artifacts"]) == 5
     assert selected["selected_canonical_config"]["opening"] == 44
     assert selected["selected_canonical_config"]["policy"] == "fixed_hybrid"
@@ -757,6 +772,7 @@ def test_selection_rejects_incomplete_or_wrong_digest_manifest(tmp_path, complet
         "spec_digest": SPEC,
         "config_digest": CONFIG,
         "generator_digest": GENERATOR,
+        "generator_manifest_sha256": GENERATOR_MANIFEST,
         "source_commit": SOURCE,
         "source_dirty": False,
     }
