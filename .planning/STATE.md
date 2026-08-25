@@ -29,6 +29,13 @@ Two failures were caused by the isolated worktree lacking `.venv`; four were his
 bitwise numerical drift; three were material historical adaptive qLogEI/qLogNEI replay
 mismatches already recorded in `.planning/codebase/CONCERNS.md`.
 
+The current implementation produced 2,012 passed, 8 failed, and 2 skipped. All eight
+failures were rerun in isolation and reproduced from an archive of pre-SPADE commit
+`02a6bfa` using the same environment: one historical calibration stop-gate, four
+historical exact-float replay drifts, and three historical stochastic qLogEI/qLogNEI
+replay mismatches. They are therefore baseline reproducibility debt rather than SPADE
+regressions and are not being repaired inside the prospective study branch.
+
 ## Completed in this milestone
 
 - Task 1 deterministic seed/noise/checkpoint/replay foundations passed independent review.
@@ -68,9 +75,19 @@ mismatches already recorded in `.planning/codebase/CONCERNS.md`.
   It selected identical points to an independent dense reference on five randomized
   positive-definite cases, completed the real 16,384-candidate/2,048-reference shape in
   2.061 seconds, and passed 174 focused compatibility tests.
+- Task 7 guarded lockbox execution, manifest-driven confirmatory analysis, and the
+  fail-closed release validator passed final independent adversarial review. Hashes are
+  byte-bound in disjoint namespaces; every shard has an exact registered filename,
+  completion/count/command/provenance contract, and local family/key/arm grid; malformed
+  numeric or deeply nested JSON becomes a written FAIL report; publication is write-once
+  with the completion manifest installed last. The final relevant suite is 275 passed
+  with two pre-existing Torch deprecation warnings, and the reviewer reported no
+  Critical, Important, or Minor findings.
 
 ## Next action
 
-Execute the clean frozen development campaign grid, apply the prespecified unanimous
-leave-one-family-out selection, and implement the lockbox runner without opening lockbox
-outcomes unless a single SPADE policy is selected.
+Freeze and independently review the missing pre-lockbox map/regret power and sample-size
+rule before generating development outcomes. Then execute the clean frozen development
+campaign grid and apply the prespecified unanimous leave-one-family-out selection. Do not
+open lockbox outcomes unless exactly one SPADE policy is selected and the frozen power
+gate approves an instance prefix no larger than the 2,000 reserved keys.
