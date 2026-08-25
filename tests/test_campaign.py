@@ -81,6 +81,10 @@ def _indexed_evaluator():
     )
 
 
+def _legacy_evaluator():
+    return TorchEvaluator(Branin(), sigma_rel=0.1, sigma_add=0.01, seed=31)
+
+
 def _indexed_cfg():
     return CampaignConfig(
         d=2,
@@ -328,7 +332,15 @@ def test_pending_survives_a_save(tmp_path):
 def test_saved_state_includes_evaluator_checkpoint_when_available():
     c = Campaign(_indexed_evaluator(), _bounds(2), _indexed_cfg())
     c.initialize()
-    assert c.state_dict()["evaluator_state"] == {"next_index": 6}
+    evaluator_state = c.state_dict()["evaluator_state"]
+    assert evaluator_state == {
+        "noise_mode": "indexed",
+        "seed": 31,
+        "sigma_rel": 0.1,
+        "sigma_add": 0.01,
+        "oracle_identity": "boec.oracles.Branin:branin:d=2",
+        "next_index": 6,
+    }
 
 
 def test_saved_evaluator_state_requires_restoration_support():
@@ -336,6 +348,25 @@ def test_saved_evaluator_state_requires_restoration_support():
     c.initialize()
     with pytest.raises(TypeError, match="cannot restore evaluator state"):
         Campaign.from_state_dict(c.state_dict(), FormulaEvaluator())
+
+
+def test_campaign_rejects_checkpoint_with_inconsistent_evaluator_index():
+    c = Campaign(_indexed_evaluator(), _bounds(2), _indexed_cfg())
+    c.initialize()
+    state = c.state_dict()
+    state["evaluator_state"] = dict(state["evaluator_state"], next_index=0)
+
+    with pytest.raises(ValueError, match=r"next_index 0.*6 observed"):
+        Campaign.from_state_dict(state, _indexed_evaluator())
+
+
+def test_campaign_refuses_to_save_inconsistent_live_evaluator_index():
+    c = Campaign(_indexed_evaluator(), _bounds(2), _indexed_cfg())
+    c.initialize()
+    c.evaluator._next_index = 0
+
+    with pytest.raises(ValueError, match=r"next_index 0.*6 observed"):
+        c.state_dict()
 
 
 def test_indexed_noise_resume_matches_uninterrupted_campaign_byte_for_byte(tmp_path):
@@ -348,6 +379,25 @@ def test_indexed_noise_resume_matches_uninterrupted_campaign_byte_for_byte(tmp_p
     _advance_indexed(uninterrupted)
 
     resumed = Campaign.load(checkpoint, _indexed_evaluator())
+    _advance_indexed(resumed)
+
+    assert torch.equal(uninterrupted.train_X, resumed.train_X)
+    assert torch.equal(uninterrupted.train_Y, resumed.train_Y)
+    _assert_logs_equal(uninterrupted.logs, resumed.logs)
+    assert uninterrupted.evaluator.state_dict() == resumed.evaluator.state_dict()
+    assert _serialized(uninterrupted.state_dict()) == _serialized(resumed.state_dict())
+
+
+def test_legacy_noise_resume_matches_uninterrupted_campaign_byte_for_byte(tmp_path):
+    uninterrupted = Campaign(_legacy_evaluator(), _bounds(2), _indexed_cfg())
+    uninterrupted.initialize()
+    _advance_indexed(uninterrupted)
+
+    checkpoint = tmp_path / "legacy-mid.pt"
+    uninterrupted.save(checkpoint)
+    _advance_indexed(uninterrupted)
+
+    resumed = Campaign.load(checkpoint, _legacy_evaluator())
     _advance_indexed(resumed)
 
     assert torch.equal(uninterrupted.train_X, resumed.train_X)

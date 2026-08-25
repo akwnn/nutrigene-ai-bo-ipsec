@@ -181,23 +181,121 @@ def test_indexed_evaluator_noise_does_not_depend_on_batch_chunking(d6, adapter):
 
 @pytest.mark.parametrize("adapter", ("biphasic", "torch"))
 def test_indexed_evaluator_state_restores_the_next_observation(d6, adapter):
-    def build():
-        source = IndexedGaussianNoise(23, sigma_rel=0.1, sigma_add=0.01)
+    def build(root_seed=23, sigma_rel=0.1, sigma_add=0.01, indexed=True, instance=0):
+        source = (
+            IndexedGaussianNoise(root_seed, sigma_rel=sigma_rel, sigma_add=sigma_add)
+            if indexed
+            else None
+        )
         if adapter == "biphasic":
-            return BiphasicOracle(d6[0], noise_source=source)
-        return TorchEvaluator(HillOracle(d6[0]), noise_source=source)
+            return BiphasicOracle(
+                d6[instance],
+                sigma_rel=sigma_rel,
+                sigma_add=sigma_add,
+                seed=root_seed,
+                noise_source=source,
+            )
+        return TorchEvaluator(
+            HillOracle(d6[instance]),
+            sigma_rel=sigma_rel,
+            sigma_add=sigma_add,
+            seed=root_seed,
+            noise_source=source,
+        )
 
     X = torch.rand(5, 6, dtype=torch.double)
     original = build()
     original.evaluate(X[:2])
-    assert original.state_dict() == {"next_index": 2}
+    state = original.state_dict()
+    assert state["noise_mode"] == "indexed"
+    assert state["seed"] == 23
+    assert state["sigma_rel"] == 0.1
+    assert state["sigma_add"] == 0.01
+    assert state["oracle_identity"]
+    assert state["next_index"] == 2
 
     resumed = build()
-    resumed.load_state_dict(original.state_dict())
+    resumed.load_state_dict(state)
     expected = original.evaluate(X[2:])
     actual = resumed.evaluate(X[2:])
 
-    assert resumed.state_dict() == {"next_index": 5}
+    assert resumed.state_dict()["next_index"] == 5
+    assert all(torch.equal(a, b) for a, b in zip(expected, actual))
+
+
+@pytest.mark.parametrize("adapter", ("biphasic", "torch"))
+@pytest.mark.parametrize(
+    ("mismatch", "message"),
+    (
+        ("noise_mode", "noise_mode"),
+        ("seed", "seed"),
+        ("sigma_rel", "sigma_rel"),
+        ("sigma_add", "sigma_add"),
+        ("oracle_identity", "oracle_identity"),
+    ),
+)
+def test_indexed_evaluator_rejects_checkpoint_identity_mismatch(
+    d6, adapter, mismatch, message
+):
+    def build(*, root_seed=23, sigma_rel=0.1, sigma_add=0.01, indexed=True, instance=0):
+        source = (
+            IndexedGaussianNoise(root_seed, sigma_rel=sigma_rel, sigma_add=sigma_add)
+            if indexed
+            else None
+        )
+        if adapter == "biphasic":
+            return BiphasicOracle(
+                d6[instance],
+                sigma_rel=sigma_rel,
+                sigma_add=sigma_add,
+                seed=root_seed,
+                noise_source=source,
+            )
+        return TorchEvaluator(
+            HillOracle(d6[instance]),
+            sigma_rel=sigma_rel,
+            sigma_add=sigma_add,
+            seed=root_seed,
+            noise_source=source,
+        )
+
+    state = build().state_dict()
+    changed = {
+        "noise_mode": {"indexed": False},
+        "seed": {"root_seed": 24},
+        "sigma_rel": {"sigma_rel": 0.2},
+        "sigma_add": {"sigma_add": 0.02},
+        "oracle_identity": {"instance": 1},
+    }[mismatch]
+
+    with pytest.raises(ValueError, match=message):
+        build(**changed).load_state_dict(state)
+
+
+@pytest.mark.parametrize("adapter", ("biphasic", "torch"))
+def test_legacy_evaluator_state_restores_the_next_observation(d6, adapter):
+    def build():
+        if adapter == "biphasic":
+            return BiphasicOracle(d6[0], sigma_rel=0.1, sigma_add=0.01, seed=29)
+        return TorchEvaluator(
+            HillOracle(d6[0]), sigma_rel=0.1, sigma_add=0.01, seed=29
+        )
+
+    X = torch.rand(5, 6, dtype=torch.double)
+    original = build()
+    original.evaluate(X[:2])
+    state = original.state_dict()
+
+    assert state["noise_mode"] == "legacy"
+    assert state["next_index"] == 2
+    assert "rng_state" in state
+
+    expected = original.evaluate(X[2:])
+    resumed = build()
+    resumed.load_state_dict(state)
+    actual = resumed.evaluate(X[2:])
+
+    assert resumed.state_dict()["next_index"] == 5
     assert all(torch.equal(a, b) for a, b in zip(expected, actual))
 
 

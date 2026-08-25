@@ -57,6 +57,7 @@ patching.
 
 from __future__ import annotations
 
+import copy
 from typing import Literal
 
 import numpy as np
@@ -69,6 +70,30 @@ from boec.seedbook import IndexedGaussianNoise
 __all__ = ["BiphasicOracle", "TorchEvaluator"]
 
 YvarMode = Literal["plugin", "analytic"]
+_CHECKPOINT_IDENTITY_FIELDS = (
+    "noise_mode",
+    "seed",
+    "sigma_rel",
+    "sigma_add",
+    "oracle_identity",
+)
+
+
+def _oracle_identity(oracle: Oracle) -> str:
+    """Stable identity for rejecting checkpoints from another oracle."""
+    cls = f"{type(oracle).__module__}.{type(oracle).__qualname__}"
+    return f"{cls}:{oracle.name}:d={int(oracle.dim)}"
+
+
+def _validate_checkpoint_identity(state: dict, expected: dict) -> None:
+    for field in _CHECKPOINT_IDENTITY_FIELDS:
+        if field not in state:
+            raise ValueError(f"evaluator checkpoint is missing {field}")
+        if state[field] != expected[field]:
+            raise ValueError(
+                f"evaluator checkpoint {field} mismatch: "
+                f"saved {state[field]!r}, current {expected[field]!r}"
+            )
 
 
 def _plug_in_yvar(base: np.ndarray, sigma_rel: float, sigma_add: float) -> np.ndarray:
@@ -144,14 +169,36 @@ class TorchEvaluator:
         eps = self._rng.normal(0.0, self.sigma_rel, size=f.shape)
         eta = self._rng.normal(0.0, self.sigma_add, size=f.shape)
         y = f * (1.0 + eps) + eta
+        self._next_index += f.shape[0]
         return torch.from_numpy(y), torch.from_numpy(
             _plug_in_yvar(y, self.sigma_rel, self.sigma_add))
 
-    def state_dict(self) -> dict[str, int]:
-        return {"next_index": self._next_index}
+    def _checkpoint_identity(self) -> dict:
+        indexed = self.noise_source is not None
+        return {
+            "noise_mode": "indexed" if indexed else "legacy",
+            "seed": self.noise_source.root_seed if indexed else self.seed,
+            "sigma_rel": self.noise_source.sigma_rel if indexed else self.sigma_rel,
+            "sigma_add": self.noise_source.sigma_add if indexed else self.sigma_add,
+            "oracle_identity": _oracle_identity(self.oracle),
+        }
 
-    def load_state_dict(self, state: dict[str, int]) -> None:
-        self._next_index = int(state["next_index"])
+    def state_dict(self) -> dict:
+        state = {**self._checkpoint_identity(), "next_index": self._next_index}
+        if self.noise_source is None:
+            state["rng_state"] = copy.deepcopy(self._rng.bit_generator.state)
+        return state
+
+    def load_state_dict(self, state: dict) -> None:
+        _validate_checkpoint_identity(state, self._checkpoint_identity())
+        next_index = int(state["next_index"])
+        if next_index < 0:
+            raise ValueError(f"evaluator checkpoint next_index must be nonnegative, got {next_index}")
+        if self.noise_source is None:
+            if "rng_state" not in state:
+                raise ValueError("legacy evaluator checkpoint is missing rng_state")
+            self._rng.bit_generator.state = copy.deepcopy(state["rng_state"])
+        self._next_index = next_index
 
     def __repr__(self) -> str:  # pragma: no cover - debugging aid
         return f"TorchEvaluator({self.oracle.name}, d={self.dim}, seed={self.seed})"
@@ -265,6 +312,7 @@ class BiphasicOracle:
 
         base = y if self.yvar_mode == "plugin" else f
         yvar = np.maximum(base**2 * self.sigma_rel**2 + self.sigma_add**2, self.yvar_floor)
+        self._next_index += f.shape[0]
         return torch.from_numpy(y), torch.from_numpy(yvar)
 
     # -- the campaign loop's name for the same thing ------------------------------
@@ -272,11 +320,35 @@ class BiphasicOracle:
         """``(n, d) -> ((n, m), (n, m))``. ``boec.campaign.Evaluator``'s one method."""
         return self.observe(X)
 
-    def state_dict(self) -> dict[str, int]:
-        return {"next_index": self._next_index}
+    def _checkpoint_identity(self) -> dict:
+        indexed = self.noise_source is not None
+        return {
+            "noise_mode": "indexed" if indexed else "legacy",
+            "seed": self.noise_source.root_seed if indexed else self.seed,
+            "sigma_rel": self.noise_source.sigma_rel if indexed else self.sigma_rel,
+            "sigma_add": self.noise_source.sigma_add if indexed else self.sigma_add,
+            "oracle_identity": (
+                f"{type(self).__module__}.{type(self).__qualname__}:"
+                f"{self.instance_id}:d={self.dim}"
+            ),
+        }
 
-    def load_state_dict(self, state: dict[str, int]) -> None:
-        self._next_index = int(state["next_index"])
+    def state_dict(self) -> dict:
+        state = {**self._checkpoint_identity(), "next_index": self._next_index}
+        if self.noise_source is None:
+            state["rng_state"] = copy.deepcopy(self._rng.bit_generator.state)
+        return state
+
+    def load_state_dict(self, state: dict) -> None:
+        _validate_checkpoint_identity(state, self._checkpoint_identity())
+        next_index = int(state["next_index"])
+        if next_index < 0:
+            raise ValueError(f"evaluator checkpoint next_index must be nonnegative, got {next_index}")
+        if self.noise_source is None:
+            if "rng_state" not in state:
+                raise ValueError("legacy evaluator checkpoint is missing rng_state")
+            self._rng.bit_generator.state = copy.deepcopy(state["rng_state"])
+        self._next_index = next_index
 
     def __repr__(self) -> str:  # pragma: no cover - debugging aid
         return (

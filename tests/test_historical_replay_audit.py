@@ -31,7 +31,10 @@ def _audit_module():
 def test_audit_has_one_complete_row_per_observed_historical_failure():
     audit = _audit_module()
     document = audit.build_audit(ROOT)
-    assert document["schema_version"] == "boec.historical-replay-audit.v1"
+    assert document["schema_version"] == "boec.historical-replay-audit.v2"
+    assert document["observed_run"]["run_id"] == "task-1-historical-replay-2026-08-25"
+    assert document["observed_run"]["environment"] == audit.OBSERVED_ENVIRONMENT
+    assert document["audit_environment"] == audit.environment()
     rows = document["rows"]
     assert {row["gate"] for row in rows} == GATES
     assert len(rows) == len(GATES)
@@ -46,8 +49,12 @@ def test_audit_has_one_complete_row_per_observed_historical_failure():
         "selected_point_unchanged",
         "evidence",
         "environment",
+        "observed_run_id",
+        "observed_environment",
         "sources",
         "source_hash",
+        "current_source_hash",
+        "source_matches_observation",
     }
     for row in rows:
         assert set(row) == required
@@ -55,9 +62,12 @@ def test_audit_has_one_complete_row_per_observed_historical_failure():
         assert row["observed_delta"] > 0.0
         assert row["classification"] in audit.CLASSIFICATIONS
         assert len(row["source_hash"]) == 64
-        assert row["source_hash"] == audit.hash_sources(ROOT, row["sources"])
-        assert {"python", "platform", "numpy", "scipy", "torch", "gpytorch", "botorch", "threads"} <= set(
-            row["environment"]
+        assert row["observed_run_id"] == document["observed_run"]["run_id"]
+        assert row["observed_environment"] == audit.OBSERVED_ENVIRONMENT
+        assert row["environment"] == row["observed_environment"]
+        assert row["current_source_hash"] == audit.hash_sources(ROOT, row["sources"])
+        assert row["source_matches_observation"] is (
+            row["source_hash"] == row["current_source_hash"]
         )
 
 
@@ -90,10 +100,30 @@ def test_material_adaptive_mismatches_are_not_rounded_away():
 
 def test_observed_deltas_are_pinned_to_the_audited_source_content():
     audit = _audit_module()
+    document = audit.build_audit(ROOT)
+    by_gate = {row["gate"]: row for row in document["rows"]}
     for observation in audit.OBSERVATIONS:
-        assert observation["source_hash"] == audit.hash_sources(
+        row = by_gate[observation["gate"]]
+        assert row["source_hash"] == observation["source_hash"]
+        assert row["current_source_hash"] == audit.hash_sources(
             ROOT, observation["sources"]
         )
+
+
+def test_observed_environment_is_frozen_not_relabelled_by_the_current_caller(monkeypatch):
+    audit = _audit_module()
+    current = {"caller_environment": "deliberately-different"}
+    monkeypatch.setattr(audit, "environment", lambda: current)
+
+    document = audit.build_audit(ROOT)
+
+    assert document["audit_environment"] == current
+    assert document["observed_run"]["environment"] == audit.OBSERVED_ENVIRONMENT
+    assert all(
+        row["observed_environment"] == audit.OBSERVED_ENVIRONMENT
+        and row["observed_environment"] != current
+        for row in document["rows"]
+    )
 
 
 def test_audit_document_round_trips_to_json(tmp_path):

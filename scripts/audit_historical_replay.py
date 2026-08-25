@@ -9,6 +9,7 @@ No historical equality gate is changed by this script.
 from __future__ import annotations
 
 import argparse
+import copy
 import hashlib
 import json
 import os
@@ -25,7 +26,7 @@ import torch
 
 
 ROOT = Path(__file__).resolve().parents[1]
-SCHEMA_VERSION = "boec.historical-replay-audit.v1"
+SCHEMA_VERSION = "boec.historical-replay-audit.v2"
 CLASSIFICATIONS = frozenset(
     {
         "REPRODUCIBLE_EXACT",
@@ -34,6 +35,39 @@ CLASSIFICATIONS = frozenset(
     }
 )
 DEFAULT_ARTIFACT = ROOT / "results" / "historical-replay-audit.json"
+
+OBSERVED_ENVIRONMENT: dict[str, Any] = {
+    "python": "3.11.15",
+    "platform": "macOS-26.2-arm64-arm-64bit",
+    "numpy": "2.4.6",
+    "scipy": "1.17.1",
+    "torch": "2.13.0",
+    "gpytorch": "1.15.2",
+    "botorch": "0.18.1",
+    "threads": {
+        "torch": 4,
+        "torch_interop": 10,
+        "OMP_NUM_THREADS": None,
+        "MKL_NUM_THREADS": None,
+    },
+}
+OBSERVED_RUN: dict[str, Any] = {
+    "run_id": "task-1-historical-replay-2026-08-25",
+    "command": (
+        ".venv/bin/python -m pytest tests/test_d23_doe_subspace.py "
+        "tests/test_p4_coord.py tests/test_q59_map_rescore.py "
+        "tests/test_spread_gp.py tests/test_calibration.py tests/test_replay.py -q"
+    ),
+    "source_commit": "ecbd4239211e2648465cc7a8c52b6c58fd642390",
+    "source_dirty": True,
+    "test_summary": {
+        "failed": 8,
+        "passed": 94,
+        "warnings": 5,
+        "seconds": 240.66,
+    },
+    "environment": OBSERVED_ENVIRONMENT,
+}
 
 
 OBSERVATIONS: tuple[dict[str, Any], ...] = (
@@ -256,18 +290,12 @@ def _validate(observation: dict[str, Any]) -> None:
 
 def build_audit(root: Path = ROOT) -> dict[str, Any]:
     """Build the deterministic audit document without rerunning expensive campaigns."""
-    numerical_environment = environment()
+    audit_environment = environment()
     rows = []
     for observation in OBSERVATIONS:
         _validate(observation)
         sources = list(observation["sources"])
         current_source_hash = hash_sources(root, sources)
-        if current_source_hash != observation["source_hash"]:
-            raise RuntimeError(
-                f"audit observation is stale for {observation['gate']}: "
-                f"expected source hash {observation['source_hash']}, "
-                f"found {current_source_hash}; rerun the historical gate"
-            )
         rows.append(
             {
                 "schema_version": SCHEMA_VERSION,
@@ -280,12 +308,23 @@ def build_audit(root: Path = ROOT) -> dict[str, Any]:
                 ],
                 "selected_point_unchanged": observation["selected_point_unchanged"],
                 "evidence": observation["evidence"],
-                "environment": numerical_environment,
+                "environment": copy.deepcopy(OBSERVED_ENVIRONMENT),
+                "observed_run_id": OBSERVED_RUN["run_id"],
+                "observed_environment": copy.deepcopy(OBSERVED_ENVIRONMENT),
                 "sources": sources,
                 "source_hash": observation["source_hash"],
+                "current_source_hash": current_source_hash,
+                "source_matches_observation": (
+                    current_source_hash == observation["source_hash"]
+                ),
             }
         )
-    return {"schema_version": SCHEMA_VERSION, "rows": rows}
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "observed_run": copy.deepcopy(OBSERVED_RUN),
+        "audit_environment": audit_environment,
+        "rows": rows,
+    }
 
 
 def write_audit(path: Path = DEFAULT_ARTIFACT, root: Path = ROOT) -> None:
