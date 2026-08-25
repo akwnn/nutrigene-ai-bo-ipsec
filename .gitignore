@@ -219,6 +219,14 @@ COMMIT_MSG.txt
 !results/f2-error-volumes.json
 !results/f3-draw-sweep.json
 
+# Frozen SPADE joint-protocol development evidence. Raw shards remain split and hashed;
+# the small analysis/selection artifacts bind their exact inputs before lockbox access.
+!results/spade-development-*.jsonl.gz
+!results/spade-development-*.jsonl.gz.sha256
+!results/spade-development-*.jsonl.gz.manifest.json
+!results/spade-development-analysis.json
+!results/spade-selected-protocol.json
+
 # Requested by the workers that produced them; results/* ignores by default.
 # f2-ce-error-volumes: error volumes for the CONSERVATIVE-ESTIMATE sets, zero new
 # campaigns, derived from k6b's ce_false_in_*/ce_vol_*/true_frac_above. It was
