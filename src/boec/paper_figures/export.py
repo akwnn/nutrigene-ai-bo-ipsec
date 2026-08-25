@@ -14,9 +14,9 @@ from PIL import Image, ImageDraw, ImageOps
 
 from .core import FigureBundle, assert_no_prohibited_content, sha256_file
 from .evidence import (
-    build_figure2_data,
-    build_figure3_data,
-    build_figure4_data,
+    build_certification_data,
+    build_spade_evidence_data,
+    build_terminal_rule_data,
     source_paths,
 )
 from .figure1 import build_figure1
@@ -218,9 +218,9 @@ def build_all(results_dir: Path, output_dir: Path, preset_name: str = "portable"
     if missing := [path for path in evidence_paths if not path.exists()]:
         raise FileNotFoundError(f"required evidence source is missing: {missing[0]}")
     source_hashes = {str(path): sha256_file(path) for path in evidence_paths}
-    data2 = build_figure2_data(results_dir)
-    data3 = build_figure3_data(results_dir)
-    data4 = build_figure4_data(results_dir)
+    data2 = build_terminal_rule_data(results_dir)
+    data3 = build_spade_evidence_data(results_dir)
+    data4 = build_certification_data(results_dir)
     # Build, export, and close one figure at a time; this keeps failures from
     # leaking open GUI/backend figures into subsequent builds.
     figures = {}

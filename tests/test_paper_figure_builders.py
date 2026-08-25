@@ -14,7 +14,11 @@ from matplotlib.text import Text
 import numpy as np
 import pytest
 
-from boec.paper_figures.evidence import build_figure2_data, build_figure3_data, build_figure4_data
+from boec.paper_figures.evidence import (
+    build_certification_data,
+    build_spade_evidence_data,
+    build_terminal_rule_data,
+)
 from boec.paper_figures.figure1 import build_figure1
 from boec.paper_figures.figure2 import build_figure2
 from boec.paper_figures.figure3 import build_figure3
@@ -26,7 +30,7 @@ from boec.paper_figures.style import get_preset
 def test_figure4_uses_math_font_for_symbols_missing_from_charis():
     with warnings.catch_warnings(record=True) as caught:
         warnings.simplefilter("always")
-        bundle = build_figure4(build_figure4_data(Path("results")), get_preset("portable"))
+        bundle = build_figure4(build_certification_data(Path("results")), get_preset("portable"))
         bundle.figure.canvas.draw()
 
     missing_glyphs = [
@@ -103,7 +107,7 @@ def test_figure1_includes_editorial_caption_and_long_description():
 
 
 def test_figure2_encodes_same_campaign_rules_contrasts_and_decomposition():
-    data = build_figure2_data(Path("results"))
+    data = build_terminal_rule_data(Path("results"))
     bundle = build_figure2(data, get_preset("portable"))
 
     assert set(bundle.panel_data) == {"A", "B", "C"}
@@ -117,7 +121,7 @@ def test_figure2_encodes_same_campaign_rules_contrasts_and_decomposition():
 
 
 def test_figure2_rendered_text_states_terminal_rule_semantics():
-    bundle = build_figure2(build_figure2_data(Path("results")), get_preset("portable"))
+    bundle = build_figure2(build_terminal_rule_data(Path("results")), get_preset("portable"))
     bundle.figure.canvas.draw()
     rendered_text = {
         " ".join(text.get_text().split())
@@ -145,7 +149,7 @@ def test_figure2_rendered_text_states_terminal_rule_semantics():
 
 @pytest.mark.parametrize("preset_name", ["portable", "rsc", "nature", "plos"])
 def test_figure2_text_stays_inside_the_rendered_figure_for_every_preset(preset_name):
-    bundle = build_figure2(build_figure2_data(Path("results")), get_preset(preset_name))
+    bundle = build_figure2(build_terminal_rule_data(Path("results")), get_preset(preset_name))
     figure = bundle.figure
     figure.canvas.draw()
     renderer = figure.canvas.get_renderer()
@@ -161,7 +165,7 @@ def test_figure2_text_stays_inside_the_rendered_figure_for_every_preset(preset_n
 
 
 def test_figure3_separates_point_map_and_cost_without_boundary_evidence():
-    data = build_figure3_data(Path("results"))
+    data = build_spade_evidence_data(Path("results"))
     bundle = build_figure3(data, get_preset("portable"))
 
     assert bundle.panel_data["A"]["terminal_rule"] == "P"
@@ -180,7 +184,7 @@ def test_figure3_separates_point_map_and_cost_without_boundary_evidence():
 
 
 def test_figure3_rendered_panels_preserve_pareto_contrasts_costs_and_descriptive_status():
-    data = build_figure3_data(Path("results"))
+    data = build_spade_evidence_data(Path("results"))
     bundle = build_figure3(data, get_preset("portable"))
     figure = bundle.figure
     figure.canvas.draw()
@@ -266,7 +270,7 @@ def test_figure3_rendered_panels_preserve_pareto_contrasts_costs_and_descriptive
 
 @pytest.mark.parametrize("preset_name", ["portable", "rsc", "nature", "plos"])
 def test_figure3_rendered_text_is_contained_in_each_panel_for_every_preset(preset_name):
-    bundle = build_figure3(build_figure3_data(Path("results")), get_preset(preset_name))
+    bundle = build_figure3(build_spade_evidence_data(Path("results")), get_preset(preset_name))
     figure = bundle.figure
     figure.canvas.draw()
     renderer = figure.canvas.get_renderer()
@@ -283,7 +287,7 @@ def test_figure3_rendered_text_is_contained_in_each_panel_for_every_preset(prese
 
 
 def test_figure3_contrast_labels_follow_ids_not_input_order():
-    data = deepcopy(build_figure3_data(Path("results")))
+    data = deepcopy(build_spade_evidence_data(Path("results")))
     data["contrasts"].reverse()
     bundle = build_figure3(data, get_preset("portable"))
     panel_b = bundle.figure.axes[1]
@@ -299,19 +303,19 @@ def test_figure3_contrast_labels_follow_ids_not_input_order():
 
 
 def test_figure3_rejects_contrasts_without_expected_ids_or_common_sesoi():
-    missing = deepcopy(build_figure3_data(Path("results")))
+    missing = deepcopy(build_spade_evidence_data(Path("results")))
     missing["contrasts"] = missing["contrasts"][:2]
     with pytest.raises(ValueError, match="expected contrast IDs"):
         build_figure3(missing, get_preset("portable"))
 
-    mismatched_sesoi = deepcopy(build_figure3_data(Path("results")))
+    mismatched_sesoi = deepcopy(build_spade_evidence_data(Path("results")))
     mismatched_sesoi["contrasts"][0]["sesoi"] = 0.01
     with pytest.raises(ValueError, match="common SESOI"):
         build_figure3(mismatched_sesoi, get_preset("portable"))
 
 
 def test_figure4_keeps_calibration_containment_and_answer_rate_distinct():
-    data = build_figure4_data(Path("results"))
+    data = build_certification_data(Path("results"))
     bundle = build_figure4(data, get_preset("portable"))
 
     assert set(bundle.panel_data) == {"A", "B", "C", "D"}
@@ -329,7 +333,7 @@ def test_figure4_keeps_calibration_containment_and_answer_rate_distinct():
 
 @pytest.mark.parametrize("preset_name", ["portable", "rsc", "nature", "plos"])
 def test_figure4_rendered_panels_keep_exact_denominators_and_certification_states_distinct(preset_name):
-    data = build_figure4_data(Path("results"))
+    data = build_certification_data(Path("results"))
     preset = get_preset(preset_name)
     bundle = build_figure4(data, preset)
     figure = bundle.figure
@@ -427,7 +431,7 @@ def test_figure4_rendered_panels_keep_exact_denominators_and_certification_state
 
 @pytest.mark.parametrize("preset_name", ["portable", "rsc", "nature", "plos"])
 def test_figure4_declined_certification_labels_stay_inside_their_containment_panels(preset_name):
-    bundle = build_figure4(build_figure4_data(Path("results")), get_preset(preset_name))
+    bundle = build_figure4(build_certification_data(Path("results")), get_preset(preset_name))
     figure = bundle.figure
     figure.canvas.draw()
     renderer = figure.canvas.get_renderer()
@@ -446,7 +450,7 @@ def test_figure4_declined_certification_labels_stay_inside_their_containment_pan
 
 @pytest.mark.parametrize("preset_name", ["portable", "rsc", "nature", "plos"])
 def test_figure4_rendered_text_stays_inside_the_figure_for_every_preset(preset_name):
-    bundle = build_figure4(build_figure4_data(Path("results")), get_preset(preset_name))
+    bundle = build_figure4(build_certification_data(Path("results")), get_preset(preset_name))
     figure = bundle.figure
     figure.canvas.draw()
     renderer = figure.canvas.get_renderer()

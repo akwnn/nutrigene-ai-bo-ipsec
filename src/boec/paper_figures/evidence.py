@@ -10,11 +10,11 @@ from scipy.stats import beta
 from .core import assert_no_prohibited_content, load_json, require_keys
 
 
-FIGURE2_RULE_ARMS = ("doe", "qlogei", "qlognei", "versionb")
-FIGURE2_DECOMPOSITION_ARMS = ("doe", "qlognei", "lhs", "sobol")
-FIGURE3_ARMS = ("doe", "lhs", "sobol", "qlogei", "qlognei", "spade_cf_m0")
-FIGURE3_HARTMANN_CONDITIONS = ("hartmann6-d6-s0.25", "hartmann6-d8-s0.25")
-FIGURE4_HILL_CELL_IDS = frozenset(
+TERMINAL_RULE_ARMS = ("doe", "qlogei", "qlognei", "versionb")
+TERMINAL_DECOMPOSITION_ARMS = ("doe", "qlognei", "lhs", "sobol")
+SPADE_EVIDENCE_ARMS = ("doe", "lhs", "sobol", "qlogei", "qlognei", "spade_cf_m0")
+SPADE_HARTMANN_CONDITIONS = ("hartmann6-d6-s0.25", "hartmann6-d8-s0.25")
+CERTIFICATION_HILL_CELL_IDS = frozenset(
     {
         "spade_cf_m0|hill-d6-s0.1|tf0.25|g0.5|a0.8",
         "spade_cf_m0|hill-d6-s0.1|tf0.25|g0.5|a0.95",
@@ -24,7 +24,7 @@ FIGURE4_HILL_CELL_IDS = frozenset(
         "spade_cf_m0|hill-d6-s0.25|tf0.25|g0.5|a0.95",
     }
 )
-FIGURE4_HILL_CELL_SPECS = {
+CERTIFICATION_HILL_CELL_SPECS = {
     "spade_cf_m0|hill-d6-s0.1|tf0.25|g0.5|a0.8": ("hill-d6-s0.1", 0.25, 0.5, 0.8),
     "spade_cf_m0|hill-d6-s0.1|tf0.25|g0.5|a0.95": ("hill-d6-s0.1", 0.25, 0.5, 0.95),
     "spade_cf_m0|hill-d6-s0.1|tf0.25|g0.95|a0.8": ("hill-d6-s0.1", 0.25, 0.95, 0.8),
@@ -122,7 +122,7 @@ def source_paths(results_dir: Path) -> tuple[Path, ...]:
     return tuple(Path(results_dir) / name for name in names)
 
 
-def build_figure2_data(results_dir: Path) -> dict[str, Any]:
+def build_terminal_rule_data(results_dir: Path) -> dict[str, Any]:
     terminal_source, analysis_source, oracle_source = (
         "fix1-terminal-rule.json", "fix1-analysis.json", "step0-oracle-best.json"
     )
@@ -141,7 +141,7 @@ def build_figure2_data(results_dir: Path) -> dict[str, Any]:
         _record(row, {"arm"}, analysis_source, f"record {index}")
         _string(row["arm"], f"{_context(analysis_source, f'record {index}')}.arm")
     per_arm: dict[str, dict[str, Any]] = {}
-    for arm in FIGURE2_RULE_ARMS:
+    for arm in TERMINAL_RULE_ARMS:
         index, row = _exactly_one(((i, value) for i, value in enumerate(analysis_rows) if value["arm"] == arm), analysis_source, f"selected arm {arm}")
         label = f"record {index} ({arm})"
         _record(row, {"rounds", "n", "mean_rule_a", "mean_rule_p", "delta_p_minus_a"}, analysis_source, label)
@@ -161,13 +161,13 @@ def build_figure2_data(results_dir: Path) -> dict[str, Any]:
         per_arm[arm] = row
 
     decomposition_counts: dict[str, int] = {}
-    for arm in FIGURE2_DECOMPOSITION_ARMS:
+    for arm in TERMINAL_DECOMPOSITION_ARMS:
         index, row = _exactly_one(((i, value) for i, value in enumerate(analysis_rows) if value["arm"] == arm), analysis_source, f"decomposition arm {arm}")
         label = f"record {index} ({arm})"
         _record(row, {"n"}, analysis_source, label)
         decomposition_counts[arm] = _count(row["n"], f"{_context(analysis_source, label)}.n", positive=True)
 
-    selected_terminal: dict[str, list[dict[str, Any]]] = {arm: [] for arm in FIGURE2_RULE_ARMS}
+    selected_terminal: dict[str, list[dict[str, Any]]] = {arm: [] for arm in TERMINAL_RULE_ARMS}
     for index, row in enumerate(terminal_rows):
         _record(row, {"arm"}, terminal_source, f"record {index}")
         arm = _string(row["arm"], f"{_context(terminal_source, f'record {index}')}.arm")
@@ -184,7 +184,7 @@ def build_figure2_data(results_dir: Path) -> dict[str, Any]:
         if not np.allclose((raw_a, raw_p), (per_arm[arm]["mean_rule_a"], per_arm[arm]["mean_rule_p"]), atol=1e-12):
             raise ValueError(f"{terminal_source} selected arm {arm}: raw rows do not reconcile with analysis")
 
-    grouped: dict[str, list[dict[str, Any]]] = {arm: [] for arm in FIGURE2_DECOMPOSITION_ARMS}
+    grouped: dict[str, list[dict[str, Any]]] = {arm: [] for arm in TERMINAL_DECOMPOSITION_ARMS}
     for index, row in enumerate(oracle_rows):
         _record(row, {"arm"}, oracle_source, f"record {index}")
         arm = _string(row["arm"], f"{_context(oracle_source, f'record {index}')}.arm")
@@ -207,15 +207,15 @@ def build_figure2_data(results_dir: Path) -> dict[str, Any]:
 
     output = {
         "condition": "hill-d6-s0.25",
-        "rule_means": [{"arm": arm, "rule_a": per_arm[arm]["mean_rule_a"], "rule_p": per_arm[arm]["mean_rule_p"], "rounds": per_arm[arm]["rounds"], "n": per_arm[arm]["n"]} for arm in FIGURE2_RULE_ARMS],
-        "paired_rule_contrasts": [{"arm": arm, "mean": per_arm[arm]["delta_p_minus_a"]["mean"], "lo": per_arm[arm]["delta_p_minus_a"]["lo"], "hi": per_arm[arm]["delta_p_minus_a"]["hi"], "n": per_arm[arm]["delta_p_minus_a"]["n"]} for arm in FIGURE2_RULE_ARMS],
+        "rule_means": [{"arm": arm, "rule_a": per_arm[arm]["mean_rule_a"], "rule_p": per_arm[arm]["mean_rule_p"], "rounds": per_arm[arm]["rounds"], "n": per_arm[arm]["n"]} for arm in TERMINAL_RULE_ARMS],
+        "paired_rule_contrasts": [{"arm": arm, "mean": per_arm[arm]["delta_p_minus_a"]["mean"], "lo": per_arm[arm]["delta_p_minus_a"]["lo"], "hi": per_arm[arm]["delta_p_minus_a"]["hi"], "n": per_arm[arm]["delta_p_minus_a"]["n"]} for arm in TERMINAL_RULE_ARMS],
         "decomposition": decomposition, "unit": unit,
     }
     assert_no_prohibited_content(output)
     return output
 
 
-def build_figure3_data(results_dir: Path) -> dict[str, Any]:
+def build_spade_evidence_data(results_dir: Path) -> dict[str, Any]:
     pareto_source, ledger_source = "final-spade-regret-pareto.json", "final-spade-kill-ledger.json"
     pareto = load_json(Path(results_dir) / pareto_source)
     ledger = load_json(Path(results_dir) / ledger_source)
@@ -226,7 +226,7 @@ def build_figure3_data(results_dir: Path) -> dict[str, Any]:
         _string(row["condition"], f"{_context(pareto_source, f'record {index}')}.condition")
 
     targets: list[dict[str, Any]] = []
-    for arm in FIGURE3_ARMS:
+    for arm in SPADE_EVIDENCE_ARMS:
         index, row = _exactly_one(((i, value) for i, value in enumerate(rows) if value["condition"] == "hill-d6-s0.1" and value["arm"] == arm), pareto_source, f"target arm {arm}")
         _pareto_row(row, pareto_source, index)
         targets.append(row)
@@ -251,8 +251,8 @@ def build_figure3_data(results_dir: Path) -> dict[str, Any]:
         ledger_rows[key] = row
 
     hartmann = []
-    for condition in FIGURE3_HARTMANN_CONDITIONS:
-        for arm in FIGURE3_ARMS:
+    for condition in SPADE_HARTMANN_CONDITIONS:
+        for arm in SPADE_EVIDENCE_ARMS:
             index, row = _exactly_one(((i, value) for i, value in enumerate(rows) if value["condition"] == condition and value["arm"] == arm), pareto_source, f"Hartmann condition {condition} arm {arm}")
             _pareto_row(row, pareto_source, index)
             hartmann.append({"arm": row["arm"], "condition": row["condition"], "map_error": row["symmetric_difference"], "regret_p": row["regret"]["P"], "rounds": row["rounds"], "wells": row["wells"], "evidence_stage": "descriptive; raw-row intervals unavailable"})
@@ -281,7 +281,7 @@ def _clopper_pearson(x: int, n: int, level: float = 0.95) -> tuple[float, float]
     return lo, hi
 
 
-def build_figure4_data(results_dir: Path) -> dict[str, Any]:
+def build_certification_data(results_dir: Path) -> dict[str, Any]:
     murphy_source, certificate_source = "p7-murphy.json", "final-spade-certificate.json"
     predictions_source, families_source = "p8-predictions.json", "p8-certificate-families.json"
     murphy = load_json(Path(results_dir) / murphy_source)
@@ -322,18 +322,18 @@ def build_figure4_data(results_dir: Path) -> dict[str, Any]:
         _probability(cell["alpha"], f"{_context(certificate_source, label)}.alpha")
         if not isinstance(cell["infeasible"], bool):
             raise ValueError(f"{_context(certificate_source, label)}.infeasible: expected a boolean")
-    missing = sorted(FIGURE4_HILL_CELL_IDS - set(by_id))
+    missing = sorted(CERTIFICATION_HILL_CELL_IDS - set(by_id))
     if missing:
         raise ValueError(f"{certificate_source}: missing selected cell IDs {missing}")
-    unexpected = [cell_id for cell_id, cell in by_id.items() if cell["arm"] == "spade_cf_m0" and cell["condition"].startswith("hill-") and cell["tau_frac"] == 0.25 and cell["gamma"] in {0.5, 0.95} and cell["alpha"] in {0.8, 0.95} and not cell["infeasible"] and cell_id not in FIGURE4_HILL_CELL_IDS]
+    unexpected = [cell_id for cell_id, cell in by_id.items() if cell["arm"] == "spade_cf_m0" and cell["condition"].startswith("hill-") and cell["tau_frac"] == 0.25 and cell["gamma"] in {0.5, 0.95} and cell["alpha"] in {0.8, 0.95} and not cell["infeasible"] and cell_id not in CERTIFICATION_HILL_CELL_IDS]
     if unexpected:
         raise ValueError(f"{certificate_source}: unexpected selected cell IDs {sorted(unexpected)}")
 
     hill_containment = []
-    for cell_id in sorted(FIGURE4_HILL_CELL_IDS):
+    for cell_id in sorted(CERTIFICATION_HILL_CELL_IDS):
         cell = by_id[cell_id]
         label = f"cell {cell_id}"
-        expected_condition, expected_tau_frac, expected_gamma, expected_alpha = FIGURE4_HILL_CELL_SPECS[cell_id]
+        expected_condition, expected_tau_frac, expected_gamma, expected_alpha = CERTIFICATION_HILL_CELL_SPECS[cell_id]
         expected_fields = {
             "arm": "spade_cf_m0",
             "condition": expected_condition,
