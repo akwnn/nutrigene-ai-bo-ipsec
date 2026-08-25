@@ -3,12 +3,14 @@ from __future__ import annotations
 import copy
 import hashlib
 import json
+import subprocess
 from pathlib import Path
 
 import pytest
 
 from boec.spade import SpadeConfig
 from boec.spade_study import REGISTERED_SCORING_SETTINGS, write_jsonl_gzip
+from boec.seedbook import derive_seed
 from scripts import run_spade_development as runner
 from scripts import select_spade_protocol as selector
 
@@ -29,6 +31,12 @@ def _candidate_protocol(arm_id: str, root_seed: int) -> str:
     ).protocol_digest
 
 
+def _identity_digest(payload: object) -> str:
+    return hashlib.sha256(
+        json.dumps(payload, sort_keys=True, separators=(",", ":")).encode()
+    ).hexdigest()
+
+
 def _row(
     family: str,
     key_index: int,
@@ -41,12 +49,17 @@ def _row(
     registered: bool = True,
 ) -> dict:
     instance_seed, campaign_seed = runner.development_campaign_key(family, key_index)
-    root_seed = 10_000 + key_index
+    registered_seed_identity = runner.development_seed_identity(
+        family=family,
+        instance_seed=instance_seed,
+        campaign_seed=campaign_seed,
+    )
+    root_seed = registered_seed_identity["root"]
     arm = "spade" if arm_id.startswith("spade-") else arm_id
     arm_protocol = (
         _candidate_protocol(arm_id, root_seed)
         if arm == "spade"
-        else ("b" if arm == "sobol48" else "c") * 64
+        else runner.comparator_protocol_digest(arm, root_seed=root_seed)
     )
     run_digest = hashlib.sha256(
         f"{family}|{key_index}|{arm_id}|{root_seed}".encode()
@@ -61,6 +74,17 @@ def _row(
     settings_digest = (
         REGISTERED_SCORING_SETTINGS.digest if registered else "0" * 64
     )
+    scoring_seed = registered_seed_identity["scoring"]
+    terminal_grid_seed = derive_seed(scoring_seed, "terminal_rule_p_grid")
+    map_grid_seed = derive_seed(scoring_seed, "probability_map_grid")
+    certificate_grid_seed = derive_seed(scoring_seed, "certificate_grid")
+    certificate_draw_seed = derive_seed(scoring_seed, "certificate_joint_draws")
+    terminal_fit_seed = derive_seed(
+        scoring_seed,
+        "score_terminal_common_gp",
+        run_digest,
+        settings_digest,
+    )
     execution_mode = "REGISTERED" if registered else "TEST_ONLY"
     score = {
         "schema": "boec-spade-score-v1",
@@ -73,13 +97,13 @@ def _row(
         "execution_mode": execution_mode,
         "scoring_settings_digest": settings_digest,
         "threshold_record_digest": "2" * 64,
-        "scoring_seed": 4,
-        "terminal_fit_seed": 5,
+        "scoring_seed": scoring_seed,
+        "terminal_fit_seed": terminal_fit_seed,
         "terminal_fit_restarts": 4 if registered else 1,
-        "terminal_grid_seed": 6,
-        "map_grid_seed": 7,
-        "certificate_grid_seed": 8,
-        "certificate_draw_seed": 9,
+        "terminal_grid_seed": terminal_grid_seed,
+        "map_grid_seed": map_grid_seed,
+        "certificate_grid_seed": certificate_grid_seed,
+        "certificate_draw_seed": certificate_draw_seed,
         "decision_digest": "3" * 64,
         "tau": 0.5,
         "sigma_rel": 0.1,
@@ -102,6 +126,35 @@ def _row(
         "certificate_empirical_containment": contained if answer else None,
         "certificate_selection_draws": selection_draws,
         "certificate_evaluation_draws": evaluation_draws,
+    }
+    derived_seeds = {
+        "noise": registered_seed_identity["noise"],
+        "threshold": registered_seed_identity["threshold"],
+        "scoring": scoring_seed,
+        "opening_design": derive_seed(root_seed, "opening_design"),
+        "candidate_menu": derive_seed(root_seed, "adaptive_candidate_menu"),
+        "ivr_reference": derive_seed(root_seed, "ivr_reference_grid"),
+        "terminal_grid": terminal_grid_seed,
+        "map_grid": map_grid_seed,
+        "certificate_grid": certificate_grid_seed,
+        "certificate_draws": certificate_draw_seed,
+    }
+    candidate_menu_contract = {
+        "schema": "boec-candidate-menu-contract-v1",
+        "design": "scrambled_sobol",
+        "dimension": 6,
+        "size": 16_384 if registered else 256,
+        "seed": derived_seeds["candidate_menu"],
+    }
+    scorer_contract = {
+        "schema": "boec-scorer-contract-v1",
+        "scoring_seed": scoring_seed,
+        "settings_digest": settings_digest,
+        "threshold_record_digest": score["threshold_record_digest"],
+        "terminal_grid_seed": terminal_grid_seed,
+        "map_grid_seed": map_grid_seed,
+        "certificate_grid_seed": certificate_grid_seed,
+        "certificate_draw_seed": certificate_draw_seed,
     }
     return {
         "schema": "boec-spade-study-row-v1",
@@ -144,12 +197,15 @@ def _row(
             "spec": SPEC,
             "config": CONFIG,
             "generator": GENERATOR,
+            "seed_contract": _identity_digest(derived_seeds),
+            "candidate_menu_contract": _identity_digest(candidate_menu_contract),
+            "scorer_contract": _identity_digest(scorer_contract),
         },
         "family": family,
         "instance_seed": instance_seed,
         "campaign_seed": campaign_seed,
         "root_seed": root_seed,
-        "derived_seeds": {"noise": 2, "threshold": 3, "scoring": 4},
+        "derived_seeds": derived_seeds,
         "arm": arm,
         "budget": 48,
         "rounds": rounds,
@@ -306,7 +362,11 @@ def test_smoke_shard_is_scratch_only_marked_and_resumable(tmp_path, monkeypatch)
             metadata=metadata,
             repo_root=tmp_path / "repo",
         )
-    assert len(runner.read_shard_rows(output, PROTOCOL)) == 5
+    checkpoint = runner.read_resume_checkpoint(
+        runner.resume_checkpoint_path(output), protocol_digest=PROTOCOL
+    )
+    assert checkpoint["row_count"] == 5
+    assert not output.exists()
 
     monkeypatch.setattr(
         runner,
@@ -327,6 +387,20 @@ def test_smoke_shard_is_scratch_only_marked_and_resumable(tmp_path, monkeypatch)
     assert manifest["status"] == "SMOKE"
     assert manifest["complete"] is True
     assert manifest["row_count"] == 22
+
+    rows = runner.read_shard_rows(output, PROTOCOL)
+    rows[0]["scores"]["map_loss"] = 0.123
+    write_jsonl_gzip(output, rows, protocol_digest=PROTOCOL)
+    with pytest.raises(ValueError, match="expected raw|resume|SHA-256"):
+        runner.run_development_shard(
+            family="ackley",
+            start=0,
+            stop=2,
+            output=output,
+            smoke=True,
+            metadata=metadata,
+            repo_root=tmp_path / "repo",
+        )
 
     results = tmp_path / "repo" / "results"
     results.mkdir(parents=True)
@@ -352,13 +426,144 @@ def test_nested_lofo_selection_records_every_gate_and_tie(complete_rows):
     )
     assert all(len(fold["training_families"]) == 4 for fold in analysis["lofo_folds"])
     trace = analysis["selection_trace"]
-    assert set(trace) == {"step1", "step2", "step3", "step4"}
-    assert trace["step4"]["policy_order"] == [
+    assert trace["all_five_refit_diagnostic"]["trace"]["step4"]["policy_order"] == [
         "fixed_hybrid",
         "validity_gated",
         "staged",
     ]
     assert set(analysis["candidates"]) == set(runner.CANDIDATE_ARM_IDS)
+    assert analysis["selection_trace"]["rule"] == "unanimous_lofo_consensus"
+    assert analysis["selection_trace"]["unanimous"] is True
+
+
+def test_lofo_disagreement_returns_no_selection_even_when_full_grid_has_winner(complete_rows):
+    rows = copy.deepcopy(complete_rows)
+    candidate_a = "spade-o44-fixed_hybrid"
+    candidate_b = "spade-o44-validity_gated"
+    for row in rows:
+        arm_id = selector.development_arm_id(row)
+        if arm_id == "sobol48":
+            row["scores"]["map_loss"] = 0.40
+        elif arm_id == candidate_a:
+            row["scores"]["map_loss"] = 0.60 if row["family"] == "rosenbrock" else 0.10
+        elif arm_id == candidate_b:
+            row["scores"]["map_loss"] = 0.40
+        elif row["arm"] == "spade":
+            row["scores"]["map_loss"] = 0.80
+    analysis = selector.analyse_development(rows, protocol_digest=PROTOCOL)
+    winners = {fold["selected_candidate"] for fold in analysis["lofo_folds"]}
+    assert winners == {candidate_a, candidate_b}
+    assert analysis["status"] == "NO_SELECTION"
+    assert analysis["selected_candidate"] is None
+    assert analysis["selection_trace"]["unanimous"] is False
+    assert "unanimous" in analysis["selection_trace"]["rationale"]
+
+
+def test_all_eleven_arms_must_share_seed_and_scoring_identity(complete_rows):
+    for field, value in (
+        ("root_seed", 999_999),
+        ("noise", 999_998),
+        ("candidate_menu", 999_997),
+        ("scoring", 999_996),
+    ):
+        rows = copy.deepcopy(complete_rows)
+        target = next(
+            row
+            for row in rows
+            if row["family"] == "ackley"
+            and row["campaign_seed"] == 0
+            and selector.development_arm_id(row) == "sobol48"
+        )
+        if field == "root_seed":
+            target[field] = value
+        else:
+            target["derived_seeds"][field] = value
+        with pytest.raises(ValueError, match="matched|seed|identity|protocol|comparator"):
+            selector.validate_development_grid(rows, protocol_digest=PROTOCOL)
+
+    rows = copy.deepcopy(complete_rows)
+    target = next(
+        row
+        for row in rows
+        if row["family"] == "levy"
+        and row["campaign_seed"] == 2
+        and selector.development_arm_id(row) == "qlognei48"
+    )
+    target["scores"]["scoring_seed"] += 1
+    with pytest.raises(ValueError, match="scor|seed|identity"):
+        selector.validate_development_grid(rows, protocol_digest=PROTOCOL)
+
+    rows = copy.deepcopy(complete_rows)
+    target = next(
+        row for row in rows
+        if row["family"] == "ackley"
+        and row["campaign_seed"] == 1
+        and selector.development_arm_id(row) == "qlognei48"
+    )
+    target["arm_protocol_digest"] = "0" * 64
+    target["scores"]["protocol_digest"] = "0" * 64
+    target["campaign_key"]["arm_protocol_digest"] = "0" * 64
+    with pytest.raises(ValueError, match="comparator|protocol|identity"):
+        selector.validate_development_grid(rows, protocol_digest=PROTOCOL)
+
+    for contract in ("seed_contract", "candidate_menu_contract", "scorer_contract"):
+        rows = copy.deepcopy(complete_rows)
+        target = next(
+            row for row in rows
+            if row["family"] == "hartmann6"
+            and row["campaign_seed"] == 3
+            and selector.development_arm_id(row) == "sobol48"
+        )
+        target["parent_artifacts"][contract] = "0" * 64
+        with pytest.raises(ValueError, match="contract|digest|identity"):
+            selector.validate_development_grid(rows, protocol_digest=PROTOCOL)
+
+    rows = copy.deepcopy(complete_rows)
+    group = [
+        row for row in rows
+        if row["family"] == "rosenbrock" and row["campaign_seed"] == 4
+    ]
+    assert len(group) == 11
+    for row in group:
+        row["derived_seeds"]["noise"] = 999_995
+        row["parent_artifacts"]["seed_contract"] = runner.seed_contract_digest(
+            row["derived_seeds"]
+        )
+    with pytest.raises(ValueError, match="registered|noise|seed identity"):
+        selector.validate_development_grid(rows, protocol_digest=PROTOCOL)
+
+
+@pytest.mark.parametrize(
+    ("field", "bad"),
+    [
+        ("map_loss", -0.1),
+        ("map_loss", float("nan")),
+        ("regret_rule_p", -0.1),
+        ("regret_rule_p", float("inf")),
+        ("certificate_nonempty", 1),
+        ("certificate_empirical_containment", 1),
+    ],
+)
+def test_direct_selection_metrics_are_finite_typed_and_in_range(complete_rows, field, bad):
+    rows = copy.deepcopy(complete_rows)
+    rows[0]["scores"][field] = bad
+    with pytest.raises(ValueError, match="finite|range|boolean|containment|metric"):
+        selector.analyse_development(rows, protocol_digest=PROTOCOL)
+
+
+def test_git_state_treats_modified_tracked_selected_artifact_as_dirty(tmp_path):
+    subprocess.run(["git", "init", "-q"], cwd=tmp_path, check=True)
+    subprocess.run(["git", "config", "user.email", "test@example.com"], cwd=tmp_path, check=True)
+    subprocess.run(["git", "config", "user.name", "Test"], cwd=tmp_path, check=True)
+    result_dir = tmp_path / "results"
+    result_dir.mkdir()
+    selected = result_dir / "spade-selected-protocol.json"
+    selected.write_text("{}\n")
+    subprocess.run(["git", "add", "results/spade-selected-protocol.json"], cwd=tmp_path, check=True)
+    subprocess.run(["git", "commit", "-qm", "fixture"], cwd=tmp_path, check=True)
+    selected.write_text('{"tampered":true}\n')
+    _, dirty = runner.git_state(tmp_path)
+    assert dirty is True
 
 
 def test_each_mandatory_gate_and_no_selection_are_independently_exercised(complete_rows):
@@ -412,10 +617,31 @@ def test_each_mandatory_gate_and_no_selection_are_independently_exercised(comple
 
 def _write_complete_shards(tmp_path: Path, rows: list[dict]) -> list[Path]:
     manifests = []
+    metadata = {
+        "study_protocol_digest": PROTOCOL,
+        "spec_digest": SPEC,
+        "config_digest": CONFIG,
+        "generator_digest": GENERATOR,
+        "source_commit": SOURCE,
+        "source_dirty": False,
+    }
     for family in runner.DEVELOPMENT_FAMILIES:
         family_rows = [row for row in rows if row["family"] == family]
         raw = tmp_path / f"spade-development-{family}-000-050.jsonl.gz"
         raw_hash = write_jsonl_gzip(raw, family_rows, protocol_digest=PROTOCOL)
+        resume_path = runner.resume_checkpoint_path(raw)
+        resume_payload = runner._resume_payload(
+            family=family,
+            start=0,
+            stop=50,
+            raw_file=raw.name,
+            rows=family_rows,
+            metadata=metadata,
+            smoke=False,
+            command_args=(),
+            expected_raw_sha256=raw_hash,
+        )
+        resume_hash = runner._write_resume_checkpoint(resume_path, resume_payload)
         manifest = runner.make_shard_manifest(
             family=family,
             start=0,
@@ -423,14 +649,10 @@ def _write_complete_shards(tmp_path: Path, rows: list[dict]) -> list[Path]:
             row_count=len(family_rows),
             raw_file=raw.name,
             raw_sha256=raw_hash,
-            metadata={
-                "study_protocol_digest": PROTOCOL,
-                "spec_digest": SPEC,
-                "config_digest": CONFIG,
-                "generator_digest": GENERATOR,
-                "source_commit": SOURCE,
-                "source_dirty": False,
-            },
+            resume_file=resume_path.name,
+            resume_sha256=resume_hash,
+            row_chain_head=resume_payload["row_chain_head"],
+            metadata=metadata,
             smoke=False,
             complete=True,
             command_args=(),
@@ -455,8 +677,15 @@ def test_selected_artifact_is_hash_bound_and_fail_closed(tmp_path, complete_rows
     }
     monkeypatch.setattr(selector, "registered_metadata", lambda _root: metadata)
     monkeypatch.setattr(selector, "git_state", lambda _root: (SOURCE, False))
-    analysis_path = tmp_path / "spade-development-analysis.json"
-    selected_path = tmp_path / "spade-selected-protocol.json"
+    analysis_path = tmp_path / "results" / "spade-development-analysis.json"
+    selected_path = tmp_path / "results" / "spade-selected-protocol.json"
+    with pytest.raises(ValueError, match="exact registered path"):
+        selector.select_from_shards(
+            manifests,
+            analysis_output=tmp_path / "wrong-analysis.json",
+            selected_output=selected_path,
+            repo_root=tmp_path,
+        )
     selected = selector.select_from_shards(
         manifests,
         analysis_output=analysis_path,
@@ -471,10 +700,11 @@ def test_selected_artifact_is_hash_bound_and_fail_closed(tmp_path, complete_rows
     assert len(selected["development_artifacts"]) == 5
     assert selected["selected_canonical_config"]["opening"] == 44
     assert selected["selected_canonical_config"]["policy"] == "fixed_hybrid"
+    assert selected["selection_trace"]["rule"] == "unanimous_lofo_consensus"
+    assert len(selected["lofo_folds"]) == 5
     assert hashlib.sha256(analysis_path.read_bytes()).hexdigest() == selected["analysis_sha256"]
 
-    monkeypatch.setattr(selector, "git_state", lambda _root: (SOURCE, True))
-    with pytest.raises(ValueError, match="dirty"):
+    with pytest.raises(ValueError, match="write-once|already exists"):
         selector.select_from_shards(
             manifests,
             analysis_output=analysis_path,
@@ -482,14 +712,19 @@ def test_selected_artifact_is_hash_bound_and_fail_closed(tmp_path, complete_rows
             repo_root=tmp_path,
         )
 
+    monkeypatch.setattr(selector, "git_state", lambda _root: (SOURCE, True))
+    with pytest.raises(ValueError, match="dirty"):
+        selector.selection_payload_from_shards(
+            manifests,
+            repo_root=tmp_path,
+        )
+
     monkeypatch.setattr(selector, "git_state", lambda _root: (SOURCE, False))
     sidecar = Path(str(tmp_path / "spade-development-hill-000-050.jsonl.gz") + ".sha256")
     sidecar.unlink()
     with pytest.raises(ValueError, match="SHA-256|sidecar|hashed"):
-        selector.select_from_shards(
+        selector.selection_payload_from_shards(
             manifests,
-            analysis_output=analysis_path,
-            selected_output=selected_path,
             repo_root=tmp_path,
         )
 
@@ -514,8 +749,8 @@ def test_selection_rejects_incomplete_or_wrong_digest_manifest(tmp_path, complet
     with pytest.raises(ValueError, match="complete|COMPLETE"):
         selector.select_from_shards(
             manifests,
-            analysis_output=tmp_path / "a.json",
-            selected_output=tmp_path / "s.json",
+            analysis_output=tmp_path / "results" / "spade-development-analysis.json",
+            selected_output=tmp_path / "results" / "spade-selected-protocol.json",
             repo_root=tmp_path,
         )
 
@@ -526,7 +761,7 @@ def test_selection_rejects_incomplete_or_wrong_digest_manifest(tmp_path, complet
     with pytest.raises(ValueError, match="protocol digest"):
         selector.select_from_shards(
             manifests,
-            analysis_output=tmp_path / "a.json",
-            selected_output=tmp_path / "s.json",
+            analysis_output=tmp_path / "results" / "spade-development-analysis.json",
+            selected_output=tmp_path / "results" / "spade-selected-protocol.json",
             repo_root=tmp_path,
         )

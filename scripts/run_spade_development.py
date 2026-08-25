@@ -24,6 +24,7 @@ from boec.replay import FAMILY_ORACLE, unit_bounds  # noqa: E402
 from boec.seedbook import IndexedGaussianNoise, derive_seed  # noqa: E402
 from boec.spade import (  # noqa: E402
     SpadeConfig,
+    _common_protocol_digest,
     run_qlognei48,
     run_sobol48,
     run_spade,
@@ -81,6 +82,7 @@ HILL_DEVELOPMENT_INSTANCE_IDS = (
 )
 STUDY_ROOT_SEED = 2_026_08_25
 MANIFEST_SCHEMA = "boec-spade-development-shard-v1"
+RESUME_SCHEMA = "boec-spade-development-resume-v1"
 DATASET_ROLE = "DEVELOPMENT"
 _CONFIG_PATH = Path("configs/experiment/spade-joint.yaml")
 _SPEC_PATH = Path("docs/superpowers/specs/2026-08-25-spade-joint-protocol-design.md")
@@ -120,6 +122,9 @@ _MANIFEST_FIELDS = frozenset(
         "source_dirty",
         "raw_file",
         "raw_sha256",
+        "resume_file",
+        "resume_sha256",
+        "row_chain_head",
         "command_args",
     }
 )
@@ -171,6 +176,21 @@ def _atomic_json(path: Path, payload: Mapping[str, object]) -> None:
         raise
 
 
+def _atomic_text(path: Path, text: str) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    descriptor, temporary_name = tempfile.mkstemp(prefix=f".{path.name}.", dir=path.parent)
+    temporary = Path(temporary_name)
+    try:
+        with os.fdopen(descriptor, "w", encoding="ascii") as handle:
+            handle.write(text)
+            handle.flush()
+            os.fsync(handle.fileno())
+        os.replace(temporary, path)
+    except BaseException:
+        temporary.unlink(missing_ok=True)
+        raise
+
+
 def candidate_spec(arm_id: str) -> tuple[int, str]:
     if arm_id not in CANDIDATE_ARM_IDS:
         raise ValueError(f"unknown SPADE candidate {arm_id!r}")
@@ -187,6 +207,14 @@ def rounds_for_opening(opening: int) -> int:
     return 1 + (48 - opening) // 4
 
 
+def comparator_protocol_digest(arm: str, *, root_seed: int) -> str:
+    if arm == "sobol48":
+        return _common_protocol_digest(arm, root_seed, 48, (48,))
+    if arm == "qlognei48":
+        return _common_protocol_digest(arm, root_seed, 14, (14, *([4] * 8), 2))
+    raise ValueError(f"unknown development comparator {arm!r}")
+
+
 def development_campaign_key(family: str, key_index: int) -> tuple[int, int]:
     if family not in DEVELOPMENT_FAMILIES:
         raise ValueError(f"unknown development family {family!r}")
@@ -196,6 +224,99 @@ def development_campaign_key(family: str, key_index: int) -> tuple[int, int]:
     if family == "hill":
         return index // 2, index % 2
     return 0, index
+
+
+def development_seed_identity(
+    *, family: str, instance_seed: int, campaign_seed: int
+) -> dict[str, int]:
+    registered_keys = {
+        development_campaign_key(family, key_index)
+        for key_index in range(CAMPAIGNS_PER_FAMILY)
+    }
+    if (instance_seed, campaign_seed) not in registered_keys:
+        raise ValueError("instance/campaign seed is not a registered development key")
+    root_seed = derive_seed(
+        STUDY_ROOT_SEED,
+        "development_campaign",
+        family,
+        instance_seed,
+        campaign_seed,
+    )
+    return {
+        "root": root_seed,
+        "noise": derive_seed(
+            STUDY_ROOT_SEED,
+            "development_noise",
+            family,
+            instance_seed,
+            campaign_seed,
+        ),
+        "threshold": derive_seed(
+            STUDY_ROOT_SEED,
+            "development_threshold",
+            family,
+            instance_seed,
+        ),
+        "scoring": derive_seed(
+            STUDY_ROOT_SEED,
+            "development_scoring",
+            family,
+            instance_seed,
+            campaign_seed,
+        ),
+    }
+
+
+def matched_seed_identity(
+    *, root_seed: int, noise_seed: int, threshold_seed: int, scoring_seed: int
+) -> dict[str, int]:
+    return {
+        "noise": noise_seed,
+        "threshold": threshold_seed,
+        "scoring": scoring_seed,
+        "opening_design": derive_seed(root_seed, "opening_design"),
+        "candidate_menu": derive_seed(root_seed, "adaptive_candidate_menu"),
+        "ivr_reference": derive_seed(root_seed, "ivr_reference_grid"),
+        "terminal_grid": derive_seed(scoring_seed, "terminal_rule_p_grid"),
+        "map_grid": derive_seed(scoring_seed, "probability_map_grid"),
+        "certificate_grid": derive_seed(scoring_seed, "certificate_grid"),
+        "certificate_draws": derive_seed(scoring_seed, "certificate_joint_draws"),
+    }
+
+
+def _identity_contract_digest(payload: Mapping[str, object]) -> str:
+    return hashlib.sha256(_canonical_json(payload).encode("utf-8")).hexdigest()
+
+
+def seed_contract_digest(seeds: Mapping[str, int]) -> str:
+    return _identity_contract_digest(dict(seeds))
+
+
+def candidate_menu_contract_digest(*, root_seed: int, size: int) -> str:
+    return _identity_contract_digest(
+        {
+            "schema": "boec-candidate-menu-contract-v1",
+            "design": "scrambled_sobol",
+            "dimension": 6,
+            "size": size,
+            "seed": derive_seed(root_seed, "adaptive_candidate_menu"),
+        }
+    )
+
+
+def scorer_contract_digest(score: Mapping[str, object]) -> str:
+    return _identity_contract_digest(
+        {
+            "schema": "boec-scorer-contract-v1",
+            "scoring_seed": score["scoring_seed"],
+            "settings_digest": score["scoring_settings_digest"],
+            "threshold_record_digest": score["threshold_record_digest"],
+            "terminal_grid_seed": score["terminal_grid_seed"],
+            "map_grid_seed": score["map_grid_seed"],
+            "certificate_grid_seed": score["certificate_grid_seed"],
+            "certificate_draw_seed": score["certificate_draw_seed"],
+        }
+    )
 
 
 def _allowed_generated_path(path: str) -> bool:
@@ -230,7 +351,8 @@ def git_state(repo_root: Path = ROOT) -> tuple[str, bool]:
         path = line[3:]
         if " -> " in path:
             path = path.split(" -> ", 1)[1]
-        if not _allowed_generated_path(path):
+        status_code = line[:2]
+        if status_code != "??" or not _allowed_generated_path(path):
             dirty = True
             break
     return commit, dirty
@@ -310,6 +432,9 @@ def make_shard_manifest(
     row_count: int,
     raw_file: str,
     raw_sha256: str,
+    resume_file: str | None = None,
+    resume_sha256: str = "0" * 64,
+    row_chain_head: str = "0" * 64,
     metadata: Mapping[str, object],
     smoke: bool,
     complete: bool,
@@ -337,6 +462,9 @@ def make_shard_manifest(
         "source_dirty": metadata["source_dirty"],
         "raw_file": raw_file,
         "raw_sha256": raw_sha256,
+        "resume_file": resume_file or f"{raw_file}.resume.json",
+        "resume_sha256": resume_sha256,
+        "row_chain_head": row_chain_head,
         "command_args": list(command_args),
     }
     validate_shard_manifest(manifest, allow_incomplete=True)
@@ -387,6 +515,8 @@ def validate_shard_manifest(
         "config_digest",
         "generator_digest",
         "raw_sha256",
+        "resume_sha256",
+        "row_chain_head",
     ):
         _hex_digest(result[name], name)
     _hex_digest(result["source_commit"], "source_commit", length=40)
@@ -394,6 +524,11 @@ def validate_shard_manifest(
         raise ValueError("source_dirty must be boolean")
     if not isinstance(result["raw_file"], str) or Path(result["raw_file"]).name != result["raw_file"]:
         raise ValueError("raw_file must be a basename")
+    if (
+        not isinstance(result["resume_file"], str)
+        or Path(result["resume_file"]).name != result["resume_file"]
+    ):
+        raise ValueError("resume_file must be a basename")
     if not isinstance(result["command_args"], list) or not all(
         isinstance(value, str) for value in result["command_args"]
     ):
@@ -403,6 +538,91 @@ def validate_shard_manifest(
 
 def read_shard_rows(path: str | Path, protocol_digest: str) -> list[dict[str, object]]:
     return read_jsonl_gzip(path, protocol_digest=protocol_digest)
+
+
+def resume_checkpoint_path(output: str | Path) -> Path:
+    return Path(f"{Path(output)}.resume.json")
+
+
+def _row_chain_head(rows: Sequence[Mapping[str, object]]) -> str:
+    head = "0" * 64
+    for row in rows:
+        row_digest = hashlib.sha256(_canonical_json(row).encode("utf-8")).hexdigest()
+        head = hashlib.sha256(f"{head}:{row_digest}".encode("ascii")).hexdigest()
+    return head
+
+
+def _resume_payload(
+    *,
+    family: str,
+    start: int,
+    stop: int,
+    raw_file: str,
+    rows: Sequence[Mapping[str, object]],
+    metadata: Mapping[str, object],
+    smoke: bool,
+    command_args: Sequence[str],
+    expected_raw_sha256: str | None,
+) -> dict[str, object]:
+    payload = {
+        "schema": RESUME_SCHEMA,
+        "family": family,
+        "start": start,
+        "stop": stop,
+        "raw_file": raw_file,
+        "execution_mode": "TEST_ONLY" if smoke else "REGISTERED",
+        "study_protocol_digest": metadata["study_protocol_digest"],
+        "spec_digest": metadata["spec_digest"],
+        "config_digest": metadata["config_digest"],
+        "generator_digest": metadata["generator_digest"],
+        "source_commit": metadata["source_commit"],
+        "source_dirty": metadata["source_dirty"],
+        "command_args": list(command_args),
+        "row_count": len(rows),
+        "row_chain_head": _row_chain_head(rows),
+        "expected_raw_sha256": expected_raw_sha256,
+        "rows": [dict(row) for row in rows],
+    }
+    _canonical_json(payload)
+    return payload
+
+
+def _write_resume_checkpoint(path: Path, payload: Mapping[str, object]) -> str:
+    _atomic_json(path, payload)
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def read_resume_checkpoint(
+    path: str | Path, *, protocol_digest: str
+) -> dict[str, object]:
+    source = Path(path)
+    if not source.is_file():
+        raise ValueError("independent resume checkpoint is missing")
+    try:
+        payload = json.loads(source.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        raise ValueError("resume checkpoint is not valid JSON") from exc
+    required = {
+        "schema", "family", "start", "stop", "raw_file", "execution_mode",
+        "study_protocol_digest", "spec_digest", "config_digest", "generator_digest",
+        "source_commit", "source_dirty", "command_args", "row_count",
+        "row_chain_head", "expected_raw_sha256", "rows",
+    }
+    if not isinstance(payload, dict) or set(payload) != required:
+        raise ValueError("resume checkpoint schema fields drift")
+    if payload["schema"] != RESUME_SCHEMA:
+        raise ValueError("resume checkpoint schema drift")
+    if payload["study_protocol_digest"] != protocol_digest:
+        raise ValueError("resume checkpoint protocol digest mismatch")
+    rows = payload["rows"]
+    if not isinstance(rows, list) or payload["row_count"] != len(rows):
+        raise ValueError("resume checkpoint row count mismatch")
+    if payload["row_chain_head"] != _row_chain_head(rows):
+        raise ValueError("resume checkpoint row hash-chain mismatch")
+    expected_raw = payload["expected_raw_sha256"]
+    if expected_raw is not None:
+        _hex_digest(expected_raw, "resume expected raw SHA-256")
+    return payload
 
 
 def _development_oracle(
@@ -453,18 +673,15 @@ def _run_campaign_rows(
     command_args: Sequence[str],
 ) -> Iterable[dict[str, object]]:
     instance_seed, campaign_seed = development_campaign_key(family, key_index)
-    campaign_root = derive_seed(
-        STUDY_ROOT_SEED, "development_campaign", family, instance_seed, campaign_seed
+    registered_seeds = development_seed_identity(
+        family=family,
+        instance_seed=instance_seed,
+        campaign_seed=campaign_seed,
     )
-    noise_seed = derive_seed(
-        STUDY_ROOT_SEED, "development_noise", family, instance_seed, campaign_seed
-    )
-    threshold_seed = derive_seed(
-        STUDY_ROOT_SEED, "development_threshold", family, instance_seed
-    )
-    scoring_seed = derive_seed(
-        STUDY_ROOT_SEED, "development_scoring", family, instance_seed, campaign_seed
-    )
+    campaign_root = registered_seeds["root"]
+    noise_seed = registered_seeds["noise"]
+    threshold_seed = registered_seeds["threshold"]
+    scoring_seed = registered_seeds["scoring"]
     truth_oracle, _, oracle_identity = _development_oracle(
         family, instance_seed, noise_seed
     )
@@ -531,6 +748,13 @@ def _run_campaign_rows(
             execution_mode=mode,
             settings=settings,
         )
+        derived_seeds = matched_seed_identity(
+            root_seed=campaign_root,
+            noise_seed=noise_seed,
+            threshold_seed=threshold_seed,
+            scoring_seed=scoring_seed,
+        )
+        score_payload = score.as_dict()
         yield build_study_row(
             score,
             study_protocol_digest=str(metadata["study_protocol_digest"]),
@@ -543,22 +767,30 @@ def _run_campaign_rows(
                 "spec": str(metadata["spec_digest"]),
                 "config": str(metadata["config_digest"]),
                 "generator": str(metadata["generator_digest"]),
+                "seed_contract": seed_contract_digest(derived_seeds),
+                "candidate_menu_contract": candidate_menu_contract_digest(
+                    root_seed=campaign_root,
+                    size=campaign.effective_settings.candidate_menu_size,
+                ),
+                "scorer_contract": scorer_contract_digest(score_payload),
             },
             family=family,
             instance_seed=instance_seed,
             campaign_seed=campaign_seed,
             root_seed=campaign_root,
-            derived_seeds={
-                "noise": noise_seed,
-                "threshold": threshold_seed,
-                "scoring": scoring_seed,
-            },
+            derived_seeds=derived_seeds,
         )
 
 
 def _development_arm_id(row: Mapping[str, object]) -> str:
     arm = row.get("arm")
     if arm in CONTROL_ARMS:
+        root_seed = row.get("root_seed")
+        if isinstance(root_seed, bool) or not isinstance(root_seed, int):
+            raise ValueError("comparator row root_seed is invalid")
+        expected = comparator_protocol_digest(str(arm), root_seed=root_seed)
+        if row.get("arm_protocol_digest") != expected:
+            raise ValueError("row has an unregistered comparator protocol digest")
         return str(arm)
     if arm != "spade":
         raise ValueError(f"unregistered development arm {arm!r}")
@@ -650,10 +882,45 @@ def run_development_shard(
     if not smoke and frozen["source_dirty"]:
         raise ValueError("registered development campaigns require a clean source tree")
     manifest_path = Path(str(destination) + ".manifest.json")
-    if destination.exists() != manifest_path.exists():
-        raise ValueError("resumable shard requires raw file and manifest together")
+    resume_path = resume_checkpoint_path(destination)
     rows: list[dict[str, object]] = []
+    prior_resume: dict[str, object] | None = None
+    if resume_path.exists():
+        prior_resume = read_resume_checkpoint(
+            resume_path,
+            protocol_digest=str(frozen["study_protocol_digest"]),
+        )
+        expected_resume_identity = {
+            "family": family,
+            "start": start,
+            "stop": stop,
+            "raw_file": destination.name,
+            "execution_mode": "TEST_ONLY" if smoke else "REGISTERED",
+            "study_protocol_digest": frozen["study_protocol_digest"],
+            "spec_digest": frozen["spec_digest"],
+            "config_digest": frozen["config_digest"],
+            "generator_digest": frozen["generator_digest"],
+            "source_commit": frozen["source_commit"],
+            "source_dirty": frozen["source_dirty"],
+        }
+        for name, expected in expected_resume_identity.items():
+            if prior_resume[name] != expected:
+                raise ValueError(f"resume checkpoint {name} mismatch")
+        rows = list(prior_resume["rows"])
+    elif destination.exists() or manifest_path.exists():
+        raise ValueError(
+            "raw shard/manifest exists without its independent resume checkpoint"
+        )
+
     if destination.exists():
+        if prior_resume is None or prior_resume["expected_raw_sha256"] is None:
+            raise ValueError("raw shard exists without a persisted expected raw SHA-256")
+        actual_raw_digest = hashlib.sha256(destination.read_bytes()).hexdigest()
+        if actual_raw_digest != prior_resume["expected_raw_sha256"]:
+            raise ValueError("raw shard differs from the independent resume expected raw SHA-256")
+    if manifest_path.exists():
+        if not destination.exists() or prior_resume is None:
+            raise ValueError("complete manifest requires raw shard and resume checkpoint")
         prior_manifest = validate_shard_manifest(
             json.loads(manifest_path.read_text(encoding="utf-8")),
             allow_incomplete=True,
@@ -670,13 +937,25 @@ def run_development_shard(
             "source_commit": frozen["source_commit"],
             "source_dirty": frozen["source_dirty"],
             "raw_file": destination.name,
+            "resume_file": resume_path.name,
         }
         for name, expected in expected_invocation.items():
             if prior_manifest[name] != expected:
                 raise ValueError(f"resumed shard manifest {name} mismatch")
-        rows = read_shard_rows(destination, str(frozen["study_protocol_digest"]))
+        resume_digest = hashlib.sha256(resume_path.read_bytes()).hexdigest()
+        if prior_manifest["resume_sha256"] != resume_digest:
+            raise ValueError("complete manifest resume checkpoint SHA-256 mismatch")
+        if prior_manifest["row_chain_head"] != prior_resume["row_chain_head"]:
+            raise ValueError("complete manifest row hash-chain mismatch")
+        if prior_manifest["raw_sha256"] != prior_resume["expected_raw_sha256"]:
+            raise ValueError("complete manifest expected raw SHA-256 mismatch")
+        raw_rows = read_shard_rows(destination, str(frozen["study_protocol_digest"]))
+        if _canonical_json(raw_rows) != _canonical_json(rows):
+            raise ValueError("raw shard rows differ from independent resume checkpoint")
         if prior_manifest["row_count"] != len(rows):
             raise ValueError("resumed shard manifest row count mismatch")
+        if prior_manifest["complete"]:
+            return prior_manifest
     seen = _validate_partial_rows(
         rows,
         family=family,
@@ -686,27 +965,19 @@ def run_development_shard(
         smoke=smoke,
     )
 
-    def checkpoint() -> dict[str, object]:
-        raw_digest = write_jsonl_gzip(
-            destination,
-            rows,
-            protocol_digest=str(frozen["study_protocol_digest"]),
-        )
-        complete = len(rows) == (stop - start) * len(DEVELOPMENT_ARM_IDS)
-        manifest = make_shard_manifest(
+    def checkpoint(expected_raw_sha256: str | None = None) -> tuple[dict[str, object], str]:
+        payload = _resume_payload(
             family=family,
             start=start,
             stop=stop,
-            row_count=len(rows),
             raw_file=destination.name,
-            raw_sha256=raw_digest,
+            rows=rows,
             metadata=frozen,
             smoke=smoke,
-            complete=complete,
             command_args=command_args,
+            expected_raw_sha256=expected_raw_sha256,
         )
-        _atomic_json(manifest_path, manifest)
-        return manifest
+        return payload, _write_resume_checkpoint(resume_path, payload)
 
     for key_index in range(start, stop):
         missing = [
@@ -731,10 +1002,46 @@ def run_development_shard(
             checkpoint()
     if not rows:
         raise RuntimeError("development shard produced no rows")
-    final = checkpoint()
-    if not final["complete"]:
+    complete = len(rows) == (stop - start) * len(DEVELOPMENT_ARM_IDS)
+    if not complete:
         raise RuntimeError("development shard stopped before every requested arm completed")
-    return final
+    staging = destination.with_name(f".{destination.name}.promotion")
+    raw_digest = write_jsonl_gzip(
+        staging,
+        rows,
+        protocol_digest=str(frozen["study_protocol_digest"]),
+    )
+    if (
+        prior_resume is not None
+        and prior_resume["expected_raw_sha256"] is not None
+        and prior_resume["expected_raw_sha256"] != raw_digest
+    ):
+        raise ValueError("deterministic promotion differs from persisted expected raw SHA-256")
+    final_resume, resume_digest = checkpoint(raw_digest)
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    os.replace(staging, destination)
+    Path(f"{staging}.sha256").unlink(missing_ok=True)
+    _atomic_text(
+        Path(f"{destination}.sha256"),
+        f"{raw_digest}  {destination.name}\n",
+    )
+    manifest = make_shard_manifest(
+        family=family,
+        start=start,
+        stop=stop,
+        row_count=len(rows),
+        raw_file=destination.name,
+        raw_sha256=raw_digest,
+        resume_file=resume_path.name,
+        resume_sha256=resume_digest,
+        row_chain_head=str(final_resume["row_chain_head"]),
+        metadata=frozen,
+        smoke=smoke,
+        complete=True,
+        command_args=command_args,
+    )
+    _atomic_json(manifest_path, manifest)
+    return manifest
 
 
 def _parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:

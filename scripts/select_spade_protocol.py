@@ -10,6 +10,7 @@ import math
 import os
 import sys
 import tempfile
+from numbers import Real
 from pathlib import Path
 from typing import Mapping, Sequence
 
@@ -21,6 +22,8 @@ sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "src"))
 
 from boec.spade import SpadeConfig  # noqa: E402
+from boec.seedbook import derive_seed  # noqa: E402
+from boec.spade_study import REGISTERED_SCORING_SETTINGS  # noqa: E402
 from scripts import run_spade_development as development  # noqa: E402
 
 
@@ -102,6 +105,17 @@ def _key(row: Mapping[str, object]) -> tuple[int, int]:
     return instance_seed, campaign_seed
 
 
+def _selection_metric(value: object, name: str) -> float:
+    if isinstance(value, bool) or not isinstance(value, Real):
+        raise ValueError(f"{name} metric must be a finite real number")
+    result = float(value)
+    if not math.isfinite(result):
+        raise ValueError(f"{name} metric must be finite")
+    if not 0.0 <= result <= 1.0:
+        raise ValueError(f"{name} metric must be in range [0, 1]")
+    return result
+
+
 def validate_development_grid(
     rows: Sequence[Mapping[str, object]], *, protocol_digest: str
 ) -> dict[str, object]:
@@ -120,6 +134,7 @@ def validate_development_grid(
     spec_digests: set[str] = set()
     config_digests: set[str] = set()
     generator_digests: set[str] = set()
+    matched_groups: dict[tuple[str, int, int], list[Mapping[str, object]]] = {}
     for index, row in enumerate(rows):
         family = row.get("family")
         if family not in development.DEVELOPMENT_FAMILIES:
@@ -137,6 +152,9 @@ def validate_development_grid(
             "spec",
             "config",
             "generator",
+            "seed_contract",
+            "candidate_menu_contract",
+            "scorer_contract",
         }:
             raise ValueError(f"row {index} parent artifacts drift")
         generator_digest = _require_digest(
@@ -156,6 +174,21 @@ def validate_development_grid(
             or score.get("execution_mode") != "REGISTERED"
         ):
             raise ValueError(f"row {index} score identity or registered mode drift")
+        _selection_metric(score.get("map_loss"), f"row {index} map_loss")
+        _selection_metric(score.get("regret_rule_p"), f"row {index} regret_rule_p")
+        nonempty = score.get("certificate_nonempty")
+        empirical = score.get("certificate_empirical_containment")
+        if not isinstance(nonempty, bool):
+            raise ValueError(f"row {index} certificate_nonempty must be boolean")
+        if nonempty:
+            if not isinstance(empirical, bool):
+                raise ValueError(
+                    f"row {index} nonempty certificate containment must be boolean"
+                )
+        elif empirical is not None:
+            raise ValueError(
+                f"row {index} empty certificate containment must be null"
+            )
         campaign_key = row.get("campaign_key")
         if not isinstance(campaign_key, Mapping):
             raise ValueError(f"row {index} has no campaign_key")
@@ -176,6 +209,7 @@ def validate_development_grid(
             raise ValueError(f"duplicate development row {identity}")
         seen.add(identity)
         family_keys[family].add(key)
+        matched_groups.setdefault((family, key[0], key[1]), []).append(row)
         source_commits.add(str(row.get("source_commit")))
         spec_digests.add(spec_digest)
         config_digests.add(config_digest)
@@ -199,6 +233,106 @@ def validate_development_grid(
         or len(generator_digests) != 1
     ):
         raise ValueError("development grid mixes source/spec/config/generator identities")
+    expected_seed_labels = {
+        "noise", "threshold", "scoring", "opening_design", "candidate_menu",
+        "ivr_reference", "terminal_grid", "map_grid", "certificate_grid",
+        "certificate_draws",
+    }
+    for group_key, group_rows in matched_groups.items():
+        if len(group_rows) != len(development.DEVELOPMENT_ARM_IDS):
+            raise ValueError(f"matched campaign {group_key} does not contain all 11 arms")
+        roots = {row["root_seed"] for row in group_rows}
+        if len(roots) != 1:
+            raise ValueError(f"matched campaign {group_key} has root seed identity drift")
+        root_seed = next(iter(roots))
+        if isinstance(root_seed, bool) or not isinstance(root_seed, int) or root_seed < 0:
+            raise ValueError(f"matched campaign {group_key} root seed is invalid")
+        registered_seeds = development.development_seed_identity(
+            family=group_key[0],
+            instance_seed=group_key[1],
+            campaign_seed=group_key[2],
+        )
+        if root_seed != registered_seeds["root"]:
+            raise ValueError(f"matched campaign {group_key} registered root seed identity drift")
+        seed_records = []
+        threshold_digests = set()
+        scoring_digests = set()
+        taus = set()
+        for row in group_rows:
+            seeds = row.get("derived_seeds")
+            if not isinstance(seeds, Mapping) or set(seeds) != expected_seed_labels:
+                raise ValueError(f"matched campaign {group_key} seed labels drift")
+            if any(
+                isinstance(value, bool) or not isinstance(value, int) or value < 0
+                for value in seeds.values()
+            ):
+                raise ValueError(f"matched campaign {group_key} seed values are invalid")
+            expected_seeds = development.matched_seed_identity(
+                root_seed=root_seed,
+                noise_seed=seeds["noise"],
+                threshold_seed=seeds["threshold"],
+                scoring_seed=seeds["scoring"],
+            )
+            if dict(seeds) != expected_seeds:
+                raise ValueError(f"matched campaign {group_key} derived seed identity drift")
+            for name in ("noise", "threshold", "scoring"):
+                if seeds[name] != registered_seeds[name]:
+                    raise ValueError(
+                        f"matched campaign {group_key} registered {name} seed identity drift"
+                    )
+            score = row["scores"]
+            if score.get("scoring_settings_digest") != REGISTERED_SCORING_SETTINGS.digest:
+                raise ValueError(
+                    f"matched campaign {group_key} registered scorer settings digest drift"
+                )
+            expected_score_seeds = {
+                "scoring_seed": seeds["scoring"],
+                "terminal_grid_seed": seeds["terminal_grid"],
+                "map_grid_seed": seeds["map_grid"],
+                "certificate_grid_seed": seeds["certificate_grid"],
+                "certificate_draw_seed": seeds["certificate_draws"],
+            }
+            for field, expected in expected_score_seeds.items():
+                if score.get(field) != expected:
+                    raise ValueError(
+                        f"matched campaign {group_key} scorer seed identity drift at {field}"
+                    )
+            expected_fit_seed = derive_seed(
+                seeds["scoring"],
+                "score_terminal_common_gp",
+                row["run_digest"],
+                score["scoring_settings_digest"],
+            )
+            if score.get("terminal_fit_seed") != expected_fit_seed:
+                raise ValueError(
+                    f"matched campaign {group_key} terminal scorer seed identity drift"
+                )
+            parents = row["parent_artifacts"]
+            expected_contracts = {
+                "seed_contract": development.seed_contract_digest(seeds),
+                "candidate_menu_contract": development.candidate_menu_contract_digest(
+                    root_seed=root_seed,
+                    size=16_384,
+                ),
+                "scorer_contract": development.scorer_contract_digest(score),
+            }
+            for name, expected in expected_contracts.items():
+                if parents.get(name) != expected:
+                    raise ValueError(
+                        f"matched campaign {group_key} {name} digest identity drift"
+                    )
+            seed_records.append(_canonical_json(dict(seeds)))
+            threshold_digests.add(score.get("threshold_record_digest"))
+            scoring_digests.add(score.get("scoring_settings_digest"))
+            taus.add(score.get("tau"))
+        if len(set(seed_records)) != 1:
+            raise ValueError(f"matched campaign {group_key} seed identity differs across arms")
+        if len(threshold_digests) != 1 or len(scoring_digests) != 1 or len(taus) != 1:
+            raise ValueError(
+                f"matched campaign {group_key} scorer/threshold digest identity drift"
+            )
+        _require_digest(next(iter(threshold_digests)), "threshold record digest")
+        _require_digest(next(iter(scoring_digests)), "scoring settings digest")
     return {
         "row_count": len(rows),
         "families": list(development.DEVELOPMENT_FAMILIES),
@@ -454,13 +588,13 @@ def analyse_development(
 ) -> dict[str, object]:
     grid = validate_development_grid(rows, protocol_digest=protocol_digest)
     metrics = _candidate_metrics(rows)
-    full = _lexicographic_select(metrics, development.DEVELOPMENT_FAMILIES)
+    full_diagnostic = _lexicographic_select(metrics, development.DEVELOPMENT_FAMILIES)
     candidates = {}
     for candidate in development.CANDIDATE_ARM_IDS:
         candidate_metrics = dict(metrics[candidate])
-        candidate_metrics["step1_failures"] = full["step1_failures"][candidate]
+        candidate_metrics["step1_failures"] = full_diagnostic["step1_failures"][candidate]
         candidate_metrics["step1_pass"] = not candidate_metrics["step1_failures"]
-        candidate_metrics["step2_failures"] = full["step2_failures"][candidate]
+        candidate_metrics["step2_failures"] = full_diagnostic["step2_failures"][candidate]
         candidate_metrics["step2_pass"] = (
             candidate_metrics["step1_pass"] and not candidate_metrics["step2_failures"]
         )
@@ -482,18 +616,62 @@ def analyse_development(
                 "held_out_metrics": (
                     None if selected is None else metrics[selected]["families"][held_out]
                 ),
+                "rationale": (
+                    "training-fold frozen rule produced no candidate"
+                    if selected is None
+                    else "winner selected using only the four training families; held-out "
+                    "metrics were not used in this fold's choice"
+                ),
             }
         )
+    fold_winners = [fold["selected_candidate"] for fold in lofo_folds]
+    unanimous = (
+        len(fold_winners) == len(development.DEVELOPMENT_FAMILIES)
+        and all(winner is not None for winner in fold_winners)
+        and len(set(fold_winners)) == 1
+    )
+    selected_candidate = fold_winners[0] if unanimous else None
+    if unanimous:
+        status = "SELECTED"
+        rationale = (
+            "all five leave-one-family-out training folds selected the same candidate; "
+            "the all-five refit is diagnostic only"
+        )
+    else:
+        status = "NO_SELECTION"
+        rationale = (
+            "unanimous five-fold LOFO consensus was not achieved; no all-five refit "
+            "may override fold disagreement or a fold-level NO_SELECTION"
+        )
+    selection_trace = {
+        "rule": "unanimous_lofo_consensus",
+        "fold_winners": [
+            {
+                "held_out_family": fold["held_out_family"],
+                "winner": fold["selected_candidate"],
+                "status": fold["status"],
+            }
+            for fold in lofo_folds
+        ],
+        "unanimous": unanimous,
+        "selected_candidate": selected_candidate,
+        "rationale": rationale,
+        "all_five_refit_diagnostic": {
+            "status": full_diagnostic["status"],
+            "selected_candidate": full_diagnostic["selected_candidate"],
+            "trace": full_diagnostic["trace"],
+        },
+    }
     payload = {
         "schema": ANALYSIS_SCHEMA,
-        "status": full["status"],
-        "selected_candidate": full["selected_candidate"],
-        "selection_method": "nested_leave_one_family_out_with_frozen_full_grid_rule",
+        "status": status,
+        "selected_candidate": selected_candidate,
+        "selection_method": "unanimous_nested_leave_one_family_out_consensus",
         "paired_upper_bound_method": PAIRED_BOUND_METHOD,
         "grid": grid,
         "candidates": candidates,
         "lofo_folds": lofo_folds,
-        "selection_trace": full["trace"],
+        "selection_trace": selection_trace,
     }
     _canonical_json(payload)
     return payload
@@ -535,6 +713,20 @@ def _load_complete_shards(
                 label = "protocol digest" if name == "study_protocol_digest" else name
                 raise ValueError(f"development manifest {label} mismatch")
         raw_path = manifest_path.parent / str(manifest["raw_file"])
+        resume_path = manifest_path.parent / str(manifest["resume_file"])
+        if not resume_path.is_file():
+            raise ValueError("development raw shard is missing its independent resume checkpoint")
+        resume_bytes = resume_path.read_bytes()
+        if _sha256_bytes(resume_bytes) != manifest["resume_sha256"]:
+            raise ValueError("development resume checkpoint SHA-256 mismatch")
+        resume = development.read_resume_checkpoint(
+            resume_path,
+            protocol_digest=str(metadata["study_protocol_digest"]),
+        )
+        if resume["expected_raw_sha256"] != manifest["raw_sha256"]:
+            raise ValueError("development resume expected raw SHA-256 mismatch")
+        if resume["row_chain_head"] != manifest["row_chain_head"]:
+            raise ValueError("development resume row hash-chain mismatch")
         shard_rows = development.read_shard_rows(
             raw_path, str(metadata["study_protocol_digest"])
         )
@@ -543,6 +735,8 @@ def _load_complete_shards(
             raise ValueError("development raw SHA-256 does not match its manifest")
         if len(shard_rows) != manifest["row_count"]:
             raise ValueError("development manifest row count does not match raw shard")
+        if _canonical_json(shard_rows) != _canonical_json(resume["rows"]):
+            raise ValueError("development raw rows differ from independent resume checkpoint")
         for row in shard_rows:
             expected_row_identity = {
                 "protocol_digest": metadata["study_protocol_digest"],
@@ -555,7 +749,10 @@ def _load_complete_shards(
             for name, value in expected_row_identity.items():
                 if row.get(name) != value:
                     raise ValueError(f"development row {name} mismatch")
-            if row.get("parent_artifacts") != {
+            parents = row.get("parent_artifacts")
+            if not isinstance(parents, Mapping) or {
+                name: parents.get(name) for name in ("spec", "config", "generator")
+            } != {
                 "spec": metadata["spec_digest"],
                 "config": metadata["config_digest"],
                 "generator": metadata["generator_digest"],
@@ -580,6 +777,9 @@ def _load_complete_shards(
                 "raw_sha256": raw_hash,
                 "manifest_file": manifest_path.name,
                 "manifest_sha256": _sha256_bytes(manifest_bytes),
+                "resume_file": resume_path.name,
+                "resume_sha256": _sha256_bytes(resume_bytes),
+                "row_chain_head": manifest["row_chain_head"],
             }
         )
     for family, intervals in ranges.items():
@@ -595,13 +795,11 @@ def _load_complete_shards(
     return rows, artifacts
 
 
-def select_from_shards(
+def selection_payload_from_shards(
     manifest_paths: Sequence[str | Path],
     *,
-    analysis_output: str | Path,
-    selected_output: str | Path,
     repo_root: Path = ROOT,
-) -> dict[str, object]:
+) -> tuple[dict[str, object], dict[str, object]]:
     metadata = registered_metadata(repo_root)
     source_commit, dirty = git_state(repo_root)
     if dirty:
@@ -617,8 +815,8 @@ def select_from_shards(
         rows,
         protocol_digest=str(metadata["study_protocol_digest"]),
     )
-    analysis_path = Path(analysis_output)
-    analysis_sha = _atomic_json(analysis_path, analysis)
+    analysis_bytes = (_canonical_json(analysis) + "\n").encode("utf-8")
+    analysis_sha = _sha256_bytes(analysis_bytes)
     selected_candidate = analysis["selected_candidate"]
     if selected_candidate is None:
         canonical_config = None
@@ -640,8 +838,10 @@ def select_from_shards(
         "config_digest": metadata["config_digest"],
         "generator_digest": metadata["generator_digest"],
         "development_artifacts": artifacts,
-        "analysis_file": analysis_path.name,
+        "analysis_file": "spade-development-analysis.json",
         "analysis_sha256": analysis_sha,
+        "selection_trace": analysis["selection_trace"],
+        "lofo_folds": analysis["lofo_folds"],
         "selection_trace_digest": _sha256_bytes(
             _canonical_json(analysis["selection_trace"]).encode("utf-8")
         ),
@@ -650,7 +850,34 @@ def select_from_shards(
         "selected_template_protocol_digest": template_digest,
         "campaign_root_seed_binding": "sha256_labelled_derived_per_campaign",
     }
-    _atomic_json(Path(selected_output), selected)
+    return analysis, selected
+
+
+def select_from_shards(
+    manifest_paths: Sequence[str | Path],
+    *,
+    analysis_output: str | Path,
+    selected_output: str | Path,
+    repo_root: Path = ROOT,
+) -> dict[str, object]:
+    analysis_path = Path(analysis_output)
+    selected_path = Path(selected_output)
+    expected_analysis = repo_root / "results" / "spade-development-analysis.json"
+    expected_selected = repo_root / "results" / "spade-selected-protocol.json"
+    if analysis_path.resolve() != expected_analysis.resolve():
+        raise ValueError(f"analysis output must be the exact registered path {expected_analysis}")
+    if selected_path.resolve() != expected_selected.resolve():
+        raise ValueError(f"selected artifact must be the exact registered path {expected_selected}")
+    if selected_path.exists():
+        raise ValueError("selected protocol artifact is write-once and already exists")
+    analysis, selected = selection_payload_from_shards(
+        manifest_paths,
+        repo_root=repo_root,
+    )
+    analysis_sha = _atomic_json(analysis_path, analysis)
+    if analysis_sha != selected["analysis_sha256"]:
+        raise RuntimeError("analysis serialization hash drifted before selected-artifact write")
+    _atomic_json(selected_path, selected)
     return selected
 
 
