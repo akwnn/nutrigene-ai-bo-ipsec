@@ -114,7 +114,7 @@ def build_figure1(preset: VenuePreset) -> FigureBundle:
             0.60,
             0.56,
             0.25,
-            "Point decision\ntested-best | noisy-readout\nmodel | confirmation",
+            "Point decision\ntested-best | noisy selection\nmodel recommendation | confirmation",
             _CAMPAIGN_FILL,
             preset,
             dashed=True,
@@ -159,7 +159,7 @@ def build_figure1(preset: VenuePreset) -> FigureBundle:
             bbox=(0.01, 0.04, 0.98, 0.86),
         )
         table.auto_set_font_size(False)
-        table.set_fontsize(max(6.5, preset.body_pt * 0.85))
+        table.set_fontsize(preset.body_pt)
         for (row, _), cell in table.get_celld().items():
             cell.set_edgecolor(_LINE)
             cell.set_linewidth(0.5)
@@ -170,7 +170,16 @@ def build_figure1(preset: VenuePreset) -> FigureBundle:
 
     panel_data = {
         "A": {"stages": ["formulation", "wells", "assay", "model"]},
-        "B": {"branches": {"point decision": 4, "region decision": 2}},
+        "B": {
+            "branches": {"point decision": 4, "region decision": 2},
+            "point deliverables": (
+                "tested-best",
+                "noisy selection",
+                "model recommendation",
+                "confirmation",
+            ),
+            "region deliverables": ("acceptable-region map", "conservative certificate"),
+        },
         "C": {"columns": columns, "rows": rows},
     }
     alt_text = (
