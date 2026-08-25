@@ -13,7 +13,7 @@ from boec.designspace import (brier_and_auc, certified_mask, certified_volume_cu
                               component_report, connected_components,
                               false_inclusion_rate, inscribed_box, iou,
                               inscribed_box_from_mask, predictive_probability_map,
-                              probability_map, tau_max)
+                              probability_map, tau_max, tau_quantile)
 from boec.norms import sobol_grid
 
 
@@ -49,6 +49,70 @@ def test_tau_max_falls_as_assurance_rises():
 def test_tau_max_is_one_at_fifty_percent_assurance():
     """At gamma=0.5 the z-multiplier is 0, so the floor imposes no ceiling."""
     assert tau_max(0.50, 0.25) == 1.0
+
+
+# --- per-family quantile tau (docs/SPADE-TAU-QUANTILE-SPEC.md) -------------------
+#
+# Registered fix for FINDINGS-SPADE.md §41's ackley/hartmann6 near-total emptiness:
+# a fixed fraction of each family's MAX treats "60% of peak height" as the same
+# question on every landscape, but peak sharpness varies enormously (ackley's true
+# prevalence at tau_frac=0.60 is 0.0000; rosenbrock's is 0.9560). tau_quantile
+# instead asks "the threshold whose TRUE superlevel-set covers fraction p of the
+# box", which is comparable by construction across families.
+
+def test_tau_quantile_of_a_uniform_zero_one_distribution_matches_1_minus_p():
+    """For f ~ Uniform(0,1) over a dense grid, P(f >= tau) = p means tau = 1-p exactly."""
+    torch.manual_seed(0)
+    truth = torch.rand(200_000, dtype=torch.double)
+    for p in (0.30, 0.10, 0.03, 0.01):
+        tau = tau_quantile(truth, p)
+        assert abs(tau - (1.0 - p)) < 5e-3
+
+
+def test_tau_quantile_prevalence_matches_p_on_a_finite_grid():
+    """The defining property, checked directly: fraction of truth >= tau equals p
+    (up to the grid's discreteness), for any distribution -- not just uniform."""
+    torch.manual_seed(1)
+    truth = torch.randn(50_000, dtype=torch.double) ** 2  # a skewed, non-uniform shape
+    for p in (0.30, 0.10, 0.03, 0.01):
+        tau = tau_quantile(truth, p)
+        prevalence = float((truth >= tau).double().mean())
+        assert abs(prevalence - p) < 5e-3
+
+
+def test_tau_quantile_is_monotone_decreasing_in_p():
+    """Asking for a LARGER true region (bigger p) must give a LOWER threshold."""
+    torch.manual_seed(2)
+    truth = torch.rand(10_000, dtype=torch.double)
+    taus = [tau_quantile(truth, p) for p in (0.30, 0.10, 0.03, 0.01)]
+    assert taus == sorted(taus)
+
+
+def test_tau_quantile_on_ackleys_own_shape_is_not_degenerate():
+    """The whole point: ackley's true grid is what made tau_frac*tau_max useless
+    (prevalence 0.0000 at tau_frac=0.60, FINDINGS-SPADE.md sec 5 / COVERAGE-MATRIX
+    B1). A quantile-based tau must NOT return tau_max's degenerate near-zero value --
+    it must return a threshold that actually carves off the requested fraction,
+    however small ackley's true peak is."""
+    from boec.replay import family_evaluator
+    ev = family_evaluator("ackley", 6, 0.25, 0)
+    grid = sobol_grid(6, 4096, seed=0)
+    truth = ev.truth(grid).reshape(-1).double()
+    for p in (0.30, 0.10, 0.03, 0.01):
+        tau = tau_quantile(truth, p)
+        prevalence = float((truth >= tau).double().mean())
+        assert abs(prevalence - p) < 0.02, f"p={p} gave prevalence {prevalence}"
+
+
+def test_tau_quantile_rejects_p_outside_zero_one():
+    import pytest
+    truth = torch.rand(100, dtype=torch.double)
+    with pytest.raises(ValueError):
+        tau_quantile(truth, 0.0)
+    with pytest.raises(ValueError):
+        tau_quantile(truth, 1.0)
+    with pytest.raises(ValueError):
+        tau_quantile(truth, 1.5)
 
 
 # --- the two maps ----------------------------------------------------------------

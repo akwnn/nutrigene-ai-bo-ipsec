@@ -1,0 +1,15 @@
+{
+  "n_campaigns": 200,
+  "rho_sup_err_regret": 0.33490534076594086,
+  "p_sup_err_regret": 1.2515063705327156e-06,
+  "rho_grid_r2_regret": -0.31785491063156024,
+  "p_grid_r2_regret": 4.5078545270032835e-06,
+  "abs_diff_r2_minus_sup": -0.017050430134380623,
+  "bootstrap_ci_95": [
+    -0.16016568491739977,
+    0.11848770895534837
+  ],
+  "verdict": "REVIVE -- sup_err correlates and R2 does not; Piece A goes back on the table, gated by K1",
+  "source": "results/p2-versionb-gamma.json",
+  "spec": "docs/SPADE-CALIBRATION-FIX-SPEC.md sec 1"
+}

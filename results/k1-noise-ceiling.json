@@ -1,0 +1,413 @@
+{
+  "n_campaigns": 50,
+  "mean_ceiling_improvement": 0.008156218627690913,
+  "wilcoxon_p": 0.016637745581261854,
+  "bootstrap_ci_95": [
+    0.0020220174938939276,
+    0.014169807766724949
+  ],
+  "verdict": "KILL -- ceiling improvement < 0.01; drop replicates, Piece A not worth building",
+  "rows": [
+    {
+      "instance": "033466197eba3ddb",
+      "seed": 0,
+      "GATE_FAILED": false,
+      "regret_p_plugin": 0.0755194825874358,
+      "regret_p_true_sigma": 0.10038511007116202,
+      "ceiling_improvement": -0.024865627483726227
+    },
+    {
+      "instance": "0a6e0788538a7c52",
+      "seed": 0,
+      "GATE_FAILED": false,
+      "regret_p_plugin": 0.10476973347547924,
+      "regret_p_true_sigma": 0.07584448264550647,
+      "ceiling_improvement": 0.02892525082997277
+    },
+    {
+      "instance": "0ed87c75239d73f8",
+      "seed": 0,
+      "GATE_FAILED": false,
+      "regret_p_plugin": 0.13769837820633857,
+      "regret_p_true_sigma": 0.14106039428082207,
+      "ceiling_improvement": -0.003362016074483498
+    },
+    {
+      "instance": "32bb966a18f1d863",
+      "seed": 0,
+      "GATE_FAILED": false,
+      "regret_p_plugin": 0.10623209340603801,
+      "regret_p_true_sigma": 0.11906216564486416,
+      "ceiling_improvement": -0.012830072238826151
+    },
+    {
+      "instance": "443c180247c17191",
+      "seed": 0,
+      "GATE_FAILED": false,
+      "regret_p_plugin": 0.03745735593835908,
+      "regret_p_true_sigma": 0.046273658647354776,
+      "ceiling_improvement": -0.008816302708995694
+    },
+    {
+      "instance": "48b1324dd0461cd9",
+      "seed": 0,
+      "GATE_FAILED": false,
+      "regret_p_plugin": 0.1896153273132466,
+      "regret_p_true_sigma": 0.1752750317519557,
+      "ceiling_improvement": 0.014340295561290906
+    },
+    {
+      "instance": "4d4f7158b65b52ba",
+      "seed": 0,
+      "GATE_FAILED": false,
+      "regret_p_plugin": 0.0748026024200582,
+      "regret_p_true_sigma": 0.061646178208481506,
+      "ceiling_improvement": 0.0131564242115767
+    },
+    {
+      "instance": "51cf489c521a6911",
+      "seed": 0,
+      "GATE_FAILED": false,
+      "regret_p_plugin": 0.08511448523576959,
+      "regret_p_true_sigma": 0.1020073013289372,
+      "ceiling_improvement": -0.016892816093167617
+    },
+    {
+      "instance": "578e5d8768359f0f",
+      "seed": 0,
+      "GATE_FAILED": false,
+      "regret_p_plugin": 0.10563885268931328,
+      "regret_p_true_sigma": 0.10112081216545565,
+      "ceiling_improvement": 0.004518040523857625
+    },
+    {
+      "instance": "59e420274f4385d9",
+      "seed": 0,
+      "GATE_FAILED": false,
+      "regret_p_plugin": 0.09166809895153005,
+      "regret_p_true_sigma": 0.10178754721271588,
+      "ceiling_improvement": -0.010119448261185826
+    },
+    {
+      "instance": "5b3926ef2c5fe4b6",
+      "seed": 0,
+      "GATE_FAILED": false,
+      "regret_p_plugin": 0.06840711863654003,
+      "regret_p_true_sigma": 0.06258250556514022,
+      "ceiling_improvement": 0.005824613071399809
+    },
+    {
+      "instance": "763e0f58925816ca",
+      "seed": 0,
+      "GATE_FAILED": false,
+      "regret_p_plugin": 0.10957614913762559,
+      "regret_p_true_sigma": 0.0549699231930767,
+      "ceiling_improvement": 0.05460622594454889
+    },
+    {
+      "instance": "7b6071e568a98779",
+      "seed": 0,
+      "GATE_FAILED": false,
+      "regret_p_plugin": 0.10873794842079165,
+      "regret_p_true_sigma": 0.12062557391576634,
+      "ceiling_improvement": -0.011887625494974685
+    },
+    {
+      "instance": "7ef3fc89acece49c",
+      "seed": 0,
+      "GATE_FAILED": false,
+      "regret_p_plugin": 0.14601935618818063,
+      "regret_p_true_sigma": 0.13520980565743723,
+      "ceiling_improvement": 0.010809550530743395
+    },
+    {
+      "instance": "7f5c7431c0530e74",
+      "seed": 0,
+      "GATE_FAILED": false,
+      "regret_p_plugin": 0.07704999930621592,
+      "regret_p_true_sigma": 0.10958193094714963,
+      "ceiling_improvement": -0.03253193164093371
+    },
+    {
+      "instance": "8abe35e93ddfcad1",
+      "seed": 0,
+      "GATE_FAILED": false,
+      "regret_p_plugin": 0.10728358009854588,
+      "regret_p_true_sigma": 0.12449595145907844,
+      "ceiling_improvement": -0.017212371360532552
+    },
+    {
+      "instance": "9414bc879284eef0",
+      "seed": 0,
+      "GATE_FAILED": false,
+      "regret_p_plugin": 0.04378652432093866,
+      "regret_p_true_sigma": 0.04603867958415375,
+      "ceiling_improvement": -0.0022521552632150943
+    },
+    {
+      "instance": "9f3cdb4d835c6909",
+      "seed": 0,
+      "GATE_FAILED": false,
+      "regret_p_plugin": 0.12443376332513967,
+      "regret_p_true_sigma": 0.12359217822694346,
+      "ceiling_improvement": 0.000841585098196207
+    },
+    {
+      "instance": "c75f6d6f50fe2434",
+      "seed": 0,
+      "GATE_FAILED": false,
+      "regret_p_plugin": 0.12575010678381204,
+      "regret_p_true_sigma": 0.12026967042163184,
+      "ceiling_improvement": 0.005480436362180208
+    },
+    {
+      "instance": "ce7334da318bc5e5",
+      "seed": 0,
+      "GATE_FAILED": false,
+      "regret_p_plugin": 0.09251393819556941,
+      "regret_p_true_sigma": 0.1093534325604184,
+      "ceiling_improvement": -0.016839494364848995
+    },
+    {
+      "instance": "da5ec2fbb20c9f9b",
+      "seed": 0,
+      "GATE_FAILED": false,
+      "regret_p_plugin": 0.10462363428286281,
+      "regret_p_true_sigma": 0.09350769538749881,
+      "ceiling_improvement": 0.011115938895363997
+    },
+    {
+      "instance": "e402c32907f27534",
+      "seed": 0,
+      "GATE_FAILED": false,
+      "regret_p_plugin": 0.08125316098689461,
+      "regret_p_true_sigma": 0.0691567175029828,
+      "ceiling_improvement": 0.012096443483911812
+    },
+    {
+      "instance": "e946207e9dfe1876",
+      "seed": 0,
+      "GATE_FAILED": false,
+      "regret_p_plugin": 0.05964765348603851,
+      "regret_p_true_sigma": 0.07193256207247756,
+      "ceiling_improvement": -0.012284908586439047
+    },
+    {
+      "instance": "ef2815cdafff288c",
+      "seed": 0,
+      "GATE_FAILED": false,
+      "regret_p_plugin": 0.1191149079684799,
+      "regret_p_true_sigma": 0.10995024267258113,
+      "ceiling_improvement": 0.009164665295898766
+    },
+    {
+      "instance": "f79c5cf175034acd",
+      "seed": 0,
+      "GATE_FAILED": false,
+      "regret_p_plugin": 0.11130526006301333,
+      "regret_p_true_sigma": 0.08526592858227267,
+      "ceiling_improvement": 0.02603933148074067
+    },
+    {
+      "instance": "033466197eba3ddb",
+      "seed": 1,
+      "GATE_FAILED": false,
+      "regret_p_plugin": 0.11504428532912103,
+      "regret_p_true_sigma": 0.07763779233684598,
+      "ceiling_improvement": 0.03740649299227505
+    },
+    {
+      "instance": "0a6e0788538a7c52",
+      "seed": 1,
+      "GATE_FAILED": false,
+      "regret_p_plugin": 0.1395249852860354,
+      "regret_p_true_sigma": 0.08703675041196934,
+      "ceiling_improvement": 0.052488234874066064
+    },
+    {
+      "instance": "0ed87c75239d73f8",
+      "seed": 1,
+      "GATE_FAILED": false,
+      "regret_p_plugin": 0.12969576015657625,
+      "regret_p_true_sigma": 0.10890344709087973,
+      "ceiling_improvement": 0.02079231306569651
+    },
+    {
+      "instance": "32bb966a18f1d863",
+      "seed": 1,
+      "GATE_FAILED": false,
+      "regret_p_plugin": 0.14479299102356924,
+      "regret_p_true_sigma": 0.10871039258084048,
+      "ceiling_improvement": 0.036082598442728764
+    },
+    {
+      "instance": "443c180247c17191",
+      "seed": 1,
+      "GATE_FAILED": false,
+      "regret_p_plugin": 0.1778991861115351,
+      "regret_p_true_sigma": 0.13015581690170286,
+      "ceiling_improvement": 0.04774336920983224
+    },
+    {
+      "instance": "48b1324dd0461cd9",
+      "seed": 1,
+      "GATE_FAILED": false,
+      "regret_p_plugin": 0.06232062297228769,
+      "regret_p_true_sigma": 0.07240966059405063,
+      "ceiling_improvement": -0.010089037621762942
+    },
+    {
+      "instance": "4d4f7158b65b52ba",
+      "seed": 1,
+      "GATE_FAILED": false,
+      "regret_p_plugin": 0.08073770881744713,
+      "regret_p_true_sigma": 0.0647380841870514,
+      "ceiling_improvement": 0.015999624630395726
+    },
+    {
+      "instance": "51cf489c521a6911",
+      "seed": 1,
+      "GATE_FAILED": false,
+      "regret_p_plugin": 0.07906857900799757,
+      "regret_p_true_sigma": 0.12728090372634682,
+      "ceiling_improvement": -0.04821232471834924
+    },
+    {
+      "instance": "578e5d8768359f0f",
+      "seed": 1,
+      "GATE_FAILED": false,
+      "regret_p_plugin": 0.07476562104795181,
+      "regret_p_true_sigma": 0.07381706047174963,
+      "ceiling_improvement": 0.0009485605762021843
+    },
+    {
+      "instance": "59e420274f4385d9",
+      "seed": 1,
+      "GATE_FAILED": false,
+      "regret_p_plugin": 0.12200056874330323,
+      "regret_p_true_sigma": 0.10258225693673562,
+      "ceiling_improvement": 0.019418311806567612
+    },
+    {
+      "instance": "5b3926ef2c5fe4b6",
+      "seed": 1,
+      "GATE_FAILED": false,
+      "regret_p_plugin": 0.08814643422109669,
+      "regret_p_true_sigma": 0.0478739917376666,
+      "ceiling_improvement": 0.04027244248343009
+    },
+    {
+      "instance": "763e0f58925816ca",
+      "seed": 1,
+      "GATE_FAILED": false,
+      "regret_p_plugin": 0.10102168462114025,
+      "regret_p_true_sigma": 0.09937645740224588,
+      "ceiling_improvement": 0.001645227218894374
+    },
+    {
+      "instance": "7b6071e568a98779",
+      "seed": 1,
+      "GATE_FAILED": false,
+      "regret_p_plugin": 0.07404069006698755,
+      "regret_p_true_sigma": 0.05208854708676147,
+      "ceiling_improvement": 0.021952142980226075
+    },
+    {
+      "instance": "7ef3fc89acece49c",
+      "seed": 1,
+      "GATE_FAILED": false,
+      "regret_p_plugin": 0.07776967585700156,
+      "regret_p_true_sigma": 0.06781208434786223,
+      "ceiling_improvement": 0.00995759150913933
+    },
+    {
+      "instance": "7f5c7431c0530e74",
+      "seed": 1,
+      "GATE_FAILED": false,
+      "regret_p_plugin": 0.05874458878899391,
+      "regret_p_true_sigma": 0.08038256623417395,
+      "ceiling_improvement": -0.021637977445180034
+    },
+    {
+      "instance": "8abe35e93ddfcad1",
+      "seed": 1,
+      "GATE_FAILED": false,
+      "regret_p_plugin": 0.10516277271244356,
+      "regret_p_true_sigma": 0.09178764976338072,
+      "ceiling_improvement": 0.013375122949062845
+    },
+    {
+      "instance": "9414bc879284eef0",
+      "seed": 1,
+      "GATE_FAILED": false,
+      "regret_p_plugin": 0.1414904683809446,
+      "regret_p_true_sigma": 0.10417365510485355,
+      "ceiling_improvement": 0.03731681327609104
+    },
+    {
+      "instance": "9f3cdb4d835c6909",
+      "seed": 1,
+      "GATE_FAILED": false,
+      "regret_p_plugin": 0.05342856443773236,
+      "regret_p_true_sigma": 0.07886025292537524,
+      "ceiling_improvement": -0.02543168848764288
+    },
+    {
+      "instance": "c75f6d6f50fe2434",
+      "seed": 1,
+      "GATE_FAILED": false,
+      "regret_p_plugin": 0.08300826220245061,
+      "regret_p_true_sigma": 0.05493106882426757,
+      "ceiling_improvement": 0.02807719337818304
+    },
+    {
+      "instance": "ce7334da318bc5e5",
+      "seed": 1,
+      "GATE_FAILED": false,
+      "regret_p_plugin": 0.11160597753237678,
+      "regret_p_true_sigma": 0.07504243174944891,
+      "ceiling_improvement": 0.036563545782927864
+    },
+    {
+      "instance": "da5ec2fbb20c9f9b",
+      "seed": 1,
+      "GATE_FAILED": false,
+      "regret_p_plugin": 0.045873811066009185,
+      "regret_p_true_sigma": 0.032906533240678826,
+      "ceiling_improvement": 0.012967277825330359
+    },
+    {
+      "instance": "e402c32907f27534",
+      "seed": 1,
+      "GATE_FAILED": false,
+      "regret_p_plugin": 0.14566030296157728,
+      "regret_p_true_sigma": 0.11462658357352606,
+      "ceiling_improvement": 0.031033719388051217
+    },
+    {
+      "instance": "e946207e9dfe1876",
+      "seed": 1,
+      "GATE_FAILED": false,
+      "regret_p_plugin": 0.09865085239882354,
+      "regret_p_true_sigma": 0.10048255967938369,
+      "ceiling_improvement": -0.0018317072805601464
+    },
+    {
+      "instance": "ef2815cdafff288c",
+      "seed": 1,
+      "GATE_FAILED": false,
+      "regret_p_plugin": 0.11310409448642589,
+      "regret_p_true_sigma": 0.0999388332995963,
+      "ceiling_improvement": 0.013165261186829591
+    },
+    {
+      "instance": "f79c5cf175034acd",
+      "seed": 1,
+      "GATE_FAILED": false,
+      "regret_p_plugin": 0.10428160929856745,
+      "regret_p_true_sigma": 0.09349781765480925,
+      "ceiling_improvement": 0.0107837916437582
+    }
+  ],
+  "spec": "docs/SPADE-CALIBRATION-FIX-SPEC.md sec 2"
+}
