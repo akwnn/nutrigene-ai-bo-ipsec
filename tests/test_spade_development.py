@@ -22,6 +22,24 @@ CONFIG = "f" * 64
 GENERATOR = "a" * 64
 SOURCE = "1" * 40
 GENERATOR_MANIFEST = "b" * 64
+POWER_DESIGN = "c" * 64
+POWER_ENGINE = "8" * 64
+POWER_PLANNER = "9" * 64
+
+
+def _registered_metadata() -> dict[str, object]:
+    return {
+        "study_protocol_digest": PROTOCOL,
+        "spec_digest": SPEC,
+        "config_digest": CONFIG,
+        "generator_digest": GENERATOR,
+        "generator_manifest_sha256": GENERATOR_MANIFEST,
+        "power_design_digest": POWER_DESIGN,
+        "power_engine_digest": POWER_ENGINE,
+        "power_planner_digest": POWER_PLANNER,
+        "source_commit": SOURCE,
+        "source_dirty": False,
+    }
 
 
 def _candidate_protocol(arm_id: str, root_seed: int) -> str:
@@ -332,6 +350,81 @@ def test_registered_metadata_binds_live_power_sources_and_dynamic_rule():
     assert "Run 350 independent paired campaigns" not in parent
 
 
+def test_default_live_metadata_reaches_campaign_boundary_as_development_projection(
+    tmp_path, monkeypatch
+):
+    root = Path(__file__).resolve().parents[1]
+    observed: list[dict[str, object]] = []
+
+    class CampaignBoundaryReached(RuntimeError):
+        pass
+
+    def stop_before_campaign(_family, _key_index, _arm_ids, *, metadata, **_kwargs):
+        observed.append(dict(metadata))
+        raise CampaignBoundaryReached
+
+    monkeypatch.setattr(runner, "_run_campaign_rows", stop_before_campaign)
+    with pytest.raises(CampaignBoundaryReached):
+        runner.run_development_shard(
+            family="ackley",
+            start=0,
+            stop=1,
+            output=tmp_path / "scratch.jsonl.gz",
+            smoke=True,
+            repo_root=root,
+        )
+
+    live = runner.registered_metadata(root)
+    assert observed == [
+        {
+            field: live[field]
+            for field in (
+                "study_protocol_digest",
+                "spec_digest",
+                "config_digest",
+                "generator_digest",
+                "generator_manifest_sha256",
+                "source_commit",
+                "source_dirty",
+            )
+        }
+    ]
+
+
+@pytest.mark.parametrize(
+    "mutate",
+    [
+        lambda metadata: metadata.pop("power_design_digest"),
+        lambda metadata: metadata.__setitem__("unexpected", "0" * 64),
+        lambda metadata: metadata.__setitem__("power_engine_digest", "0" * 63),
+    ],
+    ids=("missing-power-digest", "extra-field", "malformed-power-digest"),
+)
+def test_development_entry_rejects_registered_metadata_drift_before_campaign(
+    tmp_path, monkeypatch, mutate
+):
+    metadata = _registered_metadata()
+    mutate(metadata)
+    monkeypatch.setattr(
+        runner,
+        "_run_campaign_rows",
+        lambda *_args, **_kwargs: (_ for _ in ()).throw(
+            AssertionError("campaign work must not begin")
+        ),
+    )
+
+    with pytest.raises(ValueError, match="registered metadata|power_engine_digest"):
+        runner.run_development_shard(
+            family="ackley",
+            start=0,
+            stop=1,
+            output=tmp_path / "scratch.jsonl.gz",
+            smoke=True,
+            metadata=metadata,
+            repo_root=tmp_path / "repo",
+        )
+
+
 def test_generator_manifest_remains_unopened_and_binds_final_protocol_bytes():
     root = Path(__file__).resolve().parents[1]
     config_path = root / "configs/experiment/spade-joint.yaml"
@@ -435,15 +528,7 @@ def test_grid_rejects_tenth_candidate_missing_arm_and_heldout_role(complete_rows
 
 
 def test_smoke_shard_is_scratch_only_marked_and_resumable(tmp_path, monkeypatch):
-    metadata = {
-        "study_protocol_digest": PROTOCOL,
-        "spec_digest": SPEC,
-        "config_digest": CONFIG,
-        "generator_digest": GENERATOR,
-        "generator_manifest_sha256": GENERATOR_MANIFEST,
-        "source_commit": SOURCE,
-        "source_dirty": False,
-    }
+    metadata = _registered_metadata()
     output = tmp_path / "smoke.jsonl.gz"
     calls = []
 
