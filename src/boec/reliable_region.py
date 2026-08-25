@@ -185,12 +185,30 @@ def reliable_set_draws(
         raise ValueError(f"seed must lie in [0, 2**63), got {seed_i}")
 
     noise_variance = _learned_noise_variance(model)
-    posterior, _, _ = _latent_posterior(model, X)
-    devices = [X.device.index] if X.is_cuda else []
-    with torch.random.fork_rng(devices=devices):
-        torch.manual_seed(seed_i)
-        with torch.no_grad():
-            latent = posterior.rsample(torch.Size([n_draws_i]))
+    posterior, posterior_mean, _ = _latent_posterior(model, X)
+    try:
+        base_sample_shape = torch.Size(posterior.base_sample_shape)
+        sample_from_base = posterior.rsample_from_base_samples
+    except (AttributeError, TypeError) as exc:
+        raise ValueError(
+            "posterior must support deterministic joint sampling from base samples"
+        ) from exc
+    if len(base_sample_shape) == 0 or math.prod(base_sample_shape) < 1:
+        raise ValueError(
+            f"posterior base_sample_shape must be non-empty, got {base_sample_shape}"
+        )
+
+    sample_shape = torch.Size([n_draws_i])
+    generator = torch.Generator(device="cpu")
+    generator.manual_seed(seed_i)
+    base_samples = torch.randn(
+        sample_shape + base_sample_shape,
+        generator=generator,
+        dtype=torch.double,
+        device="cpu",
+    ).to(dtype=posterior_mean.dtype, device=posterior_mean.device)
+    with torch.no_grad():
+        latent = sample_from_base(sample_shape, base_samples)
     expected = (n_draws_i, X.shape[0], 1)
     if tuple(latent.shape) != expected:
         raise ValueError(

@@ -28,6 +28,18 @@ class _JointGaussianPosterior:
     def rsample(self, sample_shape: torch.Size = torch.Size()) -> torch.Tensor:
         return self._distribution.rsample(sample_shape).unsqueeze(-1)
 
+    @property
+    def base_sample_shape(self) -> torch.Size:
+        return torch.Size([self.mean.shape[0]])
+
+    def rsample_from_base_samples(
+        self, sample_shape: torch.Size, base_samples: torch.Tensor
+    ) -> torch.Tensor:
+        expected = sample_shape + self.base_sample_shape
+        assert base_samples.shape == expected
+        samples = self._distribution.loc + base_samples @ self._distribution.scale_tril.T
+        return samples.unsqueeze(-1)
+
 
 class _JointGaussianModel:
     def __init__(
@@ -118,6 +130,35 @@ def test_reliable_set_draws_are_joint_boolean_seeded_and_rng_independent(model, 
     assert torch.equal(first, second)
 
 
+def _available_rng_states():
+    states = {"cpu": torch.random.get_rng_state().clone()}
+    if torch.cuda.is_available():
+        states["cuda"] = tuple(state.clone() for state in torch.cuda.get_rng_state_all())
+    if torch.backends.mps.is_available():
+        states["mps"] = torch.mps.get_rng_state().clone()
+    return states
+
+
+def test_cpu_reliable_set_draws_leave_every_global_rng_unchanged(
+    model, grid, monkeypatch
+):
+    before = _available_rng_states()
+
+    def reject_global_seed(*args, **kwargs):
+        raise AssertionError("reliable_set_draws must use a local generator")
+
+    monkeypatch.setattr(torch, "manual_seed", reject_global_seed)
+    reliable_set_draws(model, grid.cpu(), tau=0.5, gamma=0.8, n_draws=128, seed=7)
+    after = _available_rng_states()
+
+    assert before.keys() == after.keys()
+    for device, state in before.items():
+        if isinstance(state, tuple):
+            assert all(torch.equal(a, b) for a, b in zip(state, after[device]))
+        else:
+            assert torch.equal(state, after[device]), device
+
+
 @pytest.mark.parametrize("gamma", [0.0, 1.0, -0.1, 1.1, float("nan")])
 def test_reliable_set_draws_reject_invalid_gamma(model, grid, gamma):
     with pytest.raises(ValueError, match="gamma"):
@@ -173,7 +214,7 @@ def test_reliable_set_draws_reject_invalid_or_odd_draw_counts(model, grid, n_dra
 
 def test_reliable_set_draws_rejects_bad_posterior_draw_shape(grid):
     class BadPosterior(_JointGaussianPosterior):
-        def rsample(self, sample_shape=torch.Size()):
+        def rsample_from_base_samples(self, sample_shape, base_samples):
             return torch.zeros(sample_shape[0], 4, 2, dtype=torch.double)
 
     model = _JointGaussianModel(
