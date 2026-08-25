@@ -130,6 +130,6 @@ protocol:
 digests:
   digest_definition: "sha256; protocol payload uses canonical sorted compact JSON of the parsed protocol mapping"
   protocol_payload_sha256: e7edddd4f281748642017c49c51c38f50156e7d74fb54db2de7c4736d8ea98fb
-  spec_sha256: a73b2f0710737d95682ae42b7c811e5f57afa9f408ddfc1856c26d74bc170d50
+  spec_sha256: aec2ac555706a8107db896fdba0a62d6d2743c8a1d907bf9b144604f56ef4b97
   lockbox_oracles_source_sha256: 1a79abd6e62d503852fe98957e67d4d4f6d7e9f8b52788176f2359ed38d3e0c3
   spade_study_source_sha256: cf981ec0735eb98b98585b3b026537dca874ef9ab93ac2e3c8d4784626071a05

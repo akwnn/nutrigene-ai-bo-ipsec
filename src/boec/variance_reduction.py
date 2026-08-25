@@ -10,6 +10,73 @@ from boec.surrogate import outcome_scale
 __all__ = ["greedy_ivr"]
 
 
+_POSTERIOR_BLOCK_SIZE = 1_024
+
+
+def _posterior_covariance(model, X: Tensor) -> Tensor:
+    with torch.no_grad():
+        posterior = model.posterior(X.double(), observation_noise=False)
+        covariance = posterior.mvn.covariance_matrix.detach().double()
+    if covariance.ndim != 2 or covariance.shape != (X.shape[0], X.shape[0]):
+        raise ValueError(
+            "greedy_ivr requires a single-output latent covariance matrix of "
+            f"shape ({X.shape[0]}, {X.shape[0]}); got {tuple(covariance.shape)}"
+        )
+    if not bool(torch.all(torch.isfinite(covariance))):
+        raise RuntimeError("latent posterior covariance contains nonfinite values")
+    return covariance
+
+
+def _reference_cross_and_candidate_variances(
+    model,
+    reference: Tensor,
+    candidates: Tensor,
+) -> tuple[Tensor, Tensor]:
+    n_reference = reference.shape[0]
+    n_candidates = candidates.shape[0]
+    cross = torch.empty(
+        (n_reference, n_candidates),
+        dtype=torch.double,
+        device=reference.device,
+    )
+    variances = torch.empty(
+        n_candidates,
+        dtype=torch.double,
+        device=candidates.device,
+    )
+    for start in range(0, n_candidates, _POSTERIOR_BLOCK_SIZE):
+        stop = min(start + _POSTERIOR_BLOCK_SIZE, n_candidates)
+        covariance = _posterior_covariance(
+            model,
+            torch.cat([reference.double(), candidates[start:stop].double()], dim=0),
+        )
+        cross[:, start:stop] = covariance[:n_reference, n_reference:]
+        variances[start:stop] = torch.diagonal(
+            covariance[n_reference:, n_reference:]
+        )
+    return cross, variances
+
+
+def _candidate_covariance_row(
+    model,
+    selected: Tensor,
+    candidates: Tensor,
+) -> Tensor:
+    result = torch.empty(
+        candidates.shape[0],
+        dtype=torch.double,
+        device=candidates.device,
+    )
+    for start in range(0, candidates.shape[0], _POSTERIOR_BLOCK_SIZE):
+        stop = min(start + _POSTERIOR_BLOCK_SIZE, candidates.shape[0])
+        covariance = _posterior_covariance(
+            model,
+            torch.cat([selected.reshape(1, -1).double(), candidates[start:stop].double()]),
+        )
+        result[start:stop] = covariance[0, 1:]
+    return result
+
+
 def greedy_ivr(
     model,
     candidates: Tensor,
@@ -80,18 +147,11 @@ def greedy_ivr(
             raise ValueError("normalized weights cannot be all-zero")
 
     model.eval()
-    joint = torch.cat([reference.double(), candidates.double()], dim=0)
-    with torch.no_grad():
-        posterior = model.posterior(joint, observation_noise=False)
-        covariance = posterior.mvn.covariance_matrix.detach().double().clone()
-    expected = n_reference + candidates.shape[0]
-    if covariance.ndim != 2 or covariance.shape != (expected, expected):
-        raise ValueError(
-            "greedy_ivr requires a single-output latent covariance matrix of "
-            f"shape ({expected}, {expected}); got {tuple(covariance.shape)}"
-        )
-    if not bool(torch.all(torch.isfinite(covariance))):
-        raise RuntimeError("latent posterior covariance contains nonfinite values")
+    reference_cross, candidate_variances = _reference_cross_and_candidate_variances(
+        model,
+        reference,
+        candidates,
+    )
 
     likelihood_noise = model.likelihood.noise.detach().double().reshape(-1)
     scale = outcome_scale(model).double().reshape(-1)
@@ -101,13 +161,12 @@ def greedy_ivr(
     if not bool(torch.isfinite(observation_noise)) or float(observation_noise) <= 0:
         raise ValueError("learned likelihood noise must be positive and finite")
 
-    reference_cross = covariance[:n_reference, n_reference:]
-    candidate_covariance = covariance[n_reference:, n_reference:]
     remaining = torch.arange(candidates.shape[0], device=candidates.device)
     selected: list[int] = []
+    conditioning_events: list[tuple[Tensor, Tensor]] = []
 
     for _ in range(q):
-        denominators = torch.diagonal(candidate_covariance) + observation_noise
+        denominators = candidate_variances + observation_noise
         if not bool(torch.all(torch.isfinite(denominators))) or bool(
             torch.any(denominators <= 0)
         ):
@@ -123,12 +182,31 @@ def greedy_ivr(
         if len(selected) == q:
             break
 
+        selected_global = int(remaining[local_index].item())
+        conditional_row = _candidate_covariance_row(
+            model,
+            candidates[selected_global],
+            candidates,
+        )[remaining]
+        for event_cross, event_denominator in conditioning_events:
+            conditional_row = conditional_row - (
+                event_cross[selected_global]
+                * event_cross[remaining]
+                / event_denominator
+            )
         keep = torch.ones(remaining.shape[0], dtype=torch.bool, device=remaining.device)
         keep[local_index] = False
         denominator = denominators[local_index]
         selected_reference_cross = reference_cross[:, local_index].clone()
-        selected_candidate_cross = candidate_covariance[local_index, keep].clone()
-        kept_to_selected = candidate_covariance[keep, local_index].clone()
+        selected_candidate_cross = conditional_row[keep].clone()
+
+        event_cross = torch.zeros(
+            candidates.shape[0],
+            dtype=torch.double,
+            device=candidates.device,
+        )
+        event_cross[remaining] = conditional_row
+        conditioning_events.append((event_cross, denominator))
 
         reference_cross = (
             reference_cross[:, keep]
@@ -136,15 +214,10 @@ def greedy_ivr(
             * selected_candidate_cross[None, :]
             / denominator
         )
-        candidate_covariance = (
-            candidate_covariance[keep][:, keep]
-            - kept_to_selected[:, None]
-            * selected_candidate_cross[None, :]
-            / denominator
+        candidate_variances = (
+            candidate_variances[keep]
+            - selected_candidate_cross.square() / denominator
         )
-        candidate_covariance = (
-            candidate_covariance + candidate_covariance.transpose(-1, -2)
-        ) / 2
         remaining = remaining[keep]
 
     return candidates[selected].clone()

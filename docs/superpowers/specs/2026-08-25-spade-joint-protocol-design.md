@@ -247,7 +247,10 @@ are never added.
 
 Greedy IVR accounts for already selected members of the same batch. It uses posterior
 covariance and learned observation noise, not predictive variance containing an
-irreducible noise term.
+irreducible noise term. The exact covariance calculation is evaluated in deterministic
+1,024-candidate blocks: it stores the reference-to-candidate block, candidate diagonal,
+and at most `q-1` selected-candidate rows, then applies the same rank-one Schur updates.
+It must never materialize the full 16,384 by 16,384 candidate covariance matrix.
 
 ### 7.4 Development policies
 

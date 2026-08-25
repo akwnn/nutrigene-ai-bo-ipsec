@@ -60,6 +60,14 @@ mismatches already recorded in `.planning/codebase/CONCERNS.md`.
   finite negative tails without clipping but still enforce an upper bound of one. The
   focused suite is 103 passed and the broader relevant suite is 171 passed; independent
   re-review found no remaining issue.
+- The next clean launch exposed a registered-scale implementation bottleneck before any
+  IVR row completed: the dense path materialized an 18,432-square covariance (about
+  2.7 GB per process). Five one-row, qLogNEI-only checkpoints were isolated without
+  reading metrics and will not be reused. IVR now evaluates exact posterior covariance
+  in deterministic 1,024-candidate blocks and applies the same sequential Schur updates.
+  It selected identical points to an independent dense reference on five randomized
+  positive-definite cases, completed the real 16,384-candidate/2,048-reference shape in
+  2.061 seconds, and passed 174 focused compatibility tests.
 
 ## Next action
 
