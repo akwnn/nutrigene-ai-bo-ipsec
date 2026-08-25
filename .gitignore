@@ -325,4 +325,6 @@ COMMIT_MSG.txt
 
 # tau-quantile / calibration-fix follow-ups: same convention -- small derived verdicts.
 !results/k0-calibration-gate.json
+!results/k1-noise-ceiling.json
 !results/tau-quantile-followup.json
+!results/k2-design-lottery.json

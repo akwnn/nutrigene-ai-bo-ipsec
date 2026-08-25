@@ -85,6 +85,38 @@ justified by the gate's own logic, which was designed to give a clean kill/reviv
 and did not. Not proceeding to build Piece A without an explicit decision to do so despite
 the ambiguity.
 
+## 3b. K1 result — PIECE A KILLED CLEANLY
+
+**Computed on `versionb`, all 50 hill seeds** (`scripts/analyse_k1_noise_ceiling.py`,
+`results/k1-noise-ceiling.json`). Before running: a real, previously-undetected
+regeneration break was found and routed around, not silently patched over —
+`run_fix1_terminal_rule.py`'s call to `_VB._two_plate(orc, DIM, seed, mu_max, True)`
+predates that function's current signature (`mode: str`, returns 4 values; changed in
+commit `c8347f1`) and raises `ValueError` if actually run today. `run_fix1_terminal_rule.py`
+was not edited (frozen); this analysis calls `_two_plate(..., mode="lse")` directly and
+gates its own regenerated `regret_a` against the committed value at every one of the 50
+campaigns (0 failures) before trusting any `regret_p` comparison.
+
+| | value |
+|---|---|
+| mean ceiling improvement (plugin σ̂ → true σ) | **+0.00816** |
+| 95% bootstrap CI | **[+0.00202, +0.01417]** |
+| Wilcoxon p | 0.0166 |
+
+**Statistically real (CI excludes zero) but below the registered 0.01 bar.** Per K1's own
+rule: *"moves regret < 0.01 → drop the replicates, hand those 6 wells back to the design."*
+**Even perfect, oracle-granted knowledge of the true noise variance — a better ceiling than
+any finite-replicate estimator could ever reach — buys less than a hundredth of regret on
+average.** Piece A (the replicate-pooled noise estimator) is **not worth building**: no
+achievable estimator can beat this ceiling, and the ceiling itself doesn't clear the bar.
+
+**Verdict: Piece A KILLED.** Not because K0 was clean (it wasn't — genuinely ambiguous), but
+because the second, more direct gate K0's own escape route pointed to (K1) answers it
+cleanly. SPADE's calibration shortfall (`docs/SPADE-RESULTS-AND-ANALYSIS.md` §4, SPADE
+ranks 5th–7th/9) is not explained by this specific, previously-diagnosed noise-estimator
+defect at a magnitude worth fixing — the architecture-level explanation stands unless a
+different mechanism is found.
+
 ## 4. K2 — the design lottery (gates Piece B, OA-LHS)
 
 **Exact rule, `docs/ODIN-VERDICT.md` §6, K2, adopted verbatim:** 20 design draws each of
