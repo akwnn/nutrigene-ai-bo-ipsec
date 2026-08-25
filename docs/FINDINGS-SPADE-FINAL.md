@@ -7,6 +7,11 @@
 > yet supported by a committed result file is labelled **`NOT RUN`** and **must not be
 > cited**. This project has retracted its own headline three times (§4.4, §9.5, §14/§29);
 > the labelling is the defence against a fourth.
+>
+> **Drafting rule (2026-08-25).** §§5–16 record the study as it stood after C1+C2 and before
+> `doe_unscreened`. **§17.4 is the current ledger** (all seven conditions merged, KF-1 PASS,
+> KF-2 FAIL, unscreened implemented). `docs/RESEARCH-SUMMARY.md` matches §17.4. Do not quote
+> §12's KF-1 INCONCLUSIVE / KF-2 NOT_RUN rows, or §15's “unscreened missing,” as current.
 
 ---
 
@@ -369,6 +374,8 @@ rule-A/rule-P asymmetry reproduces at C1 (0.1141 → 0.1684), so it is not a σ=
 classical comparison remains incomplete across the study.
 
 ## 12. Kill ledger
+
+> **Historical snapshot.** This table is C1+C2 only. Current adjudication is **§17.4**.
 
 **C1 + C2 combined via `merge_condition_rows`, adjudicated at map cell
 (τ_q p=0.25, γ=0.95, α=0.95).** Source: `results/final-spade-kill-ledger.json`. Every

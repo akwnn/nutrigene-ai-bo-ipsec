@@ -121,14 +121,14 @@ is that `doe` screens 6→4 and confines its response-surface design to a sub-bo
 **Significant in 24 of 24**, favouring the unscreened arm. And it runs exactly opposite to
 regret, where `doe` **beats** `lhs` by **+0.0312 [+0.0133, +0.0491], p=0.0028**.
 
-> **🔴 PROVENANCE GAP, raised 2026-08-23 — this table is not reproducible from a committed
-> file.** `scripts/analyse_k6.py` sets `SPREAD, CLUSTERED = "doe", "qlogei"` and never
-> references `lhs`, so `k6-analysis.json`'s `spread_vs_clustered` field is **`doe − qlogei`**
-> (−0.0996 [−0.1241, −0.0744] at γ=0.50, τ_frac=0.60) and **not** the `lhs`-versus-`doe`
-> contrast printed above. No committed artefact carries these six rows. The claim may well be
-> right — the direction is corroborated by Q59's independent re-score (§26) — but a section
-> called *"the cleanest result in the study"* must name the file it came from. **Either commit
-> the runner that produces it or withdraw the table before it reaches a draft.**
+> **Provenance (closed 2026-08-25).** This table is `lhs − doe` on AUC(predictive) from
+> `results/f1-dual-n.json` (family “§5.3 HEADLINE 1”), produced by `scripts/analyse_f1_dual_n.py`
+> from `results/k6-designspace.json` + `k6-designspace-spread.json`. Rounded n=50 means match
+> the printed cells; all 24 cells are significant at n=25 and after Holm. **Do not recover it
+> from `scripts/analyse_k6.py`:** that runner still sets `SPREAD, CLUSTERED = "doe", "qlogei"`,
+> so `k6-analysis.json`'s `spread_vs_clustered` field is **`doe − qlogei`** (−0.0996 at
+> γ=0.50, τ_frac=0.60), not this contrast. Q59 (`results/q59-map-rescore.json`) independently
+> corroborates the screening-cost direction.
 
 Two arms, one difference, a complete ranking reversal. **Screening buys the better single
 recipe and costs the ability to state a range for two of six factors** — which is what a
