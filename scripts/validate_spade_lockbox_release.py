@@ -8,10 +8,13 @@ import hashlib
 import json
 import math
 import os
+import stat
+import subprocess
 import tempfile
 from collections.abc import Mapping, Sequence
 from pathlib import Path
 
+from boec.spade_power import validate_power_plan_payload
 from scripts import analyse_spade_lockbox as confirmatory
 from scripts import run_spade_lockbox as lockbox_contract
 
@@ -21,7 +24,14 @@ ARMS = ("spade", "sobol48", "qlognei48")
 LOCKBOX_FAMILIES = (
     "toroidal_rastrigin", "gaussian_basin_mixture", "curved_ridge", "soft_plateau",
 )
-LOCKBOX_SAMPLE_SIZE = 350
+POWER_RELATIVE_PATH = Path("results/spade-lockbox-power.json")
+POWER_SOURCE_BLOBS = {
+    "power_design_sha256": Path(
+        "docs/superpowers/specs/2026-08-25-spade-lockbox-power-design.md"
+    ),
+    "power_engine_sha256": Path("src/boec/spade_power.py"),
+    "power_planner_sha256": Path("scripts/plan_spade_lockbox_power.py"),
+}
 PERMISSIBLE_PASS_CLAIM = (
     "After prespecified selection on development families, the frozen 48-evaluation "
     "SPADE protocol matched the specialist Sobol map and qLogNEI optimizer within "
@@ -38,6 +48,10 @@ def _canonical_json(value: object) -> str:
     return json.dumps(
         value, sort_keys=True, separators=(",", ":"), ensure_ascii=False, allow_nan=False
     )
+
+
+def _canonical_bytes(value: object) -> bytes:
+    return (_canonical_json(value) + "\n").encode("utf-8")
 
 
 def _sha256(path: Path) -> str:
@@ -69,7 +83,20 @@ def _strict_json_loads(data: bytes) -> object:
     def reject_constant(token: str) -> object:
         raise ValueError(f"non-finite JSON constant: {token}")
 
-    return json.loads(data, parse_float=finite_float, parse_constant=reject_constant)
+    def unique_object(pairs: list[tuple[str, object]]) -> dict[str, object]:
+        result: dict[str, object] = {}
+        for key, value in pairs:
+            if key in result:
+                raise ValueError(f"duplicate JSON object key: {key}")
+            result[key] = value
+        return result
+
+    return json.loads(
+        data,
+        parse_float=finite_float,
+        parse_constant=reject_constant,
+        object_pairs_hook=unique_object,
+    )
 
 
 def _finite_number(value: object) -> float | None:
@@ -111,6 +138,337 @@ def _load_json_mapping(
     return dict(value)
 
 
+def _git_output(repo_root: Path, *args: str) -> bytes:
+    completed = subprocess.run(
+        ["git", "-C", str(repo_root), *args],
+        check=False,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
+    if completed.returncode != 0:
+        message = completed.stderr.decode("utf-8", errors="replace").strip()
+        raise ValueError(message or f"git {' '.join(args)} failed")
+    return completed.stdout
+
+
+def _validated_repo_root(repo_root: Path) -> Path:
+    lexical = Path(os.path.abspath(repo_root))
+    output = _git_output(lexical, "rev-parse", "--show-toplevel")
+    actual = Path(output.decode("utf-8").strip())
+    if actual != lexical:
+        raise ValueError("release repository root does not match its Git worktree root")
+    return lexical
+
+
+def _reject_symlink_components(repo_root: Path, path: Path) -> None:
+    try:
+        relative = path.relative_to(repo_root)
+    except ValueError as exc:
+        raise ValueError("power plan is outside its repository") from exc
+    cursor = repo_root
+    for component in relative.parts:
+        cursor = cursor / component
+        try:
+            metadata = os.lstat(cursor)
+        except OSError as exc:
+            raise ValueError(f"power plan is missing or unreadable: {exc}") from exc
+        if stat.S_ISLNK(metadata.st_mode):
+            raise ValueError(f"power plan path contains a symlink: {cursor}")
+    if not stat.S_ISREG(os.lstat(path).st_mode):
+        raise ValueError("power plan path is not a regular file")
+
+
+def _committed_power_bytes(repo_root: Path) -> bytes:
+    relative = POWER_RELATIVE_PATH.as_posix()
+    entry = _git_output(repo_root, "ls-tree", "-z", "HEAD", "--", relative)
+    try:
+        metadata, recorded_path = entry.rstrip(b"\0").split(b"\t", 1)
+        mode, kind, _object_id = metadata.split(b" ", 2)
+    except ValueError as exc:
+        raise ValueError("power plan has no unique committed HEAD tree entry") from exc
+    if recorded_path.decode("utf-8") != relative or kind != b"blob" or mode not in {
+        b"100644",
+        b"100755",
+    }:
+        raise ValueError("power plan HEAD entry is not the registered regular file")
+    return _git_output(repo_root, "show", f"HEAD:{relative}")
+
+
+def _git_commit_exists(repo_root: Path, commit: object) -> bool:
+    if not _digest(commit, length=40):
+        return False
+    try:
+        _git_output(repo_root, "cat-file", "-e", f"{commit}^{{commit}}")
+    except ValueError:
+        return False
+    return True
+
+
+def _git_is_ancestor(repo_root: Path, older: str, newer: str) -> bool:
+    completed = subprocess.run(
+        ["git", "-C", str(repo_root), "merge-base", "--is-ancestor", older, newer],
+        check=False,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
+    return completed.returncode == 0
+
+
+def _committed_blob_sha256(repo_root: Path, commit: str, path: Path) -> str:
+    relative = path.as_posix()
+    entry = _git_output(repo_root, "ls-tree", "-z", commit, "--", relative)
+    try:
+        metadata, recorded_path = entry.rstrip(b"\0").split(b"\t", 1)
+        mode, kind, _object_id = metadata.split(b" ", 2)
+    except ValueError as exc:
+        raise ValueError(f"registered source blob is absent: {relative}") from exc
+    if recorded_path.decode("utf-8") != relative or kind != b"blob" or mode not in {
+        b"100644",
+        b"100755",
+    }:
+        raise ValueError(f"registered source path is not a regular blob: {relative}")
+    return hashlib.sha256(_git_output(repo_root, "show", f"{commit}:{relative}")).hexdigest()
+
+
+def _load_power_plan(
+    path: Path,
+    *,
+    repo_root: Path,
+    hashes: dict[str, str],
+    violations: list[str],
+) -> dict[str, object]:
+    """Authenticate the exact committed power file before any outcome shard is read."""
+    lexical = Path(os.path.abspath(path))
+    safe_regular_file = False
+    try:
+        repo_root = _validated_repo_root(repo_root)
+        expected = repo_root / POWER_RELATIVE_PATH
+        if lexical != expected:
+            raise ValueError(f"power plan must use the exact registered path {expected}")
+        _reject_symlink_components(repo_root, lexical)
+        safe_regular_file = True
+    except (OSError, UnicodeDecodeError, ValueError) as exc:
+        _violation(violations, f"power plan registered path violation: {exc}")
+
+    data = (
+        _hash_actual(
+            lexical,
+            key="power_plan_sha256",
+            label="power plan",
+            hashes=hashes,
+            violations=violations,
+        )
+        if safe_regular_file
+        else None
+    )
+    if data is None:
+        return {}
+
+    if repo_root is not None:
+        try:
+            if data != _committed_power_bytes(repo_root):
+                raise ValueError("working-tree bytes differ from committed HEAD bytes")
+        except (OSError, UnicodeDecodeError, ValueError) as exc:
+            _violation(violations, f"power plan committed-file violation: {exc}")
+
+    try:
+        parsed = _strict_json_loads(data)
+    except (UnicodeDecodeError, ValueError, RecursionError) as exc:
+        _violation(violations, f"power plan JSON parse violation: {exc}")
+        return {}
+    if not isinstance(parsed, Mapping):
+        _violation(violations, "power plan schema violation: expected a JSON object")
+        return {}
+    try:
+        if data != _canonical_bytes(parsed):
+            raise ValueError("bytes are not the exact canonical serialization")
+    except (RecursionError, TypeError, ValueError) as exc:
+        _violation(violations, f"power plan canonical-byte violation: {exc}")
+        return dict(parsed)
+    try:
+        return validate_power_plan_payload(parsed)
+    except (OverflowError, RecursionError, TypeError, ValueError) as exc:
+        _violation(violations, f"power plan schema/decision violation: {exc}")
+        return dict(parsed)
+
+
+def _power_sample_size(
+    power_plan: Mapping[str, object], *, violations: list[str]
+) -> int | None:
+    if power_plan.get("status") != "POWERED":
+        _violation(violations, "release requires an authentic POWERED power plan")
+        return None
+    decision = power_plan.get("decision")
+    selected_n = decision.get("selected_sample_size") if isinstance(decision, Mapping) else None
+    if (
+        isinstance(selected_n, bool)
+        or not isinstance(selected_n, int)
+        or not 350 <= selected_n <= 2000
+    ):
+        _violation(violations, "power plan selected sample size is invalid")
+        return None
+    return selected_n
+
+
+def _canonical_equal(left: object, right: object) -> bool:
+    try:
+        return _canonical_json(left) == _canonical_json(right)
+    except (RecursionError, TypeError, ValueError):
+        return False
+
+
+def _preflight_power_bindings(
+    *,
+    repo_root: Path,
+    manifest: Mapping[str, object],
+    selection: Mapping[str, object],
+    power_plan: Mapping[str, object],
+    top_level_hashes: Mapping[str, str],
+    violations: list[str],
+) -> int | None:
+    """Authorize outcome reads only after every immutable power binding is proven."""
+    if (
+        set(manifest) != lockbox_contract.MERGED_MANIFEST_FIELDS
+        or manifest.get("schema") != lockbox_contract.MERGED_MANIFEST_SCHEMA
+        or manifest.get("status") != "COMPLETE"
+        or manifest.get("source_dirty") is not False
+    ):
+        _violation(violations, "merged manifest preflight schema/provenance violation")
+    try:
+        validated_selection = lockbox_contract.validate_selected_protocol_payload(selection)
+    except (TypeError, ValueError) as exc:
+        validated_selection = dict(selection)
+        _violation(violations, f"selection preflight schema violation: {exc}")
+    try:
+        validated_power = validate_power_plan_payload(power_plan)
+    except (OverflowError, RecursionError, TypeError, ValueError) as exc:
+        _violation(violations, f"power plan preflight schema/decision violation: {exc}")
+        return None
+    sample_size = _power_sample_size(validated_power, violations=violations)
+
+    selected_actual = top_level_hashes.get("selected_protocol_sha256")
+    power_actual = top_level_hashes.get("power_plan_sha256")
+    if (
+        not _digest(selected_actual)
+        or selected_actual != manifest.get("selected_protocol_sha256")
+    ):
+        _violation(violations, "preflight selection hash mismatch")
+    if not _digest(power_actual) or power_actual != manifest.get("power_plan_sha256"):
+        _violation(violations, "preflight power hash mismatch")
+    if sample_size is None or manifest.get("sample_size") != sample_size:
+        _violation(violations, "preflight power sample-size mismatch")
+    try:
+        lockbox_contract.validate_environment_compatibility(
+            manifest.get("environment_compatibility")
+        )
+    except (TypeError, ValueError) as exc:
+        _violation(violations, f"preflight environment compatibility violation: {exc}")
+
+    selection_bindings = {
+        "study_protocol_digest": "protocol_digest",
+        "spec_digest": "spec_digest",
+        "config_digest": "config_digest",
+        "generator_digest": "generator_digest",
+        "generator_manifest_sha256": "generator_manifest_sha256",
+    }
+    if any(
+        validated_selection.get(selection_field) != manifest.get(manifest_field)
+        for selection_field, manifest_field in selection_bindings.items()
+    ):
+        _violation(violations, "preflight selection/manifest provenance mismatch")
+
+    power_selected = validated_power.get("selected_protocol")
+    if not isinstance(power_selected, Mapping) or (
+        power_selected.get("sha256") != selected_actual
+        or power_selected.get("source_commit")
+        != validated_selection.get("source_commit")
+    ):
+        _violation(violations, "preflight power selected protocol binding mismatch")
+    if validated_power.get("source_commit") != manifest.get("power_source_commit"):
+        _violation(violations, "preflight power source provenance mismatch")
+
+    power_digests = validated_power.get("digests")
+    expected_power_digests = {
+        "study_protocol_sha256": manifest.get("protocol_digest"),
+        "specification_sha256": manifest.get("spec_digest"),
+        "configuration_sha256": manifest.get("config_digest"),
+        "generator_sha256": manifest.get("generator_digest"),
+        "generator_manifest_sha256": manifest.get("generator_manifest_sha256"),
+    }
+    if not isinstance(power_digests, Mapping) or any(
+        power_digests.get(field) != digest
+        for field, digest in expected_power_digests.items()
+    ):
+        _violation(violations, "preflight power digest provenance mismatch")
+
+    try:
+        selected_artifacts, selected_folds = lockbox_contract._selection_power_bindings(
+            validated_selection
+        )
+    except (TypeError, ValueError) as exc:
+        selected_artifacts, selected_folds = [], []
+        _violation(
+            violations, f"preflight selection development provenance violation: {exc}"
+        )
+    proof = validated_power.get("held_out_proof")
+    if (
+        not isinstance(proof, Mapping)
+        or proof.get("selected_candidate")
+        != validated_selection.get("selected_candidate")
+        or not _canonical_equal(proof.get("folds"), selected_folds)
+        or not _canonical_equal(
+            validated_power.get("development_artifacts"), selected_artifacts
+        )
+    ):
+        _violation(violations, "preflight power development provenance mismatch")
+
+    selection_source = validated_selection.get("source_commit")
+    power_source = validated_power.get("source_commit")
+    execution_source = manifest.get("source_commit")
+    try:
+        head = _git_output(repo_root, "rev-parse", "HEAD").decode("ascii").strip()
+    except (UnicodeDecodeError, ValueError) as exc:
+        head = ""
+        _violation(violations, f"release HEAD provenance violation: {exc}")
+    for label, commit in (
+        ("selection", selection_source),
+        ("power", power_source),
+        ("execution", execution_source),
+    ):
+        if not _git_commit_exists(repo_root, commit):
+            _violation(
+                violations, f"{label} source commit does not exist in project Git"
+            )
+    if all(
+        _git_commit_exists(repo_root, commit)
+        for commit in (selection_source, power_source, execution_source, head)
+    ):
+        selection_commit = str(selection_source)
+        power_commit = str(power_source)
+        execution_commit = str(execution_source)
+        if not _git_is_ancestor(repo_root, selection_commit, power_commit):
+            _violation(violations, "selection source is not an ancestor of power source")
+        if not _git_is_ancestor(repo_root, power_commit, execution_commit):
+            _violation(violations, "power source is not an ancestor of execution source")
+        if not _git_is_ancestor(repo_root, execution_commit, head):
+            _violation(violations, "execution source is not an ancestor of release HEAD")
+        if isinstance(power_digests, Mapping):
+            for field, path in POWER_SOURCE_BLOBS.items():
+                try:
+                    actual = _committed_blob_sha256(repo_root, power_commit, path)
+                except (UnicodeDecodeError, ValueError) as exc:
+                    _violation(
+                        violations, f"power source blob provenance violation: {exc}"
+                    )
+                    continue
+                if power_digests.get(field) != actual:
+                    _violation(
+                        violations,
+                        f"power source blob digest mismatch: {field}",
+                    )
+    return sample_size if not violations else None
+
+
 def _artifact_basename(
     item: Mapping[str, object], field: str, *, violations: list[str]
 ) -> str | None:
@@ -122,7 +480,7 @@ def _artifact_basename(
 
 
 def _analysis_provenance(
-    manifest: Mapping[str, object], rows: Sequence[Mapping[str, object]]
+    manifest: Mapping[str, object], rows: Sequence[Mapping[str, object]], *, sample_size: int
 ) -> dict[str, object]:
     return {
         "protocol_digest": manifest.get("protocol_digest"),
@@ -131,17 +489,22 @@ def _analysis_provenance(
         "generator_digest": manifest.get("generator_digest"),
         "generator_manifest_sha256": manifest.get("generator_manifest_sha256"),
         "source_commit": manifest.get("source_commit"),
-        "environment": rows[0].get("environment") if rows else None,
+        "selected_protocol_sha256": manifest.get("selected_protocol_sha256"),
+        "power_plan_sha256": manifest.get("power_plan_sha256"),
+        "power_source_commit": manifest.get("power_source_commit"),
+        "sample_size": sample_size,
+        "environment_compatibility": manifest.get("environment_compatibility"),
     }
 
 
 def _recompute_registered_analysis(
-    manifest: Mapping[str, object], rows: Sequence[Mapping[str, object]]
+    manifest: Mapping[str, object], rows: Sequence[Mapping[str, object]], *, sample_size: int
 ) -> dict[str, object]:
     return confirmatory.analyse_lockbox_rows(
         rows,
         execution_mode="REGISTERED",
-        provenance=_analysis_provenance(manifest, rows),
+        sample_size=sample_size,
+        provenance=_analysis_provenance(manifest, rows, sample_size=sample_size),
     )
 
 
@@ -155,7 +518,12 @@ def _canonical_analysis_mismatch(
 
 
 def load_release_inputs(
-    *, manifest_path: Path, selection_path: Path, analysis_path: Path
+    *,
+    manifest_path: Path,
+    selection_path: Path,
+    power_path: Path,
+    analysis_path: Path,
+    repo_root: Path | None = None,
 ) -> dict[str, object]:
     """Defensively load, hash, normalize, and recompute every release input."""
     violations: list[str] = []
@@ -165,6 +533,13 @@ def load_release_inputs(
         "top_level": top_level_hashes,
         "raw_shards": shard_hashes,
     }
+    actual_repo_root = repo_root or ROOT
+    power_plan = _load_power_plan(
+        power_path,
+        repo_root=actual_repo_root,
+        hashes=top_level_hashes,
+        violations=violations,
+    )
     manifest = _load_json_mapping(
         manifest_path,
         key="merged_manifest_sha256",
@@ -179,18 +554,38 @@ def load_release_inputs(
         hashes=top_level_hashes,
         violations=violations,
     )
-    analysis = _load_json_mapping(
-        analysis_path,
-        key="stored_analysis_sha256",
-        label="stored analysis",
-        hashes=top_level_hashes,
-        violations=violations,
-    )
+    if violations:
+        sample_size = None
+    else:
+        sample_size = _preflight_power_bindings(
+            repo_root=_validated_repo_root(actual_repo_root),
+            manifest=manifest,
+            selection=selection,
+            power_plan=power_plan,
+            top_level_hashes=top_level_hashes,
+            violations=violations,
+        )
+    if sample_size is None:
+        analysis: dict[str, object] = {}
+        _violation(
+            violations,
+            "stored analysis and lockbox outcomes were not opened because power preflight failed",
+        )
+    else:
+        analysis = _load_json_mapping(
+            analysis_path,
+            key="stored_analysis_sha256",
+            label="stored analysis",
+            hashes=top_level_hashes,
+            violations=violations,
+        )
 
     rows: dict[str, list[dict[str, object]]] = {}
     raw_shards = manifest.get("raw_shards")
     if not isinstance(raw_shards, list):
         _violation(violations, "merged manifest raw_shards schema violation")
+        raw_shards = []
+    if sample_size is None:
         raw_shards = []
     protocol = manifest.get("protocol_digest")
     read_protocol = str(protocol) if _digest(protocol) else "0" * 64
@@ -212,9 +607,10 @@ def load_release_inputs(
         if raw_file is not None:
             try:
                 expected_raw_file = lockbox_contract.registered_raw_filename(
-                    item.get("family"), item.get("start"), item.get("stop")
+                    item.get("family"), item.get("start"), item.get("stop"),
+                    sample_size=sample_size,
                 )
-            except ValueError as exc:
+            except (TypeError, ValueError) as exc:
                 expected_raw_file = None
                 _violation(violations, f"raw shard family/range violation: {exc}")
             if expected_raw_file is not None and raw_file != expected_raw_file:
@@ -252,7 +648,10 @@ def load_release_inputs(
             if shard_manifest:
                 try:
                     lockbox_contract.validate_completed_shard_contract(
-                        shard_manifest, merged_entry=item, merged_manifest=manifest
+                        shard_manifest,
+                        sample_size=sample_size,
+                        merged_entry=item,
+                        merged_manifest=manifest,
                     )
                 except (TypeError, ValueError) as exc:
                     _violation(violations, f"shard manifest violation {shard_file}: {exc}")
@@ -285,6 +684,7 @@ def load_release_inputs(
                     family=item.get("family"),
                     start=item.get("start"),
                     stop=item.get("stop"),
+                    sample_size=sample_size,
                 )
             except Exception as exc:  # untrusted artifact parsers must become report violations
                 rows.setdefault(raw_file, [])
@@ -292,11 +692,16 @@ def load_release_inputs(
 
     all_rows = [row for shard_rows in rows.values() for row in shard_rows]
     recomputed: dict[str, object] | None
-    try:
-        recomputed = _recompute_registered_analysis(manifest, all_rows)
-    except (KeyError, TypeError, ValueError) as exc:
+    if sample_size is None:
         recomputed = None
-        _violation(violations, f"recomputed registered analysis invalid: {exc}")
+    else:
+        try:
+            recomputed = _recompute_registered_analysis(
+                manifest, all_rows, sample_size=sample_size
+            )
+        except (KeyError, TypeError, ValueError) as exc:
+            recomputed = None
+            _violation(violations, f"recomputed registered analysis invalid: {exc}")
     if recomputed is not None and _canonical_analysis_mismatch(analysis, recomputed):
         _violation(
             violations,
@@ -305,6 +710,7 @@ def load_release_inputs(
     return {
         "manifest": manifest,
         "selection": selection,
+        "power_plan": power_plan,
         "analysis": analysis,
         "rows": rows,
         "actual_hashes": hashes,
@@ -317,6 +723,7 @@ def collect_release_violations(
     *,
     manifest: Mapping[str, object],
     selection: Mapping[str, object],
+    power_plan: Mapping[str, object],
     analysis: Mapping[str, object],
     rows: Mapping[str, Sequence[Mapping[str, object]]],
     actual_hashes: Mapping[str, object],
@@ -331,6 +738,9 @@ def collect_release_violations(
     if not isinstance(selection, Mapping):
         _violation(violations, "selection schema violation")
         selection = {}
+    if not isinstance(power_plan, Mapping):
+        _violation(violations, "power plan schema violation")
+        power_plan = {}
     if not isinstance(analysis, Mapping):
         _violation(violations, "analysis schema violation")
         analysis = {}
@@ -349,6 +759,20 @@ def collect_release_violations(
         _violation(violations, "per-shard actual hash namespace schema violation")
         per_shard_hashes = {}
 
+    try:
+        validated_power = validate_power_plan_payload(power_plan)
+    except (OverflowError, RecursionError, TypeError, ValueError) as exc:
+        validated_power = dict(power_plan)
+        power_valid = False
+        _violation(violations, f"power plan schema/decision violation: {exc}")
+    else:
+        power_valid = True
+    power_sample_size = (
+        _power_sample_size(validated_power, violations=violations)
+        if power_valid
+        else None
+    )
+
     if set(manifest) != lockbox_contract.MERGED_MANIFEST_FIELDS:
         _violation(violations, "merged manifest schema violation")
     if manifest.get("schema") != lockbox_contract.MERGED_MANIFEST_SCHEMA:
@@ -356,15 +780,16 @@ def collect_release_violations(
     if manifest.get("status") != "COMPLETE":
         _violation(violations, "lockbox manifest is not COMPLETE")
     sample_size = manifest.get("sample_size")
-    if isinstance(sample_size, bool) or not isinstance(sample_size, int) or sample_size != LOCKBOX_SAMPLE_SIZE:
-        _violation(violations, "unregistered sample size")
+    if power_sample_size is None or sample_size != power_sample_size:
+        _violation(violations, "manifest sample size does not match authentic power decision")
     if manifest.get("source_dirty") is not False:
         _violation(violations, "dirty source SHA or row")
     for field, length in (
         ("protocol_digest", 64), ("spec_digest", 64), ("config_digest", 64),
         ("generator_digest", 64), ("generator_manifest_sha256", 64),
         ("selected_protocol_sha256", 64), ("source_commit", 40),
-        ("selection_source_commit", 40),
+        ("selection_source_commit", 40), ("power_plan_sha256", 64),
+        ("power_source_commit", 40),
     ):
         if not _digest(manifest.get(field), length=length):
             _violation(violations, f"merged manifest {field} digest schema violation")
@@ -393,6 +818,52 @@ def collect_release_violations(
     for selection_field, manifest_field, message in selection_bindings:
         if validated_selection.get(selection_field) != manifest.get(manifest_field):
             _violation(violations, message)
+
+    actual_power_sha256 = top_level_hashes.get("power_plan_sha256")
+    if (
+        not _digest(actual_power_sha256)
+        or actual_power_sha256 != manifest.get("power_plan_sha256")
+    ):
+        _violation(violations, "actual power hash does not match merged power hash")
+    if power_valid and validated_power.get("source_commit") != manifest.get("power_source_commit"):
+        _violation(violations, "power source provenance mismatch")
+    power_selected = validated_power.get("selected_protocol")
+    if power_valid and (not isinstance(power_selected, Mapping) or (
+        power_selected.get("sha256") != selected_actual
+        or power_selected.get("source_commit")
+        != validated_selection.get("source_commit")
+    )):
+        _violation(violations, "power selected protocol binding mismatch")
+    power_digests = validated_power.get("digests")
+    expected_power_digests = {
+        "study_protocol_sha256": manifest.get("protocol_digest"),
+        "specification_sha256": manifest.get("spec_digest"),
+        "configuration_sha256": manifest.get("config_digest"),
+        "generator_sha256": manifest.get("generator_digest"),
+        "generator_manifest_sha256": manifest.get("generator_manifest_sha256"),
+    }
+    if power_valid and (not isinstance(power_digests, Mapping) or any(
+        power_digests.get(field) != digest
+        for field, digest in expected_power_digests.items()
+    )):
+        _violation(violations, "power frozen digest provenance mismatch")
+    try:
+        selected_artifacts, selected_folds = lockbox_contract._selection_power_bindings(
+            validated_selection
+        )
+    except (TypeError, ValueError) as exc:
+        selected_artifacts, selected_folds = [], []
+        _violation(violations, f"selection power binding schema violation: {exc}")
+    proof = validated_power.get("held_out_proof")
+    if power_valid and (
+        not isinstance(proof, Mapping)
+        or proof.get("selected_candidate")
+        != validated_selection.get("selected_candidate")
+        or _canonical_json(proof.get("folds")) != _canonical_json(selected_folds)
+        or _canonical_json(validated_power.get("development_artifacts"))
+        != _canonical_json(selected_artifacts)
+    ):
+        _violation(violations, "power held-out selection provenance mismatch")
     if manifest.get("lockbox_started_before_selection_commit") is True:
         _violation(violations, "premature lockbox before selection commit")
 
@@ -454,16 +925,20 @@ def collect_release_violations(
             family not in LOCKBOX_FAMILIES
             or isinstance(start, bool) or not isinstance(start, int)
             or isinstance(stop, bool) or not isinstance(stop, int)
-            or not 0 <= start < stop <= LOCKBOX_SAMPLE_SIZE
+            or power_sample_size is None
+            or not 0 <= start < stop <= power_sample_size
         ):
             _violation(violations, "raw shard has unregistered family/range")
         else:
             ranges[str(family)].append((start, stop))
-            if filename != lockbox_contract.registered_raw_filename(family, start, stop):
+            if filename != lockbox_contract.registered_raw_filename(
+                family, start, stop, sample_size=power_sample_size
+            ):
                 _violation(violations, "exact registered raw filename mismatch")
             try:
                 lockbox_contract.validate_shard_local_rows(
-                    rows.get(filename), family=family, start=start, stop=stop
+                    rows.get(filename), family=family, start=start, stop=stop,
+                    sample_size=power_sample_size,
                 )
             except (TypeError, ValueError):
                 _violation(violations, "raw shard does not contain the exact local key/arm grid")
@@ -476,10 +951,16 @@ def collect_release_violations(
                 _violation(violations, f"raw shard ranges are missing or overlap for {family}")
                 break
             cursor = stop
-        if cursor != LOCKBOX_SAMPLE_SIZE:
+        if power_sample_size is None or cursor != power_sample_size:
             _violation(violations, f"raw shard ranges are incomplete for {family}")
 
-    expected_environment: object | None = None
+    try:
+        expected_environment = lockbox_contract.validate_environment_compatibility(
+            manifest.get("environment_compatibility")
+        )
+    except (TypeError, ValueError) as exc:
+        expected_environment = None
+        _violation(violations, f"manifest environment compatibility violation: {exc}")
     all_keys: set[tuple[object, object, object, object]] = set()
     all_key_arms: dict[tuple[object, object, object], set[object]] = {}
     for row in valid_rows:
@@ -503,11 +984,14 @@ def collect_release_violations(
         ):
             if row.get(row_field) != manifest.get(manifest_field):
                 _violation(violations, label)
-        environment = row.get("environment")
-        if expected_environment is None:
-            expected_environment = environment
-        elif environment != expected_environment:
-            _violation(violations, "wrong environment")
+        try:
+            row_environment = lockbox_contract.environment_compatibility_projection(
+                row.get("environment")
+            )
+        except (TypeError, ValueError):
+            row_environment = None
+        if expected_environment is None or row_environment != expected_environment:
+            _violation(violations, "wrong environment compatibility")
         parents = row.get("parent_artifacts")
         expected_parents = {
             "spec": manifest.get("spec_digest"),
@@ -515,6 +999,7 @@ def collect_release_violations(
             "generator": manifest.get("generator_digest"),
             "generator_manifest": manifest.get("generator_manifest_sha256"),
             "selected_protocol": manifest.get("selected_protocol_sha256"),
+            "power_plan": manifest.get("power_plan_sha256"),
         }
         if not isinstance(parents, Mapping) or any(
             parents.get(name) != digest for name, digest in expected_parents.items()
@@ -533,7 +1018,7 @@ def collect_release_violations(
     expected_key_arms = {
         (family, key, 0, arm)
         for family in LOCKBOX_FAMILIES
-        for key in range(LOCKBOX_SAMPLE_SIZE)
+        for key in range(power_sample_size or 0)
         for arm in ARMS
     }
     if all_keys != expected_key_arms:
@@ -541,10 +1026,13 @@ def collect_release_violations(
 
     recomputed = recomputed_analysis
     if recomputed is None:
-        try:
-            recomputed = _recompute_registered_analysis(manifest, valid_rows)
-        except (KeyError, TypeError, ValueError) as exc:
-            _violation(violations, f"recomputed registered analysis invalid: {exc}")
+        if power_sample_size is not None:
+            try:
+                recomputed = _recompute_registered_analysis(
+                    manifest, valid_rows, sample_size=power_sample_size
+                )
+            except (KeyError, TypeError, ValueError) as exc:
+                _violation(violations, f"recomputed registered analysis invalid: {exc}")
     if recomputed is not None and _canonical_analysis_mismatch(analysis, recomputed):
         _violation(
             violations,
@@ -603,10 +1091,12 @@ def build_release_report(**kwargs: object) -> dict[str, object]:
     violations = collect_release_violations(**kwargs)  # type: ignore[arg-type]
     analysis = kwargs.get("analysis")
     manifest = kwargs.get("manifest")
+    power_plan = kwargs.get("power_plan")
     rows = kwargs.get("rows")
     hashes = kwargs.get("actual_hashes")
     analysis_mapping = analysis if isinstance(analysis, Mapping) else {}
     manifest_mapping = manifest if isinstance(manifest, Mapping) else {}
+    power_mapping = power_plan if isinstance(power_plan, Mapping) else {}
     row_mapping = rows if isinstance(rows, Mapping) else {}
     hash_mapping = hashes if isinstance(hashes, Mapping) else {}
     verdict = (
@@ -620,8 +1110,12 @@ def build_release_report(**kwargs: object) -> dict[str, object]:
         for name, value in row_mapping.items()
         if isinstance(value, Sequence) and not isinstance(value, (str, bytes))
     }
+    decision = power_mapping.get("decision")
+    selected_sample_size = (
+        decision.get("selected_sample_size") if isinstance(decision, Mapping) else None
+    )
     return {
-        "schema": "boec-spade-lockbox-release-v1",
+        "schema": "boec-spade-lockbox-release-v2",
         "checks": {
             "all_registered_checks_pass": not violations,
             "analysis_verdict": analysis_mapping.get("overall_verdict"),
@@ -629,6 +1123,8 @@ def build_release_report(**kwargs: object) -> dict[str, object]:
         "hashes": dict(hash_mapping),
         "row_counts": row_counts,
         "manifest_sample_size": manifest_mapping.get("sample_size"),
+        "power_status": power_mapping.get("status"),
+        "selected_sample_size": selected_sample_size,
         "verdict": verdict,
         "violations": violations,
         "permissible_claim": claim,
@@ -655,6 +1151,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--manifest", required=True, type=Path)
     parser.add_argument("--selection", required=True, type=Path)
+    parser.add_argument("--power", required=True, type=Path)
     parser.add_argument("--analysis", required=True, type=Path)
     parser.add_argument(
         "--out", default=ROOT / "results" / "spade-lockbox-release.json", type=Path
@@ -663,6 +1160,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     loaded = load_release_inputs(
         manifest_path=args.manifest,
         selection_path=args.selection,
+        power_path=args.power,
         analysis_path=args.analysis,
     )
     report = build_release_report(**loaded)
