@@ -1,6 +1,6 @@
 # External Integrations
 
-**Analysis Date:** 2026-08-24
+**Analysis Date:** 2026-08-26
 
 ## APIs & External Services
 
@@ -100,15 +100,20 @@
 - Not applicable. The project is a local/repository-based research workflow, not a network service.
 
 **CI Pipeline:**
-- None detected; no `.github/workflows/` pipeline is present.
-- Verification is local: `pytest` uses `pyproject.toml`, and dedicated release/fidelity scripts such as `scripts/validate_final_spade_release.py`, `scripts/run_k1_replay_gate.py`, and `scripts/probe_e2_determinism.py` compare regenerated outputs with committed evidence.
+- `.github/workflows/spade-distributed.yml` is a manual-only (`workflow_dispatch`) execution workflow for registered SPADE development or lockbox shards. It is not a general CI or quality gate: it has no `push`, `pull_request`, or scheduled trigger and does not run pytest, lint, coverage, analysis, selection, or release validation.
+- Dispatch requires an exact 40-character `source_sha` plus the phase-specific confirmation string. The workflow binds both the event and workflow source to that SHA, checks out a clean tree with read-only contents permission, pins `actions/checkout`, `actions/upload-artifact`, and the Linux/amd64 Python 3.11.15 container by immutable digest.
+- `scripts/make_spade_actions_matrix.py` generates and validates one exact no-gap matrix. Development uses 65 logical width-4 family/key shards packed into 33 jobs. Lockbox uses width-10 ranges and creates 35 through 200 jobs from the exact committed canonical `POWERED` sample-size prefix (`n=350..2000`); it refuses a wrong source SHA, uncommitted/drifted artifact, noncanonical JSON, or non-`POWERED` decision.
+- The workflow caps GitHub runners at 40 in parallel. `scripts/run_spade_actions_worker.py` enforces CPU-only, single-thread NumPy/BLAS/Torch execution, and each runner job starts at most two worker processes concurrently. Development jobs use one pair; lockbox jobs run two sequential pairs over the four families.
+- Each completed logical shard is uploaded as an uncompressed, non-overwriting, 90-day artifact containing the raw `.jsonl.gz`, `.sha256`, `.resume.json`, and `.manifest.json` files. The workflow intentionally does not inspect outcomes or merge shards.
+- Development artifacts are merged separately with `scripts/merge_spade_development_shards.py`. The merger requires exact `[0,50)` family coverage, canonical row order, matching clean registered provenance and execution environments, authenticated parent hashes/commands, exact repository result paths, and write-once atomic promotion.
+- General verification remains local: `pytest` uses `pyproject.toml`, and dedicated release/fidelity scripts such as `scripts/validate_final_spade_release.py`, `scripts/run_k1_replay_gate.py`, and `scripts/probe_e2_determinism.py` compare regenerated outputs with committed evidence.
 - Git history is part of the scientific workflow because preregistrations and analysis decisions cite commits in `configs/experiment/`, `docs/OPEN-QUESTIONS.md`, and final-study scripts.
 
 ## Environment Configuration
 
 **Required env vars:**
 - No secrets or service variables.
-- For reproducible numerics, set `OMP_NUM_THREADS=1`, `MKL_NUM_THREADS=1`, `VECLIB_MAXIMUM_THREADS=1`, and `OPENBLAS_NUM_THREADS=1` before NumPy/Torch imports where the driver does not already do so. `scripts/drive_p6.sh` shows the full shell pattern.
+- Local numerical drivers commonly set `OMP_NUM_THREADS=1`, `MKL_NUM_THREADS=1`, `VECLIB_MAXIMUM_THREADS=1`, and `OPENBLAS_NUM_THREADS=1` before NumPy/Torch imports. The distributed path has its own exact contract: `OMP_NUM_THREADS=1`, `MKL_NUM_THREADS=1`, `OPENBLAS_NUM_THREADS=1`, `NUMEXPR_NUM_THREADS=1`, `PYTHONHASHSEED=0`, and an empty `CUDA_VISIBLE_DEVICES`; `scripts/run_spade_actions_worker.py` validates these values and freezes Torch intra/inter-op threads.
 - `PYTHONPATH=src` appears in older diagnostic command examples, but the supported setup is an editable install (`pip install -e .`) per `pyproject.toml` and `requirements.txt`.
 
 **Secrets location:**
@@ -127,6 +132,7 @@
 **Git:**
 - Several result scripts invoke the local Git CLI to embed `HEAD`, dirty state, and registration/code commits; examples include `scripts/run_k6b_conservative.py`, `scripts/run_p3_cells.py`, and `scripts/analyse_final_spade_benchmark.py`.
 - Paper-critical preregistrations are committed before the governed run, especially `configs/experiment/e2.yaml`, `configs/experiment/e4.yaml`, and `docs/SPADE-FINAL-SPEC.md`. Do not edit a preregistered value without versioning and recording the reason.
+- The SPADE Actions planner and development merger also bind work to the current clean commit. The merger carries an authenticated canonical parent ledger into every merged row, resume checkpoint, and manifest so downstream selection and power planning retain the original shard hash, command, and provenance chain.
 
 **Checksums:**
 - `data/lab/overlay/MANIFEST.sha256` records SHA-256 and size for immutable raw lab files.
@@ -148,4 +154,4 @@
 
 ---
 
-*Integration audit: 2026-08-24*
+*Integration audit: 2026-08-26*

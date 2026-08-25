@@ -1,6 +1,6 @@
 # Codebase Structure
 
-**Analysis Date:** 2026-08-24
+**Analysis Date:** 2026-08-26
 
 ## Directory Layout
 
@@ -9,6 +9,8 @@ nutrigene-ai-bo-ipsec/
 ├── pyproject.toml                 # Installable `boec` package and pytest configuration
 ├── requirements.txt              # Runtime and research dependencies
 ├── START-HERE-PERSON-A.md        # Historical onboarding to the original benchmark
+├── .github/
+│   └── workflows/                # Manual registered SPADE shard execution
 ├── configs/
 │   ├── experiment/               # Registered experiment grids and rules
 │   └── lab/                      # In-house condition/metric schemas
@@ -56,14 +58,20 @@ nutrigene-ai-bo-ipsec/
 **`scripts/`:**
 
 - Purpose: Define executable studies and transformations around the reusable package.
-- Contains: `run_*.py` campaign/study runners, `analyse_*.py` aggregators, `preflight_*.py` gates, `make_*.py` renderers, data builders, and release validators.
-- Key files: `scripts/run_e2.py`, `scripts/run_final_spade_benchmark.py`, `scripts/analyse_final_spade_benchmark.py`, `scripts/make_final_spade_figures.py`, `scripts/build_published_dataset.py`, `scripts/build_lab_dataset.py`, `scripts/validate_final_spade_release.py`.
+- Contains: `run_*.py` campaign/study runners, `analyse_*.py` aggregators, `preflight_*.py` gates, `make_*.py` renderers, data builders, distributed matrix/worker adapters, shard mergers, and release validators.
+- Key files: `scripts/run_e2.py`, `scripts/run_spade_development.py`, `scripts/run_spade_lockbox.py`, `scripts/make_spade_actions_matrix.py`, `scripts/run_spade_actions_worker.py`, `scripts/merge_spade_development_shards.py`, `scripts/analyse_final_spade_benchmark.py`, `scripts/build_published_dataset.py`, `scripts/build_lab_dataset.py`, `scripts/validate_final_spade_release.py`.
 
 **`tests/`:**
 
 - Purpose: Assert numerical primitives, end-to-end method contracts, artifact schemas, scientific protocol rules, and reproducibility boundaries.
 - Contains: Module-matched tests (`test_campaign.py`, `test_surrogate.py`), experiment tests (`test_p*.py`, `test_versionc_*.py`), final-study tests (`test_final_spade_*.py`), and data-pipeline tests (`test_published*.py`, `test_lab_*.py`).
-- Key files: `tests/test_final_spade_protocol.py`, `tests/test_final_spade_reproducibility.py`, `tests/test_replay.py`, `tests/test_campaign.py`.
+- Key files: `tests/test_final_spade_protocol.py`, `tests/test_spade_actions_workflow.py`, `tests/test_spade_actions_matrix.py`, `tests/test_spade_development_merge.py`, `tests/test_final_spade_reproducibility.py`, `tests/test_replay.py`, `tests/test_campaign.py`.
+
+**`.github/workflows/`:**
+
+- Purpose: Host repository automation without making it part of the reusable scientific library.
+- Contains: `.github/workflows/spade-distributed.yml`, a manual-only, source-SHA-bound transport for registered development or lockbox shards.
+- Boundary: The workflow plans and runs shards and uploads immutable four-file contracts. It does not run general CI checks, inspect outcomes, merge development shards, select a protocol, analyze lockbox data, or validate a release.
 
 **`configs/experiment/`:**
 
@@ -135,6 +143,12 @@ nutrigene-ai-bo-ipsec/
 
 **Entry Points:**
 
+- `.github/workflows/spade-distributed.yml`: Manual registered distributed development/lockbox dispatch.
+- `scripts/make_spade_actions_matrix.py`: Deterministic no-gap development or POWERED-prefix lockbox matrix generator.
+- `scripts/run_spade_actions_worker.py`: CPU-only, single-thread adapter to the registered development/lockbox runners.
+- `scripts/run_spade_development.py`: Resumable registered development-family shard runner.
+- `scripts/merge_spade_development_shards.py`: Deterministic authenticated merger for one complete development family.
+- `scripts/run_spade_lockbox.py`: Guarded registered lockbox-family shard runner.
 - `scripts/run_final_spade_benchmark.py`: Prospective final-study campaign runner.
 - `scripts/run_final_spade_feasibility.py`: Pre-campaign feasibility/regime gate.
 - `scripts/analyse_final_spade_benchmark.py`: Final-study aggregation and registered comparisons.
@@ -149,6 +163,7 @@ nutrigene-ai-bo-ipsec/
 - `requirements.txt`: Runtime/test dependency pins or lower bounds.
 - `configs/experiment/e2.yaml`: Original sample-efficiency preregistration.
 - `configs/experiment/e4.yaml`: Extrapolation experiment configuration.
+- `configs/experiment/spade-joint.yaml`: Registered joint SPADE development/lockbox configuration.
 - `configs/lab/coating_2026-08-06.yaml`: In-house coating/dose search-space and metric schema.
 - `docs/SPADE-FINAL-SPEC.md`: Frozen final prospective-study contract.
 
@@ -185,6 +200,9 @@ nutrigene-ai-bo-ipsec/
 - `tests/test_final_spade_protocol.py`: Registered final-study invariants.
 - `tests/test_final_spade_reproducibility.py`: Artifact-only figure and reproducibility boundaries.
 - `tests/test_final_spade_statistics.py`: Statistical/adjudication behavior.
+- `tests/test_spade_actions_workflow.py`: Manual trigger, immutable pins, source binding, concurrency, and upload contract.
+- `tests/test_spade_actions_matrix.py`: Exact width-4 development and width-10 POWERED-prefix lockbox coverage plus worker preflight.
+- `tests/test_spade_development_merge.py`: Canonical authenticated family merge, downstream acceptance, path safety, and write-once behavior.
 - `tests/test_replay.py`: Exact campaign regeneration semantics.
 - `tests/test_published_dataset.py`, `tests/test_lab_dataset.py`: Data pipeline integration.
 
@@ -206,6 +224,7 @@ nutrigene-ai-bo-ipsec/
 
 - Package directories are lowercase Python identifiers: `src/boec/lab/`.
 - Study-specific result sharding uses a hyphenated stem: `results/p6-families/`.
+- Registered SPADE shards encode phase, family, and half-open key range: `results/spade-development-<family>-<start:03d>-<stop:03d>.jsonl.gz` and `results/spade-lockbox-<family>-<start:04d>-<stop:04d>.jsonl.gz`. Each raw file travels with `.sha256`, `.resume.json`, and `.manifest.json`.
 - Immutable/human/generated lab layers are named by role: `data/lab/raw/`, `data/lab/overlay/`, `data/lab/derived/`.
 - Archived material stays under `docs/archive/`; do not use archived paths as current paper evidence without revalidation.
 
@@ -273,6 +292,12 @@ nutrigene-ai-bo-ipsec/
 - Generated: Yes, by codebase mapping.
 - Committed: Determined by the GSD orchestrator.
 
+**`.github/workflows/`:**
+
+- Purpose: Manual repository automation for registered distributed execution.
+- Generated: No.
+- Committed: Yes; action and container identities are pinned by immutable digest and verified by `tests/test_spade_actions_workflow.py`.
+
 **`data/lab/raw/`:**
 
 - Purpose: Immutable source-of-truth instrument files.
@@ -317,4 +342,4 @@ nutrigene-ai-bo-ipsec/
 
 ---
 
-*Structure analysis: 2026-08-24*
+*Structure analysis: 2026-08-26*
