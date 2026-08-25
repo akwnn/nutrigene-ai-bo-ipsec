@@ -211,13 +211,113 @@ def test_figure3_encodes_same_campaign_rules_contrasts_and_decomposition():
     bundle = build_figure3(data, get_preset("portable"))
 
     assert set(bundle.panel_data) == {"A", "B", "C"}
+    assert bundle.layout_rows == (("A",), ("B", "C"))
+    assert bundle.headline == "The terminal rule changes method rankings on the same campaigns"
+    assert bundle.deck == (
+        "Hill · d=6 · σ=0.25 · n=50 paired campaigns · 95% paired-bootstrap intervals"
+    )
     assert bundle.panel_data["A"]["pairing"] == "same campaigns"
-    assert bundle.panel_data["B"]["reference"] == 0.0
+    assert bundle.panel_data["A"]["reference"] == 0.0
+    assert bundle.panel_data["A"]["dominant_panel"] is True
     assert bundle.panel_data["C"]["identity"] == "Rule A = search loss + identification loss"
     assert "same campaigns" in bundle.alt_text.lower()
-    assert len(bundle.figure.axes) == 3
+    expected_panel_titles = {
+        "a": "Paired terminal-rule effect",
+        "b": "Mean regret by rule",
+        "c": "What Rule A combines",
+    }
+    visible_figure_text = {text.get_text() for text in bundle.figure.texts}
+    panel_titles = {
+        label: title
+        for label, title in expected_panel_titles.items()
+        if title in visible_figure_text
+    }
+    assert panel_titles == expected_panel_titles
+    assert len(bundle.figure.axes) == 4
 
     plt.close(bundle.figure)
+
+
+def test_figure3_preserves_every_terminal_rule_value_and_numerical_mark():
+    bundle = build_figure3(build_terminal_rule_data(Path("results")), get_preset("portable"))
+    figure = bundle.figure
+    figure.canvas.draw()
+    _, panel_a, panel_b, panel_c = figure.axes
+
+    expected_contrasts = {
+        "doe": (0.10348625913954412, 0.07225003121385253, 0.13667376335054549, 50),
+        "qlogei": (-0.03203675680145408, -0.04892103581591358, -0.015074944183211461, 50),
+        "qlognei": (-0.02461824959888463, -0.04168010918755903, -0.007641877264361989, 50),
+        "versionb": (-0.054323796385480565, -0.06928781070598541, -0.03984640664834545, 50),
+    }
+    contrast_rows = {row["arm"]: row for row in bundle.panel_data["A"]["rows"]}
+    assert set(contrast_rows) == set(expected_contrasts)
+    for arm, expected in expected_contrasts.items():
+        row = contrast_rows[arm]
+        assert (row["mean"], row["lo"], row["hi"], row["n"]) == pytest.approx(expected)
+        interval = next(
+            collection
+            for collection in panel_a.collections
+            if collection.get_gid() == f"paired:{arm}"
+        )
+        segment = interval.get_segments()[0]
+        assert segment[:, 0] == pytest.approx((expected[1], expected[2]))
+        point = next(
+            collection
+            for collection in panel_a.collections
+            if collection.get_gid() == f"paired-point:{arm}"
+        )
+        assert point.get_offsets()[0, 0] == pytest.approx(expected[0])
+
+    expected_means = {
+        "doe": (0.09580089411672021, 0.19928715325626434, 50),
+        "qlogei": (0.15525130489063754, 0.12321454808918345, 50),
+        "qlognei": (0.15321199940788324, 0.12859374980899857, 50),
+        "versionb": (0.15464098856453284, 0.10031719217905226, 50),
+    }
+    mean_rows = {row["arm"]: row for row in bundle.panel_data["B"]["rows"]}
+    assert set(mean_rows) == set(expected_means)
+    for arm, expected in expected_means.items():
+        row = mean_rows[arm]
+        assert (row["rule_a"], row["rule_p"], row["n"]) == pytest.approx(expected)
+        slope = next(line for line in panel_b.lines if line.get_gid() == f"rule-slope:{arm}")
+        assert slope.get_xdata() == pytest.approx((0.0, 1.0))
+        assert slope.get_ydata() == pytest.approx(expected[:2])
+
+    expected_decomposition = {
+        "doe": (0.059666720920255135, 0.03613417319646509, 0.09580089411672021, 50),
+        "qlognei": (0.08340172329615139, 0.06981027611173182, 0.15321199940788324, 50),
+        "lhs": (0.07951998084532072, 0.04749959230902029, 0.12701957315434098, 50),
+        "sobol": (0.09933441983958823, 0.0730215905552549, 0.1723560103948431, 50),
+    }
+    decomposition_rows = {row["arm"]: row for row in bundle.panel_data["C"]["rows"]}
+    assert set(decomposition_rows) == set(expected_decomposition)
+    for arm, expected in expected_decomposition.items():
+        row = decomposition_rows[arm]
+        assert (
+            row["oracle_best"],
+            row["identification_gap"],
+            row["rule_a"],
+            row["n"],
+        ) == pytest.approx(expected)
+        search = next(patch for patch in panel_c.patches if patch.get_gid() == f"decomposition:{arm}:search")
+        identification = next(
+            patch for patch in panel_c.patches if patch.get_gid() == f"decomposition:{arm}:identification"
+        )
+        assert search.get_width() == pytest.approx(expected[0])
+        assert identification.get_x() == pytest.approx(expected[0])
+        assert identification.get_width() == pytest.approx(expected[1])
+        assert search.get_width() + identification.get_width() == pytest.approx(expected[2])
+
+    legend = panel_c.get_legend()
+    assert legend is not None
+    legend_bounds = legend.get_window_extent(figure.canvas.get_renderer())
+    assert not any(
+        legend_bounds.overlaps(patch.get_window_extent(figure.canvas.get_renderer()))
+        for patch in panel_c.patches
+    )
+
+    plt.close(figure)
 
 
 def test_figure3_rendered_text_states_terminal_rule_semantics():
@@ -233,16 +333,18 @@ def test_figure3_rendered_text_states_terminal_rule_semantics():
     assert "Search loss" in rendered_text
     assert "Identification loss" in rendered_text
     assert not any("blue:" in text or "orange:" in text for text in rendered_text)
-    assert any("← P lower" in text and "P higher →" in text for text in rendered_text)
+    assert "no terminal-rule effect" in rendered_text
+    assert "Rule P lowers regret" in rendered_text
+    assert "Rule P raises regret" in rendered_text
     panel_a_labels = {
         " ".join(text.get_text().split())
-        for text in bundle.figure.axes[0].texts
+        for text in bundle.figure.axes[1].texts
         if text.get_text()
     }
     assert {"Classical DoE", "qLogEI", "qLogNEI", "SPADE"} <= panel_a_labels
-    assert all(text.get_color() == "#243746" for text in bundle.figure.axes[0].texts if text.get_text() in panel_a_labels)
+    assert all(text.get_color() == "#243746" for text in bundle.figure.axes[1].texts if text.get_text() in panel_a_labels)
     assert all(linewidth <= 1.0 for collection in bundle.figure.axes[1].collections for linewidth in collection.get_linewidths())
-    assert {patch.get_hatch() for patch in bundle.figure.axes[2].patches} >= {"////", "...."}
+    assert {patch.get_hatch() for patch in bundle.figure.axes[3].patches} >= {"////", "...."}
 
     plt.close(bundle.figure)
 
@@ -254,12 +356,44 @@ def test_figure3_text_stays_inside_the_rendered_figure_for_every_preset(preset_n
     figure.canvas.draw()
     renderer = figure.canvas.get_renderer()
     figure_bounds = figure.bbox
+    _, panel_a, panel_b, panel_c = figure.axes
 
     for text in figure.findobj(match=Text):
         if text.get_text():
             text_bounds = text.get_window_extent(renderer)
             assert figure_bounds.contains(*text_bounds.get_points()[0])
             assert figure_bounds.contains(*text_bounds.get_points()[1])
+
+    assert_registered_geometry(figure)
+    for texts in (
+        panel_a.texts,
+        [text for text in panel_b.texts if text.get_text()],
+    ):
+        extents = [text.get_window_extent(renderer) for text in texts]
+        assert not any(
+            first.overlaps(second)
+            for index, first in enumerate(extents)
+            for second in extents[index + 1 :]
+        )
+
+    slope_labels = [text.get_window_extent(renderer) for text in panel_b.texts if text.get_text()]
+    decomposition_labels = [
+        text.get_window_extent(renderer)
+        for text in panel_c.get_yticklabels()
+        if text.get_visible() and text.get_text()
+    ]
+    assert not any(
+        slope.overlaps(decomposition)
+        for slope in slope_labels
+        for decomposition in decomposition_labels
+    )
+    legend = panel_c.get_legend()
+    legend_bounds = legend.get_window_extent(renderer)
+    assert not legend_bounds.overlaps(panel_c.xaxis.label.get_window_extent(renderer))
+    assert not any(
+        legend_bounds.overlaps(patch.get_window_extent(renderer))
+        for patch in panel_c.patches
+    )
 
     plt.close(figure)
 
