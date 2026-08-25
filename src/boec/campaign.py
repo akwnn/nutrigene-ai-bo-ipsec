@@ -416,7 +416,17 @@ class Campaign:
     def _validate_evaluator_progress(evaluator_state: dict, n_observed: int) -> None:
         if "next_index" not in evaluator_state:
             return
-        next_index = int(evaluator_state["next_index"])
+        value = evaluator_state["next_index"]
+        if (
+            isinstance(value, (bool, np.bool_))
+            or not isinstance(value, (int, np.integer))
+            or value < 0
+        ):
+            raise ValueError(
+                "evaluator checkpoint next_index must be a nonnegative integer, "
+                f"got {value!r}"
+            )
+        next_index = int(value)
         if next_index != n_observed:
             raise ValueError(
                 f"evaluator checkpoint next_index {next_index} does not match "

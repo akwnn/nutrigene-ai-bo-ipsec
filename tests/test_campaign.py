@@ -338,7 +338,10 @@ def test_saved_state_includes_evaluator_checkpoint_when_available():
         "seed": 31,
         "sigma_rel": 0.1,
         "sigma_add": 0.01,
-        "oracle_identity": "boec.oracles.Branin:branin:d=2",
+        "oracle_identity": (
+            "boec.oracles.Branin:branin:d=2:"
+            "sha256=1ee5bae76ac74ee8f9e5d02520aad7feb3cb9d9b313ec7e51b2e9194b5f7e405"
+        ),
         "next_index": 6,
     }
 
@@ -357,6 +360,19 @@ def test_campaign_rejects_checkpoint_with_inconsistent_evaluator_index():
     state["evaluator_state"] = dict(state["evaluator_state"], next_index=0)
 
     with pytest.raises(ValueError, match=r"next_index 0.*6 observed"):
+        Campaign.from_state_dict(state, _indexed_evaluator())
+
+
+@pytest.mark.parametrize("next_index", (-1, 6.5, 6.0, True, "6"))
+def test_campaign_rejects_malformed_evaluator_index(next_index):
+    c = Campaign(_indexed_evaluator(), _bounds(2), _indexed_cfg())
+    c.initialize()
+    state = c.state_dict()
+    state["evaluator_state"] = dict(
+        state["evaluator_state"], next_index=next_index
+    )
+
+    with pytest.raises(ValueError, match="next_index must be a nonnegative integer"):
         Campaign.from_state_dict(state, _indexed_evaluator())
 
 

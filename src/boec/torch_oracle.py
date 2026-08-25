@@ -58,6 +58,12 @@ patching.
 from __future__ import annotations
 
 import copy
+import dataclasses
+import hashlib
+import json
+from collections.abc import Mapping
+from enum import Enum
+from pathlib import Path
 from typing import Literal
 
 import numpy as np
@@ -70,23 +76,123 @@ from boec.seedbook import IndexedGaussianNoise
 __all__ = ["BiphasicOracle", "TorchEvaluator"]
 
 YvarMode = Literal["plugin", "analytic"]
-_CHECKPOINT_IDENTITY_FIELDS = (
-    "noise_mode",
-    "seed",
-    "sigma_rel",
-    "sigma_add",
-    "oracle_identity",
-)
 
 
 def _oracle_identity(oracle: Oracle) -> str:
-    """Stable identity for rejecting checkpoints from another oracle."""
+    """Stable identity for rejecting checkpoints from another oracle config."""
     cls = f"{type(oracle).__module__}.{type(oracle).__qualname__}"
-    return f"{cls}:{oracle.name}:d={int(oracle.dim)}"
+    payload = json.dumps(
+        _canonical_checkpoint_value(oracle, set()),
+        sort_keys=True,
+        separators=(",", ":"),
+        ensure_ascii=False,
+    ).encode()
+    digest = hashlib.sha256(payload).hexdigest()
+    return f"{cls}:{oracle.name}:d={int(oracle.dim)}:sha256={digest}"
+
+
+def _canonical_checkpoint_value(value: object, active: set[int]) -> object:
+    """Convert config state to deterministic JSON data without using ``repr``."""
+    if value is None:
+        return ["none"]
+    if isinstance(value, Enum):
+        return [
+            "enum",
+            f"{type(value).__module__}.{type(value).__qualname__}",
+            value.name,
+        ]
+    if isinstance(value, bool):
+        return ["bool", value]
+    if isinstance(value, int):
+        return ["int", str(value)]
+    if isinstance(value, float):
+        return ["float", value.hex()]
+    if isinstance(value, str):
+        return ["str", value]
+    if isinstance(value, bytes):
+        return ["bytes", value.hex()]
+    if isinstance(value, Path):
+        return ["path", value.as_posix()]
+    if isinstance(value, np.generic):
+        array = np.asarray(value)
+        return ["numpy-scalar", array.dtype.str, array.tobytes().hex()]
+    if isinstance(value, np.ndarray):
+        array = np.ascontiguousarray(value)
+        if array.dtype.hasobject:
+            data: object = _canonical_checkpoint_value(array.tolist(), active)
+        else:
+            data = array.tobytes(order="C").hex()
+        return ["numpy-array", array.dtype.str, list(array.shape), data]
+    if isinstance(value, Tensor):
+        tensor = value.detach().cpu().contiguous()
+        raw = tensor.reshape(-1).view(torch.uint8).numpy().tobytes(order="C").hex()
+        return ["torch-tensor", str(tensor.dtype), list(tensor.shape), raw]
+
+    object_id = id(value)
+    if object_id in active:
+        raise TypeError("oracle configuration contains a reference cycle")
+    active.add(object_id)
+    try:
+        if dataclasses.is_dataclass(value) and not isinstance(value, type):
+            fields = [
+                [field.name, _canonical_checkpoint_value(getattr(value, field.name), active)]
+                for field in dataclasses.fields(value)
+            ]
+            return [
+                "dataclass",
+                f"{type(value).__module__}.{type(value).__qualname__}",
+                fields,
+            ]
+        if isinstance(value, Mapping):
+            entries = [
+                [
+                    _canonical_checkpoint_value(key, active),
+                    _canonical_checkpoint_value(item, active),
+                ]
+                for key, item in value.items()
+            ]
+            entries.sort(
+                key=lambda entry: json.dumps(
+                    entry[0], sort_keys=True, separators=(",", ":"), ensure_ascii=False
+                )
+            )
+            return ["mapping", entries]
+        if isinstance(value, (list, tuple)):
+            return [
+                type(value).__name__,
+                [_canonical_checkpoint_value(item, active) for item in value],
+            ]
+        if isinstance(value, (set, frozenset)):
+            items = [_canonical_checkpoint_value(item, active) for item in value]
+            items.sort(
+                key=lambda item: json.dumps(
+                    item, sort_keys=True, separators=(",", ":"), ensure_ascii=False
+                )
+            )
+            return [type(value).__name__, items]
+        if callable(value):
+            raise TypeError("callable oracle configuration is not checkpointable")
+        try:
+            attributes = vars(value)
+        except TypeError as exc:
+            raise TypeError(
+                "unsupported oracle configuration value "
+                f"{type(value).__module__}.{type(value).__qualname__}"
+            ) from exc
+        return [
+            "object",
+            f"{type(value).__module__}.{type(value).__qualname__}",
+            [
+                [name, _canonical_checkpoint_value(attributes[name], active)]
+                for name in sorted(attributes)
+            ],
+        ]
+    finally:
+        active.remove(object_id)
 
 
 def _validate_checkpoint_identity(state: dict, expected: dict) -> None:
-    for field in _CHECKPOINT_IDENTITY_FIELDS:
+    for field in expected:
         if field not in state:
             raise ValueError(f"evaluator checkpoint is missing {field}")
         if state[field] != expected[field]:
@@ -94,6 +200,22 @@ def _validate_checkpoint_identity(state: dict, expected: dict) -> None:
                 f"evaluator checkpoint {field} mismatch: "
                 f"saved {state[field]!r}, current {expected[field]!r}"
             )
+
+
+def _checkpoint_next_index(state: dict) -> int:
+    if "next_index" not in state:
+        raise ValueError("evaluator checkpoint is missing next_index")
+    value = state["next_index"]
+    if (
+        isinstance(value, (bool, np.bool_))
+        or not isinstance(value, (int, np.integer))
+        or value < 0
+    ):
+        raise ValueError(
+            "evaluator checkpoint next_index must be a nonnegative integer, "
+            f"got {value!r}"
+        )
+    return int(value)
 
 
 def _plug_in_yvar(base: np.ndarray, sigma_rel: float, sigma_add: float) -> np.ndarray:
@@ -191,9 +313,7 @@ class TorchEvaluator:
 
     def load_state_dict(self, state: dict) -> None:
         _validate_checkpoint_identity(state, self._checkpoint_identity())
-        next_index = int(state["next_index"])
-        if next_index < 0:
-            raise ValueError(f"evaluator checkpoint next_index must be nonnegative, got {next_index}")
+        next_index = _checkpoint_next_index(state)
         if self.noise_source is None:
             if "rng_state" not in state:
                 raise ValueError("legacy evaluator checkpoint is missing rng_state")
@@ -327,10 +447,8 @@ class BiphasicOracle:
             "seed": self.noise_source.root_seed if indexed else self.seed,
             "sigma_rel": self.noise_source.sigma_rel if indexed else self.sigma_rel,
             "sigma_add": self.noise_source.sigma_add if indexed else self.sigma_add,
-            "oracle_identity": (
-                f"{type(self).__module__}.{type(self).__qualname__}:"
-                f"{self.instance_id}:d={self.dim}"
-            ),
+            "yvar_mode": self.yvar_mode,
+            "oracle_identity": _oracle_identity(self._core),
         }
 
     def state_dict(self) -> dict:
@@ -341,9 +459,7 @@ class BiphasicOracle:
 
     def load_state_dict(self, state: dict) -> None:
         _validate_checkpoint_identity(state, self._checkpoint_identity())
-        next_index = int(state["next_index"])
-        if next_index < 0:
-            raise ValueError(f"evaluator checkpoint next_index must be nonnegative, got {next_index}")
+        next_index = _checkpoint_next_index(state)
         if self.noise_source is None:
             if "rng_state" not in state:
                 raise ValueError("legacy evaluator checkpoint is missing rng_state")
