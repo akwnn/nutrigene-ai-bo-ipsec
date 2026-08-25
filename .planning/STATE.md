@@ -46,8 +46,11 @@ mismatches already recorded in `.planning/codebase/CONCERNS.md`.
 - Task 4 unified SPADE/Sobol48/qLogNEI48 runners passed independent review: exact 48-point
   budgets, no truth access, frozen registered constants, identity-bound thresholds and
   schedules, RNG isolation, and non-scientific TEST_ONLY execution identities.
+- Task 5 lockbox generators/common scorer passed independent review. All live digests
+  match, controlled thresholds achieve 25% prevalence, scorer refits all 48 observations,
+  and the manifest remains `FROZEN_UNOPENED` with no comparative outcomes inspected.
 
 ## Next action
 
-Freeze and independently review the four untouched randomized lockbox generators,
-controlled threshold, common scorer, and deterministic artifact format.
+Implement and independently review the resumable development runner and prespecified
+nested-family selection, then execute the frozen development campaign grid.
