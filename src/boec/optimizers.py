@@ -202,6 +202,26 @@ def lhs_design(bounds: Tensor, n: int, *, seed: int = 0) -> Tensor:
     return bounds[0].double() + unit * (bounds[1] - bounds[0]).double()
 
 
+def oa_lhs_design(bounds: Tensor, n: int, *, seed: int = 0) -> Tensor:
+    """``n = p^2`` points by strength-2 orthogonal-array LHS.
+
+    Stratifies every 1D marginal (plain LHS's property) AND every 2D projection: for
+    any pair of coordinates, each of the ``p x p`` grid cells of that projection is
+    hit exactly once. That is the property Stein (1987) needs for the variance-
+    reduction guarantee `docs/SPADE-SPEC.md` Stage 1 cites -- plain LHS only has the
+    first half. Requires ``n`` to be a perfect square; **no silent fallback** to a
+    weaker design if it is not (`docs/ODIN-VERDICT.md` sec 4(a): "do not fall back
+    silently and keep the citation").
+    """
+    _check_bounds(bounds)
+    p = round(n ** 0.5)
+    if p * p != n:
+        raise ValueError(f"oa_lhs_design needs n = p^2 for an integer p; got n={n}")
+    d = bounds.shape[1]
+    unit = torch.from_numpy(qmc.LatinHypercube(d=d, strength=2, seed=seed).random(n)).double()
+    return bounds[0].double() + unit * (bounds[1] - bounds[0]).double()
+
+
 def initial_design(bounds: Tensor, *, seed: int = 0) -> Tensor:
     """The opening batch, before the model knows anything: ``2d + 2`` points.
 
