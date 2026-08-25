@@ -1,19 +1,31 @@
-"""Reliability and non-vacuity audit for the paper's Figure 4."""
+"""Point–map–cost decision display for the paper's Figure 4."""
 
 from __future__ import annotations
 
 from importlib.resources import files
 
 import matplotlib.pyplot as plt
+from matplotlib.lines import Line2D
 
 from .core import FigureBundle, assert_no_prohibited_content
 from .style import VenuePreset, apply_axis_style, method_style, panel_label
 
 
-_CONTAINMENT_COLOUR = "#009E73"
-_UNDERCOVERAGE_WARNING = "#B2182B"
 _INK = "#243746"
-_MUTED = "#6B7280"
+_SESOI_FILL = "#E5E7EB"
+_CONTRAST_SPECS = {
+    "map_spade_minus_sobol": "Map: SPADE − Sobol",
+    "map_spade_minus_qlognei": "Map: SPADE − qLogNEI",
+    "regret_spade_minus_qlognei": "Regret: SPADE − qLogNEI",
+}
+_HARTMANN_CONDITIONS = ("hartmann6-d6-s0.25", "hartmann6-d8-s0.25")
+_KEY_LABELS = {"spade_cf_m0", "qlognei", "sobol", "doe"}
+_POINT_LABEL_OFFSETS = {
+    "spade_cf_m0": (-6, 7),
+    "qlognei": (5, -10),
+    "sobol": (6, 12),
+    "doe": (-5, 5),
+}
 
 
 def _marker_facecolour(arm: str) -> str:
@@ -21,104 +33,51 @@ def _marker_facecolour(arm: str) -> str:
     return "white" if style.fill == "none" else style.colour
 
 
-def _containment_effect(row: dict) -> tuple[float, float, float]:
-    return (
-        row["proportion"] - row["alpha"],
-        row["ci_lo"] - row["alpha"],
-        row["ci_hi"] - row["alpha"],
-    )
-
-
-def _undercoverage(row: dict) -> bool:
-    return row["ci_hi"] < row["alpha"]
-
-
-def _containment_colour(row: dict) -> str:
-    return _UNDERCOVERAGE_WARNING if _undercoverage(row) else _CONTAINMENT_COLOUR
-
-
-def _effect_limits(rows: list[dict]) -> tuple[float, float]:
-    intervals = [_containment_effect(row) for row in rows if row["n"]]
-    lower = min([0.0, *(interval[1] for interval in intervals)])
-    upper = max([0.0, *(interval[2] for interval in intervals)])
-    return lower - 0.04, upper + 0.16
-
-
 def _keep_ticks_within_view(axis) -> None:
-    lower, upper = sorted(axis.get_xlim())
-    axis.set_xticks([tick for tick in axis.get_xticks() if lower <= tick <= upper])
+    x_lower, x_upper = sorted(axis.get_xlim())
+    y_lower, y_upper = sorted(axis.get_ylim())
+    axis.set_xticks([tick for tick in axis.get_xticks() if x_lower <= tick <= x_upper])
+    axis.set_yticks([tick for tick in axis.get_yticks() if y_lower <= tick <= y_upper])
 
 
-def _hill_label(row: dict) -> str:
-    condition = row["condition"].replace("hill-d", "d=").replace("-s", "; σ=")
-    return f"{condition}; γ={row['gamma']:g}; α={row['alpha']:g}"
+def _ordered_contrasts(data: dict) -> tuple[list[dict], float]:
+    by_id = {row.get("contrast_id"): row for row in data["contrasts"]}
+    if set(by_id) != set(_CONTRAST_SPECS) or len(by_id) != len(data["contrasts"]):
+        raise ValueError(f"expected contrast IDs {tuple(_CONTRAST_SPECS)}")
+    sesois = {row.get("sesoi") for row in by_id.values()}
+    if sesois != {0.02}:
+        raise ValueError("expected a common SESOI of 0.02")
+    return [by_id[contrast_id] for contrast_id in _CONTRAST_SPECS], 0.02
 
 
-def _draw_containment_forest(
-    axis,
-    rows: list[dict],
-    *,
-    id_prefix: str,
-    labels: list[str],
-    preset: VenuePreset,
-    declined_text: str,
-) -> None:
-    """Draw a zero-centred exact-interval forest plus a right status gutter."""
-    axis.axvline(0, color=_INK, linewidth=0.8, zorder=0)
-    limits = _effect_limits(rows)
-    axis.set_xlim(*limits)
-    for y_position, row in enumerate(rows):
-        if not row["n"]:
-            axis.text(
-                0.015,
-                y_position,
-                declined_text,
-                color=_MUTED,
-                ha="left",
-                va="center",
-                fontsize=preset.body_pt,
+def _legend_handles(arms: list[str]) -> list[Line2D]:
+    handles = []
+    for arm in arms:
+        style = method_style(arm)
+        handles.append(
+            Line2D(
+                [0],
+                [0],
+                marker=style.marker,
+                linestyle="none",
+                markersize=4.2,
+                markerfacecolor=_marker_facecolour(arm),
+                markeredgecolor=style.colour,
+                markeredgewidth=0.8,
+                label=style.label,
             )
-            continue
-        effect, lo, hi = _containment_effect(row)
-        colour = _containment_colour(row)
-        interval = axis.hlines(y_position, lo, hi, color=colour, linewidth=0.9, zorder=2)
-        interval.set_gid(f"{id_prefix}-interval:{row.get('cell_id', row.get('family'))}")
-        point = axis.scatter(
-            effect,
-            y_position,
-            color=colour,
-            edgecolor=_INK,
-            linewidth=0.5,
-            marker="v" if _undercoverage(row) else "o",
-            s=30,
-            zorder=3,
         )
-        point.set_gid(f"{id_prefix}:{row.get('cell_id', row.get('family'))}")
-        axis.text(hi + 0.012, y_position, f"{row['x']}/{row['n']}", va="center", fontsize=preset.body_pt, color=_INK)
-    axis.set_yticks(range(len(rows)), labels)
-    axis.set_ylim(len(rows) - 0.6, -0.6)
-    axis.text(
-        0.99,
-        1.01,
-        "STATUS",
-        transform=axis.transAxes,
-        ha="right",
-        va="bottom",
-        fontsize=preset.body_pt,
-        fontweight="bold",
-        color=_INK,
-    )
-    _keep_ticks_within_view(axis)
+    return handles
 
 
 def build_figure4(data: dict, preset: VenuePreset) -> FigureBundle:
-    """Build the retrospective calibration and prospective certification audit."""
+    """Build the registered target point-map-cost display."""
     assert_no_prohibited_content(data)
     style_path = files("boec.paper_figures").joinpath("paper.mplstyle")
     with plt.style.context(str(style_path)):
-        height_mm = 168 if preset.name == "plos" else 154
+        height_mm = 166 if preset.name == "plos" else 150
         figure = plt.figure(figsize=preset.figsize(height_mm), constrained_layout=True)
-        grid = figure.add_gridspec(2, 2, width_ratios=(0.95, 1.05), hspace=0.18, wspace=0.12)
+        grid = figure.add_gridspec(2, 2, width_ratios=(1.03, 0.97), hspace=0.18, wspace=0.12)
         axis_a = figure.add_subplot(grid[0, 0])
         axis_b = figure.add_subplot(grid[0, 1])
         axis_c = figure.add_subplot(grid[1, 0])
@@ -128,150 +87,172 @@ def build_figure4(data: dict, preset: VenuePreset) -> FigureBundle:
             label_text = panel_label(axis, label, preset)
             label_text.set_position((-0.10, 1.01))
 
-        calibration_rows = data["calibration_refinement"]
-        axis_a.set_axis_off()
-        axis_a.set_title("Retrospective Hill evidence: descriptive", loc="left", fontsize=preset.body_pt)
-        metric_axes = (
-            axis_a.inset_axes((0.02, 0.14, 0.46, 0.72)),
-            axis_a.inset_axes((0.54, 0.14, 0.44, 0.72)),
+        target_points = data["target_points"]
+        for row in target_points:
+            style = method_style(row["arm"])
+            axis_a.scatter(
+                row["map_error"],
+                row["regret_p"],
+                s=32,
+                marker=style.marker,
+                facecolor=_marker_facecolour(row["arm"]),
+                edgecolor=style.colour,
+                linewidth=0.8,
+                zorder=3,
+            )
+            if row["arm"] in _KEY_LABELS:
+                axis_a.annotate(
+                    style.label,
+                    (row["map_error"], row["regret_p"]),
+                    xytext=_POINT_LABEL_OFFSETS[row["arm"]],
+                    textcoords="offset points",
+                    ha="right" if row["arm"] in {"doe", "spade_cf_m0"} else "left",
+                    fontsize=preset.body_pt,
+                    color=_INK,
+                )
+        axis_a.margins(0.20)
+        axis_a.set_xlabel("Symmetric-difference error  ← lower is better", fontsize=preset.body_pt)
+        axis_a.set_ylabel("Rule-P simple regret  ← lower is better", fontsize=preset.body_pt)
+        axis_a.set_title("Registered point–map trade-off", loc="left", fontsize=preset.body_pt)
+
+        contrast_rows, sesoi = _ordered_contrasts(data)
+        axis_b.axvspan(-sesoi, sesoi, color=_SESOI_FILL, zorder=0)
+        axis_b.axvline(0, color=_INK, linewidth=0.8, zorder=1)
+        for y_position, row in enumerate(contrast_rows):
+            axis_b.hlines(y_position, row["lo"], row["hi"], color=_INK, linewidth=0.9, zorder=2)
+            axis_b.scatter(row["mean"], y_position, color="#009E73", edgecolor=_INK, linewidth=0.5, s=28, zorder=3)
+        axis_b.set_yticks(range(len(contrast_rows)), tuple(_CONTRAST_SPECS.values()))
+        axis_b.invert_yaxis()
+        axis_b.set_xlabel("Paired difference (SPADE − comparator)", fontsize=preset.body_pt)
+        axis_b.set_title("Paired contrasts and ±0.02 margin", loc="left", fontsize=preset.body_pt)
+
+        costs = data["cost_ledger"]
+        for y_position, row in enumerate(costs):
+            style = method_style(row["arm"])
+            axis_c.hlines(y_position, 0, row["rounds"], color="#AAB4BE", linewidth=0.8, zorder=1)
+            axis_c.scatter(
+                row["rounds"],
+                y_position,
+                marker=style.marker,
+                s=28,
+                facecolor=_marker_facecolour(row["arm"]),
+                edgecolor=style.colour,
+                linewidth=0.8,
+                zorder=2,
+            )
+        axis_c.set_yticks(range(len(costs)), [method_style(row["arm"]).label for row in costs])
+        axis_c.set_ylim(len(costs) - 0.6, -0.6)
+        axis_c.set_xlim(0, 10.8)
+        axis_c.set_xticks((0, 2, 4, 6, 8, 10))
+        axis_c.set_xlabel("Feedback rounds", fontsize=preset.body_pt)
+        axis_c.set_title("Equal wells, unequal experimental feedback", loc="left", fontsize=preset.body_pt)
+        axis_c.text(
+            0.98,
+            0.04,
+            "All methods use 48 wells",
+            transform=axis_c.transAxes,
+            ha="right",
+            va="bottom",
+            fontsize=preset.body_pt,
+            color=_INK,
+            fontweight="bold",
         )
-        for metric_axis, metric, title in zip(
-            metric_axes,
-            ("calibration", "refinement"),
-            ("Calibration error ↓", "Refinement ↑"),
-            strict=True,
-        ):
-            apply_axis_style(metric_axis, preset)
-            for y_position, row in enumerate(calibration_rows):
+
+        axis_d.set_axis_off()
+        axis_d.set_title(
+            "Hartmann robustness\ndescriptive means\nintervals unavailable",
+            loc="left",
+            fontsize=preset.body_pt,
+        )
+        facet_axes = (
+            axis_d.inset_axes((0.02, 0.20, 0.45, 0.62)),
+            axis_d.inset_axes((0.53, 0.20, 0.45, 0.62)),
+        )
+        all_hartmann = data["hartmann"]
+        map_limits = (
+            min(row["map_error"] for row in all_hartmann) - 0.008,
+            max(row["map_error"] for row in all_hartmann) + 0.008,
+        )
+        regret_limits = (
+            min(row["regret_p"] for row in all_hartmann) - 0.04,
+            max(row["regret_p"] for row in all_hartmann) + 0.04,
+        )
+        for facet, condition, title in zip(facet_axes, _HARTMANN_CONDITIONS, ("d=6", "d=8"), strict=True):
+            apply_axis_style(facet, preset)
+            rows = [row for row in all_hartmann if row["condition"] == condition]
+            for row in rows:
                 style = method_style(row["arm"])
-                metric_axis.scatter(
-                    row[metric],
-                    y_position,
+                point = facet.scatter(
+                    row["map_error"],
+                    row["regret_p"],
                     marker=style.marker,
-                    s=30,
+                    s=22,
                     facecolor=_marker_facecolour(row["arm"]),
                     edgecolor=style.colour,
                     linewidth=0.8,
-                    zorder=3,
                 )
-            metric_axis.set_yticks(
-                range(len(calibration_rows)),
-                [method_style(row["arm"]).label for row in calibration_rows] if metric == "calibration" else [],
-            )
-            metric_axis.set_ylim(len(calibration_rows) - 0.6, -0.6)
-            metric_axis.set_title(title, loc="left", fontsize=preset.body_pt)
-            metric_axis.tick_params(axis="x", labelsize=preset.body_pt)
-            _keep_ticks_within_view(metric_axis)
-
-        hill_rows = data["hill_containment"]
-        _draw_containment_forest(
-            axis_b,
-            hill_rows,
-            id_prefix="hill",
-            labels=[_hill_label(row) for row in hill_rows],
-            preset=preset,
-            declined_text="no non-empty\ncertificate",
-        )
-        axis_b.set_xlabel("Cross-fit containment − nominal", fontsize=preset.body_pt)
-        axis_b.set_title("Prospective Hill\nnon-empty denominators", loc="left", fontsize=preset.body_pt)
-
-        answer_rows = data["cross_family_answer_rate"]
-        bars = axis_c.barh(
-            range(len(answer_rows)),
-            [row["answer_rate"] for row in answer_rows],
-            color="#D6DEE5",
-            edgecolor=_INK,
-            linewidth=0.6,
-        )
-        for y_position, (bar, row) in enumerate(zip(bars, answer_rows, strict=True)):
-            bar.set_gid(f"answer-rate:{row['family']}")
-            axis_c.text(
-                row["answer_rate"] + 0.025,
-                y_position,
-                f"{row['answered']}/{row['n_campaigns']}",
-                va="center",
-                fontsize=preset.body_pt,
-                color=_INK,
-            )
-        axis_c.set_yticks(range(len(answer_rows)), [row["family"] for row in answer_rows])
-        axis_c.invert_yaxis()
-        axis_c.set_xlim(0, 1.16)
-        axis_c.set_xticks((0, 0.25, 0.50, 0.75, 1.00))
-        axis_c.set_xlabel(
-            r"Campaigns with any non-empty $\gamma{\times}\tau$ certificate",
+                point.set_gid(f"{condition}:{row['arm']}")
+            facet.set_xlim(*map_limits)
+            facet.set_ylim(*regret_limits)
+            facet.set_title(title, loc="left", fontsize=preset.body_pt)
+            facet.set_xlabel("Map error", fontsize=preset.body_pt)
+            if facet is facet_axes[0]:
+                facet.set_ylabel("Rule-P regret", fontsize=preset.body_pt)
+            else:
+                facet.set_yticklabels([])
+            _keep_ticks_within_view(facet)
+        arms = [row["arm"] for row in costs]
+        axis_d.legend(
+            handles=_legend_handles(arms),
+            loc="lower center",
+            bbox_to_anchor=(0.5, -0.16),
+            ncol=3,
             fontsize=preset.body_pt,
-        )
-        axis_c.set_title(
-            "Campaign answer rate (α=0.95)\n0 = declined to certify\nnot zero containment",
-            loc="left",
-            fontsize=preset.body_pt,
+            columnspacing=0.8,
+            handletextpad=0.3,
         )
 
-        conditional_rows = data["cross_family_conditional_containment"]
-        _draw_containment_forest(
-            axis_d,
-            conditional_rows,
-            id_prefix="conditional",
-            labels=[row["family"] for row in conditional_rows],
-            preset=preset,
-            declined_text="declined\nto certify",
-        )
-        axis_d.set_xlabel("Containment − nominal", fontsize=preset.body_pt)
-        axis_d.set_title(
-            "Conditional on answering\n" + r"$\blacktriangledown$ interval wholly below nominal",
-            loc="left",
-            fontsize=preset.body_pt,
-        )
+        for axis in (axis_a, axis_b, axis_c):
+            _keep_ticks_within_view(axis)
 
     panel_data = {
-        "A": {
-            "rows": calibration_rows,
-            "evidence": "retrospective Hill; descriptive",
-            "display": "aligned dot strips",
-        },
-        "B": {
-            "rows": hill_rows,
-            "reference": 0.0,
-            "interval": "Clopper-Pearson 95% exact",
-            "empty_policy": "exclude from numerator and denominator",
-            "status_gutter": True,
-        },
+        "A": {"rows": target_points, "terminal_rule": data["terminal_rule"]},
+        "B": {"rows": contrast_rows, "sesoi": sesoi, "reference": 0.0},
         "C": {
-            "rows": answer_rows,
-            "scope": "alpha=0.95 campaigns; any non-empty gamma-by-tau certificate",
-            "zero_means": "declined to certify",
+            "rows": costs,
+            "rounds_are_not_point_size": True,
+            "constant_wells": 48,
+            "encoding": "rounds lollipop",
         },
         "D": {
-            "rows": conditional_rows,
-            "effect": "containment minus nominal",
-            "interval": "Clopper-Pearson 95% exact",
-            "conditioning": "non-empty certificate cell returned an answer",
-            "warning_encoding": "red triangle plus status text",
+            "rows": all_hartmann,
+            "intervals": "unavailable",
+            "summary": "descriptive means",
+            "facets": ["d=6", "d=8"],
         },
     }
     assert_no_prohibited_content(panel_data)
     alt_text = (
-        "Retrospective Hill calibration and refinement are shown as aligned dot strips. Prospective Hill "
-        "cross-fit containment uses exact intervals and non-empty denominators. Cross-family answer rates "
-        "distinguish declining to certify from containment conditional on answering; a red downward triangle "
-        "marks an interval wholly below nominal."
+        "On the registered target, SPADE has the lowest map error and competitive Rule-P regret. "
+        "Paired contrasts show lower SPADE map error than Sobol and qLogNEI, while its regret is slightly "
+        "higher than qLogNEI. All methods use 48 wells but require one to ten feedback rounds. Hartmann "
+        "d=6 and d=8 panels report descriptive means only."
     )
     caption = (
-        "Figure 4 | Reliability requires both calibration and non-vacuous certification. (a) Retrospective "
-        "Hill calibration error and refinement are descriptive summaries (n=1,200 cells per method). "
-        "(b) Prospective Hill cross-fit containment relative to nominal assurance, with 95% exact intervals "
-        "and empty certificates excluded from each displayed denominator. (c) At α=0.95, campaigns returning "
-        "any non-empty certificate were 0/50 for Ackley, 11/50 for Hartmann6, 50/50 for Hill, 49/50 for Levy "
-        "and 50/50 for Rosenbrock; zero denotes refusal to certify, not zero containment. (d) Conditional "
-        "containment is shown only when a certificate was returned; downward triangles denote intervals "
-        "wholly below nominal assurance."
+        "Figure 4 | Point, map and experimental-cost evidence for SPADE. (a) Registered Hill-target means "
+        "for symmetric-difference map error and Rule-P simple regret (n=25 campaigns per method); lower is "
+        "better on both axes. (b) Paired SPADE-minus-comparator contrasts with 95% intervals and the prespecified "
+        "±0.02 smallest effect size of interest. SPADE reduces map error relative to Sobol (−0.0109) and qLogNEI "
+        "(−0.0327), while Rule-P regret is +0.0094 relative to qLogNEI. (c) Every method consumes 48 wells, but "
+        "feedback ranges from one to ten rounds. (d) Hartmann d=6 and d=8 robustness values are descriptive means; "
+        "intervals are unavailable."
     )
     long_description = (
-        "Panel a separates calibration error from refinement so the two reliability properties are not collapsed "
-        "into one score. Panel b reports six prospective Hill cells; one α=0.95, σ=0.25 cell returns no non-empty "
-        "certificate and is explicitly marked as such. Panel c shows answer counts of 0, 11, 50, 49 and 50 out "
-        "of 50 campaigns for Ackley, Hartmann6, Hill, Levy and Rosenbrock. Panel d conditions containment on an "
-        "answer: Ackley declines to certify; Hartmann6 contains 16/32 and its exact interval is wholly below the "
-        "0.8 nominal target; Hill contains 802/808, Levy 697/747 and Rosenbrock 778/845."
+        "Panel a places six methods in the map-error versus Rule-P-regret plane and directly labels SPADE, qLogNEI, "
+        "Sobol and Classical DoE. Panel b shows three paired estimates: SPADE minus Sobol map error is −0.010892 "
+        "(−0.015662, −0.005969); SPADE minus qLogNEI map error is −0.032655 (−0.037232, −0.028543); and SPADE "
+        "minus qLogNEI regret is +0.009375 (+0.002578, +0.016151). Panel c is a rounds lollipop: Latin hypercube "
+        "and Sobol use one round, SPADE two, Classical DoE three, and qLogEI/qLogNEI ten. Panel d separates "
+        "Hartmann d=6 and d=8 into two small multiples without inferential intervals."
     )
     return FigureBundle("fig4", figure, panel_data, alt_text, caption, long_description)

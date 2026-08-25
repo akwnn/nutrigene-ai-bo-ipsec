@@ -23,6 +23,7 @@ from .figure1 import build_figure1
 from .figure2 import build_figure2
 from .figure3 import build_figure3
 from .figure4 import build_figure4
+from .figure5 import build_figure5
 from .fonts import font_manifest, validate_publication_fonts
 from .qa import assert_registered_geometry, resolved_publication_font
 from .style import VenuePreset, get_preset
@@ -184,7 +185,8 @@ def make_contact_sheet(
         cards.append(card)
     if not cards:
         raise ValueError("contact sheet requires at least one PNG")
-    width = max(card.width for card in cards) * 2
+    column_width = max(card.width for card in cards)
+    width = column_width * 2
     row_heights = [
         max(cards[i].height for i in range(start, min(start + 2, len(cards))))
         for start in range(0, len(cards), 2)
@@ -192,8 +194,15 @@ def make_contact_sheet(
     sheet = Image.new("RGB", (width, sum(row_heights)), "#E5E7EB")
     y = 0
     for start, height in zip(range(0, len(cards), 2), row_heights, strict=True):
-        for offset, card in enumerate(cards[start : start + 2]):
-            sheet.paste(card, (offset * width // 2, y))
+        row_cards = cards[start : start + 2]
+        if len(row_cards) == 1:
+            full_width_card = Image.new("RGB", (width, height), "white")
+            card = row_cards[0]
+            full_width_card.paste(card, ((width - card.width) // 2, 0))
+            sheet.paste(full_width_card, (0, y))
+        else:
+            for offset, card in enumerate(row_cards):
+                sheet.paste(card, (offset * column_width, y))
         y += height
     Path(path).parent.mkdir(parents=True, exist_ok=True)
     sheet.save(path, dpi=(150, 150))
@@ -206,7 +215,7 @@ def write_manifest(manifest: dict[str, Any], path: Path) -> None:
 
 
 def build_all(results_dir: Path, output_dir: Path, preset_name: str = "portable") -> dict[str, Any]:
-    """Build Figures 1–4 from authoritative results and return the manifest."""
+    """Build Figures 1–5 from authoritative results and return the manifest."""
     preset = get_preset(preset_name)
     results_dir, output_dir = Path(results_dir), Path(output_dir)
     figure_dir = output_dir / preset.name
@@ -218,16 +227,20 @@ def build_all(results_dir: Path, output_dir: Path, preset_name: str = "portable"
     if missing := [path for path in evidence_paths if not path.exists()]:
         raise FileNotFoundError(f"required evidence source is missing: {missing[0]}")
     source_hashes = {str(path): sha256_file(path) for path in evidence_paths}
-    data2 = build_terminal_rule_data(results_dir)
-    data3 = build_spade_evidence_data(results_dir)
-    data4 = build_certification_data(results_dir)
+    terminal_data = build_terminal_rule_data(results_dir)
+    spade_data = build_spade_evidence_data(results_dir)
+    certification_data = build_certification_data(results_dir)
     # Build, export, and close one figure at a time; this keeps failures from
     # leaking open GUI/backend figures into subsequent builds.
     figures = {}
-    for builder, data in (
-        (build_figure1, None), (build_figure2, data2),
-        (build_figure3, data3), (build_figure4, data4),
-    ):
+    builders = (
+        (build_figure1, None),
+        (build_figure2, None),
+        (build_figure3, terminal_data),
+        (build_figure4, spade_data),
+        (build_figure5, certification_data),
+    )
+    for builder, data in builders:
         before = set(plt.get_fignums())
         try:
             bundle = builder(preset) if data is None else builder(data, preset)
@@ -241,7 +254,7 @@ def build_all(results_dir: Path, output_dir: Path, preset_name: str = "portable"
             # returning a FigureBundle (export_bundle handles its own case).
             for number in set(plt.get_fignums()) - before:
                 plt.close(number)
-    png_paths = [figure_dir / f"fig{i}.png" for i in range(1, 5)]
+    png_paths = [figure_dir / f"fig{i}.png" for i in range(1, 6)]
     make_contact_sheet(png_paths, output_dir / "paper-figures-contact-sheet.png")
     make_contact_sheet(
         png_paths,

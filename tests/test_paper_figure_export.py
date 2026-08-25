@@ -23,14 +23,14 @@ from boec.paper_figures.style import get_preset
 def test_build_all_writes_complete_bundle(tmp_path):
     manifest = build_all(Path("results"), tmp_path, "portable")
     figure_dir = tmp_path / "portable"
-    for figure_id in ("fig1", "fig2", "fig3", "fig4"):
+    for figure_id in ("fig1", "fig2", "fig3", "fig4", "fig5"):
         for suffix in (
             "pdf", "svg", "tiff", "png", "data.json", "alt.txt", "caption.txt", "description.txt"
         ):
             output = figure_dir / f"{figure_id}.{suffix}"
             assert output.exists() and output.stat().st_size > 100
     assert manifest["preset"]["width_mm"] == 178.0
-    assert set(manifest["figures"]) == {"fig1", "fig2", "fig3", "fig4"}
+    assert list(manifest["figures"]) == ["fig1", "fig2", "fig3", "fig4", "fig5"]
     assert manifest["font"]["family"] == "Charis SIL"
     assert manifest["font"]["path"].endswith("CharisSIL-Regular.ttf")
     assert len(manifest["font"]["sha256"]) == 64
@@ -107,11 +107,11 @@ def test_pdf_embeds_unicode_charis_and_stix_without_type3(tmp_path):
 
 def test_panel_data_alt_text_and_manifest_are_traceable(tmp_path):
     manifest = build_all(Path("results"), tmp_path, "portable")
-    data = json.loads((tmp_path / "portable" / "fig3.data.json").read_text())
+    data = json.loads((tmp_path / "portable" / "fig4.data.json").read_text())
     assert set(data) == {"A", "B", "C", "D"}
-    assert len((tmp_path / "portable" / "fig3.alt.txt").read_text().split()) >= 25
-    assert "Figure 3" in (tmp_path / "portable" / "fig3.caption.txt").read_text()
-    assert len((tmp_path / "portable" / "fig3.description.txt").read_text().split()) >= 60
+    assert len((tmp_path / "portable" / "fig4.alt.txt").read_text().split()) >= 25
+    assert "Figure 4" in (tmp_path / "portable" / "fig4.caption.txt").read_text()
+    assert len((tmp_path / "portable" / "fig4.description.txt").read_text().split()) >= 60
     for source, digest in manifest["sources"].items():
         assert len(digest) == 64 and Path(source).exists()
     for files in manifest["figures"].values():
@@ -126,7 +126,7 @@ def test_rebuild_is_deterministic(tmp_path):
     assert (tmp_path / "one" / "build-manifest.json").read_bytes() == (
         tmp_path / "two" / "build-manifest.json"
     ).read_bytes()
-    for figure_id in ("fig1", "fig2", "fig3", "fig4"):
+    for figure_id in ("fig1", "fig2", "fig3", "fig4", "fig5"):
         for suffix in (
             "pdf", "svg", "tiff", "png", "data.json", "alt.txt", "caption.txt", "description.txt"
         ):

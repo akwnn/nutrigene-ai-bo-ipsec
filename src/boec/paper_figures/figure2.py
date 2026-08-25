@@ -1,178 +1,229 @@
-"""Terminal-rule evidence display for the paper's Figure 2."""
+"""Benchmark-definition schematic for the paper's Figure 2."""
 
 from __future__ import annotations
 
 from importlib.resources import files
 
 import matplotlib.pyplot as plt
-import numpy as np
+from matplotlib.axes import Axes
+from matplotlib.patches import FancyArrowPatch
 
 from .core import FigureBundle
-from .style import VenuePreset, apply_axis_style, method_style, panel_label
+from .layout import content_box
+from .qa import register_artist
+from .style import VenuePreset, panel_label
 
 
 _INK = "#243746"
-_SEARCH_COLOUR = "#D6E4EE"
-_IDENTIFICATION_COLOUR = "#B6BEC6"
-_LABEL_OFFSETS = {"qlogei": -0.005, "qlognei": 0.005}
+_LINE = "#CBD2D9"
+_CAMPAIGN_FILL = "#E8F1F8"
+_ASSAY_FILL = "#FDE9DD"
+_REGION_FILL = "#DDF3E8"
 
 
-def _direct_rule_label(row: dict[str, float | str]) -> float:
-    return float(row["rule_p"]) + _LABEL_OFFSETS.get(str(row["arm"]), 0.0)
+def _node(
+    ax: Axes,
+    xy: tuple[float, float],
+    text: str,
+    facecolour: str,
+    preset: VenuePreset,
+    label: str,
+    *,
+    dashed: bool = False,
+    fontweight: str = "normal",
+):
+    """Add and register a renderer-sized semantic module."""
+    node = content_box(
+        ax,
+        xy,
+        text,
+        preset,
+        facecolor=facecolour,
+        dashed=dashed,
+        fontweight=fontweight,
+    )
+    register_artist(ax.figure, label, node.text, node.patch, padding_pt=2.0)
+    return node
 
 
-def build_figure2(data: dict, preset: VenuePreset) -> FigureBundle:
-    """Build the paired terminal-rule comparison from validated evidence."""
+def _arrow(ax: Axes, start: tuple[float, float], end: tuple[float, float]) -> None:
+    """Add a restrained primary-flow connector."""
+    ax.add_patch(
+        FancyArrowPatch(
+            start,
+            end,
+            transform=ax.transAxes,
+            arrowstyle="-|>",
+            mutation_scale=7,
+            linewidth=0.8,
+            color=_INK,
+            shrinkA=4,
+            shrinkB=4,
+        )
+    )
+
+
+def _prepare_panel(ax: Axes, label: str, preset: VenuePreset) -> None:
+    ax.set_axis_off()
+    ax.set_xlim(0, 1)
+    ax.set_ylim(0, 1)
+    panel_label(ax, label, preset=preset)
+
+
+def build_figure2(preset: VenuePreset) -> FigureBundle:
+    """Build the benchmark schematic using content-aware physical typography."""
     style_path = files("boec.paper_figures").joinpath("paper.mplstyle")
     with plt.style.context(str(style_path)):
-        height_mm = 96 if preset.name == "plos" else 88
-        figure, axes = plt.subplots(
-            1,
-            3,
-            figsize=preset.figsize(height_mm),
-            gridspec_kw={"width_ratios": (0.90, 1.28, 1.02), "wspace": 0.12},
-            constrained_layout=True,
-        )
-        axis_a, axis_b, axis_c = axes
-        for axis, label in zip(axes, "abc", strict=True):
-            apply_axis_style(axis, preset)
-            panel_label(axis, label, preset)
+        figure = plt.figure(figsize=preset.figsize(148), constrained_layout=True)
+        grid = figure.add_gridspec(2, 2, height_ratios=(0.88, 1.32), wspace=0.12)
+        ax_a = figure.add_subplot(grid[0, 0])
+        ax_b = figure.add_subplot(grid[0, 1])
+        ax_c = figure.add_subplot(grid[1, :])
+        for axis, label in zip((ax_a, ax_b, ax_c), "abc", strict=True):
+            _prepare_panel(axis, label, preset)
 
-        rule_means = data["rule_means"]
-        for row in rule_means:
-            style = method_style(row["arm"])
-            marker_facecolour = "white" if style.fill == "none" else style.colour
-            axis_a.plot(
-                (0, 1),
-                (row["rule_a"], row["rule_p"]),
-                color=style.colour,
-                linewidth=0.8,
-                marker=style.marker,
-                markersize=4.5,
-                markerfacecolor=marker_facecolour,
-                markeredgewidth=0.8,
-            )
-            axis_a.text(
-                1.07,
-                _direct_rule_label(row),
-                style.label,
-                color=_INK,
-                va="center",
-                fontsize=preset.body_pt,
-            )
-        axis_a.set_xlim(-0.12, 1.58)
-        axis_a.margins(y=0.16)
-        axis_a.set_xticks((0, 1), ("Rule A", "Rule P"))
-        axis_a.set_ylabel("Mean simple regret", fontsize=preset.body_pt)
-        axis_a.set_title("Same campaigns\ndifferent terminal rules", loc="left", fontsize=preset.body_pt)
+        ax_a.text(
+            0.02,
+            0.86,
+            "ONE CAMPAIGN",
+            transform=ax_a.transAxes,
+            fontsize=preset.body_pt,
+            fontweight="bold",
+            color=_INK,
+            va="top",
+        )
+        stage_specs = (
+            ((0.10, 0.49), "Formulation\nvariables", _CAMPAIGN_FILL, "campaign-formulation"),
+            ((0.37, 0.49), "48-well\ncampaign", _CAMPAIGN_FILL, "campaign-wells"),
+            ((0.64, 0.49), "Noisy assay\nresponses", _ASSAY_FILL, "campaign-assay"),
+            ((0.90, 0.49), "Response\nmodel", _REGION_FILL, "campaign-model"),
+        )
+        for xy, text, facecolour, label in stage_specs:
+            _node(ax_a, xy, text, facecolour, preset, label)
+        arrow_specs = (
+            ((0.20, 0.49), (0.27, 0.49)),
+            ((0.47, 0.49), (0.54, 0.49)),
+            ((0.74, 0.49), (0.81, 0.49)),
+        )
+        for start, end in arrow_specs:
+            _arrow(ax_a, start, end)
 
-        contrasts = data["paired_rule_contrasts"]
-        for y_position, row in enumerate(contrasts):
-            style = method_style(row["arm"])
-            interval = axis_b.hlines(
-                y_position,
-                row["lo"],
-                row["hi"],
-                color=_INK,
-                linewidth=0.9,
-                zorder=2,
-            )
-            interval.set_gid(f"paired:{row['arm']}")
-            axis_b.scatter(
-                row["mean"],
-                y_position,
-                facecolor="white" if style.fill == "none" else style.colour,
-                edgecolor=style.colour,
-                linewidth=0.8,
-                marker=style.marker,
-                s=28,
-                zorder=3,
-            )
-        axis_b.axvline(0, color=_INK, linewidth=0.8, zorder=0)
-        axis_b.set_yticks(range(len(contrasts)), [method_style(row["arm"]).label for row in contrasts])
-        axis_b.invert_yaxis()
-        axis_b.set_xlabel(
-            "Paired Rule P − Rule A regret\n← P lower          P higher →",
-            fontsize=preset.body_pt,
+        _node(
+            ax_b,
+            (0.15, 0.50),
+            "Same sampled\ncampaign",
+            _CAMPAIGN_FILL,
+            preset,
+            "same-sampled-campaign",
+            fontweight="bold",
         )
-        axis_b.set_title("Paired terminal-rule effect\n95% bootstrap interval", loc="left", fontsize=preset.body_pt)
+        _node(
+            ax_b,
+            (0.69, 0.70),
+            "POINT DECISION\nTested-best · noisy selection\nModel recommendation · confirmation",
+            _CAMPAIGN_FILL,
+            preset,
+            "point-decision-lane",
+            dashed=True,
+        )
+        _node(
+            ax_b,
+            (0.69, 0.27),
+            "REGION DECISION\nAcceptable-region map\nConservative certificate",
+            _REGION_FILL,
+            preset,
+            "region-decision-lane",
+            dashed=True,
+        )
+        _arrow(ax_b, (0.28, 0.52), (0.47, 0.69))
+        _arrow(ax_b, (0.28, 0.48), (0.47, 0.29))
 
-        decomposition = data["decomposition"]
-        y_positions = np.arange(len(decomposition))
-        search_loss = np.array([row["oracle_best"] for row in decomposition])
-        identification_loss = np.array([row["identification_gap"] for row in decomposition])
-        axis_c.barh(
-            y_positions,
-            search_loss,
-            color=_SEARCH_COLOUR,
-            edgecolor=_INK,
-            linewidth=0.5,
-            hatch="////",
-            label="Search loss",
+        columns = ("Deliverable", "Reported object", "Observable?", "Score", "Extra wells", "Rounds")
+        display_columns = ("Deliverable", "Reported\nobject", "Observable?", "Score", "Extra\nwells", "Rounds")
+        rows = (
+            ("Tested-best", "latent best visited", "no", "simple regret", "0", "campaign"),
+            ("Measured selection", "one tested well", "yes", "Rule-A regret", "0", "campaign"),
+            ("Model recommendation", "predicted optimum", "yes", "Rule-P regret", "0", "campaign"),
+            ("Confirmation protocol", "confirmed tested well", "yes", "confirmed regret", "protocol", "campaign + confirmation"),
+            ("Acceptable-region map", "set of acceptable inputs", "yes", "symmetric difference", "0", "campaign"),
+            ("Certificate", "conservative subset", "yes", "joint containment", "0", "campaign"),
         )
-        axis_c.barh(
-            y_positions,
-            identification_loss,
-            left=search_loss,
-            color=_IDENTIFICATION_COLOUR,
-            edgecolor=_INK,
-            linewidth=0.5,
-            hatch="....",
-            label="Identification loss",
+        display_rows = (
+            ("Tested-best", "latent best\nvisited", "no", "simple\nregret", "0", "campaign"),
+            ("Measured\nselection", "one tested\nwell", "yes", "Rule-A\nregret", "0", "campaign"),
+            ("Model\nrecommendation", "predicted\noptimum", "yes", "Rule-P\nregret", "0", "campaign"),
+            ("Confirmation\nprotocol", "confirmed\ntested well", "yes", "confirmed\nregret", "protocol", "campaign +\nconfirmation"),
+            ("Acceptable-region\nmap", "acceptable\ninput set", "yes", "symmetric\ndifference", "0", "campaign"),
+            ("Certificate", "conservative\nsubset", "yes", "joint\ncontainment", "0", "campaign"),
         )
-        axis_c.set_yticks(y_positions, [method_style(row["arm"]).label for row in decomposition])
-        axis_c.invert_yaxis()
-        maximum_regret = float(np.max(search_loss + identification_loss))
-        axis_c.set_xlim(0, maximum_regret * 1.08)
-        axis_c.set_xticks([tick for tick in axis_c.get_xticks() if tick <= axis_c.get_xlim()[1]])
-        axis_c.set_xlabel("Rule-A simple regret", fontsize=preset.body_pt)
-        axis_c.set_title(
-            "Rule A =\nsearch loss +\nidentification loss",
-            loc="left",
+        ax_c.text(
+            0.01,
+            0.96,
+            "ESTIMAND LEDGER   •   point decisions (blue)   •   region decisions (green)",
+            transform=ax_c.transAxes,
             fontsize=preset.body_pt,
+            fontweight="bold",
+            color=_INK,
+            va="top",
         )
-        axis_c.legend(
-            loc="lower center",
-            bbox_to_anchor=(0.5, -0.31),
-            ncol=2,
-            fontsize=preset.body_pt,
-            handlelength=1.1,
-            columnspacing=0.8,
+        table = ax_c.table(
+            cellText=display_rows,
+            colLabels=display_columns,
+            cellLoc="left",
+            colLoc="left",
+            bbox=(0.01, 0.02, 0.98, 0.84),
+            colWidths=(0.19, 0.18, 0.15, 0.16, 0.13, 0.19),
         )
+        table.auto_set_font_size(False)
+        table.set_fontsize(preset.body_pt)
+        for (row, column), cell in table.get_celld().items():
+            cell.set_edgecolor(_LINE)
+            cell.set_linewidth(0.5)
+            cell.PAD = 0.06
+            if row == 0:
+                cell.set_facecolor("#F3F6F8")
+                cell.get_text().set_fontweight("bold")
+            elif column == 0 and row <= 4:
+                cell.set_facecolor(_CAMPAIGN_FILL)
+            elif column == 0:
+                cell.set_facecolor(_REGION_FILL)
+            else:
+                cell.set_facecolor("white")
+            if row == 5:
+                cell.set_linewidth(0.9)
+            cell.get_text().set_color(_INK)
+            cell.get_text().set_linespacing(0.85)
 
     panel_data = {
-        "A": {"rows": rule_means, "pairing": "same campaigns"},
+        "A": {"stages": ["formulation", "wells", "assay", "model"]},
         "B": {
-            "rows": contrasts,
-            "reference": 0.0,
-            "interval": "paired bootstrap 95%",
-            "direction": "negative means Rule P has lower regret",
-            "dominant_panel": True,
+            "branches": {"point decision": 4, "region decision": 2},
+            "point deliverables": (
+                "tested-best",
+                "noisy selection",
+                "model recommendation",
+                "confirmation",
+            ),
+            "region deliverables": ("acceptable-region map", "conservative certificate"),
         },
-        "C": {
-            "rows": decomposition,
-            "identity": "Rule A = search loss + identification loss",
-            "redundant_encoding": "luminance and hatch",
-        },
+        "C": {"columns": columns, "rows": rows},
     }
     alt_text = (
-        "The same campaigns (n=50 per method) change ordering under Rules A and P. SPADE, qLogEI and qLogNEI have "
-        "negative paired Rule-P-minus-Rule-A effects, whereas Classical DoE has a positive effect. "
-        "Rule-A regret is decomposed into search and identification losses."
+        "Benchmark definition. A campaign flows from formulation variables through wells, assay, and model; "
+        "the same data then fork into point or region deliverables, each with a distinct estimand. "
+        "This schematic contains no performance result."
     )
     caption = (
-        "Figure 2 | The terminal decision rule changes comparative performance on the same campaigns. "
-        "(a) Mean simple regret under measured-selection Rule A and model-recommendation Rule P for the "
-        "Hill d=6, σ=0.25 benchmark (n=50 paired campaigns per method). (b) Paired Rule P − Rule A "
-        "differences with 95% paired-bootstrap intervals; negative values favour Rule P. SPADE shows the "
-        "largest reduction (−0.0543), while Classical DoE increases regret (+0.1035). (c) For compatible "
-        "arms, Rule-A regret is the sum of search loss and identification loss."
+        "Figure 2 | Benchmark decisions and estimands. (a) Each method operates within one 48-well "
+        "campaign. (b) The same sampled campaign supports point and region decisions. (c) The estimand "
+        "ledger distinguishes the reported object, observability, score, additional wells and experimental "
+        "rounds for every deliverable. This figure defines the benchmark and contains no performance result."
     )
     long_description = (
-        "Panel a is a slopegraph linking each method's mean Rule-A and Rule-P regret. Panel b is the "
-        "principal forest plot: SPADE is −0.0543 with interval −0.0693 to −0.0398; qLogEI is −0.0320 "
-        "with interval −0.0489 to −0.0151; qLogNEI is −0.0246 with interval −0.0417 to −0.0076; and "
-        "Classical DoE is +0.1035 with interval +0.0723 to +0.1367. Panel c partitions measured-selection "
-        "regret into search and identification components using both luminance and hatch."
+        "Panel a presents a left-to-right campaign ribbon from formulation variables to a 48-well campaign, "
+        "noisy assay responses and a fitted response model. Panel b shows the same sampled campaign branching "
+        "to four point-decision deliverables and two region-decision deliverables. Panel c lists the distinct "
+        "reported object and scoring rule for each point and region output, preventing model recommendation, "
+        "measured selection, acceptable-region mapping and conservative certification from being conflated."
     )
     return FigureBundle("fig2", figure, panel_data, alt_text, caption, long_description)

@@ -23,14 +23,49 @@ from boec.paper_figures.figure1 import build_figure1
 from boec.paper_figures.figure2 import build_figure2
 from boec.paper_figures.figure3 import build_figure3
 from boec.paper_figures.figure4 import build_figure4
+from boec.paper_figures.figure5 import build_figure5
+from boec.paper_figures.landscape_glyphs import LANDSCAPE_FAMILIES, landscape_slice
 from boec.paper_figures.qa import assert_registered_geometry
 from boec.paper_figures.style import get_preset
 
 
-def test_figure4_uses_math_font_for_symbols_missing_from_charis():
+def test_figure1_separates_landscapes_methods_campaign_and_outputs():
+    bundle = build_figure1(get_preset("portable"))
+
+    assert set(bundle.panel_data) == {"A", "B", "C"}
+    assert bundle.panel_data["A"]["families"] == [
+        "hill", "ackley", "hartmann6", "levy", "rosenbrock"
+    ]
+    assert bundle.panel_data["B"]["method_families"] == [
+        "classical experimental design",
+        "space-filling design",
+        "sequential Bayesian optimization",
+        "SPADE",
+    ]
+    assert bundle.panel_data["C"]["campaign_wells"] == 48
+    assert set(bundle.panel_data["C"]["outputs"]) == {
+        "point", "region map", "certificate", "experimental cost"
+    }
+
+    plt.close(bundle.figure)
+
+
+@pytest.mark.parametrize("family", LANDSCAPE_FAMILIES)
+def test_landscape_glyph_is_deterministic_finite_vector_data(family):
+    first = landscape_slice(family, resolution=48)
+    second = landscape_slice(family, resolution=48)
+
+    assert np.array_equal(first.z, second.z)
+    assert first.z.shape == (48, 48)
+    assert np.isfinite(first.z).all()
+    assert first.z.min() == pytest.approx(0.0)
+    assert first.z.max() == pytest.approx(1.0)
+
+
+def test_figure5_uses_math_font_for_symbols_missing_from_charis():
     with warnings.catch_warnings(record=True) as caught:
         warnings.simplefilter("always")
-        bundle = build_figure4(build_certification_data(Path("results")), get_preset("portable"))
+        bundle = build_figure5(build_certification_data(Path("results")), get_preset("portable"))
         bundle.figure.canvas.draw()
 
     missing_glyphs = [
@@ -40,8 +75,8 @@ def test_figure4_uses_math_font_for_symbols_missing_from_charis():
     plt.close(bundle.figure)
 
 
-def test_figure1_defines_campaign_decisions_and_estimands():
-    bundle = build_figure1(get_preset("portable"))
+def test_figure2_defines_campaign_decisions_and_estimands():
+    bundle = build_figure2(get_preset("portable"))
 
     assert set(bundle.panel_data) == {"A", "B", "C"}
     assert bundle.panel_data["A"]["stages"] == ["formulation", "wells", "assay", "model"]
@@ -52,8 +87,8 @@ def test_figure1_defines_campaign_decisions_and_estimands():
     plt.close(bundle.figure)
 
 
-def test_figure1_panel_b_names_required_point_deliverables():
-    bundle = build_figure1(get_preset("portable"))
+def test_figure2_panel_b_names_required_point_deliverables():
+    bundle = build_figure2(get_preset("portable"))
 
     point_deliverables = bundle.panel_data["B"]["point deliverables"]
     assert "noisy selection" in point_deliverables
@@ -65,9 +100,9 @@ def test_figure1_panel_b_names_required_point_deliverables():
 
 
 @pytest.mark.parametrize("name", ["portable", "rsc", "nature"])
-def test_figure1_estimand_table_uses_preset_body_typography(name):
+def test_figure2_estimand_table_uses_preset_body_typography(name):
     preset = get_preset(name)
-    bundle = build_figure1(preset)
+    bundle = build_figure2(preset)
     table = bundle.figure.axes[2].tables[0]
 
     assert all(cell.get_text().get_fontsize() >= preset.body_pt for cell in table.get_celld().values())
@@ -76,8 +111,8 @@ def test_figure1_estimand_table_uses_preset_body_typography(name):
 
 
 @pytest.mark.parametrize("preset_name", ["portable", "rsc", "nature", "plos"])
-def test_figure1_text_stays_inside_nodes_and_ledger_cells_for_every_preset(preset_name):
-    bundle = build_figure1(get_preset(preset_name))
+def test_figure2_text_stays_inside_nodes_and_ledger_cells_for_every_preset(preset_name):
+    bundle = build_figure2(get_preset(preset_name))
     figure = bundle.figure
     figure.canvas.draw()
     renderer = figure.canvas.get_renderer()
@@ -96,8 +131,8 @@ def test_figure1_text_stays_inside_nodes_and_ledger_cells_for_every_preset(prese
     plt.close(figure)
 
 
-def test_figure1_includes_editorial_caption_and_long_description():
-    bundle = build_figure1(get_preset("portable"))
+def test_figure2_includes_editorial_caption_and_long_description():
+    bundle = build_figure2(get_preset("portable"))
 
     assert "no performance result" in bundle.caption.lower()
     assert "point" in bundle.long_description.lower()
@@ -106,9 +141,9 @@ def test_figure1_includes_editorial_caption_and_long_description():
     plt.close(bundle.figure)
 
 
-def test_figure2_encodes_same_campaign_rules_contrasts_and_decomposition():
+def test_figure3_encodes_same_campaign_rules_contrasts_and_decomposition():
     data = build_terminal_rule_data(Path("results"))
-    bundle = build_figure2(data, get_preset("portable"))
+    bundle = build_figure3(data, get_preset("portable"))
 
     assert set(bundle.panel_data) == {"A", "B", "C"}
     assert bundle.panel_data["A"]["pairing"] == "same campaigns"
@@ -120,8 +155,8 @@ def test_figure2_encodes_same_campaign_rules_contrasts_and_decomposition():
     plt.close(bundle.figure)
 
 
-def test_figure2_rendered_text_states_terminal_rule_semantics():
-    bundle = build_figure2(build_terminal_rule_data(Path("results")), get_preset("portable"))
+def test_figure3_rendered_text_states_terminal_rule_semantics():
+    bundle = build_figure3(build_terminal_rule_data(Path("results")), get_preset("portable"))
     bundle.figure.canvas.draw()
     rendered_text = {
         " ".join(text.get_text().split())
@@ -148,8 +183,8 @@ def test_figure2_rendered_text_states_terminal_rule_semantics():
 
 
 @pytest.mark.parametrize("preset_name", ["portable", "rsc", "nature", "plos"])
-def test_figure2_text_stays_inside_the_rendered_figure_for_every_preset(preset_name):
-    bundle = build_figure2(build_terminal_rule_data(Path("results")), get_preset(preset_name))
+def test_figure3_text_stays_inside_the_rendered_figure_for_every_preset(preset_name):
+    bundle = build_figure3(build_terminal_rule_data(Path("results")), get_preset(preset_name))
     figure = bundle.figure
     figure.canvas.draw()
     renderer = figure.canvas.get_renderer()
@@ -164,9 +199,9 @@ def test_figure2_text_stays_inside_the_rendered_figure_for_every_preset(preset_n
     plt.close(figure)
 
 
-def test_figure3_separates_point_map_and_cost_without_boundary_evidence():
+def test_figure4_separates_point_map_and_cost_without_boundary_evidence():
     data = build_spade_evidence_data(Path("results"))
-    bundle = build_figure3(data, get_preset("portable"))
+    bundle = build_figure4(data, get_preset("portable"))
 
     assert bundle.panel_data["A"]["terminal_rule"] == "P"
     assert bundle.panel_data["B"]["sesoi"] == 0.02
@@ -183,9 +218,9 @@ def test_figure3_separates_point_map_and_cost_without_boundary_evidence():
     plt.close(bundle.figure)
 
 
-def test_figure3_rendered_panels_preserve_pareto_contrasts_costs_and_descriptive_status():
+def test_figure4_rendered_panels_preserve_pareto_contrasts_costs_and_descriptive_status():
     data = build_spade_evidence_data(Path("results"))
-    bundle = build_figure3(data, get_preset("portable"))
+    bundle = build_figure4(data, get_preset("portable"))
     figure = bundle.figure
     figure.canvas.draw()
     panel_a, panel_b, panel_c, panel_d = figure.axes
@@ -269,8 +304,8 @@ def test_figure3_rendered_panels_preserve_pareto_contrasts_costs_and_descriptive
 
 
 @pytest.mark.parametrize("preset_name", ["portable", "rsc", "nature", "plos"])
-def test_figure3_rendered_text_is_contained_in_each_panel_for_every_preset(preset_name):
-    bundle = build_figure3(build_spade_evidence_data(Path("results")), get_preset(preset_name))
+def test_figure4_rendered_text_is_contained_in_each_panel_for_every_preset(preset_name):
+    bundle = build_figure4(build_spade_evidence_data(Path("results")), get_preset(preset_name))
     figure = bundle.figure
     figure.canvas.draw()
     renderer = figure.canvas.get_renderer()
@@ -286,10 +321,10 @@ def test_figure3_rendered_text_is_contained_in_each_panel_for_every_preset(prese
     plt.close(figure)
 
 
-def test_figure3_contrast_labels_follow_ids_not_input_order():
+def test_figure4_contrast_labels_follow_ids_not_input_order():
     data = deepcopy(build_spade_evidence_data(Path("results")))
     data["contrasts"].reverse()
-    bundle = build_figure3(data, get_preset("portable"))
+    bundle = build_figure4(data, get_preset("portable"))
     panel_b = bundle.figure.axes[1]
     observed = {
         int(collection.get_offsets()[0, 1]): float(collection.get_offsets()[0, 0])
@@ -302,21 +337,21 @@ def test_figure3_contrast_labels_follow_ids_not_input_order():
     plt.close(bundle.figure)
 
 
-def test_figure3_rejects_contrasts_without_expected_ids_or_common_sesoi():
+def test_figure4_rejects_contrasts_without_expected_ids_or_common_sesoi():
     missing = deepcopy(build_spade_evidence_data(Path("results")))
     missing["contrasts"] = missing["contrasts"][:2]
     with pytest.raises(ValueError, match="expected contrast IDs"):
-        build_figure3(missing, get_preset("portable"))
+        build_figure4(missing, get_preset("portable"))
 
     mismatched_sesoi = deepcopy(build_spade_evidence_data(Path("results")))
     mismatched_sesoi["contrasts"][0]["sesoi"] = 0.01
     with pytest.raises(ValueError, match="common SESOI"):
-        build_figure3(mismatched_sesoi, get_preset("portable"))
+        build_figure4(mismatched_sesoi, get_preset("portable"))
 
 
-def test_figure4_keeps_calibration_containment_and_answer_rate_distinct():
+def test_figure5_keeps_calibration_containment_and_answer_rate_distinct():
     data = build_certification_data(Path("results"))
-    bundle = build_figure4(data, get_preset("portable"))
+    bundle = build_figure5(data, get_preset("portable"))
 
     assert set(bundle.panel_data) == {"A", "B", "C", "D"}
     assert all(row["estimator"] == "crossfit" for row in bundle.panel_data["B"]["rows"])
@@ -332,10 +367,10 @@ def test_figure4_keeps_calibration_containment_and_answer_rate_distinct():
 
 
 @pytest.mark.parametrize("preset_name", ["portable", "rsc", "nature", "plos"])
-def test_figure4_rendered_panels_keep_exact_denominators_and_certification_states_distinct(preset_name):
+def test_figure5_rendered_panels_keep_exact_denominators_and_certification_states_distinct(preset_name):
     data = build_certification_data(Path("results"))
     preset = get_preset(preset_name)
-    bundle = build_figure4(data, preset)
+    bundle = build_figure5(data, preset)
     figure = bundle.figure
     figure.canvas.draw()
     panel_a, panel_b, panel_c, panel_d = figure.axes
@@ -430,8 +465,8 @@ def test_figure4_rendered_panels_keep_exact_denominators_and_certification_state
 
 
 @pytest.mark.parametrize("preset_name", ["portable", "rsc", "nature", "plos"])
-def test_figure4_declined_certification_labels_stay_inside_their_containment_panels(preset_name):
-    bundle = build_figure4(build_certification_data(Path("results")), get_preset(preset_name))
+def test_figure5_declined_certification_labels_stay_inside_their_containment_panels(preset_name):
+    bundle = build_figure5(build_certification_data(Path("results")), get_preset(preset_name))
     figure = bundle.figure
     figure.canvas.draw()
     renderer = figure.canvas.get_renderer()
@@ -449,8 +484,8 @@ def test_figure4_declined_certification_labels_stay_inside_their_containment_pan
 
 
 @pytest.mark.parametrize("preset_name", ["portable", "rsc", "nature", "plos"])
-def test_figure4_rendered_text_stays_inside_the_figure_for_every_preset(preset_name):
-    bundle = build_figure4(build_certification_data(Path("results")), get_preset(preset_name))
+def test_figure5_rendered_text_stays_inside_the_figure_for_every_preset(preset_name):
+    bundle = build_figure5(build_certification_data(Path("results")), get_preset(preset_name))
     figure = bundle.figure
     figure.canvas.draw()
     renderer = figure.canvas.get_renderer()
