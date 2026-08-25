@@ -26,6 +26,12 @@
   nonparametric sensitivity for map and regret in all five development families.
   Failure to find such an `n` yields `INSUFFICIENT_POWER` and forbids lockbox access.
 
+## Execution choice
+
+- Registered campaigns will run locally; the GitHub Actions workflow remains a frozen,
+  tested transport option but will not be dispatched. Development and any eligible
+  lockbox must each complete as a homogeneous local run without mixing environments.
+
 ## Baseline evidence
 
 On commit `02a6bfa`, the full suite produced 1,676 passed, 9 failed, and 2 skipped.
@@ -100,14 +106,19 @@ regressions and are not being repaired inside the prospective study branch.
   Torch deprecation warnings. After final immutable metadata/read/write and source-blob
   fixes, the two touched lockbox/release modules passed 90 tests with the same two
   warnings. No development or lockbox outcome was run or opened.
+- The logistics-only execution freeze preserves the scientific protocol digest at
+  `00ce6971a990749645052273215897f57562106610777d0d8ce417e8e9afdd1a` and binds the
+  workflow, matrix, worker, merger, dependency, environment, and parallelism contracts.
+  After merging the final immutable-read safeguards and refreshing dependent hashes,
+  the clean integrated affected suite passed 203 tests with two pre-existing Torch
+  deprecation warnings. No workflow was launched and no outcome was read.
 
 ## Next action
 
-Complete and verify the logistics-only distributed-execution freeze, push that exact clean
-source commit, then execute the development campaign grid and apply the prespecified
-unanimous leave-one-family-out selection. Only after a committed `SELECTED` protocol may
-the planner create the committed power artifact. Do not open lockbox outcomes unless that
-artifact is `POWERED` with an exact instance prefix no larger than the 2,000 reserved keys
-and the available no-cost capacity can finish that prefix without a partial run. Historical
-final-SPADE raw artifacts are restored and validated; they must remain provenance-separated
-from the new joint-protocol outcomes.
+Push the exact clean source commit, then execute the development campaign grid locally and
+apply the prespecified unanimous leave-one-family-out selection. Only after a committed
+`SELECTED` protocol may the planner create the committed power artifact. Do not open lockbox
+outcomes unless that artifact is `POWERED` with an exact instance prefix no larger than the
+2,000 reserved keys and verified homogeneous local capacity can finish that prefix without
+a partial run. Historical final-SPADE raw artifacts are restored and validated; they must
+remain provenance-separated from the new joint-protocol outcomes.
