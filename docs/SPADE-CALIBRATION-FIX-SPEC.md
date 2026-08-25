@@ -57,8 +57,33 @@ machinery is built. **Not run in this pass** unless K0 revives Piece A.
 
 ## 3. K0 result
 
-<!-- Filled in immediately after computing, not before -- this section is the freeze
-     boundary. Nothing above this line may be edited once a result exists below it. -->
+**Computed once, from `results/p2-versionb-gamma.json`, 200 unique campaigns**
+(`scripts/analyse_k0_calibration_gate.py`, `results/k0-calibration-gate.json`):
+
+| statistic | ρ (vs. regret) | p |
+|---|---|---|
+| `sup_err` | **+0.335** | 1.25e-06 |
+| `grid_r2` | **−0.318** | 4.51e-06 |
+
+`|ρ_grid_r2| − |ρ_sup_err|` = **−0.0171**, 95% bootstrap CI **[−0.160, +0.118]**
+(4,000 resamples).
+
+**Literal point-estimate reading: REVIVE** (`sup_err` correlates marginally more strongly
+than `grid_r2`, so under the registered rule's plain wording Piece A is not immediately
+killed). **But this is not a confident revival.** The bootstrap CI on the *difference*
+comfortably spans zero — the data at n=200 campaigns cannot distinguish which channel
+governs regret more strongly. Both `sup_err` and `grid_r2` are, individually, strongly and
+significantly correlated with regret (ρ ≈ 0.32–0.34, both p < 5e-06) — the honest finding
+is that **surrogate accuracy along both norms tracks regret about equally well, and K0 as
+registered does not resolve which one is closer to causal.**
+
+**Decision, given the ambiguity, and given Piece A's real cost (new replicate-carrying
+campaigns, a new well-budget accounting, new noise-estimator code, then a full re-run of
+the certificate benchmark to check whether it helps at γ=0.99) — this is reported back
+rather than auto-decided.** Building Piece A on a gate this marginal is not obviously
+justified by the gate's own logic, which was designed to give a clean kill/revive read
+and did not. Not proceeding to build Piece A without an explicit decision to do so despite
+the ambiguity.
 
 ## 4. K2 — the design lottery (gates Piece B, OA-LHS)
 

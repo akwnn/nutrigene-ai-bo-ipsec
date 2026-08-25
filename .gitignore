@@ -322,3 +322,7 @@ COMMIT_MSG.txt
 # per-arm-per-condition campaign files (kf3-followup-c*-spade_cf_*.json/.ckpt.jsonl, bulk,
 # regenerable).
 !results/kf3-followup-analysis.json
+
+# tau-quantile / calibration-fix follow-ups: same convention -- small derived verdicts.
+!results/k0-calibration-gate.json
+!results/tau-quantile-followup.json
