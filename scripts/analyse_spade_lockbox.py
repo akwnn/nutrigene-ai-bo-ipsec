@@ -190,7 +190,7 @@ def analyse_merged_manifest(manifest_path: Path) -> dict[str, object]:
     from scripts import run_spade_lockbox as lockbox_contract
     try:
         manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError) as exc:
+    except (OSError, UnicodeDecodeError, ValueError, RecursionError) as exc:
         raise ValueError("merged lockbox manifest is invalid") from exc
     if not isinstance(manifest, Mapping) or set(manifest) != lockbox_contract.MERGED_MANIFEST_FIELDS or manifest.get("schema") != lockbox_contract.MERGED_MANIFEST_SCHEMA or manifest.get("status") != "COMPLETE" or manifest.get("source_dirty") is not False or manifest.get("sample_size") != 350:
         raise ValueError("merged lockbox manifest schema/provenance drift")
@@ -214,6 +214,14 @@ def analyse_merged_manifest(manifest_path: Path) -> dict[str, object]:
             or sidecar_file != f"{raw_file}.sha256"
         ):
             raise ValueError("merged lockbox artifact filename identity drift")
+        try:
+            exact_raw_file = lockbox_contract.registered_raw_filename(
+                shard.get("family"), shard.get("start"), shard.get("stop")
+            )
+        except ValueError as exc:
+            raise ValueError("merged lockbox shard has unregistered family/range") from exc
+        if raw_file != exact_raw_file:
+            raise ValueError("merged lockbox shard exact registered raw filename drift")
         raw = manifest_path.parent / str(raw_file)
         shard_manifest_path = manifest_path.parent / str(manifest_file)
         sidecar_path = manifest_path.parent / str(sidecar_file)
@@ -235,28 +243,20 @@ def analyse_merged_manifest(manifest_path: Path) -> dict[str, object]:
         try:
             shard_manifest = json.loads(shard_manifest_path.read_text(encoding="utf-8"))
             sidecar_tokens = sidecar_path.read_text(encoding="ascii").split()
-        except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+        except (OSError, UnicodeDecodeError, ValueError, RecursionError) as exc:
             raise ValueError("merged lockbox shard metadata is invalid") from exc
-        if (
-            not isinstance(shard_manifest, Mapping)
-            or set(shard_manifest) != lockbox_contract.SHARD_MANIFEST_FIELDS
-            or shard_manifest.get("schema") != lockbox_contract.MANIFEST_SCHEMA
-            or shard_manifest.get("status") != "COMPLETE"
-        ):
-            raise ValueError("merged lockbox shard manifest schema drift")
-        shared = (
-            "family", "start", "stop", "raw_file", "raw_sha256", "protocol_digest",
-            "spec_digest", "config_digest", "generator_digest",
-            "generator_manifest_sha256", "source_commit", "source_dirty",
-            "selected_protocol_sha256", "selection_source_commit",
+        shard_manifest = lockbox_contract.validate_completed_shard_contract(
+            shard_manifest, merged_entry=shard, merged_manifest=manifest
         )
-        for field in shared:
-            expected = shard.get(field) if field in shard else manifest.get(field)
-            if shard_manifest.get(field) != expected:
-                raise ValueError(f"merged lockbox shard {field} identity drift")
         if sidecar_tokens != [shard["raw_sha256"], raw_file]:
             raise ValueError("merged lockbox SHA-256 sidecar content mismatch")
-        rows.extend(read_jsonl_gzip(raw, protocol_digest=str(manifest["protocol_digest"])))
+        shard_rows = read_jsonl_gzip(raw, protocol_digest=str(manifest["protocol_digest"]))
+        rows.extend(lockbox_contract.validate_shard_local_rows(
+            shard_rows,
+            family=shard_manifest["family"],
+            start=shard_manifest["start"],
+            stop=shard_manifest["stop"],
+        ))
     if not rows:
         raise ValueError("merged lockbox manifest has no rows")
     provenance = {field: manifest[field] for field in ("protocol_digest", "spec_digest", "config_digest", "generator_digest", "generator_manifest_sha256", "source_commit")}

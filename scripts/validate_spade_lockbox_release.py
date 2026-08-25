@@ -59,6 +59,29 @@ def _violation(violations: list[str], message: str) -> None:
         violations.append(message)
 
 
+def _strict_json_loads(data: bytes) -> object:
+    def finite_float(token: str) -> float:
+        value = float(token)
+        if not math.isfinite(value):
+            raise ValueError("non-finite JSON number")
+        return value
+
+    def reject_constant(token: str) -> object:
+        raise ValueError(f"non-finite JSON constant: {token}")
+
+    return json.loads(data, parse_float=finite_float, parse_constant=reject_constant)
+
+
+def _finite_number(value: object) -> float | None:
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        return None
+    try:
+        converted = float(value)
+    except (OverflowError, TypeError, ValueError):
+        return None
+    return converted if math.isfinite(converted) else None
+
+
 def _hash_actual(
     path: Path, *, key: str, label: str, hashes: dict[str, str], violations: list[str]
 ) -> bytes | None:
@@ -78,8 +101,8 @@ def _load_json_mapping(
     if data is None:
         return {}
     try:
-        value = json.loads(data)
-    except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+        value = _strict_json_loads(data)
+    except (UnicodeDecodeError, ValueError, RecursionError) as exc:
         _violation(violations, f"{label} JSON parse violation: {exc}")
         return {}
     if not isinstance(value, Mapping):
@@ -136,26 +159,31 @@ def load_release_inputs(
 ) -> dict[str, object]:
     """Defensively load, hash, normalize, and recompute every release input."""
     violations: list[str] = []
-    hashes: dict[str, str] = {}
+    top_level_hashes: dict[str, str] = {}
+    shard_hashes: dict[str, dict[str, str]] = {}
+    hashes: dict[str, object] = {
+        "top_level": top_level_hashes,
+        "raw_shards": shard_hashes,
+    }
     manifest = _load_json_mapping(
         manifest_path,
         key="merged_manifest_sha256",
         label="merged manifest",
-        hashes=hashes,
+        hashes=top_level_hashes,
         violations=violations,
     )
     selection = _load_json_mapping(
         selection_path,
         key="selected_protocol_sha256",
         label="selected protocol",
-        hashes=hashes,
+        hashes=top_level_hashes,
         violations=violations,
     )
     analysis = _load_json_mapping(
         analysis_path,
         key="stored_analysis_sha256",
         label="stored analysis",
-        hashes=hashes,
+        hashes=top_level_hashes,
         violations=violations,
     )
 
@@ -181,6 +209,16 @@ def load_release_inputs(
             or sidecar_file != f"{raw_file}.sha256"
         ):
             _violation(violations, "raw shard artifact filename identity mismatch")
+        if raw_file is not None:
+            try:
+                expected_raw_file = lockbox_contract.registered_raw_filename(
+                    item.get("family"), item.get("start"), item.get("stop")
+                )
+            except ValueError as exc:
+                expected_raw_file = None
+                _violation(violations, f"raw shard family/range violation: {exc}")
+            if expected_raw_file is not None and raw_file != expected_raw_file:
+                _violation(violations, f"exact registered raw filename mismatch: {raw_file}")
         names = [name for name in (raw_file, shard_file, sidecar_file) if name is not None]
         for name in names:
             if name in seen_artifacts:
@@ -188,55 +226,47 @@ def load_release_inputs(
             seen_artifacts.add(name)
         if raw_file is None:
             continue
+        artifact_hashes = shard_hashes.setdefault(raw_file, {})
         raw_path = manifest_path.parent / raw_file
         raw_data = _hash_actual(
-            raw_path, key=raw_file, label="raw shard", hashes=hashes, violations=violations
+            raw_path,
+            key="raw_sha256",
+            label="raw shard",
+            hashes=artifact_hashes,
+            violations=violations,
         )
-        if raw_data is not None and item.get("raw_sha256") != hashes[raw_file]:
+        if raw_data is not None and item.get("raw_sha256") != artifact_hashes["raw_sha256"]:
             _violation(violations, f"raw shard hash mismatch: {raw_file}")
 
         if shard_file is not None:
             shard_path = manifest_path.parent / shard_file
             shard_manifest = _load_json_mapping(
                 shard_path,
-                key=shard_file,
+                key="manifest_sha256",
                 label="shard manifest",
-                hashes=hashes,
+                hashes=artifact_hashes,
                 violations=violations,
             )
-            if item.get("manifest_sha256") != hashes.get(shard_file):
+            if item.get("manifest_sha256") != artifact_hashes.get("manifest_sha256"):
                 _violation(violations, f"shard manifest hash mismatch: {shard_file}")
-            if shard_manifest and (
-                set(shard_manifest) != lockbox_contract.SHARD_MANIFEST_FIELDS
-                or shard_manifest.get("schema") != lockbox_contract.MANIFEST_SCHEMA
-                or shard_manifest.get("status") != "COMPLETE"
-            ):
-                _violation(violations, f"shard manifest schema/completion violation: {shard_file}")
             if shard_manifest:
-                shared = (
-                    "family", "start", "stop", "raw_file", "raw_sha256", "protocol_digest",
-                    "spec_digest", "config_digest", "generator_digest",
-                    "generator_manifest_sha256", "source_commit", "source_dirty",
-                    "selected_protocol_sha256", "selection_source_commit",
-                )
-                for field in shared:
-                    expected = item.get(field) if field in item else manifest.get(field)
-                    if shard_manifest.get(field) != expected:
-                        _violation(
-                            violations,
-                            f"shard manifest {field} identity mismatch: {shard_file}",
-                        )
+                try:
+                    lockbox_contract.validate_completed_shard_contract(
+                        shard_manifest, merged_entry=item, merged_manifest=manifest
+                    )
+                except (TypeError, ValueError) as exc:
+                    _violation(violations, f"shard manifest violation {shard_file}: {exc}")
 
         if sidecar_file is not None:
             sidecar_path = manifest_path.parent / sidecar_file
             sidecar_data = _hash_actual(
                 sidecar_path,
-                key=sidecar_file,
+                key="sha256_sha256",
                 label="SHA-256 sidecar",
-                hashes=hashes,
+                hashes=artifact_hashes,
                 violations=violations,
             )
-            if item.get("sha256_sha256") != hashes.get(sidecar_file):
+            if item.get("sha256_sha256") != artifact_hashes.get("sha256_sha256"):
                 _violation(violations, f"SHA-256 sidecar hash mismatch: {sidecar_file}")
             if sidecar_data is not None:
                 try:
@@ -248,10 +278,17 @@ def load_release_inputs(
 
         if raw_data is not None:
             try:
-                rows[raw_file] = read_jsonl_gzip(raw_path, protocol_digest=read_protocol)
+                shard_rows = read_jsonl_gzip(raw_path, protocol_digest=read_protocol)
+                rows[raw_file] = shard_rows
+                lockbox_contract.validate_shard_local_rows(
+                    shard_rows,
+                    family=item.get("family"),
+                    start=item.get("start"),
+                    stop=item.get("stop"),
+                )
             except Exception as exc:  # untrusted artifact parsers must become report violations
-                rows[raw_file] = []
-                _violation(violations, f"raw shard parse/schema violation {raw_file}: {exc}")
+                rows.setdefault(raw_file, [])
+                _violation(violations, f"raw shard parse/schema/local grid violation {raw_file}: {exc}")
 
     all_rows = [row for shard_rows in rows.values() for row in shard_rows]
     recomputed: dict[str, object] | None
@@ -282,7 +319,7 @@ def collect_release_violations(
     selection: Mapping[str, object],
     analysis: Mapping[str, object],
     rows: Mapping[str, Sequence[Mapping[str, object]]],
-    actual_hashes: Mapping[str, str],
+    actual_hashes: Mapping[str, object],
     input_violations: Sequence[str] = (),
     recomputed_analysis: Mapping[str, object] | None = None,
 ) -> list[str]:
@@ -303,6 +340,14 @@ def collect_release_violations(
     if not isinstance(actual_hashes, Mapping):
         _violation(violations, "actual hash mapping schema violation")
         actual_hashes = {}
+    top_level_hashes = actual_hashes.get("top_level")
+    per_shard_hashes = actual_hashes.get("raw_shards")
+    if not isinstance(top_level_hashes, Mapping):
+        _violation(violations, "top-level actual hash namespace schema violation")
+        top_level_hashes = {}
+    if not isinstance(per_shard_hashes, Mapping):
+        _violation(violations, "per-shard actual hash namespace schema violation")
+        per_shard_hashes = {}
 
     if set(manifest) != lockbox_contract.MERGED_MANIFEST_FIELDS:
         _violation(violations, "merged manifest schema violation")
@@ -331,7 +376,7 @@ def collect_release_violations(
         _violation(violations, f"selection schema violation: {exc}")
     if validated_selection.get("status") != "SELECTED":
         _violation(violations, "premature lockbox without selected protocol")
-    selected_actual = actual_hashes.get("selected_protocol_sha256")
+    selected_actual = top_level_hashes.get("selected_protocol_sha256")
     if not _digest(selected_actual) or selected_actual != manifest.get("selected_protocol_sha256"):
         _violation(violations, "actual selection hash does not match merged selected protocol hash")
     selection_bindings = (
@@ -389,18 +434,20 @@ def collect_release_violations(
             or item.get("sha256_file") != f"{filename}.sha256"
         ):
             _violation(violations, "raw shard artifact filename identity mismatch")
-        if filename not in rows or filename not in actual_hashes:
+        artifact_hashes = per_shard_hashes.get(filename)
+        if filename not in rows or not isinstance(artifact_hashes, Mapping):
             _violation(violations, "absent raw shard")
-        elif item.get("raw_sha256") != actual_hashes.get(filename):
+            artifact_hashes = {}
+        elif item.get("raw_sha256") != artifact_hashes.get("raw_sha256"):
             _violation(violations, "raw shard hash mismatch")
-        for file_field, digest_field, label in (
-            ("manifest_file", "manifest_sha256", "shard manifest hash mismatch"),
-            ("sha256_file", "sha256_sha256", "SHA-256 sidecar hash mismatch"),
+        for hash_field, digest_field, label in (
+            ("manifest_sha256", "manifest_sha256", "shard manifest hash mismatch"),
+            ("sha256_sha256", "sha256_sha256", "SHA-256 sidecar hash mismatch"),
         ):
-            artifact = item.get(file_field)
-            if not isinstance(artifact, str) or artifact not in actual_hashes:
+            actual_digest = artifact_hashes.get(hash_field)
+            if not _digest(actual_digest):
                 _violation(violations, f"absent {label.removesuffix(' hash mismatch')}")
-            elif item.get(digest_field) != actual_hashes.get(artifact):
+            elif item.get(digest_field) != actual_digest:
                 _violation(violations, label)
         family, start, stop = item.get("family"), item.get("start"), item.get("stop")
         if (
@@ -412,6 +459,14 @@ def collect_release_violations(
             _violation(violations, "raw shard has unregistered family/range")
         else:
             ranges[str(family)].append((start, stop))
+            if filename != lockbox_contract.registered_raw_filename(family, start, stop):
+                _violation(violations, "exact registered raw filename mismatch")
+            try:
+                lockbox_contract.validate_shard_local_rows(
+                    rows.get(filename), family=family, start=start, stop=stop
+                )
+            except (TypeError, ValueError):
+                _violation(violations, "raw shard does not contain the exact local key/arm grid")
     if set(rows) != seen_files:
         _violation(violations, "raw row mapping does not exactly match merged raw shards")
     for family, intervals in ranges.items():
@@ -518,13 +573,14 @@ def collect_release_violations(
                     computed_pass = False
                     continue
                 bound, margin = endpoint.get("one_sided_bound"), endpoint.get("margin")
-                valid = (
-                    isinstance(bound, (int, float)) and not isinstance(bound, bool)
-                    and math.isfinite(float(bound))
-                    and isinstance(margin, (int, float)) and not isinstance(margin, bool)
-                    and math.isfinite(float(margin))
+                finite_bound = _finite_number(bound)
+                finite_margin = _finite_number(margin)
+                valid = finite_bound is not None and finite_margin is not None
+                passed = valid and (
+                    finite_bound < finite_margin
+                    if direction == "upper"
+                    else finite_bound > finite_margin
                 )
-                passed = valid and (bound < margin if direction == "upper" else bound > margin)
                 if endpoint.get("verdict") != ("PASS" if passed else "FAIL"):
                     _violation(
                         violations,

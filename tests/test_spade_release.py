@@ -93,7 +93,10 @@ def _payload():
     }
     calculated = analysis.analyse_lockbox_rows(rows, provenance=provenance)
     rows_by_file = {}
-    actual_hashes = {"selected_protocol_sha256": selected_sha256}
+    actual_hashes = {
+        "top_level": {"selected_protocol_sha256": selected_sha256},
+        "raw_shards": {},
+    }
     raw_shards = []
     for family in release.LOCKBOX_FAMILIES:
         raw_file = f"spade-lockbox-{family}-000-350.jsonl.gz"
@@ -103,11 +106,11 @@ def _payload():
         manifest_digest = hashlib.sha256(manifest_file.encode()).hexdigest()
         sidecar_digest = hashlib.sha256(sha256_file.encode()).hexdigest()
         rows_by_file[raw_file] = [row for row in rows if row["family"] == family]
-        actual_hashes.update({
-            raw_file: raw_digest,
-            manifest_file: manifest_digest,
-            sha256_file: sidecar_digest,
-        })
+        actual_hashes["raw_shards"][raw_file] = {
+            "raw_sha256": raw_digest,
+            "manifest_sha256": manifest_digest,
+            "sha256_sha256": sidecar_digest,
+        }
         raw_shards.append({
             "family": family,
             "start": 0,
@@ -137,6 +140,128 @@ def _payload():
     }
 
 
+def _write_complete_release_tree(tmp_path: Path) -> dict[str, object]:
+    payload = _payload()
+    manifest = copy.deepcopy(payload["manifest"])
+    selection_path = tmp_path / "spade-selected-protocol.json"
+    selection_path.write_text(
+        json.dumps(payload["selection"], sort_keys=True, separators=(",", ":")) + "\n"
+    )
+    for item in manifest["raw_shards"]:
+        _rewrite_shard(
+            tmp_path,
+            manifest,
+            item,
+            copy.deepcopy(payload["rows"][item["raw_file"]]),
+        )
+    manifest_path = tmp_path / "spade-lockbox-manifest.json"
+    _write_json(manifest_path, manifest)
+    stored = analysis.analyse_merged_manifest(manifest_path)
+    assert stored == payload["analysis"]
+    analysis_path = tmp_path / "spade-lockbox-analysis.json"
+    _write_json(analysis_path, stored)
+    return {
+        "payload": payload,
+        "manifest": manifest,
+        "manifest_path": manifest_path,
+        "selection_path": selection_path,
+        "analysis_path": analysis_path,
+    }
+
+
+def _write_json(path: Path, value: object) -> None:
+    path.write_text(json.dumps(value, sort_keys=True, separators=(",", ":")) + "\n")
+
+
+def _rewrite_shard(
+    directory: Path,
+    manifest: dict[str, object],
+    item: dict[str, object],
+    rows: list[dict[str, object]],
+) -> dict[str, object]:
+    raw_path = directory / item["raw_file"]
+    raw_digest = lockbox.write_jsonl_gzip(raw_path, rows, protocol_digest=DIGEST)
+    item["raw_sha256"] = raw_digest
+    sidecar_path = Path(f"{raw_path}.sha256")
+    item["sha256_sha256"] = hashlib.sha256(sidecar_path.read_bytes()).hexdigest()
+    shard_manifest = {
+        "schema": lockbox.MANIFEST_SCHEMA,
+        "status": "COMPLETE",
+        "family": item["family"],
+        "start": item["start"],
+        "stop": item["stop"],
+        "sample_size": 350,
+        "expected_rows": (item["stop"] - item["start"]) * 3,
+        "row_count": len(rows),
+        "complete": True,
+        "raw_file": item["raw_file"],
+        "raw_sha256": raw_digest,
+        "protocol_digest": manifest["protocol_digest"],
+        "spec_digest": manifest["spec_digest"],
+        "config_digest": manifest["config_digest"],
+        "generator_digest": manifest["generator_digest"],
+        "generator_manifest_sha256": manifest["generator_manifest_sha256"],
+        "source_commit": manifest["source_commit"],
+        "source_dirty": False,
+        "selected_protocol_sha256": manifest["selected_protocol_sha256"],
+        "selection_source_commit": manifest["selection_source_commit"],
+        "command_args": item["command_args"],
+    }
+    shard_manifest_path = directory / item["manifest_file"]
+    _write_json(shard_manifest_path, shard_manifest)
+    item["manifest_sha256"] = hashlib.sha256(shard_manifest_path.read_bytes()).hexdigest()
+    return shard_manifest
+
+
+def _rewrite_merged(tree: dict[str, object]) -> None:
+    _write_json(tree["manifest_path"], tree["manifest"])
+
+
+def _run_release_main(
+    tmp_path: Path, *, manifest_text: str, analysis_text: str, selection_text: str = "{}"
+) -> dict[str, object]:
+    manifest = tmp_path / "manifest.json"
+    selection = tmp_path / "selection.json"
+    stored_analysis = tmp_path / "analysis.json"
+    output = tmp_path / "release.json"
+    manifest.write_text(manifest_text)
+    selection.write_text(selection_text)
+    stored_analysis.write_text(analysis_text)
+    code = release.main([
+        "--manifest", str(manifest),
+        "--selection", str(selection),
+        "--analysis", str(stored_analysis),
+        "--out", str(output),
+    ])
+    assert code == 2
+    report = json.loads(output.read_text())
+    assert report["schema"] == "boec-spade-lockbox-release-v1"
+    assert report["verdict"] == "FAIL"
+    assert report["violations"]
+    assert set(report) == {
+        "schema", "checks", "hashes", "row_counts", "manifest_sample_size",
+        "verdict", "violations", "permissible_claim",
+    }
+    return report
+
+
+def _analysis_with_bound_literal(literal: str) -> str:
+    endpoint_names = (
+        "map_noninferiority",
+        "regret_noninferiority",
+        "certificate_willingness",
+        "certificate_validity",
+    )
+    endpoints = ",".join(
+        f'"{name}":{{"one_sided_bound":{literal},"margin":0.02,"verdict":"FAIL"}}'
+        for name in endpoint_names
+    )
+    families = ",".join(
+        f'"{family}":{{{endpoints}}}' for family in release.LOCKBOX_FAMILIES
+    )
+    return f'{{"families":{{{families}}},"overall_verdict":"FAIL"}}'
+
+
 def test_release_validator_collects_every_registered_corruption():
     payload = _payload()
     rows = payload["rows"][next(iter(payload["rows"]))]
@@ -154,7 +279,9 @@ def test_release_validator_collects_every_registered_corruption():
     payload["manifest"]["lockbox_started_before_selection_commit"] = True
     payload["analysis"]["permissible_claim"] = "SPADE beats everything"
     payload["manifest"]["raw_shards"].append({"raw_file": "absent.jsonl.gz", "raw_sha256": "0" * 64})
-    payload["actual_hashes"][next(iter(payload["rows"]))] = "f" * 64
+    payload["actual_hashes"]["raw_shards"][next(iter(payload["rows"]))][
+        "raw_sha256"
+    ] = "f" * 64
     violations = release.collect_release_violations(**payload)
     expected = {
         "missing campaign key", "duplicate campaign key", "budget", "terminal rule", "dirty",
@@ -274,11 +401,16 @@ def test_release_loader_hashes_every_actual_artifact_and_detects_binding_drift(t
         analysis_path=stored_analysis,
     )
     hashes = loaded["actual_hashes"]
-    assert hashes["merged_manifest_sha256"] == hashlib.sha256(merged.read_bytes()).hexdigest()
-    assert hashes["selected_protocol_sha256"] == hashlib.sha256(selection.read_bytes()).hexdigest()
-    assert hashes["stored_analysis_sha256"] == hashlib.sha256(stored_analysis.read_bytes()).hexdigest()
-    for path in (raw, sidecar, shard_manifest):
-        assert hashes[path.name] == hashlib.sha256(path.read_bytes()).hexdigest()
+    assert hashes["top_level"] == {
+        "merged_manifest_sha256": hashlib.sha256(merged.read_bytes()).hexdigest(),
+        "selected_protocol_sha256": hashlib.sha256(selection.read_bytes()).hexdigest(),
+        "stored_analysis_sha256": hashlib.sha256(stored_analysis.read_bytes()).hexdigest(),
+    }
+    assert hashes["raw_shards"][raw.name] == {
+        "raw_sha256": hashlib.sha256(raw.read_bytes()).hexdigest(),
+        "manifest_sha256": hashlib.sha256(shard_manifest.read_bytes()).hexdigest(),
+        "sha256_sha256": hashlib.sha256(sidecar.read_bytes()).hexdigest(),
+    }
     report = release.build_release_report(**loaded)
     joined = "\n".join(report["violations"]).lower()
     assert "selection hash" in joined
@@ -287,65 +419,116 @@ def test_release_loader_hashes_every_actual_artifact_and_detects_binding_drift(t
     assert "sha-256 sidecar hash" in joined
 
 
+@pytest.mark.parametrize("reserved_name", ["merged_manifest_sha256", "stored_analysis_sha256"])
+def test_release_hash_namespaces_cannot_be_overwritten_by_reserved_raw_names(
+    tmp_path, reserved_name
+):
+    tree = _write_complete_release_tree(tmp_path)
+    manifest = tree["manifest"]
+    first = manifest["raw_shards"][0]
+    original_raw = tmp_path / first["raw_file"]
+    reserved_raw = tmp_path / reserved_name
+    reserved_raw.write_bytes(original_raw.read_bytes())
+    raw_digest = hashlib.sha256(reserved_raw.read_bytes()).hexdigest()
+    reserved_sidecar = Path(f"{reserved_raw}.sha256")
+    reserved_sidecar.write_text(f"{raw_digest}  {reserved_name}\n")
+    original_shard_manifest = json.loads((tmp_path / first["manifest_file"]).read_text())
+    original_shard_manifest.update(raw_file=reserved_name, raw_sha256=raw_digest)
+    reserved_manifest = Path(f"{reserved_raw}.manifest.json")
+    _write_json(reserved_manifest, original_shard_manifest)
+    first.update(
+        raw_file=reserved_name,
+        raw_sha256=raw_digest,
+        manifest_file=reserved_manifest.name,
+        manifest_sha256=hashlib.sha256(reserved_manifest.read_bytes()).hexdigest(),
+        sha256_file=reserved_sidecar.name,
+        sha256_sha256=hashlib.sha256(reserved_sidecar.read_bytes()).hexdigest(),
+    )
+    _rewrite_merged(tree)
+
+    loaded = release.load_release_inputs(
+        manifest_path=tree["manifest_path"],
+        selection_path=tree["selection_path"],
+        analysis_path=tree["analysis_path"],
+    )
+    hashes = loaded["actual_hashes"]
+    assert hashes["top_level"]["merged_manifest_sha256"] == hashlib.sha256(
+        tree["manifest_path"].read_bytes()
+    ).hexdigest()
+    assert hashes["top_level"]["stored_analysis_sha256"] == hashlib.sha256(
+        tree["analysis_path"].read_bytes()
+    ).hexdigest()
+    assert hashes["raw_shards"][reserved_name]["raw_sha256"] == raw_digest
+    report = release.build_release_report(**loaded)
+    assert report["verdict"] == "FAIL"
+    assert any("exact registered raw filename" in value for value in report["violations"])
+    with pytest.raises(ValueError, match="exact registered raw filename"):
+        analysis.analyse_merged_manifest(tree["manifest_path"])
+
+
+@pytest.mark.parametrize(
+    ("field", "value", "message"),
+    [
+        ("complete", False, "completion"),
+        ("sample_size", 349, "sample size"),
+        ("expected_rows", 1049, "expected row count"),
+        ("row_count", 1049, "row count"),
+        ("command_args", ["--tampered"], "command args"),
+    ],
+)
+def test_release_and_manifest_analysis_reject_every_shard_contract_drift(
+    tmp_path, field, value, message
+):
+    tree = _write_complete_release_tree(tmp_path)
+    first = tree["manifest"]["raw_shards"][0]
+    shard_path = tmp_path / first["manifest_file"]
+    shard = json.loads(shard_path.read_text())
+    shard[field] = value
+    _write_json(shard_path, shard)
+    first["manifest_sha256"] = hashlib.sha256(shard_path.read_bytes()).hexdigest()
+    _rewrite_merged(tree)
+
+    loaded = release.load_release_inputs(
+        manifest_path=tree["manifest_path"],
+        selection_path=tree["selection_path"],
+        analysis_path=tree["analysis_path"],
+    )
+    report = release.build_release_report(**loaded)
+    assert report["verdict"] == "FAIL"
+    assert any(message in value for value in report["violations"])
+    with pytest.raises(ValueError, match=message):
+        analysis.analyse_merged_manifest(tree["manifest_path"])
+
+
+def test_release_and_manifest_analysis_reject_cross_shard_row_relocation(tmp_path):
+    tree = _write_complete_release_tree(tmp_path)
+    manifest = tree["manifest"]
+    left, right = manifest["raw_shards"][:2]
+    left_rows = copy.deepcopy(tree["payload"]["rows"][left["raw_file"]])
+    right_rows = copy.deepcopy(tree["payload"]["rows"][right["raw_file"]])
+    left_rows[0], right_rows[0] = right_rows[0], left_rows[0]
+    _rewrite_shard(tmp_path, manifest, left, left_rows)
+    _rewrite_shard(tmp_path, manifest, right, right_rows)
+    _rewrite_merged(tree)
+
+    loaded = release.load_release_inputs(
+        manifest_path=tree["manifest_path"],
+        selection_path=tree["selection_path"],
+        analysis_path=tree["analysis_path"],
+    )
+    report = release.build_release_report(**loaded)
+    assert report["verdict"] == "FAIL"
+    assert any("exact local key/arm grid" in value for value in report["violations"])
+    with pytest.raises(ValueError, match="exact local key/arm grid"):
+        analysis.analyse_merged_manifest(tree["manifest_path"])
+
+
 def test_complete_manifest_analysis_and_release_flow_uses_canonical_registered_result(tmp_path):
-    payload = _payload()
-    manifest = copy.deepcopy(payload["manifest"])
-    selection = payload["selection"]
-    selection_path = tmp_path / "spade-selected-protocol.json"
-    selection_path.write_text(
-        json.dumps(selection, sort_keys=True, separators=(",", ":")) + "\n"
-    )
-
-    for item in manifest["raw_shards"]:
-        raw_path = tmp_path / item["raw_file"]
-        family_rows = payload["rows"][item["raw_file"]]
-        raw_digest = lockbox.write_jsonl_gzip(
-            raw_path, family_rows, protocol_digest=DIGEST
-        )
-        item["raw_sha256"] = raw_digest
-        sidecar_path = Path(f"{raw_path}.sha256")
-        item["sha256_sha256"] = hashlib.sha256(sidecar_path.read_bytes()).hexdigest()
-        shard_manifest = {
-            "schema": lockbox.MANIFEST_SCHEMA,
-            "status": "COMPLETE",
-            "family": item["family"],
-            "start": 0,
-            "stop": 350,
-            "sample_size": 350,
-            "expected_rows": 1050,
-            "row_count": 1050,
-            "complete": True,
-            "raw_file": item["raw_file"],
-            "raw_sha256": raw_digest,
-            "protocol_digest": manifest["protocol_digest"],
-            "spec_digest": manifest["spec_digest"],
-            "config_digest": manifest["config_digest"],
-            "generator_digest": manifest["generator_digest"],
-            "generator_manifest_sha256": manifest["generator_manifest_sha256"],
-            "source_commit": manifest["source_commit"],
-            "source_dirty": False,
-            "selected_protocol_sha256": manifest["selected_protocol_sha256"],
-            "selection_source_commit": manifest["selection_source_commit"],
-            "command_args": item["command_args"],
-        }
-        shard_manifest_path = tmp_path / item["manifest_file"]
-        shard_manifest_path.write_text(
-            json.dumps(shard_manifest, sort_keys=True, separators=(",", ":")) + "\n"
-        )
-        item["manifest_sha256"] = hashlib.sha256(
-            shard_manifest_path.read_bytes()
-        ).hexdigest()
-
-    manifest_path = tmp_path / "spade-lockbox-manifest.json"
-    manifest_path.write_text(
-        json.dumps(manifest, sort_keys=True, separators=(",", ":")) + "\n"
-    )
-    stored = analysis.analyse_merged_manifest(manifest_path)
-    assert stored == payload["analysis"]
-    analysis_path = tmp_path / "spade-lockbox-analysis.json"
-    analysis_path.write_text(
-        json.dumps(stored, sort_keys=True, separators=(",", ":")) + "\n"
-    )
+    tree = _write_complete_release_tree(tmp_path)
+    manifest = tree["manifest"]
+    manifest_path = tree["manifest_path"]
+    selection_path = tree["selection_path"]
+    analysis_path = tree["analysis_path"]
 
     loaded = release.load_release_inputs(
         manifest_path=manifest_path,
@@ -366,9 +549,7 @@ def test_complete_manifest_analysis_and_release_flow_uses_canonical_registered_r
     first["sha256_sha256"] = hashlib.sha256(alias_sidecar.read_bytes()).hexdigest()
     first["manifest_file"] = alias_manifest.name
     first["manifest_sha256"] = hashlib.sha256(alias_manifest.read_bytes()).hexdigest()
-    manifest_path.write_text(
-        json.dumps(aliased, sort_keys=True, separators=(",", ":")) + "\n"
-    )
+    _write_json(manifest_path, aliased)
     loaded = release.load_release_inputs(
         manifest_path=manifest_path,
         selection_path=selection_path,
@@ -413,3 +594,31 @@ def test_release_main_always_writes_complete_fail_report_for_malformed_inputs(
         "schema", "checks", "hashes", "row_counts", "manifest_sample_size",
         "verdict", "violations", "permissible_claim",
     }
+
+
+@pytest.mark.parametrize(
+    ("analysis_text", "expected_violation"),
+    [
+        ('{"value":' + "9" * 5000 + "}", "JSON parse violation"),
+        (_analysis_with_bound_literal("1e1000000"), "JSON parse violation"),
+        ('{"value":' + "[" * 1200 + "0" + "]" * 1200 + "}", "JSON parse violation"),
+    ],
+)
+def test_release_main_reports_oversized_nonfinite_and_deep_json_without_raising(
+    tmp_path, analysis_text, expected_violation
+):
+    report = _run_release_main(
+        tmp_path,
+        manifest_text='{"raw_shards":[]}',
+        analysis_text=analysis_text,
+    )
+    assert any(expected_violation in value for value in report["violations"])
+
+
+def test_release_main_reports_endpoint_integer_float_overflow_without_raising(tmp_path):
+    report = _run_release_main(
+        tmp_path,
+        manifest_text='{"raw_shards":[]}',
+        analysis_text=_analysis_with_bound_literal("9" * 4000),
+    )
+    assert report["verdict"] == "FAIL"

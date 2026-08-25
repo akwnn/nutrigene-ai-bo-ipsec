@@ -317,8 +317,107 @@ def assert_no_development_metric_dependency() -> None:
         raise RuntimeError("lockbox runner must not depend on development outcome metrics")
 
 
+def registered_raw_filename(family: object, start: object, stop: object) -> str:
+    if (
+        family not in LOCKBOX_FAMILIES
+        or isinstance(start, bool)
+        or not isinstance(start, int)
+        or isinstance(stop, bool)
+        or not isinstance(stop, int)
+        or not 0 <= start < stop <= LOCKBOX_SAMPLE_SIZE
+    ):
+        raise ValueError("lockbox shard has unregistered family/range")
+    return f"spade-lockbox-{family}-{start:03d}-{stop:03d}.jsonl.gz"
+
+
+def validate_completed_shard_contract(
+    shard: object,
+    *,
+    merged_entry: Mapping[str, object] | None = None,
+    merged_manifest: Mapping[str, object] | None = None,
+) -> dict[str, object]:
+    """Validate one immutable completed shard before any rows are pooled."""
+    if (
+        not isinstance(shard, Mapping)
+        or set(shard) != SHARD_MANIFEST_FIELDS
+        or shard.get("schema") != MANIFEST_SCHEMA
+        or shard.get("status") != "COMPLETE"
+    ):
+        raise ValueError("lockbox shard manifest schema drift")
+    result = dict(shard)
+    family, start, stop = result.get("family"), result.get("start"), result.get("stop")
+    expected_name = registered_raw_filename(family, start, stop)
+    if result.get("raw_file") != expected_name:
+        raise ValueError("lockbox shard exact registered raw filename drift")
+    if result.get("complete") is not True:
+        raise ValueError("lockbox shard completion drift")
+    if result.get("sample_size") != LOCKBOX_SAMPLE_SIZE:
+        raise ValueError("lockbox shard sample size drift")
+    expected_rows = (stop - start) * len(LOCKBOX_ARMS)
+    if result.get("expected_rows") != expected_rows:
+        raise ValueError("lockbox shard expected row count drift")
+    if result.get("row_count") != expected_rows:
+        raise ValueError("lockbox shard row count drift")
+    command_args = result.get("command_args")
+    if not isinstance(command_args, list) or any(not isinstance(value, str) for value in command_args):
+        raise ValueError("lockbox shard command args schema drift")
+    if merged_entry is not None:
+        if set(merged_entry) != MERGED_RAW_SHARD_FIELDS:
+            raise ValueError("lockbox merged raw-shard schema drift")
+        for field in ("family", "start", "stop", "raw_file", "raw_sha256", "command_args"):
+            if result.get(field) != merged_entry.get(field):
+                label = "command args" if field == "command_args" else field
+                raise ValueError(f"lockbox shard {label} identity drift")
+    if merged_manifest is not None:
+        for field in (
+            "protocol_digest", "spec_digest", "config_digest", "generator_digest",
+            "generator_manifest_sha256", "source_commit", "source_dirty",
+            "selected_protocol_sha256", "selection_source_commit",
+        ):
+            if result.get(field) != merged_manifest.get(field):
+                raise ValueError(f"lockbox shard {field} identity drift")
+    return result
+
+
+def validate_shard_local_rows(
+    rows: object, *, family: object, start: object, stop: object
+) -> list[dict[str, object]]:
+    """Require the exact registered key/arm grid belonging to this shard."""
+    registered_raw_filename(family, start, stop)
+    if not isinstance(rows, Sequence) or isinstance(rows, (str, bytes)):
+        raise ValueError("lockbox shard does not contain the exact local key/arm grid")
+    identities: list[tuple[str, int, int, str]] = []
+    normalized: list[dict[str, object]] = []
+    for row in rows:
+        if not isinstance(row, Mapping):
+            raise ValueError("lockbox shard does not contain the exact local key/arm grid")
+        row_family = row.get("family")
+        key = row.get("instance_seed")
+        campaign_seed = row.get("campaign_seed")
+        arm = row.get("arm")
+        if (
+            row_family != family
+            or isinstance(key, bool)
+            or not isinstance(key, int)
+            or not start <= key < stop
+            or campaign_seed != 0
+            or arm not in LOCKBOX_ARMS
+        ):
+            raise ValueError("lockbox shard does not contain the exact local key/arm grid")
+        identities.append((row_family, key, campaign_seed, arm))
+        normalized.append(dict(row))
+    expected = {
+        (family, key, 0, arm)
+        for key in range(start, stop)
+        for arm in LOCKBOX_ARMS
+    }
+    if len(identities) != len(expected) or set(identities) != expected:
+        raise ValueError("lockbox shard does not contain the exact local key/arm grid")
+    return normalized
+
+
 def expected_registered_output(repo_root: Path, family: str, start: int, stop: int) -> Path:
-    return repo_root / "results" / f"spade-lockbox-{family}-{start:03d}-{stop:03d}.jsonl.gz"
+    return repo_root / "results" / registered_raw_filename(family, start, stop)
 
 
 def validate_shard_request(*, family: str, start: int, stop: int, output: Path, limit: int | None, smoke: bool, repo_root: Path) -> None:
@@ -464,18 +563,11 @@ def merge_lockbox_manifests(manifest_paths: Sequence[str | Path], *, output: str
             shard = json.loads(Path(manifest_path).read_text())
         except (OSError, json.JSONDecodeError) as exc:
             raise ValueError("lockbox shard manifest is missing or invalid") from exc
-        if not isinstance(shard, dict) or set(shard) != SHARD_MANIFEST_FIELDS or shard.get("schema") != MANIFEST_SCHEMA or shard.get("status") != "COMPLETE" or shard.get("complete") is not True:
-            raise ValueError("lockbox shard manifest schema or completion drift")
-        family, start, stop = shard.get("family"), shard.get("start"), shard.get("stop")
-        if family not in LOCKBOX_FAMILIES or isinstance(start, bool) or isinstance(stop, bool) or not isinstance(start, int) or not isinstance(stop, int) or not 0 <= start < stop <= LOCKBOX_SAMPLE_SIZE:
-            raise ValueError("lockbox shard has unregistered range")
-        if shard.get("sample_size") != LOCKBOX_SAMPLE_SIZE or shard.get("expected_rows") != (stop - start) * len(LOCKBOX_ARMS) or shard.get("row_count") != shard.get("expected_rows"):
-            raise ValueError("lockbox shard row count or sample size drift")
+        shard = validate_completed_shard_contract(shard)
+        family, start, stop = shard["family"], shard["start"], shard["stop"]
         if any(shard.get(field) != metadata[field] for field in expected_metadata):
             raise ValueError("lockbox shard provenance drift")
         raw_file = shard.get("raw_file")
-        if not isinstance(raw_file, str) or Path(raw_file).name != raw_file:
-            raise ValueError("lockbox shard raw filename drift")
         raw_path = Path(manifest_path).parent / raw_file
         sidecar = Path(f"{raw_path}.sha256")
         if not raw_path.is_file() or not sidecar.is_file() or shard.get("raw_sha256") != _sha256(raw_path):
