@@ -1,0 +1,943 @@
+{
+  "output_hashes": {
+    "table-spade-comparison.csv": "9dfca4fa8678579469e9a16c48c3b741accb7ec68b1e09fcc20b331148e9d7e0",
+    "table-spade-comparison.md": "fa48653af023b90967ddc4cf21c55f0438fd13c632291b1b27fdb3bfb0c4bbfe",
+    "table-spade-kill-ledger.csv": "bda573b71875fb84c705026578a06855659453f92fbd2de984449f9a19790a63",
+    "table-spade-kill-ledger.md": "5cc4b4b97e1ca039547bc3aaf3a36aeaf6c1bafb4eaf0f0ac4c507dbc731e075",
+    "table-spade-prospective-calibration.csv": "811f87e1a10f1414576d130bc754fa88e9952ee7c40524be2ec3855e4c8134f8",
+    "table-spade-prospective-calibration.md": "6b061dac577d79ef33e29e1f71c63df82661524f3989a9bd112c71f3d52d7935"
+  },
+  "source_hashes": {
+    "final-spade-c1.json": "06f2d01aff3c25218ca7dcf08621fa21a8366b7886ea0b71d264dd1239230c28",
+    "final-spade-c2.json": "7629d7027be40010105abcd6bdeb4af20bdb0d415cd896c937ab0fe5ddae4c65",
+    "final-spade-c3.json": "2a487a38e33113f0966b6e0eaec8d93a239d4f26fee97e3891688ad75ae4c70c",
+    "final-spade-c4.json": "176b6f94a5101415e31192d97f0eeb90bb2bab770676b6ab2897e95199a7ba1b",
+    "final-spade-kill-ledger.json": "eb8830972115b0447b002ef519992879e1fff2297bb80268bb7e9323bf16a87b",
+    "final-spade-regret-pareto.json": "ce5ed85819b444dee719c1c4e5f401031e3a975fbeb13bc224441e9a9aa1595d",
+    "final-spade-s1.json": "2ee3f0db7492d3fe38fcf1a8144c34fd94e58d36cf7f0ddf394445a8681c58c4",
+    "final-spade-s2.json": "28b4ca6f4f655be4a31795eea2338a7fb0b2240a544cebfe51f81e110f81f511",
+    "final-spade-s3.json": "18248941f044dd45e9ae88de302bd282faaf3f97188b0e789ab317f496fba3bc"
+  },
+  "study_id": "spade-final-2026-08-23",
+  "tables": {
+    "kill_ledger": {
+      "rows": [
+        {
+          "ci": [
+            0.5629692737631854,
+            0.9253965923511963
+          ],
+          "claim": "SPADE's certificate is valid prospectively under cross-fit",
+          "denominator": 23,
+          "effect": -0.167391304347826,
+          "fires_when": "any primary F-CERT cell demonstrably below nominal after exact test + Holm",
+          "id": "KF-1",
+          "interpretation": "no confirmatory cell is demonstrably below nominal across 64 cells. This is a failure to reject, not a proof of validity (§7.1) -- §22 measured what this design can and cannot detect",
+          "p": 0.004930342414473064,
+          "p_adjusted": 0.3894970507433721,
+          "sesoi": 0.02,
+          "sesoi_comparison": "SESOI does not govern a containment proportion; the registered bar is the nominal alpha=0.95, and the worst confirmatory cell sits -0.1674 from it",
+          "source": {
+            "artefact": "results/final-spade-certificate.json",
+            "key": "cells[cell_id=spade_random_plate2|hill-d6-s0.1|tf0.1|g0.5|a0.95]"
+          },
+          "status": "PASS"
+        },
+        {
+          "ci": [
+            0.8078725425815965,
+            0.9546690502212429
+          ],
+          "claim": "Certificate validity extends beyond hill d=6 sigma=0.25",
+          "denominator": 78,
+          "effect": 0.09743589743589742,
+          "fires_when": "C3/C4 INCONCLUSIVE or FAIL -> the claim narrows to hill",
+          "id": "KF-2",
+          "interpretation": "cross-family evidence is not clean, so the certificate claim narrows to hill and says so (§10.1 item 2). §37/§42 predicted SPADE would struggle off hill; a narrowing here is the registered outcome, not a surprise",
+          "p": 0.9930556846725205,
+          "p_adjusted": 1.0,
+          "sesoi": 0.02,
+          "sesoi_comparison": "nominal alpha=0.8; SESOI does not apply",
+          "source": {
+            "artefact": "results/final-spade-certificate.json",
+            "key": "cells[cell_id=spade_plate1_only|hartmann6-d6-s0.25|tf0.25|g0.5|a0.8]"
+          },
+          "status": "FAIL"
+        },
+        {
+          "ci": [
+            -0.006238224999999998,
+            0.0026081874999999964
+          ],
+          "claim": "Targeted plate 2 earns its complexity",
+          "denominator": 25,
+          "effect": -0.0018820000000000009,
+          "fires_when": "m0 does not beat random_plate2 by >=SESOI on symmetric difference in any TARGET condition",
+          "holm_family": "F-BOUND",
+          "holm_family_size": 2,
+          "holm_member": "spade_cf_m0 vs spade_random_plate2 @ hill-d6-s0.1",
+          "id": "KF-3",
+          "interpretation": "targeted plate-2 SUR did not demonstrate value beyond random second-plate wells. Spec §7.3's registered consequence applies: the mechanistic claim comes out of the paper. This is THE load-bearing causal comparison of the study",
+          "p": 0.4107651710510254,
+          "p_adjusted": 0.4107651710510254,
+          "per_condition": {
+            "hill-d6-s0.1": {
+              "effect": -0.0018820000000000009,
+              "p": 0.4107651710510254,
+              "p_adjusted": 0.4107651710510254,
+              "units_disagree": false
+            }
+          },
+          "sesoi": 0.02,
+          "sesoi_comparison": "effect -0.00188 against SESOI 0.02 in hill-d6-s0.1",
+          "source": {
+            "artefact": "results/final-spade-regret-pareto.json",
+            "key": "rows[arm=spade_cf_m0,condition=hill-d6-s0.1].symmetric_difference"
+          },
+          "status": "FAIL",
+          "units_disagree": false
+        },
+        {
+          "ci": [
+            0.007429837499999992,
+            0.015644412500000007
+          ],
+          "claim": "Plate 2 does anything at all",
+          "denominator": 25,
+          "effect": 0.0117145,
+          "fires_when": "m0 does not beat plate1_only on symmetric difference",
+          "holm_family": "F-BOUND",
+          "holm_family_size": 2,
+          "holm_member": "spade_cf_m0 vs spade_plate1_only @ hill-d6-s0.1",
+          "id": "KF-4",
+          "interpretation": "plate 2 does not improve the map over plate 1 alone. Note the asymmetry spec §4.1 requires: plate1_only is budget-short by 8 wells, so it is a rounds/wells reference and NOT an equal-well comparator -- this failure is the stronger reading of the two, not the weaker one",
+          "p": 6.365776062011719e-05,
+          "p_adjusted": 0.00012731552124023438,
+          "per_condition": {
+            "hill-d6-s0.1": {
+              "effect": 0.0117145,
+              "p": 6.365776062011719e-05,
+              "p_adjusted": 0.00012731552124023438,
+              "units_disagree": false
+            }
+          },
+          "sesoi": 0.02,
+          "sesoi_comparison": "effect +0.01171 against SESOI 0.02 in hill-d6-s0.1",
+          "source": {
+            "artefact": "results/final-spade-regret-pareto.json",
+            "key": "rows[arm=spade_cf_m0,condition=hill-d6-s0.1].symmetric_difference"
+          },
+          "status": "FAIL",
+          "units_disagree": false
+        },
+        {
+          "ci": [
+            -0.007611496727115248,
+            0.002124546102173942
+          ],
+          "claim": "m>0 lowers regret safely",
+          "clauses": {
+            "calibration_not_worse_by_more_than_0.005": true,
+            "certificate_retained": false,
+            "map_not_worse_by_more_than_0.02": true,
+            "regret_reduced_by_sesoi": false
+          },
+          "denominator": 25,
+          "effect": -0.0027763259811726627,
+          "fires_when": "the §7.5 conjunction is unmet -> trade-off, not an improvement",
+          "holm_family": "F-ALLOC",
+          "id": "KF-5",
+          "interpretation": "spade_cf_m4 does not meet the full §7.5 conjunction in hill-d6-s0.1, so m>0 is reported as a TRADE-OFF and not as an improvement. A regret reduction that damages the certificate is not a SPADE improvement",
+          "p": 0.312333345413208,
+          "p_adjusted": 0.312333345413208,
+          "sesoi": 0.02,
+          "sesoi_comparison": "rule-P regret reduction -0.00278 against SESOI 0.02",
+          "source": {
+            "artefact": "results/final-spade-regret-pareto.json",
+            "key": "rows[arm=spade_cf_m4,condition=hill-d6-s0.1].regret.P"
+          },
+          "status": "FAIL",
+          "terminal_rule": "P"
+        },
+        {
+          "ci": [
+            0.005969112499999999,
+            0.01566185
+          ],
+          "claim": "SPADE is competitive with Sobol on the map in TARGET regimes",
+          "denominator": 25,
+          "effect": 0.010891999999999999,
+          "fires_when": "sobol beats m0 by >SESOI in a TARGET condition",
+          "holm_family": "F-MAP",
+          "holm_family_size": 3,
+          "holm_member": "spade_cf_m0 vs sobol @ hill-d6-s0.1",
+          "id": "KF-6",
+          "interpretation": "SPADE is within SESOI of Sobol on the symmetric difference in the TARGET regime, which is competitiveness and is never phrased as a win (§9 publication guard 1)",
+          "p": 0.00028705596923828125,
+          "p_adjusted": 0.00028705596923828125,
+          "per_condition": {
+            "hill-d6-s0.1": {
+              "effect": 0.010891999999999999,
+              "p": 0.00028705596923828125,
+              "p_adjusted": 0.00028705596923828125,
+              "units_disagree": false
+            }
+          },
+          "sesoi": 0.02,
+          "sesoi_comparison": "effect +0.01089 against SESOI 0.02 in hill-d6-s0.1",
+          "source": {
+            "artefact": "results/final-spade-regret-pareto.json",
+            "key": "rows[arm=spade_cf_m0,condition=hill-d6-s0.1].symmetric_difference"
+          },
+          "status": "PASS",
+          "units_disagree": false
+        },
+        {
+          "ci": [
+            0.028543325,
+            0.037231837500000003
+          ],
+          "claim": "SPADE is competitive with qLogNEI on the map in TARGET regimes",
+          "denominator": 25,
+          "effect": 0.0326545,
+          "fires_when": "qlognei beats m0 by >SESOI in a TARGET condition",
+          "holm_family": "F-MAP",
+          "holm_family_size": 3,
+          "holm_member": "spade_cf_m0 vs qlognei @ hill-d6-s0.1",
+          "id": "KF-7",
+          "interpretation": "SPADE is within SESOI of qLogNEI on the symmetric difference in the TARGET regime, which is competitiveness and is never phrased as a win (§9 publication guard 1)",
+          "p": 5.960464477539063e-08,
+          "p_adjusted": 1.7881393432617188e-07,
+          "per_condition": {
+            "hill-d6-s0.1": {
+              "effect": 0.0326545,
+              "p": 5.960464477539063e-08,
+              "p_adjusted": 1.7881393432617188e-07,
+              "units_disagree": false
+            }
+          },
+          "sesoi": 0.02,
+          "sesoi_comparison": "effect +0.03265 against SESOI 0.02 in hill-d6-s0.1",
+          "source": {
+            "artefact": "results/final-spade-regret-pareto.json",
+            "key": "rows[arm=spade_cf_m0,condition=hill-d6-s0.1].symmetric_difference"
+          },
+          "status": "PASS",
+          "units_disagree": false
+        },
+        {
+          "bar_arm": "qlognei",
+          "ci": [
+            0.0025784576605545994,
+            0.016151187714924787
+          ],
+          "claim": "Regret is at practical parity under a common terminal rule",
+          "denominator": 25,
+          "effect": 0.009374760719689424,
+          "estimand_note": "both sides are rule P. §43.1: the registered r* bar was a rule A column and the mixed comparison had to be withdrawn",
+          "fires_when": "m0 - best BO regret > SESOI under rule P",
+          "id": "KF-8",
+          "interpretation": "SPADE is within SESOI of qlognei under a common terminal rule. That is PARITY and §11 prohibits calling practical parity a superiority win -- §43.1 is this project doing it once already",
+          "p": 0.014722049236297607,
+          "p_adjusted": null,
+          "sesoi": 0.02,
+          "sesoi_comparison": "gap +0.00937 against SESOI 0.02",
+          "source": {
+            "artefact": "results/final-spade-regret-pareto.json",
+            "key": "rows[arm=spade_cf_m0,condition=hill-d6-s0.1].regret.P"
+          },
+          "status": "PASS",
+          "terminal_rule": "P",
+          "units_disagree": false
+        },
+        {
+          "ci": null,
+          "claim": "The study's cells are feasible",
+          "denominator": 23600,
+          "effect": 0.0,
+          "fires_when": "any planned cell with tau >= tau_max reached the analysis",
+          "id": "KF-9",
+          "interpretation": "every analysed primary-gamma cell sits below the certifiability ceiling, as the pre-run feasibility gate requires",
+          "p": null,
+          "p_adjusted": null,
+          "sesoi": 0.02,
+          "sesoi_comparison": "a count, not an effect size; SESOI does not apply",
+          "source": {
+            "artefact": "results/final-spade-certificate.json",
+            "key": "cells[].infeasible"
+          },
+          "status": "PASS"
+        },
+        {
+          "ci": null,
+          "claim": "Empty-set degeneracy does not explain a pass",
+          "denominator": 64,
+          "effect": 18.0,
+          "fires_when": "any PASS cell with empty rate > 0.50",
+          "id": "KF-10",
+          "interpretation": "18 cell(s) reached PASS on containment while certifying nothing in more than half their campaigns, and were downgraded to INCONCLUSIVE. §41.3 records the same failure mode off hill: the problem is emptiness, not miscoverage -- and an empty certificate is vacuously contained",
+          "p": null,
+          "p_adjusted": null,
+          "sesoi": 0.02,
+          "sesoi_comparison": "empty-rate ceiling 50%; SESOI does not apply to a degeneracy guard",
+          "source": {
+            "artefact": "results/final-spade-certificate.json",
+            "key": "cells[].downgraded_by"
+          },
+          "status": "FAIL"
+        }
+      ],
+      "source": "final-spade-kill-ledger.json"
+    },
+    "prospective_calibration": {
+      "alpha": 0.95,
+      "condition": "hill-d6-s0.1",
+      "gamma": 0.95,
+      "lower_is_better": [
+        "brier",
+        "murphy_calibration",
+        "symmetric_difference",
+        "regret_rule_p"
+      ],
+      "rows": [
+        {
+          "arm": "spade_cf_m4",
+          "auc": 0.8501722515761964,
+          "brier": 0.12753008395271412,
+          "campaigns_per_instance": 4,
+          "murphy_calibration": 0.003992422824871988,
+          "murphy_refinement": 0.0652314309,
+          "n_instances": 25,
+          "regret_rule_p": 0.08713990926662094,
+          "rounds": 2,
+          "symmetric_difference": 0.17704499999999995,
+          "wells": 48
+        },
+        {
+          "arm": "spade_random_plate2",
+          "auc": 0.8488219018189708,
+          "brier": 0.12833565535763894,
+          "campaigns_per_instance": 4,
+          "murphy_calibration": 0.0034389378543262816,
+          "murphy_refinement": 0.06387776090000001,
+          "n_instances": 25,
+          "regret_rule_p": 0.08219547099036277,
+          "rounds": 2,
+          "symmetric_difference": 0.17853199999999994,
+          "wells": 48
+        },
+        {
+          "arm": "spade_cf_m0",
+          "auc": 0.8454962483074173,
+          "brier": 0.12905314459595565,
+          "campaigns_per_instance": 4,
+          "murphy_calibration": 0.003851124172983919,
+          "murphy_refinement": 0.06354906689999999,
+          "n_instances": 25,
+          "regret_rule_p": 0.08436358328544825,
+          "rounds": 2,
+          "symmetric_difference": 0.18041400000000002,
+          "wells": 48
+        },
+        {
+          "arm": "spade_cf_m8",
+          "auc": 0.8446700594094048,
+          "brier": 0.12952295051418455,
+          "campaigns_per_instance": 4,
+          "murphy_calibration": 0.004054836171770124,
+          "murphy_refinement": 0.0633151804,
+          "n_instances": 25,
+          "regret_rule_p": 0.08350121621675737,
+          "rounds": 2,
+          "symmetric_difference": 0.179674,
+          "wells": 48
+        },
+        {
+          "arm": "lhs",
+          "auc": 0.8393562043221382,
+          "brier": 0.13245307305310033,
+          "campaigns_per_instance": 4,
+          "murphy_calibration": 0.004189139702092822,
+          "murphy_refinement": 0.0605198034,
+          "n_instances": 25,
+          "regret_rule_p": 0.07473925424630386,
+          "rounds": 1,
+          "symmetric_difference": 0.1867035,
+          "wells": 48
+        },
+        {
+          "arm": "sobol",
+          "auc": 0.8341932371387005,
+          "brier": 0.1351333106008804,
+          "campaigns_per_instance": 4,
+          "murphy_calibration": 0.004638527143283351,
+          "murphy_refinement": 0.05833759090000001,
+          "n_instances": 25,
+          "regret_rule_p": 0.08547615566822646,
+          "rounds": 1,
+          "symmetric_difference": 0.1913060000000001,
+          "wells": 48
+        },
+        {
+          "arm": "spade_plate1_only",
+          "auc": 0.8265786537219799,
+          "brier": 0.1366914810088704,
+          "campaigns_per_instance": 4,
+          "murphy_calibration": 0.0035408016206938562,
+          "murphy_refinement": 0.05568976689999999,
+          "n_instances": 25,
+          "regret_rule_p": 0.0863175373582373,
+          "rounds": 1,
+          "symmetric_difference": 0.19212849999999995,
+          "wells": 40
+        },
+        {
+          "arm": "random",
+          "auc": 0.7987518560816335,
+          "brier": 0.1464149256020032,
+          "campaigns_per_instance": 4,
+          "murphy_calibration": 0.006823116540948299,
+          "murphy_refinement": 0.049254206900000014,
+          "n_instances": 25,
+          "regret_rule_p": 0.09046277805225475,
+          "rounds": 1,
+          "symmetric_difference": 0.20502900000000002,
+          "wells": 48
+        },
+        {
+          "arm": "qlogei",
+          "auc": 0.8020159999247279,
+          "brier": 0.1487726607609421,
+          "campaigns_per_instance": 4,
+          "murphy_calibration": 0.012982822815089756,
+          "murphy_refinement": 0.0527255309,
+          "n_instances": 25,
+          "regret_rule_p": 0.07979852500141008,
+          "rounds": 10,
+          "symmetric_difference": 0.20671499999999998,
+          "wells": 48
+        },
+        {
+          "arm": "qlognei",
+          "auc": 0.7715426505732863,
+          "brier": 0.15457192215339374,
+          "campaigns_per_instance": 4,
+          "murphy_calibration": 0.012131495423407395,
+          "murphy_refinement": 0.0459787724,
+          "n_instances": 25,
+          "regret_rule_p": 0.07498882256575881,
+          "rounds": 10,
+          "symmetric_difference": 0.2130685,
+          "wells": 48
+        },
+        {
+          "arm": "doe_unscreened",
+          "auc": 0.7379399032849981,
+          "brier": 0.17726273870876444,
+          "campaigns_per_instance": 4,
+          "murphy_calibration": 0.014582035293032883,
+          "murphy_refinement": 0.027626089399999998,
+          "n_instances": 25,
+          "regret_rule_p": 0.2866352254469048,
+          "rounds": 1,
+          "symmetric_difference": 0.25022550000000005,
+          "wells": 48
+        },
+        {
+          "arm": "doe",
+          "auc": 0.5986521291713881,
+          "brier": 0.21609721492167103,
+          "campaigns_per_instance": 4,
+          "murphy_calibration": 0.032984995193785595,
+          "murphy_refinement": 0.0073018304000000015,
+          "n_instances": 25,
+          "regret_rule_p": 0.30721659159104237,
+          "rounds": 3,
+          "symmetric_difference": 0.2579785,
+          "wells": 48
+        }
+      ],
+      "tau_frac": 0.25,
+      "unit": "n25 landscape instances; campaign seeds averaged within instance"
+    },
+    "spade_comparison": {
+      "arms": [
+        "doe",
+        "sobol",
+        "qlogei",
+        "qlognei",
+        "spade_cf_m0",
+        "spade_random_plate2"
+      ],
+      "lower_is_better": [
+        "regret_rule_p",
+        "symmetric_difference"
+      ],
+      "primary_terminal_rule": "P",
+      "rows": [
+        {
+          "arm": "doe",
+          "certificate_status": "NOT_ASSESSED",
+          "condition": "ackley-d6-s0.25",
+          "pareto_nondominated": true,
+          "regret_rule_p": 0.5538755574324404,
+          "rounds": 3,
+          "symmetric_difference": 0.45985849999999995,
+          "unit": "n25",
+          "wells": 48
+        },
+        {
+          "arm": "sobol",
+          "certificate_status": "NOT_ASSESSED",
+          "condition": "ackley-d6-s0.25",
+          "pareto_nondominated": false,
+          "regret_rule_p": 0.7321086875322487,
+          "rounds": 1,
+          "symmetric_difference": 0.23825800000000016,
+          "unit": "n25",
+          "wells": 48
+        },
+        {
+          "arm": "qlogei",
+          "certificate_status": "NOT_ASSESSED",
+          "condition": "ackley-d6-s0.25",
+          "pareto_nondominated": false,
+          "regret_rule_p": 0.6939678388811373,
+          "rounds": 10,
+          "symmetric_difference": 0.2359825000000001,
+          "unit": "n25",
+          "wells": 48
+        },
+        {
+          "arm": "qlognei",
+          "certificate_status": "NOT_ASSESSED",
+          "condition": "ackley-d6-s0.25",
+          "pareto_nondominated": true,
+          "regret_rule_p": 0.6602293804518051,
+          "rounds": 10,
+          "symmetric_difference": 0.22333350000000002,
+          "unit": "n25",
+          "wells": 48
+        },
+        {
+          "arm": "spade_cf_m0",
+          "certificate_status": "INCONCLUSIVE",
+          "condition": "ackley-d6-s0.25",
+          "pareto_nondominated": false,
+          "regret_rule_p": 0.7600729913138224,
+          "rounds": 2,
+          "symmetric_difference": 0.23855049999999992,
+          "unit": "n25",
+          "wells": 48
+        },
+        {
+          "arm": "spade_random_plate2",
+          "certificate_status": "INCONCLUSIVE",
+          "condition": "ackley-d6-s0.25",
+          "pareto_nondominated": false,
+          "regret_rule_p": 0.7507697896649266,
+          "rounds": 2,
+          "symmetric_difference": 0.2388705,
+          "unit": "n25",
+          "wells": 48
+        },
+        {
+          "arm": "doe",
+          "certificate_status": "NOT_ASSESSED",
+          "condition": "hartmann6-d6-s0.25",
+          "pareto_nondominated": false,
+          "regret_rule_p": 0.5681735317682803,
+          "rounds": 3,
+          "symmetric_difference": 0.22441749999999988,
+          "unit": "n25",
+          "wells": 48
+        },
+        {
+          "arm": "sobol",
+          "certificate_status": "NOT_ASSESSED",
+          "condition": "hartmann6-d6-s0.25",
+          "pareto_nondominated": false,
+          "regret_rule_p": 0.46080918004896126,
+          "rounds": 1,
+          "symmetric_difference": 0.18991149999999998,
+          "unit": "n25",
+          "wells": 48
+        },
+        {
+          "arm": "qlogei",
+          "certificate_status": "NOT_ASSESSED",
+          "condition": "hartmann6-d6-s0.25",
+          "pareto_nondominated": false,
+          "regret_rule_p": 0.29965029040703905,
+          "rounds": 10,
+          "symmetric_difference": 0.22586500000000004,
+          "unit": "n25",
+          "wells": 48
+        },
+        {
+          "arm": "qlognei",
+          "certificate_status": "NOT_ASSESSED",
+          "condition": "hartmann6-d6-s0.25",
+          "pareto_nondominated": true,
+          "regret_rule_p": 0.23048735454156127,
+          "rounds": 10,
+          "symmetric_difference": 0.22427399999999997,
+          "unit": "n25",
+          "wells": 48
+        },
+        {
+          "arm": "spade_cf_m0",
+          "certificate_status": "INCONCLUSIVE",
+          "condition": "hartmann6-d6-s0.25",
+          "pareto_nondominated": false,
+          "regret_rule_p": 0.42206762215312005,
+          "rounds": 2,
+          "symmetric_difference": 0.18482999999999994,
+          "unit": "n25",
+          "wells": 48
+        },
+        {
+          "arm": "spade_random_plate2",
+          "certificate_status": "INCONCLUSIVE",
+          "condition": "hartmann6-d6-s0.25",
+          "pareto_nondominated": false,
+          "regret_rule_p": 0.46867004733327405,
+          "rounds": 2,
+          "symmetric_difference": 0.19936349999999994,
+          "unit": "n25",
+          "wells": 48
+        },
+        {
+          "arm": "doe",
+          "certificate_status": "NOT_ASSESSED",
+          "condition": "hartmann6-d8-s0.25",
+          "pareto_nondominated": false,
+          "regret_rule_p": 0.6391421325132647,
+          "rounds": 3,
+          "symmetric_difference": 0.25071999999999994,
+          "unit": "n25",
+          "wells": 48
+        },
+        {
+          "arm": "sobol",
+          "certificate_status": "NOT_ASSESSED",
+          "condition": "hartmann6-d8-s0.25",
+          "pareto_nondominated": false,
+          "regret_rule_p": 0.47963376167410693,
+          "rounds": 1,
+          "symmetric_difference": 0.200588,
+          "unit": "n25",
+          "wells": 48
+        },
+        {
+          "arm": "qlogei",
+          "certificate_status": "NOT_ASSESSED",
+          "condition": "hartmann6-d8-s0.25",
+          "pareto_nondominated": false,
+          "regret_rule_p": 0.2945007902697073,
+          "rounds": 10,
+          "symmetric_difference": 0.23478350000000006,
+          "unit": "n25",
+          "wells": 48
+        },
+        {
+          "arm": "qlognei",
+          "certificate_status": "NOT_ASSESSED",
+          "condition": "hartmann6-d8-s0.25",
+          "pareto_nondominated": true,
+          "regret_rule_p": 0.2620287297356133,
+          "rounds": 10,
+          "symmetric_difference": 0.21958149999999993,
+          "unit": "n25",
+          "wells": 48
+        },
+        {
+          "arm": "spade_cf_m0",
+          "certificate_status": "INCONCLUSIVE",
+          "condition": "hartmann6-d8-s0.25",
+          "pareto_nondominated": false,
+          "regret_rule_p": 0.44540376238518303,
+          "rounds": 2,
+          "symmetric_difference": 0.19080850000000005,
+          "unit": "n25",
+          "wells": 48
+        },
+        {
+          "arm": "spade_random_plate2",
+          "certificate_status": "INCONCLUSIVE",
+          "condition": "hartmann6-d8-s0.25",
+          "pareto_nondominated": false,
+          "regret_rule_p": 0.45403283507253056,
+          "rounds": 2,
+          "symmetric_difference": 0.21168249999999994,
+          "unit": "n25",
+          "wells": 48
+        },
+        {
+          "arm": "doe",
+          "certificate_status": "NOT_ASSESSED",
+          "condition": "hill-d6-s0.1",
+          "pareto_nondominated": false,
+          "regret_rule_p": 0.30721659159104237,
+          "rounds": 3,
+          "symmetric_difference": 0.2579785,
+          "unit": "n25",
+          "wells": 48
+        },
+        {
+          "arm": "sobol",
+          "certificate_status": "NOT_ASSESSED",
+          "condition": "hill-d6-s0.1",
+          "pareto_nondominated": false,
+          "regret_rule_p": 0.08547615566822646,
+          "rounds": 1,
+          "symmetric_difference": 0.1913060000000001,
+          "unit": "n25",
+          "wells": 48
+        },
+        {
+          "arm": "qlogei",
+          "certificate_status": "NOT_ASSESSED",
+          "condition": "hill-d6-s0.1",
+          "pareto_nondominated": false,
+          "regret_rule_p": 0.07979852500141008,
+          "rounds": 10,
+          "symmetric_difference": 0.20671499999999998,
+          "unit": "n25",
+          "wells": 48
+        },
+        {
+          "arm": "qlognei",
+          "certificate_status": "NOT_ASSESSED",
+          "condition": "hill-d6-s0.1",
+          "pareto_nondominated": false,
+          "regret_rule_p": 0.07498882256575881,
+          "rounds": 10,
+          "symmetric_difference": 0.2130685,
+          "unit": "n25",
+          "wells": 48
+        },
+        {
+          "arm": "spade_cf_m0",
+          "certificate_status": "INCONCLUSIVE",
+          "condition": "hill-d6-s0.1",
+          "pareto_nondominated": false,
+          "regret_rule_p": 0.08436358328544825,
+          "rounds": 2,
+          "symmetric_difference": 0.18041400000000002,
+          "unit": "n25",
+          "wells": 48
+        },
+        {
+          "arm": "spade_random_plate2",
+          "certificate_status": "INCONCLUSIVE",
+          "condition": "hill-d6-s0.1",
+          "pareto_nondominated": true,
+          "regret_rule_p": 0.08219547099036277,
+          "rounds": 2,
+          "symmetric_difference": 0.17853199999999994,
+          "unit": "n25",
+          "wells": 48
+        },
+        {
+          "arm": "doe",
+          "certificate_status": "NOT_ASSESSED",
+          "condition": "hill-d6-s0.25",
+          "pareto_nondominated": false,
+          "regret_rule_p": 0.16836708986278368,
+          "rounds": 3,
+          "symmetric_difference": 0.25828699999999993,
+          "unit": "n25",
+          "wells": 48
+        },
+        {
+          "arm": "sobol",
+          "certificate_status": "NOT_ASSESSED",
+          "condition": "hill-d6-s0.25",
+          "pareto_nondominated": false,
+          "regret_rule_p": 0.1221174333945115,
+          "rounds": 1,
+          "symmetric_difference": 0.250434,
+          "unit": "n25",
+          "wells": 48
+        },
+        {
+          "arm": "qlogei",
+          "certificate_status": "NOT_ASSESSED",
+          "condition": "hill-d6-s0.25",
+          "pareto_nondominated": false,
+          "regret_rule_p": 0.13697342509743315,
+          "rounds": 10,
+          "symmetric_difference": 0.2524975,
+          "unit": "n25",
+          "wells": 48
+        },
+        {
+          "arm": "qlognei",
+          "certificate_status": "NOT_ASSESSED",
+          "condition": "hill-d6-s0.25",
+          "pareto_nondominated": false,
+          "regret_rule_p": 0.12702005985723186,
+          "rounds": 10,
+          "symmetric_difference": 0.25201549999999995,
+          "unit": "n25",
+          "wells": 48
+        },
+        {
+          "arm": "spade_cf_m0",
+          "certificate_status": "INCONCLUSIVE",
+          "condition": "hill-d6-s0.25",
+          "pareto_nondominated": false,
+          "regret_rule_p": 0.11258114514055599,
+          "rounds": 2,
+          "symmetric_difference": 0.24153700000000003,
+          "unit": "n25",
+          "wells": 48
+        },
+        {
+          "arm": "spade_random_plate2",
+          "certificate_status": "INCONCLUSIVE",
+          "condition": "hill-d6-s0.25",
+          "pareto_nondominated": false,
+          "regret_rule_p": 0.11937562138469135,
+          "rounds": 2,
+          "symmetric_difference": 0.2411205,
+          "unit": "n25",
+          "wells": 48
+        },
+        {
+          "arm": "doe",
+          "certificate_status": "NOT_ASSESSED",
+          "condition": "levy-d6-s0.25",
+          "pareto_nondominated": false,
+          "regret_rule_p": 0.26800131322804716,
+          "rounds": 3,
+          "symmetric_difference": 0.251056,
+          "unit": "n25",
+          "wells": 48
+        },
+        {
+          "arm": "sobol",
+          "certificate_status": "NOT_ASSESSED",
+          "condition": "levy-d6-s0.25",
+          "pareto_nondominated": false,
+          "regret_rule_p": 0.07269547775458324,
+          "rounds": 1,
+          "symmetric_difference": 0.24813599999999997,
+          "unit": "n25",
+          "wells": 48
+        },
+        {
+          "arm": "qlogei",
+          "certificate_status": "NOT_ASSESSED",
+          "condition": "levy-d6-s0.25",
+          "pareto_nondominated": false,
+          "regret_rule_p": 0.07679539381440736,
+          "rounds": 10,
+          "symmetric_difference": 0.247002,
+          "unit": "n25",
+          "wells": 48
+        },
+        {
+          "arm": "qlognei",
+          "certificate_status": "NOT_ASSESSED",
+          "condition": "levy-d6-s0.25",
+          "pareto_nondominated": true,
+          "regret_rule_p": 0.06558171310613246,
+          "rounds": 10,
+          "symmetric_difference": 0.24533699999999992,
+          "unit": "n25",
+          "wells": 48
+        },
+        {
+          "arm": "spade_cf_m0",
+          "certificate_status": "INCONCLUSIVE",
+          "condition": "levy-d6-s0.25",
+          "pareto_nondominated": false,
+          "regret_rule_p": 0.07468772836126292,
+          "rounds": 2,
+          "symmetric_difference": 0.2481925,
+          "unit": "n25",
+          "wells": 48
+        },
+        {
+          "arm": "spade_random_plate2",
+          "certificate_status": "INCONCLUSIVE",
+          "condition": "levy-d6-s0.25",
+          "pareto_nondominated": false,
+          "regret_rule_p": 0.07264272715548654,
+          "rounds": 2,
+          "symmetric_difference": 0.24807799999999997,
+          "unit": "n25",
+          "wells": 48
+        },
+        {
+          "arm": "doe",
+          "certificate_status": "NOT_ASSESSED",
+          "condition": "rosenbrock-d6-s0.25",
+          "pareto_nondominated": false,
+          "regret_rule_p": 0.05259493833597802,
+          "rounds": 3,
+          "symmetric_difference": 0.24940949999999995,
+          "unit": "n25",
+          "wells": 48
+        },
+        {
+          "arm": "sobol",
+          "certificate_status": "NOT_ASSESSED",
+          "condition": "rosenbrock-d6-s0.25",
+          "pareto_nondominated": true,
+          "regret_rule_p": 0.027766924837433118,
+          "rounds": 1,
+          "symmetric_difference": 0.24664999999999995,
+          "unit": "n25",
+          "wells": 48
+        },
+        {
+          "arm": "qlogei",
+          "certificate_status": "NOT_ASSESSED",
+          "condition": "rosenbrock-d6-s0.25",
+          "pareto_nondominated": false,
+          "regret_rule_p": 0.03473723253909708,
+          "rounds": 10,
+          "symmetric_difference": 0.24797399999999997,
+          "unit": "n25",
+          "wells": 48
+        },
+        {
+          "arm": "qlognei",
+          "certificate_status": "NOT_ASSESSED",
+          "condition": "rosenbrock-d6-s0.25",
+          "pareto_nondominated": false,
+          "regret_rule_p": 0.03742981139593722,
+          "rounds": 10,
+          "symmetric_difference": 0.24656349999999996,
+          "unit": "n25",
+          "wells": 48
+        },
+        {
+          "arm": "spade_cf_m0",
+          "certificate_status": "INCONCLUSIVE",
+          "condition": "rosenbrock-d6-s0.25",
+          "pareto_nondominated": false,
+          "regret_rule_p": 0.03188324652044166,
+          "rounds": 2,
+          "symmetric_difference": 0.24642099999999995,
+          "unit": "n25",
+          "wells": 48
+        },
+        {
+          "arm": "spade_random_plate2",
+          "certificate_status": "INCONCLUSIVE",
+          "condition": "rosenbrock-d6-s0.25",
+          "pareto_nondominated": true,
+          "regret_rule_p": 0.027158334134027066,
+          "rounds": 2,
+          "symmetric_difference": 0.24683899999999992,
+          "unit": "n25",
+          "wells": 48
+        }
+      ]
+    }
+  }
+}
