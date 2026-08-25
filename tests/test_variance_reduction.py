@@ -102,6 +102,24 @@ def test_ivr_batch_is_unique_deterministic_and_ties_use_row_order():
     assert torch.unique(first, dim=0).shape[0] == 2
 
 
+def test_finite_huge_weights_normalize_without_overflow_and_stay_deterministic():
+    cross = torch.tensor([[0.10, 0.80], [0.10, 0.70]], dtype=torch.double)
+    covariance = _joint_covariance(cross, torch.eye(2, dtype=torch.double))
+    model = _CovarianceModel(covariance)
+    candidates = _points(2)
+    huge_equal_weights = torch.tensor([1e308, 1e308], dtype=torch.double)
+
+    first = greedy_ivr(
+        model, candidates, _points(2), q=1, weights=huge_equal_weights
+    )
+    second = greedy_ivr(
+        model, candidates, _points(2), q=1, weights=huge_equal_weights
+    )
+
+    assert torch.equal(first, candidates[[1]])
+    assert torch.equal(second, first)
+
+
 @pytest.mark.parametrize(
     "weights, message",
     [

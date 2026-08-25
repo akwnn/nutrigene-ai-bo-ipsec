@@ -70,7 +70,14 @@ def greedy_ivr(
             raise ValueError("weights cannot contain negative values")
         if not bool(torch.any(normalized_weights > 0)):
             raise ValueError("weights cannot be all-zero")
+        normalized_weights = normalized_weights / normalized_weights.max()
         normalized_weights = normalized_weights / normalized_weights.mean()
+        if not bool(torch.all(torch.isfinite(normalized_weights))):
+            raise ValueError("normalized weights must be finite")
+        if bool(torch.any(normalized_weights < 0)):
+            raise ValueError("normalized weights cannot be negative")
+        if not bool(torch.any(normalized_weights > 0)):
+            raise ValueError("normalized weights cannot be all-zero")
 
     model.eval()
     joint = torch.cat([reference.double(), candidates.double()], dim=0)
