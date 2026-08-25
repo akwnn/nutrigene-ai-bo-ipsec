@@ -21,21 +21,21 @@
    "claim": "SPADE's certificate is valid prospectively under cross-fit",
    "fires_when": "any primary F-CERT cell demonstrably below nominal after exact test + Holm",
    "status": "PASS",
-   "effect": 0.0461538461538461,
+   "effect": -0.167391304347826,
    "ci": [
-    0.5455289443234423,
-    0.9807933280174715
+    0.5629692737631854,
+    0.9253965923511963
    ],
-   "p": 0.7663537790975998,
-   "p_adjusted": 1.0,
+   "p": 0.004930342414473064,
+   "p_adjusted": 0.3894970507433721,
    "sesoi": 0.02,
-   "sesoi_comparison": "SESOI does not govern a containment proportion; the registered bar is the nominal alpha=0.8, and the worst confirmatory cell sits +0.0462 from it",
-   "denominator": 13,
+   "sesoi_comparison": "SESOI does not govern a containment proportion; the registered bar is the nominal alpha=0.95, and the worst confirmatory cell sits -0.1674 from it",
+   "denominator": 23,
    "source": {
     "artefact": "results/final-spade-certificate.json",
-    "key": "cells[cell_id=spade_cf_m4|hill-d6-s0.25|tf0.25|g0.5|a0.8]"
+    "key": "cells[cell_id=spade_random_plate2|hill-d6-s0.1|tf0.1|g0.5|a0.95]"
    },
-   "interpretation": "no confirmatory cell is demonstrably below nominal across 44 cells. This is a failure to reject, not a proof of validity (\u00a77.1) -- \u00a722 measured what this design can and cannot detect"
+   "interpretation": "no confirmatory cell is demonstrably below nominal across 64 cells. This is a failure to reject, not a proof of validity (\u00a77.1) -- \u00a722 measured what this design can and cannot detect"
   },
   "KF-2": {
    "id": "KF-2",
@@ -129,10 +129,10 @@
    "claim": "m>0 lowers regret safely",
    "fires_when": "the \u00a77.5 conjunction is unmet -> trade-off, not an improvement",
    "status": "FAIL",
-   "effect": -0.0027763775641876155,
+   "effect": -0.0027763259811726627,
    "ci": [
-    -0.007611598878443308,
-    0.002124458251760016
+    -0.007611496727115248,
+    0.002124546102173942
    ],
    "p": 0.312333345413208,
    "p_adjusted": 0.312333345413208,
@@ -191,15 +191,15 @@
    "claim": "SPADE is competitive with qLogNEI on the map in TARGET regimes",
    "fires_when": "qlognei beats m0 by >SESOI in a TARGET condition",
    "status": "PASS",
-   "effect": 0.0330745,
+   "effect": 0.0326545,
    "ci": [
-    0.028139912499999996,
-    0.038435375
+    0.028543325,
+    0.037231837500000003
    ],
    "p": 5.960464477539063e-08,
    "p_adjusted": 1.7881393432617188e-07,
    "sesoi": 0.02,
-   "sesoi_comparison": "effect +0.03307 against SESOI 0.02 in hill-d6-s0.1",
+   "sesoi_comparison": "effect +0.03265 against SESOI 0.02 in hill-d6-s0.1",
    "denominator": 25,
    "source": {
     "artefact": "results/final-spade-regret-pareto.json",
@@ -211,7 +211,7 @@
    "holm_member": "spade_cf_m0 vs qlognei @ hill-d6-s0.1",
    "per_condition": {
     "hill-d6-s0.1": {
-     "effect": 0.0330745,
+     "effect": 0.0326545,
      "p": 5.960464477539063e-08,
      "p_adjusted": 1.7881393432617188e-07,
      "units_disagree": false
@@ -224,15 +224,15 @@
    "claim": "Regret is at practical parity under a common terminal rule",
    "fires_when": "m0 - best BO regret > SESOI under rule P",
    "status": "PASS",
-   "effect": 0.015272473358876977,
+   "effect": 0.009374760719689424,
    "ci": [
-    0.008158484480851545,
-    0.02230523400744078
+    0.0025784576605545994,
+    0.016151187714924787
    ],
-   "p": 0.0007149577140808105,
+   "p": 0.014722049236297607,
    "p_adjusted": null,
    "sesoi": 0.02,
-   "sesoi_comparison": "gap +0.01527 against SESOI 0.02",
+   "sesoi_comparison": "gap +0.00937 against SESOI 0.02",
    "denominator": 25,
    "source": {
     "artefact": "results/final-spade-regret-pareto.json",
@@ -248,8 +248,8 @@
    "id": "KF-9",
    "claim": "The study's cells are feasible",
    "fires_when": "any planned cell with tau >= tau_max reached the analysis",
-   "status": "FAIL",
-   "effect": 4400,
+   "status": "PASS",
+   "effect": 0,
    "ci": null,
    "p": null,
    "p_adjusted": null,
@@ -260,25 +260,25 @@
     "artefact": "results/final-spade-certificate.json",
     "key": "cells[].infeasible"
    },
-   "interpretation": "4400 primary-gamma row(s) sit at or above the certifiability ceiling and reached the analyser. \u00a74.5: no method certifies above tau_max at any budget, so these cells must be excluded BEFORE campaigns run. A zero scored there is a property of the threshold and reading it as a method failure is precisely the error the pre-run feasibility gate exists to stop. (Diagnostic gamma=0.99 rows are excluded from this check: spec names it a stress diagnostic never claimed as primary evidence, and Erratum 1 already registers that it may exceed the ceiling as a fact about noise and assurance, not a protocol breach.)"
+   "interpretation": "every analysed primary-gamma cell sits below the certifiability ceiling, as the pre-run feasibility gate requires"
   },
   "KF-10": {
    "id": "KF-10",
    "claim": "Empty-set degeneracy does not explain a pass",
    "fires_when": "any PASS cell with empty rate > 0.50",
    "status": "FAIL",
-   "effect": 8,
+   "effect": 18,
    "ci": null,
    "p": null,
    "p_adjusted": null,
    "sesoi": 0.02,
    "sesoi_comparison": "empty-rate ceiling 50%; SESOI does not apply to a degeneracy guard",
-   "denominator": 44,
+   "denominator": 64,
    "source": {
     "artefact": "results/final-spade-certificate.json",
     "key": "cells[].downgraded_by"
    },
-   "interpretation": "8 cell(s) reached PASS on containment while certifying nothing in more than half their campaigns, and were downgraded to INCONCLUSIVE. \u00a741.3 records the same failure mode off hill: the problem is emptiness, not miscoverage -- and an empty certificate is vacuously contained"
+   "interpretation": "18 cell(s) reached PASS on containment while certifying nothing in more than half their campaigns, and were downgraded to INCONCLUSIVE. \u00a741.3 records the same failure mode off hill: the problem is emptiness, not miscoverage -- and an empty certificate is vacuously contained"
   }
  }
 }
