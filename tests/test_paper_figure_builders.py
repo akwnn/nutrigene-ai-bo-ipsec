@@ -109,7 +109,12 @@ def test_figure2_rendered_text_states_terminal_rule_semantics():
         for text in rendered_text
     )
     assert any("← P lower" in text and "P higher →" in text for text in rendered_text)
-    assert {"Classical DoE", "qLogEI", "qLogNEI", "SPADE"} <= rendered_text
+    panel_a_labels = {
+        " ".join(text.get_text().split())
+        for text in bundle.figure.axes[0].texts
+        if text.get_text()
+    }
+    assert {"Classical DoE", "qLogEI", "qLogNEI", "SPADE"} <= panel_a_labels
 
     plt.close(bundle.figure)
 
