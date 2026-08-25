@@ -156,6 +156,39 @@ runs before committing to the full 125, per this project's standard protocol.
 spec was frozen.** `oa_lhs_design` (TDD, `src/boec/optimizers.py`) is built now, gated by
 this section; Piece A (the replicate estimator) was killed by K1 (§3b) and is not built.
 
-## 5. K2 result
+## 5. K2 result — PIECE B KILLED
 
-<!-- Filled in after the pilot and full run. -->
+**Computed: 25 seeds × 5 OA-LHS draws each, hartmann6, d=6, σ=0.25**
+(`scripts/analyse_k2_design_lottery.py`, `results/k2-design-lottery.json`).
+
+| | design SD (mean) | range |
+|---|---|---|
+| OA-LHS (n=49, this run) | **0.1628** | [0.0761, 0.2733] |
+| plain LHS (n=48, `Q53`, committed) | 0.1496 | [0.0512, 0.2724] |
+
+**Difference (OA − plain): +0.0132, 95% bootstrap CI [−0.0196, +0.0450] — spans zero, and
+the point estimate trends in the WRONG direction** (OA-LHS's design SD is nominally
+*higher*, not lower, though not significantly so). Per K2's own rule: *"design SD
+unchanged → Stage 1 is plain LHS with extra steps."*
+
+**Verdict: Piece B KILLED.** Strength-2 OA-LHS's theoretical stratification advantage
+(every 2D projection covered, not just every 1D marginal — independently verified by
+`oa_lhs_design`'s own test suite) does not measurably shrink the design-lottery variance
+on Hartmann6 in practice. The lottery itself is real and large on both designs (SD
+0.08–0.27 either way) — it is just not the specific mechanism OA-LHS addresses. This is
+consistent with, not contradicted by, `docs/SPADE-RESULTS-AND-ANALYSIS.md` §2's finding
+that Plate 1's contribution is real but the specific reducing mechanism was never shown to
+work: it still hasn't been, now on direct test rather than by absence of evidence.
+
+## 6. Summary — both pieces of Fix 2 killed
+
+| piece | gate | result | verdict |
+|---|---|---|---|
+| A (replicate noise estimator) | K0 → K1 | ceiling improvement +0.008, below the 0.01 bar | **KILLED** |
+| B (OA-LHS Plate 1) | K2 | design SD +0.013 vs. plain LHS, CI spans zero, wrong-signed | **KILLED** |
+
+Neither of SPADE's two never-built spec pieces, once actually built and tested, closes the
+gap it was hypothesized to close. SPADE's calibration shortfall (§4 of the consolidated
+report) and its Plate-1-lottery dependence (§2) both stand as architecture-level properties,
+not artefacts of these two specific unbuilt fixes — the two most plausible candidate
+explanations were tested directly and did not survive.
