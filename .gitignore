@@ -227,6 +227,15 @@ COMMIT_MSG.txt
 !results/spade-development-analysis.json
 !results/spade-selected-protocol.json
 
+# Frozen lockbox evidence: raw shards are compressed and hash-bound; the final manifest,
+# confirmatory analysis, and release report are the only allowlisted lockbox artifacts.
+!results/spade-lockbox-*.jsonl.gz
+!results/spade-lockbox-*.jsonl.gz.sha256
+!results/spade-lockbox-*.jsonl.gz.manifest.json
+!results/spade-lockbox-manifest.json
+!results/spade-lockbox-analysis.json
+!results/spade-lockbox-release.json
+
 # Requested by the workers that produced them; results/* ignores by default.
 # f2-ce-error-volumes: error volumes for the CONSERVATIVE-ESTIMATE sets, zero new
 # campaigns, derived from k6b's ce_false_in_*/ce_vol_*/true_frac_above. It was
