@@ -1,6 +1,6 @@
 # Codebase Concerns
 
-**Analysis Date:** 2026-08-24
+**Analysis Date:** 2026-08-26
 
 ## Tech Debt
 
@@ -16,9 +16,9 @@
 - Impact: The current tree is not green, committed adaptive-family results do not replay in the installed environment, and the historical log cannot substantiate current reproducibility. Absolute paths also weaken portability and can confuse provenance.
 - Fix approach: Diagnose environment/thread/seed drift without weakening exact gates. Separate deterministic floating-point drift from the large adaptive replay mismatches, restore bitwise or registered-tolerance reproduction as appropriate, then rerun the complete suite and capture a fresh log with git SHA and environment metadata. Do not report a current green suite until this is done.
 
-**No lint, type, coverage, or CI quality gate (Medium):**
-- Issue: `pyproject.toml` configures pytest only. `requirements.txt` has no formatter, linter, type checker, coverage plugin, or CI tool, and no CI workflow is detected.
-- Files: `pyproject.toml`, `requirements.txt`, `src/boec/`, `scripts/`, `tests/`
+**No lint, type, coverage, or general automated CI quality gate (Medium):**
+- Issue: `pyproject.toml` configures pytest only. `requirements.txt` has no formatter, linter, type checker, or coverage plugin. `.github/workflows/spade-distributed.yml` exists, but it is a manual registered-shard executor with no push/pull-request/schedule trigger and deliberately runs no tests, lint, coverage, analysis, selection, or release validation.
+- Files: `pyproject.toml`, `requirements.txt`, `.github/workflows/spade-distributed.yml`, `src/boec/`, `scripts/`, `tests/`
 - Impact: The large script surface can accumulate dead branches, inconsistent style, missing annotations, and unexecuted manuscript paths without a machine-visible gate.
 - Fix approach: Add only the minimal checks justified for paper release: a reproducible test job, targeted lint, and coverage reporting for `src/boec/` plus release-critical scripts. Establish a baseline before setting thresholds.
 
@@ -64,9 +64,9 @@
 
 **Result and manifest integrity:**
 - Risk: A result path can point to different local untracked content in different clones, making a self-comparison look like independent reproduction.
-- Files: `.gitignore`, `tests/test_e2_provenance.py`, `results/e2-grid.json`, `results/final-spade-manifest.json`
-- Current mitigation: Specific paper-critical results are allow-listed in `.gitignore`; provenance and manifest tests detect known drift patterns.
-- Recommendations: Every number entering the manuscript must resolve to a committed immutable artefact or a documented source-data limitation. Validate SHA/checksum fields against the actual tree, not only internal consistency.
+- Files: `.gitignore`, `.github/workflows/spade-distributed.yml`, `scripts/merge_spade_development_shards.py`, `tests/test_e2_provenance.py`, `tests/test_spade_development_merge.py`, `results/e2-grid.json`, `results/final-spade-manifest.json`
+- Current mitigation: Specific paper-critical results are allow-listed in `.gitignore`; provenance and manifest tests detect known drift patterns. Distributed SPADE uploads carry raw, hash, resume, and manifest files, while the development merger validates their bytes, exact paths, clean common provenance, canonical coverage/order, and parent hash ledger before write-once promotion.
+- Recommendations: Every number entering the manuscript must resolve to a committed immutable artefact or a documented source-data limitation. Preserve the complete four-file shard contract through download/extraction, retain the parent ledger, and validate SHA/checksum fields against the actual tree rather than only internal consistency.
 
 ## Performance Bottlenecks
 
@@ -78,11 +78,17 @@
 
 **Thread oversubscription hazard:**
 - Problem: Multiple Torch workers may each spawn multiple BLAS threads and run slower than a single-threaded configuration.
-- Files: `src/boec/runner.py`, experiment scripts under `scripts/`
+- Files: `src/boec/runner.py`, `scripts/run_spade_actions_worker.py`, experiment scripts under `scripts/`
 - Cause: `set_single_threaded()` sets environment variables after Torch is already imported in `src/boec/runner.py`, and its docstring warns that some builds fix thread pools at import time.
-- Improvement path: Set `OMP_NUM_THREADS=1` and `MKL_NUM_THREADS=1` at the top of entry scripts before importing Torch; retain `set_single_threaded()` as a secondary guard.
+- Improvement path: Set thread environment variables before importing Torch and retain `set_single_threaded()` as a secondary guard. The distributed worker wrapper already fails closed on the full environment freeze, CPU-only execution, and one Torch intra/inter-op thread; preserve that wrapper and the workflow's maximum of two concurrent worker processes per runner.
 
 ## Fragile Areas
+
+**Distributed SPADE custody and lockbox provenance:**
+- Files: `.github/workflows/spade-distributed.yml`, `scripts/make_spade_actions_matrix.py`, `scripts/run_spade_actions_worker.py`, `scripts/merge_spade_development_shards.py`, `scripts/run_spade_lockbox.py`, `results/spade-lockbox-power.json`, `tests/test_spade_actions_workflow.py`, `tests/test_spade_actions_matrix.py`, `tests/test_spade_development_merge.py`
+- Why fragile: GitHub artifact transport is temporary and external to Git history, while the lockbox matrix depends on an exact committed canonical `POWERED` prefix and an exact source SHA. The workflow uploads shard contracts but intentionally performs no outcome inspection, analysis, or merge. Losing a sidecar/resume/manifest, mixing run attempts or source identities, or bypassing guarded lockbox execution breaks the provenance chain even if raw rows appear complete.
+- Safe modification: Keep dispatch manual and phase-confirmed; preserve pinned action/container identities, the 40-runner/two-process ceilings, and all four files per shard. Download without renaming, reject mixed source/protocol/config/generator identities, use the deterministic development merger, and keep lockbox planning/execution gated by the committed power decision and guarded runner.
+- Test coverage: Structural workflow, matrix, worker-preflight, and development-merge contracts are strong. They do not turn GitHub Actions into a general CI gate, prove artifact retention/custody after upload, or replace lockbox release/provenance validation.
 
 **Manuscript evidence graph and stale artefacts:**
 - Files: `docs/MAIN-LINE.md`, `docs/CLAIMS.md`, `docs/RESEARCH-SUMMARY.md`, `docs/TRIAGE.md`, `docs/RESULTS.md`, `docs/archive/`, `results/*.SUPERSEDED-*.json`
@@ -179,4 +185,4 @@
 
 ---
 
-*Concerns audit: 2026-08-24*
+*Concerns audit: 2026-08-26*

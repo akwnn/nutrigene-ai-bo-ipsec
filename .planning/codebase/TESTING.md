@@ -1,6 +1,6 @@
 # Testing Patterns
 
-**Analysis Date:** 2026-08-24
+**Analysis Date:** 2026-08-26
 
 ## Test Framework
 
@@ -19,6 +19,8 @@
 .venv/bin/pytest                         # Run all tests, including registered slow kill conditions
 .venv/bin/pytest -m "not slow"           # Fast development subset
 .venv/bin/pytest tests/test_<area>.py -q # Focused module/workstream validation
+.venv/bin/pytest tests/test_spade_actions_workflow.py tests/test_spade_actions_matrix.py tests/test_spade_development_merge.py -q
+                                         # Distributed execution and merge contracts
 .venv/bin/pytest --collect-only -q       # Verify collection and current test count
 .venv/bin/python scripts/validate_final_spade_release.py --pre-release
                                          # Publication checks while final benchmark is absent
@@ -46,6 +48,8 @@ tests/
 ├── test_<core_module>.py             # Unit and property tests for src/boec
 ├── test_<experiment_id>.py           # Script/result fidelity and analysis tests
 ├── test_final_spade_*.py             # Protocol, statistics, release, reproducibility
+├── test_spade_actions_*.py            # Manual workflow and deterministic matrix contracts
+├── test_spade_development_merge.py    # Authenticated, write-once shard merging
 └── test_lab_*.py                     # Conditional real-data ingestion/QC tests
 ```
 
@@ -73,6 +77,9 @@ This representative pattern appears throughout `tests/test_final_spade_protocol.
 - Use exact/bitwise comparisons when determinism is part of the contract, and `pytest.approx` with an explicit tolerance for numerical results.
 - Mark genuinely expensive optimization or real-data tests with `@pytest.mark.slow`; the marker remains in the default suite because some slow tests are scientific kill conditions (`pyproject.toml`).
 - Use `pytest.mark.skipif` only for optional external/raw data or absent committed artefacts, and state the reason, as in `tests/test_lab_protocol.py`, `tests/test_lab_imaging.py`, and `tests/test_q50_paired.py`.
+- Test workflow YAML as an executable contract. `tests/test_spade_actions_workflow.py` requires manual-only/read-only dispatch, source-SHA binding, pinned actions/container, the 40-runner and two-process ceilings, complete four-file uploads, and the absence of analysis or merging from the workflow.
+- Test matrix construction independently of GitHub. `tests/test_spade_actions_matrix.py` proves exact development coverage (65 width-4 logical shards packed into 33 jobs), lockbox coverage across the registered `n=350..2000` range (35..200 width-10 jobs), deterministic GitHub output, committed canonical `POWERED` input, and CPU/single-thread worker preflight.
+- Test development merging at the artifact boundary. `tests/test_spade_development_merge.py` checks deterministic canonical bytes, downstream selector/power-planner acceptance, authenticated parent ledgers, exact path/row/environment/provenance coverage, hash and resume validation, symlink/traversal refusal, and write-once race-safe promotion.
 
 ## Mocking
 
@@ -125,7 +132,7 @@ def _row(**overrides):
 
 ## Coverage
 
-**Requirements:** None enforced. There is no coverage configuration, threshold, CI gate, or `pytest-cov` dependency in `requirements.txt`/`pyproject.toml`.
+**Requirements:** None enforced. There is no coverage configuration, threshold, general CI quality gate, or `pytest-cov` dependency in `requirements.txt`/`pyproject.toml`. The manual SPADE Actions workflow executes registered shards only; it does not run the test suite or establish coverage.
 
 **View Coverage:**
 ```bash
@@ -141,6 +148,7 @@ def _row(**overrides):
 
 **Integration Tests:**
 - Full campaigns, persistence/resume, real GP fitting, script/result gates, and release validation. Representative files are `tests/test_campaign.py`, `tests/test_runner.py`, `tests/test_replay.py`, `tests/test_e2_provenance.py`, and `tests/test_final_spade_reproducibility.py`.
+- Distributed-study integration contracts span `.github/workflows/spade-distributed.yml`, `scripts/make_spade_actions_matrix.py`, `scripts/run_spade_actions_worker.py`, and `scripts/merge_spade_development_shards.py`, with focused coverage in `tests/test_spade_actions_workflow.py`, `tests/test_spade_actions_matrix.py`, and `tests/test_spade_development_merge.py`.
 - Lab ingestion tests cover manifests, FCS parsing/gating, imaging QC, plate parsing, and candidate-only promotion safeguards in `tests/test_lab_*.py`; several skip if local raw data is unavailable.
 
 **E2E Tests:**
@@ -153,7 +161,7 @@ def _row(**overrides):
 ```python
 # Not applicable: the codebase is synchronous and CPU-oriented.
 ```
-- Parallel experiment execution is validated through deterministic shards, manifests, merge completeness, and replay rather than async unit tests.
+- Parallel experiment execution is validated through deterministic matrices, workflow structure, shard manifests, authenticated merge completeness, and replay rather than async unit tests. These tests validate the execution contract locally; the workflow itself remains manually dispatched and is not a test runner.
 
 **Error Testing:**
 ```python
@@ -165,4 +173,4 @@ with pytest.raises(ValueError, match="m must be non-negative"):
 
 ---
 
-*Testing analysis: 2026-08-24*
+*Testing analysis: 2026-08-26*
