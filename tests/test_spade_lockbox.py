@@ -1110,9 +1110,9 @@ def test_merged_analysis_hashes_actual_power_and_passes_manifest_size(
 
     monkeypatch.setattr(
         study,
-        "read_jsonl_gzip",
-        lambda path, **_kwargs: rows_by_family[
-            next(family for family in lockbox.LOCKBOX_FAMILIES if family in Path(path).name)
+        "read_jsonl_gzip_bytes",
+        lambda _raw, _sidecar, *, source_name, **_kwargs: rows_by_family[
+            next(family for family in lockbox.LOCKBOX_FAMILIES if family in source_name)
         ],
     )
     captured: dict[str, object] = {}
@@ -1149,6 +1149,36 @@ def test_shard_schema_and_merged_schema_share_protocol_and_provenance_keys():
     assert lockbox.MANIFEST_SCHEMA == "boec-spade-lockbox-shard-v2"
     assert lockbox.MERGED_MANIFEST_SCHEMA == "boec-spade-lockbox-manifest-v2"
     assert "command_args" in lockbox.SHARD_MANIFEST_FIELDS
+
+
+def test_shard_publication_filters_internal_registered_power_digests():
+    metadata = {
+        **_lockbox_metadata(),
+        "power_design_digest": "1" * 64,
+        "power_engine_digest": "2" * 64,
+        "power_planner_digest": "3" * 64,
+    }
+    published = lockbox._lockbox_publication_metadata(metadata)
+    assert set(published) == lockbox.LOCKBOX_PROVENANCE_FIELDS
+    assert not {
+        "power_design_digest", "power_engine_digest", "power_planner_digest"
+    } & set(published)
+
+
+def test_final_lockbox_json_publication_is_write_once(tmp_path):
+    destination = tmp_path / "spade-lockbox-manifest.json"
+    lockbox._write_once_json(destination, {"status": "COMPLETE"})
+    original = destination.read_bytes()
+    with pytest.raises(ValueError, match="immutable|exists"):
+        lockbox._write_once_json(destination, {"status": "REPLACED"})
+    assert destination.read_bytes() == original
+
+    analysis_path = tmp_path / "spade-lockbox-analysis.json"
+    analysis._atomic_json(analysis_path, {"status": "COMPLETE"})
+    original_analysis = analysis_path.read_bytes()
+    with pytest.raises(ValueError, match="immutable|exists"):
+        analysis._atomic_json(analysis_path, {"status": "REPLACED"})
+    assert analysis_path.read_bytes() == original_analysis
 
 
 @pytest.mark.parametrize("existing_suffix", ["", ".sha256", ".manifest.json"])

@@ -20,6 +20,7 @@ from scripts import run_spade_lockbox as lockbox_contract
 
 
 ROOT = Path(__file__).resolve().parents[1]
+_SOURCE_ROOT = Path(__file__).resolve().parents[1]
 ARMS = ("spade", "sobol48", "qlognei48")
 LOCKBOX_FAMILIES = (
     "toroidal_rastrigin", "gaussian_basin_mixture", "curved_ridge", "soft_plateau",
@@ -32,6 +33,12 @@ POWER_SOURCE_BLOBS = {
     "power_engine_sha256": Path("src/boec/spade_power.py"),
     "power_planner_sha256": Path("scripts/plan_spade_lockbox_power.py"),
 }
+EXECUTION_SOURCE_BLOBS = (
+    Path("scripts/run_spade_lockbox.py"),
+    Path("scripts/analyse_spade_lockbox.py"),
+    Path("scripts/validate_spade_lockbox_release.py"),
+    Path("src/boec/spade_study.py"),
+)
 PERMISSIBLE_PASS_CLAIM = (
     "After prespecified selection on development families, the frozen 48-evaluation "
     "SPADE protocol matched the specialist Sobol map and qLogNEI optimizer within "
@@ -452,6 +459,24 @@ def _preflight_power_bindings(
             _violation(violations, "power source is not an ancestor of execution source")
         if not _git_is_ancestor(repo_root, execution_commit, head):
             _violation(violations, "execution source is not an ancestor of release HEAD")
+        for path in EXECUTION_SOURCE_BLOBS:
+            try:
+                committed_digest = _committed_blob_sha256(
+                    repo_root, execution_commit, path
+                )
+                live_digest = hashlib.sha256(
+                    (_SOURCE_ROOT / path).read_bytes()
+                ).hexdigest()
+            except (OSError, UnicodeDecodeError, ValueError) as exc:
+                _violation(
+                    violations, f"execution source blob provenance violation: {exc}"
+                )
+                continue
+            if committed_digest != live_digest:
+                _violation(
+                    violations,
+                    f"execution source blob digest mismatch: {path.as_posix()}",
+                )
         if isinstance(power_digests, Mapping):
             for field, path in POWER_SOURCE_BLOBS.items():
                 try:
@@ -589,7 +614,7 @@ def load_release_inputs(
         raw_shards = []
     protocol = manifest.get("protocol_digest")
     read_protocol = str(protocol) if _digest(protocol) else "0" * 64
-    from boec.spade_study import read_jsonl_gzip
+    from boec.spade_study import read_jsonl_gzip_bytes
 
     seen_artifacts: set[str] = set()
     for index, item in enumerate(raw_shards):
@@ -624,6 +649,7 @@ def load_release_inputs(
             continue
         artifact_hashes = shard_hashes.setdefault(raw_file, {})
         raw_path = manifest_path.parent / raw_file
+        sidecar_data: bytes | None = None
         raw_data = _hash_actual(
             raw_path,
             key="raw_sha256",
@@ -677,7 +703,14 @@ def load_release_inputs(
 
         if raw_data is not None:
             try:
-                shard_rows = read_jsonl_gzip(raw_path, protocol_digest=read_protocol)
+                if sidecar_data is None:
+                    raise ValueError("raw shard sidecar bytes are unavailable")
+                shard_rows = read_jsonl_gzip_bytes(
+                    raw_data,
+                    sidecar_data,
+                    source_name=raw_file,
+                    protocol_digest=read_protocol,
+                )
                 rows[raw_file] = shard_rows
                 lockbox_contract.validate_shard_local_rows(
                     shard_rows,
@@ -1141,10 +1174,20 @@ def write_release_report(path: Path, report: Mapping[str, object]) -> None:
             handle.write(data)
             handle.flush()
             os.fsync(handle.fileno())
-        os.replace(temporary, path)
+        try:
+            os.link(temporary, path)
+        except FileExistsError as exc:
+            raise ValueError(f"immutable release target already exists: {path}") from exc
+        directory_descriptor = os.open(path.parent, os.O_RDONLY)
+        try:
+            os.fsync(directory_descriptor)
+        finally:
+            os.close(directory_descriptor)
     except BaseException:
         temporary.unlink(missing_ok=True)
         raise
+    finally:
+        temporary.unlink(missing_ok=True)
 
 
 def main(argv: Sequence[str] | None = None) -> int:

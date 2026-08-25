@@ -43,20 +43,20 @@ RESUME_SCHEMA = "boec-spade-lockbox-resume-v2"
 GENERATOR_FREEZE_SHA256 = "cf4b57f9e087391f3d971b46fa3b688700f0f03ead6fad410729aafa1af54404"
 GENERATOR_FREEZE_PARENT_COMMIT = "d1fab2c2099926945e399f741ccc79123a539066"
 ENVIRONMENT_COMPATIBILITY_SCHEMA = "boec-spade-environment-compatibility-v1"
+LOCKBOX_PROVENANCE_FIELDS = frozenset({
+    "protocol_digest", "spec_digest", "config_digest", "generator_digest",
+    "generator_manifest_sha256", "source_commit", "source_dirty",
+    "selected_protocol_sha256", "selection_source_commit",
+    "power_plan_sha256", "power_source_commit",
+})
 SHARD_MANIFEST_FIELDS = frozenset({
     "schema", "status", "family", "start", "stop", "sample_size", "expected_rows",
-    "row_count", "complete", "raw_file", "raw_sha256", "protocol_digest",
-    "spec_digest", "config_digest", "generator_digest", "generator_manifest_sha256",
-    "source_commit", "source_dirty", "selected_protocol_sha256",
-    "selection_source_commit", "power_plan_sha256", "power_source_commit",
+    "row_count", "complete", "raw_file", "raw_sha256",
     "environment_compatibility", "command_args",
-})
+}) | LOCKBOX_PROVENANCE_FIELDS
 MERGED_MANIFEST_FIELDS = frozenset({
-    "schema", "status", "sample_size", "raw_shards", "protocol_digest", "spec_digest",
-    "config_digest", "generator_digest", "generator_manifest_sha256", "source_commit",
-    "source_dirty", "selected_protocol_sha256", "selection_source_commit",
-    "power_plan_sha256", "power_source_commit", "environment_compatibility",
-})
+    "schema", "status", "sample_size", "raw_shards", "environment_compatibility",
+}) | LOCKBOX_PROVENANCE_FIELDS
 MERGED_RAW_SHARD_FIELDS = frozenset({
     "family", "start", "stop", "raw_file", "raw_sha256", "command_args",
     "manifest_file", "manifest_sha256", "sha256_file", "sha256_sha256",
@@ -193,6 +193,21 @@ def _atomic_json(path: Path, payload: Mapping[str, object]) -> None:
         temporary.unlink(missing_ok=True); raise
 
 
+def _write_once_json(path: Path, payload: Mapping[str, object]) -> None:
+    """Publish final JSON without replacing an existing evidence artifact."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    data = (_canonical_json(payload) + "\n").encode()
+    fd, temporary_name = tempfile.mkstemp(prefix=f".{path.name}.", dir=path.parent)
+    temporary = Path(temporary_name)
+    try:
+        with os.fdopen(fd, "wb") as handle:
+            handle.write(data); handle.flush(); os.fsync(handle.fileno())
+        _install_new(temporary, path)
+        _fsync_directory(path.parent)
+    finally:
+        temporary.unlink(missing_ok=True)
+
+
 def _row_chain_head(rows: Sequence[Mapping[str, object]]) -> str:
     head = "0" * 64
     for row in rows:
@@ -205,6 +220,16 @@ def _registered_sample_size(value: object) -> int:
     if isinstance(value, bool) or not isinstance(value, int) or not 350 <= value <= 2000:
         raise ValueError("lockbox sample size must lie in the registered 350..2000 range")
     return value
+
+
+def _lockbox_publication_metadata(
+    metadata: Mapping[str, object],
+) -> dict[str, object]:
+    """Project internal registered metadata onto the exact public shard contract."""
+    missing = LOCKBOX_PROVENANCE_FIELDS - set(metadata)
+    if missing:
+        raise ValueError(f"lockbox publication metadata is missing {sorted(missing)}")
+    return {field: metadata[field] for field in LOCKBOX_PROVENANCE_FIELDS}
 
 
 def _validate_resume_rows(
@@ -784,7 +809,8 @@ def run_lockbox_shard(*, family: str, start: int, stop: int, output: str | Path,
         staged_raw = Path(staging_name) / destination.name
         digest = write_jsonl_gzip(staged_raw, rows, protocol_digest=metadata["protocol_digest"])
         staged_sidecar = Path(f"{staged_raw}.sha256")
-        manifest = {"schema": MANIFEST_SCHEMA, "status": "COMPLETE", "family": family, "start": start, "stop": stop, "sample_size": sample_size, "expected_rows": (stop-start)*3, "row_count": len(rows), "complete": True, "raw_file": destination.name, "raw_sha256": digest, **metadata, "environment_compatibility": environment_compatibility, "command_args": list(command_args)}
+        published_metadata = _lockbox_publication_metadata(metadata)
+        manifest = {"schema": MANIFEST_SCHEMA, "status": "COMPLETE", "family": family, "start": start, "stop": stop, "sample_size": sample_size, "expected_rows": (stop-start)*3, "row_count": len(rows), "complete": True, "raw_file": destination.name, "raw_sha256": digest, **published_metadata, "environment_compatibility": environment_compatibility, "command_args": list(command_args)}
         if set(manifest) != SHARD_MANIFEST_FIELDS:
             raise RuntimeError("lockbox shard manifest schema drift")
         staged_manifest = Path(f"{staged_raw}.manifest.json")
@@ -811,7 +837,7 @@ def merge_lockbox_manifests(
     registered_n = _registered_sample_size(access["sample_size"])
     if sample_size != registered_n:
         raise ValueError("lockbox merge caller sample size drift")
-    expected_metadata = {"protocol_digest", "spec_digest", "config_digest", "generator_digest", "generator_manifest_sha256", "source_commit", "source_dirty", "selected_protocol_sha256", "selection_source_commit", "power_plan_sha256", "power_source_commit"}
+    expected_metadata = set(LOCKBOX_PROVENANCE_FIELDS)
     live_metadata = registered_metadata(repo_root)
     trusted_metadata = {
         field: live_metadata[field]
@@ -876,7 +902,7 @@ def merge_lockbox_manifests(
     final = {"schema": MERGED_MANIFEST_SCHEMA, "status": "COMPLETE", "sample_size": registered_n, "raw_shards": shards, **trusted_metadata, "environment_compatibility": environment_compatibility}
     if set(final) != MERGED_MANIFEST_FIELDS:
         raise RuntimeError("lockbox merged manifest schema drift")
-    _atomic_json(output_path, final)
+    _write_once_json(output_path, final)
     return final
 
 

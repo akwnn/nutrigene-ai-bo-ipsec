@@ -21,6 +21,10 @@
   has no replicate reserve.
 - OA-LHS is excluded: exact strength-2 construction needs 49 evaluations and the matched
   Hartmann6 study did not reduce design-lottery SD. The opening remains scrambled Sobol.
+- Lockbox size is selected only by the frozen held-out LOFO power rule: the first
+  `n` in 350..2,000 that passes paired-normal power and exact-confidence
+  nonparametric sensitivity for map and regret in all five development families.
+  Failure to find such an `n` yields `INSUFFICIENT_POWER` and forbids lockbox access.
 
 ## Baseline evidence
 
@@ -83,11 +87,26 @@ regressions and are not being repaired inside the prospective study branch.
   with the completion manifest installed last. The final relevant suite is 275 passed
   with two pre-existing Torch deprecation warnings, and the reviewer reported no
   Critical, Important, or Minor findings.
+- The pre-lockbox power system is fully implemented through release validation. It
+  authenticates exact committed held-out development bytes, recomputes the selected
+  LOFO analysis, writes one immutable power artifact, derives every lockbox range and
+  count from its decision, and binds the same power hash/source through shard, merge,
+  analysis, and release. Symlink/path-swap races and post-outcome code reinterpretation
+  are rejected before outcome readers or oracle construction can run.
+- Lockbox execution supports any number of disjoint cross-host shards with exact
+  no-gap/no-overlap coverage. Full host provenance is retained per row while a frozen
+  science-affecting environment identity permits different virtualenv paths on
+  compatible hosts. The focused end-to-end suite is 262 passed with two pre-existing
+  Torch deprecation warnings. After final immutable metadata/read/write and source-blob
+  fixes, the two touched lockbox/release modules passed 90 tests with the same two
+  warnings. No development or lockbox outcome was run or opened.
 
 ## Next action
 
-Freeze and independently review the missing pre-lockbox map/regret power and sample-size
-rule before generating development outcomes. Then execute the clean frozen development
-campaign grid and apply the prespecified unanimous leave-one-family-out selection. Do not
-open lockbox outcomes unless exactly one SPADE policy is selected and the frozen power
-gate approves an instance prefix no larger than the 2,000 reserved keys.
+Integrate the approved power implementation, then execute the clean frozen development
+campaign grid and apply the prespecified unanimous leave-one-family-out selection. Only
+after a committed `SELECTED` protocol may the planner create the committed power
+artifact. Do not open lockbox outcomes unless that artifact is `POWERED` with an exact
+instance prefix no larger than the 2,000 reserved keys. Meeting an eight-hour eligible
+lockbox wall-clock remains an execution-capacity/scheduling requirement; the repository
+now supports the required disjoint compatible-host shards but does not provision hosts.

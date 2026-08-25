@@ -1300,12 +1300,34 @@ def read_jsonl_gzip(
     sidecar = Path(str(source) + ".sha256")
     if not source.is_file() or not sidecar.is_file():
         raise ValueError("gzip shard and SHA-256 sidecar must both exist")
-    compressed = source.read_bytes()
-    expected = sidecar.read_text(encoding="ascii").split()
+    return read_jsonl_gzip_bytes(
+        source.read_bytes(),
+        sidecar.read_bytes(),
+        source_name=source.name,
+        protocol_digest=protocol_digest,
+    )
+
+
+def read_jsonl_gzip_bytes(
+    compressed: bytes,
+    sidecar_data: bytes,
+    *,
+    source_name: str,
+    protocol_digest: str,
+) -> list[dict[str, object]]:
+    """Validate a shard from already-authenticated bytes without reopening its path."""
+    if not isinstance(compressed, bytes) or not isinstance(sidecar_data, bytes):
+        raise TypeError("gzip shard and sidecar inputs must be bytes")
+    if not isinstance(source_name, str) or Path(source_name).name != source_name:
+        raise ValueError("gzip shard source name must be a basename")
+    try:
+        expected = sidecar_data.decode("ascii").split()
+    except UnicodeDecodeError as exc:
+        raise ValueError("gzip shard SHA-256 sidecar must be ASCII") from exc
     if (
         len(expected) != 2
         or expected[0] != hashlib.sha256(compressed).hexdigest()
-        or expected[1] != source.name
+        or expected[1] != source_name
     ):
         raise ValueError("gzip shard SHA-256 mismatch")
     if len(compressed) < 10 or compressed[:2] != b"\x1f\x8b" or compressed[4:8] != b"\x00\x00\x00\x00":

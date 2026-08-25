@@ -74,10 +74,20 @@ def _atomic_json(path: Path, value: Mapping[str, object]) -> None:
             handle.write(data)
             handle.flush()
             os.fsync(handle.fileno())
-        os.replace(temporary, path)
+        try:
+            os.link(temporary, path)
+        except FileExistsError as exc:
+            raise ValueError(f"immutable analysis target already exists: {path}") from exc
+        directory_descriptor = os.open(path.parent, os.O_RDONLY)
+        try:
+            os.fsync(directory_descriptor)
+        finally:
+            os.close(directory_descriptor)
     except BaseException:
         temporary.unlink(missing_ok=True)
         raise
+    finally:
+        temporary.unlink(missing_ok=True)
 
 
 def paired_bootstrap_upper(values: Sequence[float], *, replicates: int = BOOTSTRAP_REPLICATES, seed: int = 0) -> float:
@@ -229,7 +239,7 @@ def analyse_lockbox_rows(rows: Sequence[Mapping[str, object]], *, bootstrap_repl
 
 def analyse_merged_manifest(manifest_path: Path, *, power_path: Path | None = None) -> dict[str, object]:
     """Read only hash-validated raw shards named by a completed merged manifest."""
-    from boec.spade_study import read_jsonl_gzip
+    from boec.spade_study import read_jsonl_gzip_bytes
     from scripts import run_spade_lockbox as lockbox_contract
     manifest, _manifest_bytes = _load_canonical_mapping(
         manifest_path, "merged lockbox manifest"
@@ -299,7 +309,8 @@ def analyse_merged_manifest(manifest_path: Path, *, power_path: Path | None = No
         raw = manifest_path.parent / str(raw_file)
         shard_manifest_path = manifest_path.parent / str(manifest_file)
         sidecar_path = manifest_path.parent / str(sidecar_file)
-        actual = hashlib.sha256(raw.read_bytes()).hexdigest() if raw.is_file() else None
+        raw_bytes = raw.read_bytes() if raw.is_file() else None
+        actual = hashlib.sha256(raw_bytes).hexdigest() if raw_bytes is not None else None
         if actual != shard["raw_sha256"]:
             raise ValueError("merged lockbox raw hash mismatch")
         actual_manifest = (
@@ -308,9 +319,10 @@ def analyse_merged_manifest(manifest_path: Path, *, power_path: Path | None = No
         )
         if actual_manifest != shard["manifest_sha256"]:
             raise ValueError("merged lockbox shard manifest hash mismatch")
+        sidecar_bytes = sidecar_path.read_bytes() if sidecar_path.is_file() else None
         actual_sidecar = (
-            hashlib.sha256(sidecar_path.read_bytes()).hexdigest()
-            if sidecar_path.is_file() else None
+            hashlib.sha256(sidecar_bytes).hexdigest()
+            if sidecar_bytes is not None else None
         )
         if actual_sidecar != shard["sha256_sha256"]:
             raise ValueError("merged lockbox SHA-256 sidecar hash mismatch")
@@ -318,7 +330,9 @@ def analyse_merged_manifest(manifest_path: Path, *, power_path: Path | None = No
             shard_manifest, _shard_manifest_bytes = _load_canonical_mapping(
                 shard_manifest_path, "lockbox shard manifest"
             )
-            sidecar_tokens = sidecar_path.read_text(encoding="ascii").split()
+            if sidecar_bytes is None:
+                raise ValueError("lockbox SHA-256 sidecar is missing")
+            sidecar_tokens = sidecar_bytes.decode("ascii").split()
         except (OSError, UnicodeDecodeError, ValueError, RecursionError) as exc:
             raise ValueError("merged lockbox shard metadata is invalid") from exc
         shard_manifest = lockbox_contract.validate_completed_shard_contract(
@@ -327,7 +341,14 @@ def analyse_merged_manifest(manifest_path: Path, *, power_path: Path | None = No
         )
         if sidecar_tokens != [shard["raw_sha256"], raw_file]:
             raise ValueError("merged lockbox SHA-256 sidecar content mismatch")
-        shard_rows = read_jsonl_gzip(raw, protocol_digest=str(manifest["protocol_digest"]))
+        if raw_bytes is None or sidecar_bytes is None:
+            raise ValueError("merged lockbox raw bytes are missing")
+        shard_rows = read_jsonl_gzip_bytes(
+            raw_bytes,
+            sidecar_bytes,
+            source_name=str(raw_file),
+            protocol_digest=str(manifest["protocol_digest"]),
+        )
         rows.extend(lockbox_contract.validate_shard_local_rows(
             shard_rows,
             family=shard_manifest["family"],
