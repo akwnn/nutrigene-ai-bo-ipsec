@@ -55,9 +55,9 @@ A matched experimental budget is scientifically incomplete until the terminal de
 
 ### Panels
 
-**A. Campaign spine.** A restrained vector workflow will show formulation variables, sampled wells, noisy assay responses, and a fitted response model. The schematic will use geometric shapes and arrows rather than stock illustrations, biological clip art, or generative imagery.
+**A. Campaign spine.** A restrained vector workflow will show formulation variables, sampled wells, noisy assay responses, and a fitted response model. Repeated stages will use aligned, equal-sized modules; pale fills will encode semantic stage; and nested or repeated operations will use rounded or dashed group containers. The schematic will use geometric shapes and arrows rather than stock illustrations, biological clip art, or generative imagery.
 
-**B. Decision fork.** The same campaign will branch into hidden tested-best, single noisy-readout selection, posterior/model recommendation, confirmation protocol, acceptable-region map, and conservative certificate. Point decisions and set-valued decisions will occupy visibly separate branches.
+**B. Decision fork.** The same campaign will branch into hidden tested-best, single noisy-readout selection, posterior/model recommendation, confirmation protocol, acceptable-region map, and conservative certificate. Point decisions and set-valued decisions will occupy visibly separate grouped branches, using one primary flow direction and avoiding crossed connectors.
 
 **C. Estimand ledger.** A compact matrix will list, for each branch, the selected object, practical observability, scoring quantity, additional wells, and feedback rounds. The ledger will distinguish simple regret, symmetric-difference error, probability calibration, and joint containment.
 
@@ -134,6 +134,20 @@ The first implementation pass will reserve stable identifiers for:
 The unresolved boundary-targeting comparison is prohibited from the main and supplementary packages until corrected and frozen.
 
 ## Visual System
+
+### Reference visual benchmark
+
+The visual benchmark supplied during design review is Jiang et al., “A data-driven framework for plant-wide modeling and simulation in biopharmaceutical manufacturing,” *Computers & Chemical Engineering* 215 (2026) 109830, doi:10.1016/j.compchemeng.2026.109830. Its most successful features will inform the visual grammar without reproducing its layouts:
+
+- centered, self-contained scientific schematics with generous white space;
+- repeated modules drawn with consistent dimensions, alignment, and border weight;
+- pale semantic fills contained by dark outlines, with colour reserved for model or data-flow meaning;
+- dashed group boundaries and rounded containers to distinguish hierarchy from sequence;
+- predominantly left-to-right or top-to-bottom flow with minimal line crossings;
+- compact, aligned small multiples with shared axes, common reference lines, and one figure-level key;
+- concise panel labels embedded at the upper-left of each panel and captions kept outside the artwork.
+
+The implementation will exceed the reference where its production choices are unsuitable for this paper. The reference figures are embedded as approximately 300-dpi raster images; the new schematics and statistical plots will remain editable vectors. Final-size labels will be larger, repeated axes will be suppressed where safe, method identity will not rely on the reference's low-separation cyan/blue or red/green combinations, and uncertainty and practical-effect bands will be shown explicitly rather than relying on scatter alone.
 
 ### Palette and redundant encodings
 
