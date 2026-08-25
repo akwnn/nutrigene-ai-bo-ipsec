@@ -65,59 +65,61 @@ def export_bundle(bundle: FigureBundle, output_dir: Path, preset: VenuePreset | 
     """Write all publication formats and machine-readable panel sidecars."""
     if isinstance(preset, str):
         preset = get_preset(preset)
-    assert_no_prohibited_content(bundle.panel_data)
-    assert_no_prohibited_content(bundle.alt_text)
     output_dir = Path(output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
-    paths = {
-        suffix: output_dir / f"{bundle.figure_id}.{suffix}"
-        for suffix in ("pdf", "svg", "png", "tiff", "data.json", "alt.txt")
-    }
-    # A builder may inherit a style's rounded figure width; restore the venue's
-    # physical width before rasterisation so pixels are exactly reproducible.
-    width_in = preset.width_mm / 25.4
-    bundle.figure.set_size_inches(width_in, bundle.figure.get_figheight(), forward=True)
-    # Keep backend settings explicit at export time, independent of caller rcParams.
-    export_rc = {
-        "pdf.fonttype": 42,
-        "ps.fonttype": 42,
-        "svg.fonttype": "none",
-        "svg.hashsalt": "boec-paper-figures-v1",
-    }
-    fixed_date = datetime(2000, 1, 1, tzinfo=timezone.utc)
-    with mpl.rc_context(export_rc):
-        bundle.figure.savefig(
-            paths["pdf"], format="pdf",
-            metadata={"Creator": "boec.paper_figures", "CreationDate": fixed_date},
+    try:
+        assert_no_prohibited_content(bundle.panel_data)
+        assert_no_prohibited_content(bundle.alt_text)
+        paths = {
+            suffix: output_dir / f"{bundle.figure_id}.{suffix}"
+            for suffix in ("pdf", "svg", "png", "tiff", "data.json", "alt.txt")
+        }
+        # A builder may inherit a style's rounded figure width; restore the venue's
+        # physical width before rasterisation so pixels are exactly reproducible.
+        width_in = preset.width_mm / 25.4
+        bundle.figure.set_size_inches(width_in, bundle.figure.get_figheight(), forward=True)
+        # Keep backend settings explicit at export time, independent of caller rcParams.
+        export_rc = {
+            "pdf.fonttype": 42,
+            "ps.fonttype": 42,
+            "svg.fonttype": "none",
+            "svg.hashsalt": "boec-paper-figures-v1",
+        }
+        fixed_date = datetime(2000, 1, 1, tzinfo=timezone.utc)
+        with mpl.rc_context(export_rc):
+            bundle.figure.savefig(
+                paths["pdf"], format="pdf",
+                metadata={"Creator": "boec.paper_figures", "CreationDate": fixed_date},
+            )
+            bundle.figure.savefig(
+                paths["svg"], format="svg",
+                metadata={"Creator": "boec.paper_figures", "Date": "2000-01-01T00:00:00+00:00"},
+            )
+            bundle.figure.savefig(paths["png"], format="png", dpi=preset.png_dpi)
+            bundle.figure.savefig(
+                paths["tiff"], format="tiff", dpi=preset.tiff_dpi,
+                pil_kwargs={"compression": "tiff_lzw"},
+            )
+        # Matplotlib's Agg backend commonly emits RGBA even for opaque artwork;
+        # publication raster derivatives are explicitly RGB.
+        for suffix in ("png", "tiff"):
+            with Image.open(paths[suffix]) as image:
+                if image.mode != "RGB":
+                    converted = image.convert("RGB")
+                    if suffix == "tiff":
+                        converted.save(paths[suffix], dpi=(preset.tiff_dpi, preset.tiff_dpi), compression="tiff_lzw")
+                    else:
+                        converted.save(paths[suffix], dpi=(preset.png_dpi, preset.png_dpi))
+        paths["data.json"].write_text(
+            json.dumps(bundle.panel_data, indent=2, sort_keys=True) + "\n", encoding="utf-8"
         )
-        bundle.figure.savefig(
-            paths["svg"], format="svg",
-            metadata={"Creator": "boec.paper_figures", "Date": "2000-01-01T00:00:00+00:00"},
-        )
-        bundle.figure.savefig(paths["png"], format="png", dpi=preset.png_dpi)
-        bundle.figure.savefig(
-            paths["tiff"], format="tiff", dpi=preset.tiff_dpi,
-            pil_kwargs={"compression": "tiff_lzw"},
-        )
-    # Matplotlib's Agg backend commonly emits RGBA even for opaque artwork;
-    # publication raster derivatives are explicitly RGB.
-    for suffix in ("png", "tiff"):
-        with Image.open(paths[suffix]) as image:
-            if image.mode != "RGB":
-                converted = image.convert("RGB")
-                if suffix == "tiff":
-                    converted.save(paths[suffix], dpi=(preset.tiff_dpi, preset.tiff_dpi), compression="tiff_lzw")
-                else:
-                    converted.save(paths[suffix], dpi=(preset.png_dpi, preset.png_dpi))
-    paths["data.json"].write_text(
-        json.dumps(bundle.panel_data, indent=2, sort_keys=True) + "\n", encoding="utf-8"
-    )
-    paths["alt.txt"].write_text(bundle.alt_text.strip() + "\n", encoding="utf-8")
-    plt.close(bundle.figure)
-    return {
-        name: {"path": str(path), "sha256": sha256_file(path)}
-        for name, path in paths.items()
-    }
+        paths["alt.txt"].write_text(bundle.alt_text.strip() + "\n", encoding="utf-8")
+        return {
+            name: {"path": path.name, "sha256": sha256_file(path)}
+            for name, path in paths.items()
+        }
+    finally:
+        plt.close(bundle.figure)
 
 
 def make_contact_sheet(png_paths: list[Path], path: Path) -> None:
@@ -158,20 +160,31 @@ def build_all(results_dir: Path, output_dir: Path, preset_name: str = "portable"
     preset = get_preset(preset_name)
     results_dir, output_dir = Path(results_dir), Path(output_dir)
     figure_dir = output_dir / preset.name
+    evidence_paths = source_paths(results_dir)
+    if missing := [path for path in evidence_paths if not path.exists()]:
+        raise FileNotFoundError(f"required evidence source is missing: {missing[0]}")
+    source_hashes = {str(path): sha256_file(path) for path in evidence_paths}
     data2 = build_figure2_data(results_dir)
     data3 = build_figure3_data(results_dir)
     data4 = build_figure4_data(results_dir)
-    bundles = (
-        build_figure1(preset), build_figure2(data2, preset),
-        build_figure3(data3, preset), build_figure4(data4, preset),
-    )
-    figures = {bundle.figure_id: export_bundle(bundle, figure_dir, preset) for bundle in bundles}
+    # Build, export, and close one figure at a time; this keeps failures from
+    # leaking open GUI/backend figures into subsequent builds.
+    figures = {}
+    for builder, data in (
+        (build_figure1, None), (build_figure2, data2),
+        (build_figure3, data3), (build_figure4, data4),
+    ):
+        bundle = builder(preset) if data is None else builder(data, preset)
+        records = export_bundle(bundle, figure_dir, preset)
+        figures[bundle.figure_id] = {
+            key: {**record, "path": str(Path(preset.name) / record["path"])}
+            for key, record in records.items()
+        }
     make_contact_sheet([figure_dir / f"fig{i}.png" for i in range(1, 5)], output_dir / "paper-figures-contact-sheet.png")
-    sources = {}
-    for path in source_paths(results_dir):
-        if not path.exists():
-            raise FileNotFoundError(f"required evidence source is missing: {path}")
-        sources[str(path)] = sha256_file(path)
+    sources = {str(path): digest for path, digest in source_hashes.items()}
+    for path, digest in source_hashes.items():
+        if sha256_file(Path(path)) != digest:
+            raise RuntimeError(f"evidence source changed during build: {path}")
     manifest = {
         "built_at_utc": _manifest_time(),
         "code_commit": _git_value("rev-parse", "HEAD"),

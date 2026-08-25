@@ -47,13 +47,10 @@ def test_panel_data_alt_text_and_manifest_are_traceable(tmp_path):
 def test_rebuild_is_deterministic(tmp_path):
     first = build_all(Path("results"), tmp_path / "one", "portable")
     second = build_all(Path("results"), tmp_path / "two", "portable")
-    # Output paths are intentionally absolute for a directly consumable manifest;
-    # compare the content and hashes, not each temporary directory name.
-    for manifest in (first, second):
-        for records in manifest["figures"].values():
-            for record in records.values():
-                record["path"] = Path(record["path"]).name
     assert first == second
+    assert (tmp_path / "one" / "build-manifest.json").read_bytes() == (
+        tmp_path / "two" / "build-manifest.json"
+    ).read_bytes()
     for figure_id in ("fig1", "fig2", "fig3", "fig4"):
         for suffix in ("pdf", "svg", "tiff", "png", "data.json", "alt.txt"):
             a = (tmp_path / "one" / "portable" / f"{figure_id}.{suffix}").read_bytes()
