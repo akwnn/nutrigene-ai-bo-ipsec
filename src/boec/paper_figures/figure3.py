@@ -153,16 +153,18 @@ def build_figure3(data: dict, preset: VenuePreset) -> FigureBundle:
             rows = [row for row in data["hartmann"] if row["condition"] == condition]
             for row in rows:
                 style = method_style(row["arm"])
-                axis_d.scatter(
+                point = axis_d.scatter(
                     row["map_error"],
                     row["regret_p"],
                     marker=style.marker,
                     s=24,
-                    facecolor=style.colour if condition == _HARTMANN_CONDITIONS[0] else "white",
+                    facecolor=_marker_facecolour(row["arm"]),
                     edgecolor=style.colour,
-                    linewidth=0.9,
+                    linewidth=0.8 if condition == _HARTMANN_CONDITIONS[0] else 1.6,
+                    linestyle="-" if condition == _HARTMANN_CONDITIONS[0] else "--",
                     label=style.label if condition == _HARTMANN_CONDITIONS[0] else "_nolegend_",
                 )
+                point.set_gid(f"{condition}:{row['arm']}")
         axis_d.set_xlabel("Symmetric-difference error")
         axis_d.set_ylabel("Rule-P simple regret")
         axis_d.legend(
@@ -177,7 +179,8 @@ def build_figure3(data: dict, preset: VenuePreset) -> FigureBundle:
             fontsize=preset.body_pt,
             wrap=True,
         )
-        axis_d.text(0.02, 0.95, "filled: d=6; open: d=8", transform=axis_d.transAxes, va="top", fontsize=preset.body_pt)
+        condition_key = "thin border: d=6\nthick dashed: d=8" if preset.name == "plos" else "thin border: d=6; thick dashed: d=8"
+        axis_d.text(0.02, 0.95, condition_key, transform=axis_d.transAxes, va="top", fontsize=preset.body_pt)
         for axis in (axis_a, axis_b, axis_d):
             _keep_ticks_within_view(axis)
 

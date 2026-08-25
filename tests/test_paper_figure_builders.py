@@ -8,6 +8,7 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 from matplotlib.collections import PathCollection
+from matplotlib.colors import to_hex
 from matplotlib.text import Text
 import numpy as np
 import pytest
@@ -216,9 +217,20 @@ def test_figure3_rendered_panels_preserve_pareto_contrasts_costs_and_descriptive
     assert {text.get_text() for text in panel_d.get_legend().get_texts()} == {
         "Classical DoE", "Latin hypercube", "Sobol", "qLogEI", "qLogNEI", "SPADE"
     }
-    assert "filled: d=6; open: d=8" in {text.get_text() for text in panel_d.texts}
+    assert "thin border: d=6; thick dashed: d=8" in {text.get_text() for text in panel_d.texts}
     assert {float(size) for collection in panel_a.collections for size in collection.get_sizes()} == {34.0}
     assert {float(size) for collection in panel_d.collections for size in collection.get_sizes()} == {24.0}
+
+    hartmann_points = {collection.get_gid(): collection for collection in panel_d.collections}
+    arms = ("doe", "lhs", "sobol", "qlogei", "qlognei", "spade_cf_m0")
+    conditions = ("hartmann6-d6-s0.25", "hartmann6-d8-s0.25")
+    assert set(hartmann_points) == {f"{condition}:{arm}" for condition in conditions for arm in arms}
+    for condition in conditions:
+        assert to_hex(hartmann_points[f"{condition}:qlogei"].get_facecolors()[0]) == "#ffffff"
+        assert to_hex(hartmann_points[f"{condition}:qlognei"].get_facecolors()[0]) == "#0072b2"
+        assert to_hex(hartmann_points[f"{condition}:lhs"].get_facecolors()[0]) == "#ffffff"
+        assert to_hex(hartmann_points[f"{condition}:sobol"].get_facecolors()[0]) == "#6b7280"
+    assert hartmann_points["hartmann6-d6-s0.25:doe"].get_linewidths()[0] != hartmann_points["hartmann6-d8-s0.25:doe"].get_linewidths()[0]
 
     plt.close(figure)
 
