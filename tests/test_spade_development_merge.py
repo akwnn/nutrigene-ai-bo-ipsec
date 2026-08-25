@@ -20,6 +20,9 @@ CONFIG = "f" * 64
 GENERATOR = "a" * 64
 GENERATOR_MANIFEST = "b" * 64
 SOURCE = "1" * 40
+POWER_DESIGN = "2" * 64
+POWER_ENGINE = "3" * 64
+POWER_PLANNER = "4" * 64
 
 
 def _canonical_bytes(value: object) -> bytes:
@@ -44,6 +47,15 @@ def _metadata() -> dict[str, object]:
         "generator_manifest_sha256": GENERATOR_MANIFEST,
         "source_commit": SOURCE,
         "source_dirty": False,
+    }
+
+
+def _registered_metadata() -> dict[str, object]:
+    return {
+        **_metadata(),
+        "power_design_digest": POWER_DESIGN,
+        "power_engine_digest": POWER_ENGINE,
+        "power_planner_digest": POWER_PLANNER,
     }
 
 
@@ -114,6 +126,16 @@ def _import_merger():
     return merger
 
 
+@pytest.fixture(autouse=True)
+def _freeze_current_registered_metadata(monkeypatch: pytest.MonkeyPatch) -> None:
+    merger = _import_merger()
+    monkeypatch.setattr(
+        merger.development,
+        "registered_metadata",
+        lambda _root: _registered_metadata(),
+    )
+
+
 def test_merge_emits_deterministic_canonical_artifacts_accepted_unchanged(
     tmp_path: Path,
 ) -> None:
@@ -136,8 +158,46 @@ def test_merge_emits_deterministic_canonical_artifacts_accepted_unchanged(
         selector_manifests.append(manifest_path)
         assert manifest["status"] == "COMPLETE"
         assert manifest["row_count"] == 550
+        resume = json.loads(Path(f"{output}.resume.json").read_bytes())
+        output_rows = development.read_shard_rows(output, PROTOCOL)
+        assert resume["command_args"] == manifest["command_args"]
+        assert all(row["command_args"] == manifest["command_args"] for row in output_rows)
+        ledger = merger.parent_shard_ledger(manifest["command_args"])
+        assert ledger["schema"] == "boec-spade-development-parent-ledger-v1"
+        assert [(item["start"], item["stop"]) for item in ledger["parents"]] == [
+            (0, 25),
+            (25, 50),
+        ]
+        for parent in ledger["parents"]:
+            parent_manifest = next(
+                path for path in inputs if path.name == parent["manifest_file"]
+            )
+            raw = Path(str(parent_manifest).removesuffix(".manifest.json"))
+            assert parent["manifest_sha256"] == hashlib.sha256(
+                parent_manifest.read_bytes()
+            ).hexdigest()
+            assert parent["raw_sha256"] == hashlib.sha256(raw.read_bytes()).hexdigest()
+            assert parent["sidecar_sha256"] == hashlib.sha256(
+                Path(f"{raw}.sha256").read_bytes()
+            ).hexdigest()
+            assert parent["resume_sha256"] == hashlib.sha256(
+                Path(f"{raw}.resume.json").read_bytes()
+            ).hexdigest()
+            assert parent["command_args"] == ["--family", family]
+            assert parent["provenance"] == _metadata()
+        revalidated, revalidated_rows, _, _ = merger._validate_input_shard(
+            manifest_path,
+            family=family,
+            common_provenance=_metadata(),
+        )
+        assert revalidated == manifest
+        assert revalidated_rows == output_rows
+        expected_rows = [
+            {**row, "command_args": manifest["command_args"]}
+            for row in _family_rows(family)
+        ]
         assert output.read_bytes() == merger.canonical_gzip_bytes(
-            _family_rows(family), protocol_digest=PROTOCOL
+            expected_rows, protocol_digest=PROTOCOL
         )
         assert output.with_suffix(output.suffix + ".sha256").read_bytes() == (
             f"{hashlib.sha256(output.read_bytes()).hexdigest()}  {output.name}\n"
@@ -261,3 +321,117 @@ def test_merge_never_overwrites_a_target_that_appears_during_promotion(
     assert not Path(f"{output}.sha256").exists()
     assert not Path(f"{output}.resume.json").exists()
     assert not Path(f"{output}.manifest.json").exists()
+
+
+def test_merge_rejects_symlinked_input_parent_and_lexical_output_escape(
+    tmp_path: Path,
+) -> None:
+    merger = _import_merger()
+    real_inputs = tmp_path / "real-inputs"
+    inputs = _split_family(real_inputs, "ackley")
+    linked_inputs = tmp_path / "linked-inputs"
+    linked_inputs.symlink_to(real_inputs, target_is_directory=True)
+    supplied = [linked_inputs / path.name for path in inputs]
+    output = tmp_path / "results" / "spade-development-ackley-000-050.jsonl.gz"
+
+    with pytest.raises(ValueError, match="symlink"):
+        merger.merge_development_shards(
+            supplied,
+            family="ackley",
+            output=output,
+            repo_root=tmp_path,
+        )
+    assert not output.exists()
+
+    escaped_lexically = (
+        tmp_path
+        / "results"
+        / "not-a-real-directory"
+        / ".."
+        / "spade-development-ackley-000-050.jsonl.gz"
+    )
+    with pytest.raises(ValueError, match="lexical|traversal|results"):
+        merger.merge_development_shards(
+            inputs,
+            family="ackley",
+            output=escaped_lexically,
+            repo_root=tmp_path,
+        )
+    assert not output.exists()
+
+
+def test_merge_rejects_symlinked_repo_component_before_writing(
+    tmp_path: Path,
+) -> None:
+    merger = _import_merger()
+    real_repo = tmp_path / "real-repo"
+    inputs = _split_family(tmp_path / "inputs", "ackley")
+    real_repo.mkdir()
+    linked_repo = tmp_path / "linked-repo"
+    linked_repo.symlink_to(real_repo, target_is_directory=True)
+    output = linked_repo / "results" / "spade-development-ackley-000-050.jsonl.gz"
+
+    with pytest.raises(ValueError, match="symlink"):
+        merger.merge_development_shards(
+            inputs,
+            family="ackley",
+            output=output,
+            repo_root=linked_repo,
+        )
+    assert not (real_repo / "results").exists()
+
+
+@pytest.mark.parametrize("drift", ["source_commit", "source_dirty", "config_digest"])
+def test_merge_preflights_current_clean_registered_metadata_before_writing(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    drift: str,
+) -> None:
+    merger = _import_merger()
+    inputs = _split_family(tmp_path / "inputs", "ackley")
+    current = _registered_metadata()
+    if drift == "source_dirty":
+        current[drift] = True
+    else:
+        current[drift] = ("9" * 40) if drift == "source_commit" else ("9" * 64)
+    monkeypatch.setattr(
+        merger.development,
+        "registered_metadata",
+        lambda _root: current,
+    )
+    output = tmp_path / "results" / "spade-development-ackley-000-050.jsonl.gz"
+
+    with pytest.raises(ValueError, match="current|registered|clean|provenance"):
+        merger.merge_development_shards(
+            inputs,
+            family="ackley",
+            output=output,
+            repo_root=tmp_path,
+        )
+    assert not (tmp_path / "results").exists()
+
+
+def test_parent_ledger_rejects_noncanonical_or_malformed_authentication(
+    tmp_path: Path,
+) -> None:
+    merger = _import_merger()
+    parents = []
+    for path in sorted(_split_family(tmp_path / "inputs", "ackley")):
+        _, _, _, parent = merger._validate_input_shard(
+            path,
+            family="ackley",
+            common_provenance=_metadata(),
+        )
+        parents.append(parent)
+    parents.sort(key=lambda item: item["start"])
+    valid = list(merger._merged_command_args("ackley", parents))
+    assert merger.parent_shard_ledger(valid)["parents"] == parents
+
+    malformed = json.loads(valid[3])
+    malformed["parents"][0]["raw_sha256"] = "0" * 63
+    with pytest.raises(ValueError, match="hexadecimal"):
+        merger.parent_shard_ledger([*valid[:3], merger._canonical_json(malformed)])
+
+    noncanonical = json.dumps(json.loads(valid[3]), indent=2)
+    with pytest.raises(ValueError, match="canonical"):
+        merger.parent_shard_ledger([*valid[:3], noncanonical])

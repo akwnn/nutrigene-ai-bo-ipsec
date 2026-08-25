@@ -9,6 +9,7 @@ import hashlib
 import io
 import json
 import os
+import stat
 import sys
 import tempfile
 from pathlib import Path
@@ -31,6 +32,27 @@ _PROVENANCE_FIELDS = (
     "source_commit",
     "source_dirty",
 )
+_PARENT_LEDGER_SCHEMA = "boec-spade-development-parent-ledger-v1"
+_PARENT_LEDGER_FLAG = "--parent-shard-ledger-json"
+_PARENT_FIELDS = frozenset(
+    {
+        "start",
+        "stop",
+        "expected_rows",
+        "row_count",
+        "manifest_file",
+        "manifest_sha256",
+        "raw_file",
+        "raw_sha256",
+        "sidecar_file",
+        "sidecar_sha256",
+        "resume_file",
+        "resume_sha256",
+        "row_chain_head",
+        "command_args",
+        "provenance",
+    }
+)
 
 
 def _canonical_json(value: object) -> str:
@@ -51,6 +73,16 @@ def _sha256(data: bytes) -> str:
     return hashlib.sha256(data).hexdigest()
 
 
+def _lower_hex(value: object, name: str, *, length: int = 64) -> str:
+    if (
+        not isinstance(value, str)
+        or len(value) != length
+        or any(character not in "0123456789abcdef" for character in value)
+    ):
+        raise ValueError(f"{name} must be {length} lowercase hexadecimal characters")
+    return value
+
+
 def _read_canonical_mapping(path: Path, name: str) -> tuple[dict[str, object], bytes]:
     _require_regular_file(path, name)
     data = path.read_bytes()
@@ -69,9 +101,39 @@ def _read_canonical_mapping(path: Path, name: str) -> tuple[dict[str, object], b
     return payload, data
 
 
+def _lexical_absolute(path: str | Path, *, base: Path, name: str) -> Path:
+    supplied = Path(path)
+    if ".." in supplied.parts:
+        raise ValueError(f"{name} contains lexical traversal")
+    candidate = supplied if supplied.is_absolute() else base / supplied
+    if not candidate.is_absolute():
+        raise ValueError(f"{name} is not an absolute lexical path")
+    return candidate
+
+
+def _reject_symlink_components(
+    path: Path, *, name: str, allow_missing_tail: bool = False
+) -> None:
+    if not path.is_absolute():
+        raise ValueError(f"{name} must be absolute before symlink validation")
+    current = Path(path.anchor)
+    for component in path.parts[1:]:
+        current = current / component
+        try:
+            status = os.lstat(current)
+        except FileNotFoundError:
+            if allow_missing_tail:
+                return
+            raise ValueError(f"{name} is missing: {current}") from None
+        if stat.S_ISLNK(status.st_mode):
+            raise ValueError(f"{name} contains a symlink component: {current}")
+
+
 def _require_regular_file(path: Path, name: str) -> None:
-    if path.is_symlink() or not path.is_file():
-        raise ValueError(f"{name} must be a regular non-symlink file: {path}")
+    _reject_symlink_components(path, name=name)
+    status = os.lstat(path)
+    if not stat.S_ISREG(status.st_mode):
+        raise ValueError(f"{name} must be a regular file: {path}")
 
 
 def output_paths(output: str | Path) -> tuple[Path, Path, Path, Path]:
@@ -98,6 +160,95 @@ def canonical_gzip_bytes(
     return buffer.getvalue()
 
 
+def parent_shard_ledger(command_args: object) -> dict[str, object]:
+    """Decode and validate the authenticated parent ledger carried by merged rows."""
+    if (
+        not isinstance(command_args, list)
+        or len(command_args) != 4
+        or command_args[0] != "--family"
+        or not isinstance(command_args[1], str)
+        or command_args[1] not in development.DEVELOPMENT_FAMILIES
+        or command_args[2] != _PARENT_LEDGER_FLAG
+        or not isinstance(command_args[3], str)
+    ):
+        raise ValueError("merged command_args do not contain an explicit parent ledger")
+    try:
+        ledger = json.loads(command_args[3])
+    except json.JSONDecodeError as exc:
+        raise ValueError("parent-shard ledger is not JSON") from exc
+    if command_args[3] != _canonical_json(ledger):
+        raise ValueError("parent-shard ledger is not canonical JSON")
+    if (
+        not isinstance(ledger, dict)
+        or set(ledger) != {"schema", "family", "parents"}
+        or ledger["schema"] != _PARENT_LEDGER_SCHEMA
+        or ledger["family"] != command_args[1]
+        or not isinstance(ledger["parents"], list)
+        or not ledger["parents"]
+    ):
+        raise ValueError("parent-shard ledger schema or family drift")
+    cursor = 0
+    common_provenance: dict[str, object] | None = None
+    for index, value in enumerate(ledger["parents"]):
+        if not isinstance(value, dict) or set(value) != _PARENT_FIELDS:
+            raise ValueError(f"parent-shard ledger entry {index} fields drift")
+        start = development._strict_int(value["start"], f"parent {index} start")
+        stop = development._strict_int(
+            value["stop"], f"parent {index} stop", minimum=1
+        )
+        if start != cursor or not start < stop <= development.CAMPAIGNS_PER_FAMILY:
+            raise ValueError("parent-shard ledger ranges contain a gap or overlap")
+        expected_rows = (stop - start) * len(development.DEVELOPMENT_ARM_IDS)
+        if value["expected_rows"] != expected_rows or value["row_count"] != expected_rows:
+            raise ValueError("parent-shard ledger row counts drift")
+        raw_name = (
+            f"spade-development-{ledger['family']}-{start:03d}-{stop:03d}.jsonl.gz"
+        )
+        expected_names = {
+            "manifest_file": f"{raw_name}.manifest.json",
+            "raw_file": raw_name,
+            "sidecar_file": f"{raw_name}.sha256",
+            "resume_file": f"{raw_name}.resume.json",
+        }
+        if any(value[field] != expected for field, expected in expected_names.items()):
+            raise ValueError("parent-shard ledger filename identity drift")
+        for field in (
+            "manifest_sha256",
+            "raw_sha256",
+            "sidecar_sha256",
+            "resume_sha256",
+            "row_chain_head",
+        ):
+            _lower_hex(value[field], f"parent {index} {field}")
+        if not isinstance(value["command_args"], list) or not all(
+            isinstance(argument, str) for argument in value["command_args"]
+        ):
+            raise ValueError("parent-shard ledger command_args drift")
+        provenance = value["provenance"]
+        if (
+            not isinstance(provenance, dict)
+            or set(provenance) != set(_PROVENANCE_FIELDS)
+            or provenance["source_dirty"] is not False
+        ):
+            raise ValueError("parent-shard ledger clean provenance drift")
+        for field in _PROVENANCE_FIELDS:
+            if field == "source_dirty":
+                continue
+            _lower_hex(
+                provenance[field],
+                f"parent {index} provenance {field}",
+                length=40 if field == "source_commit" else 64,
+            )
+        if common_provenance is None:
+            common_provenance = provenance
+        elif provenance != common_provenance:
+            raise ValueError("parent-shard ledger mixes provenance identities")
+        cursor = stop
+    if cursor != development.CAMPAIGNS_PER_FAMILY:
+        raise ValueError("parent-shard ledger does not cover exact interval [0,50)")
+    return ledger
+
+
 def _key_index(family: str, row: Mapping[str, object]) -> int:
     key = (row.get("instance_seed"), row.get("campaign_seed"))
     by_key = {
@@ -118,8 +269,11 @@ def _validate_input_shard(
     dict[str, object],
     list[dict[str, object]],
     dict[str, object],
+    dict[str, object],
 ]:
-    parsed, _ = _read_canonical_mapping(manifest_path, "development manifest")
+    parsed, manifest_bytes = _read_canonical_mapping(
+        manifest_path, "development manifest"
+    )
     manifest = development.validate_shard_manifest(parsed)
     if manifest["family"] != family:
         raise ValueError("development manifests mix family identities")
@@ -138,6 +292,10 @@ def _validate_input_shard(
     provenance = {field: manifest[field] for field in _PROVENANCE_FIELDS}
     if common_provenance is not None and provenance != dict(common_provenance):
         raise ValueError("development shards mix clean provenance identities")
+    if _PARENT_LEDGER_FLAG in manifest["command_args"]:
+        ledger = parent_shard_ledger(manifest["command_args"])
+        if any(parent["provenance"] != provenance for parent in ledger["parents"]):
+            raise ValueError("parent-shard ledger provenance differs from merged manifest")
 
     raw_path = manifest_path.parent / raw_name
     sidecar_path = Path(f"{raw_path}.sha256")
@@ -153,7 +311,8 @@ def _validate_input_shard(
     if raw_digest != manifest["raw_sha256"]:
         raise ValueError("development raw SHA-256 does not match manifest")
     expected_sidecar = f"{raw_digest}  {raw_name}\n".encode("ascii")
-    if sidecar_path.read_bytes() != expected_sidecar:
+    sidecar_bytes = sidecar_path.read_bytes()
+    if sidecar_bytes != expected_sidecar:
         raise ValueError("development SHA-256 sidecar path or hash drift")
 
     resume, resume_bytes = _read_canonical_mapping(
@@ -216,16 +375,58 @@ def _validate_input_shard(
     ]
     if actual_order != expected_order:
         raise ValueError("development shard rows are not in canonical key/arm order")
-    return manifest, rows, provenance
+    parent = _parent_record(
+        manifest,
+        manifest_path,
+        manifest_bytes=manifest_bytes,
+        raw_bytes=raw_bytes,
+        sidecar_bytes=sidecar_bytes,
+        resume_bytes=resume_bytes,
+    )
+    return manifest, rows, provenance, parent
 
 
-def _stable_command_args(
-    family: str, manifests: Sequence[tuple[int, int, Path]]
+def _parent_record(
+    manifest: Mapping[str, object],
+    manifest_path: Path,
+    *,
+    manifest_bytes: bytes,
+    raw_bytes: bytes,
+    sidecar_bytes: bytes,
+    resume_bytes: bytes,
+) -> dict[str, object]:
+    raw_path = manifest_path.parent / str(manifest["raw_file"])
+    sidecar_path = Path(f"{raw_path}.sha256")
+    resume_path = manifest_path.parent / str(manifest["resume_file"])
+    provenance = {field: manifest[field] for field in _PROVENANCE_FIELDS}
+    return {
+        "start": manifest["start"],
+        "stop": manifest["stop"],
+        "expected_rows": manifest["expected_rows"],
+        "row_count": manifest["row_count"],
+        "manifest_file": manifest_path.name,
+        "manifest_sha256": _sha256(manifest_bytes),
+        "raw_file": raw_path.name,
+        "raw_sha256": _sha256(raw_bytes),
+        "sidecar_file": sidecar_path.name,
+        "sidecar_sha256": _sha256(sidecar_bytes),
+        "resume_file": resume_path.name,
+        "resume_sha256": _sha256(resume_bytes),
+        "row_chain_head": manifest["row_chain_head"],
+        "command_args": manifest["command_args"],
+        "provenance": provenance,
+    }
+
+
+def _merged_command_args(
+    family: str, parents: Sequence[Mapping[str, object]]
 ) -> tuple[str, ...]:
-    values: list[str] = ["--family", family]
-    for _, _, path in manifests:
-        values.extend(("--manifest", path.name))
-    return tuple(values)
+    ledger = {
+        "schema": _PARENT_LEDGER_SCHEMA,
+        "family": family,
+        "parents": [dict(parent) for parent in parents],
+    }
+    return ("--family", family, _PARENT_LEDGER_FLAG, _canonical_json(ledger))
 
 
 def _write_staged(path: Path, data: bytes) -> Path:
@@ -254,53 +455,95 @@ def merge_development_shards(
         raise ValueError(f"family must be one of {development.DEVELOPMENT_FAMILIES}")
     if not manifest_paths:
         raise ValueError("at least one development manifest is required")
-    root = Path(os.path.abspath(repo_root))
-    destination = Path(os.path.abspath(output))
-    expected = Path(
-        os.path.abspath(development.expected_registered_output(root, family, 0, 50))
+    working_directory = Path.cwd()
+    root = _lexical_absolute(
+        repo_root, base=working_directory, name="repository root"
+    )
+    _reject_symlink_components(root, name="repository root")
+    destination = _lexical_absolute(
+        output, base=root, name="merged output"
+    )
+    expected = root / "results" / (
+        f"spade-development-{family}-000-050.jsonl.gz"
     )
     if destination != expected:
-        raise ValueError(f"merged output must be the exact canonical path {expected}")
+        raise ValueError(
+            "merged output must remain inside the exact lexical repository/results "
+            f"path {expected}"
+        )
+    _reject_symlink_components(
+        destination.parent,
+        name="merged output parent",
+        allow_missing_tail=True,
+    )
     targets = output_paths(destination)
     existing = [path for path in targets if path.exists() or path.is_symlink()]
     if existing:
         raise ValueError(f"merged development outputs are write-once; already exists: {existing[0]}")
 
-    records: list[tuple[int, int, Path, list[dict[str, object]]]] = []
-    provenance: dict[str, object] | None = None
+    try:
+        registered = development.registered_metadata(root)
+        current_provenance = {
+            field: registered[field] for field in _PROVENANCE_FIELDS
+        }
+    except KeyError as exc:
+        raise ValueError("current registered metadata fields drift") from exc
+    if current_provenance["source_dirty"] is not False:
+        raise ValueError("development merge requires current clean registered metadata")
+
+    records: list[
+        tuple[int, int, Path, dict[str, object], list[dict[str, object]], dict[str, object]]
+    ] = []
     environment: str | None = None
     seen_manifest_paths: set[Path] = set()
     for supplied in manifest_paths:
-        path = Path(os.path.abspath(supplied))
+        path = _lexical_absolute(
+            supplied, base=working_directory, name="development manifest path"
+        )
+        _reject_symlink_components(path, name="development manifest path")
         if path in seen_manifest_paths:
             raise ValueError("duplicate development manifest path")
         seen_manifest_paths.add(path)
-        manifest, rows, shard_provenance = _validate_input_shard(
+        manifest, rows, shard_provenance, parent = _validate_input_shard(
             path,
             family=family,
-            common_provenance=provenance,
+            common_provenance=current_provenance,
         )
-        if provenance is None:
-            provenance = shard_provenance
+        if shard_provenance != current_provenance:
+            raise ValueError("development shard provenance differs from current registration")
         for row in rows:
             encoded_environment = _canonical_json(row.get("environment"))
             if environment is None:
                 environment = encoded_environment
             elif environment != encoded_environment:
                 raise ValueError("development shards mix execution environments")
-        records.append((int(manifest["start"]), int(manifest["stop"]), path, rows))
+        records.append(
+            (
+                int(manifest["start"]),
+                int(manifest["stop"]),
+                path,
+                manifest,
+                rows,
+                parent,
+            )
+        )
 
     records.sort(key=lambda item: (item[0], item[1]))
     cursor = 0
-    for start, stop, _, _ in records:
+    for start, stop, _, _, _, _ in records:
         if start != cursor:
             raise ValueError("development shard ranges contain a gap or overlap")
         cursor = stop
     if cursor != development.CAMPAIGNS_PER_FAMILY:
         raise ValueError("development shard ranges do not cover exact interval [0,50)")
-    assert provenance is not None
-
-    merged_rows = [row for _, _, _, rows in records for row in rows]
+    parents = [parent for _, _, _, _, _, parent in records]
+    command_args = _merged_command_args(family, parents)
+    parent_shard_ledger(list(command_args))
+    merged_rows = [
+        {**row, "command_args": list(command_args)}
+        for _, _, _, _, rows, _ in records
+        for row in rows
+    ]
     expected_identities = {
         (key_index, arm_id)
         for key_index in range(development.CAMPAIGNS_PER_FAMILY)
@@ -313,18 +556,16 @@ def merge_development_shards(
     if len(identities) != len(expected_identities) or set(identities) != expected_identities:
         raise ValueError("merged development grid has duplicates, gaps, or missing arms")
 
-    protocol_digest = str(provenance["study_protocol_digest"])
+    protocol_digest = str(current_provenance["study_protocol_digest"])
     raw_bytes = canonical_gzip_bytes(merged_rows, protocol_digest=protocol_digest)
     raw_digest = _sha256(raw_bytes)
-    ordered_manifests = [(start, stop, path) for start, stop, path, _ in records]
-    command_args = _stable_command_args(family, ordered_manifests)
     resume = development._resume_payload(
         family=family,
         start=0,
         stop=development.CAMPAIGNS_PER_FAMILY,
         raw_file=destination.name,
         rows=merged_rows,
-        metadata=provenance,
+        metadata=current_provenance,
         smoke=False,
         command_args=command_args,
         expected_raw_sha256=raw_digest,
@@ -340,7 +581,7 @@ def merge_development_shards(
         resume_file=f"{destination.name}.resume.json",
         resume_sha256=_sha256(resume_bytes),
         row_chain_head=str(resume["row_chain_head"]),
-        metadata=provenance,
+        metadata=current_provenance,
         smoke=False,
         complete=True,
         command_args=command_args,
@@ -353,6 +594,7 @@ def merge_development_shards(
     )
 
     destination.parent.mkdir(parents=True, exist_ok=True)
+    _reject_symlink_components(destination.parent, name="merged output parent")
     if any(path.exists() or path.is_symlink() for path in targets):
         raise ValueError("merged development outputs are write-once; target appeared during validation")
     staged: list[Path] = []
