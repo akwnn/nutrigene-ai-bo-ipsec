@@ -43,8 +43,11 @@ mismatches already recorded in `.planning/codebase/CONCERNS.md`.
 - Task 3 predictive reliable-region and split certificate passed independent review. The
   focused suite is 80 passed; joint draws are deterministic without global RNG mutation,
   gamma-aware, split-isolated, and empirically scored with exact confidence bounds.
+- Task 4 unified SPADE/Sobol48/qLogNEI48 runners passed independent review: exact 48-point
+  budgets, no truth access, frozen registered constants, identity-bound thresholds and
+  schedules, RNG isolation, and non-scientific TEST_ONLY execution identities.
 
 ## Next action
 
-Implement and independently review the unified 48-evaluation SPADE, Sobol48, and
-qLogNEI48 campaign runners.
+Freeze and independently review the four untouched randomized lockbox generators,
+controlled threshold, common scorer, and deterministic artifact format.
