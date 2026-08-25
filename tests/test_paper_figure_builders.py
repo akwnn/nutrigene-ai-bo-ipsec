@@ -1,12 +1,17 @@
 from __future__ import annotations
 
+from pathlib import Path
+
 import matplotlib
 
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
+from matplotlib.text import Text
 import pytest
 
+from boec.paper_figures.evidence import build_figure2_data
 from boec.paper_figures.figure1 import build_figure1
+from boec.paper_figures.figure2 import build_figure2
 from boec.paper_figures.style import get_preset
 
 
@@ -71,5 +76,35 @@ def test_figure1_portable_text_stays_inside_decision_boxes_and_ledger_cells():
         text_bounds = cell.get_text().get_window_extent(renderer)
         assert cell_bounds.contains(*text_bounds.get_points()[0])
         assert cell_bounds.contains(*text_bounds.get_points()[1])
+
+    plt.close(figure)
+
+
+def test_figure2_encodes_same_campaign_rules_contrasts_and_decomposition():
+    data = build_figure2_data(Path("results"))
+    bundle = build_figure2(data, get_preset("portable"))
+
+    assert set(bundle.panel_data) == {"A", "B", "C"}
+    assert bundle.panel_data["A"]["pairing"] == "same campaigns"
+    assert bundle.panel_data["B"]["reference"] == 0.0
+    assert bundle.panel_data["C"]["identity"] == "Rule A = search loss + identification loss"
+    assert "same campaigns" in bundle.alt_text.lower()
+    assert len(bundle.figure.axes) == 3
+
+    plt.close(bundle.figure)
+
+
+def test_figure2_portable_text_stays_inside_the_rendered_figure():
+    bundle = build_figure2(build_figure2_data(Path("results")), get_preset("portable"))
+    figure = bundle.figure
+    figure.canvas.draw()
+    renderer = figure.canvas.get_renderer()
+    figure_bounds = figure.bbox
+
+    for text in figure.findobj(match=Text):
+        if text.get_text():
+            text_bounds = text.get_window_extent(renderer)
+            assert figure_bounds.contains(*text_bounds.get_points()[0])
+            assert figure_bounds.contains(*text_bounds.get_points()[1])
 
     plt.close(figure)
