@@ -73,8 +73,8 @@ from torch import Tensor
 
 __all__ = ["alpha_star", "conservative_estimate", "conservative_estimate_split",
            "containment_probability", "empirical_containment",
-           "excursion_probability", "vorobev_deviation", "vorobev_expectation",
-           "vorobev_quantile"]
+           "excursion_probability", "set_containment_probability",
+           "vorobev_deviation", "vorobev_expectation", "vorobev_quantile"]
 
 
 def excursion_probability(draws: Tensor, theta: float) -> Tensor:
@@ -119,6 +119,33 @@ def containment_probability(draws: Tensor, mask: Tensor, theta: float) -> float:
     if int(mask.sum()) == 0:
         return 1.0
     return float((draws[:, mask] >= theta).all(dim=1).double().mean())
+
+
+def set_containment_probability(set_draws: Tensor, mask: Tensor) -> float:
+    """Joint containment of ``mask`` in boolean random-set draws.
+
+    This is the set-valued counterpart of :func:`containment_probability` after
+    each latent draw has already been converted to the event of interest.  The
+    empty set is mathematically contained with probability one; certificate
+    callers must still exclude it from empirical success denominators.
+    """
+    if set_draws.ndim != 2:
+        raise ValueError(
+            f"set_draws must have shape (n_draws, n_grid), got {tuple(set_draws.shape)}"
+        )
+    if set_draws.dtype != torch.bool:
+        raise ValueError("set_draws must be boolean; numeric draws cannot be coerced")
+    if set_draws.shape[0] < 1 or set_draws.shape[1] < 1:
+        raise ValueError("set_draws must contain at least one draw and one grid point")
+    if mask.ndim != 1 or mask.shape[0] != set_draws.shape[1]:
+        raise ValueError(
+            f"mask must have shape ({set_draws.shape[1]},), got {tuple(mask.shape)}"
+        )
+    if mask.dtype != torch.bool:
+        raise ValueError("mask must be boolean")
+    if int(mask.sum()) == 0:
+        return 1.0
+    return float(set_draws[:, mask].all(dim=1).double().mean())
 
 
 def alpha_star(draws: Tensor, theta: float, n_rho: int = 64) -> float:

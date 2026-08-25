@@ -11,6 +11,8 @@ observed one, and `truth` returning something noisy.
 
 from __future__ import annotations
 
+from dataclasses import dataclass, replace
+
 import numpy as np
 import pytest
 import torch
@@ -18,10 +20,47 @@ import torch
 from boec.campaign import Evaluator
 from boec.designs import sub_box_bounds
 from boec.e4 import Oracle
-from boec.oracles import ENSEMBLE_VERSION, load_ensemble, load_instance
-from boec.torch_oracle import BiphasicOracle
+from boec.oracles import (
+    ENSEMBLE_VERSION,
+    Embedded,
+    Hartmann6,
+    HillOracle,
+    load_ensemble,
+    load_instance,
+)
+from boec.seedbook import IndexedGaussianNoise
+from boec.torch_oracle import BiphasicOracle, TorchEvaluator
 
 KAPPAS = (0.6, 0.7, 0.8, 0.9)
+
+
+@dataclass
+class _ConfiguredOracleSettings:
+    coefficients: np.ndarray
+    offset: torch.Tensor
+
+
+class _ConfiguredOracle:
+    name = "configured"
+    dim = 2
+
+    def __init__(self, settings: _ConfiguredOracleSettings) -> None:
+        self.settings = settings
+
+    def f(self, X: np.ndarray) -> np.ndarray:
+        X = np.asarray(X, dtype=float)
+        return X @ self.settings.coefficients + float(self.settings.offset)
+
+
+def _configured_oracle(
+    coefficients: tuple[float, float] = (1.0, 2.0), offset: float = 0.5
+) -> _ConfiguredOracle:
+    return _ConfiguredOracle(
+        _ConfiguredOracleSettings(
+            coefficients=np.asarray(coefficients, dtype=np.float64),
+            offset=torch.tensor(offset, dtype=torch.double),
+        )
+    )
 
 
 @pytest.fixture(scope="module")
@@ -156,6 +195,225 @@ def test_observe_is_reproducible_from_the_seed(d6):
     b = BiphasicOracle(d6[0], seed=11).observe(X)
     torch.testing.assert_close(a[0], b[0])
     torch.testing.assert_close(a[1], b[1])
+
+
+@pytest.mark.parametrize("adapter", ("biphasic", "torch"))
+def test_indexed_evaluator_noise_does_not_depend_on_batch_chunking(d6, adapter):
+    def build():
+        source = IndexedGaussianNoise(17, sigma_rel=0.1, sigma_add=0.01)
+        if adapter == "biphasic":
+            return BiphasicOracle(d6[0], noise_source=source)
+        return TorchEvaluator(HillOracle(d6[0]), noise_source=source)
+
+    X = torch.rand(5, 6, dtype=torch.double)
+    together = build().evaluate(X)
+    split_evaluator = build()
+    first = split_evaluator.evaluate(X[:2])
+    second = split_evaluator.evaluate(X[2:])
+    split = tuple(
+        torch.cat([first[i], second[i]])
+        for i in range(2)
+    )
+    assert all(torch.equal(a, b) for a, b in zip(together, split))
+
+
+@pytest.mark.parametrize("adapter", ("biphasic", "torch"))
+def test_indexed_evaluator_state_restores_the_next_observation(d6, adapter):
+    def build(root_seed=23, sigma_rel=0.1, sigma_add=0.01, indexed=True, instance=0):
+        source = (
+            IndexedGaussianNoise(root_seed, sigma_rel=sigma_rel, sigma_add=sigma_add)
+            if indexed
+            else None
+        )
+        if adapter == "biphasic":
+            return BiphasicOracle(
+                d6[instance],
+                sigma_rel=sigma_rel,
+                sigma_add=sigma_add,
+                seed=root_seed,
+                noise_source=source,
+            )
+        return TorchEvaluator(
+            HillOracle(d6[instance]),
+            sigma_rel=sigma_rel,
+            sigma_add=sigma_add,
+            seed=root_seed,
+            noise_source=source,
+        )
+
+    X = torch.rand(5, 6, dtype=torch.double)
+    original = build()
+    original.evaluate(X[:2])
+    state = original.state_dict()
+    assert state["noise_mode"] == "indexed"
+    assert state["seed"] == 23
+    assert state["sigma_rel"] == 0.1
+    assert state["sigma_add"] == 0.01
+    assert state["oracle_identity"]
+    assert state["next_index"] == 2
+
+    resumed = build()
+    resumed.load_state_dict(state)
+    expected = original.evaluate(X[2:])
+    actual = resumed.evaluate(X[2:])
+
+    assert resumed.state_dict()["next_index"] == 5
+    assert all(torch.equal(a, b) for a, b in zip(expected, actual))
+
+
+def test_generic_checkpoint_rejects_different_embedded_seed():
+    def build(seed: int) -> TorchEvaluator:
+        return TorchEvaluator(
+            Embedded(Hartmann6(), dim=8, seed=seed),
+            noise_source=IndexedGaussianNoise(23, sigma_rel=0.1, sigma_add=0.01),
+        )
+
+    state = build(3).state_dict()
+    assert np.array_equal(
+        Embedded(Hartmann6(), dim=8, seed=3).active,
+        Embedded(Hartmann6(), dim=8, seed=3).active,
+    )
+    assert not np.array_equal(
+        Embedded(Hartmann6(), dim=8, seed=3).active,
+        Embedded(Hartmann6(), dim=8, seed=4).active,
+    )
+
+    build(3).load_state_dict(state)
+    with pytest.raises(ValueError, match="oracle_identity"):
+        build(4).load_state_dict(state)
+
+
+@pytest.mark.parametrize(
+    ("coefficients", "offset"),
+    (((1.0, 2.1), 0.5), ((1.0, 2.0), 0.6)),
+)
+def test_generic_checkpoint_digest_is_stable_and_covers_array_tensor_dataclass_config(
+    coefficients, offset
+):
+    def build(
+        coefficients: tuple[float, float] = (1.0, 2.0), offset: float = 0.5
+    ) -> TorchEvaluator:
+        return TorchEvaluator(
+            _configured_oracle(coefficients, offset),
+            noise_source=IndexedGaussianNoise(23, sigma_rel=0.1, sigma_add=0.01),
+        )
+
+    state = build().state_dict()
+    equivalent = build()
+    assert equivalent.state_dict()["oracle_identity"] == state["oracle_identity"]
+    equivalent.load_state_dict(state)
+
+    with pytest.raises(ValueError, match="oracle_identity"):
+        build(coefficients, offset).load_state_dict(state)
+
+
+def test_biphasic_checkpoint_rejects_yvar_mode_mismatch(d6):
+    state = BiphasicOracle(d6[0], yvar_mode="plugin", seed=23).state_dict()
+
+    assert state["yvar_mode"] == "plugin"
+    with pytest.raises(ValueError, match="yvar_mode"):
+        BiphasicOracle(d6[0], yvar_mode="analytic", seed=23).load_state_dict(state)
+
+
+def test_biphasic_checkpoint_hashes_full_instance_configuration(d6):
+    changed_weights = d6[0].weights.copy()
+    changed_weights[0] = np.nextafter(changed_weights[0], np.inf)
+    changed_instance = replace(d6[0], weights=changed_weights)
+    assert changed_instance.instance_id == d6[0].instance_id
+
+    state = BiphasicOracle(d6[0], seed=23).state_dict()
+    with pytest.raises(ValueError, match="oracle_identity"):
+        BiphasicOracle(changed_instance, seed=23).load_state_dict(state)
+
+
+@pytest.mark.parametrize("adapter", ("biphasic", "torch"))
+@pytest.mark.parametrize(
+    ("mismatch", "message"),
+    (
+        ("noise_mode", "noise_mode"),
+        ("seed", "seed"),
+        ("sigma_rel", "sigma_rel"),
+        ("sigma_add", "sigma_add"),
+        ("oracle_identity", "oracle_identity"),
+    ),
+)
+def test_indexed_evaluator_rejects_checkpoint_identity_mismatch(
+    d6, adapter, mismatch, message
+):
+    def build(*, root_seed=23, sigma_rel=0.1, sigma_add=0.01, indexed=True, instance=0):
+        source = (
+            IndexedGaussianNoise(root_seed, sigma_rel=sigma_rel, sigma_add=sigma_add)
+            if indexed
+            else None
+        )
+        if adapter == "biphasic":
+            return BiphasicOracle(
+                d6[instance],
+                sigma_rel=sigma_rel,
+                sigma_add=sigma_add,
+                seed=root_seed,
+                noise_source=source,
+            )
+        return TorchEvaluator(
+            HillOracle(d6[instance]),
+            sigma_rel=sigma_rel,
+            sigma_add=sigma_add,
+            seed=root_seed,
+            noise_source=source,
+        )
+
+    state = build().state_dict()
+    changed = {
+        "noise_mode": {"indexed": False},
+        "seed": {"root_seed": 24},
+        "sigma_rel": {"sigma_rel": 0.2},
+        "sigma_add": {"sigma_add": 0.02},
+        "oracle_identity": {"instance": 1},
+    }[mismatch]
+
+    with pytest.raises(ValueError, match=message):
+        build(**changed).load_state_dict(state)
+
+
+@pytest.mark.parametrize("adapter", ("biphasic", "torch"))
+def test_legacy_evaluator_state_restores_the_next_observation(d6, adapter):
+    def build():
+        if adapter == "biphasic":
+            return BiphasicOracle(d6[0], sigma_rel=0.1, sigma_add=0.01, seed=29)
+        return TorchEvaluator(
+            HillOracle(d6[0]), sigma_rel=0.1, sigma_add=0.01, seed=29
+        )
+
+    X = torch.rand(5, 6, dtype=torch.double)
+    original = build()
+    original.evaluate(X[:2])
+    state = original.state_dict()
+
+    assert state["noise_mode"] == "legacy"
+    assert state["next_index"] == 2
+    assert "rng_state" in state
+
+    expected = original.evaluate(X[2:])
+    resumed = build()
+    resumed.load_state_dict(state)
+    actual = resumed.evaluate(X[2:])
+
+    assert resumed.state_dict()["next_index"] == 5
+    assert all(torch.equal(a, b) for a, b in zip(expected, actual))
+
+
+@pytest.mark.parametrize("adapter", ("biphasic", "torch"))
+@pytest.mark.parametrize("next_index", (-1, -0.5, 1.5, 2.0, True, np.bool_(False), "2"))
+def test_evaluator_rejects_malformed_next_index(d6, adapter, next_index):
+    if adapter == "biphasic":
+        evaluator = BiphasicOracle(d6[0], seed=29)
+    else:
+        evaluator = TorchEvaluator(HillOracle(d6[0]), seed=29)
+    state = evaluator.state_dict()
+    state["next_index"] = next_index
+
+    with pytest.raises(ValueError, match="next_index must be a nonnegative integer"):
+        evaluator.load_state_dict(state)
 
 
 # ------------------------------------------------------- the containment invariant

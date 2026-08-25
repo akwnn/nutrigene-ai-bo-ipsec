@@ -57,6 +57,13 @@ patching.
 
 from __future__ import annotations
 
+import copy
+import dataclasses
+import hashlib
+import json
+from collections.abc import Mapping
+from enum import Enum
+from pathlib import Path
 from typing import Literal
 
 import numpy as np
@@ -64,10 +71,151 @@ import torch
 from torch import Tensor
 
 from boec.oracles import HillInstance, HillOracle, Oracle
+from boec.seedbook import IndexedGaussianNoise
 
 __all__ = ["BiphasicOracle", "TorchEvaluator"]
 
 YvarMode = Literal["plugin", "analytic"]
+
+
+def _oracle_identity(oracle: Oracle) -> str:
+    """Stable identity for rejecting checkpoints from another oracle config."""
+    cls = f"{type(oracle).__module__}.{type(oracle).__qualname__}"
+    payload = json.dumps(
+        _canonical_checkpoint_value(oracle, set()),
+        sort_keys=True,
+        separators=(",", ":"),
+        ensure_ascii=False,
+    ).encode()
+    digest = hashlib.sha256(payload).hexdigest()
+    return f"{cls}:{oracle.name}:d={int(oracle.dim)}:sha256={digest}"
+
+
+def _canonical_checkpoint_value(value: object, active: set[int]) -> object:
+    """Convert config state to deterministic JSON data without using ``repr``."""
+    if value is None:
+        return ["none"]
+    if isinstance(value, Enum):
+        return [
+            "enum",
+            f"{type(value).__module__}.{type(value).__qualname__}",
+            value.name,
+        ]
+    if isinstance(value, bool):
+        return ["bool", value]
+    if isinstance(value, int):
+        return ["int", str(value)]
+    if isinstance(value, float):
+        return ["float", value.hex()]
+    if isinstance(value, str):
+        return ["str", value]
+    if isinstance(value, bytes):
+        return ["bytes", value.hex()]
+    if isinstance(value, Path):
+        return ["path", value.as_posix()]
+    if isinstance(value, np.generic):
+        array = np.asarray(value)
+        return ["numpy-scalar", array.dtype.str, array.tobytes().hex()]
+    if isinstance(value, np.ndarray):
+        array = np.ascontiguousarray(value)
+        if array.dtype.hasobject:
+            data: object = _canonical_checkpoint_value(array.tolist(), active)
+        else:
+            data = array.tobytes(order="C").hex()
+        return ["numpy-array", array.dtype.str, list(array.shape), data]
+    if isinstance(value, Tensor):
+        tensor = value.detach().cpu().contiguous()
+        raw = tensor.reshape(-1).view(torch.uint8).numpy().tobytes(order="C").hex()
+        return ["torch-tensor", str(tensor.dtype), list(tensor.shape), raw]
+
+    object_id = id(value)
+    if object_id in active:
+        raise TypeError("oracle configuration contains a reference cycle")
+    active.add(object_id)
+    try:
+        if dataclasses.is_dataclass(value) and not isinstance(value, type):
+            fields = [
+                [field.name, _canonical_checkpoint_value(getattr(value, field.name), active)]
+                for field in dataclasses.fields(value)
+            ]
+            return [
+                "dataclass",
+                f"{type(value).__module__}.{type(value).__qualname__}",
+                fields,
+            ]
+        if isinstance(value, Mapping):
+            entries = [
+                [
+                    _canonical_checkpoint_value(key, active),
+                    _canonical_checkpoint_value(item, active),
+                ]
+                for key, item in value.items()
+            ]
+            entries.sort(
+                key=lambda entry: json.dumps(
+                    entry[0], sort_keys=True, separators=(",", ":"), ensure_ascii=False
+                )
+            )
+            return ["mapping", entries]
+        if isinstance(value, (list, tuple)):
+            return [
+                type(value).__name__,
+                [_canonical_checkpoint_value(item, active) for item in value],
+            ]
+        if isinstance(value, (set, frozenset)):
+            items = [_canonical_checkpoint_value(item, active) for item in value]
+            items.sort(
+                key=lambda item: json.dumps(
+                    item, sort_keys=True, separators=(",", ":"), ensure_ascii=False
+                )
+            )
+            return [type(value).__name__, items]
+        if callable(value):
+            raise TypeError("callable oracle configuration is not checkpointable")
+        try:
+            attributes = vars(value)
+        except TypeError as exc:
+            raise TypeError(
+                "unsupported oracle configuration value "
+                f"{type(value).__module__}.{type(value).__qualname__}"
+            ) from exc
+        return [
+            "object",
+            f"{type(value).__module__}.{type(value).__qualname__}",
+            [
+                [name, _canonical_checkpoint_value(attributes[name], active)]
+                for name in sorted(attributes)
+            ],
+        ]
+    finally:
+        active.remove(object_id)
+
+
+def _validate_checkpoint_identity(state: dict, expected: dict) -> None:
+    for field in expected:
+        if field not in state:
+            raise ValueError(f"evaluator checkpoint is missing {field}")
+        if state[field] != expected[field]:
+            raise ValueError(
+                f"evaluator checkpoint {field} mismatch: "
+                f"saved {state[field]!r}, current {expected[field]!r}"
+            )
+
+
+def _checkpoint_next_index(state: dict) -> int:
+    if "next_index" not in state:
+        raise ValueError("evaluator checkpoint is missing next_index")
+    value = state["next_index"]
+    if (
+        isinstance(value, (bool, np.bool_))
+        or not isinstance(value, (int, np.integer))
+        or value < 0
+    ):
+        raise ValueError(
+            "evaluator checkpoint next_index must be a nonnegative integer, "
+            f"got {value!r}"
+        )
+    return int(value)
 
 
 def _plug_in_yvar(base: np.ndarray, sigma_rel: float, sigma_add: float) -> np.ndarray:
@@ -108,6 +256,7 @@ class TorchEvaluator:
         sigma_rel: float = 0.10,
         sigma_add: float = 0.01,
         seed: int = 0,
+        noise_source: IndexedGaussianNoise | None = None,
     ) -> None:
         self.oracle = oracle
         self.dim = int(oracle.dim)
@@ -116,6 +265,8 @@ class TorchEvaluator:
         self.seed = int(seed)
         self.yvar_floor = float(sigma_add) ** 2
         self._rng = np.random.default_rng(seed)
+        self.noise_source = noise_source
+        self._next_index = 0
 
     def _check(self, X: Tensor) -> np.ndarray:
         if X.ndim != 2:
@@ -132,11 +283,42 @@ class TorchEvaluator:
     def evaluate(self, X: Tensor) -> tuple[Tensor, Tensor]:
         """``(n, d) -> ((n, 1), (n, 1))`` a noisy measurement and its plug-in variance."""
         f = np.asarray(self.oracle.f(self._check(X)), dtype=float).reshape(-1, 1)
+        if self.noise_source is not None:
+            indices = torch.arange(self._next_index, self._next_index + f.shape[0])
+            result = self.noise_source.observe(indices, torch.from_numpy(f))
+            self._next_index += f.shape[0]
+            return result
         eps = self._rng.normal(0.0, self.sigma_rel, size=f.shape)
         eta = self._rng.normal(0.0, self.sigma_add, size=f.shape)
         y = f * (1.0 + eps) + eta
+        self._next_index += f.shape[0]
         return torch.from_numpy(y), torch.from_numpy(
             _plug_in_yvar(y, self.sigma_rel, self.sigma_add))
+
+    def _checkpoint_identity(self) -> dict:
+        indexed = self.noise_source is not None
+        return {
+            "noise_mode": "indexed" if indexed else "legacy",
+            "seed": self.noise_source.root_seed if indexed else self.seed,
+            "sigma_rel": self.noise_source.sigma_rel if indexed else self.sigma_rel,
+            "sigma_add": self.noise_source.sigma_add if indexed else self.sigma_add,
+            "oracle_identity": _oracle_identity(self.oracle),
+        }
+
+    def state_dict(self) -> dict:
+        state = {**self._checkpoint_identity(), "next_index": self._next_index}
+        if self.noise_source is None:
+            state["rng_state"] = copy.deepcopy(self._rng.bit_generator.state)
+        return state
+
+    def load_state_dict(self, state: dict) -> None:
+        _validate_checkpoint_identity(state, self._checkpoint_identity())
+        next_index = _checkpoint_next_index(state)
+        if self.noise_source is None:
+            if "rng_state" not in state:
+                raise ValueError("legacy evaluator checkpoint is missing rng_state")
+            self._rng.bit_generator.state = copy.deepcopy(state["rng_state"])
+        self._next_index = next_index
 
     def __repr__(self) -> str:  # pragma: no cover - debugging aid
         return f"TorchEvaluator({self.oracle.name}, d={self.dim}, seed={self.seed})"
@@ -178,6 +360,7 @@ class BiphasicOracle:
         sigma_add: float = 0.01,
         yvar_mode: YvarMode = "plugin",
         seed: int = 0,
+        noise_source: IndexedGaussianNoise | None = None,
     ) -> None:
         if yvar_mode not in ("plugin", "analytic"):
             raise ValueError(f"unknown yvar_mode {yvar_mode!r}")
@@ -190,6 +373,8 @@ class BiphasicOracle:
         self.yvar_floor = float(sigma_add) ** 2
         self._core = HillOracle(instance)
         self._rng = np.random.default_rng(seed)
+        self.noise_source = noise_source
+        self._next_index = 0
 
     # -- identity ----------------------------------------------------------------
     @property
@@ -236,18 +421,50 @@ class BiphasicOracle:
         this is the first candidate, not a bug.**
         """
         f = np.asarray(self._core.f(self._check(X)), dtype=float).reshape(-1, 1)
+        if self.noise_source is not None:
+            indices = torch.arange(self._next_index, self._next_index + f.shape[0])
+            result = self.noise_source.observe(indices, torch.from_numpy(f))
+            self._next_index += f.shape[0]
+            return result
         eps = self._rng.normal(0.0, self.sigma_rel, size=f.shape)
         eta = self._rng.normal(0.0, self.sigma_add, size=f.shape)
         y = f * (1.0 + eps) + eta
 
         base = y if self.yvar_mode == "plugin" else f
         yvar = np.maximum(base**2 * self.sigma_rel**2 + self.sigma_add**2, self.yvar_floor)
+        self._next_index += f.shape[0]
         return torch.from_numpy(y), torch.from_numpy(yvar)
 
     # -- the campaign loop's name for the same thing ------------------------------
     def evaluate(self, X: Tensor) -> tuple[Tensor, Tensor]:
         """``(n, d) -> ((n, m), (n, m))``. ``boec.campaign.Evaluator``'s one method."""
         return self.observe(X)
+
+    def _checkpoint_identity(self) -> dict:
+        indexed = self.noise_source is not None
+        return {
+            "noise_mode": "indexed" if indexed else "legacy",
+            "seed": self.noise_source.root_seed if indexed else self.seed,
+            "sigma_rel": self.noise_source.sigma_rel if indexed else self.sigma_rel,
+            "sigma_add": self.noise_source.sigma_add if indexed else self.sigma_add,
+            "yvar_mode": self.yvar_mode,
+            "oracle_identity": _oracle_identity(self._core),
+        }
+
+    def state_dict(self) -> dict:
+        state = {**self._checkpoint_identity(), "next_index": self._next_index}
+        if self.noise_source is None:
+            state["rng_state"] = copy.deepcopy(self._rng.bit_generator.state)
+        return state
+
+    def load_state_dict(self, state: dict) -> None:
+        _validate_checkpoint_identity(state, self._checkpoint_identity())
+        next_index = _checkpoint_next_index(state)
+        if self.noise_source is None:
+            if "rng_state" not in state:
+                raise ValueError("legacy evaluator checkpoint is missing rng_state")
+            self._rng.bit_generator.state = copy.deepcopy(state["rng_state"])
+        self._next_index = next_index
 
     def __repr__(self) -> str:  # pragma: no cover - debugging aid
         return (

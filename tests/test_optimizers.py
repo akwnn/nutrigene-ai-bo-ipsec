@@ -10,6 +10,7 @@ from boec.optimizers import (
     initial_design,
     lhs_design,
     make_acquisition,
+    oa_lhs_design,
     propose,
     random_design,
     sobol_design,
@@ -85,6 +86,57 @@ def test_lhs_uses_each_slice_once():
         assert len(set(slots.tolist())) == n
 
 
+# --------------------------------------------------------------------------
+# OA-LHS (docs/SPADE-CALIBRATION-FIX-SPEC.md sec 4, K2 -- design lottery)
+# --------------------------------------------------------------------------
+
+def test_oa_lhs_respects_bounds_and_shape_at_a_square_n():
+    bounds = torch.tensor([[0.0, 2.0, -1.0], [1.0, 5.0, 1.0]], dtype=torch.double)
+    pts = oa_lhs_design(bounds, 9, seed=0)          # p=3, n=p^2=9
+    assert pts.shape == (9, 3)
+    assert bool(torch.all(pts >= bounds[0] - 1e-12))
+    assert bool(torch.all(pts <= bounds[1] + 1e-12))
+
+
+def test_oa_lhs_is_deterministic():
+    assert torch.equal(oa_lhs_design(UNIT, 9, seed=3), oa_lhs_design(UNIT, 9, seed=3))
+    assert not torch.equal(oa_lhs_design(UNIT, 9, seed=3), oa_lhs_design(UNIT, 9, seed=4))
+
+
+def test_oa_lhs_rejects_n_that_is_not_a_perfect_square():
+    """SPADE-SPEC.md sec 'Stage 1': n = p^2 is the whole construction -- silently
+    falling back to a non-orthogonal design would lose the Stein-theorem guarantee
+    the OA claim rests on (docs/ODIN-VERDICT.md sec 4(a): 'do not fall back silently
+    and keep the citation')."""
+    with pytest.raises(ValueError, match="n = p\\^2"):
+        oa_lhs_design(UNIT, 48, seed=0)             # 48 is not p^2 for any integer p
+
+
+def test_oa_lhs_uses_each_1d_slice_once():
+    """Strength-2 OA-LHS is strictly stronger than plain LHS, so it must still keep
+    plain LHS's defining property: every factor's range evenly covered."""
+    n = 49                                          # p=7
+    pts = oa_lhs_design(UNIT, n, seed=0)
+    for j in range(D):
+        slots = (pts[:, j] * n).floor().long()
+        assert len(set(slots.tolist())) == n
+
+
+def test_oa_lhs_stratifies_every_2d_projection():
+    """THE defining property plain LHS lacks: every pair of coordinates lands in
+    every one of the p x p grid cells of that 2D projection exactly once, at
+    n=p^2. This is what the Stein (1987) variance-reduction argument requires and
+    what SPADE-SPEC.md sec 'Stage 1' cites it for."""
+    p, n = 7, 49
+    pts = oa_lhs_design(UNIT, n, seed=1)
+    for j in range(D):
+        for k in range(j + 1, D):
+            cell_j = (pts[:, j] * p).floor().long()
+            cell_k = (pts[:, k] * p).floor().long()
+            cells = set(zip(cell_j.tolist(), cell_k.tolist()))
+            assert len(cells) == n, f"2D projection ({j},{k}) is not fully stratified"
+
+
 @pytest.mark.parametrize("fn", [sobol_design, random_design, lhs_design])
 def test_baselines_reject_inverted_bounds(fn):
     bad = torch.tensor([[1.0, 1.0, 1.0], [0.0, 0.0, 0.0]], dtype=torch.double)
@@ -154,6 +206,37 @@ def test_discrete_proposals_are_distinct(fitted):
     menu = torch.rand(40, D, dtype=torch.double)
     out = propose(model, UNIT, 4, X, Y, config=SMALL, candidates=menu)
     assert torch.unique(out, dim=0).shape[0] == 4
+
+
+def test_qlognei_sampler_seed_reproduces_discrete_batch(fitted):
+    model, X, Y = fitted
+    menu = sobol_design(UNIT, 40, seed=71)
+    cfg = AcqConfig(kind="qlognei", mc_samples=64, sampler_seed=19)
+
+    torch.manual_seed(1)
+    first = propose(model, UNIT, 4, X, Y, config=cfg, candidates=menu)
+    torch.manual_seed(999)
+    second = propose(model, UNIT, 4, X, Y, config=cfg, candidates=menu)
+
+    assert torch.equal(first, second)
+    assert torch.unique(first, dim=0).shape[0] == 4
+
+
+def test_qlognei_sampler_seed_is_explicit_and_changes_qmc_stream(fitted):
+    model, X, Y = fitted
+    first = make_acquisition(
+        model, X, Y, config=AcqConfig(kind="qlognei", mc_samples=64, sampler_seed=19)
+    )
+    second = make_acquisition(
+        model, X, Y, config=AcqConfig(kind="qlognei", mc_samples=64, sampler_seed=23)
+    )
+
+    probe = sobol_design(UNIT, 3, seed=11).unsqueeze(-2)
+    first(probe)
+    second(probe)
+    assert first.sampler.seed == 19
+    assert second.sampler.seed == 23
+    assert not torch.equal(first.sampler.base_samples, second.sampler.base_samples)
 
 
 def test_discrete_picks_the_promising_end_of_the_menu(fitted):

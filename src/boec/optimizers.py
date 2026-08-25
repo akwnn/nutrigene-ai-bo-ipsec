@@ -128,6 +128,7 @@ class AcqConfig:
         num_restarts: how many places the search starts from. More is safer.
         raw_samples: how many points are screened before the search begins.
         mc_samples: how many draws are used to estimate the expected gain.
+        sampler_seed: explicit QMC stream seed; never read from ambient RNG.
         inequality_constraints: combinations that must satisfy a linear rule.
         equality_constraints: combinations pinned to a linear relationship.
         nonlinear_inequality_constraints: anything more complicated.
@@ -147,6 +148,7 @@ class AcqConfig:
     equality_constraints: list | None = None
     nonlinear_inequality_constraints: list | None = None
     fixed_features_list: list[dict[int, float]] | None = field(default=None)
+    sampler_seed: int = 0
 
     def __post_init__(self) -> None:
         if self.kind not in ACQUISITION_CHOICES:
@@ -159,6 +161,10 @@ class AcqConfig:
                 f"unknown best_f policy {self.best_f_policy!r}; "
                 f"choose from {sorted(BEST_F_POLICIES)}"
             )
+        if isinstance(self.sampler_seed, bool) or not isinstance(self.sampler_seed, int):
+            raise ValueError("sampler_seed must be an integer")
+        if self.sampler_seed < 0:
+            raise ValueError("sampler_seed must be nonnegative")
 
 
 # ---------------------------------------------------------------------------
@@ -199,6 +205,26 @@ def lhs_design(bounds: Tensor, n: int, *, seed: int = 0) -> Tensor:
     _check_bounds(bounds)
     d = bounds.shape[1]
     unit = torch.from_numpy(qmc.LatinHypercube(d=d, seed=seed).random(n)).double()
+    return bounds[0].double() + unit * (bounds[1] - bounds[0]).double()
+
+
+def oa_lhs_design(bounds: Tensor, n: int, *, seed: int = 0) -> Tensor:
+    """``n = p^2`` points by strength-2 orthogonal-array LHS.
+
+    Stratifies every 1D marginal (plain LHS's property) AND every 2D projection: for
+    any pair of coordinates, each of the ``p x p`` grid cells of that projection is
+    hit exactly once. That is the property Stein (1987) needs for the variance-
+    reduction guarantee `docs/SPADE-SPEC.md` Stage 1 cites -- plain LHS only has the
+    first half. Requires ``n`` to be a perfect square; **no silent fallback** to a
+    weaker design if it is not (`docs/ODIN-VERDICT.md` sec 4(a): "do not fall back
+    silently and keep the citation").
+    """
+    _check_bounds(bounds)
+    p = round(n ** 0.5)
+    if p * p != n:
+        raise ValueError(f"oa_lhs_design needs n = p^2 for an integer p; got n={n}")
+    d = bounds.shape[1]
+    unit = torch.from_numpy(qmc.LatinHypercube(d=d, strength=2, seed=seed).random(n)).double()
     return bounds[0].double() + unit * (bounds[1] - bounds[0]).double()
 
 
@@ -255,7 +281,10 @@ def make_acquisition(
     cfg = config or AcqConfig()
     from botorch.sampling.normal import SobolQMCNormalSampler
 
-    sampler = SobolQMCNormalSampler(sample_shape=torch.Size([cfg.mc_samples]))
+    sampler = SobolQMCNormalSampler(
+        sample_shape=torch.Size([cfg.mc_samples]),
+        seed=cfg.sampler_seed,
+    )
 
     if cfg.kind == "qlognei":
         return qLogNoisyExpectedImprovement(

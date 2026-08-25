@@ -11,12 +11,17 @@ Two tests here carry unusual weight:
 
 from __future__ import annotations
 
+import io
+
 import torch
 
 import pytest
 
 from boec.campaign import Campaign, CampaignConfig, Evaluator, batch_plan
 from boec.optimizers import AcqConfig
+from boec.oracles import Branin
+from boec.seedbook import IndexedGaussianNoise
+from boec.torch_oracle import TorchEvaluator
 
 FAST = AcqConfig(num_restarts=2, raw_samples=32, mc_samples=16)
 
@@ -67,6 +72,52 @@ def _cfg(d=3, budget=None, **kw):
 
 def _bounds(d=3):
     return torch.stack([torch.zeros(d, dtype=torch.double), torch.ones(d, dtype=torch.double)])
+
+
+def _indexed_evaluator():
+    return TorchEvaluator(
+        Branin(),
+        noise_source=IndexedGaussianNoise(31, sigma_rel=0.1, sigma_add=0.01),
+    )
+
+
+def _legacy_evaluator():
+    return TorchEvaluator(Branin(), sigma_rel=0.1, sigma_add=0.01, seed=31)
+
+
+def _indexed_cfg():
+    return CampaignConfig(
+        d=2,
+        budget=10,
+        q=2,
+        seed=7,
+        acq=FAST,
+        n_holdout=8,
+    )
+
+
+def _advance_indexed(campaign):
+    X = campaign.ask(2)
+    Y, Yvar = campaign.evaluator.evaluate(X)
+    campaign.tell(X, Y, Yvar)
+
+
+def _serialized(state):
+    buffer = io.BytesIO()
+    torch.save(state, buffer)
+    return buffer.getvalue()
+
+
+def _assert_logs_equal(left, right):
+    assert len(left) == len(right)
+    for a, b in zip(left, right):
+        for name in a.__dataclass_fields__:
+            a_value = getattr(a, name)
+            b_value = getattr(b, name)
+            if isinstance(a_value, torch.Tensor):
+                assert torch.equal(a_value, b_value), name
+            else:
+                assert a_value == b_value, name
 
 
 # --------------------------------------------------------------------------
@@ -276,6 +327,100 @@ def test_pending_survives_a_save(tmp_path):
     p = tmp_path / "s.pt"
     c.save(p)
     assert Campaign.load(p, FormulaEvaluator()).X_pending.shape[0] == 3
+
+
+def test_saved_state_includes_evaluator_checkpoint_when_available():
+    c = Campaign(_indexed_evaluator(), _bounds(2), _indexed_cfg())
+    c.initialize()
+    evaluator_state = c.state_dict()["evaluator_state"]
+    assert evaluator_state == {
+        "noise_mode": "indexed",
+        "seed": 31,
+        "sigma_rel": 0.1,
+        "sigma_add": 0.01,
+        "oracle_identity": (
+            "boec.oracles.Branin:branin:d=2:"
+            "sha256=1ee5bae76ac74ee8f9e5d02520aad7feb3cb9d9b313ec7e51b2e9194b5f7e405"
+        ),
+        "next_index": 6,
+    }
+
+
+def test_saved_evaluator_state_requires_restoration_support():
+    c = Campaign(_indexed_evaluator(), _bounds(2), _indexed_cfg())
+    c.initialize()
+    with pytest.raises(TypeError, match="cannot restore evaluator state"):
+        Campaign.from_state_dict(c.state_dict(), FormulaEvaluator())
+
+
+def test_campaign_rejects_checkpoint_with_inconsistent_evaluator_index():
+    c = Campaign(_indexed_evaluator(), _bounds(2), _indexed_cfg())
+    c.initialize()
+    state = c.state_dict()
+    state["evaluator_state"] = dict(state["evaluator_state"], next_index=0)
+
+    with pytest.raises(ValueError, match=r"next_index 0.*6 observed"):
+        Campaign.from_state_dict(state, _indexed_evaluator())
+
+
+@pytest.mark.parametrize("next_index", (-1, 6.5, 6.0, True, "6"))
+def test_campaign_rejects_malformed_evaluator_index(next_index):
+    c = Campaign(_indexed_evaluator(), _bounds(2), _indexed_cfg())
+    c.initialize()
+    state = c.state_dict()
+    state["evaluator_state"] = dict(
+        state["evaluator_state"], next_index=next_index
+    )
+
+    with pytest.raises(ValueError, match="next_index must be a nonnegative integer"):
+        Campaign.from_state_dict(state, _indexed_evaluator())
+
+
+def test_campaign_refuses_to_save_inconsistent_live_evaluator_index():
+    c = Campaign(_indexed_evaluator(), _bounds(2), _indexed_cfg())
+    c.initialize()
+    c.evaluator._next_index = 0
+
+    with pytest.raises(ValueError, match=r"next_index 0.*6 observed"):
+        c.state_dict()
+
+
+def test_indexed_noise_resume_matches_uninterrupted_campaign_byte_for_byte(tmp_path):
+    uninterrupted = Campaign(_indexed_evaluator(), _bounds(2), _indexed_cfg())
+    uninterrupted.initialize()
+    _advance_indexed(uninterrupted)
+
+    checkpoint = tmp_path / "indexed-mid.pt"
+    uninterrupted.save(checkpoint)
+    _advance_indexed(uninterrupted)
+
+    resumed = Campaign.load(checkpoint, _indexed_evaluator())
+    _advance_indexed(resumed)
+
+    assert torch.equal(uninterrupted.train_X, resumed.train_X)
+    assert torch.equal(uninterrupted.train_Y, resumed.train_Y)
+    _assert_logs_equal(uninterrupted.logs, resumed.logs)
+    assert uninterrupted.evaluator.state_dict() == resumed.evaluator.state_dict()
+    assert _serialized(uninterrupted.state_dict()) == _serialized(resumed.state_dict())
+
+
+def test_legacy_noise_resume_matches_uninterrupted_campaign_byte_for_byte(tmp_path):
+    uninterrupted = Campaign(_legacy_evaluator(), _bounds(2), _indexed_cfg())
+    uninterrupted.initialize()
+    _advance_indexed(uninterrupted)
+
+    checkpoint = tmp_path / "legacy-mid.pt"
+    uninterrupted.save(checkpoint)
+    _advance_indexed(uninterrupted)
+
+    resumed = Campaign.load(checkpoint, _legacy_evaluator())
+    _advance_indexed(resumed)
+
+    assert torch.equal(uninterrupted.train_X, resumed.train_X)
+    assert torch.equal(uninterrupted.train_Y, resumed.train_Y)
+    _assert_logs_equal(uninterrupted.logs, resumed.logs)
+    assert uninterrupted.evaluator.state_dict() == resumed.evaluator.state_dict()
+    assert _serialized(uninterrupted.state_dict()) == _serialized(resumed.state_dict())
 
 
 # --------------------------------------------------------------------------

@@ -1,5 +1,5 @@
 # Environments — .venv is ~950 MB. Never commit it.
-.venv/
+.venv
 venv/
 env/
 .python-version
@@ -219,6 +219,23 @@ COMMIT_MSG.txt
 !results/f2-error-volumes.json
 !results/f3-draw-sweep.json
 
+# Frozen SPADE joint-protocol development evidence. Raw shards remain split and hashed;
+# the small analysis/selection artifacts bind their exact inputs before lockbox access.
+!results/spade-development-*.jsonl.gz
+!results/spade-development-*.jsonl.gz.sha256
+!results/spade-development-*.jsonl.gz.manifest.json
+!results/spade-development-analysis.json
+!results/spade-selected-protocol.json
+
+# Frozen lockbox evidence: raw shards are compressed and hash-bound; the final manifest,
+# confirmatory analysis, and release report are the only allowlisted lockbox artifacts.
+!results/spade-lockbox-*.jsonl.gz
+!results/spade-lockbox-*.jsonl.gz.sha256
+!results/spade-lockbox-*.jsonl.gz.manifest.json
+!results/spade-lockbox-manifest.json
+!results/spade-lockbox-analysis.json
+!results/spade-lockbox-release.json
+
 # Requested by the workers that produced them; results/* ignores by default.
 # f2-ce-error-volumes: error volumes for the CONSERVATIVE-ESTIMATE sets, zero new
 # campaigns, derived from k6b's ce_false_in_*/ce_vol_*/true_frac_above. It was
@@ -231,6 +248,10 @@ COMMIT_MSG.txt
 
 # Q59 map re-score. Registered in OPEN-QUESTIONS before the runner existed.
 !results/q59-map-rescore.json
+
+# Phase 1 historical replay classification. Unlike transient campaign output, this is
+# provenance for why exact historical gates remain failing or receive a registered bound.
+!results/historical-replay-audit.json
 
 # ---------------------------------------------------------------------------
 # VERSION C. `results/*` above ignores .json by default, and this repository has
@@ -322,3 +343,14 @@ COMMIT_MSG.txt
 # per-arm-per-condition campaign files (kf3-followup-c*-spade_cf_*.json/.ckpt.jsonl, bulk,
 # regenerable).
 !results/kf3-followup-analysis.json
+
+# Local isolated feature worktrees.
+.worktrees/
+.superpowers/
+
+# tau-quantile / calibration-fix follow-ups: same convention -- small derived verdicts.
+# tau-quantile-followup.json is NOT included -- 9,600 rows of bulk raw campaign data
+# (14.8 MB), same category as kf3-followup-c*-spade_cf_*.json, correctly left ignored.
+!results/k0-calibration-gate.json
+!results/k1-noise-ceiling.json
+!results/k2-design-lottery.json

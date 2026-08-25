@@ -58,7 +58,7 @@ __all__ = ["NEIGHBOURS_PER_AXIS", "POSTERIOR_CHUNK", "brier_and_auc", "certified
            "certified_volume_curve", "component_report", "connected_components",
            "false_inclusion_rate", "gp_adapter", "grid_neighbours", "inscribed_box",
            "inscribed_box_from_mask", "iou", "predictive_probability_map",
-           "probability_map", "tau_max", "tau_max_exact"]
+           "probability_map", "tau_max", "tau_max_exact", "tau_quantile"]
 
 _STD_NORMAL = Normal(0.0, 1.0)
 
@@ -76,6 +76,24 @@ def tau_max(gamma: float, sigma_rel: float, mu_max: float = 1.0) -> float:
     estimation noise.
     """
     return round(mu_max * (1.0 - _z_for(gamma) * sigma_rel), 10)
+
+
+def tau_quantile(truth: Tensor, p: float) -> float:
+    """The threshold whose TRUE superlevel set covers fraction ``p`` of ``truth``.
+
+    Registered fix for the family-agnostic-grid defect in :func:`tau_max` /
+    ``tau_frac``: a fixed *fraction of the max* is not the same question on every
+    landscape (ackley's true prevalence at ``tau_frac=0.60`` is 0.0000; rosenbrock's
+    is 0.9560 -- FINDINGS-SPADE.md sec 5, ``docs/COVERAGE-MATRIX.md`` sec B1). This
+    instead asks for a fixed *fraction of the box*, which is comparable by
+    construction: ``P(truth >= tau_quantile(truth, p)) == p`` (up to the grid's
+    discretisation), on every family. ``docs/SPADE-TAU-QUANTILE-SPEC.md`` registers
+    ``p in {0.30, 0.10, 0.03, 0.01}`` as the replacement for the four ``tau_frac``
+    values -- COVERAGE-MATRIX's own recommended repair, adopted verbatim.
+    """
+    if not (0.0 < p < 1.0):
+        raise ValueError(f"p must be in (0, 1), got {p}")
+    return float(torch.quantile(truth.reshape(-1).double(), 1.0 - p))
 
 
 #: Grid rows per ``posterior`` call. See :func:`gp_adapter` for why this is not optional.
