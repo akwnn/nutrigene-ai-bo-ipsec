@@ -15,6 +15,8 @@ from pathlib import Path
 import numpy as np
 from scipy.stats import beta
 
+from boec.spade_power import validate_power_plan_payload
+
 
 ROOT = Path(__file__).resolve().parents[1]
 LOCKBOX_FAMILIES = (
@@ -27,13 +29,39 @@ MAP_MARGIN = 0.02
 REGRET_MARGIN = 0.02
 ANSWER_MINIMUM = 0.50
 CONTAINMENT_MINIMUM = 0.90
-SCHEMA = "boec-spade-lockbox-analysis-v1"
+SCHEMA = "boec-spade-lockbox-analysis-v2"
 PERMISSIBLE_PASS_CLAIM = "After prespecified selection on development families, the frozen 48-evaluation SPADE protocol matched the specialist Sobol map and qLogNEI optimizer within registered practical margins while issuing empirically calibrated conservative regions on four untouched randomized synthetic generator families."
 PERMISSIBLE_FAIL_CLAIM = "The registered lockbox intersection-union success rule did not pass; no superiority claim is supported."
 
 
 def _canonical_json(value: object) -> str:
     return json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=False, allow_nan=False)
+
+
+def _canonical_bytes(value: object) -> bytes:
+    return (_canonical_json(value) + "\n").encode("utf-8")
+
+
+def _registered_sample_size(value: object) -> int:
+    if isinstance(value, bool) or not isinstance(value, int) or not 350 <= value <= 2000:
+        raise ValueError("registered analysis sample size must lie in 350..2000")
+    return value
+
+
+def _load_canonical_mapping(path: Path, label: str) -> tuple[dict[str, object], bytes]:
+    try:
+        data = path.read_bytes()
+        payload = json.loads(data)
+    except (OSError, UnicodeDecodeError, ValueError, RecursionError) as exc:
+        raise ValueError(f"{label} is invalid JSON") from exc
+    if not isinstance(payload, dict):
+        raise ValueError(f"{label} must be a JSON object")
+    try:
+        if data != _canonical_bytes(payload):
+            raise ValueError(f"{label} bytes are not canonical")
+    except (TypeError, ValueError) as exc:
+        raise ValueError(f"{label} bytes are not finite canonical JSON") from exc
+    return payload, data
 
 
 def _atomic_json(path: Path, value: Mapping[str, object]) -> None:
@@ -108,11 +136,14 @@ def _score(row: Mapping[str, object], name: str) -> float:
     return float(value)
 
 
-def _registered_row_contract(rows: Sequence[Mapping[str, object]], provenance: Mapping[str, object]) -> None:
-    required_provenance = {"protocol_digest", "spec_digest", "config_digest", "generator_digest", "generator_manifest_sha256", "source_commit", "environment"}
+def _registered_row_contract(rows: Sequence[Mapping[str, object]], provenance: Mapping[str, object], *, sample_size: int) -> None:
+    registered_n = _registered_sample_size(sample_size)
+    required_provenance = {"protocol_digest", "spec_digest", "config_digest", "generator_digest", "generator_manifest_sha256", "source_commit", "power_plan_sha256", "power_source_commit", "sample_size", "environment"}
     if set(provenance) != required_provenance:
         raise ValueError("registered analysis provenance schema drift")
-    expected_keys = {(family, key, 0, arm) for family in LOCKBOX_FAMILIES for key in range(350) for arm in ARMS}
+    if provenance.get("sample_size") != registered_n:
+        raise ValueError("registered analysis sample size provenance mismatch")
+    expected_keys = {(family, key, 0, arm) for family in LOCKBOX_FAMILIES for key in range(registered_n) for arm in ARMS}
     actual_keys = set()
     for row in rows:
         if not isinstance(row, Mapping) or row.get("schema") != "boec-spade-study-row-v1":
@@ -127,7 +158,7 @@ def _registered_row_contract(rows: Sequence[Mapping[str, object]], provenance: M
             if row.get(field) != provenance[field]:
                 raise ValueError("registered analysis row provenance mismatch")
         parent = row.get("parent_artifacts")
-        if not isinstance(parent, Mapping) or parent.get("generator") != provenance["generator_digest"] or parent.get("generator_manifest") != provenance["generator_manifest_sha256"]:
+        if not isinstance(parent, Mapping) or parent.get("generator") != provenance["generator_digest"] or parent.get("generator_manifest") != provenance["generator_manifest_sha256"] or parent.get("power_plan") != provenance["power_plan_sha256"]:
             raise ValueError("registered analysis row parent provenance mismatch")
         if row.get("environment") != provenance["environment"]:
             raise ValueError("registered analysis common environment mismatch")
@@ -135,10 +166,10 @@ def _registered_row_contract(rows: Sequence[Mapping[str, object]], provenance: M
         if not isinstance(score, Mapping) or score.get("budget") != 48 or score.get("terminal_rule") != "P" or score.get("execution_mode") != "REGISTERED":
             raise ValueError("registered analysis score contract drift")
     if actual_keys != expected_keys or len(rows) != len(expected_keys):
-        raise ValueError("registered analysis requires exactly all four frozen families and 350 complete paired keys")
+        raise ValueError(f"registered analysis requires exactly all four frozen families and {registered_n} complete paired keys")
 
 
-def analyse_lockbox_rows(rows: Sequence[Mapping[str, object]], *, bootstrap_replicates: int = BOOTSTRAP_REPLICATES, bootstrap_seed: int = 2_026_08_25, execution_mode: str = "REGISTERED", provenance: Mapping[str, object] | None = None) -> dict[str, object]:
+def analyse_lockbox_rows(rows: Sequence[Mapping[str, object]], *, bootstrap_replicates: int = BOOTSTRAP_REPLICATES, bootstrap_seed: int = 2_026_08_25, execution_mode: str = "REGISTERED", sample_size: int | None = None, provenance: Mapping[str, object] | None = None) -> dict[str, object]:
     """Compute the primary intersection-union verdict without pooling families."""
     by_family: dict[str, object] = {}
     pooled_rows: list[Mapping[str, object]] = []
@@ -148,7 +179,8 @@ def analyse_lockbox_rows(rows: Sequence[Mapping[str, object]], *, bootstrap_repl
     if execution_mode == "REGISTERED":
         if provenance is None:
             raise ValueError("registered analysis requires immutable provenance")
-        _registered_row_contract(rows, provenance)
+        registered_n = _registered_sample_size(sample_size)
+        _registered_row_contract(rows, provenance, sample_size=registered_n)
         families = LOCKBOX_FAMILIES
     else:
         families = tuple(family for family in LOCKBOX_FAMILIES if family in present)
@@ -184,16 +216,46 @@ def analyse_lockbox_rows(rows: Sequence[Mapping[str, object]], *, bootstrap_repl
     return {"schema": SCHEMA, "execution_mode": execution_mode, "provenance": dict(provenance or {}), "families": by_family, "overall_verdict": verdict, "permissible_claim": PERMISSIBLE_PASS_CLAIM if verdict == "PASS" else PERMISSIBLE_FAIL_CLAIM, "primary_rule": "intersection_union_all_endpoints_in_every_family", "secondary": {"pooled": {"row_count": len(pooled_rows), "does_not_change_primary": True, "label": "secondary descriptive pooled analysis only"}}}
 
 
-def analyse_merged_manifest(manifest_path: Path) -> dict[str, object]:
+def analyse_merged_manifest(manifest_path: Path, *, power_path: Path | None = None) -> dict[str, object]:
     """Read only hash-validated raw shards named by a completed merged manifest."""
     from boec.spade_study import read_jsonl_gzip
     from scripts import run_spade_lockbox as lockbox_contract
-    try:
-        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
-    except (OSError, UnicodeDecodeError, ValueError, RecursionError) as exc:
-        raise ValueError("merged lockbox manifest is invalid") from exc
-    if not isinstance(manifest, Mapping) or set(manifest) != lockbox_contract.MERGED_MANIFEST_FIELDS or manifest.get("schema") != lockbox_contract.MERGED_MANIFEST_SCHEMA or manifest.get("status") != "COMPLETE" or manifest.get("source_dirty") is not False or manifest.get("sample_size") != 350:
+    manifest, _manifest_bytes = _load_canonical_mapping(
+        manifest_path, "merged lockbox manifest"
+    )
+    if set(manifest) != lockbox_contract.MERGED_MANIFEST_FIELDS or manifest.get("schema") != lockbox_contract.MERGED_MANIFEST_SCHEMA or manifest.get("status") != "COMPLETE" or manifest.get("source_dirty") is not False:
         raise ValueError("merged lockbox manifest schema/provenance drift")
+    sample_size = _registered_sample_size(manifest.get("sample_size"))
+    actual_power_path = power_path or ROOT / "results" / "spade-lockbox-power.json"
+    parsed_power, power_bytes = _load_canonical_mapping(actual_power_path, "power plan")
+    actual_power_sha256 = hashlib.sha256(power_bytes).hexdigest()
+    if manifest.get("power_plan_sha256") != actual_power_sha256:
+        raise ValueError("merged lockbox power plan hash mismatch")
+    power_plan = validate_power_plan_payload(parsed_power)
+    decision = power_plan.get("decision")
+    if (
+        power_plan.get("status") != "POWERED"
+        or not isinstance(decision, Mapping)
+        or decision.get("selected_sample_size") != sample_size
+        or power_plan.get("source_commit") != manifest.get("power_source_commit")
+    ):
+        raise ValueError("merged lockbox power decision/provenance drift")
+    power_digests = power_plan.get("digests")
+    expected_power_digests = {
+        "study_protocol_sha256": manifest.get("protocol_digest"),
+        "specification_sha256": manifest.get("spec_digest"),
+        "configuration_sha256": manifest.get("config_digest"),
+        "generator_sha256": manifest.get("generator_digest"),
+        "generator_manifest_sha256": manifest.get("generator_manifest_sha256"),
+    }
+    if not isinstance(power_digests, Mapping) or any(
+        power_digests.get(field) != value
+        for field, value in expected_power_digests.items()
+    ):
+        raise ValueError("merged lockbox power digest provenance drift")
+    selected = power_plan.get("selected_protocol")
+    if not isinstance(selected, Mapping) or selected.get("sha256") != manifest.get("selected_protocol_sha256") or selected.get("source_commit") != manifest.get("selection_source_commit"):
+        raise ValueError("merged lockbox power selection provenance drift")
     shards = manifest.get("raw_shards")
     if not isinstance(shards, list):
         raise ValueError("merged lockbox manifest has invalid shards")
@@ -216,7 +278,8 @@ def analyse_merged_manifest(manifest_path: Path) -> dict[str, object]:
             raise ValueError("merged lockbox artifact filename identity drift")
         try:
             exact_raw_file = lockbox_contract.registered_raw_filename(
-                shard.get("family"), shard.get("start"), shard.get("stop")
+                shard.get("family"), shard.get("start"), shard.get("stop"),
+                sample_size=sample_size,
             )
         except ValueError as exc:
             raise ValueError("merged lockbox shard has unregistered family/range") from exc
@@ -241,12 +304,15 @@ def analyse_merged_manifest(manifest_path: Path) -> dict[str, object]:
         if actual_sidecar != shard["sha256_sha256"]:
             raise ValueError("merged lockbox SHA-256 sidecar hash mismatch")
         try:
-            shard_manifest = json.loads(shard_manifest_path.read_text(encoding="utf-8"))
+            shard_manifest, _shard_manifest_bytes = _load_canonical_mapping(
+                shard_manifest_path, "lockbox shard manifest"
+            )
             sidecar_tokens = sidecar_path.read_text(encoding="ascii").split()
         except (OSError, UnicodeDecodeError, ValueError, RecursionError) as exc:
             raise ValueError("merged lockbox shard metadata is invalid") from exc
         shard_manifest = lockbox_contract.validate_completed_shard_contract(
-            shard_manifest, merged_entry=shard, merged_manifest=manifest
+            shard_manifest, sample_size=sample_size, merged_entry=shard,
+            merged_manifest=manifest
         )
         if sidecar_tokens != [shard["raw_sha256"], raw_file]:
             raise ValueError("merged lockbox SHA-256 sidecar content mismatch")
@@ -256,20 +322,23 @@ def analyse_merged_manifest(manifest_path: Path) -> dict[str, object]:
             family=shard_manifest["family"],
             start=shard_manifest["start"],
             stop=shard_manifest["stop"],
+            sample_size=sample_size,
         ))
     if not rows:
         raise ValueError("merged lockbox manifest has no rows")
-    provenance = {field: manifest[field] for field in ("protocol_digest", "spec_digest", "config_digest", "generator_digest", "generator_manifest_sha256", "source_commit")}
+    provenance = {field: manifest[field] for field in ("protocol_digest", "spec_digest", "config_digest", "generator_digest", "generator_manifest_sha256", "source_commit", "power_plan_sha256", "power_source_commit")}
+    provenance["sample_size"] = sample_size
     provenance["environment"] = rows[0]["environment"]
-    return analyse_lockbox_rows(rows, execution_mode="REGISTERED", provenance=provenance)
+    return analyse_lockbox_rows(rows, execution_mode="REGISTERED", sample_size=sample_size, provenance=provenance)
 
 
 def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--manifest", required=True, type=Path)
+    parser.add_argument("--power", default=ROOT / "results" / "spade-lockbox-power.json", type=Path)
     parser.add_argument("--out", default=ROOT / "results" / "spade-lockbox-analysis.json", type=Path)
     args = parser.parse_args(argv)
-    report = analyse_merged_manifest(args.manifest)
+    report = analyse_merged_manifest(args.manifest, power_path=args.power)
     _atomic_json(args.out, report)
     print(_canonical_json(report))
     return 0 if report["overall_verdict"] == "PASS" else 2

@@ -5,9 +5,12 @@ import hashlib
 import json
 import os
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 
+import boec.spade_power as power
+from boec.spade_power import DEVELOPMENT_FAMILIES, POWER_ENDPOINTS
 from scripts import analyse_spade_lockbox as analysis
 from scripts import run_spade_lockbox as lockbox
 from scripts import select_spade_protocol as selector
@@ -18,6 +21,133 @@ SPEC = "e" * 64
 CONFIG = "f" * 64
 GENERATOR = "a" * 64
 SOURCE = "1" * 40
+POWER_SOURCE = "2" * 40
+CURRENT_SOURCE = "3" * 40
+POWER_HASH = "9" * 64
+
+
+def _canonical_bytes(value: object) -> bytes:
+    return (
+        json.dumps(
+            value,
+            sort_keys=True,
+            separators=(",", ":"),
+            ensure_ascii=False,
+            allow_nan=False,
+        )
+        + "\n"
+    ).encode("utf-8")
+
+
+def _canonical_sha256(value: object) -> str:
+    return hashlib.sha256(_canonical_bytes(value)[:-1]).hexdigest()
+
+
+def _lockbox_metadata() -> dict[str, object]:
+    return {
+        "protocol_digest": PROTOCOL,
+        "spec_digest": SPEC,
+        "config_digest": CONFIG,
+        "generator_digest": GENERATOR,
+        "generator_manifest_sha256": "c" * 64,
+        "source_commit": CURRENT_SOURCE,
+        "source_dirty": False,
+        "selected_protocol_sha256": "b" * 64,
+        "selection_source_commit": SOURCE,
+        "power_plan_sha256": POWER_HASH,
+        "power_source_commit": POWER_SOURCE,
+    }
+
+
+def _development_artifacts() -> list[dict[str, object]]:
+    return [
+        {
+            "family": family,
+            "raw_file": f"spade-development-{family}-000-050.jsonl.gz",
+            "raw_sha256": f"{index:x}" * 64,
+            "manifest_file": (
+                f"spade-development-{family}-000-050.jsonl.gz.manifest.json"
+            ),
+            "manifest_sha256": f"{index + 5:x}" * 64,
+        }
+        for index, family in enumerate(DEVELOPMENT_FAMILIES)
+    ]
+
+
+def _proof_folds(candidate: str) -> list[dict[str, object]]:
+    return [
+        {
+            "held_out_family": family,
+            "training_families": [
+                other for other in DEVELOPMENT_FAMILIES if other != family
+            ],
+            "selected_candidate": candidate,
+        }
+        for family in DEVELOPMENT_FAMILIES
+    ]
+
+
+def _power_payload(
+    *, selected_sha256: str, selected_source: str = SOURCE, sample_size: int = 412
+) -> tuple[dict[str, object], object]:
+    held_out = {
+        family: {endpoint: [-0.01] * 50 for endpoint in POWER_ENDPOINTS}
+        for family in DEVELOPMENT_FAMILIES
+    }
+    decision = power.plan_lockbox_sample_size(held_out).as_dict()
+    decision["selected_sample_size"] = sample_size
+    decision["selected_instance_prefix"] = {
+        "first": 0,
+        "last": sample_size - 1,
+        "count": sample_size,
+    }
+    for family in DEVELOPMENT_FAMILIES:
+        for endpoint in POWER_ENDPOINTS:
+            decision["families"][family][endpoint]["reported_n"] = sample_size
+    decision_sha256 = _canonical_sha256(decision)
+    recomputed = SimpleNamespace(
+        status="POWERED",
+        as_dict=lambda: copy.deepcopy(decision),
+        decision_sha256=decision_sha256,
+    )
+    candidate = "spade-o44-fixed_hybrid"
+    payload: dict[str, object] = {
+        "schema": "boec-spade-lockbox-power-v1",
+        "status": "POWERED",
+        "source_commit": POWER_SOURCE,
+        "source_dirty": False,
+        "environment": {
+            "python": "3.11.9",
+            "numpy": "2.1.0",
+            "scipy": "1.14.0",
+            "platform": "test-platform",
+        },
+        "digests": {
+            "study_protocol_sha256": PROTOCOL,
+            "specification_sha256": SPEC,
+            "configuration_sha256": CONFIG,
+            "generator_sha256": GENERATOR,
+            "generator_manifest_sha256": "c" * 64,
+            "power_design_sha256": "4" * 64,
+            "power_engine_sha256": "5" * 64,
+            "power_planner_sha256": "6" * 64,
+        },
+        "selected_protocol": {
+            "file": "spade-selected-protocol.json",
+            "sha256": selected_sha256,
+            "source_commit": selected_source,
+        },
+        "development_artifacts": _development_artifacts(),
+        "held_out_proof": {
+            "unanimous": True,
+            "selected_candidate": candidate,
+            "folds": _proof_folds(candidate),
+        },
+        "held_out_differences": held_out,
+        "decision": decision,
+        "decision_sha256": decision_sha256,
+    }
+    return payload, recomputed
 
 
 def _built_selection(monkeypatch, tmp_path: Path) -> dict:
@@ -51,29 +181,43 @@ def _built_selection(monkeypatch, tmp_path: Path) -> dict:
 @pytest.fixture
 def clean_access(monkeypatch, tmp_path):
     selected_payload = _built_selection(monkeypatch, tmp_path)
+    selected_payload["development_artifacts"] = _development_artifacts()
+    selected_payload["lofo_folds"] = _proof_folds(
+        str(selected_payload["selected_candidate"])
+    )
     selected = tmp_path / "results" / "spade-selected-protocol.json"
     selected.parent.mkdir()
-    selected.write_text(json.dumps(selected_payload, sort_keys=True, separators=(",", ":")) + "\n")
+    selected.write_bytes(_canonical_bytes(selected_payload))
+    selected_sha256 = hashlib.sha256(selected.read_bytes()).hexdigest()
+    power_payload, recomputed = _power_payload(selected_sha256=selected_sha256)
+    power_path = tmp_path / "results" / "spade-lockbox-power.json"
+    power_path.write_bytes(_canonical_bytes(power_payload))
     metadata = {
         "protocol_digest": PROTOCOL,
         "spec_digest": SPEC,
         "config_digest": CONFIG,
         "generator_digest": GENERATOR,
         "generator_manifest_sha256": "c" * 64,
-        "source_commit": SOURCE,
+        "source_commit": CURRENT_SOURCE,
         "source_dirty": False,
     }
     monkeypatch.setattr(lockbox, "registered_metadata", lambda _: metadata)
-    monkeypatch.setattr(lockbox, "git_state", lambda _: (SOURCE, False))
-    monkeypatch.setattr(lockbox, "_committed_file_hash", lambda *_: hashlib.sha256(selected.read_bytes()).hexdigest())
+    monkeypatch.setattr(lockbox, "git_state", lambda _: (CURRENT_SOURCE, False))
+
+    def committed_file_hash(_root, _revision, relative="results/spade-selected-protocol.json"):
+        path = tmp_path / relative
+        return hashlib.sha256(path.read_bytes()).hexdigest() if path.is_file() else None
+
+    monkeypatch.setattr(lockbox, "_committed_file_hash", committed_file_hash)
     monkeypatch.setattr(lockbox, "_is_ancestor", lambda *_: True)
     monkeypatch.setattr(lockbox, "_load_generator_freeze", lambda _: {"freeze_parent_commit": lockbox.GENERATOR_FREEZE_PARENT_COMMIT})
-    return tmp_path, selected, selected_payload
+    monkeypatch.setattr(power, "plan_lockbox_sample_size", lambda *_args, **_kwargs: recomputed)
+    return tmp_path, selected, selected_payload, power_path, power_payload
 
 
 def test_access_control_fails_closed_without_a_clean_committed_selection(clean_access, monkeypatch):
-    root, selected, selected_payload = clean_access
-    assert lockbox.validate_lockbox_access(repo_root=root, selected_path=selected)["status"] == "SELECTED"
+    root, selected, selected_payload, _power_path, _power_payload_value = clean_access
+    assert lockbox.validate_lockbox_access(repo_root=root, selected_path=selected)["selection"]["status"] == "SELECTED"
 
     selected.unlink()
     with pytest.raises(ValueError, match="missing"):
@@ -81,31 +225,31 @@ def test_access_control_fails_closed_without_a_clean_committed_selection(clean_a
     selected.write_text(json.dumps({**selected_payload, "status": "NO_SELECTION"}) + "\n")
     with pytest.raises(ValueError, match="SELECTED"):
         lockbox.validate_lockbox_access(repo_root=root, selected_path=selected)
-    selected.write_text(json.dumps(selected_payload) + "\n")
-    monkeypatch.setattr(lockbox, "git_state", lambda _: (SOURCE, True))
+    selected.write_bytes(_canonical_bytes(selected_payload))
+    monkeypatch.setattr(lockbox, "git_state", lambda _: (CURRENT_SOURCE, True))
     with pytest.raises(ValueError, match="dirty"):
         lockbox.validate_lockbox_access(repo_root=root, selected_path=selected)
-    monkeypatch.setattr(lockbox, "git_state", lambda _: (SOURCE, False))
+    monkeypatch.setattr(lockbox, "git_state", lambda _: (CURRENT_SOURCE, False))
     monkeypatch.setattr(lockbox, "_committed_file_hash", lambda *_: None)
     with pytest.raises(ValueError, match="committed"):
         lockbox.validate_lockbox_access(repo_root=root, selected_path=selected)
 
 
 def test_access_control_rejects_digest_drift_and_pre_freeze_selection(clean_access, monkeypatch):
-    root, selected, selected_payload = clean_access
+    root, selected, selected_payload, _power_path, _power_payload_value = clean_access
     bad = copy.deepcopy(selected_payload)
     bad["generator_digest"] = "0" * 64
     selected.write_text(json.dumps(bad) + "\n")
     with pytest.raises(ValueError, match="digest"):
         lockbox.validate_lockbox_access(repo_root=root, selected_path=selected)
-    selected.write_text(json.dumps(selected_payload) + "\n")
+    selected.write_bytes(_canonical_bytes(selected_payload))
     monkeypatch.setattr(lockbox, "_is_ancestor", lambda *_: False)
     with pytest.raises(ValueError, match="freeze"):
         lockbox.validate_lockbox_access(repo_root=root, selected_path=selected)
 
 
 def test_access_uses_exact_selector_schema_and_study_protocol_digest(clean_access):
-    root, selected, selected_payload = clean_access
+    root, selected, selected_payload, _power_path, _power_payload_value = clean_access
     bad = copy.deepcopy(selected_payload)
     bad["study_protocol_digest"] = "0" * 64
     selected.write_text(json.dumps(bad) + "\n")
@@ -119,86 +263,249 @@ def test_access_uses_exact_selector_schema_and_study_protocol_digest(clean_acces
         lockbox.validate_lockbox_access(repo_root=root, selected_path=selected)
 
 
-def test_registered_path_refuses_limit_and_shard_contract_is_exact():
-    registered = lockbox.ROOT / "results" / "spade-lockbox-toroidal_rastrigin-000-350.jsonl.gz"
+def test_access_binds_exact_committed_power_plan_and_dynamic_size(clean_access):
+    root, selected, selected_payload, power_path, power_payload_value = clean_access
+    access = lockbox.validate_lockbox_access(repo_root=root, selected_path=selected)
+    assert set(access) == {"selection", "power_plan", "sample_size", "power_plan_sha256"}
+    assert access["selection"] == selected_payload
+    assert access["power_plan"] == power_payload_value
+    assert access["sample_size"] == 412
+    assert access["power_plan_sha256"] == hashlib.sha256(power_path.read_bytes()).hexdigest()
+
+
+def test_access_rejects_missing_uncommitted_or_noncanonical_power(
+    clean_access, monkeypatch
+):
+    root, selected, _selected_payload, power_path, power_payload_value = clean_access
+    power_path.unlink()
+    with pytest.raises(ValueError, match="power.*missing"):
+        lockbox.validate_lockbox_access(repo_root=root, selected_path=selected)
+
+    power_path.write_bytes(_canonical_bytes(power_payload_value))
+    original = lockbox._committed_file_hash
+    monkeypatch.setattr(
+        lockbox,
+        "_committed_file_hash",
+        lambda repo_root, revision, relative="results/spade-selected-protocol.json": (
+            None
+            if relative == "results/spade-lockbox-power.json"
+            else original(repo_root, revision, relative)
+        ),
+    )
+    with pytest.raises(ValueError, match="power.*committed"):
+        lockbox.validate_lockbox_access(repo_root=root, selected_path=selected)
+
+    monkeypatch.setattr(lockbox, "_committed_file_hash", original)
+    power_path.write_text(json.dumps(power_payload_value) + "\n")
+    with pytest.raises(ValueError, match="canonical|bytes"):
+        lockbox.validate_lockbox_access(repo_root=root, selected_path=selected)
+
+
+def test_access_rejects_insufficient_out_of_range_or_wrongly_bound_power(
+    clean_access, monkeypatch
+):
+    root, selected, _selected_payload, power_path, power_payload_value = clean_access
+    monkeypatch.setattr(lockbox, "validate_power_plan_payload", lambda payload: payload)
+
+    insufficient = copy.deepcopy(power_payload_value)
+    insufficient["status"] = "INSUFFICIENT_POWER"
+    insufficient["decision"]["status"] = "INSUFFICIENT_POWER"
+    insufficient["decision"]["selected_sample_size"] = None
+    insufficient["decision"]["selected_instance_prefix"] = None
+    power_path.write_bytes(_canonical_bytes(insufficient))
+    with pytest.raises(ValueError, match="POWERED"):
+        lockbox.validate_lockbox_access(repo_root=root, selected_path=selected)
+
+    outside = copy.deepcopy(power_payload_value)
+    outside["decision"]["selected_sample_size"] = 2001
+    outside["decision"]["selected_instance_prefix"] = {
+        "first": 0,
+        "last": 2000,
+        "count": 2001,
+    }
+    power_path.write_bytes(_canonical_bytes(outside))
+    with pytest.raises(ValueError, match="350|2000|range"):
+        lockbox.validate_lockbox_access(repo_root=root, selected_path=selected)
+
+    wrong_selection = copy.deepcopy(power_payload_value)
+    wrong_selection["selected_protocol"]["sha256"] = "0" * 64
+    power_path.write_bytes(_canonical_bytes(wrong_selection))
+    with pytest.raises(ValueError, match="selected protocol|selection"):
+        lockbox.validate_lockbox_access(repo_root=root, selected_path=selected)
+
+
+def test_access_requires_selection_and_power_sources_to_be_ancestors(
+    clean_access, monkeypatch
+):
+    root, selected, _selected_payload, _power_path, _power_payload_value = clean_access
+    monkeypatch.setattr(
+        lockbox,
+        "_is_ancestor",
+        lambda _root, older, newer: not (
+            older == POWER_SOURCE and newer == CURRENT_SOURCE
+        ),
+    )
+    with pytest.raises(ValueError, match="power.*ancestor|power.*reachable"):
+        lockbox.validate_lockbox_access(repo_root=root, selected_path=selected)
+
+
+def test_access_cross_checks_power_candidate_folds_and_development_artifacts(
+    clean_access
+):
+    root, selected, _selected_payload, power_path, power_payload_value = clean_access
+    wrong_candidate = copy.deepcopy(power_payload_value)
+    wrong_candidate["held_out_proof"]["selected_candidate"] = "spade-o32-staged"
+    for fold in wrong_candidate["held_out_proof"]["folds"]:
+        fold["selected_candidate"] = "spade-o32-staged"
+    power_path.write_bytes(_canonical_bytes(wrong_candidate))
+    with pytest.raises(ValueError, match="candidate|fold|selection"):
+        lockbox.validate_lockbox_access(repo_root=root, selected_path=selected)
+
+    wrong_artifact = copy.deepcopy(power_payload_value)
+    wrong_artifact["development_artifacts"][0]["raw_sha256"] = "f" * 64
+    power_path.write_bytes(_canonical_bytes(wrong_artifact))
+    with pytest.raises(ValueError, match="development artifact|selection"):
+        lockbox.validate_lockbox_access(repo_root=root, selected_path=selected)
+
+
+def test_access_requires_metadata_for_the_checked_clean_commit(
+    clean_access, monkeypatch
+):
+    root, selected, _selected_payload, _power_path, _power_payload_value = clean_access
+    metadata = dict(lockbox.registered_metadata(root))
+    metadata["source_commit"] = "4" * 40
+    monkeypatch.setattr(lockbox, "registered_metadata", lambda _root: metadata)
+    with pytest.raises(ValueError, match="current clean source|source commit"):
+        lockbox.validate_lockbox_access(repo_root=root, selected_path=selected)
+
+
+def test_registered_path_refuses_limit_and_uses_dynamic_four_digit_range():
+    registered = lockbox.ROOT / "results" / "spade-lockbox-toroidal_rastrigin-0000-0412.jsonl.gz"
+    assert (
+        lockbox.registered_raw_filename("toroidal_rastrigin", 0, 412, sample_size=412)
+        == registered.name
+    )
     with pytest.raises(ValueError, match="limit"):
         lockbox.validate_shard_request(
             family="toroidal_rastrigin", start=0, stop=350, output=registered,
-            limit=1, smoke=False, repo_root=lockbox.ROOT,
+            limit=1, smoke=False, repo_root=lockbox.ROOT, sample_size=412,
         )
-    with pytest.raises(ValueError, match="exactly"):
+    with pytest.raises(ValueError, match="prefix|range|412"):
         lockbox.validate_shard_request(
-            family="toroidal_rastrigin", start=0, stop=349, output=registered,
-            limit=None, smoke=False, repo_root=lockbox.ROOT,
+            family="toroidal_rastrigin", start=0, stop=413, output=registered,
+            limit=None, smoke=False, repo_root=lockbox.ROOT, sample_size=412,
+        )
+    with pytest.raises(ValueError, match="registered path"):
+        lockbox.validate_shard_request(
+            family="toroidal_rastrigin", start=0, stop=412,
+            output=registered.with_name("wrong.jsonl.gz"), limit=None, smoke=False,
+            repo_root=lockbox.ROOT, sample_size=412,
         )
 
 
 def test_resume_payload_rejects_a_corrupted_or_incomplete_arm_set():
-    metadata = {"protocol_digest": PROTOCOL, "spec_digest": SPEC, "config_digest": CONFIG, "generator_digest": GENERATOR, "generator_manifest_sha256": "c" * 64, "source_commit": SOURCE, "source_dirty": False}
+    metadata = _lockbox_metadata()
     payload = lockbox.make_resume_payload(
         family="soft_plateau", start=0, stop=1, raw_file="scratch.jsonl.gz",
         rows=[{"family": "soft_plateau", "instance_seed": 0, "campaign_seed": 0, "arm": arm} for arm in lockbox.LOCKBOX_ARMS],
-        metadata=metadata,
+        metadata=metadata, sample_size=412,
     )
     with pytest.raises(ValueError, match="study-row"):
-        lockbox.validate_resume_payload(payload, metadata=metadata, family="soft_plateau", start=0, stop=1, raw_file="scratch.jsonl.gz")
+        lockbox.validate_resume_payload(payload, metadata=metadata, family="soft_plateau", start=0, stop=1, raw_file="scratch.jsonl.gz", sample_size=412)
     payload["rows"].pop()
     with pytest.raises(ValueError, match="hash-chain|all three|incomplete"):
-        lockbox.validate_resume_payload(payload, metadata=metadata, family="soft_plateau", start=0, stop=1, raw_file="scratch.jsonl.gz")
+        lockbox.validate_resume_payload(payload, metadata=metadata, family="soft_plateau", start=0, stop=1, raw_file="scratch.jsonl.gz", sample_size=412)
 
 
 def test_resume_rejects_rows_without_full_study_schema_before_promotion():
-    metadata = {"protocol_digest": PROTOCOL, "spec_digest": SPEC, "config_digest": CONFIG, "generator_digest": GENERATOR, "generator_manifest_sha256": "c" * 64, "source_commit": SOURCE, "source_dirty": False}
+    metadata = _lockbox_metadata()
     payload = {
-        "schema": "boec-spade-lockbox-resume-v1", "family": "soft_plateau", "start": 0,
-        "stop": 1, "raw_file": "scratch.jsonl.gz", "metadata": metadata, "row_count": 3,
+        "schema": "boec-spade-lockbox-resume-v2", "family": "soft_plateau", "start": 0,
+        "stop": 1, "sample_size": 412, "raw_file": "scratch.jsonl.gz", "metadata": metadata, "row_count": 3,
         "rows": [{"family": "soft_plateau", "instance_seed": 0, "campaign_seed": 0, "arm": arm} for arm in lockbox.LOCKBOX_ARMS],
     }
     payload["row_chain_head"] = lockbox._row_chain_head(payload["rows"])
     with pytest.raises(ValueError, match="study-row|schema"):
-        lockbox.validate_resume_payload(payload, metadata=metadata, family="soft_plateau", start=0, stop=1, raw_file="scratch.jsonl.gz")
+        lockbox.validate_resume_payload(payload, metadata=metadata, family="soft_plateau", start=0, stop=1, raw_file="scratch.jsonl.gz", sample_size=412)
 
 
 def test_final_manifest_requires_complete_non_overlapping_shards(tmp_path):
-    metadata = {"protocol_digest": PROTOCOL, "spec_digest": SPEC, "config_digest": CONFIG, "generator_digest": GENERATOR, "generator_manifest_sha256": "c" * 64, "source_commit": SOURCE, "source_dirty": False, "selected_protocol_sha256": "b" * 64, "selection_source_commit": SOURCE, "command_args": []}
+    metadata = {**_lockbox_metadata(), "command_args": []}
     paths = []
     for family in lockbox.LOCKBOX_FAMILIES:
-        raw = tmp_path / f"spade-lockbox-{family}-000-350.jsonl.gz"
+        raw = tmp_path / f"spade-lockbox-{family}-0000-0412.jsonl.gz"
         raw.write_bytes(family.encode())
         raw_hash = hashlib.sha256(raw.read_bytes()).hexdigest()
         (tmp_path / f"{raw.name}.sha256").write_text(f"{raw_hash}  {raw.name}\n")
-        manifest = {"schema": lockbox.MANIFEST_SCHEMA, "status": "COMPLETE", "family": family, "start": 0, "stop": 350, "sample_size": 350, "expected_rows": 1050, "row_count": 1050, "complete": True, "raw_file": raw.name, "raw_sha256": raw_hash, **metadata}
+        manifest = {"schema": lockbox.MANIFEST_SCHEMA, "status": "COMPLETE", "family": family, "start": 0, "stop": 412, "sample_size": 412, "expected_rows": 1236, "row_count": 1236, "complete": True, "raw_file": raw.name, "raw_sha256": raw_hash, **metadata}
         path = tmp_path / f"{raw.name}.manifest.json"
         path.write_text(json.dumps(manifest))
         paths.append(path)
-    final = lockbox.merge_lockbox_manifests(paths, output=tmp_path / "spade-lockbox-manifest.json", metadata=metadata)
+    final = lockbox.merge_lockbox_manifests(paths, output=tmp_path / "spade-lockbox-manifest.json", metadata=metadata, sample_size=412)
     assert final["status"] == "COMPLETE"
+    assert final["schema"] == "boec-spade-lockbox-manifest-v2"
+    assert final["sample_size"] == 412
+    assert final["power_plan_sha256"] == POWER_HASH
+    assert final["power_source_commit"] == POWER_SOURCE
     assert len(final["raw_shards"]) == 4
     assert all(item["sha256_file"].endswith(".sha256") for item in final["raw_shards"])
     assert all(len(item["sha256_sha256"]) == 64 for item in final["raw_shards"])
     broken = json.loads(paths[0].read_text())
-    broken["row_count"] = 1049
+    broken["row_count"] = 1235
     paths[0].write_text(json.dumps(broken))
     with pytest.raises(ValueError, match="row count"):
-        lockbox.merge_lockbox_manifests(paths, output=tmp_path / "second.json", metadata=metadata)
+        lockbox.merge_lockbox_manifests(paths, output=tmp_path / "second.json", metadata=metadata, sample_size=412)
 
 
 def test_merge_keeps_distinct_shard_command_args(tmp_path):
-    metadata = {"protocol_digest": PROTOCOL, "spec_digest": SPEC, "config_digest": CONFIG, "generator_digest": GENERATOR, "generator_manifest_sha256": "c" * 64, "source_commit": SOURCE, "source_dirty": False, "selected_protocol_sha256": "b" * 64, "selection_source_commit": SOURCE, "command_args": []}
+    metadata = {**_lockbox_metadata(), "command_args": []}
     paths = []
     for index, family in enumerate(lockbox.LOCKBOX_FAMILIES):
-        raw = tmp_path / f"spade-lockbox-{family}-000-350.jsonl.gz"
+        raw = tmp_path / f"spade-lockbox-{family}-0000-0412.jsonl.gz"
         raw.write_bytes(family.encode()); digest = hashlib.sha256(raw.read_bytes()).hexdigest()
         (tmp_path / f"{raw.name}.sha256").write_text(f"{digest}  {raw.name}\n")
-        shard = {"schema": lockbox.MANIFEST_SCHEMA, "status": "COMPLETE", "family": family, "start": 0, "stop": 350, "sample_size": 350, "expected_rows": 1050, "row_count": 1050, "complete": True, "raw_file": raw.name, "raw_sha256": digest, **metadata, "command_args": ["--family", family, "--out", str(raw), str(index)]}
+        shard = {"schema": lockbox.MANIFEST_SCHEMA, "status": "COMPLETE", "family": family, "start": 0, "stop": 412, "sample_size": 412, "expected_rows": 1236, "row_count": 1236, "complete": True, "raw_file": raw.name, "raw_sha256": digest, **metadata, "command_args": ["--family", family, "--out", str(raw), str(index)]}
         path = tmp_path / f"{raw.name}.manifest.json"; path.write_text(json.dumps(shard)); paths.append(path)
-    merged = lockbox.merge_lockbox_manifests(paths, output=tmp_path / "merged.json", metadata=metadata)
-    expected = {family: ["--family", family, "--out", str(tmp_path / f"spade-lockbox-{family}-000-350.jsonl.gz"), str(index)] for index, family in enumerate(lockbox.LOCKBOX_FAMILIES)}
+    merged = lockbox.merge_lockbox_manifests(paths, output=tmp_path / "merged.json", metadata=metadata, sample_size=412)
+    expected = {family: ["--family", family, "--out", str(tmp_path / f"spade-lockbox-{family}-0000-0412.jsonl.gz"), str(index)] for index, family in enumerate(lockbox.LOCKBOX_FAMILIES)}
     assert {item["family"]: item["command_args"] for item in merged["raw_shards"]} == expected
+
+
+def test_shard_local_grid_rejects_globally_complete_relocation():
+    def rows(start: int, stop: int) -> list[dict[str, object]]:
+        return [
+            {
+                "family": "soft_plateau",
+                "instance_seed": key,
+                "campaign_seed": 0,
+                "arm": arm,
+            }
+            for key in range(start, stop)
+            for arm in lockbox.LOCKBOX_ARMS
+        ]
+
+    left, right = rows(0, 2), rows(2, 4)
+    left[-3:], right[:3] = right[:3], left[-3:]
+    assert {
+        (row["instance_seed"], row["arm"]) for row in left + right
+    } == {(key, arm) for key in range(4) for arm in lockbox.LOCKBOX_ARMS}
+    with pytest.raises(ValueError, match="local key/arm grid"):
+        lockbox.validate_shard_local_rows(
+            left, family="soft_plateau", start=0, stop=2, sample_size=350
+        )
+    with pytest.raises(ValueError, match="local key/arm grid"):
+        lockbox.validate_shard_local_rows(
+            right, family="soft_plateau", start=2, stop=4, sample_size=350
+        )
 
 
 def test_runner_source_cannot_depend_on_development_outcome_metrics():
     lockbox.assert_no_development_metric_dependency()
+
+
+def test_runner_freeze_hash_matches_current_generator_manifest_bytes():
+    path = lockbox.ROOT / "results" / "spade-lockbox-generator-manifest.json"
+    assert hashlib.sha256(path.read_bytes()).hexdigest() == lockbox.GENERATOR_FREEZE_SHA256
 
 
 def _rows(
@@ -235,6 +542,49 @@ def _rows(
                     },
                 }
             )
+    return rows
+
+
+def _registered_provenance(sample_size: int) -> dict[str, object]:
+    return {
+        "protocol_digest": PROTOCOL,
+        "spec_digest": SPEC,
+        "config_digest": CONFIG,
+        "generator_digest": GENERATOR,
+        "generator_manifest_sha256": "c" * 64,
+        "source_commit": CURRENT_SOURCE,
+        "power_plan_sha256": POWER_HASH,
+        "power_source_commit": POWER_SOURCE,
+        "sample_size": sample_size,
+        "environment": {"python": "test"},
+    }
+
+
+def _registered_rows(sample_size: int) -> list[dict[str, object]]:
+    rows: list[dict[str, object]] = []
+    for family in lockbox.LOCKBOX_FAMILIES:
+        for row in _rows(family, n=sample_size, answers=sample_size, contained=sample_size):
+            registered = copy.deepcopy(row)
+            registered.update(
+                {
+                    "schema": "boec-spade-study-row-v1",
+                    "protocol_digest": PROTOCOL,
+                    "spec_digest": SPEC,
+                    "config_digest": CONFIG,
+                    "source_commit": CURRENT_SOURCE,
+                    "source_dirty": False,
+                    "environment": {"python": "test"},
+                    "parent_artifacts": {
+                        "generator": GENERATOR,
+                        "generator_manifest": "c" * 64,
+                        "power_plan": POWER_HASH,
+                    },
+                }
+            )
+            registered["scores"].update(
+                {"budget": 48, "terminal_rule": "P", "execution_mode": "REGISTERED"}
+            )
+            rows.append(registered)
     return rows
 
 
@@ -283,7 +633,8 @@ def test_superiority_claims_require_a_strictly_negative_upper_bound():
 def test_registered_analysis_rejects_partial_or_unknown_key_grid():
     with pytest.raises(ValueError, match="exactly|350|frozen families|immutable provenance"):
         analysis.analyse_lockbox_rows(
-            _rows("soft_plateau"), execution_mode="REGISTERED", bootstrap_replicates=17
+            _rows("soft_plateau"), execution_mode="REGISTERED", sample_size=350,
+            bootstrap_replicates=17
         )
     test_only = analysis.analyse_lockbox_rows(
         _rows("soft_plateau"), execution_mode="TEST_ONLY", bootstrap_replicates=17
@@ -291,11 +642,148 @@ def test_registered_analysis_rejects_partial_or_unknown_key_grid():
     assert test_only["overall_verdict"] == "FAIL"
 
 
+@pytest.mark.parametrize("sample_size", [350, 412])
+def test_registered_analysis_uses_exact_power_controlled_sample_size(sample_size):
+    provenance = _registered_provenance(sample_size)
+    result = analysis.analyse_lockbox_rows(
+        _registered_rows(sample_size),
+        execution_mode="REGISTERED",
+        sample_size=sample_size,
+        provenance=provenance,
+        bootstrap_replicates=17,
+        bootstrap_seed=23,
+    )
+    assert result["schema"] == "boec-spade-lockbox-analysis-v2"
+    assert result["overall_verdict"] == "PASS"
+    assert result["provenance"] == provenance
+    assert result["provenance"]["sample_size"] == sample_size
+    assert result["provenance"]["power_plan_sha256"] == POWER_HASH
+
+
+def test_registered_analysis_rejects_grid_or_power_provenance_drift():
+    rows = _registered_rows(350)
+    provenance = _registered_provenance(350)
+
+    missing_arm = rows[:-1]
+    with pytest.raises(ValueError, match="exactly|complete paired"):
+        analysis.analyse_lockbox_rows(
+            missing_arm, execution_mode="REGISTERED", sample_size=350,
+            provenance=provenance, bootstrap_replicates=17,
+        )
+
+    wrong_parent = copy.deepcopy(rows)
+    wrong_parent[0]["parent_artifacts"]["power_plan"] = "0" * 64
+    with pytest.raises(ValueError, match="parent provenance|power"):
+        analysis.analyse_lockbox_rows(
+            wrong_parent, execution_mode="REGISTERED", sample_size=350,
+            provenance=provenance, bootstrap_replicates=17,
+        )
+
+    wrong_size = {**provenance, "sample_size": 412}
+    with pytest.raises(ValueError, match="sample size|provenance"):
+        analysis.analyse_lockbox_rows(
+            rows, execution_mode="REGISTERED", sample_size=350,
+            provenance=wrong_size, bootstrap_replicates=17,
+        )
+
+
+def test_merged_analysis_hashes_actual_power_and_passes_manifest_size(
+    tmp_path, monkeypatch
+):
+    power_payload = {
+        "status": "POWERED",
+        "source_commit": POWER_SOURCE,
+        "decision": {"selected_sample_size": 350},
+        "digests": {
+            "study_protocol_sha256": PROTOCOL,
+            "specification_sha256": SPEC,
+            "configuration_sha256": CONFIG,
+            "generator_sha256": GENERATOR,
+            "generator_manifest_sha256": "c" * 64,
+        },
+        "selected_protocol": {
+            "sha256": "b" * 64,
+            "source_commit": SOURCE,
+        },
+    }
+    power_path = tmp_path / "spade-lockbox-power.json"
+    power_path.write_bytes(_canonical_bytes(power_payload))
+    power_sha256 = hashlib.sha256(power_path.read_bytes()).hexdigest()
+    metadata = {**_lockbox_metadata(), "power_plan_sha256": power_sha256}
+    manifest_paths: list[Path] = []
+    rows_by_family = {
+        family: [
+            row for row in _registered_rows(350) if row["family"] == family
+        ]
+        for family in lockbox.LOCKBOX_FAMILIES
+    }
+    for family in lockbox.LOCKBOX_FAMILIES:
+        raw = tmp_path / f"spade-lockbox-{family}-0000-0350.jsonl.gz"
+        raw.write_bytes(f"raw:{family}".encode("ascii"))
+        raw_sha256 = hashlib.sha256(raw.read_bytes()).hexdigest()
+        Path(f"{raw}.sha256").write_text(f"{raw_sha256}  {raw.name}\n")
+        shard = {
+            "schema": lockbox.MANIFEST_SCHEMA,
+            "status": "COMPLETE",
+            "family": family,
+            "start": 0,
+            "stop": 350,
+            "sample_size": 350,
+            "expected_rows": 1050,
+            "row_count": 1050,
+            "complete": True,
+            "raw_file": raw.name,
+            "raw_sha256": raw_sha256,
+            **metadata,
+            "command_args": ["--family", family],
+        }
+        manifest_path = Path(f"{raw}.manifest.json")
+        manifest_path.write_bytes(_canonical_bytes(shard))
+        manifest_paths.append(manifest_path)
+    merged_path = tmp_path / "spade-lockbox-manifest.json"
+    lockbox.merge_lockbox_manifests(
+        manifest_paths, output=merged_path, metadata=metadata, sample_size=350
+    )
+
+    monkeypatch.setattr(
+        analysis, "validate_power_plan_payload", lambda payload: copy.deepcopy(payload)
+    )
+    import boec.spade_study as study
+
+    monkeypatch.setattr(
+        study,
+        "read_jsonl_gzip",
+        lambda path, **_kwargs: rows_by_family[
+            next(family for family in lockbox.LOCKBOX_FAMILIES if family in Path(path).name)
+        ],
+    )
+    captured: dict[str, object] = {}
+
+    def capture(rows, **kwargs):
+        captured.update(rows=rows, **kwargs)
+        return {"schema": "captured"}
+
+    monkeypatch.setattr(analysis, "analyse_lockbox_rows", capture)
+    assert analysis.analyse_merged_manifest(
+        merged_path, power_path=power_path
+    ) == {"schema": "captured"}
+    assert captured["sample_size"] == 350
+    assert captured["provenance"]["power_plan_sha256"] == power_sha256
+    assert len(captured["rows"]) == 4 * 350 * 3
+
+    power_path.write_bytes(_canonical_bytes({**power_payload, "status": "changed"}))
+    with pytest.raises(ValueError, match="power.*hash"):
+        analysis.analyse_merged_manifest(merged_path, power_path=power_path)
+
+
 def test_shard_schema_and_merged_schema_share_protocol_and_provenance_keys():
     assert lockbox.SHARD_MANIFEST_FIELDS <= lockbox.MERGED_MANIFEST_FIELDS | {"family", "start", "stop", "expected_rows", "row_count", "complete", "raw_file", "raw_sha256", "command_args"}
     assert "protocol_digest" in lockbox.SHARD_MANIFEST_FIELDS
     assert "study_protocol_digest" not in lockbox.MERGED_MANIFEST_FIELDS
     assert "selected_protocol_sha256" in lockbox.SHARD_MANIFEST_FIELDS
+    assert {"power_plan_sha256", "power_source_commit"} <= lockbox.SHARD_MANIFEST_FIELDS
+    assert lockbox.MANIFEST_SCHEMA == "boec-spade-lockbox-shard-v2"
+    assert lockbox.MERGED_MANIFEST_SCHEMA == "boec-spade-lockbox-manifest-v2"
     assert "command_args" in lockbox.SHARD_MANIFEST_FIELDS
 
 
