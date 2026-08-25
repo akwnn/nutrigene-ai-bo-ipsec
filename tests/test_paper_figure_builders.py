@@ -10,7 +10,9 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 from matplotlib.collections import LineCollection, PathCollection
 from matplotlib.colors import to_hex
+from matplotlib.patches import FancyArrowPatch
 from matplotlib.text import Text
+from matplotlib.transforms import Bbox
 import numpy as np
 import pytest
 
@@ -79,10 +81,27 @@ def test_figure2_defines_campaign_decisions_and_estimands():
     bundle = build_figure2(get_preset("portable"))
 
     assert set(bundle.panel_data) == {"A", "B", "C"}
+    assert bundle.layout_rows == (("A", "B"), ("C",))
+    assert bundle.headline == "One 48-well campaign supports distinct scientific decisions"
+    assert bundle.deck == (
+        "Observation, selection, mapping and certification are different reported objects"
+    )
+    expected_panel_titles = {
+        "a": "Campaign observation loop",
+        "b": "Point and region decisions",
+        "c": "Estimand ledger",
+    }
+    visible_figure_text = {text.get_text() for text in bundle.figure.texts}
+    panel_titles = {
+        label: title
+        for label, title in expected_panel_titles.items()
+        if title in visible_figure_text
+    }
+    assert panel_titles == expected_panel_titles
     assert bundle.panel_data["A"]["stages"] == ["formulation", "wells", "assay", "model"]
     assert set(bundle.panel_data["B"]["branches"]) == {"point decision", "region decision"}
     assert "contains no performance result" in bundle.alt_text.lower()
-    assert len(bundle.figure.axes) == 3
+    assert len(bundle.figure.axes) == 4
 
     plt.close(bundle.figure)
 
@@ -91,8 +110,12 @@ def test_figure2_panel_b_names_required_point_deliverables():
     bundle = build_figure2(get_preset("portable"))
 
     point_deliverables = bundle.panel_data["B"]["point deliverables"]
-    assert "noisy selection" in point_deliverables
-    assert "model recommendation" in point_deliverables
+    assert point_deliverables == (
+        "tested-best",
+        "measured selection",
+        "model recommendation",
+        "confirmation",
+    )
     assert "noisy-readout" not in point_deliverables
     assert "model" not in point_deliverables
 
@@ -103,7 +126,7 @@ def test_figure2_panel_b_names_required_point_deliverables():
 def test_figure2_estimand_table_uses_preset_body_typography(name):
     preset = get_preset(name)
     bundle = build_figure2(preset)
-    table = bundle.figure.axes[2].tables[0]
+    table = bundle.figure.axes[3].tables[0]
 
     assert all(cell.get_text().get_fontsize() >= preset.body_pt for cell in table.get_celld().values())
 
@@ -118,15 +141,46 @@ def test_figure2_text_stays_inside_nodes_and_ledger_cells_for_every_preset(prese
     renderer = figure.canvas.get_renderer()
 
     assert_registered_geometry(figure)
-    registered_labels = {item.label for item in figure._paper_geometry}
+    registrations = figure._paper_geometry
+    assert all(item.padding_pt == 2.0 for item in registrations)
+    registered_labels = {item.label for item in registrations}
     assert "same-sampled-campaign" in registered_labels
+    assert {
+        f"ledger-r{row}-c{column}"
+        for row in range(7)
+        for column in range(6)
+    } <= registered_labels
 
-    table = figure.axes[2].tables[0]
+    table = figure.axes[3].tables[0]
+    pad = renderer.points_to_pixels(2.0)
     for cell in table.get_celld().values():
         cell_bounds = cell.get_window_extent(renderer)
         text_bounds = cell.get_text().get_window_extent(renderer)
-        assert cell_bounds.contains(*text_bounds.get_points()[0])
-        assert cell_bounds.contains(*text_bounds.get_points()[1])
+        padded_cell_bounds = Bbox.from_extents(
+            cell_bounds.x0 + pad,
+            cell_bounds.y0 + pad,
+            cell_bounds.x1 - pad,
+            cell_bounds.y1 - pad,
+        )
+        assert padded_cell_bounds.contains(*text_bounds.get_points()[0])
+        assert padded_cell_bounds.contains(*text_bounds.get_points()[1])
+
+    connectors = figure.findobj(match=FancyArrowPatch)
+    text_extents = [
+        text.get_window_extent(renderer)
+        for text in figure.findobj(match=Text)
+        if text.get_visible() and text.get_text()
+    ]
+    assert connectors
+    for connector in connectors:
+        rendered_path = connector.get_path().transformed(connector.get_transform())
+        connector_bounds = rendered_path.get_extents()
+        sampled_path = rendered_path.interpolated(32)
+        assert not any(
+            connector_bounds.overlaps(text_extent)
+            and any(text_extent.contains(*point) for point in sampled_path.vertices)
+            for text_extent in text_extents
+        )
 
     plt.close(figure)
 
