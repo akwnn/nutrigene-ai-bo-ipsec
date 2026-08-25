@@ -59,6 +59,45 @@ def _lockbox_metadata() -> dict[str, object]:
     }
 
 
+def _install_trusted_merge_access(
+    monkeypatch: pytest.MonkeyPatch,
+    metadata: dict[str, object],
+    *,
+    sample_size: int,
+) -> None:
+    monkeypatch.setattr(
+        lockbox,
+        "validate_lockbox_access",
+        lambda **_kwargs: {
+            "selection": {"source_commit": metadata["selection_source_commit"]},
+            "power_plan": {
+                "source_commit": metadata["power_source_commit"],
+                "selected_protocol": {
+                    "sha256": metadata["selected_protocol_sha256"]
+                },
+            },
+            "sample_size": sample_size,
+            "power_plan_sha256": metadata["power_plan_sha256"],
+        },
+    )
+    monkeypatch.setattr(
+        lockbox,
+        "registered_metadata",
+        lambda _root: {
+            field: metadata[field]
+            for field in (
+                "protocol_digest",
+                "spec_digest",
+                "config_digest",
+                "generator_digest",
+                "generator_manifest_sha256",
+                "source_commit",
+                "source_dirty",
+            )
+        },
+    )
+
+
 def _development_artifacts() -> list[dict[str, object]]:
     return [
         {
@@ -429,8 +468,9 @@ def test_resume_rejects_rows_without_full_study_schema_before_promotion():
         lockbox.validate_resume_payload(payload, metadata=metadata, family="soft_plateau", start=0, stop=1, raw_file="scratch.jsonl.gz", sample_size=412)
 
 
-def test_final_manifest_requires_complete_non_overlapping_shards(tmp_path):
+def test_final_manifest_requires_complete_non_overlapping_shards(tmp_path, monkeypatch):
     metadata = {**_lockbox_metadata(), "command_args": []}
+    _install_trusted_merge_access(monkeypatch, metadata, sample_size=412)
     paths = []
     for family in lockbox.LOCKBOX_FAMILIES:
         raw = tmp_path / f"spade-lockbox-{family}-0000-0412.jsonl.gz"
@@ -457,8 +497,82 @@ def test_final_manifest_requires_complete_non_overlapping_shards(tmp_path):
         lockbox.merge_lockbox_manifests(paths, output=tmp_path / "second.json", metadata=metadata, sample_size=412)
 
 
-def test_merge_keeps_distinct_shard_command_args(tmp_path):
+def test_merge_requires_fresh_validated_access_before_processing_shards(
+    tmp_path, monkeypatch
+):
+    monkeypatch.setattr(
+        lockbox,
+        "validate_lockbox_access",
+        lambda **_kwargs: (_ for _ in ()).throw(ValueError("access denied")),
+    )
+    output = tmp_path / "merged.json"
+    with pytest.raises(ValueError, match="access denied"):
+        lockbox.merge_lockbox_manifests(
+            [], output=output, metadata=_lockbox_metadata(), sample_size=412,
+        )
+    assert not output.exists()
+
+
+@pytest.mark.parametrize(
+    ("sample_size", "mutate_metadata", "message"),
+    [
+        (411, lambda metadata: None, "caller sample size drift"),
+        (
+            412,
+            lambda metadata: metadata.__setitem__("power_plan_sha256", "0" * 64),
+            "caller metadata drift",
+        ),
+        (
+            412,
+            lambda metadata: metadata.__setitem__("power_source_commit", "0" * 40),
+            "caller metadata drift",
+        ),
+    ],
+)
+def test_merge_rejects_caller_power_drift_before_processing_shards(
+    tmp_path, monkeypatch, sample_size, mutate_metadata, message
+):
+    metadata = _lockbox_metadata()
+    mutate_metadata(metadata)
+    access = {
+        "selection": {"source_commit": SOURCE},
+        "power_plan": {
+            "source_commit": POWER_SOURCE,
+            "selected_protocol": {"sha256": "b" * 64},
+        },
+        "sample_size": 412,
+        "power_plan_sha256": POWER_HASH,
+    }
+    monkeypatch.setattr(lockbox, "validate_lockbox_access", lambda **_kwargs: access)
+    monkeypatch.setattr(
+        lockbox,
+        "registered_metadata",
+        lambda _root: {
+            field: metadata_value
+            for field, metadata_value in _lockbox_metadata().items()
+            if field
+            in {
+                "protocol_digest",
+                "spec_digest",
+                "config_digest",
+                "generator_digest",
+                "generator_manifest_sha256",
+                "source_commit",
+                "source_dirty",
+            }
+        },
+    )
+    output = tmp_path / "merged.json"
+    with pytest.raises(ValueError, match=message):
+        lockbox.merge_lockbox_manifests(
+            [], output=output, metadata=metadata, sample_size=sample_size,
+        )
+    assert not output.exists()
+
+
+def test_merge_keeps_distinct_shard_command_args(tmp_path, monkeypatch):
     metadata = {**_lockbox_metadata(), "command_args": []}
+    _install_trusted_merge_access(monkeypatch, metadata, sample_size=412)
     paths = []
     for index, family in enumerate(lockbox.LOCKBOX_FAMILIES):
         raw = tmp_path / f"spade-lockbox-{family}-0000-0412.jsonl.gz"
@@ -710,6 +824,7 @@ def test_merged_analysis_hashes_actual_power_and_passes_manifest_size(
     power_path.write_bytes(_canonical_bytes(power_payload))
     power_sha256 = hashlib.sha256(power_path.read_bytes()).hexdigest()
     metadata = {**_lockbox_metadata(), "power_plan_sha256": power_sha256}
+    _install_trusted_merge_access(monkeypatch, metadata, sample_size=350)
     manifest_paths: list[Path] = []
     rows_by_family = {
         family: [
@@ -806,6 +921,31 @@ def test_runner_rejects_existing_publication_targets_before_access(tmp_path, mon
             smoke=True,
             repo_root=tmp_path,
         )
+
+
+def test_failed_access_never_invokes_lockbox_oracle_factory(tmp_path, monkeypatch):
+    oracle_calls: list[tuple[object, object]] = []
+    monkeypatch.setattr(
+        lockbox,
+        "validate_lockbox_access",
+        lambda **_kwargs: (_ for _ in ()).throw(ValueError("access denied")),
+    )
+    monkeypatch.setattr(
+        lockbox,
+        "make_lockbox_oracle",
+        lambda family, key: oracle_calls.append((family, key)),
+    )
+    with pytest.raises(ValueError, match="access denied"):
+        lockbox.run_lockbox_shard(
+            family="soft_plateau",
+            start=0,
+            stop=1,
+            output=tmp_path / "scratch.jsonl.gz",
+            limit=1,
+            smoke=True,
+            repo_root=tmp_path,
+        )
+    assert oracle_calls == []
 
 
 def test_interrupted_publication_never_installs_completion_manifest(tmp_path, monkeypatch):

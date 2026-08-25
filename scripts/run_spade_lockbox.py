@@ -708,12 +708,40 @@ def run_lockbox_shard(*, family: str, start: int, stop: int, output: str | Path,
     return manifest
 
 
-def merge_lockbox_manifests(manifest_paths: Sequence[str | Path], *, output: str | Path, metadata: Mapping[str, object], sample_size: int) -> dict[str, object]:
+def merge_lockbox_manifests(
+    manifest_paths: Sequence[str | Path],
+    *,
+    output: str | Path,
+    metadata: Mapping[str, object],
+    sample_size: int,
+    repo_root: Path = ROOT,
+) -> dict[str, object]:
     """Hash and merge complete shard sidecars without loading outcome rows."""
-    registered_n = _registered_sample_size(sample_size)
+    access = validate_lockbox_access(repo_root=repo_root)
+    registered_n = _registered_sample_size(access["sample_size"])
+    if sample_size != registered_n:
+        raise ValueError("lockbox merge caller sample size drift")
     expected_metadata = {"protocol_digest", "spec_digest", "config_digest", "generator_digest", "generator_manifest_sha256", "source_commit", "source_dirty", "selected_protocol_sha256", "selection_source_commit", "power_plan_sha256", "power_source_commit"}
-    if set(metadata) not in (expected_metadata, expected_metadata | {"command_args"}) or metadata["source_dirty"] is not False:
-        raise ValueError("final lockbox manifest requires clean complete metadata")
+    live_metadata = registered_metadata(repo_root)
+    trusted_metadata = {
+        field: live_metadata[field]
+        for field in (
+            "protocol_digest", "spec_digest", "config_digest", "generator_digest",
+            "generator_manifest_sha256", "source_commit", "source_dirty",
+        )
+    }
+    trusted_metadata.update({
+        "selected_protocol_sha256": access["power_plan"]["selected_protocol"]["sha256"],
+        "selection_source_commit": access["selection"]["source_commit"],
+        "power_plan_sha256": access["power_plan_sha256"],
+        "power_source_commit": access["power_plan"]["source_commit"],
+    })
+    if (
+        set(metadata) not in (expected_metadata, expected_metadata | {"command_args"})
+        or trusted_metadata["source_dirty"] is not False
+        or any(metadata.get(field) != trusted_metadata[field] for field in expected_metadata)
+    ):
+        raise ValueError("lockbox merge caller metadata drift")
     output_path = Path(output)
     shards: list[dict[str, object]] = []
     ranges: dict[str, list[tuple[int, int]]] = {family: [] for family in LOCKBOX_FAMILIES}
@@ -724,7 +752,7 @@ def merge_lockbox_manifests(manifest_paths: Sequence[str | Path], *, output: str
             raise ValueError("lockbox shard manifest is missing or invalid") from exc
         shard = validate_completed_shard_contract(shard, sample_size=registered_n)
         family, start, stop = shard["family"], shard["start"], shard["stop"]
-        if any(shard.get(field) != metadata[field] for field in expected_metadata):
+        if any(shard.get(field) != trusted_metadata[field] for field in expected_metadata):
             raise ValueError("lockbox shard provenance drift")
         raw_file = shard.get("raw_file")
         raw_path = Path(manifest_path).parent / raw_file
@@ -747,7 +775,7 @@ def merge_lockbox_manifests(manifest_paths: Sequence[str | Path], *, output: str
         if cursor != registered_n:
             raise ValueError("lockbox manifests are incomplete")
     shards.sort(key=lambda item: (item["family"], item["start"], item["stop"]))
-    final = {"schema": MERGED_MANIFEST_SCHEMA, "status": "COMPLETE", "sample_size": registered_n, "raw_shards": shards, **{field: metadata[field] for field in expected_metadata}}
+    final = {"schema": MERGED_MANIFEST_SCHEMA, "status": "COMPLETE", "sample_size": registered_n, "raw_shards": shards, **trusted_metadata}
     if set(final) != MERGED_MANIFEST_FIELDS:
         raise RuntimeError("lockbox merged manifest schema drift")
     _atomic_json(output_path, final)
