@@ -1,0 +1,1 @@
+Benchmark definition. A campaign flows from formulation variables through wells, assay, and model; the same data then fork into point or region deliverables, each with a distinct estimand. This schematic contains no performance result.

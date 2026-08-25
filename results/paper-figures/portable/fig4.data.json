@@ -1,0 +1,224 @@
+{
+  "A": {
+    "evidence": "retrospective Hill; descriptive",
+    "rows": [
+      {
+        "arm": "doe",
+        "calibration": 0.22959063861195972,
+        "evidence_stage": "retrospective Hill",
+        "n": 1200,
+        "refinement": 0.002349230229250323
+      },
+      {
+        "arm": "sobol",
+        "calibration": 0.028933407630556143,
+        "evidence_stage": "retrospective Hill",
+        "n": 1200,
+        "refinement": 0.011418662729166668
+      },
+      {
+        "arm": "qlognei",
+        "calibration": 0.044247301600936116,
+        "evidence_stage": "retrospective Hill",
+        "n": 1200,
+        "refinement": 0.012612927770833332
+      },
+      {
+        "arm": "versionb",
+        "calibration": 0.03593476564760811,
+        "evidence_stage": "retrospective Hill",
+        "n": 1200,
+        "refinement": 0.015057962104166668
+      }
+    ]
+  },
+  "B": {
+    "empty_policy": "exclude from numerator and denominator",
+    "interval": "Clopper-Pearson 95% exact",
+    "reference": 0.0,
+    "rows": [
+      {
+        "alpha": 0.8,
+        "cell_id": "spade_cf_m0|hill-d6-s0.1|tf0.25|g0.5|a0.8",
+        "ci_hi": 0.9494447136336441,
+        "ci_lo": 0.8185711466630368,
+        "condition": "hill-d6-s0.1",
+        "empty_rate": 0.03,
+        "estimator": "crossfit",
+        "gamma": 0.5,
+        "n": 97,
+        "proportion": 0.8969072164948454,
+        "tau_frac": 0.25,
+        "x": 87
+      },
+      {
+        "alpha": 0.95,
+        "cell_id": "spade_cf_m0|hill-d6-s0.1|tf0.25|g0.5|a0.95",
+        "ci_hi": 0.9418082996596279,
+        "ci_lo": 0.7326039975029917,
+        "condition": "hill-d6-s0.1",
+        "empty_rate": 0.5,
+        "estimator": "crossfit",
+        "gamma": 0.5,
+        "n": 50,
+        "proportion": 0.86,
+        "tau_frac": 0.25,
+        "x": 43
+      },
+      {
+        "alpha": 0.8,
+        "cell_id": "spade_cf_m0|hill-d6-s0.1|tf0.25|g0.95|a0.8",
+        "ci_hi": 0.9494447136336441,
+        "ci_lo": 0.8185711466630368,
+        "condition": "hill-d6-s0.1",
+        "empty_rate": 0.03,
+        "estimator": "crossfit",
+        "gamma": 0.95,
+        "n": 97,
+        "proportion": 0.8969072164948454,
+        "tau_frac": 0.25,
+        "x": 87
+      },
+      {
+        "alpha": 0.95,
+        "cell_id": "spade_cf_m0|hill-d6-s0.1|tf0.25|g0.95|a0.95",
+        "ci_hi": 0.9418082996596279,
+        "ci_lo": 0.7326039975029917,
+        "condition": "hill-d6-s0.1",
+        "empty_rate": 0.5,
+        "estimator": "crossfit",
+        "gamma": 0.95,
+        "n": 50,
+        "proportion": 0.86,
+        "tau_frac": 0.25,
+        "x": 43
+      },
+      {
+        "alpha": 0.8,
+        "cell_id": "spade_cf_m0|hill-d6-s0.25|tf0.25|g0.5|a0.8",
+        "ci_hi": 0.9987951165516364,
+        "ci_lo": 0.7618400900631789,
+        "condition": "hill-d6-s0.25",
+        "empty_rate": 0.79,
+        "estimator": "crossfit",
+        "gamma": 0.5,
+        "n": 21,
+        "proportion": 0.9523809523809523,
+        "tau_frac": 0.25,
+        "x": 20
+      },
+      {
+        "alpha": 0.95,
+        "cell_id": "spade_cf_m0|hill-d6-s0.25|tf0.25|g0.5|a0.95",
+        "ci_hi": null,
+        "ci_lo": null,
+        "condition": "hill-d6-s0.25",
+        "empty_rate": 1.0,
+        "estimator": "crossfit",
+        "gamma": 0.5,
+        "n": 0,
+        "proportion": null,
+        "tau_frac": 0.25,
+        "x": 0
+      }
+    ]
+  },
+  "C": {
+    "rows": [
+      {
+        "answer_rate": 0.0,
+        "answered": 0,
+        "definition": "alpha=0.95 campaign returned any non-empty gamma-by-tau certificate",
+        "family": "ackley",
+        "n_campaigns": 50
+      },
+      {
+        "answer_rate": 0.22,
+        "answered": 11,
+        "definition": "alpha=0.95 campaign returned any non-empty gamma-by-tau certificate",
+        "family": "hartmann6",
+        "n_campaigns": 50
+      },
+      {
+        "answer_rate": 1.0,
+        "answered": 50,
+        "definition": "alpha=0.95 campaign returned any non-empty gamma-by-tau certificate",
+        "family": "hill",
+        "n_campaigns": 50
+      },
+      {
+        "answer_rate": 0.98,
+        "answered": 49,
+        "definition": "alpha=0.95 campaign returned any non-empty gamma-by-tau certificate",
+        "family": "levy",
+        "n_campaigns": 50
+      },
+      {
+        "answer_rate": 1.0,
+        "answered": 50,
+        "definition": "alpha=0.95 campaign returned any non-empty gamma-by-tau certificate",
+        "family": "rosenbrock",
+        "n_campaigns": 50
+      }
+    ],
+    "scope": "alpha=0.95 campaigns; any non-empty gamma-by-tau certificate",
+    "zero_means": "declined to certify"
+  },
+  "D": {
+    "conditioning": "non-empty certificate cell returned an answer",
+    "effect": "containment minus nominal",
+    "interval": "Clopper-Pearson 95% exact",
+    "rows": [
+      {
+        "alpha": 0.8,
+        "ci_hi": null,
+        "ci_lo": null,
+        "definition": "no certificate cell returned an answer",
+        "family": "ackley",
+        "n": 0,
+        "proportion": null,
+        "x": 0
+      },
+      {
+        "alpha": 0.8,
+        "ci_hi": 0.681125035765836,
+        "ci_lo": 0.318874964234164,
+        "definition": "containment conditional on a non-empty certificate cell",
+        "family": "hartmann6",
+        "n": 32,
+        "proportion": 0.5,
+        "x": 16
+      },
+      {
+        "alpha": 0.8,
+        "ci_hi": 0.9972701502657075,
+        "ci_lo": 0.9839078045317446,
+        "definition": "containment conditional on a non-empty certificate cell",
+        "family": "hill",
+        "n": 808,
+        "proportion": 0.9925742574257426,
+        "x": 802
+      },
+      {
+        "alpha": 0.8,
+        "ci_hi": 0.9499153835490755,
+        "ci_lo": 0.9127043322193272,
+        "definition": "containment conditional on a non-empty certificate cell",
+        "family": "levy",
+        "n": 747,
+        "proportion": 0.9330655957161981,
+        "x": 697
+      },
+      {
+        "alpha": 0.8,
+        "ci_hi": 0.938025706013526,
+        "ci_lo": 0.900395779921329,
+        "definition": "containment conditional on a non-empty certificate cell",
+        "family": "rosenbrock",
+        "n": 845,
+        "proportion": 0.9207100591715977,
+        "x": 778
+      }
+    ]
+  }
+}

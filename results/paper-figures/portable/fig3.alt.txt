@@ -1,0 +1,1 @@
+The registered target displays distinct point-map trade-offs for SPADE and batch BO. Paired contrasts are shown against a practical margin, wells and feedback rounds are reported separately, and Hartmann means are descriptive because intervals are unavailable.
