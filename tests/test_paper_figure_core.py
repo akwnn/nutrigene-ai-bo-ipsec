@@ -79,3 +79,20 @@ def test_figure_bundle_requires_all_metadata():
     assert bundle.caption.startswith("Figure 1.")
     assert "terminal decision" in bundle.long_description
     plt.close(fig)
+
+
+def test_figure_bundle_records_editorial_hierarchy():
+    fig = plt.figure()
+    bundle = FigureBundle(
+        "fig1",
+        fig,
+        {"A": {}},
+        "alt",
+        "caption",
+        "description",
+        headline="Study architecture separates scientific layers",
+        deck="Five landscapes · four method families · one campaign protocol",
+        layout_rows=(("A",),),
+    )
+    assert bundle.layout_rows == (("A",),)
+    plt.close(fig)

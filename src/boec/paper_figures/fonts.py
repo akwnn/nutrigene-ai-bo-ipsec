@@ -1,0 +1,56 @@
+"""Packaged publication font assets and explicit Matplotlib registration."""
+
+from __future__ import annotations
+
+import dataclasses
+from dataclasses import dataclass
+from functools import lru_cache
+from importlib.resources import files
+import json
+from pathlib import Path
+
+from matplotlib import font_manager
+
+
+@dataclass(frozen=True)
+class FontAssets:
+    text_regular: Path
+    text_bold: Path
+    text_italic: Path
+    text_bold_italic: Path
+    math_regular: Path
+
+
+def _font_root() -> Path:
+    return Path(str(files("boec.paper_figures").joinpath("fonts")))
+
+
+@lru_cache(maxsize=1)
+def register_publication_fonts() -> FontAssets:
+    """Register the exact packaged font files used by publication figures."""
+
+    root = _font_root()
+    assets = FontAssets(
+        root / "CharisSIL-Regular.ttf",
+        root / "CharisSIL-Bold.ttf",
+        root / "CharisSIL-Italic.ttf",
+        root / "CharisSIL-BoldItalic.ttf",
+        root / "STIXMath-Regular.otf",
+    )
+    for path in dataclasses.astuple(assets):
+        if not path.is_file():
+            raise RuntimeError(f"required publication font is missing: {path}")
+        font_manager.fontManager.addfont(path)
+    return assets
+
+
+def font_manifest() -> dict[str, object]:
+    """Return the recorded sources and SHA-256 digests for packaged fonts."""
+
+    path = _font_root() / "font-assets.json"
+    if not path.is_file():
+        raise RuntimeError(f"publication font manifest is missing: {path}")
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(payload, dict):
+        raise RuntimeError(f"publication font manifest must contain an object: {path}")
+    return payload

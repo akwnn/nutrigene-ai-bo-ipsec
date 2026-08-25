@@ -7,9 +7,11 @@ from functools import lru_cache
 from pathlib import Path
 
 from matplotlib.artist import Artist
-from matplotlib.font_manager import findfont
 from matplotlib.figure import Figure
+from matplotlib.text import Text
 from matplotlib.transforms import Bbox
+
+from .fonts import register_publication_fonts
 
 
 @dataclass(frozen=True)
@@ -20,14 +22,19 @@ class GeometryRegistration:
     padding_pt: float
 
 
+@dataclass(frozen=True)
+class CollisionRegistration:
+    label: str
+    first: Artist
+    second: Artist
+    padding_pt: float
+
+
 @lru_cache(maxsize=1)
 def resolved_publication_font() -> Path:
-    """Return the exact Arial file used for publication rendering."""
+    """Return the exact packaged text font used for publication rendering."""
 
-    try:
-        return Path(findfont("Arial", fallback_to_default=False)).resolve()
-    except ValueError as exc:
-        raise RuntimeError("Arial is required for publication figure rendering") from exc
+    return register_publication_fonts().text_regular.resolve()
 
 
 def register_artist(
@@ -45,6 +52,23 @@ def register_artist(
         registrations = []
         setattr(figure, "_paper_geometry", registrations)
     registrations.append(GeometryRegistration(label, content, container, padding_pt))
+
+
+def register_collision(
+    figure: Figure,
+    label: str,
+    first: Artist,
+    second: Artist,
+    *,
+    padding_pt: float = 0.0,
+) -> None:
+    """Register two artists whose rendered bounds must remain disjoint."""
+
+    registrations = getattr(figure, "_paper_collisions", None)
+    if registrations is None:
+        registrations = []
+        setattr(figure, "_paper_collisions", registrations)
+    registrations.append(CollisionRegistration(label, first, second, padding_pt))
 
 
 def assert_registered_geometry(figure: Figure) -> None:
@@ -68,6 +92,41 @@ def assert_registered_geometry(figure: Figure) -> None:
         ):
             raise AssertionError(
                 f"{registration.label}: content {content.bounds} escapes padded container {inner.bounds}"
+            )
+    assert_no_registered_collisions(figure)
+
+
+def assert_no_registered_collisions(figure: Figure) -> None:
+    """Assert that every registered pair has disjoint rendered bounds."""
+
+    figure.canvas.draw()
+    renderer = figure.canvas.get_renderer()
+    for registration in getattr(figure, "_paper_collisions", []):
+        pad = renderer.points_to_pixels(registration.padding_pt)
+        first = registration.first.get_window_extent(renderer).padded(pad)
+        second = registration.second.get_window_extent(renderer).padded(pad)
+        if first.overlaps(second):
+            raise AssertionError(
+                f"{registration.label}: registered artists collide: {first.bounds} and {second.bounds}"
+            )
+
+
+def assert_all_text_inside_figure(figure: Figure) -> None:
+    """Assert that every visible, non-empty Text artist stays on the fixed canvas."""
+
+    figure.canvas.draw()
+    renderer = figure.canvas.get_renderer()
+    canvas = figure.bbox
+    for artist in figure.findobj(match=Text):
+        if not artist.get_visible() or not artist.get_text():
+            continue
+        bounds = artist.get_window_extent(renderer)
+        if not (
+            canvas.contains(*bounds.get_points()[0])
+            and canvas.contains(*bounds.get_points()[1])
+        ):
+            raise AssertionError(
+                f"text {artist.get_text()!r} with bounds {bounds.bounds} escapes figure {canvas.bounds}"
             )
 
 

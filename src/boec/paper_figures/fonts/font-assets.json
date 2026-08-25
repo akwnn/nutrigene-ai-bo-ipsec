@@ -1,0 +1,36 @@
+{
+  "charis": {
+    "family": "Charis SIL",
+    "license": "SIL Open Font License 1.1",
+    "release_url": "https://github.com/silnrsi/font-charis/releases/tag/v6.200",
+    "version": "6.200"
+  },
+  "files": [
+    {
+      "name": "CharisSIL-Regular.ttf",
+      "sha256": "5082098fdf2abe90e80253d649eb2b52aa84c1849f8c59db23abf2121cfa784e"
+    },
+    {
+      "name": "CharisSIL-Bold.ttf",
+      "sha256": "968b864a931777ff1b686abde4ec236e5eb0c44138fc69c8d25f2d57f91d7796"
+    },
+    {
+      "name": "CharisSIL-Italic.ttf",
+      "sha256": "c1999f648e1196611bf03d37f0e524de30d5ecb2f7a66f90ed16ce61d7ec3cb4"
+    },
+    {
+      "name": "CharisSIL-BoldItalic.ttf",
+      "sha256": "b372302061b96c0d82ed75b2b0afca833f201b364d9f3e9f0804bffea4621a40"
+    },
+    {
+      "name": "STIXMath-Regular.otf",
+      "sha256": "ffa86ff85660f452fe916ada2805026bde5b9b0d1e6ffafb5f73972675ecfd40"
+    }
+  ],
+  "stix": {
+    "family": "STIX Math",
+    "license": "SIL Open Font License 1.1",
+    "release_url": "https://sourceforge.net/projects/stixfonts/files/Current%20Release/STIXv1.1.1-word.zip/download",
+    "version": "1.1.1"
+  }
+}

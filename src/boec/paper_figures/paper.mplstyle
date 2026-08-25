@@ -1,8 +1,8 @@
-font.family: Arial
+font.family: Charis SIL
 mathtext.fontset: custom
-mathtext.rm: Arial
-mathtext.it: Arial:italic
-mathtext.bf: Arial:bold
+mathtext.rm: STIX Math
+mathtext.it: STIX Math
+mathtext.bf: STIX Math
 text.color: 243746
 axes.labelcolor: 243746
 axes.titlecolor: 243746

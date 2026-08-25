@@ -20,6 +20,9 @@ class FigureBundle:
     alt_text: str
     caption: str
     long_description: str
+    headline: str = ""
+    deck: str = ""
+    layout_rows: tuple[tuple[str, ...], ...] = ()
 
 
 def load_json(path: Path) -> dict[str, Any]:

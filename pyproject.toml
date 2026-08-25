@@ -17,7 +17,13 @@ build-backend = "setuptools.build_meta"
 where = ["src"]
 
 [tool.setuptools.package-data]
-"boec.paper_figures" = ["*.mplstyle"]
+"boec.paper_figures" = [
+    "*.mplstyle",
+    "fonts/*.ttf",
+    "fonts/*.otf",
+    "fonts/*.txt",
+    "fonts/*.json",
+]
 
 [tool.pytest.ini_options]
 pythonpath = ["src"]
