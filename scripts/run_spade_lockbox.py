@@ -45,12 +45,25 @@ SHARD_MANIFEST_FIELDS = frozenset({
     "schema", "status", "family", "start", "stop", "sample_size", "expected_rows",
     "row_count", "complete", "raw_file", "raw_sha256", "protocol_digest",
     "spec_digest", "config_digest", "generator_digest", "generator_manifest_sha256",
-    "source_commit", "source_dirty", "selected_protocol_sha256", "command_args",
+    "source_commit", "source_dirty", "selected_protocol_sha256",
+    "selection_source_commit", "command_args",
 })
 MERGED_MANIFEST_FIELDS = frozenset({
     "schema", "status", "sample_size", "raw_shards", "protocol_digest", "spec_digest",
     "config_digest", "generator_digest", "generator_manifest_sha256", "source_commit",
-    "source_dirty", "selected_protocol_sha256",
+    "source_dirty", "selected_protocol_sha256", "selection_source_commit",
+})
+MERGED_RAW_SHARD_FIELDS = frozenset({
+    "family", "start", "stop", "raw_file", "raw_sha256", "command_args",
+    "manifest_file", "manifest_sha256", "sha256_file", "sha256_sha256",
+})
+SELECTED_PROTOCOL_FIELDS = frozenset({
+    "schema", "status", "selected_candidate", "source_commit",
+    "study_protocol_digest", "spec_digest", "config_digest", "generator_digest",
+    "generator_manifest_sha256", "development_artifacts", "analysis_file",
+    "analysis_sha256", "selection_trace", "lofo_folds", "selection_trace_digest",
+    "selected_canonical_config", "selected_canonical_config_json",
+    "selected_template_protocol_digest", "campaign_root_seed_binding",
 })
 _CONFIG_PATH = Path("configs/experiment/spade-joint.yaml")
 _SPEC_PATH = Path("docs/superpowers/specs/2026-08-25-spade-joint-protocol-design.md")
@@ -64,6 +77,16 @@ def _canonical_json(value: object) -> str:
 
 def _sha256(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def _require_hex(value: object, name: str, *, length: int = 64) -> str:
+    if not isinstance(value, str) or len(value) != length:
+        raise ValueError(f"selected protocol {name} must be a {length}-character digest")
+    try:
+        int(value, 16)
+    except ValueError as exc:
+        raise ValueError(f"selected protocol {name} must be hexadecimal") from exc
+    return value.lower()
 
 
 def _atomic_json(path: Path, payload: Mapping[str, object]) -> None:
@@ -185,6 +208,46 @@ def _selected_template_digest(selected: Mapping[str, object]) -> str:
     return SpadeConfig(opening=config.get("opening"), policy=config.get("policy"), root_seed=0).protocol_digest
 
 
+def validate_selected_protocol_payload(selected: object) -> dict[str, object]:
+    if not isinstance(selected, Mapping) or set(selected) != SELECTED_PROTOCOL_FIELDS:
+        raise ValueError("selected protocol schema fields drift")
+    result = dict(selected)
+    if result.get("schema") != "boec-spade-selected-protocol-v1":
+        raise ValueError("selected protocol schema drift")
+    if result.get("status") != "SELECTED":
+        raise ValueError("lockbox requires a SELECTED protocol, never NO_SELECTION")
+    _require_hex(result.get("source_commit"), "source_commit", length=40)
+    for field in (
+        "study_protocol_digest", "spec_digest", "config_digest", "generator_digest",
+        "generator_manifest_sha256", "analysis_sha256", "selection_trace_digest",
+        "selected_template_protocol_digest",
+    ):
+        _require_hex(result.get(field), field)
+    if result.get("analysis_file") != "spade-development-analysis.json":
+        raise ValueError("selected protocol analysis file identity drift")
+    if not isinstance(result.get("development_artifacts"), list):
+        raise ValueError("selected protocol development artifacts schema drift")
+    trace = result.get("selection_trace")
+    if not isinstance(trace, Mapping) or hashlib.sha256(
+        _canonical_json(trace).encode("utf-8")
+    ).hexdigest() != result["selection_trace_digest"]:
+        raise ValueError("selected protocol selection trace digest mismatch")
+    if not isinstance(result.get("lofo_folds"), list):
+        raise ValueError("selected protocol LOFO folds schema drift")
+    config = result.get("selected_canonical_config")
+    config_json = result.get("selected_canonical_config_json")
+    if not isinstance(config, Mapping) or config_json != _canonical_json(config):
+        raise ValueError("selected protocol canonical configuration schema drift")
+    opening, policy = config.get("opening"), config.get("policy")
+    if result.get("selected_candidate") != f"spade-o{opening}-{policy}":
+        raise ValueError("selected protocol candidate/configuration mismatch")
+    if result.get("selected_template_protocol_digest") != _selected_template_digest(result):
+        raise ValueError("selected protocol canonical configuration digest mismatch")
+    if result.get("campaign_root_seed_binding") != "sha256_labelled_derived_per_campaign":
+        raise ValueError("selected protocol campaign seed binding drift")
+    return result
+
+
 def _load_generator_freeze(repo_root: Path) -> dict[str, object]:
     path = repo_root / _GENERATOR_MANIFEST
     try:
@@ -213,10 +276,11 @@ def validate_lockbox_access(*, repo_root: Path = ROOT, selected_path: Path | Non
         raise ValueError("selected protocol artifact is missing")
     try:
         selected = json.loads(path.read_text())
-    except json.JSONDecodeError as exc:
+    except (OSError, json.JSONDecodeError) as exc:
         raise ValueError("selected protocol artifact is invalid JSON") from exc
     if not isinstance(selected, dict) or selected.get("status") != "SELECTED":
         raise ValueError("lockbox requires a SELECTED protocol, never NO_SELECTION")
+    selected = validate_selected_protocol_payload(selected)
     metadata = registered_metadata(repo_root)
     _, dirty = git_state(repo_root)
     if dirty or metadata.get("source_dirty"):
@@ -225,8 +289,6 @@ def validate_lockbox_access(*, repo_root: Path = ROOT, selected_path: Path | Non
         selected_field = "study_protocol_digest" if field == "protocol_digest" else field
         if selected.get(selected_field) != metadata.get(field):
             raise ValueError(f"selected protocol {field} digest mismatch")
-    if selected.get("selected_template_protocol_digest") != _selected_template_digest(selected):
-        raise ValueError("selected protocol canonical configuration digest mismatch")
     selected_hash = _committed_file_hash(repo_root, "HEAD")
     if selected_hash != _sha256(path):
         raise ValueError("selected protocol must be committed at HEAD before lockbox access")
@@ -303,15 +365,58 @@ def _campaign_rows(family: str, key: int, selected: Mapping[str, object], metada
             campaign = run_qlognei48(evaluator, torch.stack([torch.zeros(6), torch.ones(6)]).double(), root_seed=root_seed, tau=threshold.tau)
         score = score_campaign(campaign, threshold.tau, harness.scorer(), sigma_rel=SIGMA_REL, sigma_add=SIGMA_ADD, gamma=GAMMA, alpha=ALPHA, scoring_seed=scoring_seed)
         seeds = {"noise": noise_seed, "threshold": threshold_seed, "scoring": scoring_seed, "opening_design": derive_seed(root_seed, "opening_design"), "candidate_menu": derive_seed(root_seed, "adaptive_candidate_menu"), "ivr_reference": derive_seed(root_seed, "ivr_reference_grid"), "terminal_grid": derive_seed(scoring_seed, "terminal_rule_p_grid"), "map_grid": derive_seed(scoring_seed, "probability_map_grid"), "certificate_grid": derive_seed(scoring_seed, "certificate_grid"), "certificate_draws": derive_seed(scoring_seed, "certificate_joint_draws")}
-        yield build_study_row(score, study_protocol_digest=metadata["protocol_digest"], spec_digest=metadata["spec_digest"], config_digest=metadata["config_digest"], source_commit=metadata["source_commit"], source_dirty=False, command_args=command_args, parent_artifacts={"spec": metadata["spec_digest"], "config": metadata["config_digest"], "generator": metadata["generator_digest"], "generator_manifest": metadata["generator_manifest_sha256"]}, family=family, instance_seed=key, campaign_seed=0, root_seed=root_seed, derived_seeds=seeds)
+        yield build_study_row(score, study_protocol_digest=metadata["protocol_digest"], spec_digest=metadata["spec_digest"], config_digest=metadata["config_digest"], source_commit=metadata["source_commit"], source_dirty=False, command_args=command_args, parent_artifacts={"spec": metadata["spec_digest"], "config": metadata["config_digest"], "generator": metadata["generator_digest"], "generator_manifest": metadata["generator_manifest_sha256"], "selected_protocol": metadata["selected_protocol_sha256"]}, family=family, instance_seed=key, campaign_seed=0, root_seed=root_seed, derived_seeds=seeds)
+
+
+def _publication_targets(destination: Path) -> tuple[Path, Path, Path]:
+    return destination, Path(f"{destination}.sha256"), Path(f"{destination}.manifest.json")
+
+
+def _require_unused_publication_targets(destination: Path) -> None:
+    occupied = [path for path in _publication_targets(destination) if path.exists()]
+    if occupied:
+        raise ValueError(f"immutable lockbox publication target already exists: {occupied[0]}")
+
+
+def _fsync_directory(path: Path) -> None:
+    descriptor = os.open(path, os.O_RDONLY)
+    try:
+        os.fsync(descriptor)
+    finally:
+        os.close(descriptor)
+
+
+def _install_new(source: Path, target: Path) -> None:
+    try:
+        os.link(source, target)
+    except FileExistsError as exc:
+        raise ValueError(f"immutable lockbox publication target already exists: {target}") from exc
+
+
+def _install_staged_completion(
+    *, destination: Path, staged_raw: Path, staged_sidecar: Path, staged_manifest: Path
+) -> None:
+    _require_unused_publication_targets(destination)
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    raw_target, sidecar_target, manifest_target = _publication_targets(destination)
+    _install_new(staged_raw, raw_target)
+    _install_new(staged_sidecar, sidecar_target)
+    _fsync_directory(destination.parent)
+    _install_new(staged_manifest, manifest_target)
+    _fsync_directory(destination.parent)
 
 
 def run_lockbox_shard(*, family: str, start: int, stop: int, output: str | Path, limit: int | None = None, smoke: bool = False, repo_root: Path = ROOT, command_args: Sequence[str] = ()) -> dict[str, object]:
     destination = Path(output)
     validate_shard_request(family=family, start=start, stop=stop, output=destination, limit=limit, smoke=smoke, repo_root=repo_root)
+    _require_unused_publication_targets(destination)
     assert_no_development_metric_dependency()
     selected = validate_lockbox_access(repo_root=repo_root)
     metadata = registered_metadata(repo_root)
+    metadata.update({
+        "selected_protocol_sha256": _sha256(repo_root / "results/spade-selected-protocol.json"),
+        "selection_source_commit": selected["source_commit"],
+    })
     resume_path = Path(f"{destination}.resume.json")
     rows: list[dict[str, object]] = []
     if resume_path.is_file():
@@ -327,21 +432,28 @@ def run_lockbox_shard(*, family: str, start: int, stop: int, output: str | Path,
             _atomic_json(resume_path, make_resume_payload(family=family, start=start, stop=stop, raw_file=destination.name, rows=rows, metadata=metadata))
     if len(rows) != (stop - start) * len(LOCKBOX_ARMS):
         raise RuntimeError("lockbox shard is incomplete; every requested key needs all three arms")
-    staging = destination.with_name(f".{destination.name}.promotion")
-    digest = write_jsonl_gzip(staging, rows, protocol_digest=metadata["protocol_digest"])
-    destination.parent.mkdir(parents=True, exist_ok=True); os.replace(staging, destination)
-    Path(f"{staging}.sha256").unlink(missing_ok=True)
-    Path(f"{destination}.sha256").write_text(f"{digest}  {destination.name}\n")
-    manifest = {"schema": MANIFEST_SCHEMA, "status": "COMPLETE", "family": family, "start": start, "stop": stop, "sample_size": LOCKBOX_SAMPLE_SIZE, "expected_rows": (stop-start)*3, "row_count": len(rows), "complete": True, "raw_file": destination.name, "raw_sha256": digest, **metadata, "selected_protocol_sha256": _sha256(repo_root / "results/spade-selected-protocol.json"), "command_args": list(command_args)}
-    if set(manifest) != SHARD_MANIFEST_FIELDS:
-        raise RuntimeError("lockbox shard manifest schema drift")
-    _atomic_json(Path(f"{destination}.manifest.json"), manifest)
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    with tempfile.TemporaryDirectory(prefix=f".{destination.name}.", dir=destination.parent) as staging_name:
+        staged_raw = Path(staging_name) / destination.name
+        digest = write_jsonl_gzip(staged_raw, rows, protocol_digest=metadata["protocol_digest"])
+        staged_sidecar = Path(f"{staged_raw}.sha256")
+        manifest = {"schema": MANIFEST_SCHEMA, "status": "COMPLETE", "family": family, "start": start, "stop": stop, "sample_size": LOCKBOX_SAMPLE_SIZE, "expected_rows": (stop-start)*3, "row_count": len(rows), "complete": True, "raw_file": destination.name, "raw_sha256": digest, **metadata, "command_args": list(command_args)}
+        if set(manifest) != SHARD_MANIFEST_FIELDS:
+            raise RuntimeError("lockbox shard manifest schema drift")
+        staged_manifest = Path(f"{staged_raw}.manifest.json")
+        _atomic_json(staged_manifest, manifest)
+        _install_staged_completion(
+            destination=destination,
+            staged_raw=staged_raw,
+            staged_sidecar=staged_sidecar,
+            staged_manifest=staged_manifest,
+        )
     return manifest
 
 
 def merge_lockbox_manifests(manifest_paths: Sequence[str | Path], *, output: str | Path, metadata: Mapping[str, object]) -> dict[str, object]:
     """Hash and merge complete shard sidecars without loading outcome rows."""
-    expected_metadata = {"protocol_digest", "spec_digest", "config_digest", "generator_digest", "generator_manifest_sha256", "source_commit", "source_dirty", "selected_protocol_sha256"}
+    expected_metadata = {"protocol_digest", "spec_digest", "config_digest", "generator_digest", "generator_manifest_sha256", "source_commit", "source_dirty", "selected_protocol_sha256", "selection_source_commit"}
     if set(metadata) not in (expected_metadata, expected_metadata | {"command_args"}) or metadata["source_dirty"] is not False:
         raise ValueError("final lockbox manifest requires clean complete metadata")
     output_path = Path(output)
@@ -371,7 +483,10 @@ def merge_lockbox_manifests(manifest_paths: Sequence[str | Path], *, output: str
         if sidecar.read_text(encoding="ascii").split() != [shard["raw_sha256"], raw_file]:
             raise ValueError("lockbox shard raw SHA-256 sidecar mismatch")
         ranges[family].append((start, stop))
-        shards.append({"family": family, "start": start, "stop": stop, "raw_file": raw_file, "raw_sha256": shard["raw_sha256"], "command_args": shard["command_args"], "manifest_file": Path(manifest_path).name, "manifest_sha256": _sha256(Path(manifest_path))})
+        shard_entry = {"family": family, "start": start, "stop": stop, "raw_file": raw_file, "raw_sha256": shard["raw_sha256"], "command_args": shard["command_args"], "manifest_file": Path(manifest_path).name, "manifest_sha256": _sha256(Path(manifest_path)), "sha256_file": sidecar.name, "sha256_sha256": _sha256(sidecar)}
+        if set(shard_entry) != MERGED_RAW_SHARD_FIELDS:
+            raise RuntimeError("lockbox merged raw-shard schema drift")
+        shards.append(shard_entry)
     for family, intervals in ranges.items():
         cursor = 0
         for start, stop in sorted(intervals):

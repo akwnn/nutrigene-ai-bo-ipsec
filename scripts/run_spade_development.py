@@ -582,6 +582,7 @@ def _resume_payload(
         "spec_digest": metadata["spec_digest"],
         "config_digest": metadata["config_digest"],
         "generator_digest": metadata["generator_digest"],
+        "generator_manifest_sha256": metadata["generator_manifest_sha256"],
         "source_commit": metadata["source_commit"],
         "source_dirty": metadata["source_dirty"],
         "command_args": list(command_args),
@@ -612,7 +613,7 @@ def read_resume_checkpoint(
     required = {
         "schema", "family", "start", "stop", "raw_file", "execution_mode",
         "study_protocol_digest", "spec_digest", "config_digest", "generator_digest",
-        "source_commit", "source_dirty", "command_args", "row_count",
+        "generator_manifest_sha256", "source_commit", "source_dirty", "command_args", "row_count",
         "row_chain_head", "expected_raw_sha256", "rows",
     }
     if not isinstance(payload, dict) or set(payload) != required:
@@ -797,6 +798,7 @@ def _run_campaign_rows(
                 "spec": str(metadata["spec_digest"]),
                 "config": str(metadata["config_digest"]),
                 "generator": str(metadata["generator_digest"]),
+                "generator_manifest": str(metadata["generator_manifest_sha256"]),
                 "seed_contract": seed_contract_digest(derived_seeds),
                 "candidate_menu_contract": candidate_menu_contract_digest(
                     root_seed=campaign_root,
@@ -868,6 +870,13 @@ def _validate_partial_rows(
                 raise ValueError(f"resumed shard {field} mismatch")
         if row["source_dirty"] != metadata["source_dirty"]:
             raise ValueError("resumed shard source_dirty mismatch")
+        parents = row.get("parent_artifacts")
+        if (
+            not isinstance(parents, Mapping)
+            or parents.get("generator") != metadata["generator_digest"]
+            or parents.get("generator_manifest") != metadata["generator_manifest_sha256"]
+        ):
+            raise ValueError("resumed shard generator parent mismatch")
         if row["scores"]["execution_mode"] != expected_mode:
             raise ValueError("resumed shard execution mode mismatch")
         arm_id = _development_arm_id(row)
@@ -931,6 +940,7 @@ def run_development_shard(
             "spec_digest": frozen["spec_digest"],
             "config_digest": frozen["config_digest"],
             "generator_digest": frozen["generator_digest"],
+            "generator_manifest_sha256": frozen["generator_manifest_sha256"],
             "source_commit": frozen["source_commit"],
             "source_dirty": frozen["source_dirty"],
         }
@@ -965,6 +975,7 @@ def run_development_shard(
             "spec_digest": frozen["spec_digest"],
             "config_digest": frozen["config_digest"],
             "generator_digest": frozen["generator_digest"],
+            "generator_manifest_sha256": frozen["generator_manifest_sha256"],
             "source_commit": frozen["source_commit"],
             "source_dirty": frozen["source_dirty"],
             "raw_file": destination.name,

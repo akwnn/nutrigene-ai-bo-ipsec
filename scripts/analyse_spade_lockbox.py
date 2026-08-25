@@ -187,24 +187,75 @@ def analyse_lockbox_rows(rows: Sequence[Mapping[str, object]], *, bootstrap_repl
 def analyse_merged_manifest(manifest_path: Path) -> dict[str, object]:
     """Read only hash-validated raw shards named by a completed merged manifest."""
     from boec.spade_study import read_jsonl_gzip
+    from scripts import run_spade_lockbox as lockbox_contract
     try:
         manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError) as exc:
         raise ValueError("merged lockbox manifest is invalid") from exc
-    required = {"schema", "status", "sample_size", "raw_shards", "protocol_digest", "spec_digest", "config_digest", "generator_digest", "generator_manifest_sha256", "source_commit", "source_dirty", "selected_protocol_sha256"}
-    if not isinstance(manifest, Mapping) or set(manifest) != required or manifest.get("schema") != "boec-spade-lockbox-manifest-v1" or manifest.get("status") != "COMPLETE" or manifest.get("source_dirty") is not False or manifest.get("sample_size") != 350:
+    if not isinstance(manifest, Mapping) or set(manifest) != lockbox_contract.MERGED_MANIFEST_FIELDS or manifest.get("schema") != lockbox_contract.MERGED_MANIFEST_SCHEMA or manifest.get("status") != "COMPLETE" or manifest.get("source_dirty") is not False or manifest.get("sample_size") != 350:
         raise ValueError("merged lockbox manifest schema/provenance drift")
     shards = manifest.get("raw_shards")
     if not isinstance(shards, list):
         raise ValueError("merged lockbox manifest has invalid shards")
     rows: list[dict[str, object]] = []
     for shard in shards:
-        if not isinstance(shard, Mapping) or not isinstance(shard.get("raw_file"), str) or not isinstance(shard.get("raw_sha256"), str):
+        if not isinstance(shard, Mapping) or set(shard) != lockbox_contract.MERGED_RAW_SHARD_FIELDS:
             raise ValueError("merged lockbox manifest shard schema drift")
-        raw = manifest_path.parent / shard["raw_file"]
+        raw_file = shard.get("raw_file")
+        manifest_file = shard.get("manifest_file")
+        sidecar_file = shard.get("sha256_file")
+        if any(
+            not isinstance(name, str) or Path(name).name != name
+            for name in (raw_file, manifest_file, sidecar_file)
+        ):
+            raise ValueError("merged lockbox manifest artifact filename drift")
+        if (
+            manifest_file != f"{raw_file}.manifest.json"
+            or sidecar_file != f"{raw_file}.sha256"
+        ):
+            raise ValueError("merged lockbox artifact filename identity drift")
+        raw = manifest_path.parent / str(raw_file)
+        shard_manifest_path = manifest_path.parent / str(manifest_file)
+        sidecar_path = manifest_path.parent / str(sidecar_file)
         actual = hashlib.sha256(raw.read_bytes()).hexdigest() if raw.is_file() else None
         if actual != shard["raw_sha256"]:
             raise ValueError("merged lockbox raw hash mismatch")
+        actual_manifest = (
+            hashlib.sha256(shard_manifest_path.read_bytes()).hexdigest()
+            if shard_manifest_path.is_file() else None
+        )
+        if actual_manifest != shard["manifest_sha256"]:
+            raise ValueError("merged lockbox shard manifest hash mismatch")
+        actual_sidecar = (
+            hashlib.sha256(sidecar_path.read_bytes()).hexdigest()
+            if sidecar_path.is_file() else None
+        )
+        if actual_sidecar != shard["sha256_sha256"]:
+            raise ValueError("merged lockbox SHA-256 sidecar hash mismatch")
+        try:
+            shard_manifest = json.loads(shard_manifest_path.read_text(encoding="utf-8"))
+            sidecar_tokens = sidecar_path.read_text(encoding="ascii").split()
+        except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+            raise ValueError("merged lockbox shard metadata is invalid") from exc
+        if (
+            not isinstance(shard_manifest, Mapping)
+            or set(shard_manifest) != lockbox_contract.SHARD_MANIFEST_FIELDS
+            or shard_manifest.get("schema") != lockbox_contract.MANIFEST_SCHEMA
+            or shard_manifest.get("status") != "COMPLETE"
+        ):
+            raise ValueError("merged lockbox shard manifest schema drift")
+        shared = (
+            "family", "start", "stop", "raw_file", "raw_sha256", "protocol_digest",
+            "spec_digest", "config_digest", "generator_digest",
+            "generator_manifest_sha256", "source_commit", "source_dirty",
+            "selected_protocol_sha256", "selection_source_commit",
+        )
+        for field in shared:
+            expected = shard.get(field) if field in shard else manifest.get(field)
+            if shard_manifest.get(field) != expected:
+                raise ValueError(f"merged lockbox shard {field} identity drift")
+        if sidecar_tokens != [shard["raw_sha256"], raw_file]:
+            raise ValueError("merged lockbox SHA-256 sidecar content mismatch")
         rows.extend(read_jsonl_gzip(raw, protocol_digest=str(manifest["protocol_digest"])))
     if not rows:
         raise ValueError("merged lockbox manifest has no rows")

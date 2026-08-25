@@ -134,6 +134,7 @@ def validate_development_grid(
     spec_digests: set[str] = set()
     config_digests: set[str] = set()
     generator_digests: set[str] = set()
+    generator_manifest_digests: set[str] = set()
     matched_groups: dict[tuple[str, int, int], list[Mapping[str, object]]] = {}
     for index, row in enumerate(rows):
         family = row.get("family")
@@ -152,6 +153,7 @@ def validate_development_grid(
             "spec",
             "config",
             "generator",
+            "generator_manifest",
             "seed_contract",
             "candidate_menu_contract",
             "scorer_contract",
@@ -159,6 +161,10 @@ def validate_development_grid(
             raise ValueError(f"row {index} parent artifacts drift")
         generator_digest = _require_digest(
             parent_artifacts.get("generator"), f"row {index} generator digest"
+        )
+        generator_manifest_digest = _require_digest(
+            parent_artifacts.get("generator_manifest"),
+            f"row {index} generator manifest digest",
         )
         if parent_artifacts.get("spec") != spec_digest or parent_artifacts.get("config") != config_digest:
             raise ValueError(f"row {index} parent spec/config digest mismatch")
@@ -214,6 +220,7 @@ def validate_development_grid(
         spec_digests.add(spec_digest)
         config_digests.add(config_digest)
         generator_digests.add(generator_digest)
+        generator_manifest_digests.add(generator_manifest_digest)
     unknown = seen - expected_identities
     missing = expected_identities - seen
     if unknown:
@@ -231,6 +238,7 @@ def validate_development_grid(
         or len(spec_digests) != 1
         or len(config_digests) != 1
         or len(generator_digests) != 1
+        or len(generator_manifest_digests) != 1
     ):
         raise ValueError("development grid mixes source/spec/config/generator identities")
     expected_seed_labels = {
@@ -343,6 +351,7 @@ def validate_development_grid(
         "spec_digest": next(iter(spec_digests)),
         "config_digest": next(iter(config_digests)),
         "generator_digest": next(iter(generator_digests)),
+        "generator_manifest_sha256": next(iter(generator_manifest_digests)),
     }
 
 
@@ -705,6 +714,7 @@ def _load_complete_shards(
             "spec_digest": metadata["spec_digest"],
             "config_digest": metadata["config_digest"],
             "generator_digest": metadata["generator_digest"],
+            "generator_manifest_sha256": metadata["generator_manifest_sha256"],
             "source_commit": source_commit,
             "source_dirty": False,
         }
@@ -750,14 +760,19 @@ def _load_complete_shards(
                 if row.get(name) != value:
                     raise ValueError(f"development row {name} mismatch")
             parents = row.get("parent_artifacts")
-            if not isinstance(parents, Mapping) or {
-                name: parents.get(name) for name in ("spec", "config", "generator")
-            } != {
+            expected_parents = {
                 "spec": metadata["spec_digest"],
                 "config": metadata["config_digest"],
                 "generator": metadata["generator_digest"],
-            }:
-                raise ValueError("development row parent artifact digest mismatch")
+                "generator_manifest": metadata["generator_manifest_sha256"],
+            }
+            if not isinstance(parents, Mapping):
+                raise ValueError("development row parent artifact schema mismatch")
+            for parent_name, expected_parent in expected_parents.items():
+                if parents.get(parent_name) != expected_parent:
+                    raise ValueError(
+                        f"development row {parent_name} parent artifact digest mismatch"
+                    )
             campaign_seed = row.get("campaign_seed")
             instance_seed = row.get("instance_seed")
             valid_keys = {

@@ -198,6 +198,7 @@ def _row(
             "spec": SPEC,
             "config": CONFIG,
             "generator": GENERATOR,
+            "generator_manifest": GENERATOR_MANIFEST,
             "seed_contract": _identity_digest(derived_seeds),
             "candidate_menu_contract": _identity_digest(candidate_menu_contract),
             "scorer_contract": _identity_digest(scorer_contract),
@@ -802,3 +803,30 @@ def test_selection_rejects_incomplete_or_wrong_digest_manifest(tmp_path, complet
             selected_output=tmp_path / "results" / "spade-selected-protocol.json",
             repo_root=tmp_path,
         )
+
+
+def test_selection_rejects_tampered_development_generator_manifest(tmp_path, complete_rows, monkeypatch):
+    metadata = {
+        "study_protocol_digest": PROTOCOL,
+        "spec_digest": SPEC,
+        "config_digest": CONFIG,
+        "generator_digest": GENERATOR,
+        "generator_manifest_sha256": GENERATOR_MANIFEST,
+        "source_commit": SOURCE,
+        "source_dirty": False,
+    }
+    monkeypatch.setattr(selector, "registered_metadata", lambda _root: metadata)
+    monkeypatch.setattr(selector, "git_state", lambda _root: (SOURCE, False))
+
+    manifests = _write_complete_shards(tmp_path / "manifest-drift", complete_rows)
+    broken_manifest = json.loads(manifests[0].read_text())
+    broken_manifest["generator_manifest_sha256"] = "0" * 64
+    manifests[0].write_text(json.dumps(broken_manifest))
+    with pytest.raises(ValueError, match="generator.manifest"):
+        selector.selection_payload_from_shards(manifests, repo_root=tmp_path)
+
+    tampered_rows = copy.deepcopy(complete_rows)
+    tampered_rows[0]["parent_artifacts"]["generator_manifest"] = "0" * 64
+    manifests = _write_complete_shards(tmp_path / "row-drift", tampered_rows)
+    with pytest.raises(ValueError, match="generator.manifest"):
+        selector.selection_payload_from_shards(manifests, repo_root=tmp_path)
