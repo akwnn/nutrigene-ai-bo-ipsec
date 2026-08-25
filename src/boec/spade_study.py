@@ -59,6 +59,7 @@ _PRIMARY_SIGMA_ADD = 0.01
 _PRIMARY_GAMMA = 0.95
 _PRIMARY_ALPHA = 0.95
 _PRIMARY_Q_TAU = 0.75
+_TRUTH_RANGE_CONTRACTS = frozenset({"strict_unit_interval", "legacy_unit_scaled"})
 
 
 def _integer(value: object, name: str, *, minimum: int = 1) -> int:
@@ -213,7 +214,11 @@ def sobol_grid(dimension: int, size: int, seed: int) -> Tensor:
     return engine.draw(size_i).double()
 
 
-def _truth_adapter(oracle: object) -> Callable[[Tensor], Tensor]:
+def _truth_adapter(
+    oracle: object,
+    *,
+    truth_range_contract: str,
+) -> Callable[[Tensor], Tensor]:
     if callable(oracle):
         function = oracle
     elif callable(getattr(oracle, "truth", None)):
@@ -232,8 +237,14 @@ def _truth_adapter(oracle: object) -> Callable[[Tensor], Tensor]:
             raise ValueError(f"oracle truth must have shape ({X.shape[0]},)")
         if not bool(torch.isfinite(result).all()):
             raise ValueError("oracle truth must be finite")
-        if bool(torch.any(result < 0.0)) or bool(torch.any(result > 1.0)):
-            raise ValueError("lockbox oracle truth must lie in [0, 1]")
+        if truth_range_contract == "strict_unit_interval" and (
+            bool(torch.any(result < 0.0)) or bool(torch.any(result > 1.0))
+        ):
+            raise ValueError("strict_unit_interval oracle truth must lie in [0, 1]")
+        if truth_range_contract == "legacy_unit_scaled" and bool(
+            torch.any(result > 1.0)
+        ):
+            raise ValueError("legacy_unit_scaled oracle truth must not exceed 1.0")
         return result
 
     return truth
@@ -260,6 +271,7 @@ class ControlledThreshold:
     execution_mode: str
     settings_digest: str
     oracle_identity: str
+    truth_range_contract: str
     record_digest: str
 
 
@@ -322,17 +334,39 @@ class ScorerOnlyOracle:
 class SealedOracleHarness:
     """Holds truth outside campaign interfaces and emits only threshold/scorer views."""
 
-    __slots__ = ("_truth", "_optimum_value", "_oracle_identity", "_threshold")
+    __slots__ = (
+        "_truth",
+        "_optimum_value",
+        "_oracle_identity",
+        "_truth_range_contract",
+        "_threshold",
+    )
 
-    def __init__(self, oracle: object, *, optimum_value: Real, oracle_identity: str) -> None:
+    def __init__(
+        self,
+        oracle: object,
+        *,
+        optimum_value: Real,
+        oracle_identity: str,
+        truth_range_contract: str = "strict_unit_interval",
+    ) -> None:
         value = _finite(optimum_value, "optimum_value")
         if value != 1.0:
             raise ValueError("lockbox oracle optimum_value must be exactly 1.0")
         if not isinstance(oracle_identity, str) or not oracle_identity.strip():
             raise ValueError("oracle_identity must be a non-empty string")
-        self._truth = _truth_adapter(oracle)
+        if truth_range_contract not in _TRUTH_RANGE_CONTRACTS:
+            raise ValueError(
+                "truth_range_contract must be 'strict_unit_interval' or "
+                "'legacy_unit_scaled'"
+            )
+        self._truth = _truth_adapter(
+            oracle,
+            truth_range_contract=truth_range_contract,
+        )
         self._optimum_value = value
         self._oracle_identity = oracle_identity
+        self._truth_range_contract = truth_range_contract
         self._threshold: ControlledThreshold | None = None
 
     def _bind_threshold(self, threshold: ControlledThreshold) -> None:
@@ -447,6 +481,7 @@ def controlled_tau(
         "execution_mode": execution_mode,
         "settings_digest": effective.digest,
         "oracle_identity": harness._oracle_identity,
+        "truth_range_contract": harness._truth_range_contract,
     }
     record = ControlledThreshold(
         tau=tau,
@@ -468,6 +503,7 @@ def controlled_tau(
         execution_mode=execution_mode,
         settings_digest=effective.digest,
         oracle_identity=harness._oracle_identity,
+        truth_range_contract=harness._truth_range_contract,
         record_digest=_sha256_json(payload),
     )
     harness._bind_threshold(record)

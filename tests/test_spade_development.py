@@ -281,6 +281,27 @@ def test_frozen_development_grid_is_exact_and_common_keyed():
     }
 
 
+@pytest.mark.parametrize("family", runner.DEVELOPMENT_FAMILIES)
+def test_real_development_threshold_path_accepts_every_registered_family(family):
+    instance_seed, campaign_seed = runner.development_campaign_key(family, 0)
+    seeds = runner.development_seed_identity(
+        family=family,
+        instance_seed=instance_seed,
+        campaign_seed=campaign_seed,
+    )
+    _, threshold = runner._development_threshold(
+        family,
+        instance_seed,
+        seeds["noise"],
+        seeds["threshold"],
+        smoke=True,
+    )
+    assert threshold.reliable_fraction == pytest.approx(0.25, abs=1 / 256)
+    assert threshold.truth_range_contract == (
+        "strict_unit_interval" if family == "hill" else "legacy_unit_scaled"
+    )
+
+
 def test_complete_grid_accepts_exactly_2750_rows(complete_rows):
     grid = selector.validate_development_grid(complete_rows, protocol_digest=PROTOCOL)
     assert grid["row_count"] == 5 * 50 * 11 == 2750

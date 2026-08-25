@@ -143,6 +143,111 @@ def test_controlled_tau_makes_quarter_grid_reliable_and_releases_numeric_only():
     assert not hasattr(harness.scorer(), "truth")
 
 
+def test_finite_legacy_truth_can_explicitly_bypass_only_lockbox_range_check():
+    def legacy_truth(X):
+        return _truth(X) - 0.75
+
+    harness = SealedOracleHarness(
+        legacy_truth,
+        optimum_value=1.0,
+        oracle_identity="legacy-development-toy",
+        truth_range_contract="legacy_unit_scaled",
+    )
+    threshold = controlled_tau(
+        harness,
+        sigma_rel=0.10,
+        sigma_add=0.01,
+        gamma=0.95,
+        q_tau=0.75,
+        root_seed=17,
+        execution_mode="TEST_ONLY",
+        settings=_test_settings(),
+    )
+    assert 0.20 <= threshold.reliable_fraction <= 0.30
+    assert threshold.truth_range_contract == "legacy_unit_scaled"
+
+
+@pytest.mark.parametrize("bad", [0, 1, None, "finite", "unit_interval"])
+def test_sealed_harness_rejects_unknown_truth_range_contract(bad):
+    with pytest.raises(ValueError, match="truth_range_contract"):
+        SealedOracleHarness(
+            _truth,
+            optimum_value=1.0,
+            oracle_identity="typed-domain-contract",
+            truth_range_contract=bad,
+        )
+
+
+@pytest.mark.parametrize("value", [-1e-9, 1.0 + 1e-9])
+def test_strict_truth_contract_rejects_either_unit_interval_violation(value):
+    def out_of_range(X):
+        return torch.full((X.shape[0],), value, dtype=torch.double)
+
+    harness = SealedOracleHarness(
+        out_of_range,
+        optimum_value=1.0,
+        oracle_identity="strict-range-toy",
+    )
+    with pytest.raises(ValueError, match="strict_unit_interval"):
+        controlled_tau(
+            harness,
+            sigma_rel=.1,
+            sigma_add=.01,
+            gamma=.95,
+            q_tau=.75,
+            root_seed=1,
+            execution_mode="TEST_ONLY",
+            settings=_test_settings(),
+        )
+
+
+def test_legacy_truth_contract_still_rejects_values_above_one():
+    def above_one(X):
+        return torch.full((X.shape[0],), 1.001, dtype=torch.double)
+
+    harness = SealedOracleHarness(
+        above_one,
+        optimum_value=1.0,
+        oracle_identity="legacy-upper-bound-toy",
+        truth_range_contract="legacy_unit_scaled",
+    )
+    with pytest.raises(ValueError, match="legacy_unit_scaled"):
+        controlled_tau(
+            harness,
+            sigma_rel=.1,
+            sigma_add=.01,
+            gamma=.95,
+            q_tau=.75,
+            root_seed=1,
+            execution_mode="TEST_ONLY",
+            settings=_test_settings(),
+        )
+
+
+def test_truth_range_contract_is_bound_into_threshold_digest():
+    strict = SealedOracleHarness(_truth, optimum_value=1.0, oracle_identity="same")
+    legacy = SealedOracleHarness(
+        _truth,
+        optimum_value=1.0,
+        oracle_identity="same",
+        truth_range_contract="legacy_unit_scaled",
+    )
+    kwargs = dict(
+        sigma_rel=.1,
+        sigma_add=.01,
+        gamma=.95,
+        q_tau=.75,
+        root_seed=99,
+        execution_mode="TEST_ONLY",
+        settings=_test_settings(),
+    )
+    strict_threshold = controlled_tau(strict, **kwargs)
+    legacy_threshold = controlled_tau(legacy, **kwargs)
+    assert strict_threshold.truth_range_contract == "strict_unit_interval"
+    assert legacy_threshold.truth_range_contract == "legacy_unit_scaled"
+    assert strict_threshold.record_digest != legacy_threshold.record_digest
+
+
 def test_registered_threshold_rejects_reduced_settings():
     harness = SealedOracleHarness(_truth, optimum_value=1.0, oracle_identity="toy")
     with pytest.raises(ValueError, match="REGISTERED"):
@@ -549,10 +654,15 @@ def test_yaml_freezes_every_registered_design_value_and_its_payload_digest():
     assert p["certificate_draws"] == {"total": 4096, "selection": 2048, "evaluation": 2048, "rho_grid": 64}
     assert p["development"]["families"] == ["hill", "ackley", "hartmann6", "levy", "rosenbrock"]
     assert p["development"]["campaigns_per_family_arm"] == 50
+    assert p["development"]["truth_range_contracts"] == {
+        "hill": "strict_unit_interval",
+        "external_families": "legacy_unit_scaled",
+    }
     assert p["lockbox"]["families"] == [
         "toroidal_rastrigin", "gaussian_basin_mixture", "curved_ridge", "soft_plateau"
     ]
     assert p["lockbox"]["minimum_campaigns_per_family_arm"] == 350
+    assert p["lockbox"]["truth_range_contract"] == "strict_unit_interval"
     canonical = json.dumps(p, sort_keys=True, separators=(",", ":"), allow_nan=False).encode()
     assert cfg["digests"]["protocol_payload_sha256"] == hashlib.sha256(canonical).hexdigest()
     for key, relative in {

@@ -30,6 +30,7 @@ from boec.spade import (  # noqa: E402
     run_spade,
 )
 from boec.spade_study import (  # noqa: E402
+    ControlledThreshold,
     ScoringExecutionSettings,
     SealedOracleHarness,
     build_study_row,
@@ -663,6 +664,40 @@ def _development_oracle(
     return truth_oracle, evaluator, f"{family}:d6:fixed"
 
 
+def _development_threshold(
+    family: str,
+    instance_seed: int,
+    noise_seed: int,
+    threshold_seed: int,
+    *,
+    smoke: bool,
+) -> tuple[SealedOracleHarness, ControlledThreshold]:
+    truth_oracle, _, oracle_identity = _development_oracle(
+        family, instance_seed, noise_seed
+    )
+    harness = SealedOracleHarness(
+        truth_oracle,
+        optimum_value=1.0,
+        oracle_identity=oracle_identity,
+        truth_range_contract=(
+            "strict_unit_interval" if family == "hill" else "legacy_unit_scaled"
+        ),
+    )
+    mode = "TEST_ONLY" if smoke else "REGISTERED"
+    settings = _SMOKE_SCORING_SETTINGS if smoke else None
+    threshold = controlled_tau(
+        harness,
+        sigma_rel=_SIGMA_REL,
+        sigma_add=_SIGMA_ADD,
+        gamma=_GAMMA,
+        q_tau=_Q_TAU,
+        root_seed=threshold_seed,
+        execution_mode=mode,
+        settings=settings,
+    )
+    return harness, threshold
+
+
 def _run_campaign_rows(
     family: str,
     key_index: int,
@@ -682,25 +717,14 @@ def _run_campaign_rows(
     noise_seed = registered_seeds["noise"]
     threshold_seed = registered_seeds["threshold"]
     scoring_seed = registered_seeds["scoring"]
-    truth_oracle, _, oracle_identity = _development_oracle(
-        family, instance_seed, noise_seed
-    )
-    harness = SealedOracleHarness(
-        truth_oracle,
-        optimum_value=1.0,
-        oracle_identity=oracle_identity,
-    )
     mode = "TEST_ONLY" if smoke else "REGISTERED"
     settings = _SMOKE_SCORING_SETTINGS if smoke else None
-    threshold = controlled_tau(
-        harness,
-        sigma_rel=_SIGMA_REL,
-        sigma_add=_SIGMA_ADD,
-        gamma=_GAMMA,
-        q_tau=_Q_TAU,
-        root_seed=threshold_seed,
-        execution_mode=mode,
-        settings=settings,
+    harness, threshold = _development_threshold(
+        family,
+        instance_seed,
+        noise_seed,
+        threshold_seed,
+        smoke=smoke,
     )
     bounds = unit_bounds(6)
     for arm_id in arm_ids:

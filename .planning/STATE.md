@@ -49,8 +49,20 @@ mismatches already recorded in `.planning/codebase/CONCERNS.md`.
 - Task 5 lockbox generators/common scorer passed independent review. All live digests
   match, controlled thresholds achieve 25% prevalence, scorer refits all 48 observations,
   and the manifest remains `FROZEN_UNOPENED` with no comparative outcomes inspected.
+- Task 6 resumable development runner and unanimous leave-one-family-out selector passed
+  independent adversarial review. Exact shard names, write-once selection artifacts,
+  tamper-resistant resume, and all five fold gates are enforced.
+- The first development launch exposed a pre-analysis adapter-contract mismatch before
+  any result shard existed: legacy `UnitScaled` floors are sampled rather than hard
+  bounds. The aborted Hill/Rosenbrock checkpoints were isolated and never reused, and no
+  comparative outcome was inspected. Truth-range contracts are now named and digest
+  bound: Hill and lockbox are strict `[0,1]`; the four historical external families allow
+  finite negative tails without clipping but still enforce an upper bound of one. The
+  focused suite is 103 passed and the broader relevant suite is 171 passed; independent
+  re-review found no remaining issue.
 
 ## Next action
 
-Implement and independently review the resumable development runner and prespecified
-nested-family selection, then execute the frozen development campaign grid.
+Execute the clean frozen development campaign grid, apply the prespecified unanimous
+leave-one-family-out selection, and implement the lockbox runner without opening lockbox
+outcomes unless a single SPADE policy is selected.

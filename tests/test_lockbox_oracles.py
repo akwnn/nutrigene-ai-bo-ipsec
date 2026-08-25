@@ -132,6 +132,7 @@ def test_registered_threshold_achieves_quarter_reliable_prevalence(family, seed)
         root_seed=seed,
     )
     assert abs(threshold.reliable_fraction - .25) <= 1 / 65_536
+    assert threshold.truth_range_contract == "strict_unit_interval"
 
 
 def test_registered_threshold_fails_closed_when_ties_make_quarter_unachievable():

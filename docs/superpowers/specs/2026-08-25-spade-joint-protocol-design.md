@@ -275,6 +275,15 @@ Sobol48, and qLogNEI48. Run exactly 50 matched campaigns per family and arm. Hil
 families use 50 matched design/noise seeds and are interpreted only as within-landscape
 development evidence.
 
+The four legacy external-family adapters retain the exact historical `UnitScaled`
+transformation without clipping. Its floor is a deterministic Sobol estimate, so an
+independent calibration grid can contain finite values slightly below zero. Development
+therefore uses the provenance-bound `legacy_unit_scaled` truth contract: finite truth,
+an optimum normalized to one, and an enforced upper bound of one, without clipping small
+negative tails. This preserves comparability with the existing benchmarks. Hill and the
+new lockbox generators use the stricter `strict_unit_interval` [0,1] contract. The range
+contract is included in each controlled-threshold record and digest.
+
 Selection uses nested leave-one-family-out evaluation so a gate or schedule is never
 trained and judged on the same family fold. The final complete algorithm is chosen by the
 following frozen lexicographic rule:

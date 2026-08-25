@@ -80,6 +80,7 @@ protocol:
 
   development:
     families: [hill, ackley, hartmann6, levy, rosenbrock]
+    truth_range_contracts: {hill: strict_unit_interval, external_families: legacy_unit_scaled}
     campaigns_per_family_arm: 50
     arms_per_family: 11
     total_noisy_evaluations: 132000
@@ -94,6 +95,7 @@ protocol:
 
   lockbox:
     families: [toroidal_rastrigin, gaussian_basin_mixture, curved_ridge, soft_plateau]
+    truth_range_contract: strict_unit_interval
     minimum_campaigns_per_family_arm: 350
     reserved_instance_keys: {first: 0, last: 1999, count: 2000}
     selected_instance_prefix: {first: 0, last: 349, count: 350}
@@ -127,7 +129,7 @@ protocol:
 
 digests:
   digest_definition: "sha256; protocol payload uses canonical sorted compact JSON of the parsed protocol mapping"
-  protocol_payload_sha256: fe64d814cdea8d2f5812faf894af9bb813a65c45e2fc4690b064d11779d966d2
-  spec_sha256: 936c38c9c10acd7b5857a6fbe25433da67521eef53d82e659ad872d2e53172fb
+  protocol_payload_sha256: e7edddd4f281748642017c49c51c38f50156e7d74fb54db2de7c4736d8ea98fb
+  spec_sha256: a73b2f0710737d95682ae42b7c811e5f57afa9f408ddfc1856c26d74bc170d50
   lockbox_oracles_source_sha256: 1a79abd6e62d503852fe98957e67d4d4f6d7e9f8b52788176f2359ed38d3e0c3
-  spade_study_source_sha256: da90498a28dfd0158866810315f75c30cd451ec46344adcad55e38f57c4d0a17
+  spade_study_source_sha256: cf981ec0735eb98b98585b3b026537dca874ef9ab93ac2e3c8d4784626071a05
