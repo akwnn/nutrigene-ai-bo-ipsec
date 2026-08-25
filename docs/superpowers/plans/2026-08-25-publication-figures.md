@@ -1,5 +1,9 @@
 # Publication Figure System Implementation Plan
 
+> **Historical completed plan.** Raw prospective artifacts are now tracked, the corrected
+> boundary-control result is available, and the figure system has generated its outputs.
+> The prohibitions below document the evidence state under which this plan was executed.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Build and render four reproducible, publication-ready main figures for the estimand-aware experimental-design paper, with SPADE as the region-first prospective case study.

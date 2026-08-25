@@ -171,8 +171,13 @@ def test_figure3_rendered_panels_preserve_pareto_contrasts_costs_and_descriptive
 
     expected_contrasts = {
         "map_spade_minus_sobol": ("Map: SPADE − Sobol", -0.010892, -0.01566185, -0.0059691125),
-        "map_spade_minus_qlognei": ("Map: SPADE − qLogNEI", -0.0330745, -0.038435375, -0.0281399125),
-        "regret_spade_minus_qlognei": ("Regret: SPADE − qLogNEI", 0.0152724734, 0.0081584845, 0.0223052340),
+        "map_spade_minus_qlognei": ("Map: SPADE − qLogNEI", -0.0326545, -0.0372318375, -0.028543325),
+        "regret_spade_minus_qlognei": (
+            "Regret: SPADE − qLogNEI",
+            0.0093747607,
+            0.0025784577,
+            0.0161511877,
+        ),
     }
     assert {row["contrast_id"] for row in data["contrasts"]} == set(expected_contrasts)
     assert {row["sesoi"] for row in data["contrasts"]} == {0.02}
@@ -272,7 +277,7 @@ def test_figure3_contrast_labels_follow_ids_not_input_order():
         if isinstance(collection, PathCollection) and len(collection.get_offsets()) == 1
     }
 
-    assert observed == pytest.approx({0: -0.010892, 1: -0.0330745, 2: 0.0152724734})
+    assert observed == pytest.approx({0: -0.010892, 1: -0.0326545, 2: 0.0093747607})
 
     plt.close(bundle.figure)
 

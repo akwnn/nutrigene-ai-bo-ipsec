@@ -1,5 +1,8 @@
 # SPADE-First Paper Outline Rewrite Implementation Plan
 
+> **Historical completed plan.** Its boundary hold and missing-raw constraints were later
+> resolved. See `docs/PROJECT-UNDERSTANDING-OUTLINE.md` for the corrected current blueprint.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Replace the existing project-understanding document with a publication-grade, SPADE-first manuscript blueprint that a scientific writer can turn directly into the paper.
@@ -137,4 +140,3 @@ Expected: every required manuscript component appears.
 git add docs/PROJECT-UNDERSTANDING-OUTLINE.md
 git commit -m "docs: rewrite paper outline around SPADE"
 ```
-

@@ -1,5 +1,10 @@
 # Design Specification: SPADE-First Paper Outline
 
+> **Historical design state.** The boundary-targeting hold and missing-artifact limitation
+> below are resolved. The corrected result is null (m0 versus random Plate 2 effect −0.00188,
+> Holm p=0.4108); KF-9 is PASS at 0/23,600; KF-10 remains FAIL at 18/64; and the restored
+> release passes 9/9 clean-checkout checks. The body is preserved as the original design.
+
 ## Objective
 
 The existing project-understanding outline will be rewritten as a publication-grade, SPADE-first manuscript blueprint. The revised document must make the design-space problem, the SPADE method, and the prospective SPADE evaluation the central scientific contribution. The BO-versus-RSM terminal-rule benchmark remains important, but it will serve as the empirical foundation for why single-recipe optimization is an incomplete laboratory objective rather than competing with SPADE for the paper's headline.

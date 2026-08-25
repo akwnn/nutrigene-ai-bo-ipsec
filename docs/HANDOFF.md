@@ -1,5 +1,10 @@
 # HANDOFF — resume point for the next session
 
+> **Superseded handoff.** Resume from `.planning/STATE.md`, not this 2026-08-23 snapshot.
+> The joint SPADE implementation and release machinery are complete; development selection
+> and lockbox outcomes remain unrun. The historical final-SPADE raw release is restored and
+> validates cleanly.
+
 **Written 2026-08-22 (evening); §0 and §A1 updated 2026-08-23.**
 Read this first, then `docs/FINDINGS-SPADE.md` **Part V (§32 onward)**, then Part IV, then Parts II–III.
 

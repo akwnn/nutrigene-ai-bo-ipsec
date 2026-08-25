@@ -1,5 +1,10 @@
 # Design Specification: Estimand-Aware Research Summary
 
+> **Historical design state.** The missing-artifact and KF-9/KF-10 numbers below were
+> superseded by clean regeneration on 2026-08-25. Current evidence is KF-9 PASS (0/23,600),
+> KF-10 FAIL (18/64), 9/9 clean release checks, 214 focused tests, and eight generated
+> prospective figures. The original requirements remain preserved as the design record.
+
 ## Objective
 
 `docs/RESEARCH-SUMMARY.md` will be rewritten as the principal scientific summary for an estimand-aware experimental-design paper. The paper will no longer be organized as a claim that SPADE is a fundamentally new or generally superior optimizer. Its central contribution will be a controlled demonstration that experimental-design methods cannot be ranked independently of the terminal decision, scientific deliverable, and experimental cost unit used to evaluate them.

@@ -11,6 +11,14 @@ The governing design is
 SPADE results are development/history, not a new holdout. The public method remains
 SPADE; protocol digests distinguish incompatible evidence internally.
 
+## Current position
+
+Implementation and adversarial review are complete through the guarded release machinery.
+The nine-candidate development study has not produced outcomes, no policy has been selected,
+and the lockbox remains unopened. The older seven-condition final-SPADE study is separately
+restored and reproducible from tracked raw artifacts; it is historical evidence, not a
+substitute for the new protocol's development and lockbox gates.
+
 ## Done means
 
 - deterministic and resumable campaign foundations;
@@ -31,4 +39,3 @@ SPADE; protocol digests distinguish incompatible evidence internally.
 - No extra evaluations beyond 48 per arm per campaign.
 - No rebranding as SPADE 2.
 - Historical artifacts are immutable and may not be silently replaced.
-

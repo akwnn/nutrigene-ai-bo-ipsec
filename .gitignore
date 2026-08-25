@@ -331,13 +331,18 @@ COMMIT_MSG.txt
 # are the adjudication, they are small, and a pre-registered study whose verdicts live only
 # in untracked files cannot be audited against its own registration.
 #
-# The RAW row files (`final-spade-c*.json`, ~10^4 rows each) stay ignored — they are bulk
-# run output and regenerable from the committed runner plus the manifest's seeds.
+# The seven raw condition files and their per-condition aliases are intentionally tracked.
+# Their original ignored copies could not be recovered, and clean regeneration changed KF-9
+# by correcting stale checkpoint flags; release auditability therefore requires the rows.
 !results/final-spade-feasibility.json
 !results/final-spade-certificate.json
 !results/final-spade-regret-pareto.json
 !results/final-spade-kill-ledger.json
 !results/final-spade-manifest.json
+!results/final-spade-c[1-4].json
+!results/final-spade-s[1-3].json
+!results/final-spade-primary-C[1-4].json
+!results/final-spade-primary-S[1-3].json
 
 # spade-kf3-followup-2026-08-24: same convention -- the small derived verdict, not the raw
 # per-arm-per-condition campaign files (kf3-followup-c*-spade_cf_*.json/.ckpt.jsonl, bulk,

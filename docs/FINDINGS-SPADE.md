@@ -1,5 +1,12 @@
 # SPADE investigation — findings record
 
+> **Historical chronological record.** The early status table below is intentionally not
+> current. Subsequent registered work completed Version B, K0–K2 and the prospective study.
+> Current dispositions: τ-quantile retained; pooled-noise estimation rejected after its
+> oracle ceiling missed the build bar; OA-LHS rejected after K2; final raw artifacts restored;
+> KF-9 PASS at 0/23,600 and KF-10 FAIL at 18/64. Use `docs/RESEARCH-SUMMARY.md` and the latest
+> sections of `docs/FINDINGS-SPADE-FINAL.md` for current claims.
+
 **Started:** 2026-08-20 · **Last updated:** 2026-08-20, mid-run
 **Plan:** `docs/superpowers/plans/2026-08-20-spade-go-no-go.md` (body + Amendments A, B, C)
 **Registrations:** `docs/OPEN-QUESTIONS.md`, K-series, commits `ef118dd` and `a35b1fc`

@@ -1,6 +1,6 @@
 {
-  "built_at_utc": "2026-08-25T17:19:24+08:00",
-  "code_commit": "4df0721f3fd0b23757210e143c02511a9d50553b",
+  "built_at_utc": "2026-08-25T22:06:21+08:00",
+  "code_commit": "ea84d484b51ab7d710521ff0398033cebc621ff6",
   "figures": {
     "fig1": {
       "alt.txt": {
@@ -61,23 +61,23 @@
       },
       "data.json": {
         "path": "portable/fig3.data.json",
-        "sha256": "2b3ea9807695f3beb875cc4249eab716298784fcfaf4e5b70422fd4156526e4e"
+        "sha256": "f23f9ff7d338b0f190e70bef59dd9611d98d4e36e21364ecc7816f1c7cef40c8"
       },
       "pdf": {
         "path": "portable/fig3.pdf",
-        "sha256": "3883a12120a8cdf3a5cf44efcef9614e7cba270f3eb33883cc765c1ce1b73017"
+        "sha256": "db20f445c6276e167047a2f08aabbe64ae3d484ed0b85a9f3e77ee7e0fd52f17"
       },
       "png": {
         "path": "portable/fig3.png",
-        "sha256": "91b10faf17a7cffacf960fae8ba15921ab5fd970da6e6bdc6f381f0df59362ca"
+        "sha256": "dd92f233fc627eab57786293c8fc1bb6a1d2340fc38888387513466eefd1c71e"
       },
       "svg": {
         "path": "portable/fig3.svg",
-        "sha256": "d9fe8edf3e964d89aad14480d960ee7ddda80966ee358f93ed17792400023b35"
+        "sha256": "48b87c396700da095c9f485ad7af90a9b88d406a14f426b8ebbfddeb809e4ad6"
       },
       "tiff": {
         "path": "portable/fig3.tiff",
-        "sha256": "e9c1a8d82f1f341a3c86829d0b5cc19ca580be33a43d43882a23ec31df8c87ec"
+        "sha256": "cee7470034283a5f085b443b2ececf592b04c10b544f2f57510594336fc2227a"
       }
     },
     "fig4": {
@@ -116,9 +116,9 @@
     "width_mm": 178.0
   },
   "sources": {
-    "results/final-spade-certificate.json": "9fc3d418371c4161dff4ac977da866d19438da4b57e04b58370258c6b835b31c",
-    "results/final-spade-kill-ledger.json": "a86b165a812064982ae14beedf3458561e48644dfe1ef22f18c1d475b57a8f60",
-    "results/final-spade-regret-pareto.json": "d318a41e2584aa9b227214e73b32c4fcc8ce978f03767c8f1ef7a1223e30493c",
+    "results/final-spade-certificate.json": "a38a722b205ac830a3194d2f00615df14d3550b7184ea50ea4922a75121a07f9",
+    "results/final-spade-kill-ledger.json": "eb8830972115b0447b002ef519992879e1fff2297bb80268bb7e9323bf16a87b",
+    "results/final-spade-regret-pareto.json": "ce5ed85819b444dee719c1c4e5f401031e3a975fbeb13bc224441e9a9aa1595d",
     "results/fix1-analysis.json": "5b4259a43d1cede64affad141546c69a84d83d07ce86b26d8e3cd8694afc8de5",
     "results/fix1-terminal-rule.json": "7ad652b6e540eefbbadc7adfd297f4531dd8ad165635db69c1e81ec43c3887e3",
     "results/p7-murphy.json": "95df0851e1059fc7de94c0aa37196964823122fe066ab62364fe5885674613b8",

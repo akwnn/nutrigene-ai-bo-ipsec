@@ -1,5 +1,9 @@
 # What we found — in plain English
 
+> **Historical early summary.** It covers the original three point-optimization experiments,
+> not the later design-space programme or prospective SPADE studies. Use
+> `docs/RESEARCH-SUMMARY.md` for the current full result.
+
 Three experiments. Written down in advance, then run. This explains what they were for and
 what came out, without the statistics vocabulary.
 

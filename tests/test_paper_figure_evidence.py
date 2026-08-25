@@ -41,8 +41,8 @@ def test_figure3_uses_common_rule_p_and_excludes_boundary_arm():
     assert target["spade_cf_m0"]["regret_p"] == pytest.approx(0.0843635436)
     assert target["spade_cf_m0"]["map_error"] == pytest.approx(0.180414)
     contrasts = {row["contrast_id"]: row for row in data["contrasts"]}
-    assert contrasts["map_spade_minus_qlognei"]["mean"] == pytest.approx(-0.0330745)
-    assert contrasts["regret_spade_minus_qlognei"]["mean"] == pytest.approx(0.0152724734)
+    assert contrasts["map_spade_minus_qlognei"]["mean"] == pytest.approx(-0.0326545)
+    assert contrasts["regret_spade_minus_qlognei"]["mean"] == pytest.approx(0.0093747607)
 
 
 def test_figure4_exact_hill_cell_preserves_denominator():

@@ -16,7 +16,7 @@ This document is the main writing blueprint for the paper. It explains the scien
 
 The paper should be SPADE-first. The earlier Bayesian-optimization-versus-response-surface experiments remain essential, but their role is to demonstrate why optimizing one nominated recipe is an incomplete objective when the laboratory needs a defensible operating region. The prospective SPADE study is the principal evidence for method-level performance. Retrospective re-scoring and diagnostic experiments supply motivation, mechanism, and scope.
 
-One analysis is deliberately withheld. The causal comparison intended to isolate the value of boundary-targeted second-round placement is being corrected. The present outline does not quote its current estimate, interval, probability value, or verdict, and it does not use that comparison to support either a positive or negative claim. The method description still explains how SPADE chooses boundary-focused wells because that is part of the implemented protocol. The performance of that targeting rule must be inserted only after the corrected analysis has been frozen and independently verified.
+The historical prospective study and its corrected clean-checkout release are complete. The causal comparison is negative: boundary-targeted `m0` did not improve map error over an equal-well random second plate (effect −0.00188 in the registered sign convention, 95% interval −0.00624 to +0.00261, Holm $p=0.4108$). A newer 48-evaluation joint SPADE protocol is implemented and frozen around the retained τ-quantile correction, scrambled-Sobol openings, and common learned-noise GP. Its development selection and untouched lockbox outcomes have not been run, so the manuscript must keep historical results separate from that new protocol.
 
 ---
 
@@ -28,11 +28,11 @@ Multicomponent biological formulations are commonly optimized by selecting a sin
 
 We evaluated SPADE in a preregistered computer experiment using synthetic six- and eight-factor response landscapes, matched 48-well budgets, and comparators spanning one-shot space-filling designs, batch Bayesian optimization, screened response-surface methodology, and a full-dimensional unscreened central-composite design where arithmetically feasible. The primary target condition was a six-factor biphasic Hill landscape under lower benchmark noise. The primary map outcome was normalized symmetric-difference error between the estimated and true acceptable regions; point performance was evaluated by simple regret under a common posterior-mean terminal rule.
 
-In the target condition, all three SPADE allocation variants had lower mean design-space error than every non-SPADE comparator reported here, with symmetric-difference errors of 0.1770–0.1804. The registered primary SPADE arm achieved 0.1804, compared with 0.1867 for Latin hypercube sampling, 0.1913 for Sobol sampling, 0.2079 for qLogEI, 0.2135 for qLogNEI, 0.2496 for unscreened classical design, and 0.2580 for screened response-surface methodology. qLogNEI produced the lowest point regret, 0.0691, whereas primary SPADE achieved 0.0844. The mean gap of 0.0153 fell within the prespecified 0.02 practical-equivalence margin, although its interval extended slightly beyond that margin. SPADE required two experimental decision rounds, compared with ten for batch Bayesian optimization at the same 48-well budget.
+In the target condition, the three model-directed SPADE variants had symmetric-difference errors of 0.1770–0.1804. The equal-well random-second-plate control achieved 0.1785, so the registered primary `m0` arm at 0.1804 was not the best SPADE-related arm and did not establish value for boundary targeting. The specialist comparators achieved 0.1913 for Sobol, 0.2067 for qLogEI, 0.2131 for qLogNEI, 0.2502 for unscreened classical design, and 0.2580 for screened response-surface methodology. qLogNEI produced the strongest BO point regret, 0.0750, whereas primary SPADE achieved 0.0844. The mean gap was 0.00937 with a 95% interval of 0.00258–0.01615, wholly inside the prespecified 0.02 practical margin. SPADE required two experimental decision rounds, compared with ten for batch Bayesian optimization at the same 48-well budget.
 
 The distinction between point and region objectives reproduced on multimodal Hartmann landscapes: Bayesian optimization achieved lower point regret, whereas SPADE variants achieved lower map error at both six and eight dimensions. Certificate evidence was narrower than mapping performance. Prospective cross-fit containment was not shown to fall below nominal on the Hill benchmark, but the weakest confirmatory cell had only 13 non-empty certificates and a wide interval. Cross-family prospective evidence was not uniformly conclusive, and an independent five-family analysis found high-assurance under-coverage on Levy and Rosenbrock landscapes while SPADE frequently declined to certify on Ackley and Hartmann landscapes.
 
-These findings establish SPADE as a promising certification-first experimental strategy rather than a universally superior optimizer. Its strongest supported contribution is efficient estimation of acceptable formulation regions with practical point-regret parity and substantially fewer decision rounds in the registered target regime. Wet-lab validation, complete cross-family calibration, reproducible release of the raw prospective artifacts, and a corrected evaluation of boundary-targeted allocation remain necessary before broader claims are justified.
+These findings establish the evaluated SPADE workflow as a bounded certification-first case study rather than a universally superior optimizer. Its strongest supported contribution is target-regime map competitiveness with practical point-regret parity and fewer decision rounds; its targeted second plate did not earn a causal advantage. The raw prospective artifacts are now tracked, clean validation passes 9/9 checks, and all eight prospective figures are generated. Wet-lab validation and complete cross-family calibration remain absent, while the new joint protocol still requires development selection and untouched lockbox evaluation before it can support any outcome claim.
 
 ## 1.2 Draft significance statement
 
@@ -99,7 +99,7 @@ The manuscript should cite each source for a defined role. Contextual precedent 
 | Box and Wilson (1951); Box and Draper; Myers and colleagues | Classical experimental-design background | Sequential response-surface methodology, steepest ascent, canonical analysis, ridge analysis, and the principle that design and model interpretation are inseparable | Superiority of the specific classical arm used here |
 | Jones, Schonlau and Welch (1998) | Bayesian-optimization foundation | Efficient global optimization and expected improvement | Empirical superiority in this benchmark or biological system |
 | Frazier (2018) | Accessible BO methodology | Gaussian-process surrogates, acquisition functions, and sequential decision making | Evidence for the observed numerical results |
-| Bryan (2005) and level-set-estimation literature | Second-round acquisition background | Straddle-style prioritization of uncertain points near a level-set boundary | Demonstrated value of the current boundary-targeting implementation; that analysis is reserved |
+| Bryan (2005) and level-set-estimation literature | Second-round acquisition background | Straddle-style prioritization of uncertain points near a level-set boundary | Demonstrated superiority of this implementation; its matched causal comparison was null |
 | Chevalier and co-workers; Azzimonti and co-workers | Excursion-set and conservative-estimation methodology | Vorob'ev quantiles, joint containment, and conservative excursion sets | Cross-family validity of this implementation without empirical checks |
 | Gneiting and Raftery (2007) | Probabilistic-evaluation framework | Proper scoring and the need to distinguish calibration from sharpness | Proof that SPADE is calibrated |
 | ICH Q8 and quality-by-design literature | Regulatory and design-space context | The practical importance of operating regions rather than isolated optima | Regulatory qualification of the synthetic certificate |
@@ -208,7 +208,7 @@ The unscreened design uses a full-dimensional central composite design. At six f
 
 ## 4.6 SPADE implementation
 
-SPADE as actually measured differs from the earliest concept document. It does not use the proposed 49-point orthogonal-array LHS, triplicate anchors, day-zero covariate correction, or a working landscape-regime detector. The executed protocol is the following two-round method.
+SPADE as actually measured differs from the earliest concept document. The historical prospective protocol used plain LHS and response-derived plug-in variances; day-zero covariate correction was unavailable and its landscape-regime detector failed. The two proposed specification repairs were subsequently gated: 49-point strength-2 OA-LHS did not reduce the Hartmann6 design lottery, and even oracle noise variance improved regret by only 0.00816, below the registered 0.01 build bar. Neither was adopted. The executed historical protocol is the following two-round method; the frozen joint protocol instead uses scrambled Sobol and a common learned-noise GP.
 
 ### Plate one: broad coverage
 
@@ -224,7 +224,7 @@ $$
 
 where $\mu(x)$ and $s(x)$ are the posterior mean and standard deviation and $\theta$ is the working response threshold used for acquisition. Large values identify locations that are uncertain and plausibly near the estimated level-set boundary. Eight points are selected greedily. A Chebyshev exclusion radius derived from the median ARD length scale prevents the batch from collapsing into one neighborhood.
 
-After the second round, one Gaussian process is refit to all 48 observations. The second-round wells are new locations, not replicate confirmations of plate-one points. The current causal analysis intended to determine whether this boundary-focused allocation is better than its matched control is reserved pending correction and is not reported in this outline.
+After the second round, one Gaussian process is refit to all 48 observations. The second-round wells are new locations, not replicate confirmations of plate-one points. Against the matched random-placement control, the registered `m0` targeting effect was −0.00188 (95% interval −0.00624 to +0.00261, Holm $p=0.4108$): boundary targeting did not demonstrate value at the eight-well second-round budget.
 
 ### Allocation variants
 
@@ -341,7 +341,7 @@ The primary implementation is organized around the following modules.
 
 The manifest records the study identifier, registration commit, code commit, package versions, seed policy, configuration, and hashes of the seven source condition files. The reported combined dataset contains 99,601 rows: 92,400 original prospective rows, 7,200 unscreened-DoE rows, and one structured declaration that the unscreened arm is unavailable at eight factors.
 
-The committed decision artifacts are present, but the raw condition files and `final-spade-primary.json` are ignored and absent from a fresh checkout. A local execution of the release validator therefore cannot reproduce the repository's reported all-green audit and returns blocking missing-artifact violations. The targeted final-SPADE, reproducibility, statistics, and unscreened-DoE tests pass 173 of 173 in the configured Python 3.11 environment. The manuscript must distinguish passing implementation tests from a fully self-contained reproducible release.
+All seven raw condition files and their per-condition primary aliases are tracked. Clean regeneration reproduced 99,601 rows and corrected stale pre-`dd75c91` per-row feasibility flags. From a clean checkout, the release validator passes all 9 checks, the focused final-SPADE suite passes 214 tests, and the figure generator emits all eight prospective figures. The manifest preserves the superseded source hashes and regeneration rationale so the correction is auditable rather than silently replacing history.
 
 ---
 
@@ -359,25 +359,26 @@ The paper should use these results as motivation rather than as the final SPADE 
 
 ## 5.2 Registered target condition: SPADE produced the leading design-space maps
 
-The registered target condition was the six-factor Hill landscape at $\sigma_{\mathrm{rel}}=0.10$. Both map error and regret are lower-is-better. The table below reports condition means from the committed prospective Pareto artifact. The matched boundary-targeting control is omitted because its analysis is reserved pending correction.
+The registered target condition was the six-factor Hill landscape at $\sigma_{\mathrm{rel}}=0.10$. Both map error and regret are lower-is-better. The table below reports condition means from the committed prospective Pareto artifact, including the matched random-second-plate control.
 
 | Method | Wells | Rounds | Rule-P regret | Symmetric-difference error |
 |---|---:|---:|---:|---:|
 | SPADE m4 | 48 | 2 | 0.0871 | **0.1770** |
+| SPADE random Plate 2 | 48 | 2 | 0.0822 | **0.1785** |
 | SPADE m8 | 48 | 2 | 0.0835 | **0.1797** |
 | **SPADE m0, registered primary** | **48** | **2** | **0.0844** | **0.1804** |
-| Latin hypercube | 48 | 1 | 0.0747 | 0.1867 |
+| Latin hypercube | 48 | 1 | **0.0747** | 0.1867 |
 | Sobol | 48 | 1 | 0.0855 | 0.1913 |
 | SPADE plate one only | 40 | 1 | 0.0863 | 0.1921 |
 | Uniform random | 48 | 1 | 0.0905 | 0.2050 |
-| qLogEI | 48 | 10 | 0.0791 | 0.2079 |
-| qLogNEI | 48 | 10 | **0.0691** | 0.2135 |
-| Unscreened DoE/RSM | 48 | 1 | 0.2862 | 0.2496 |
+| qLogEI | 48 | 10 | 0.0798 | 0.2067 |
+| qLogNEI | 48 | 10 | 0.0750 | 0.2131 |
+| Unscreened DoE/RSM | 48 | 1 | 0.2866 | 0.2502 |
 | Screened DoE/RSM | 48 | 3 | 0.3072 | 0.2580 |
 
-The three SPADE allocation variants occupied the leading map range, 0.1770–0.1804. The primary m0 arm had lower map error than every BO, screened or unscreened classical, and one-shot space-filling comparator. Against qLogNEI, the target-specific difference favoring m0 was 0.0331, with a Holm-adjusted probability of approximately $1.8\times10^{-7}$. This finding supports lower map error in the registered target condition, not universal superiority across landscapes.
+The model-directed SPADE variants and random-second-plate control occupied a leading map range, 0.1770–0.1804. The primary m0 arm had lower map error than the named BO, screened or unscreened classical, and one-shot space-filling comparators, but was worse than its matched random-placement control. Against qLogNEI, the target-specific difference favoring m0 was 0.03265, with a Holm-adjusted probability of approximately $1.8\times10^{-7}$. This supports target-specific map competitiveness, not universal superiority or a benefit of boundary targeting.
 
-The target result also shows that SPADE's advantage is not simply a better point optimizer. qLogNEI achieved the lowest Rule-P regret, 0.0691, while primary SPADE achieved 0.0844. The mean gap was 0.0153 with a bootstrap interval of approximately 0.0082–0.0223. The registered decision rule classified the mean gap as practical parity because it was below the 0.02 margin; the interval extends slightly beyond that margin, so the paper should describe parity cautiously rather than implying proven equivalence.
+The target result also shows that SPADE's map result is not simply better point optimization. qLogNEI achieved the strongest BO Rule-P regret, 0.0750, while primary SPADE achieved 0.0844. The mean gap was 0.00937 with a bootstrap interval of approximately 0.00258–0.01615, wholly inside the registered 0.02 practical margin. The registered decision therefore supports practical parity, not superiority.
 
 The operational contrast is important. SPADE used two decision rounds; qLogNEI and qLogEI used ten. At equal wells, SPADE therefore reached its map result with one fifth as many plate-to-model decision cycles. Calendar-time superiority is plausible but not directly measured because the project did not attach days, labor, or turnaround time to a round.
 
@@ -385,7 +386,7 @@ The operational contrast is important. SPADE used two decision rounds; qLogNEI a
 
 The 40-well plate-one reference produced symmetric-difference error of 0.1921, whereas the 48-well primary SPADE arm produced 0.1804. The paired improvement was 0.0117, with a bootstrap interval of approximately 0.0074–0.0156 and Holm-adjusted $p\approx1.3\times10^{-4}$. This is a statistically detectable reduction in map error, but it is smaller than the prespecified 0.02 smallest effect of interest.
 
-The correct interpretation is that the additional eight wells and second model fit improved the target-condition map modestly, but the observed gain did not reach the project's threshold for a practically meaningful improvement. The plate-one arm is also eight wells short, so this comparison combines the effects of additional observations and an additional round. It does not establish which second-round acquisition policy is responsible. The separate causal allocation analysis remains reserved.
+The correct interpretation is that the additional eight wells and second model fit changed the target-condition map modestly, but the observed gain did not reach the project's threshold for a practically meaningful improvement. The plate-one arm is also eight wells short, so this comparison combines the effects of additional observations and an additional round. The matched equal-well causal control resolves the acquisition question separately: boundary targeting did not beat random placement.
 
 ## 5.4 Local exploitative allocation did not safely improve the primary point decision
 
@@ -395,9 +396,9 @@ The paper should report positive-$m$ allocation as a trade-off experiment, not a
 
 ## 5.5 The point-versus-region split reproduced on Hartmann landscapes
 
-Hartmann supplied the strongest cross-family replication of the paper's central distinction. At six dimensions, qLogNEI and qLogEI achieved Rule-P regrets of 0.2443 and 0.2832, clearly ahead of primary SPADE at 0.4221. Map error reversed the ordering: SPADE m4, m8, and m0 achieved 0.1815, 0.1836, and 0.1848, ahead of Sobol at 0.1899, qLogNEI at 0.2163, and qLogEI at 0.2283.
+Hartmann supplied the strongest cross-family replication of the paper's central distinction. At six dimensions, qLogNEI and qLogEI achieved Rule-P regrets of 0.2305 and 0.2997, clearly ahead of primary SPADE at 0.4221. Map error reversed the ordering: SPADE m4, m8, and m0 achieved 0.1815, 0.1836, and 0.1848, ahead of Sobol at 0.1899, qLogNEI at 0.2243, and qLogEI at 0.2259.
 
-At eight dimensions, qLogNEI and qLogEI again led point regret at 0.2738 and 0.3002. SPADE m4, m0, and m8 led map error at 0.1883, 0.1908, and 0.1950, compared with 0.2006 for Sobol, 0.2198 for qLogNEI, and 0.2306 for qLogEI.
+At eight dimensions, qLogNEI and qLogEI again led point regret at 0.2620 and 0.2945. SPADE m4, m0, and m8 led map error at 0.1883, 0.1908, and 0.1950, compared with 0.2006 for Sobol, 0.2196 for qLogNEI, and 0.2348 for qLogEI.
 
 These are robustness results, not confirmatory target-regime wins. Their importance is conceptual: the same family-level split reproduced at two dimensions. Bayesian optimization committed its budget to resolving promising basins and nominated better points; SPADE retained broader spatial information and estimated the acceptable region more accurately.
 
@@ -421,7 +422,7 @@ In the retrospective five-family Murphy analysis, primary SPADE achieved the hig
 
 The correct statement is that SPADE generated the sharpest probability separation in that analysis but did not generate the most reliable probabilities. AUC alone would have ranked SPADE first and hidden the calibration result. The main paper should therefore report calibration and refinement together and avoid language implying that a sharp design-space map is automatically well calibrated.
 
-The prospective final study contains per-row Murphy values, but its findings document does not yet provide a complete standalone calibration table. The paper should not invent a prospective calibration ranking. It may report the retrospective decomposition as supporting evidence and state that a final prospective calibration table must be generated from the raw condition artifacts before submission.
+The prospective final study contains per-row Murphy values, and the restored raw artifacts now reproduce the registered Murphy figure. The paper should derive any prospective calibration table directly from those rows and retain the retrospective decomposition as supporting evidence; it must not infer a new ranking from prose summaries.
 
 ## 5.9 Hill certificate evidence was encouraging but underpowered at the weakest cell
 
@@ -441,15 +442,15 @@ Taken together, the evidence supports a Hill-scoped statement: the certificate h
 
 ## 5.11 Empty-set and feasibility guards materially changed the interpretation
 
-Eight of 44 certificate cells initially satisfied their raw containment rule while producing empty sets in more than half of campaigns. They were correctly downgraded to inconclusive. This guard prevents vacuous containment from being reported as certificate success.
+Eighteen of 64 certificate cells satisfied their raw containment rule while producing empty sets in more than half of campaigns. They were correctly downgraded to inconclusive. This guard prevents vacuous containment from being reported as certificate success.
 
-The final ledger also recorded 4,400 of 23,600 primary-probability rows at or above the certifiability ceiling. These rows reflect thresholds that no method can certify under the requested noise and assurance. They should have been excluded before entering the analyzer. This is a protocol-feasibility failure rather than a method-performance failure.
+Clean regeneration corrected stale checkpoint flags written before the row-level `above_ceiling` fix. The current ledger records 0 of 23,600 primary-probability rows at or above the certifiability ceiling, so KF-9 passes. The superseded 4,400 count was an artifact of stale checkpoint state, not a property of the registered thresholds.
 
 These results deserve a dedicated methods-and-results paragraph because they are broadly relevant. A conservative set method can appear perfectly safe by returning nothing, and a benchmark can appear universally difficult by requesting an impossible threshold. Non-empty denominators and feasibility ceilings are therefore primary scientific quantities, not implementation details.
 
 ## 5.12 Full-dimensional DoE did not rescue the classical map
 
-The newly implemented unscreened six-factor central-composite arm allowed the project to test whether the classical map deficit was caused only by screening. In the target condition, unscreened DoE improved symmetric-difference error from 0.2580 to 0.2496 and improved Rule-P regret from 0.3072 to 0.2862, but it remained far behind the SPADE and space-filling map results. At higher-noise Hill, the screened arm led the unscreened arm on both regret rules. The comparison therefore varied by terminal rule and condition.
+The newly implemented unscreened six-factor central-composite arm allowed the project to test whether the classical map deficit was caused only by screening. In the target condition, unscreened DoE improved symmetric-difference error from 0.2580 to 0.2502 and improved Rule-P regret from 0.3072 to 0.2866, but it remained far behind the SPADE and space-filling map results. At higher-noise Hill, the screened arm led the unscreened arm on both regret rules. The comparison therefore varied by terminal rule and condition.
 
 Retrospective Hartmann re-scoring had already shown that turning off screening closed only about one fifth to one quarter of the classical arm's map deficit relative to spread designs. The full prospective comparison reinforces the interpretation that screening is not the sole mechanism; the combination of a low-order response surface, concentrated geometry, and terminal recommendation also matters.
 
@@ -473,20 +474,20 @@ The repository contains longer-run cost experiments through 200 wells for select
 
 # 6. Registered claim-evidence matrix
 
-The paper should translate internal kill identifiers into scientific statements. The current boundary-targeting contrast is reserved and must remain absent from this matrix until corrected.
+The paper should translate internal kill identifiers into scientific statements and include the resolved negative boundary-targeting comparison.
 
 | Scientific statement | Status for this manuscript | Evidence and interpretation |
 |---|---|---|
-| Primary SPADE has lower target-regime map error than the named BO and classical comparators | Supported, target-specific | m0 error 0.1804; qLogEI 0.2079; qLogNEI 0.2135; unscreened DoE 0.2496; screened DoE 0.2580 |
+| Primary SPADE has lower target-regime map error than the named BO and classical comparators | Supported, target-specific | m0 error 0.1804; qLogEI 0.2067; qLogNEI 0.2131; unscreened DoE 0.2502; screened DoE 0.2580 |
 | SPADE is competitive with Sobol in the target regime | Supported | m0 is numerically lower by 0.0109, inside the 0.02 practical margin |
-| SPADE is practically close to the best BO point decision under Rule P | Supported cautiously | Mean regret gap 0.0153 is inside the 0.02 margin; interval extends to approximately 0.0223 |
+| SPADE is practically close to the best BO point decision under Rule P | Supported | Mean regret gap 0.00937; 95% interval 0.00258–0.01615, inside the 0.02 margin |
 | A second round improves on the 40-well plate-one map by a practically meaningful amount | Not supported at the registered magnitude | Improvement 0.0117 is statistically detectable but below the 0.02 threshold |
 | Positive-$m$ allocation safely improves regret without sacrificing map or certificate behavior | Not supported | m4 regret is 0.0028 worse than m0 and the full conjunction is unmet |
 | Prospective Hill containment is demonstrably below nominal | Not observed | No confirmatory Hill cell failed the exact Holm-adjusted rule; weakest denominator is only 13 |
 | The certificate is established beyond Hill | Not supported | Prospective Hartmann evidence is not uniformly clean; independent cross-family study identifies under-coverage or non-vacuity failures |
-| Empty certificates do not explain apparent containment success | Not supported in all cells | Eight of 44 raw passing cells exceeded 50% emptiness and were downgraded |
-| Every analyzed primary threshold was feasible | Not supported | 4,400 of 23,600 rows reached the analyzer at or above the certifiability ceiling |
-| Boundary-focused second-round placement is better or worse than its matched control | **Reserved** | Corrected causal analysis is pending; no present estimate or verdict may be quoted |
+| Empty certificates do not explain apparent containment success | Not supported in all cells | Eighteen of 64 raw passing cells exceeded 50% emptiness and were downgraded |
+| Every analyzed primary threshold was feasible | Supported after clean regeneration | 0 of 23,600 primary-γ rows reached the analyzer at or above the certifiability ceiling |
+| Boundary-focused second-round placement improves on its matched control | Not supported | m0 minus random-control improvement was −0.00188, 95% interval −0.00624 to +0.00261, Holm $p=0.4108$ |
 
 ---
 
@@ -500,11 +501,11 @@ The paper should translate internal kill identifiers into scientific statements.
 
 **Panel B** should contrast point optimization with region learning. Point optimization returns one $\widehat x$ and is scored by regret. Region learning returns $\widehat A_{\tau,\gamma}$ and is scored by symmetric difference, calibration, and containment.
 
-**Panel C** should depict SPADE's 40-point Latin-hypercube plate, Gaussian-process fit, eight-point uncertainty-reduction plate, 48-point refit, probability map, conservative set, inscribed box, and setpoint. It may illustrate boundary-focused acquisition as the implemented method but must not imply that its causal value has already been established.
+**Panel C** should depict the historical SPADE 40-point Latin-hypercube plate, Gaussian-process fit, eight-point uncertainty-reduction plate, 48-point refit, probability map, conservative set, inscribed box, and setpoint. It may illustrate boundary-focused acquisition as the implemented historical method but must state that the matched causal comparison was null.
 
 **Visual encoding.** Use one color for observed plate-one points, a second for plate-two points, a probability gradient for the map, a solid contour for the estimated region, and hatching for the conservative set.
 
-**Draft caption.** *SPADE changes the experimental target from one nominal optimum to a threshold-defined operating region. Forty space-filling observations provide broad coverage of all factors. A Gaussian-process surrogate guides eight second-round observations toward uncertain portions of the estimated decision surface. The refitted model produces an exceedance-probability map, a conservative excursion set, an inscribed factor-range box, and a setpoint. The diagram is schematic; the causal value of the present boundary-targeting rule is under corrected analysis and is not inferred here.*
+**Draft caption.** *SPADE changes the experimental target from one nominal optimum to a threshold-defined operating region. Forty space-filling observations provide broad coverage of all factors. A Gaussian-process surrogate guides eight second-round observations toward uncertain portions of the estimated decision surface. The refitted model produces an exceedance-probability map, a conservative excursion set, an inscribed factor-range box, and a setpoint. The diagram is schematic; in the registered target condition, this boundary-targeting rule did not outperform equal-well random second-round placement.*
 
 **Supported conclusion.** SPADE is a defined, two-round workflow for region estimation.
 
@@ -514,7 +515,7 @@ The paper should translate internal kill identifiers into scientific statements.
 
 **Scientific question.** Does the method that nominates the best point also produce the best acceptable-region map?
 
-**Panel A** should plot mean Rule-P regret against symmetric-difference error for the target Hill condition. Each point represents a method; point size may encode wells and outline style may encode rounds. The three SPADE allocation variants should be visually grouped. The matched boundary-targeting control should be withheld until its corrected analysis is complete.
+**Panel A** should plot mean Rule-P regret against symmetric-difference error for the target Hill condition. Each point represents a method; point size may encode wells and outline style may encode rounds. The three SPADE allocation variants and matched random-second-plate control should be visually grouped.
 
 **Panel B** should show the same two outcomes for Hartmann at six dimensions, and **Panel C** at eight dimensions. The axes must retain the same lower-is-better direction. Arrows or quadrant shading may identify “strong point/weak map” and “strong map/weaker point” regions without calling either universally superior.
 
@@ -532,13 +533,13 @@ The paper should translate internal kill identifiers into scientific statements.
 
 **Panel A** should present paired mean symmetric-difference error with 95% bootstrap intervals for SPADE m0/m4/m8, Sobol, LHS, random, qLogEI, qLogNEI, screened DoE, unscreened DoE, and the 40-well plate-one reference. Lower values should appear higher or farther left consistently.
 
-**Panel B** should present Rule-P regret for the same methods. A bracket between m0 and qLogNEI should show the 0.0153 mean gap and the 0.02 practical margin, with the interval crossing the margin clearly visible.
+**Panel B** should present Rule-P regret for the same methods. A bracket between m0 and qLogNEI should show the 0.00937 mean gap, its 0.00258–0.01615 interval, and the 0.02 practical margin.
 
 **Panel C** should compare wells and rounds. All equal-budget methods should align at 48 wells, while round counts should show one for one-shot designs, two for SPADE, three for screened DoE, and ten for BO.
 
 **Panel D** should compare primary SPADE with the 40-well plate-one reference: 0.1804 versus 0.1921 map error, improvement 0.0117, interval 0.0074–0.0156, with the 0.02 smallest effect marked. This panel addresses the value of the additional observations without attributing that value to a particular acquisition rule.
 
-**Draft caption.** *SPADE's target-regime advantage is strongest for the design-space map, not the terminal point. Primary SPADE achieved symmetric-difference error 0.1804 and Rule-P regret 0.0844 in two rounds. qLogNEI achieved lower regret, 0.0691, but higher map error, 0.2135, in ten rounds. The mean regret gap was inside the prespecified 0.02 practical margin, although its interval extended slightly beyond that boundary. Adding the second round improved map error over the 40-well plate-one reference by 0.0117, a statistically detectable but sub-threshold effect.*
+**Draft caption.** *SPADE's target-regime result is strongest for the design-space map, not the terminal point. Primary SPADE achieved symmetric-difference error 0.1804 and Rule-P regret 0.0844 in two rounds. qLogNEI achieved lower regret, 0.0750, but higher map error, 0.2131, in ten rounds. The mean regret gap was 0.00937 with a 95% interval of 0.00258–0.01615, inside the prespecified 0.02 practical margin. Adding the second round changed map error over the 40-well plate-one reference by 0.0117, a statistically detectable but sub-threshold effect.*
 
 **Supported conclusion.** SPADE offers a map-first trade-off with practical mean regret proximity and fewer decision rounds.
 
@@ -572,7 +573,7 @@ Use the method table in Section 4.5, expanded with surrogate, acquisition, termi
 
 ## Table 2. Registered target-condition estimates
 
-Use the numerical table in Section 5.2, adding paired intervals and adjusted probability values for the registered contrasts. Do not insert the boundary-targeting control until the corrected analysis is finalized.
+Use the numerical table in Section 5.2, adding paired intervals and adjusted probability values for the registered contrasts, including the matched boundary-targeting control.
 
 ## Table 3. Cross-family claim scope
 
@@ -580,7 +581,7 @@ Report each condition's family, dimension, noise level, regime class, primary pr
 
 ## Table 4. Claim-evidence matrix
 
-Use Section 6 as the basis. Replace internal kill identifiers with scientific language in the main paper. The complete machine-readable kill ledger can appear in the supplement after the reserved analysis is corrected.
+Use Section 6 as the basis. Replace internal kill identifiers with scientific language in the main paper. The complete corrected machine-readable kill ledger can appear in the supplement.
 
 ## Supplementary figures
 
@@ -595,7 +596,7 @@ Use Section 6 as the basis. Replace internal kill identifiers with scientific la
 9. Certificate non-empty rates and exact containment intervals for every family and assurance cell.
 10. Feasibility-ceiling diagnostic showing which threshold/probability combinations are mathematically un-certifiable.
 
-The boundary-targeting comparison must not appear in the supplementary program until corrected. When restored, it should receive its own preregistered causal-analysis figure rather than being hidden among broad performance panels.
+The boundary-targeting comparison should receive its own preregistered causal-analysis figure rather than being hidden among broad performance panels. It must show the null effect, interval, adjusted probability value, and equal-well control explicitly.
 
 ---
 
@@ -619,7 +620,7 @@ The observed second-round gain over the 40-well plate-one reference was real but
 
 The positive-$m$ variants did not satisfy the preregistered conjunction for safe point improvement. This result argues against assuming that local exploitation can be added without compromising a region-first objective. It also illustrates the value of conjunctive method criteria: the lowest point estimate on one metric is not automatically an improvement if calibration or certificate requirements fail.
 
-The boundary-targeting causal question remains open in this manuscript. No interpretation should be added until the corrected analysis fixes the underlying issue, regenerates the affected artifacts, and passes the same claim-language and release checks as the other prospective results.
+The boundary-targeting causal question is resolved negatively for the registered target: m0 did not beat equal-well random placement. This result constrains the mechanism claim but does not erase the broader estimand-dependent ranking or target-specific map competitiveness.
 
 ## 9.4 Why certificate claims are narrower than map claims
 
@@ -690,7 +691,7 @@ A smallest effect of scientific interest should be stated in biological units be
 | “SPADE reduced experimental cost fivefold.” | “SPADE used two decision rounds versus ten at equal wells; calendar time and cost were not measured.” |
 | “The synthetic model represents endothelial biology.” | “The benchmark is structurally inspired by a formulation problem but was not fitted to endothelial data.” |
 | “The screened classical failure proves RSM is unsuitable.” | “The implemented screened pipeline failed full-domain diagnostics; standard RSM safeguards were not fully represented at the fixed budget.” |
-| Any current statement that boundary targeting worked or failed | “The causal boundary-targeting comparison is reserved pending corrected analysis.” |
+| “Boundary targeting improves the second plate.” | “Boundary-targeted m0 did not outperform equal-well random placement in the registered target condition.” |
 
 ## 10.3 Anticipated reviewer criticisms
 
@@ -704,9 +705,9 @@ A smallest effect of scientific interest should be stated in biological units be
 
 **“The classical comparator is unfair.”** Present both screened and unscreened versions, the long-run relocating RSM analysis, in-region terminal rules, and the diagnostic limitations of the implemented fixed-budget pipeline.
 
-**“The method may only be a good space-filling design.”** Report the plate-one comparison and its sub-SESOI second-round gain. Do not make a causal claim about the boundary-targeting policy until the corrected analysis is complete.
+**“The method may only be a good space-filling design.”** Report the plate-one comparison, its sub-SESOI second-round change, and the null equal-well targeting comparison. The evidence does not assign a causal benefit to boundary targeting.
 
-**“The release is not reproducible.”** Agree with the current fresh-clone limitation and archive the raw condition files before submission. Do not soften the validator failure into an advisory note.
+**“The release is not reproducible.”** Point to the tracked seven-condition raw artifacts, regeneration record, 9/9 clean-checkout validator result, focused 214-test suite, and deterministic figure workflow. Keep the regeneration disclosure visible because the original ignored files were unavailable.
 
 ---
 
@@ -718,7 +719,7 @@ The Introduction should move from the experimental burden of multicomponent form
 
 ## Methods
 
-The Methods should follow Sections 4.1–4.13 in order: evidence bodies; synthetic landscapes; observation model; external families; comparators and budgets; SPADE implementation; point and region estimands; cross-fit certificate; feasibility; target classification; statistics; and software provenance. The boundary-targeting acquisition may be defined technically, but its current causal result must not appear.
+The Methods should follow Sections 4.1–4.13 in order: evidence bodies; synthetic landscapes; observation model; external families; comparators and budgets; SPADE implementation; point and region estimands; cross-fit certificate; feasibility; target classification; statistics; and software provenance. Define the boundary-targeting acquisition and its matched random-placement control before reporting the null causal result.
 
 ## Results
 
@@ -745,18 +746,20 @@ The numerical source of truth is, in order:
 
 Early narrative sections and `docs/RESEARCH-SUMMARY.md` contain stale statements about the unscreened comparator, certificate status, kill counts, and target-arm ranking. They may help reconstruct history but must not be quoted as current results.
 
-## 12.2 Boundary-targeting hold rule
+## 12.2 Boundary-targeting reporting rule
 
-Until the corrected analysis is committed, the paper outline and manuscript must not include the existing targeted-versus-control effect, confidence interval, probability value, kill status, or prose interpretation. The only allowed statements are that SPADE's implemented acquisition focuses on uncertain portions of the estimated level-set boundary and that the causal value of this policy is reserved pending corrected analysis.
-
-When the correction lands, it must update the raw condition artifacts, merged primary artifact, Pareto analysis, kill ledger, findings document, researcher guide, figure source, and release manifest together. The restored result should be inserted only after the validator passes from a clean checkout and the sign convention is independently checked against arm means.
+The corrected targeted-versus-control result must be reported with its sign convention,
+arm means, interval, adjusted probability value and registered consequence. The safe
+statement is that `m0` did not outperform equal-well random second-round placement in the
+registered Hill target. It must not be generalized to every landscape or second-round
+budget.
 
 ## 12.3 Publication-readiness checklist
 
-- Archive or regenerate all seven raw prospective condition files and `final-spade-primary.json`.
-- Run the release validator from a clean checkout and obtain all nine checks with zero violations.
-- Generate the prospective Murphy calibration/refinement table from authoritative raw rows.
-- Correct and independently verify the boundary-targeting analysis before inserting it anywhere.
+- Keep all seven raw prospective condition files and their per-condition aliases tracked.
+- Preserve the clean-checkout 9/9 release-validator result and regenerate it for the submission commit.
+- Derive the prospective Murphy calibration/refinement table from authoritative raw rows.
+- Report the independently verified boundary-targeting result and sign convention consistently.
 - Reconcile the oracle generator's mutable acceptance default with the frozen stored ensemble configuration.
 - Verify every central number against its committed JSON key.
 - Re-read primary PDFs and finalize the bibliography, author lists, page numbers, and exact claims.

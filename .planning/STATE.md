@@ -2,7 +2,7 @@
 
 **Milestone:** SPADE joint protocol  
 **Status:** active  
-**Current phase:** Phase 2 — Joint SPADE implementation
+**Current phase:** Phase 4 — Development selection (pre-outcome)
 
 ## Decisions frozen
 
@@ -86,8 +86,9 @@ regressions and are not being repaired inside the prospective study branch.
 
 ## Next action
 
-Freeze and independently review the missing pre-lockbox map/regret power and sample-size
-rule before generating development outcomes. Then execute the clean frozen development
-campaign grid and apply the prespecified unanimous leave-one-family-out selection. Do not
-open lockbox outcomes unless exactly one SPADE policy is selected and the frozen power
-gate approves an instance prefix no larger than the 2,000 reserved keys.
+Independently review the now-frozen pre-lockbox map/regret power and sample-size amendment,
+then execute the clean frozen development campaign grid and apply the prespecified unanimous
+leave-one-family-out selection. Do not open lockbox outcomes unless exactly one SPADE policy
+is selected and the frozen power gate approves an instance prefix no larger than the 2,000
+reserved keys. Historical final-SPADE raw artifacts are restored and validated; they must
+remain provenance-separated from the new joint-protocol outcomes.

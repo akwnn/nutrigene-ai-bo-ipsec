@@ -1,5 +1,10 @@
 # Design Specification: Publication-Ready Paper Figures
 
+> **Historical design state.** The raw-artifact blocker described below is closed. All seven
+> raw condition files are tracked, clean validation passes 9/9 checks, and the eight
+> prospective final-SPADE figures plus four main paper figures have been generated. The
+> original constraints remain preserved as the pre-implementation design record.
+
 ## Objective
 
 Create a reproducible, journal-grade figure package for the estimand-aware experimental-design paper. The figures must communicate the paper's scientific argument rather than decorate it: the terminal decision and reported deliverable determine what constitutes success, point optimization and acceptable-region learning rank workflows differently, and map accuracy does not by itself establish calibration or conservative containment.

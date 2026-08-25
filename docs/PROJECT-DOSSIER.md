@@ -1,5 +1,9 @@
 # PROJECT DOSSIER — one week of work, consolidated
 
+> **Historical dossier (Aug 7–13).** It predates the design-space programme, final-SPADE
+> study, τ/noise/OA gates and joint protocol. Use `docs/RESEARCH-SUMMARY.md` for current
+> scientific conclusions and `.planning/STATE.md` for current execution status.
+
 **Repo:** `nutrigene-ai-bo-ipsec` · **HEAD:** `3aa6701` (2026-08-13 16:25) · **114 commits, Aug 7–13 2026** · fully pushed to `origin/main`
 
 **What this document is:** every experiment run, every result, the current conclusion, and everything still outstanding — assembled from the git history, `RESULTS.md`, `CLAIMS.md`, `METHODS.md`, `OPEN-QUESTIONS.md`, and the raw artifacts in `results/`. Where documents disagree with each other, this file says so and names which one is right.
