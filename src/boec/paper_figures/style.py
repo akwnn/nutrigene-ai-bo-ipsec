@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import TypeAlias
 
 
 @dataclass(frozen=True)
@@ -42,6 +43,8 @@ PRESETS = {
     "plos": VenuePreset("plos", 178.0, 9.0, 10.0),
 }
 
+PresetArg: TypeAlias = VenuePreset | str | None
+
 
 def get_preset(name: str) -> VenuePreset:
     try:
@@ -59,15 +62,40 @@ def method_style(arm: str) -> MethodStyle:
         raise ValueError(f"no visual encoding registered for arm {arm!r}") from exc
 
 
-def apply_axis_style(ax) -> None:
+def _resolve_preset(preset: PresetArg) -> VenuePreset:
+    if preset is None:
+        return PRESETS["portable"]
+    if isinstance(preset, VenuePreset):
+        return preset
+    return get_preset(preset)
+
+
+def apply_axis_style(ax, preset: PresetArg = None) -> None:
+    selected = _resolve_preset(preset)
     ax.spines[["top", "right"]].set_visible(False)
     ax.spines[["left", "bottom"]].set_color("#B8BEC5")
-    ax.tick_params(width=0.6, length=2.5, color="#6B7280")
+    ax.tick_params(width=0.6, length=2.5, color="#6B7280", labelsize=selected.body_pt)
+    ax.xaxis.label.set_size(selected.body_pt)
+    ax.yaxis.label.set_size(selected.body_pt)
+    ax.title.set_size(selected.body_pt)
+    legend = ax.get_legend()
+    if legend is not None:
+        for text in legend.get_texts():
+            text.set_fontsize(selected.body_pt)
     ax.grid(axis="y", color="#E5E7EB", linewidth=0.5)
     ax.set_axisbelow(True)
 
 
-def panel_label(ax, label: str):
+def panel_label(ax, label: str, preset: PresetArg = None):
     if label not in {"a", "b", "c", "d"}:
         raise ValueError("panel labels must be lowercase a-d")
-    return ax.text(-0.10, 1.04, label, transform=ax.transAxes, fontweight="bold", va="bottom")
+    selected = _resolve_preset(preset)
+    return ax.text(
+        -0.10,
+        1.04,
+        label,
+        transform=ax.transAxes,
+        fontsize=selected.panel_pt,
+        fontweight="bold",
+        va="bottom",
+    )
