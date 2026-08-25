@@ -337,19 +337,23 @@ may be computed until `spade-selected-protocol.json` exists in a clean commit.
 
 ## 10. Lockbox sample size and execution
 
-Run 350 independent paired campaigns per generator family and arm. This is 4 families x
-350 instances x 3 arms x 48 evaluations = 201,600 noisy evaluations.
+The executable rule is frozen in
+`2026-08-25-spade-lockbox-power-design.md`. After unanimous leave-one-family-out
+development selection, choose the first integer from 350 through 2,000 for which both
+the analytic paired-normal power and the exact lower confidence bound on nonparametric
+sensitivity power are at least 0.80 for map and regret in every development family. The
+selected lockbox keys are exactly `0..n-1`. If no registered integer passes, publish an
+immutable `INSUFFICIENT_POWER` decision and do not open the lockbox.
 
-At true answer rate 0.60 and true conditional containment 0.95, `n=350` gives about 82.5%
-joint power for the two exact lower-bound certificate criteria in Section 11. Before the
-lockbox begins, development paired differences are also used to verify at least 80% power
-for the map and regret non-inferiority tests. If they require more than 350, increase the
-sample size before any lockbox result is inspected. It may never be decreased after
-inspection.
+The 350-instance minimum still provides about 82.5% joint planning power for the two
+exact lower-bound certificate criteria in Section 11 at true answer rate 0.60 and true
+conditional containment 0.95. Any larger map/regret-powered prefix only increases that
+nominal binomial planning power. The 48-evaluation budget per arm never changes.
 
-Execution is sharded by generator and instance range. Shards write deterministic gzip
-JSONL raw rows and a sidecar manifest. The merge refuses missing, duplicate, mismatched,
-dirty-tree, wrong-protocol, or wrong-environment shards.
+Execution is sharded by generator and the committed powered instance range. Shards write
+deterministic gzip JSONL raw rows and a sidecar manifest. The merge refuses missing,
+duplicate, mismatched, dirty-tree, wrong-protocol, wrong-power-plan, or wrong-environment
+shards.
 
 ## 11. Confirmatory success rule
 

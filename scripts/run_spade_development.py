@@ -89,6 +89,11 @@ _CONFIG_PATH = Path("configs/experiment/spade-joint.yaml")
 _SPEC_PATH = Path("docs/superpowers/specs/2026-08-25-spade-joint-protocol-design.md")
 _GENERATOR_PATH = Path("src/boec/lockbox_oracles.py")
 _GENERATOR_MANIFEST_PATH = Path("results/spade-lockbox-generator-manifest.json")
+_POWER_DESIGN_PATH = Path(
+    "docs/superpowers/specs/2026-08-25-spade-lockbox-power-design.md"
+)
+_POWER_ENGINE_PATH = Path("src/boec/spade_power.py")
+_POWER_PLANNER_PATH = Path("scripts/plan_spade_lockbox_power.py")
 _SIGMA_REL = 0.10
 _SIGMA_ADD = 0.01
 _GAMMA = 0.95
@@ -366,7 +371,18 @@ def registered_metadata(repo_root: Path = ROOT) -> dict[str, object]:
     spec_path = repo_root / _SPEC_PATH
     generator_path = repo_root / _GENERATOR_PATH
     generator_manifest_path = repo_root / _GENERATOR_MANIFEST_PATH
-    for path in (config_path, spec_path, generator_path, generator_manifest_path):
+    power_design_path = repo_root / _POWER_DESIGN_PATH
+    power_engine_path = repo_root / _POWER_ENGINE_PATH
+    power_planner_path = repo_root / _POWER_PLANNER_PATH
+    for path in (
+        config_path,
+        spec_path,
+        generator_path,
+        generator_manifest_path,
+        power_design_path,
+        power_engine_path,
+        power_planner_path,
+    ):
         if not path.is_file():
             raise ValueError(f"required frozen artifact is missing: {path}")
     config = yaml.safe_load(config_path.read_text(encoding="utf-8"))
@@ -379,10 +395,45 @@ def registered_metadata(repo_root: Path = ROOT) -> dict[str, object]:
         raise ValueError("configured study protocol digest does not match canonical protocol")
     spec_digest = _sha256(spec_path)
     generator_digest = _sha256(generator_path)
+    power_design_digest = _sha256(power_design_path)
+    power_engine_digest = _sha256(power_engine_path)
+    power_planner_digest = _sha256(power_planner_path)
     if spec_digest != digests.get("spec_sha256"):
         raise ValueError("frozen specification digest mismatch")
     if generator_digest != digests.get("lockbox_oracles_source_sha256"):
         raise ValueError("frozen generator digest mismatch")
+    for field, actual in (
+        ("power_design_sha256", power_design_digest),
+        ("power_engine_sha256", power_engine_digest),
+        ("power_planner_sha256", power_planner_digest),
+    ):
+        if actual != digests.get(field):
+            raise ValueError(f"frozen {field.removesuffix('_sha256')} digest mismatch")
+    try:
+        generator_manifest = json.loads(
+            generator_manifest_path.read_text(encoding="utf-8")
+        )
+    except json.JSONDecodeError as exc:
+        raise ValueError("frozen generator manifest is not valid JSON") from exc
+    if (
+        not isinstance(generator_manifest, Mapping)
+        or generator_manifest.get("status") != "FROZEN_UNOPENED"
+        or not isinstance(generator_manifest.get("digests"), Mapping)
+    ):
+        raise ValueError("generator manifest must remain FROZEN_UNOPENED")
+    manifest_digests = generator_manifest["digests"]
+    expected_manifest_digests = {
+        "lockbox_oracles_source_sha256": generator_digest,
+        "spade_study_source_sha256": _sha256(repo_root / "src/boec/spade_study.py"),
+        "spec_sha256": spec_digest,
+        "config_file_sha256": _sha256(config_path),
+        "protocol_payload_sha256": protocol_digest,
+    }
+    if any(
+        manifest_digests.get(field) != expected
+        for field, expected in expected_manifest_digests.items()
+    ):
+        raise ValueError("frozen generator manifest digest mismatch")
     source_commit, source_dirty = git_state(repo_root)
     return {
         "study_protocol_digest": protocol_digest,
@@ -390,6 +441,9 @@ def registered_metadata(repo_root: Path = ROOT) -> dict[str, object]:
         "config_digest": _sha256(config_path),
         "generator_digest": generator_digest,
         "generator_manifest_sha256": _sha256(generator_manifest_path),
+        "power_design_digest": power_design_digest,
+        "power_engine_digest": power_engine_digest,
+        "power_planner_digest": power_planner_digest,
         "source_commit": source_commit,
         "source_dirty": source_dirty,
     }
