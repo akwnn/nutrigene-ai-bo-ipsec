@@ -15,6 +15,11 @@ from boec.paper_figures.evidence import (
 RESULTS = Path("results")
 
 
+def _copy_sources(tmp_path: Path, *names: str) -> None:
+    for name in names:
+        (tmp_path / name).write_bytes((RESULTS / name).read_bytes())
+
+
 def test_figure2_uses_current_fix1_values():
     data = build_figure2_data(RESULTS)
     by_arm = {row["arm"]: row for row in data["rule_means"]}
@@ -57,3 +62,138 @@ def test_ambiguous_duplicate_certificate_cell_fails(tmp_path):
         (tmp_path / name).write_bytes((RESULTS / name).read_bytes())
     with pytest.raises(ValueError, match="duplicate cell_id"):
         build_figure4_data(tmp_path)
+
+
+def test_figure2_rejects_duplicate_selected_analysis_arm(tmp_path):
+    analysis = json.loads((RESULTS / "fix1-analysis.json").read_text())
+    analysis["per_arm"].append(analysis["per_arm"][0])
+    (tmp_path / "fix1-analysis.json").write_text(json.dumps(analysis))
+    _copy_sources(tmp_path, "fix1-terminal-rule.json", "step0-oracle-best.json")
+
+    with pytest.raises(ValueError, match="fix1-analysis.json.*doe.*exactly one"):
+        build_figure2_data(tmp_path)
+
+
+def test_figure3_rejects_duplicate_target_arm(tmp_path):
+    pareto = json.loads((RESULTS / "final-spade-regret-pareto.json").read_text())
+    target = next(
+        row
+        for row in pareto["rows"]
+        if row["condition"] == "hill-d6-s0.1" and row["arm"] == "doe"
+    )
+    pareto["rows"].append(target)
+    (tmp_path / "final-spade-regret-pareto.json").write_text(json.dumps(pareto))
+    _copy_sources(tmp_path, "final-spade-kill-ledger.json")
+
+    with pytest.raises(ValueError, match="final-spade-regret-pareto.json.*doe.*exactly one"):
+        build_figure3_data(tmp_path)
+
+
+def test_figure3_rejects_missing_target_arm(tmp_path):
+    pareto = json.loads((RESULTS / "final-spade-regret-pareto.json").read_text())
+    pareto["rows"] = [
+        row
+        for row in pareto["rows"]
+        if not (row["condition"] == "hill-d6-s0.1" and row["arm"] == "doe")
+    ]
+    (tmp_path / "final-spade-regret-pareto.json").write_text(json.dumps(pareto))
+    _copy_sources(tmp_path, "final-spade-kill-ledger.json")
+
+    with pytest.raises(ValueError, match="final-spade-regret-pareto.json.*doe.*exactly one"):
+        build_figure3_data(tmp_path)
+
+
+def test_figure4_rejects_missing_selected_certificate_cell(tmp_path):
+    certificate = json.loads((RESULTS / "final-spade-certificate.json").read_text())
+    certificate["cells"] = [
+        cell
+        for cell in certificate["cells"]
+        if cell["cell_id"] != "spade_cf_m0|hill-d6-s0.1|tf0.25|g0.95|a0.95"
+    ]
+    (tmp_path / "final-spade-certificate.json").write_text(json.dumps(certificate))
+    _copy_sources(tmp_path, "p7-murphy.json", "p8-predictions.json", "p8-certificate-families.json")
+
+    with pytest.raises(ValueError, match="final-spade-certificate.json.*missing selected cell"):
+        build_figure4_data(tmp_path)
+
+
+@pytest.mark.parametrize(
+    ("source", "mutate", "builder", "required"),
+    [
+        (
+            "fix1-terminal-rule.json",
+            lambda payload: payload["rows"][0].__setitem__("regret_a", float("nan")),
+            build_figure2_data,
+            ("fix1-analysis.json", "step0-oracle-best.json"),
+        ),
+        (
+            "final-spade-regret-pareto.json",
+            lambda payload: next(
+                row
+                for row in payload["rows"]
+                if row["condition"] == "hill-d6-s0.1" and row["arm"] == "doe"
+            )["regret"].__setitem__("P", float("inf")),
+            build_figure3_data,
+            ("final-spade-kill-ledger.json",),
+        ),
+        (
+            "final-spade-kill-ledger.json",
+            lambda payload: payload["kills"]["KF-6"].__setitem__("effect", float("nan")),
+            build_figure3_data,
+            ("final-spade-regret-pareto.json",),
+        ),
+        (
+            "p7-murphy.json",
+            lambda payload: payload["rows"][0].__setitem__("pred_calibration", float("nan")),
+            build_figure4_data,
+            ("final-spade-certificate.json", "p8-predictions.json", "p8-certificate-families.json"),
+        ),
+        (
+            "final-spade-certificate.json",
+            lambda payload: next(
+                cell
+                for cell in payload["cells"]
+                if cell["cell_id"] == "spade_cf_m0|hill-d6-s0.1|tf0.25|g0.95|a0.95"
+            )["crossfit"].__setitem__("ci_hi", float("inf")),
+            build_figure4_data,
+            ("p7-murphy.json", "p8-predictions.json", "p8-certificate-families.json"),
+        ),
+        (
+            "p8-predictions.json",
+            lambda payload: next(iter(payload["stats"].values())).__setitem__("all_empty", float("nan")),
+            build_figure4_data,
+            ("p7-murphy.json", "final-spade-certificate.json", "p8-certificate-families.json"),
+        ),
+        (
+            "p8-certificate-families.json",
+            lambda payload: payload["rows"][0].__setitem__("ce_empirical_0.8", float("nan")),
+            build_figure4_data,
+            ("p7-murphy.json", "final-spade-certificate.json", "p8-predictions.json"),
+        ),
+    ],
+)
+def test_nonfinite_selected_evidence_fails_with_source_context(
+    tmp_path, source, mutate, builder, required
+):
+    payload = json.loads((RESULTS / source).read_text())
+    mutate(payload)
+    (tmp_path / source).write_text(json.dumps(payload))
+    _copy_sources(tmp_path, *required)
+
+    with pytest.raises(ValueError, match=source):
+        builder(tmp_path)
+
+
+def test_selected_malformed_figure3_record_has_contextual_value_error(tmp_path):
+    pareto = json.loads((RESULTS / "final-spade-regret-pareto.json").read_text())
+    target = next(
+        row
+        for row in pareto["rows"]
+        if row["condition"] == "hill-d6-s0.1" and row["arm"] == "doe"
+    )
+    del target["regret"]
+    (tmp_path / "final-spade-regret-pareto.json").write_text(json.dumps(pareto))
+    _copy_sources(tmp_path, "final-spade-kill-ledger.json")
+
+    with pytest.raises(ValueError, match="final-spade-regret-pareto.json.*record.*missing keys"):
+        build_figure3_data(tmp_path)
