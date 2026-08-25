@@ -67,6 +67,15 @@ def test_load_json_rejects_non_object(tmp_path):
 
 def test_figure_bundle_requires_all_metadata():
     fig, _ = plt.subplots()
-    bundle = FigureBundle("fig1", fig, {"A": {"claim": "definition"}}, "A benchmark schematic.")
+    bundle = FigureBundle(
+        "fig1",
+        fig,
+        {"A": {"claim": "definition"}},
+        "A benchmark schematic.",
+        "Figure 1. The deliverable defines the comparison.",
+        "A campaign is separated from the terminal decision made from its data.",
+    )
     assert bundle.figure_id == "fig1"
+    assert bundle.caption.startswith("Figure 1.")
+    assert "terminal decision" in bundle.long_description
     plt.close(fig)

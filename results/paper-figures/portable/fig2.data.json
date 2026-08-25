@@ -34,6 +34,7 @@
   },
   "B": {
     "direction": "negative means Rule P has lower regret",
+    "dominant_panel": true,
     "interval": "paired bootstrap 95%",
     "reference": 0.0,
     "rows": [
@@ -69,6 +70,7 @@
   },
   "C": {
     "identity": "Rule A = search loss + identification loss",
+    "redundant_encoding": "luminance and hatch",
     "rows": [
       {
         "arm": "doe",

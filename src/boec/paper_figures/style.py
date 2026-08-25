@@ -77,6 +77,8 @@ def apply_axis_style(ax, preset: PresetArg = None) -> None:
     ax.tick_params(width=0.6, length=2.5, color="#6B7280", labelsize=selected.body_pt)
     ax.xaxis.label.set_size(selected.body_pt)
     ax.yaxis.label.set_size(selected.body_pt)
+    ax.xaxis.label.set_color("#243746")
+    ax.yaxis.label.set_color("#243746")
     ax.title.set_size(selected.body_pt)
     legend = ax.get_legend()
     if legend is not None:
@@ -97,5 +99,6 @@ def panel_label(ax, label: str, preset: PresetArg = None):
         transform=ax.transAxes,
         fontsize=selected.panel_pt,
         fontweight="bold",
+        color="#243746",
         va="bottom",
     )

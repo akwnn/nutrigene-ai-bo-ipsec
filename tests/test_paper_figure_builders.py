@@ -18,6 +18,7 @@ from boec.paper_figures.figure1 import build_figure1
 from boec.paper_figures.figure2 import build_figure2
 from boec.paper_figures.figure3 import build_figure3
 from boec.paper_figures.figure4 import build_figure4
+from boec.paper_figures.qa import assert_registered_geometry
 from boec.paper_figures.style import get_preset
 
 
@@ -56,25 +57,16 @@ def test_figure1_estimand_table_uses_preset_body_typography(name):
     plt.close(bundle.figure)
 
 
-def test_figure1_portable_text_stays_inside_decision_boxes_and_ledger_cells():
-    bundle = build_figure1(get_preset("portable"))
+@pytest.mark.parametrize("preset_name", ["portable", "rsc", "nature", "plos"])
+def test_figure1_text_stays_inside_nodes_and_ledger_cells_for_every_preset(preset_name):
+    bundle = build_figure1(get_preset(preset_name))
     figure = bundle.figure
     figure.canvas.draw()
     renderer = figure.canvas.get_renderer()
 
-    panel_b = figure.axes[1]
-    decision_boxes = [patch for patch in panel_b.patches if patch.get_linestyle() == "--"]
-    assert len(decision_boxes) == 2
-    for box in decision_boxes:
-        box_bounds = box.get_window_extent(renderer)
-        text = next(
-            text for text in panel_b.texts if text.get_text().startswith(
-                "Point decision" if box is decision_boxes[0] else "Region decision"
-            )
-        )
-        text_bounds = text.get_window_extent(renderer)
-        assert box_bounds.contains(*text_bounds.get_points()[0])
-        assert box_bounds.contains(*text_bounds.get_points()[1])
+    assert_registered_geometry(figure)
+    registered_labels = {item.label for item in figure._paper_geometry}
+    assert "same-sampled-campaign" in registered_labels
 
     table = figure.axes[2].tables[0]
     for cell in table.get_celld().values():
@@ -84,6 +76,16 @@ def test_figure1_portable_text_stays_inside_decision_boxes_and_ledger_cells():
         assert cell_bounds.contains(*text_bounds.get_points()[1])
 
     plt.close(figure)
+
+
+def test_figure1_includes_editorial_caption_and_long_description():
+    bundle = build_figure1(get_preset("portable"))
+
+    assert "no performance result" in bundle.caption.lower()
+    assert "point" in bundle.long_description.lower()
+    assert "region" in bundle.long_description.lower()
+
+    plt.close(bundle.figure)
 
 
 def test_figure2_encodes_same_campaign_rules_contrasts_and_decomposition():
@@ -110,10 +112,9 @@ def test_figure2_rendered_text_states_terminal_rule_semantics():
     }
 
     assert "Rule A = search loss + identification loss" in rendered_text
-    assert any(
-        "blue: search loss" in text and "orange: identification loss" in text
-        for text in rendered_text
-    )
+    assert "Search loss" in rendered_text
+    assert "Identification loss" in rendered_text
+    assert not any("blue:" in text or "orange:" in text for text in rendered_text)
     assert any("← P lower" in text and "P higher →" in text for text in rendered_text)
     panel_a_labels = {
         " ".join(text.get_text().split())
@@ -121,12 +122,16 @@ def test_figure2_rendered_text_states_terminal_rule_semantics():
         if text.get_text()
     }
     assert {"Classical DoE", "qLogEI", "qLogNEI", "SPADE"} <= panel_a_labels
+    assert all(text.get_color() == "#243746" for text in bundle.figure.axes[0].texts if text.get_text() in panel_a_labels)
+    assert all(linewidth <= 1.0 for collection in bundle.figure.axes[1].collections for linewidth in collection.get_linewidths())
+    assert {patch.get_hatch() for patch in bundle.figure.axes[2].patches} >= {"////", "...."}
 
     plt.close(bundle.figure)
 
 
-def test_figure2_portable_text_stays_inside_the_rendered_figure():
-    bundle = build_figure2(build_figure2_data(Path("results")), get_preset("portable"))
+@pytest.mark.parametrize("preset_name", ["portable", "rsc", "nature", "plos"])
+def test_figure2_text_stays_inside_the_rendered_figure_for_every_preset(preset_name):
+    bundle = build_figure2(build_figure2_data(Path("results")), get_preset(preset_name))
     figure = bundle.figure
     figure.canvas.draw()
     renderer = figure.canvas.get_renderer()
@@ -148,6 +153,9 @@ def test_figure3_separates_point_map_and_cost_without_boundary_evidence():
     assert bundle.panel_data["A"]["terminal_rule"] == "P"
     assert bundle.panel_data["B"]["sesoi"] == 0.02
     assert bundle.panel_data["C"]["rounds_are_not_point_size"] is True
+    assert bundle.panel_data["C"]["constant_wells"] == 48
+    assert bundle.panel_data["C"]["encoding"] == "rounds lollipop"
+    assert bundle.panel_data["D"]["facets"] == ["d=6", "d=8"]
     assert all(row["evidence_stage"].startswith("descriptive") for row in bundle.panel_data["D"]["rows"])
     assert "spade_random_plate2" not in str(bundle.panel_data)
     assert "KF-3" not in str(bundle.panel_data)
@@ -167,17 +175,14 @@ def test_figure3_rendered_panels_preserve_pareto_contrasts_costs_and_descriptive
     assert "Symmetric-difference error" in panel_a.get_xlabel()
     assert "Rule-P simple regret" in panel_a.get_ylabel()
     assert "better" in panel_a.get_xlabel()
-    assert {text.get_text() for text in panel_a.texts} >= {"SPADE", "qLogNEI", "Sobol"}
+    direct_labels = {text.get_text() for text in panel_a.texts if text.get_text() != "a"}
+    assert direct_labels == {"SPADE", "qLogNEI", "Sobol", "Classical DoE"}
+    assert all(text.get_color() == "#243746" for text in panel_a.texts)
 
     expected_contrasts = {
         "map_spade_minus_sobol": ("Map: SPADE − Sobol", -0.010892, -0.01566185, -0.0059691125),
         "map_spade_minus_qlognei": ("Map: SPADE − qLogNEI", -0.0326545, -0.0372318375, -0.028543325),
-        "regret_spade_minus_qlognei": (
-            "Regret: SPADE − qLogNEI",
-            0.0093747607,
-            0.0025784577,
-            0.0161511877,
-        ),
+        "regret_spade_minus_qlognei": ("Regret: SPADE − qLogNEI", 0.0093747607, 0.0025784577, 0.0161511877),
     }
     assert {row["contrast_id"] for row in data["contrasts"]} == set(expected_contrasts)
     assert {row["sesoi"] for row in data["contrasts"]} == {0.02}
@@ -210,24 +215,28 @@ def test_figure3_rendered_panels_preserve_pareto_contrasts_costs_and_descriptive
     )
     assert "±0.02" in panel_b.get_title(loc="left")
 
-    table = panel_c.tables[0]
-    cell_text = {cell.get_text().get_text() for cell in table.get_celld().values()}
-    assert {"Method", "Wells", "Rounds"} <= cell_text
-    assert {str(row["wells"]) for row in data["cost_ledger"]} <= cell_text
-    assert {str(row["rounds"]) for row in data["cost_ledger"]} <= cell_text
-    assert not panel_c.collections
+    assert not panel_c.tables
+    assert "Feedback rounds" in panel_c.get_xlabel()
+    assert {tick.get_text() for tick in panel_c.get_yticklabels()} == {
+        "Classical DoE", "Latin hypercube", "Sobol", "qLogEI", "qLogNEI", "SPADE"
+    }
+    assert "All methods use 48 wells" in {text.get_text() for text in panel_c.texts}
+    assert sorted(
+        float(collection.get_offsets()[0, 0])
+        for collection in panel_c.collections
+        if isinstance(collection, PathCollection)
+    ) == [1, 1, 2, 3, 10, 10]
 
     assert "descriptive" in panel_d.get_title(loc="left").lower()
     assert "intervals unavailable" in panel_d.get_title(loc="left").lower()
-    assert not panel_d.lines
     assert {text.get_text() for text in panel_d.get_legend().get_texts()} == {
         "Classical DoE", "Latin hypercube", "Sobol", "qLogEI", "qLogNEI", "SPADE"
     }
-    assert "thin border: d=6; thick dashed: d=8" in {text.get_text() for text in panel_d.texts}
-    assert {float(size) for collection in panel_a.collections for size in collection.get_sizes()} == {34.0}
-    assert {float(size) for collection in panel_d.collections for size in collection.get_sizes()} == {24.0}
+    assert {float(size) for collection in panel_a.collections for size in collection.get_sizes()} == {32.0}
 
-    hartmann_points = {collection.get_gid(): collection for collection in panel_d.collections}
+    facet_axes = panel_d.child_axes
+    assert [axis.get_title(loc="left") for axis in facet_axes] == ["d=6", "d=8"]
+    hartmann_points = {collection.get_gid(): collection for axis in facet_axes for collection in axis.collections}
     arms = ("doe", "lhs", "sobol", "qlogei", "qlognei", "spade_cf_m0")
     conditions = ("hartmann6-d6-s0.25", "hartmann6-d8-s0.25")
     assert set(hartmann_points) == {f"{condition}:{arm}" for condition in conditions for arm in arms}
@@ -236,7 +245,7 @@ def test_figure3_rendered_panels_preserve_pareto_contrasts_costs_and_descriptive
         assert to_hex(hartmann_points[f"{condition}:qlognei"].get_facecolors()[0]) == "#0072b2"
         assert to_hex(hartmann_points[f"{condition}:lhs"].get_facecolors()[0]) == "#ffffff"
         assert to_hex(hartmann_points[f"{condition}:sobol"].get_facecolors()[0]) == "#6b7280"
-    assert hartmann_points["hartmann6-d6-s0.25:doe"].get_linewidths()[0] != hartmann_points["hartmann6-d8-s0.25:doe"].get_linewidths()[0]
+    assert not any(isinstance(collection, LineCollection) for axis in facet_axes for collection in axis.collections)
 
     plt.close(figure)
 
@@ -255,13 +264,6 @@ def test_figure3_rendered_text_is_contained_in_each_panel_for_every_preset(prese
                 text_bounds = text.get_window_extent(renderer)
                 assert figure_bounds.contains(*text_bounds.get_points()[0])
                 assert figure_bounds.contains(*text_bounds.get_points()[1])
-
-    table = figure.axes[2].tables[0]
-    for cell in table.get_celld().values():
-        cell_bounds = cell.get_window_extent(renderer)
-        text_bounds = cell.get_text().get_window_extent(renderer)
-        assert cell_bounds.contains(*text_bounds.get_points()[0])
-        assert cell_bounds.contains(*text_bounds.get_points()[1])
 
     plt.close(figure)
 
@@ -302,6 +304,9 @@ def test_figure4_keeps_calibration_containment_and_answer_rate_distinct():
     assert all(row["estimator"] == "crossfit" for row in bundle.panel_data["B"]["rows"])
     assert bundle.panel_data["C"]["zero_means"] == "declined to certify"
     assert bundle.panel_data["D"]["effect"] == "containment minus nominal"
+    assert bundle.panel_data["A"]["display"] == "aligned dot strips"
+    assert bundle.panel_data["B"]["status_gutter"] is True
+    assert bundle.panel_data["D"]["warning_encoding"] == "red triangle plus status text"
     assert "non-empty" in bundle.alt_text
     assert len(bundle.figure.axes) == 4
 
@@ -319,6 +324,9 @@ def test_figure4_rendered_panels_keep_exact_denominators_and_certification_state
 
     assert "retrospective hill" in panel_a.get_title(loc="left").lower()
     assert "descriptive" in panel_a.get_title(loc="left").lower()
+    assert [axis.get_title(loc="left") for axis in panel_a.child_axes] == [
+        "Calibration error ↓", "Refinement ↑"
+    ]
     assert all(row["estimator"] == "crossfit" for row in bundle.panel_data["B"]["rows"])
 
     hill_points = {
@@ -341,6 +349,7 @@ def test_figure4_rendered_panels_keep_exact_denominators_and_certification_state
             assert f"{row['x']}/{row['n']}" in {text.get_text() for text in panel_b.texts}
             expected_colour = "#b2182b" if row["ci_hi"] < row["alpha"] else "#009e73"
             assert to_hex(point.get_facecolors()[0]) == expected_colour
+            assert all(linewidth <= 1.0 for linewidth in interval.get_linewidths())
         else:
             assert point_id not in hill_points
             assert any(

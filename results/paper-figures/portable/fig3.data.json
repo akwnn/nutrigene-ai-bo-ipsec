@@ -83,6 +83,8 @@
     "sesoi": 0.02
   },
   "C": {
+    "constant_wells": 48,
+    "encoding": "rounds lollipop",
     "rounds_are_not_point_size": true,
     "rows": [
       {
@@ -136,6 +138,10 @@
     ]
   },
   "D": {
+    "facets": [
+      "d=6",
+      "d=8"
+    ],
     "intervals": "unavailable",
     "rows": [
       {

@@ -23,6 +23,7 @@ from .figure1 import build_figure1
 from .figure2 import build_figure2
 from .figure3 import build_figure3
 from .figure4 import build_figure4
+from .qa import assert_registered_geometry, resolved_publication_font
 from .style import VenuePreset, get_preset
 
 
@@ -82,12 +83,22 @@ def export_bundle(bundle: FigureBundle, output_dir: Path, preset: VenuePreset | 
         assert_no_prohibited_content(bundle.alt_text)
         paths = {
             suffix: output_dir / f"{bundle.figure_id}.{suffix}"
-            for suffix in ("pdf", "svg", "png", "tiff", "data.json", "alt.txt")
+            for suffix in (
+                "pdf",
+                "svg",
+                "png",
+                "tiff",
+                "data.json",
+                "alt.txt",
+                "caption.txt",
+                "description.txt",
+            )
         }
         # A builder may inherit a style's rounded figure width; restore the venue's
         # physical width before rasterisation so pixels are exactly reproducible.
         width_in = preset.width_mm / 25.4
         bundle.figure.set_size_inches(width_in, bundle.figure.get_figheight(), forward=True)
+        assert_registered_geometry(bundle.figure)
         # Keep backend settings explicit at export time, independent of caller rcParams.
         export_rc = {
             "pdf.fonttype": 42,
@@ -125,6 +136,10 @@ def export_bundle(bundle: FigureBundle, output_dir: Path, preset: VenuePreset | 
             json.dumps(bundle.panel_data, indent=2, sort_keys=True) + "\n", encoding="utf-8"
         )
         paths["alt.txt"].write_text(bundle.alt_text.strip() + "\n", encoding="utf-8")
+        paths["caption.txt"].write_text(bundle.caption.strip() + "\n", encoding="utf-8")
+        paths["description.txt"].write_text(
+            bundle.long_description.strip() + "\n", encoding="utf-8"
+        )
         return {
             name: {"path": path.name, "sha256": sha256_file(path)}
             for name, path in paths.items()
@@ -133,15 +148,37 @@ def export_bundle(bundle: FigureBundle, output_dir: Path, preset: VenuePreset | 
         plt.close(bundle.figure)
 
 
-def make_contact_sheet(png_paths: list[Path], path: Path) -> None:
+def make_contact_sheet(
+    png_paths: list[Path],
+    path: Path,
+    *,
+    review_mode: str = "colour",
+) -> None:
     """Create a compact preview without changing the source figure files."""
+    if review_mode not in {"colour", "grayscale", "deuteranopia"}:
+        raise ValueError(f"unknown review mode {review_mode!r}")
     cards = []
     for png_path in png_paths:
         with Image.open(png_path) as source:
             image = source.convert("RGB")
+        if review_mode == "grayscale":
+            image = ImageOps.grayscale(image).convert("RGB")
+        elif review_mode == "deuteranopia":
+            # Machado et al. severe-deuteranomaly matrix, used here only as a
+            # deterministic reviewer preview; canonical exports remain untouched.
+            image = image.convert(
+                "RGB",
+                (
+                    0.367, 0.861, -0.228, 0,
+                    0.280, 0.673, 0.047, 0,
+                    -0.012, 0.043, 0.969, 0,
+                ),
+            )
         image.thumbnail((1600, 1200), Image.Resampling.LANCZOS)
         card = ImageOps.expand(image, border=(30, 80, 30, 30), fill="white")
-        ImageDraw.Draw(card).text((30, 25), png_path.stem, fill="#202124")
+        ImageDraw.Draw(card).text(
+            (30, 25), f"{png_path.stem} · {review_mode}", fill="#202124"
+        )
         cards.append(card)
     if not cards:
         raise ValueError("contact sheet requires at least one PNG")
@@ -202,16 +239,33 @@ def build_all(results_dir: Path, output_dir: Path, preset_name: str = "portable"
             # returning a FigureBundle (export_bundle handles its own case).
             for number in set(plt.get_fignums()) - before:
                 plt.close(number)
-    make_contact_sheet([figure_dir / f"fig{i}.png" for i in range(1, 5)], output_dir / "paper-figures-contact-sheet.png")
+    png_paths = [figure_dir / f"fig{i}.png" for i in range(1, 5)]
+    make_contact_sheet(png_paths, output_dir / "paper-figures-contact-sheet.png")
+    make_contact_sheet(
+        png_paths,
+        output_dir / "paper-figures-grayscale-review.png",
+        review_mode="grayscale",
+    )
+    make_contact_sheet(
+        png_paths,
+        output_dir / "paper-figures-deuteranopia-review.png",
+        review_mode="deuteranopia",
+    )
     sources = {str(path): digest for path, digest in source_hashes.items()}
     for path, digest in source_hashes.items():
         if sha256_file(Path(path)) != digest:
             raise RuntimeError(f"evidence source changed during build: {path}")
+    font_path = resolved_publication_font()
     manifest = {
         "built_at_utc": _manifest_time(),
         "code_commit": _git_value("rev-parse", "HEAD"),
         "preset": preset.__dict__,
         "sources": sources,
+        "font": {
+            "family": "Arial",
+            "path": str(font_path),
+            "sha256": sha256_file(font_path),
+        },
         "figures": figures,
         "supplementary_reservations": SUPPLEMENTARY_RESERVATIONS,
     }
