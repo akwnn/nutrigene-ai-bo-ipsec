@@ -281,9 +281,9 @@ def planner_case(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> dict[str, o
 
     monkeypatch.setattr(planner, "_committed_file_bytes", committed_bytes)
     monkeypatch.setattr(
-        selector,
-        "_load_complete_shards",
-        lambda _paths, *, metadata, source_commit: (rows, artifacts),
+        planner,
+        "_load_verified_development_shards",
+        lambda _inputs, *, metadata, source_commit: (rows, artifacts),
     )
     monkeypatch.setattr(
         selector,
@@ -334,7 +334,7 @@ def test_power_payload_extracts_exact_lofo_differences_and_provenance(planner_ca
     assert validate_power_plan_payload(payload) == payload
 
 
-def test_power_payload_passes_selected_source_to_complete_shard_loader(
+def test_power_payload_passes_selected_source_to_verified_byte_loader(
     planner_case, monkeypatch
 ):
     observed: dict[str, object] = {}
@@ -343,8 +343,48 @@ def test_power_payload_passes_selected_source_to_complete_shard_loader(
         observed.update(paths=list(paths), metadata=metadata, source_commit=source_commit)
         return planner_case["rows"], planner_case["artifacts"]
 
-    monkeypatch.setattr(selector, "_load_complete_shards", load)
+    monkeypatch.setattr(planner, "_load_verified_development_shards", load)
     _payload(planner_case)
+    assert observed["source_commit"] == SOURCE
+    assert observed["metadata"]["source_commit"] == CURRENT
+
+
+def test_power_payload_never_reopens_paths_after_verified_preflight(
+    planner_case, monkeypatch
+):
+    verified_inputs = object()
+    observed: dict[str, object] = {}
+
+    monkeypatch.setattr(
+        planner,
+        "_preflight_development_inputs",
+        lambda *_args, **_kwargs: verified_inputs,
+    )
+
+    def load_verified(inputs, *, metadata, source_commit):
+        observed.update(
+            inputs=inputs,
+            metadata=metadata,
+            source_commit=source_commit,
+        )
+        return planner_case["rows"], planner_case["artifacts"]
+
+    monkeypatch.setattr(
+        planner,
+        "_load_verified_development_shards",
+        load_verified,
+        raising=False,
+    )
+    monkeypatch.setattr(
+        selector,
+        "_load_complete_shards",
+        lambda *_args, **_kwargs: (_ for _ in ()).throw(
+            AssertionError("verified development paths were reopened")
+        ),
+    )
+
+    _payload(planner_case)
+    assert observed["inputs"] is verified_inputs
     assert observed["source_commit"] == SOURCE
     assert observed["metadata"]["source_commit"] == CURRENT
 
@@ -368,7 +408,7 @@ def test_power_payload_preflights_before_loader_opens_any_development_input(
         refuse_preflight,
         raising=False,
     )
-    monkeypatch.setattr(selector, "_load_complete_shards", load)
+    monkeypatch.setattr(planner, "_load_verified_development_shards", load)
     with pytest.raises(ValueError, match="preflight"):
         _payload(planner_case)
     assert loader_called is False
@@ -472,7 +512,7 @@ def test_dependency_pinning_runs_before_loader(planner_case, monkeypatch):
         reject_dependencies,
         raising=False,
     )
-    monkeypatch.setattr(selector, "_load_complete_shards", load)
+    monkeypatch.setattr(planner, "_load_verified_development_shards", load)
     with pytest.raises(ValueError, match="dependency drift"):
         _payload(planner_case)
     assert loader_called is False
@@ -744,14 +784,74 @@ def test_power_planner_source_has_no_lockbox_outcome_dependency():
 
 
 def test_atomic_install_does_not_replace_racing_destination(tmp_path, monkeypatch):
-    destination = tmp_path / "artifact.json"
+    results = tmp_path / "results"
+    results.mkdir()
+    destination = results / "artifact.json"
     real_link = os.link
 
-    def racing_link(source, target):
-        Path(target).write_bytes(b"racer\n")
-        return real_link(source, target)
+    def racing_link(
+        source,
+        target,
+        *,
+        src_dir_fd=None,
+        dst_dir_fd=None,
+        follow_symlinks=True,
+    ):
+        racer = os.open(
+            target,
+            os.O_WRONLY | os.O_CREAT | os.O_EXCL,
+            0o644,
+            dir_fd=dst_dir_fd,
+        )
+        try:
+            os.write(racer, b"racer\n")
+        finally:
+            os.close(racer)
+        return real_link(
+            source,
+            target,
+            src_dir_fd=src_dir_fd,
+            dst_dir_fd=dst_dir_fd,
+            follow_symlinks=follow_symlinks,
+        )
 
     monkeypatch.setattr(planner.os, "link", racing_link)
-    with pytest.raises(FileExistsError):
-        planner._write_once_json(destination, {"value": 1})
+    directory_descriptor = planner._open_registered_results_directory(tmp_path)
+    try:
+        with pytest.raises(FileExistsError):
+            planner._write_once_json_at(
+                directory_descriptor,
+                destination.name,
+                {"value": 1},
+            )
+    finally:
+        os.close(directory_descriptor)
     assert destination.read_bytes() == b"racer\n"
+
+
+def test_write_power_plan_parent_swap_cannot_redirect_publication(
+    tmp_path, monkeypatch
+):
+    results = tmp_path / "results"
+    results.mkdir()
+    stable_results = tmp_path / "registered-results"
+    attacker_results = tmp_path / "attacker-results"
+    attacker_results.mkdir()
+    output = results / "spade-lockbox-power.json"
+    payload = {"status": "POWERED"}
+
+    def swap_parent(*_args, **_kwargs):
+        results.rename(stable_results)
+        results.symlink_to(attacker_results, target_is_directory=True)
+        return payload
+
+    monkeypatch.setattr(planner, "power_payload_from_shards", swap_parent)
+
+    assert planner.write_power_plan(
+        [],
+        selection_path=tmp_path / "results/spade-selected-protocol.json",
+        output_path=output,
+        repo_root=tmp_path,
+    ) == payload
+    assert (stable_results / output.name).read_bytes() == _canonical_bytes(payload)
+    assert not (attacker_results / output.name).exists()

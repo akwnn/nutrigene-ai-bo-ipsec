@@ -4,16 +4,18 @@
 from __future__ import annotations
 
 import argparse
+import gzip
 import hashlib
 import json
 import math
 import os
 import platform
+import secrets
 import stat
 import subprocess
 import sys
-import tempfile
 from collections.abc import Mapping, Sequence
+from dataclasses import dataclass
 from numbers import Real
 from pathlib import Path
 
@@ -26,6 +28,7 @@ sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "src"))
 
 from boec.spade import SpadeConfig  # noqa: E402
+from boec import spade_study as study  # noqa: E402
 from boec.spade_power import (  # noqa: E402
     DEVELOPMENT_FAMILIES,
     POWER_PLAN_SCHEMA,
@@ -82,6 +85,21 @@ _FOLD_FIELDS = frozenset(
         "rationale",
     }
 )
+
+
+@dataclass(frozen=True)
+class _VerifiedDevelopmentShard:
+    """Immutable committed bytes handed from preflight to the pure shard loader."""
+
+    family: str
+    manifest_name: str
+    manifest_bytes: bytes
+    raw_name: str
+    raw_bytes: bytes
+    resume_name: str
+    resume_bytes: bytes
+    sidecar_name: str
+    sidecar_bytes: bytes
 
 
 def _canonical_json(value: object) -> str:
@@ -241,6 +259,40 @@ def _git_regular_blob(
         raise ValueError(f"cannot read committed blob {revision}:{relative}") from exc
 
 
+def _read_regular_file_nofollow(repo_root: Path, relative: Path) -> bytes:
+    """Read one lexical repository file through stable no-follow descriptors."""
+    directory_flags = (
+        os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW | getattr(os, "O_CLOEXEC", 0)
+    )
+    file_flags = os.O_RDONLY | os.O_NOFOLLOW | getattr(os, "O_CLOEXEC", 0)
+    descriptors: list[int] = []
+    try:
+        current = os.open(repo_root, directory_flags)
+        descriptors.append(current)
+        for component in relative.parts[:-1]:
+            current = os.open(component, directory_flags, dir_fd=current)
+            descriptors.append(current)
+        descriptor = os.open(relative.name, file_flags, dir_fd=current)
+        descriptors.append(descriptor)
+        status = os.fstat(descriptor)
+        if not stat.S_ISREG(status.st_mode):
+            raise ValueError(f"artifact is not a regular file: {relative}")
+        chunks: list[bytes] = []
+        while True:
+            chunk = os.read(descriptor, 1024 * 1024)
+            if not chunk:
+                return b"".join(chunks)
+            chunks.append(chunk)
+    except OSError as exc:
+        raise ValueError(
+            "artifact contains a symlink or cannot be opened as a no-follow "
+            f"regular file: {relative}"
+        ) from exc
+    finally:
+        for descriptor in reversed(descriptors):
+            os.close(descriptor)
+
+
 def _committed_regular_file_bytes(
     repo_root: Path,
     path: str | Path,
@@ -249,14 +301,11 @@ def _committed_regular_file_bytes(
     expected_mode: str = "100644",
 ) -> bytes:
     """Read only a lexical, regular, exact-mode file matching a committed blob."""
-    source, relative = _lexical_repo_relative(repo_root, path)
+    _, relative = _lexical_repo_relative(repo_root, path)
     committed = _git_regular_blob(
         repo_root, revision, relative, expected_mode=expected_mode
     )
-    status = _reject_symlink_components(repo_root, relative)
-    if not stat.S_ISREG(status.st_mode):
-        raise ValueError(f"artifact is not a regular file: {relative}")
-    actual = source.read_bytes()
+    actual = _read_regular_file_nofollow(repo_root, relative)
     if actual != committed:
         raise ValueError(
             f"artifact bytes differ from committed {revision} blob: {relative}"
@@ -473,8 +522,8 @@ def _preflight_development_inputs(
     *,
     metadata: Mapping[str, object],
     selected_source: str,
-) -> tuple[Path, ...]:
-    """Validate every registered development path and byte before the loader opens it."""
+) -> tuple[_VerifiedDevelopmentShard, ...]:
+    """Validate registered development identities and retain their committed bytes."""
     if len(manifest_paths) != len(DEVELOPMENT_FAMILIES):
         raise ValueError("power planning requires exactly five development manifests")
     expected_relatives = {
@@ -499,7 +548,9 @@ def _preflight_development_inputs(
     if set(supplied) != set(expected_by_name):
         raise ValueError("development manifest paths do not cover the registered families")
 
-    records: dict[str, tuple[dict[str, object], Path, Path, Path, Path]] = {}
+    records: dict[
+        str, tuple[dict[str, object], bytes, Path, Path, Path, Path]
+    ] = {}
     for family in DEVELOPMENT_FAMILIES:
         manifest_path = supplied[expected_relatives[family].name]
         manifest_bytes = _committed_file_bytes(repo_root, manifest_path)
@@ -547,14 +598,23 @@ def _preflight_development_inputs(
         )
         records[family] = (
             manifest,
+            manifest_bytes,
             manifest_path,
             raw_path,
             resume_path,
             sidecar_path,
         )
 
+    verified: list[_VerifiedDevelopmentShard] = []
     for family in DEVELOPMENT_FAMILIES:
-        manifest, _, raw_path, resume_path, sidecar_path = records[family]
+        (
+            manifest,
+            manifest_bytes,
+            manifest_path,
+            raw_path,
+            resume_path,
+            sidecar_path,
+        ) = records[family]
         raw_bytes = _committed_file_bytes(repo_root, raw_path)
         resume_bytes = _committed_file_bytes(repo_root, resume_path)
         sidecar_bytes = _committed_file_bytes(repo_root, sidecar_path)
@@ -567,7 +627,242 @@ def _preflight_development_inputs(
         )
         if sidecar_bytes != expected_sidecar:
             raise ValueError("committed development SHA-256 sidecar mismatch")
-    return tuple(records[family][1] for family in DEVELOPMENT_FAMILIES)
+        verified.append(
+            _VerifiedDevelopmentShard(
+                family=family,
+                manifest_name=manifest_path.name,
+                manifest_bytes=manifest_bytes,
+                raw_name=raw_path.name,
+                raw_bytes=raw_bytes,
+                resume_name=resume_path.name,
+                resume_bytes=resume_bytes,
+                sidecar_name=sidecar_path.name,
+                sidecar_bytes=sidecar_bytes,
+            )
+        )
+    return tuple(verified)
+
+
+def _read_resume_bytes(data: bytes, *, protocol_digest: str) -> dict[str, object]:
+    """Apply the registered resume-checkpoint validation to immutable bytes."""
+    try:
+        payload = json.loads(data.decode("utf-8"))
+    except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise ValueError("resume checkpoint is not valid JSON") from exc
+    required = {
+        "schema",
+        "family",
+        "start",
+        "stop",
+        "raw_file",
+        "execution_mode",
+        "study_protocol_digest",
+        "spec_digest",
+        "config_digest",
+        "generator_digest",
+        "generator_manifest_sha256",
+        "source_commit",
+        "source_dirty",
+        "command_args",
+        "row_count",
+        "row_chain_head",
+        "expected_raw_sha256",
+        "rows",
+    }
+    if not isinstance(payload, dict) or set(payload) != required:
+        raise ValueError("resume checkpoint schema fields drift")
+    if payload["schema"] != development.RESUME_SCHEMA:
+        raise ValueError("resume checkpoint schema drift")
+    if payload["study_protocol_digest"] != protocol_digest:
+        raise ValueError("resume checkpoint protocol digest mismatch")
+    rows = payload["rows"]
+    if not isinstance(rows, list) or payload["row_count"] != len(rows):
+        raise ValueError("resume checkpoint row count mismatch")
+    if payload["row_chain_head"] != development._row_chain_head(rows):
+        raise ValueError("resume checkpoint row hash-chain mismatch")
+    expected_raw = payload["expected_raw_sha256"]
+    if expected_raw is not None:
+        _digest(expected_raw, "resume expected raw SHA-256")
+    return payload
+
+
+def _read_shard_rows_bytes(
+    compressed: bytes, *, protocol_digest: str
+) -> list[dict[str, object]]:
+    """Apply deterministic gzip/JSONL/row validation without opening a path."""
+    if (
+        len(compressed) < 10
+        or compressed[:2] != b"\x1f\x8b"
+        or compressed[4:8] != b"\x00\x00\x00\x00"
+    ):
+        raise ValueError("gzip shard does not use the deterministic mtime=0 header")
+    if compressed[3] & 0x08:
+        raise ValueError("gzip shard embeds a filename and is not path-independent")
+    try:
+        text = gzip.decompress(compressed).decode("utf-8")
+        if not text.endswith("\n"):
+            raise ValueError("gzip JSONL must end with a newline")
+        lines = text.splitlines()
+        rows = [json.loads(line) for line in lines]
+        if any(line != _canonical_json(row) for line, row in zip(lines, rows)):
+            raise ValueError("gzip JSONL rows are not canonical sorted compact JSON")
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise ValueError("gzip shard is not valid UTF-8 JSONL") from exc
+    return study._validate_rows(rows, protocol_digest)
+
+
+def _load_verified_development_shards(
+    verified_shards: Sequence[_VerifiedDevelopmentShard],
+    *,
+    metadata: Mapping[str, object],
+    source_commit: str,
+) -> tuple[list[dict[str, object]], list[dict[str, object]]]:
+    """Load complete development shards exclusively from preflighted bytes."""
+    if len(verified_shards) != len(DEVELOPMENT_FAMILIES):
+        raise ValueError("power planning requires five verified development shards")
+    rows: list[dict[str, object]] = []
+    artifacts: list[dict[str, object]] = []
+    ranges: dict[str, list[tuple[int, int]]] = {
+        family: [] for family in DEVELOPMENT_FAMILIES
+    }
+    seen_families: set[str] = set()
+    protocol_digest = str(metadata["study_protocol_digest"])
+    for shard in verified_shards:
+        if not isinstance(shard, _VerifiedDevelopmentShard):
+            raise TypeError("development preflight did not return verified byte bundles")
+        manifest = development.validate_shard_manifest(
+            _parse_canonical_json(
+                shard.manifest_bytes,
+                f"development manifest {shard.family}",
+            )
+        )
+        family = str(manifest["family"])
+        if family != shard.family or family in seen_families:
+            raise ValueError("verified development family identity is duplicate or drifted")
+        seen_families.add(family)
+        expected_names = {
+            "manifest": f"spade-development-{family}-000-050.jsonl.gz.manifest.json",
+            "raw": f"spade-development-{family}-000-050.jsonl.gz",
+            "resume": f"spade-development-{family}-000-050.jsonl.gz.resume.json",
+            "sidecar": f"spade-development-{family}-000-050.jsonl.gz.sha256",
+        }
+        if (
+            shard.manifest_name != expected_names["manifest"]
+            or shard.raw_name != expected_names["raw"]
+            or shard.resume_name != expected_names["resume"]
+            or shard.sidecar_name != expected_names["sidecar"]
+            or manifest["raw_file"] != shard.raw_name
+            or manifest["resume_file"] != shard.resume_name
+        ):
+            raise ValueError("verified development filename identity drifted")
+        expected_manifest = {
+            "study_protocol_digest": metadata["study_protocol_digest"],
+            "spec_digest": metadata["spec_digest"],
+            "config_digest": metadata["config_digest"],
+            "generator_digest": metadata["generator_digest"],
+            "generator_manifest_sha256": metadata["generator_manifest_sha256"],
+            "source_commit": source_commit,
+            "source_dirty": False,
+        }
+        for name, expected in expected_manifest.items():
+            if manifest[name] != expected:
+                label = "protocol digest" if name == "study_protocol_digest" else name
+                raise ValueError(f"development manifest {label} mismatch")
+
+        raw_hash = _sha256_bytes(shard.raw_bytes)
+        if raw_hash != manifest["raw_sha256"]:
+            raise ValueError("development raw SHA-256 does not match its manifest")
+        if _sha256_bytes(shard.resume_bytes) != manifest["resume_sha256"]:
+            raise ValueError("development resume checkpoint SHA-256 mismatch")
+        if shard.sidecar_bytes != (
+            f"{raw_hash}  {shard.raw_name}\n".encode("ascii")
+        ):
+            raise ValueError("development SHA-256 sidecar mismatch")
+
+        resume = _read_resume_bytes(
+            shard.resume_bytes,
+            protocol_digest=protocol_digest,
+        )
+        if resume["expected_raw_sha256"] != manifest["raw_sha256"]:
+            raise ValueError("development resume expected raw SHA-256 mismatch")
+        if resume["row_chain_head"] != manifest["row_chain_head"]:
+            raise ValueError("development resume row hash-chain mismatch")
+        shard_rows = _read_shard_rows_bytes(
+            shard.raw_bytes,
+            protocol_digest=protocol_digest,
+        )
+        if len(shard_rows) != manifest["row_count"]:
+            raise ValueError("development manifest row count does not match raw shard")
+        if _canonical_json(shard_rows) != _canonical_json(resume["rows"]):
+            raise ValueError(
+                "development raw rows differ from independent resume checkpoint"
+            )
+
+        valid_keys = {
+            development.development_campaign_key(family, key_index)
+            for key_index in range(int(manifest["start"]), int(manifest["stop"]))
+        }
+        for row in shard_rows:
+            expected_row_identity = {
+                "protocol_digest": metadata["study_protocol_digest"],
+                "spec_digest": metadata["spec_digest"],
+                "config_digest": metadata["config_digest"],
+                "source_commit": source_commit,
+                "source_dirty": False,
+                "family": family,
+            }
+            for name, expected in expected_row_identity.items():
+                if row.get(name) != expected:
+                    raise ValueError(f"development row {name} mismatch")
+            parents = row.get("parent_artifacts")
+            expected_parents = {
+                "spec": metadata["spec_digest"],
+                "config": metadata["config_digest"],
+                "generator": metadata["generator_digest"],
+                "generator_manifest": metadata["generator_manifest_sha256"],
+            }
+            if not isinstance(parents, Mapping):
+                raise ValueError("development row parent artifact schema mismatch")
+            for parent_name, expected_parent in expected_parents.items():
+                if parents.get(parent_name) != expected_parent:
+                    raise ValueError(
+                        "development row "
+                        f"{parent_name} parent artifact digest mismatch"
+                    )
+            if (row.get("instance_seed"), row.get("campaign_seed")) not in valid_keys:
+                raise ValueError("development row lies outside its manifest key range")
+
+        ranges[family].append((int(manifest["start"]), int(manifest["stop"])))
+        rows.extend(shard_rows)
+        artifacts.append(
+            {
+                "family": family,
+                "start": manifest["start"],
+                "stop": manifest["stop"],
+                "raw_file": shard.raw_name,
+                "raw_sha256": raw_hash,
+                "manifest_file": shard.manifest_name,
+                "manifest_sha256": _sha256_bytes(shard.manifest_bytes),
+                "resume_file": shard.resume_name,
+                "resume_sha256": _sha256_bytes(shard.resume_bytes),
+                "row_chain_head": manifest["row_chain_head"],
+            }
+        )
+
+    if seen_families != set(DEVELOPMENT_FAMILIES):
+        raise ValueError("verified development shards do not cover all five families")
+    for family, intervals in ranges.items():
+        cursor = 0
+        for start, stop in sorted(intervals):
+            if start != cursor:
+                raise ValueError(
+                    f"development manifests are incomplete or overlap for {family}"
+                )
+            cursor = stop
+        if cursor != development.CAMPAIGNS_PER_FAMILY:
+            raise ValueError(f"development manifests are incomplete for {family}")
+    artifacts.sort(key=lambda item: (item["family"], item["start"], item["stop"]))
+    return rows, artifacts
 
 
 def power_payload_from_shards(
@@ -605,14 +900,14 @@ def power_payload_from_shards(
         raise ValueError("committed development analysis SHA-256 mismatch")
     stored_analysis = _parse_canonical_json(analysis_bytes, "development analysis")
 
-    registered_manifests = _preflight_development_inputs(
+    verified_shards = _preflight_development_inputs(
         root,
         manifest_paths,
         metadata=metadata,
         selected_source=selected_source,
     )
-    rows, artifacts = selector._load_complete_shards(
-        registered_manifests,
+    rows, artifacts = _load_verified_development_shards(
+        verified_shards,
         metadata=metadata,
         source_commit=selected_source,
     )
@@ -689,28 +984,145 @@ def power_payload_from_shards(
     return validate_power_plan_payload(payload)
 
 
-def _write_once_json(path: Path, payload: Mapping[str, object]) -> str:
-    """Install canonical JSON atomically without any overwrite window."""
-    path.parent.mkdir(parents=True, exist_ok=True)
-    data = _canonical_bytes(payload)
-    descriptor, temporary_name = tempfile.mkstemp(
-        prefix=f".{path.name}.", dir=path.parent
+def _open_registered_results_directory(repo_root: Path) -> int:
+    """Open and return the exact registered results directory without following links."""
+    flags = (
+        os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW | getattr(os, "O_CLOEXEC", 0)
     )
-    temporary = Path(temporary_name)
+    root_descriptor: int | None = None
     try:
-        with os.fdopen(descriptor, "wb") as handle:
-            handle.write(data)
-            handle.flush()
-            os.fsync(handle.fileno())
-        os.link(temporary, path)
-        directory_descriptor = os.open(path.parent, os.O_RDONLY)
-        try:
-            os.fsync(directory_descriptor)
-        finally:
-            os.close(directory_descriptor)
+        root_descriptor = os.open(repo_root, flags)
+        results_descriptor = os.open("results", flags, dir_fd=root_descriptor)
+    except OSError as exc:
+        raise ValueError(
+            "registered results directory must be an exact no-follow directory"
+        ) from exc
     finally:
-        temporary.unlink(missing_ok=True)
-    return _sha256_bytes(data)
+        if root_descriptor is not None:
+            os.close(root_descriptor)
+    status = os.fstat(results_descriptor)
+    if not stat.S_ISDIR(status.st_mode):
+        os.close(results_descriptor)
+        raise ValueError("registered results path is not a directory")
+    return results_descriptor
+
+
+def _require_absent_at(directory_descriptor: int, name: str) -> None:
+    try:
+        os.stat(name, dir_fd=directory_descriptor, follow_symlinks=False)
+    except FileNotFoundError:
+        return
+    except OSError as exc:
+        raise ValueError("cannot inspect registered power-plan destination") from exc
+    raise ValueError("power plan is write-once and already exists")
+
+
+def _write_all(descriptor: int, data: bytes) -> None:
+    view = memoryview(data)
+    while view:
+        written = os.write(descriptor, view)
+        if written <= 0:
+            raise OSError("short write while publishing power plan")
+        view = view[written:]
+
+
+def _read_all(descriptor: int) -> bytes:
+    chunks: list[bytes] = []
+    while True:
+        chunk = os.read(descriptor, 1024 * 1024)
+        if not chunk:
+            return b"".join(chunks)
+        chunks.append(chunk)
+
+
+def _same_file(left: os.stat_result, right: os.stat_result) -> bool:
+    return left.st_dev == right.st_dev and left.st_ino == right.st_ino
+
+
+def _write_once_json_at(
+    directory_descriptor: int,
+    name: str,
+    payload: Mapping[str, object],
+) -> str:
+    """Publish and verify canonical JSON entirely through one stable directory FD."""
+    if Path(name).name != name or name in {"", ".", ".."}:
+        raise ValueError("power-plan destination must be one registered basename")
+    data = _canonical_bytes(payload)
+    file_flags = (
+        os.O_WRONLY
+        | os.O_CREAT
+        | os.O_EXCL
+        | os.O_NOFOLLOW
+        | getattr(os, "O_CLOEXEC", 0)
+    )
+    read_flags = os.O_RDONLY | os.O_NOFOLLOW | getattr(os, "O_CLOEXEC", 0)
+    temporary_name: str | None = None
+    temporary_descriptor: int | None = None
+    temporary_status: os.stat_result | None = None
+    try:
+        for _ in range(128):
+            candidate = f".{name}.{secrets.token_hex(16)}.tmp"
+            try:
+                temporary_descriptor = os.open(
+                    candidate,
+                    file_flags,
+                    0o600,
+                    dir_fd=directory_descriptor,
+                )
+            except FileExistsError:
+                continue
+            temporary_name = candidate
+            break
+        if temporary_descriptor is None or temporary_name is None:
+            raise RuntimeError("could not allocate a unique power-plan temporary file")
+
+        _write_all(temporary_descriptor, data)
+        os.fchmod(temporary_descriptor, 0o644)
+        os.fsync(temporary_descriptor)
+        temporary_status = os.fstat(temporary_descriptor)
+        if not stat.S_ISREG(temporary_status.st_mode):
+            raise RuntimeError("power-plan temporary is not a regular file")
+
+        os.link(
+            temporary_name,
+            name,
+            src_dir_fd=directory_descriptor,
+            dst_dir_fd=directory_descriptor,
+            follow_symlinks=False,
+        )
+        os.fsync(directory_descriptor)
+
+        installed_descriptor = os.open(
+            name,
+            read_flags,
+            dir_fd=directory_descriptor,
+        )
+        try:
+            installed_status = os.fstat(installed_descriptor)
+            if (
+                not stat.S_ISREG(installed_status.st_mode)
+                or not _same_file(installed_status, temporary_status)
+            ):
+                raise RuntimeError("installed power plan identity changed during publish")
+            if _read_all(installed_descriptor) != data:
+                raise RuntimeError(
+                    "installed power plan bytes failed canonical verification"
+                )
+        finally:
+            os.close(installed_descriptor)
+
+        os.unlink(temporary_name, dir_fd=directory_descriptor)
+        temporary_name = None
+        os.fsync(directory_descriptor)
+        return _sha256_bytes(data)
+    finally:
+        if temporary_name is not None:
+            try:
+                os.unlink(temporary_name, dir_fd=directory_descriptor)
+            except FileNotFoundError:
+                pass
+        if temporary_descriptor is not None:
+            os.close(temporary_descriptor)
 
 
 def write_power_plan(
@@ -724,23 +1136,20 @@ def write_power_plan(
     destination = _exact_registered_path(
         root, output_path, _REGISTERED_OUTPUT, "power output"
     )
-    parent_status = _reject_symlink_components(root, _REGISTERED_OUTPUT.parent)
-    if not stat.S_ISDIR(parent_status.st_mode):
-        raise ValueError("registered results path is not a directory")
-    if os.path.lexists(destination):
-        raise ValueError("power plan is write-once and already exists")
-    payload = power_payload_from_shards(
-        manifest_paths,
-        selection_path=selection_path,
-        repo_root=root,
-    )
-    _write_once_json(destination, payload)
-    installed_status = _reject_symlink_components(root, _REGISTERED_OUTPUT)
-    if not stat.S_ISREG(installed_status.st_mode):
-        raise RuntimeError("installed power plan is not a regular file")
-    if destination.read_bytes() != _canonical_bytes(payload):
-        raise RuntimeError("installed power plan bytes failed canonical verification")
-    return payload
+    if destination.name != _REGISTERED_OUTPUT.name:
+        raise ValueError("power output basename drifted from the registered identity")
+    directory_descriptor = _open_registered_results_directory(root)
+    try:
+        _require_absent_at(directory_descriptor, destination.name)
+        payload = power_payload_from_shards(
+            manifest_paths,
+            selection_path=selection_path,
+            repo_root=root,
+        )
+        _write_once_json_at(directory_descriptor, destination.name, payload)
+        return payload
+    finally:
+        os.close(directory_descriptor)
 
 
 def _parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
