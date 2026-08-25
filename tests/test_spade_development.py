@@ -7,6 +7,7 @@ import subprocess
 from pathlib import Path
 
 import pytest
+import yaml
 
 from boec.spade import SpadeConfig
 from boec.spade_study import REGISTERED_SCORING_SETTINGS, write_jsonl_gzip
@@ -290,6 +291,74 @@ def test_registered_metadata_binds_the_frozen_generator_manifest():
     assert metadata["generator_manifest_sha256"] == hashlib.sha256(
         manifest.read_bytes()
     ).hexdigest()
+
+
+def test_registered_metadata_binds_live_power_sources_and_dynamic_rule():
+    root = Path(__file__).resolve().parents[1]
+    config = yaml.safe_load(
+        (root / "configs/experiment/spade-joint.yaml").read_text(encoding="utf-8")
+    )
+    expected_rule = {
+        "minimum": 350,
+        "maximum": 2000,
+        "target_power": 0.80,
+        "paired_margin": 0.02,
+        "one_sided_alpha": 0.05,
+        "sensitivity_replicates": 2000,
+        "sensitivity_lower_confidence": 0.95,
+        "decision": "first_integer_passing_all_families_and_both_endpoints",
+    }
+    assert config["protocol"]["lockbox"]["sample_size_rule"] == expected_rule
+    assert "selected_instance_prefix" not in config["protocol"]["lockbox"]
+
+    paths = {
+        "power_design_sha256": (
+            "docs/superpowers/specs/2026-08-25-spade-lockbox-power-design.md"
+        ),
+        "power_engine_sha256": "src/boec/spade_power.py",
+        "power_planner_sha256": "scripts/plan_spade_lockbox_power.py",
+    }
+    metadata = runner.registered_metadata(root)
+    for field, relative in paths.items():
+        expected = hashlib.sha256((root / relative).read_bytes()).hexdigest()
+        assert config["digests"][field] == expected
+        assert metadata[field.removesuffix("_sha256") + "_digest"] == expected
+
+    parent = (
+        root / "docs/superpowers/specs/2026-08-25-spade-joint-protocol-design.md"
+    ).read_text(encoding="utf-8")
+    assert "2026-08-25-spade-lockbox-power-design.md" in parent
+    assert "first integer from 350 through 2,000" in parent
+    assert "Run 350 independent paired campaigns" not in parent
+
+
+def test_generator_manifest_remains_unopened_and_binds_final_protocol_bytes():
+    root = Path(__file__).resolve().parents[1]
+    config_path = root / "configs/experiment/spade-joint.yaml"
+    spec_path = root / "docs/superpowers/specs/2026-08-25-spade-joint-protocol-design.md"
+    manifest = json.loads(
+        (root / "results/spade-lockbox-generator-manifest.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    config = yaml.safe_load(config_path.read_text(encoding="utf-8"))
+    protocol_digest = hashlib.sha256(
+        json.dumps(
+            config["protocol"],
+            sort_keys=True,
+            separators=(",", ":"),
+            ensure_ascii=False,
+            allow_nan=False,
+        ).encode("utf-8")
+    ).hexdigest()
+    assert manifest["status"] == "FROZEN_UNOPENED"
+    assert manifest["digests"]["config_file_sha256"] == hashlib.sha256(
+        config_path.read_bytes()
+    ).hexdigest()
+    assert manifest["digests"]["spec_sha256"] == hashlib.sha256(
+        spec_path.read_bytes()
+    ).hexdigest()
+    assert manifest["digests"]["protocol_payload_sha256"] == protocol_digest
 
 
 @pytest.mark.parametrize("family", runner.DEVELOPMENT_FAMILIES)

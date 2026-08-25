@@ -224,8 +224,10 @@ COMMIT_MSG.txt
 !results/spade-development-*.jsonl.gz
 !results/spade-development-*.jsonl.gz.sha256
 !results/spade-development-*.jsonl.gz.manifest.json
+!results/spade-development-*.jsonl.gz.resume.json
 !results/spade-development-analysis.json
 !results/spade-selected-protocol.json
+!results/spade-lockbox-power.json
 
 # Frozen lockbox evidence: raw shards are compressed and hash-bound; the final manifest,
 # confirmatory analysis, and release report are the only allowlisted lockbox artifacts.

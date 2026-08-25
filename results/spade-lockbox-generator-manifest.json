@@ -142,8 +142,8 @@
   "digests": {
     "lockbox_oracles_source_sha256": "1a79abd6e62d503852fe98957e67d4d4f6d7e9f8b52788176f2359ed38d3e0c3",
     "spade_study_source_sha256": "cf981ec0735eb98b98585b3b026537dca874ef9ab93ac2e3c8d4784626071a05",
-    "spec_sha256": "aec2ac555706a8107db896fdba0a62d6d2743c8a1d907bf9b144604f56ef4b97",
-    "config_file_sha256": "ed0d0224141bd0eb611ff134957157f142053c01ee3a92367dbfad0fa09c7801",
-    "protocol_payload_sha256": "e7edddd4f281748642017c49c51c38f50156e7d74fb54db2de7c4736d8ea98fb"
+    "spec_sha256": "1d78408a42b87820ab43c9adac76ef9faf40a6b62da1148078299cdc24aaecc4",
+    "config_file_sha256": "caf5460e76e82fec54f6c9d3b5f92adda9801289be164be443d5a52765fc0883",
+    "protocol_payload_sha256": "00ce6971a990749645052273215897f57562106610777d0d8ce417e8e9afdd1a"
   }
 }
