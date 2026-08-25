@@ -6,12 +6,15 @@ import matplotlib
 
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
+from matplotlib.collections import PathCollection
 from matplotlib.text import Text
+import numpy as np
 import pytest
 
-from boec.paper_figures.evidence import build_figure2_data
+from boec.paper_figures.evidence import build_figure2_data, build_figure3_data
 from boec.paper_figures.figure1 import build_figure1
 from boec.paper_figures.figure2 import build_figure2
+from boec.paper_figures.figure3 import build_figure3
 from boec.paper_figures.style import get_preset
 
 
@@ -131,5 +134,90 @@ def test_figure2_portable_text_stays_inside_the_rendered_figure():
             text_bounds = text.get_window_extent(renderer)
             assert figure_bounds.contains(*text_bounds.get_points()[0])
             assert figure_bounds.contains(*text_bounds.get_points()[1])
+
+    plt.close(figure)
+
+
+def test_figure3_separates_point_map_and_cost_without_boundary_evidence():
+    data = build_figure3_data(Path("results"))
+    bundle = build_figure3(data, get_preset("portable"))
+
+    assert bundle.panel_data["A"]["terminal_rule"] == "P"
+    assert bundle.panel_data["B"]["sesoi"] == 0.02
+    assert bundle.panel_data["C"]["rounds_are_not_point_size"] is True
+    assert all(row["evidence_stage"].startswith("descriptive") for row in bundle.panel_data["D"]["rows"])
+    assert "spade_random_plate2" not in str(bundle.panel_data)
+    assert "KF-3" not in str(bundle.panel_data)
+    assert "KF-4" not in str(bundle.panel_data)
+    assert len(bundle.figure.axes) == 4
+
+    plt.close(bundle.figure)
+
+
+def test_figure3_rendered_panels_preserve_pareto_contrasts_costs_and_descriptive_status():
+    data = build_figure3_data(Path("results"))
+    bundle = build_figure3(data, get_preset("portable"))
+    figure = bundle.figure
+    figure.canvas.draw()
+    panel_a, panel_b, panel_c, panel_d = figure.axes
+
+    assert "Symmetric-difference error" in panel_a.get_xlabel()
+    assert "Rule-P simple regret" in panel_a.get_ylabel()
+    assert "better" in panel_a.get_xlabel()
+    assert {text.get_text() for text in panel_a.texts} >= {"SPADE", "qLogNEI", "Sobol"}
+
+    observed_means = sorted(
+        float(collection.get_offsets()[0, 0])
+        for collection in panel_b.collections
+        if isinstance(collection, PathCollection) and len(collection.get_offsets()) == 1
+    )
+    assert observed_means == pytest.approx(sorted([-0.0330745, -0.010892, 0.0152724734]))
+    assert any(
+        np.isclose(patch.get_x(), -0.02)
+        and np.isclose(patch.get_x() + patch.get_width(), 0.02)
+        for patch in panel_b.patches
+    )
+    assert tuple(panel_b.get_yticklabels()[index].get_text() for index in range(3)) == (
+        "Map: SPADE − Sobol",
+        "Map: SPADE − qLogNEI",
+        "Regret: SPADE − qLogNEI",
+    )
+    assert "±0.02" in panel_b.get_title(loc="left")
+
+    table = panel_c.tables[0]
+    cell_text = {cell.get_text().get_text() for cell in table.get_celld().values()}
+    assert {"Method", "Wells", "Rounds"} <= cell_text
+    assert {str(row["wells"]) for row in data["cost_ledger"]} <= cell_text
+    assert {str(row["rounds"]) for row in data["cost_ledger"]} <= cell_text
+    assert not panel_c.collections
+
+    assert "descriptive" in panel_d.get_title(loc="left").lower()
+    assert "intervals unavailable" in panel_d.get_title(loc="left").lower()
+    assert not panel_d.lines
+    assert len(panel_d.collections) == 2
+
+    plt.close(figure)
+
+
+def test_figure3_portable_rendered_text_is_contained_in_each_panel():
+    bundle = build_figure3(build_figure3_data(Path("results")), get_preset("portable"))
+    figure = bundle.figure
+    figure.canvas.draw()
+    renderer = figure.canvas.get_renderer()
+    figure_bounds = figure.bbox
+
+    for axis in figure.axes:
+        for text in axis.findobj(match=Text):
+            if text.get_text():
+                text_bounds = text.get_window_extent(renderer)
+                assert figure_bounds.contains(*text_bounds.get_points()[0])
+                assert figure_bounds.contains(*text_bounds.get_points()[1])
+
+    table = figure.axes[2].tables[0]
+    for cell in table.get_celld().values():
+        cell_bounds = cell.get_window_extent(renderer)
+        text_bounds = cell.get_text().get_window_extent(renderer)
+        assert cell_bounds.contains(*text_bounds.get_points()[0])
+        assert cell_bounds.contains(*text_bounds.get_points()[1])
 
     plt.close(figure)
