@@ -64,6 +64,7 @@ import torch
 from torch import Tensor
 
 from boec.oracles import HillInstance, HillOracle, Oracle
+from boec.seedbook import IndexedGaussianNoise
 
 __all__ = ["BiphasicOracle", "TorchEvaluator"]
 
@@ -108,6 +109,7 @@ class TorchEvaluator:
         sigma_rel: float = 0.10,
         sigma_add: float = 0.01,
         seed: int = 0,
+        noise_source: IndexedGaussianNoise | None = None,
     ) -> None:
         self.oracle = oracle
         self.dim = int(oracle.dim)
@@ -116,6 +118,8 @@ class TorchEvaluator:
         self.seed = int(seed)
         self.yvar_floor = float(sigma_add) ** 2
         self._rng = np.random.default_rng(seed)
+        self.noise_source = noise_source
+        self._next_index = 0
 
     def _check(self, X: Tensor) -> np.ndarray:
         if X.ndim != 2:
@@ -132,11 +136,22 @@ class TorchEvaluator:
     def evaluate(self, X: Tensor) -> tuple[Tensor, Tensor]:
         """``(n, d) -> ((n, 1), (n, 1))`` a noisy measurement and its plug-in variance."""
         f = np.asarray(self.oracle.f(self._check(X)), dtype=float).reshape(-1, 1)
+        if self.noise_source is not None:
+            indices = torch.arange(self._next_index, self._next_index + f.shape[0])
+            result = self.noise_source.observe(indices, torch.from_numpy(f))
+            self._next_index += f.shape[0]
+            return result
         eps = self._rng.normal(0.0, self.sigma_rel, size=f.shape)
         eta = self._rng.normal(0.0, self.sigma_add, size=f.shape)
         y = f * (1.0 + eps) + eta
         return torch.from_numpy(y), torch.from_numpy(
             _plug_in_yvar(y, self.sigma_rel, self.sigma_add))
+
+    def state_dict(self) -> dict[str, int]:
+        return {"next_index": self._next_index}
+
+    def load_state_dict(self, state: dict[str, int]) -> None:
+        self._next_index = int(state["next_index"])
 
     def __repr__(self) -> str:  # pragma: no cover - debugging aid
         return f"TorchEvaluator({self.oracle.name}, d={self.dim}, seed={self.seed})"
@@ -178,6 +193,7 @@ class BiphasicOracle:
         sigma_add: float = 0.01,
         yvar_mode: YvarMode = "plugin",
         seed: int = 0,
+        noise_source: IndexedGaussianNoise | None = None,
     ) -> None:
         if yvar_mode not in ("plugin", "analytic"):
             raise ValueError(f"unknown yvar_mode {yvar_mode!r}")
@@ -190,6 +206,8 @@ class BiphasicOracle:
         self.yvar_floor = float(sigma_add) ** 2
         self._core = HillOracle(instance)
         self._rng = np.random.default_rng(seed)
+        self.noise_source = noise_source
+        self._next_index = 0
 
     # -- identity ----------------------------------------------------------------
     @property
@@ -236,6 +254,11 @@ class BiphasicOracle:
         this is the first candidate, not a bug.**
         """
         f = np.asarray(self._core.f(self._check(X)), dtype=float).reshape(-1, 1)
+        if self.noise_source is not None:
+            indices = torch.arange(self._next_index, self._next_index + f.shape[0])
+            result = self.noise_source.observe(indices, torch.from_numpy(f))
+            self._next_index += f.shape[0]
+            return result
         eps = self._rng.normal(0.0, self.sigma_rel, size=f.shape)
         eta = self._rng.normal(0.0, self.sigma_add, size=f.shape)
         y = f * (1.0 + eps) + eta
@@ -248,6 +271,12 @@ class BiphasicOracle:
     def evaluate(self, X: Tensor) -> tuple[Tensor, Tensor]:
         """``(n, d) -> ((n, m), (n, m))``. ``boec.campaign.Evaluator``'s one method."""
         return self.observe(X)
+
+    def state_dict(self) -> dict[str, int]:
+        return {"next_index": self._next_index}
+
+    def load_state_dict(self, state: dict[str, int]) -> None:
+        self._next_index = int(state["next_index"])
 
     def __repr__(self) -> str:  # pragma: no cover - debugging aid
         return (

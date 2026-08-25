@@ -232,6 +232,10 @@ COMMIT_MSG.txt
 # Q59 map re-score. Registered in OPEN-QUESTIONS before the runner existed.
 !results/q59-map-rescore.json
 
+# Phase 1 historical replay classification. Unlike transient campaign output, this is
+# provenance for why exact historical gates remain failing or receive a registered bound.
+!results/historical-replay-audit.json
+
 # ---------------------------------------------------------------------------
 # VERSION C. `results/*` above ignores .json by default, and this repository has
 # now been bitten four times by a runner writing a registered artefact that git

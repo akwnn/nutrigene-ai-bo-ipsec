@@ -11,12 +11,17 @@ Two tests here carry unusual weight:
 
 from __future__ import annotations
 
+import io
+
 import torch
 
 import pytest
 
 from boec.campaign import Campaign, CampaignConfig, Evaluator, batch_plan
 from boec.optimizers import AcqConfig
+from boec.oracles import Branin
+from boec.seedbook import IndexedGaussianNoise
+from boec.torch_oracle import TorchEvaluator
 
 FAST = AcqConfig(num_restarts=2, raw_samples=32, mc_samples=16)
 
@@ -67,6 +72,48 @@ def _cfg(d=3, budget=None, **kw):
 
 def _bounds(d=3):
     return torch.stack([torch.zeros(d, dtype=torch.double), torch.ones(d, dtype=torch.double)])
+
+
+def _indexed_evaluator():
+    return TorchEvaluator(
+        Branin(),
+        noise_source=IndexedGaussianNoise(31, sigma_rel=0.1, sigma_add=0.01),
+    )
+
+
+def _indexed_cfg():
+    return CampaignConfig(
+        d=2,
+        budget=10,
+        q=2,
+        seed=7,
+        acq=FAST,
+        n_holdout=8,
+    )
+
+
+def _advance_indexed(campaign):
+    X = campaign.ask(2)
+    Y, Yvar = campaign.evaluator.evaluate(X)
+    campaign.tell(X, Y, Yvar)
+
+
+def _serialized(state):
+    buffer = io.BytesIO()
+    torch.save(state, buffer)
+    return buffer.getvalue()
+
+
+def _assert_logs_equal(left, right):
+    assert len(left) == len(right)
+    for a, b in zip(left, right):
+        for name in a.__dataclass_fields__:
+            a_value = getattr(a, name)
+            b_value = getattr(b, name)
+            if isinstance(a_value, torch.Tensor):
+                assert torch.equal(a_value, b_value), name
+            else:
+                assert a_value == b_value, name
 
 
 # --------------------------------------------------------------------------
@@ -276,6 +323,38 @@ def test_pending_survives_a_save(tmp_path):
     p = tmp_path / "s.pt"
     c.save(p)
     assert Campaign.load(p, FormulaEvaluator()).X_pending.shape[0] == 3
+
+
+def test_saved_state_includes_evaluator_checkpoint_when_available():
+    c = Campaign(_indexed_evaluator(), _bounds(2), _indexed_cfg())
+    c.initialize()
+    assert c.state_dict()["evaluator_state"] == {"next_index": 6}
+
+
+def test_saved_evaluator_state_requires_restoration_support():
+    c = Campaign(_indexed_evaluator(), _bounds(2), _indexed_cfg())
+    c.initialize()
+    with pytest.raises(TypeError, match="cannot restore evaluator state"):
+        Campaign.from_state_dict(c.state_dict(), FormulaEvaluator())
+
+
+def test_indexed_noise_resume_matches_uninterrupted_campaign_byte_for_byte(tmp_path):
+    uninterrupted = Campaign(_indexed_evaluator(), _bounds(2), _indexed_cfg())
+    uninterrupted.initialize()
+    _advance_indexed(uninterrupted)
+
+    checkpoint = tmp_path / "indexed-mid.pt"
+    uninterrupted.save(checkpoint)
+    _advance_indexed(uninterrupted)
+
+    resumed = Campaign.load(checkpoint, _indexed_evaluator())
+    _advance_indexed(resumed)
+
+    assert torch.equal(uninterrupted.train_X, resumed.train_X)
+    assert torch.equal(uninterrupted.train_Y, resumed.train_Y)
+    _assert_logs_equal(uninterrupted.logs, resumed.logs)
+    assert uninterrupted.evaluator.state_dict() == resumed.evaluator.state_dict()
+    assert _serialized(uninterrupted.state_dict()) == _serialized(resumed.state_dict())
 
 
 # --------------------------------------------------------------------------

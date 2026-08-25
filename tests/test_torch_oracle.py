@@ -18,8 +18,9 @@ import torch
 from boec.campaign import Evaluator
 from boec.designs import sub_box_bounds
 from boec.e4 import Oracle
-from boec.oracles import ENSEMBLE_VERSION, load_ensemble, load_instance
-from boec.torch_oracle import BiphasicOracle
+from boec.oracles import ENSEMBLE_VERSION, HillOracle, load_ensemble, load_instance
+from boec.seedbook import IndexedGaussianNoise
+from boec.torch_oracle import BiphasicOracle, TorchEvaluator
 
 KAPPAS = (0.6, 0.7, 0.8, 0.9)
 
@@ -156,6 +157,48 @@ def test_observe_is_reproducible_from_the_seed(d6):
     b = BiphasicOracle(d6[0], seed=11).observe(X)
     torch.testing.assert_close(a[0], b[0])
     torch.testing.assert_close(a[1], b[1])
+
+
+@pytest.mark.parametrize("adapter", ("biphasic", "torch"))
+def test_indexed_evaluator_noise_does_not_depend_on_batch_chunking(d6, adapter):
+    def build():
+        source = IndexedGaussianNoise(17, sigma_rel=0.1, sigma_add=0.01)
+        if adapter == "biphasic":
+            return BiphasicOracle(d6[0], noise_source=source)
+        return TorchEvaluator(HillOracle(d6[0]), noise_source=source)
+
+    X = torch.rand(5, 6, dtype=torch.double)
+    together = build().evaluate(X)
+    split_evaluator = build()
+    first = split_evaluator.evaluate(X[:2])
+    second = split_evaluator.evaluate(X[2:])
+    split = tuple(
+        torch.cat([first[i], second[i]])
+        for i in range(2)
+    )
+    assert all(torch.equal(a, b) for a, b in zip(together, split))
+
+
+@pytest.mark.parametrize("adapter", ("biphasic", "torch"))
+def test_indexed_evaluator_state_restores_the_next_observation(d6, adapter):
+    def build():
+        source = IndexedGaussianNoise(23, sigma_rel=0.1, sigma_add=0.01)
+        if adapter == "biphasic":
+            return BiphasicOracle(d6[0], noise_source=source)
+        return TorchEvaluator(HillOracle(d6[0]), noise_source=source)
+
+    X = torch.rand(5, 6, dtype=torch.double)
+    original = build()
+    original.evaluate(X[:2])
+    assert original.state_dict() == {"next_index": 2}
+
+    resumed = build()
+    resumed.load_state_dict(original.state_dict())
+    expected = original.evaluate(X[2:])
+    actual = resumed.evaluate(X[2:])
+
+    assert resumed.state_dict() == {"next_index": 5}
+    assert all(torch.equal(a, b) for a, b in zip(expected, actual))
 
 
 # ------------------------------------------------------- the containment invariant

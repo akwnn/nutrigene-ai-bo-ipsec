@@ -417,7 +417,7 @@ class Campaign:
         internals** — the model is rebuilt on resume.
         """
         import botorch
-        return {
+        state = {
             "format_version": 1,
             "config": asdict(self.config),
             "bounds": self.bounds,
@@ -437,6 +437,10 @@ class Campaign:
                 "python": platform.python_version(),
             },
         }
+        evaluator_state = getattr(self.evaluator, "state_dict", None)
+        if callable(evaluator_state):
+            state["evaluator_state"] = evaluator_state()
+        return state
 
     def save(self, path: str | Path) -> None:
         torch.save(self.state_dict(), Path(path))
@@ -462,6 +466,14 @@ class Campaign:
         c.holdout_X = state["holdout_X"]
         c.logs = [RoundLog(**log) for log in state["logs"]]
         c._round = state["round"]
+        if "evaluator_state" in state:
+            restore_evaluator = getattr(evaluator, "load_state_dict", None)
+            if not callable(restore_evaluator):
+                raise TypeError(
+                    "saved campaign contains evaluator state, but the supplied "
+                    "evaluator cannot restore evaluator state"
+                )
+            restore_evaluator(state["evaluator_state"])
         # Restored last: constructing the campaign above re-seeded, which would
         # otherwise overwrite the state we are trying to restore.
         cls._set_rng_state(state["rng_state"])
