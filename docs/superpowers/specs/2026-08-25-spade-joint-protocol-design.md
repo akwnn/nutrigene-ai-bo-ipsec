@@ -279,6 +279,13 @@ Selection uses nested leave-one-family-out evaluation so a gate or schedule is n
 trained and judged on the same family fold. The final complete algorithm is chosen by the
 following frozen lexicographic rule:
 
+For each of the five folds, apply the rule using only the other four development
+families. A final protocol is selected only if all five fold-specific selections name the
+same candidate. Any fold returning `NO_SELECTION`, or disagreement among fold winners,
+produces overall `NO_SELECTION`. This conservative consensus rule is frozen before any
+outcome-bearing development campaign is run; the all-five-family refit is diagnostic only
+and cannot override the nested result.
+
 1. Reject any candidate whose worst-family development empirical-containment point
    estimate is below 0.90 or whose answer-rate point estimate is below 0.50.
 2. Among remaining candidates, retain those whose one-sided 95% paired upper confidence

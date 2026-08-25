@@ -598,9 +598,11 @@ gzip writer.
 - [ ] **Step 4: Implement nested-family selection**
 
 Compute per-candidate family-fold answer rate, empirical containment, paired regret
-difference, and map loss. Apply the four-step lexicographic rule verbatim. Emit every
-candidate's failure reason and the complete tie-break trace. Synthetic fixtures must prove
-each gate and `NO_SELECTION` independently.
+difference, and map loss. Apply the four-step lexicographic rule verbatim on each set of
+four training families. All five leave-one-family-out folds must name the same candidate;
+otherwise the overall result is `NO_SELECTION`. Emit every candidate's failure reason,
+each fold winner, and the complete tie-break trace. Synthetic fixtures must prove each
+gate, fold disagreement, and `NO_SELECTION` independently.
 
 - [ ] **Step 5: Guard the selected-protocol artifact**
 
