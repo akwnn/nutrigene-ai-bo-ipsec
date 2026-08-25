@@ -40,8 +40,11 @@ mismatches already recorded in `.planning/codebase/CONCERNS.md`.
 - Task 2 common learned-noise GP, explicitly seeded qLogNEI, and Schur-updated IVR passed
   independent numerical review. The focused suite is 96 passed, including randomized
   brute-force conditioning and extreme-weight tests.
+- Task 3 predictive reliable-region and split certificate passed independent review. The
+  focused suite is 80 passed; joint draws are deterministic without global RNG mutation,
+  gamma-aware, split-isolated, and empirically scored with exact confidence bounds.
 
 ## Next action
 
-Implement and independently review the gamma-aware predictive reliable region and split,
-empirically testable certificate.
+Implement and independently review the unified 48-evaluation SPADE, Sobol48, and
+qLogNEI48 campaign runners.
