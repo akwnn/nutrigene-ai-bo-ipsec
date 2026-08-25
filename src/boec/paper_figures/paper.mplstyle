@@ -3,6 +3,10 @@ mathtext.fontset: custom
 mathtext.rm: STIX Math
 mathtext.it: STIX Math
 mathtext.bf: STIX Math
+mathtext.cal: STIX Math
+mathtext.tt: STIX Math
+mathtext.sf: STIX Math
+mathtext.bfit: STIX Math
 text.color: 243746
 axes.labelcolor: 243746
 axes.titlecolor: 243746

@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import TypeAlias
 
-from .fonts import register_publication_fonts
+from .fonts import validate_publication_fonts
 
 
 @dataclass(frozen=True)
@@ -65,7 +65,7 @@ def method_style(arm: str) -> MethodStyle:
 
 
 def _resolve_preset(preset: PresetArg) -> VenuePreset:
-    register_publication_fonts()
+    validate_publication_fonts()
     if preset is None:
         return PRESETS["portable"]
     if isinstance(preset, VenuePreset):

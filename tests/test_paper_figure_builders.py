@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from copy import deepcopy
 from pathlib import Path
+import warnings
 
 import matplotlib
 
@@ -20,6 +21,19 @@ from boec.paper_figures.figure3 import build_figure3
 from boec.paper_figures.figure4 import build_figure4
 from boec.paper_figures.qa import assert_registered_geometry
 from boec.paper_figures.style import get_preset
+
+
+def test_figure4_uses_math_font_for_symbols_missing_from_charis():
+    with warnings.catch_warnings(record=True) as caught:
+        warnings.simplefilter("always")
+        bundle = build_figure4(build_figure4_data(Path("results")), get_preset("portable"))
+        bundle.figure.canvas.draw()
+
+    missing_glyphs = [
+        warning for warning in caught if "missing from font(s) Charis SIL" in str(warning.message)
+    ]
+    assert not missing_glyphs
+    plt.close(bundle.figure)
 
 
 def test_figure1_defines_campaign_decisions_and_estimands():

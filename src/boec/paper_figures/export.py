@@ -23,6 +23,7 @@ from .figure1 import build_figure1
 from .figure2 import build_figure2
 from .figure3 import build_figure3
 from .figure4 import build_figure4
+from .fonts import font_manifest, validate_publication_fonts
 from .qa import assert_registered_geometry, resolved_publication_font
 from .style import VenuePreset, get_preset
 
@@ -76,6 +77,7 @@ def export_bundle(bundle: FigureBundle, output_dir: Path, preset: VenuePreset | 
     """Write all publication formats and machine-readable panel sidecars."""
     if isinstance(preset, str):
         preset = get_preset(preset)
+    validate_publication_fonts()
     output_dir = Path(output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
     try:
@@ -256,15 +258,17 @@ def build_all(results_dir: Path, output_dir: Path, preset_name: str = "portable"
         if sha256_file(Path(path)) != digest:
             raise RuntimeError(f"evidence source changed during build: {path}")
     font_path = resolved_publication_font()
+    packaged_fonts = font_manifest()
     manifest = {
         "built_at_utc": _manifest_time(),
         "code_commit": _git_value("rev-parse", "HEAD"),
         "preset": preset.__dict__,
         "sources": sources,
         "font": {
-            "family": "Arial",
+            "family": packaged_fonts["charis"]["family"],
             "path": str(font_path),
             "sha256": sha256_file(font_path),
+            "assets": packaged_fonts,
         },
         "figures": figures,
         "supplementary_reservations": SUPPLEMENTARY_RESERVATIONS,

@@ -13,7 +13,7 @@ from matplotlib.patches import FancyBboxPatch
 import matplotlib.pyplot as plt
 from matplotlib.text import Text
 
-from .fonts import register_publication_fonts
+from .fonts import validate_publication_fonts
 from .qa import register_collision
 from .style import VenuePreset
 
@@ -88,7 +88,7 @@ def editorial_figure(
 
     if rows < 1 or cols < 1:
         raise ValueError("editorial grids require at least one row and one column")
-    register_publication_fonts()
+    validate_publication_fonts()
     figure = plt.figure(figsize=preset.figsize(height_mm))
     header = figure.add_axes((0.08, 0.83, 0.90, 0.13), frameon=False)
     header.set_axis_off()
@@ -143,7 +143,7 @@ def panel_heading(
     if len(label) != 1 or not label.islower() or not label.isalpha():
         raise ValueError("panel labels must be one lowercase letter")
     figure = ax.figure
-    register_publication_fonts()
+    validate_publication_fonts()
     position = ax.get_position()
     figure_height_pt = figure.get_figheight() * 72.0
     figure_width_pt = figure.get_figwidth() * 72.0

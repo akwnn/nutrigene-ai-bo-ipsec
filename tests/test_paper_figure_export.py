@@ -1,15 +1,22 @@
 from __future__ import annotations
 
 import json
+from importlib.resources import files
 from pathlib import Path
+import re
+import shutil
+import subprocess
 
 import matplotlib.pyplot as plt
 from PIL import Image
 import pytest
 
 import boec.paper_figures.export as export
+from boec.paper_figures.core import FigureBundle
+from boec.paper_figures.fonts import font_manifest
 from boec.paper_figures.figure1 import build_figure1
 from boec.paper_figures.export import build_all
+from boec.paper_figures.layout import editorial_figure
 from boec.paper_figures.style import get_preset
 
 
@@ -24,9 +31,10 @@ def test_build_all_writes_complete_bundle(tmp_path):
             assert output.exists() and output.stat().st_size > 100
     assert manifest["preset"]["width_mm"] == 178.0
     assert set(manifest["figures"]) == {"fig1", "fig2", "fig3", "fig4"}
-    assert manifest["font"]["family"] == "Arial"
-    assert manifest["font"]["path"].endswith("Arial.ttf")
+    assert manifest["font"]["family"] == "Charis SIL"
+    assert manifest["font"]["path"].endswith("CharisSIL-Regular.ttf")
     assert len(manifest["font"]["sha256"]) == 64
+    assert manifest["font"]["assets"] == font_manifest()
     assert set(manifest["supplementary_reservations"]) == {f"S{i}" for i in range(1, 12)}
     assert (tmp_path / "build-manifest.json").exists()
     assert (tmp_path / "paper-figures-contact-sheet.png").exists()
@@ -52,6 +60,49 @@ def test_export_bundle_strips_svg_trailing_whitespace(tmp_path):
         line == line.rstrip()
         for line in (tmp_path / "fig1.svg").read_text(encoding="utf-8").splitlines()
     )
+
+
+def test_export_validates_packaged_font_resolution_before_writing(tmp_path, monkeypatch):
+    bundle = build_figure1(get_preset("portable"))
+
+    def reject_shadowed_font():
+        raise RuntimeError("publication font resolved outside packaged assets")
+
+    monkeypatch.setattr(export, "validate_publication_fonts", reject_shadowed_font)
+    with pytest.raises(RuntimeError, match="resolved outside packaged assets"):
+        export.export_bundle(bundle, tmp_path, "portable")
+    assert not (tmp_path / "fig1.pdf").exists()
+
+
+@pytest.mark.skipif(shutil.which("pdffonts") is None, reason="pdffonts is required")
+def test_pdf_embeds_unicode_charis_and_stix_without_type3(tmp_path):
+    preset = get_preset("plos")
+    style_path = files("boec.paper_figures").joinpath("paper.mplstyle")
+    with plt.style.context(str(style_path)):
+        figure, content = editorial_figure(
+            preset,
+            90,
+            "Publication typography smoke test",
+            "Packaged fonts only",
+            rows=1,
+            cols=1,
+        )
+        axis = figure.add_subplot(content[0, 0])
+        axis.set_xlabel(r"$x^2 + \sigma$")
+        bundle = FigureBundle("font-smoke", figure, {"A": {}}, "alt", "caption", "description")
+        export.export_bundle(bundle, tmp_path, preset)
+
+    result = subprocess.run(
+        ["pdffonts", str(tmp_path / "font-smoke.pdf")],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    known_poppler_warning = "Syntax Warning: Mismatch between font type and embedded font file"
+    assert set(result.stderr.splitlines()) <= {known_poppler_warning}
+    assert "Type 3" not in result.stdout
+    assert re.search(r"CharisSIL.*yes\s+yes\s+yes", result.stdout)
+    assert re.search(r"STIXMath-Regular.*yes\s+yes\s+yes", result.stdout)
 
 
 def test_panel_data_alt_text_and_manifest_are_traceable(tmp_path):

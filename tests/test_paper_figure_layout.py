@@ -2,11 +2,14 @@ from __future__ import annotations
 
 import importlib
 from importlib.resources import files
+from pathlib import Path
 
 import matplotlib
 
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
+from matplotlib import font_manager
+import pytest
 
 from boec.paper_figures.core import sha256_file
 from boec.paper_figures.fonts import font_manifest, register_publication_fonts
@@ -26,6 +29,34 @@ def test_publication_fonts_are_packaged_and_hash_verified():
         assert sha256_file(assets.text_regular.parent / record["name"]) == record["sha256"]
 
 
+def test_publication_font_families_resolve_to_exact_packaged_paths():
+    fonts = importlib.import_module("boec.paper_figures.fonts")
+    assets = fonts.validate_publication_fonts()
+    cases = (
+        ("Charis SIL", "normal", "normal", assets.text_regular),
+        ("Charis SIL", "normal", "bold", assets.text_bold),
+        ("Charis SIL", "italic", "normal", assets.text_italic),
+        ("Charis SIL", "italic", "bold", assets.text_bold_italic),
+        ("STIX Math", "normal", "normal", assets.math_regular),
+    )
+    for family, style, weight, expected in cases:
+        properties = font_manager.FontProperties(
+            family=[family], style=style, weight=weight
+        )
+        resolved = font_manager.findfont(properties, fallback_to_default=False)
+        assert Path(resolved).resolve() == expected.resolve()
+
+
+def test_publication_font_validation_rejects_shadowed_family_lookup(monkeypatch, tmp_path):
+    fonts = importlib.import_module("boec.paper_figures.fonts")
+    shadow = tmp_path / "CharisSIL-Regular.ttf"
+    shadow.write_bytes(b"not the packaged font")
+    monkeypatch.setattr(fonts.font_manager, "findfont", lambda *_args, **_kwargs: str(shadow))
+
+    with pytest.raises(RuntimeError, match="resolved outside packaged assets"):
+        fonts.validate_publication_fonts()
+
+
 def test_paper_style_uses_only_packaged_font_faces():
     style_path = files("boec.paper_figures").joinpath("paper.mplstyle")
     with matplotlib.rc_context(fname=style_path):
@@ -33,6 +64,10 @@ def test_paper_style_uses_only_packaged_font_faces():
         assert matplotlib.rcParams["mathtext.rm"] == "STIX Math"
         assert matplotlib.rcParams["mathtext.it"] == "STIX Math"
         assert matplotlib.rcParams["mathtext.bf"] == "STIX Math"
+        assert matplotlib.rcParams["mathtext.cal"] == "STIX Math"
+        assert matplotlib.rcParams["mathtext.tt"] == "STIX Math"
+        assert matplotlib.rcParams["mathtext.sf"] == "STIX Math"
+        assert matplotlib.rcParams["mathtext.bfit"] == "STIX Math"
 
 
 def test_editorial_heading_has_reserved_non_overlapping_geometry():

@@ -197,7 +197,10 @@ def build_figure4(data: dict, preset: VenuePreset) -> FigureBundle:
         axis_c.invert_yaxis()
         axis_c.set_xlim(0, 1.16)
         axis_c.set_xticks((0, 0.25, 0.50, 0.75, 1.00))
-        axis_c.set_xlabel("Campaigns with any non-empty γ×τ certificate", fontsize=preset.body_pt)
+        axis_c.set_xlabel(
+            r"Campaigns with any non-empty $\gamma{\times}\tau$ certificate",
+            fontsize=preset.body_pt,
+        )
         axis_c.set_title(
             "Campaign answer rate (α=0.95)\n0 = declined to certify\nnot zero containment",
             loc="left",
@@ -214,7 +217,11 @@ def build_figure4(data: dict, preset: VenuePreset) -> FigureBundle:
             declined_text="declined\nto certify",
         )
         axis_d.set_xlabel("Containment − nominal", fontsize=preset.body_pt)
-        axis_d.set_title("Conditional on answering\n▼ interval wholly below nominal", loc="left", fontsize=preset.body_pt)
+        axis_d.set_title(
+            "Conditional on answering\n" + r"$\blacktriangledown$ interval wholly below nominal",
+            loc="left",
+            fontsize=preset.body_pt,
+        )
 
     panel_data = {
         "A": {

@@ -44,6 +44,33 @@ def register_publication_fonts() -> FontAssets:
     return assets
 
 
+def validate_publication_fonts() -> FontAssets:
+    """Fail unless every publication family/style resolves to its packaged file."""
+
+    assets = register_publication_fonts()
+    lookups = (
+        ("Charis SIL", "normal", "normal", assets.text_regular),
+        ("Charis SIL", "normal", "bold", assets.text_bold),
+        ("Charis SIL", "italic", "normal", assets.text_italic),
+        ("Charis SIL", "italic", "bold", assets.text_bold_italic),
+        ("STIX Math", "normal", "normal", assets.math_regular),
+    )
+    for family, style, weight, expected in lookups:
+        properties = font_manager.FontProperties(
+            family=[family], style=style, weight=weight
+        )
+        resolved = Path(
+            font_manager.findfont(properties, fallback_to_default=False)
+        ).resolve()
+        expected = expected.resolve()
+        if resolved != expected:
+            raise RuntimeError(
+                f"required publication font {family} {style}/{weight} resolved "
+                f"outside packaged assets: expected {expected}, got {resolved}"
+            )
+    return assets
+
+
 def font_manifest() -> dict[str, object]:
     """Return the recorded sources and SHA-256 digests for packaged fonts."""
 

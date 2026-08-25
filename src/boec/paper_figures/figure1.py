@@ -192,6 +192,7 @@ def build_figure1(preset: VenuePreset) -> FigureBundle:
             if row == 5:
                 cell.set_linewidth(0.9)
             cell.get_text().set_color(_INK)
+            cell.get_text().set_linespacing(0.85)
 
     panel_data = {
         "A": {"stages": ["formulation", "wells", "assay", "model"]},

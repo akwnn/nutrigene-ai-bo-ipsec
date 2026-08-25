@@ -11,7 +11,7 @@ from matplotlib.figure import Figure
 from matplotlib.text import Text
 from matplotlib.transforms import Bbox
 
-from .fonts import register_publication_fonts
+from .fonts import validate_publication_fonts
 
 
 @dataclass(frozen=True)
@@ -34,7 +34,7 @@ class CollisionRegistration:
 def resolved_publication_font() -> Path:
     """Return the exact packaged text font used for publication rendering."""
 
-    return register_publication_fonts().text_regular.resolve()
+    return validate_publication_fonts().text_regular.resolve()
 
 
 def register_artist(
