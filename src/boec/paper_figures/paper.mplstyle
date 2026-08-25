@@ -1,0 +1,16 @@
+font.family: sans-serif
+font.sans-serif: Arial, Helvetica, DejaVu Sans
+mathtext.fontset: dejavusans
+pdf.fonttype: 42
+ps.fonttype: 42
+svg.fonttype: none
+axes.linewidth: 0.6
+lines.linewidth: 1.0
+patch.linewidth: 0.7
+xtick.major.width: 0.6
+ytick.major.width: 0.6
+legend.frameon: False
+figure.facecolor: white
+axes.facecolor: white
+savefig.facecolor: white
+savefig.transparent: False
