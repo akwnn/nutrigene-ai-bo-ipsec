@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from copy import deepcopy
 from pathlib import Path
 
 import matplotlib
@@ -166,12 +167,30 @@ def test_figure3_rendered_panels_preserve_pareto_contrasts_costs_and_descriptive
     assert "better" in panel_a.get_xlabel()
     assert {text.get_text() for text in panel_a.texts} >= {"SPADE", "qLogNEI", "Sobol"}
 
-    observed_means = sorted(
-        float(collection.get_offsets()[0, 0])
+    expected_contrasts = {
+        "map_spade_minus_sobol": ("Map: SPADE − Sobol", -0.010892, -0.01566185, -0.0059691125),
+        "map_spade_minus_qlognei": ("Map: SPADE − qLogNEI", -0.0330745, -0.038435375, -0.0281399125),
+        "regret_spade_minus_qlognei": ("Regret: SPADE − qLogNEI", 0.0152724734, 0.0081584845, 0.0223052340),
+    }
+    assert {row["contrast_id"] for row in data["contrasts"]} == set(expected_contrasts)
+    assert {row["sesoi"] for row in data["contrasts"]} == {0.02}
+    points_by_y = {
+        int(collection.get_offsets()[0, 1]): float(collection.get_offsets()[0, 0])
         for collection in panel_b.collections
         if isinstance(collection, PathCollection) and len(collection.get_offsets()) == 1
-    )
-    assert observed_means == pytest.approx(sorted([-0.0330745, -0.010892, 0.0152724734]))
+    }
+    intervals_by_y = {
+        int(collection.get_segments()[0][0, 1]): tuple(collection.get_segments()[0][:, 0])
+        for collection in panel_b.collections
+        if collection.__class__.__name__ == "LineCollection"
+    }
+    for y_position, contrast_id in enumerate(
+        ("map_spade_minus_sobol", "map_spade_minus_qlognei", "regret_spade_minus_qlognei")
+    ):
+        label, mean, lo, hi = expected_contrasts[contrast_id]
+        assert panel_b.get_yticklabels()[y_position].get_text() == label
+        assert points_by_y[y_position] == pytest.approx(mean)
+        assert intervals_by_y[y_position] == pytest.approx((lo, hi))
     assert any(
         np.isclose(patch.get_x(), -0.02)
         and np.isclose(patch.get_x() + patch.get_width(), 0.02)
@@ -194,13 +213,19 @@ def test_figure3_rendered_panels_preserve_pareto_contrasts_costs_and_descriptive
     assert "descriptive" in panel_d.get_title(loc="left").lower()
     assert "intervals unavailable" in panel_d.get_title(loc="left").lower()
     assert not panel_d.lines
-    assert len(panel_d.collections) == 2
+    assert {text.get_text() for text in panel_d.get_legend().get_texts()} == {
+        "Classical DoE", "Latin hypercube", "Sobol", "qLogEI", "qLogNEI", "SPADE"
+    }
+    assert "filled: d=6; open: d=8" in {text.get_text() for text in panel_d.texts}
+    assert {float(size) for collection in panel_a.collections for size in collection.get_sizes()} == {34.0}
+    assert {float(size) for collection in panel_d.collections for size in collection.get_sizes()} == {24.0}
 
     plt.close(figure)
 
 
-def test_figure3_portable_rendered_text_is_contained_in_each_panel():
-    bundle = build_figure3(build_figure3_data(Path("results")), get_preset("portable"))
+@pytest.mark.parametrize("preset_name", ["portable", "rsc", "nature", "plos"])
+def test_figure3_rendered_text_is_contained_in_each_panel_for_every_preset(preset_name):
+    bundle = build_figure3(build_figure3_data(Path("results")), get_preset(preset_name))
     figure = bundle.figure
     figure.canvas.draw()
     renderer = figure.canvas.get_renderer()
@@ -221,3 +246,31 @@ def test_figure3_portable_rendered_text_is_contained_in_each_panel():
         assert cell_bounds.contains(*text_bounds.get_points()[1])
 
     plt.close(figure)
+
+
+def test_figure3_contrast_labels_follow_ids_not_input_order():
+    data = deepcopy(build_figure3_data(Path("results")))
+    data["contrasts"].reverse()
+    bundle = build_figure3(data, get_preset("portable"))
+    panel_b = bundle.figure.axes[1]
+    observed = {
+        int(collection.get_offsets()[0, 1]): float(collection.get_offsets()[0, 0])
+        for collection in panel_b.collections
+        if isinstance(collection, PathCollection) and len(collection.get_offsets()) == 1
+    }
+
+    assert observed == pytest.approx({0: -0.010892, 1: -0.0330745, 2: 0.0152724734})
+
+    plt.close(bundle.figure)
+
+
+def test_figure3_rejects_contrasts_without_expected_ids_or_common_sesoi():
+    missing = deepcopy(build_figure3_data(Path("results")))
+    missing["contrasts"] = missing["contrasts"][:2]
+    with pytest.raises(ValueError, match="expected contrast IDs"):
+        build_figure3(missing, get_preset("portable"))
+
+    mismatched_sesoi = deepcopy(build_figure3_data(Path("results")))
+    mismatched_sesoi["contrasts"][0]["sesoi"] = 0.01
+    with pytest.raises(ValueError, match="common SESOI"):
+        build_figure3(mismatched_sesoi, get_preset("portable"))
