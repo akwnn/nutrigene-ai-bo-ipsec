@@ -94,6 +94,29 @@ _POWER_DESIGN_PATH = Path(
 )
 _POWER_ENGINE_PATH = Path("src/boec/spade_power.py")
 _POWER_PLANNER_PATH = Path("scripts/plan_spade_lockbox_power.py")
+_REGISTERED_METADATA_FIELDS = frozenset(
+    {
+        "study_protocol_digest",
+        "spec_digest",
+        "config_digest",
+        "generator_digest",
+        "generator_manifest_sha256",
+        "power_design_digest",
+        "power_engine_digest",
+        "power_planner_digest",
+        "source_commit",
+        "source_dirty",
+    }
+)
+_DEVELOPMENT_ARTIFACT_METADATA_FIELDS = (
+    "study_protocol_digest",
+    "spec_digest",
+    "config_digest",
+    "generator_digest",
+    "generator_manifest_sha256",
+    "source_commit",
+    "source_dirty",
+)
 _SIGMA_REL = 0.10
 _SIGMA_ADD = 0.01
 _GAMMA = 0.95
@@ -366,6 +389,27 @@ def git_state(repo_root: Path = ROOT) -> tuple[str, bool]:
     return commit, dirty
 
 
+def _validate_registered_metadata(metadata: Mapping[str, object]) -> dict[str, object]:
+    if not isinstance(metadata, Mapping) or set(metadata) != _REGISTERED_METADATA_FIELDS:
+        raise ValueError("registered metadata fields drift")
+    result = dict(metadata)
+    for field in _REGISTERED_METADATA_FIELDS - {"source_commit", "source_dirty"}:
+        _hex_digest(result[field], field)
+    _hex_digest(result["source_commit"], "source_commit", length=40)
+    if not isinstance(result["source_dirty"], bool):
+        raise ValueError("registered metadata source_dirty must be boolean")
+    return result
+
+
+def _development_artifact_metadata(
+    metadata: Mapping[str, object],
+) -> dict[str, object]:
+    return {
+        field: metadata[field]
+        for field in _DEVELOPMENT_ARTIFACT_METADATA_FIELDS
+    }
+
+
 def registered_metadata(repo_root: Path = ROOT) -> dict[str, object]:
     config_path = repo_root / _CONFIG_PATH
     spec_path = repo_root / _SPEC_PATH
@@ -435,7 +479,7 @@ def registered_metadata(repo_root: Path = ROOT) -> dict[str, object]:
     ):
         raise ValueError("frozen generator manifest digest mismatch")
     source_commit, source_dirty = git_state(repo_root)
-    return {
+    return _validate_registered_metadata({
         "study_protocol_digest": protocol_digest,
         "spec_digest": spec_digest,
         "config_digest": _sha256(config_path),
@@ -446,7 +490,7 @@ def registered_metadata(repo_root: Path = ROOT) -> dict[str, object]:
         "power_planner_digest": power_planner_digest,
         "source_commit": source_commit,
         "source_dirty": source_dirty,
-    }
+    })
 
 
 def expected_registered_output(
@@ -961,18 +1005,10 @@ def run_development_shard(
         smoke=smoke,
         repo_root=repo_root,
     )
-    frozen = dict(registered_metadata(repo_root) if metadata is None else metadata)
-    required_metadata = {
-        "study_protocol_digest",
-        "spec_digest",
-        "config_digest",
-        "generator_digest",
-        "generator_manifest_sha256",
-        "source_commit",
-        "source_dirty",
-    }
-    if set(frozen) != required_metadata:
-        raise ValueError("development metadata fields drift")
+    registered = _validate_registered_metadata(
+        registered_metadata(repo_root) if metadata is None else metadata
+    )
+    frozen = _development_artifact_metadata(registered)
     if not smoke and frozen["source_dirty"]:
         raise ValueError("registered development campaigns require a clean source tree")
     manifest_path = Path(str(destination) + ".manifest.json")
