@@ -513,6 +513,30 @@ def test_access_requires_metadata_for_the_checked_clean_commit(
         lockbox.validate_lockbox_access(repo_root=root, selected_path=selected)
 
 
+@pytest.mark.parametrize(
+    "relative",
+    [
+        ".github/workflows/spade-distributed.yml",
+        "scripts/make_spade_actions_matrix.py",
+        "scripts/run_spade_actions_worker.py",
+        "scripts/merge_spade_development_shards.py",
+        "requirements.txt",
+    ],
+)
+def test_registered_metadata_rejects_live_execution_blob_drift(monkeypatch, relative):
+    root = Path(__file__).resolve().parents[1]
+    original = lockbox._sha256
+
+    def drift(path):
+        if path == root / relative:
+            return "0" * 64
+        return original(path)
+
+    monkeypatch.setattr(lockbox, "_sha256", drift)
+    with pytest.raises(ValueError, match="execution|source digest"):
+        lockbox.registered_metadata(root)
+
+
 def test_registered_path_refuses_limit_and_uses_dynamic_four_digit_range():
     registered = lockbox.ROOT / "results" / "spade-lockbox-toroidal_rastrigin-0000-0412.jsonl.gz"
     assert (

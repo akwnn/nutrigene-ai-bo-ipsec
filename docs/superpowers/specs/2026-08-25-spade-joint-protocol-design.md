@@ -355,6 +355,37 @@ deterministic gzip JSONL raw rows and a sidecar manifest. The merge refuses miss
 duplicate, mismatched, dirty-tree, wrong-protocol, wrong-power-plan, or wrong-environment
 shards.
 
+### 10.1 Registered execution logistics
+
+The machine-readable config has a top-level `execution` mapping outside `protocol`.
+This is an execution-only amendment: it does not change the scientific design or the
+canonical `protocol_payload_sha256`, which remains
+`00ce6971a990749645052273215897f57562106610777d0d8ce417e8e9afdd1a`.
+The execution mapping has its own canonical sorted compact-JSON SHA-256, and the config
+also records live SHA-256 hashes for the workflow, matrix builder, worker, development
+merger, and frozen requirements file. Both registered runners authenticate those bytes
+before campaign work begins.
+
+Each phase uses one manual `workflow_dispatch` at an exact lowercase 40-character source
+commit. The event SHA, workflow SHA, checkout ref, checked-out HEAD, and requested source
+SHA must all be identical, and the checkout must be clean. GitHub permissions are
+read-only. The runner is `ubuntu-24.04` with Linux/AMD64 Python 3.11.15 in the pinned
+`python@sha256:eaeffb6e8511935426934aac863940fbd004ef31dab0d7fc27a129bb7c19d9a8`
+container. Checkout and upload-artifact actions are pinned respectively to commits
+`11bd71901bbe5b1630ceea73d27597364c9af683` and
+`ea165f8d65b6e75b540449e92b4886f43607fa02`. CUDA is disabled; Python hashing, OpenMP,
+MKL, OpenBLAS, NumExpr, and Torch intra/inter-op thread settings are fixed to the values
+in the execution mapping.
+
+The Actions matrix uses `max-parallel: 40`, while each job runs at most two worker
+processes concurrently. Development has 65 logical width-4 shards packed into 33 jobs.
+Lockbox shards have width 10 and produce 35 jobs at `n=350` through 200 jobs at `n=2000`;
+each job runs the four families in the two frozen pairs
+`(toroidal_rastrigin, gaussian_basin_mixture)` and
+`(curved_ridge, soft_plateau)`. Every enabled slot is uploaded separately as an immutable
+four-file contract: gzip JSONL, SHA-256 sidecar, resume JSON, and manifest JSON, with no
+overwrite and no result inspection in the workflow.
+
 ## 11. Confirmatory success rule
 
 All conditions below must pass separately in every one of the four lockbox families.
@@ -404,6 +435,10 @@ Every artifact records:
 - evaluation budget and round count;
 - terminal rule and every primary estimand; and
 - parent artifact hashes.
+
+The release validator authenticates the committed configuration and every registered
+execution blob from the lockbox execution source commit before it may read stored
+analysis or raw outcome rows.
 
 The release validator fails closed on absent raw shards, dirty source, mismatched hashes,
 duplicate/missing campaign keys, a lockbox run before the selection commit, mixed

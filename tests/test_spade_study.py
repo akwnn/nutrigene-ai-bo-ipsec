@@ -665,6 +665,104 @@ def test_yaml_freezes_every_registered_design_value_and_its_payload_digest():
     assert p["lockbox"]["truth_range_contract"] == "strict_unit_interval"
     canonical = json.dumps(p, sort_keys=True, separators=(",", ":"), allow_nan=False).encode()
     assert cfg["digests"]["protocol_payload_sha256"] == hashlib.sha256(canonical).hexdigest()
+    assert cfg["digests"]["protocol_payload_sha256"] == (
+        "00ce6971a990749645052273215897f57562106610777d0d8ce417e8e9afdd1a"
+    )
+    execution = cfg["execution"]
+    assert execution == {
+        "schema": "boec-spade-registered-execution-v1",
+        "dispatch": {
+            "trigger": "workflow_dispatch",
+            "dispatches_per_phase": 1,
+            "source_sha_input": "exact_40_character_lowercase_commit",
+            "event_sha_equals_source_sha": True,
+            "workflow_sha_equals_source_sha": True,
+            "checkout_ref": "source_sha",
+            "checked_out_head_equals_source_sha": True,
+            "clean_checkout_required": True,
+            "permissions": {"contents": "read"},
+        },
+        "runtime": {
+            "runner": "ubuntu-24.04",
+            "platform": "linux/amd64",
+            "python": "3.11.15",
+            "container": (
+                "python@sha256:"
+                "eaeffb6e8511935426934aac863940fbd004ef31dab0d7fc27a129bb7c19d9a8"
+            ),
+            "actions": {
+                "checkout": "actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
+                "upload_artifact": (
+                    "actions/upload-artifact@"
+                    "ea165f8d65b6e75b540449e92b4886f43607fa02"
+                ),
+            },
+            "environment": {
+                "OMP_NUM_THREADS": "1",
+                "MKL_NUM_THREADS": "1",
+                "OPENBLAS_NUM_THREADS": "1",
+                "NUMEXPR_NUM_THREADS": "1",
+                "PYTHONHASHSEED": "0",
+                "CUDA_VISIBLE_DEVICES": "",
+            },
+            "torch_threads": 1,
+            "torch_interop_threads": 1,
+        },
+        "parallelism": {
+            "matrix_max_parallel": 40,
+            "processes_per_job_maximum": 2,
+        },
+        "development_sharding": {
+            "family_count": 5,
+            "keys_per_family": 50,
+            "key_width": 4,
+            "logical_shards": 65,
+            "jobs": 33,
+            "enabled_slots_per_job_maximum": 2,
+        },
+        "lockbox_sharding": {
+            "family_count": 4,
+            "key_width": 10,
+            "jobs_at_minimum_n_350": 35,
+            "jobs_at_maximum_n_2000": 200,
+            "family_pairs": [
+                ["toroidal_rastrigin", "gaussian_basin_mixture"],
+                ["curved_ridge", "soft_plateau"],
+            ],
+        },
+        "artifacts": {
+            "one_upload_per_enabled_slot": True,
+            "files_per_slot": [
+                "raw_jsonl_gzip",
+                "sha256_sidecar",
+                "resume_json",
+                "manifest_json",
+            ],
+            "compression_level": 0,
+            "overwrite": False,
+            "retention_days": 90,
+        },
+    }
+    execution_canonical = json.dumps(
+        execution,
+        sort_keys=True,
+        separators=(",", ":"),
+        ensure_ascii=False,
+        allow_nan=False,
+    ).encode("utf-8")
+    assert cfg["digests"]["execution_payload_sha256"] == hashlib.sha256(
+        execution_canonical
+    ).hexdigest()
+    for key, relative in {
+        "actions_workflow_sha256": ".github/workflows/spade-distributed.yml",
+        "actions_matrix_sha256": "scripts/make_spade_actions_matrix.py",
+        "actions_worker_sha256": "scripts/run_spade_actions_worker.py",
+        "development_merger_sha256": "scripts/merge_spade_development_shards.py",
+        "requirements_sha256": "requirements.txt",
+    }.items():
+        assert cfg["digests"][key] == hashlib.sha256(
+            (ROOT / relative).read_bytes()
+        ).hexdigest()
     for key, relative in {
         "lockbox_oracles_source_sha256": "src/boec/lockbox_oracles.py",
         "spade_study_source_sha256": "src/boec/spade_study.py",

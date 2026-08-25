@@ -350,6 +350,30 @@ def test_registered_metadata_binds_live_power_sources_and_dynamic_rule():
     assert "Run 350 independent paired campaigns" not in parent
 
 
+@pytest.mark.parametrize(
+    "relative",
+    [
+        ".github/workflows/spade-distributed.yml",
+        "scripts/make_spade_actions_matrix.py",
+        "scripts/run_spade_actions_worker.py",
+        "scripts/merge_spade_development_shards.py",
+        "requirements.txt",
+    ],
+)
+def test_registered_metadata_rejects_live_execution_blob_drift(monkeypatch, relative):
+    root = Path(__file__).resolve().parents[1]
+    original = runner._sha256
+
+    def drift(path):
+        if path == root / relative:
+            return "0" * 64
+        return original(path)
+
+    monkeypatch.setattr(runner, "_sha256", drift)
+    with pytest.raises(ValueError, match="execution|source digest"):
+        runner.registered_metadata(root)
+
+
 def test_default_live_metadata_reaches_campaign_boundary_as_development_projection(
     tmp_path, monkeypatch
 ):
