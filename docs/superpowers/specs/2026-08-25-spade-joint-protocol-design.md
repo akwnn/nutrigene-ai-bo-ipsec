@@ -288,10 +288,10 @@ parameters, and has an independently verified optimum. Analytic optima are used 
 available; otherwise a deterministic multistart optimizer plus a dense Sobol audit must
 agree within `1e-6` before an instance is eligible.
 
-Generator definitions, allowed parameter ranges, instance seeds, and their source digest
-are frozen before development selection. No map, regret, answer-rate, or containment
-score from these generators may be computed until `spade-selected-protocol.json` exists
-in a clean commit.
+Generator definitions, allowed parameter ranges, instance seed keys `0..1999`, and their
+source digest are frozen before development selection. The final power decision uses the
+prefix `0..n-1`. No map, regret, answer-rate, or containment score from these generators
+may be computed until `spade-selected-protocol.json` exists in a clean commit.
 
 ## 10. Lockbox sample size and execution
 

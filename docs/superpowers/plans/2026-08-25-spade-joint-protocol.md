@@ -143,11 +143,14 @@ class IndexedGaussianNoise:
         eps_t = torch.stack(eps).reshape_as(latent) * self.sigma_rel
         eta_t = torch.stack(eta).reshape_as(latent) * self.sigma_add
         y = latent * (1 + eps_t) + eta_t
-        return y, torch.full_like(y, float("nan"))
+        yvar = (y.square() * self.sigma_rel**2 + self.sigma_add**2).clamp_min(
+            self.sigma_add**2)
+        return y, yvar
 ```
 
-The `nan` variance is deliberate: current SPADE fits learned noise and must not consume a
-truth-derived or noisy-response-derived fixed variance.
+The returned plug-in variance preserves the repository's evaluator contract without
+leaking latent truth. Current SPADE deliberately ignores this field and fits learned
+noise; historical fixed-noise campaigns may continue consuming it.
 
 - [ ] **Step 4: Add opt-in indexed evaluation and checkpoint state**
 
@@ -537,7 +540,9 @@ campaign keys or schema/protocol drift.
 
 The YAML contains every numeric design value from the spec. The manifest contains family
 definitions, parameter ranges, instance key range `0..349`, source/spec/config digests,
-and status `FROZEN_UNOPENED`; it contains no outcome metrics.
+  and status `FROZEN_UNOPENED`; it reserves instance keys `0..1999` so a pre-outcome
+  power increase does not alter generator identity. The committed sample-size decision
+  selects the prefix `0..n-1`. The manifest contains no outcome metrics.
 
 - [ ] **Step 8: Run Task 5 tests**
 
