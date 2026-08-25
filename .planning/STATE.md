@@ -2,7 +2,7 @@
 
 **Milestone:** SPADE joint protocol  
 **Status:** active  
-**Current phase:** Phase 1 — Freeze and foundations
+**Current phase:** Phase 2 — Joint SPADE implementation
 
 ## Decisions frozen
 
@@ -29,8 +29,16 @@ Two failures were caused by the isolated worktree lacking `.venv`; four were his
 bitwise numerical drift; three were material historical adaptive qLogEI/qLogNEI replay
 mismatches already recorded in `.planning/codebase/CONCERNS.md`.
 
+## Completed in this milestone
+
+- Task 1 deterministic seed/noise/checkpoint/replay foundations passed independent review.
+  The focused post-merge suite is 186 passed with two third-party deprecation warnings.
+- Checkpoints now reject oracle/configuration/noise/cursor mismatches and preserve legacy
+  RNG state for byte-identical resume.
+- The committed tau-quantile, oracle-noise ceiling, and OA-LHS design-lottery evidence from
+  `origin/main` is merged into this branch.
+
 ## Next action
 
-Correct the fail-closed checkpoint/provenance defects found in the first independent
-review, merge the committed tau/noise/OA-LHS evidence, then continue task-by-task with TDD
-and independent review gates.
+Implement and independently review the common learned-noise surrogate, discrete candidate
+pool, acquisition, and batch-objective primitives used by SPADE and its comparators.
