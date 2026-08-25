@@ -153,6 +153,9 @@ def test_figure3_separates_point_map_and_cost_without_boundary_evidence():
     assert bundle.panel_data["A"]["terminal_rule"] == "P"
     assert bundle.panel_data["B"]["sesoi"] == 0.02
     assert bundle.panel_data["C"]["rounds_are_not_point_size"] is True
+    assert bundle.panel_data["C"]["constant_wells"] == 48
+    assert bundle.panel_data["C"]["encoding"] == "rounds lollipop"
+    assert bundle.panel_data["D"]["facets"] == ["d=6", "d=8"]
     assert all(row["evidence_stage"].startswith("descriptive") for row in bundle.panel_data["D"]["rows"])
     assert "spade_random_plate2" not in str(bundle.panel_data)
     assert "KF-3" not in str(bundle.panel_data)
@@ -172,7 +175,9 @@ def test_figure3_rendered_panels_preserve_pareto_contrasts_costs_and_descriptive
     assert "Symmetric-difference error" in panel_a.get_xlabel()
     assert "Rule-P simple regret" in panel_a.get_ylabel()
     assert "better" in panel_a.get_xlabel()
-    assert {text.get_text() for text in panel_a.texts} >= {"SPADE", "qLogNEI", "Sobol"}
+    direct_labels = {text.get_text() for text in panel_a.texts if text.get_text() != "a"}
+    assert direct_labels == {"SPADE", "qLogNEI", "Sobol", "Classical DoE"}
+    assert all(text.get_color() == "#243746" for text in panel_a.texts)
 
     expected_contrasts = {
         "map_spade_minus_sobol": ("Map: SPADE − Sobol", -0.010892, -0.01566185, -0.0059691125),
@@ -210,24 +215,28 @@ def test_figure3_rendered_panels_preserve_pareto_contrasts_costs_and_descriptive
     )
     assert "±0.02" in panel_b.get_title(loc="left")
 
-    table = panel_c.tables[0]
-    cell_text = {cell.get_text().get_text() for cell in table.get_celld().values()}
-    assert {"Method", "Wells", "Rounds"} <= cell_text
-    assert {str(row["wells"]) for row in data["cost_ledger"]} <= cell_text
-    assert {str(row["rounds"]) for row in data["cost_ledger"]} <= cell_text
-    assert not panel_c.collections
+    assert not panel_c.tables
+    assert "Feedback rounds" in panel_c.get_xlabel()
+    assert {tick.get_text() for tick in panel_c.get_yticklabels()} == {
+        "Classical DoE", "Latin hypercube", "Sobol", "qLogEI", "qLogNEI", "SPADE"
+    }
+    assert "All methods use 48 wells" in {text.get_text() for text in panel_c.texts}
+    assert sorted(
+        float(collection.get_offsets()[0, 0])
+        for collection in panel_c.collections
+        if isinstance(collection, PathCollection)
+    ) == [1, 1, 2, 3, 10, 10]
 
     assert "descriptive" in panel_d.get_title(loc="left").lower()
     assert "intervals unavailable" in panel_d.get_title(loc="left").lower()
-    assert not panel_d.lines
     assert {text.get_text() for text in panel_d.get_legend().get_texts()} == {
         "Classical DoE", "Latin hypercube", "Sobol", "qLogEI", "qLogNEI", "SPADE"
     }
-    assert "thin border: d=6; thick dashed: d=8" in {text.get_text() for text in panel_d.texts}
-    assert {float(size) for collection in panel_a.collections for size in collection.get_sizes()} == {34.0}
-    assert {float(size) for collection in panel_d.collections for size in collection.get_sizes()} == {24.0}
+    assert {float(size) for collection in panel_a.collections for size in collection.get_sizes()} == {32.0}
 
-    hartmann_points = {collection.get_gid(): collection for collection in panel_d.collections}
+    facet_axes = panel_d.child_axes
+    assert [axis.get_title(loc="left") for axis in facet_axes] == ["d=6", "d=8"]
+    hartmann_points = {collection.get_gid(): collection for axis in facet_axes for collection in axis.collections}
     arms = ("doe", "lhs", "sobol", "qlogei", "qlognei", "spade_cf_m0")
     conditions = ("hartmann6-d6-s0.25", "hartmann6-d8-s0.25")
     assert set(hartmann_points) == {f"{condition}:{arm}" for condition in conditions for arm in arms}
@@ -236,7 +245,7 @@ def test_figure3_rendered_panels_preserve_pareto_contrasts_costs_and_descriptive
         assert to_hex(hartmann_points[f"{condition}:qlognei"].get_facecolors()[0]) == "#0072b2"
         assert to_hex(hartmann_points[f"{condition}:lhs"].get_facecolors()[0]) == "#ffffff"
         assert to_hex(hartmann_points[f"{condition}:sobol"].get_facecolors()[0]) == "#6b7280"
-    assert hartmann_points["hartmann6-d6-s0.25:doe"].get_linewidths()[0] != hartmann_points["hartmann6-d8-s0.25:doe"].get_linewidths()[0]
+    assert not any(isinstance(collection, LineCollection) for axis in facet_axes for collection in axis.collections)
 
     plt.close(figure)
 
@@ -255,13 +264,6 @@ def test_figure3_rendered_text_is_contained_in_each_panel_for_every_preset(prese
                 text_bounds = text.get_window_extent(renderer)
                 assert figure_bounds.contains(*text_bounds.get_points()[0])
                 assert figure_bounds.contains(*text_bounds.get_points()[1])
-
-    table = figure.axes[2].tables[0]
-    for cell in table.get_celld().values():
-        cell_bounds = cell.get_window_extent(renderer)
-        text_bounds = cell.get_text().get_window_extent(renderer)
-        assert cell_bounds.contains(*text_bounds.get_points()[0])
-        assert cell_bounds.contains(*text_bounds.get_points()[1])
 
     plt.close(figure)
 

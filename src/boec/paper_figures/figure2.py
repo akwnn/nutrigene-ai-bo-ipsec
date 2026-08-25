@@ -63,8 +63,8 @@ def build_figure2(data: dict, preset: VenuePreset) -> FigureBundle:
         axis_a.set_xlim(-0.12, 1.58)
         axis_a.margins(y=0.16)
         axis_a.set_xticks((0, 1), ("Rule A", "Rule P"))
-        axis_a.set_ylabel("Mean simple regret")
-        axis_a.set_title("Same campaigns\ndifferent terminal rules", loc="left")
+        axis_a.set_ylabel("Mean simple regret", fontsize=preset.body_pt)
+        axis_a.set_title("Same campaigns\ndifferent terminal rules", loc="left", fontsize=preset.body_pt)
 
         contrasts = data["paired_rule_contrasts"]
         for y_position, row in enumerate(contrasts):
@@ -91,8 +91,11 @@ def build_figure2(data: dict, preset: VenuePreset) -> FigureBundle:
         axis_b.axvline(0, color=_INK, linewidth=0.8, zorder=0)
         axis_b.set_yticks(range(len(contrasts)), [method_style(row["arm"]).label for row in contrasts])
         axis_b.invert_yaxis()
-        axis_b.set_xlabel("Paired Rule P − Rule A regret\n← P lower          P higher →")
-        axis_b.set_title("Paired terminal-rule effect\n95% bootstrap interval", loc="left")
+        axis_b.set_xlabel(
+            "Paired Rule P − Rule A regret\n← P lower          P higher →",
+            fontsize=preset.body_pt,
+        )
+        axis_b.set_title("Paired terminal-rule effect\n95% bootstrap interval", loc="left", fontsize=preset.body_pt)
 
         decomposition = data["decomposition"]
         y_positions = np.arange(len(decomposition))
@@ -122,8 +125,12 @@ def build_figure2(data: dict, preset: VenuePreset) -> FigureBundle:
         maximum_regret = float(np.max(search_loss + identification_loss))
         axis_c.set_xlim(0, maximum_regret * 1.08)
         axis_c.set_xticks([tick for tick in axis_c.get_xticks() if tick <= axis_c.get_xlim()[1]])
-        axis_c.set_xlabel("Rule-A simple regret")
-        axis_c.set_title("Rule A =\nsearch loss +\nidentification loss", loc="left")
+        axis_c.set_xlabel("Rule-A simple regret", fontsize=preset.body_pt)
+        axis_c.set_title(
+            "Rule A =\nsearch loss +\nidentification loss",
+            loc="left",
+            fontsize=preset.body_pt,
+        )
         axis_c.legend(
             loc="lower center",
             bbox_to_anchor=(0.5, -0.31),
