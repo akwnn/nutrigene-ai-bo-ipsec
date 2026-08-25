@@ -9,6 +9,7 @@ import json
 import math
 import os
 import platform
+import stat
 import subprocess
 import sys
 import tempfile
@@ -38,6 +39,15 @@ from scripts import select_spade_protocol as selector  # noqa: E402
 _REGISTERED_SELECTION = Path("results/spade-selected-protocol.json")
 _REGISTERED_ANALYSIS = Path("results/spade-development-analysis.json")
 _REGISTERED_OUTPUT = Path("results/spade-lockbox-power.json")
+_FROZEN_POST_DEVELOPMENT_DEPENDENCIES = (
+    Path("scripts/plan_spade_lockbox_power.py"),
+    Path("scripts/run_spade_development.py"),
+    Path("scripts/select_spade_protocol.py"),
+    Path("src/boec/seedbook.py"),
+    Path("src/boec/spade.py"),
+    Path("src/boec/spade_power.py"),
+    Path("src/boec/spade_study.py"),
+)
 _SELECTION_FIELDS = frozenset(
     {
         "schema",
@@ -137,31 +147,139 @@ def git_state(repo_root: Path = ROOT) -> tuple[str, bool]:
     return development.git_state(repo_root)
 
 
-def _repository_relative(repo_root: Path, path: Path) -> Path:
+def _lexical_repo_relative(repo_root: Path, path: str | Path) -> tuple[Path, Path]:
+    """Return an unfollowed lexical repository path and reject traversal."""
+    root = Path(os.path.abspath(repo_root))
+    supplied = Path(path)
+    if ".." in supplied.parts:
+        raise ValueError(f"repository path contains traversal: {supplied}")
+    candidate = supplied if supplied.is_absolute() else root / supplied
     try:
-        return path.resolve().relative_to(repo_root.resolve())
+        relative = candidate.relative_to(root)
     except ValueError as exc:
-        raise ValueError(f"artifact lies outside the repository: {path}") from exc
+        raise ValueError(f"artifact lies outside the repository: {supplied}") from exc
+    if not relative.parts or candidate != root / relative:
+        raise ValueError(f"artifact path is not lexically canonical: {supplied}")
+    return root / relative, relative
 
 
-def _committed_file_bytes(repo_root: Path, path: Path) -> bytes:
-    """Read a file only when its working bytes equal the blob committed at HEAD."""
-    relative = _repository_relative(repo_root, path)
-    if not path.is_file():
-        raise ValueError(f"required committed artifact is missing: {relative}")
+def _exact_registered_path(
+    repo_root: Path, supplied: str | Path, expected_relative: Path, name: str
+) -> Path:
+    candidate, relative = _lexical_repo_relative(repo_root, supplied)
+    if relative != expected_relative:
+        raise ValueError(f"{name} must be the exact registered path {expected_relative}")
+    return candidate
+
+
+def _reject_symlink_components(repo_root: Path, relative: Path) -> os.stat_result:
+    root = Path(os.path.abspath(repo_root))
     try:
-        committed = subprocess.run(
-            ["git", "show", f"HEAD:{relative.as_posix()}"],
+        root_status = os.lstat(root)
+    except OSError as exc:
+        raise ValueError(f"repository root is unavailable: {root}") from exc
+    if stat.S_ISLNK(root_status.st_mode):
+        raise ValueError("repository root must not be a symlink")
+    current = root
+    final_status = root_status
+    for index, component in enumerate(relative.parts):
+        current = current / component
+        try:
+            final_status = os.lstat(current)
+        except OSError as exc:
+            raise ValueError(f"required committed artifact is missing: {relative}") from exc
+        if stat.S_ISLNK(final_status.st_mode):
+            raise ValueError(f"symlink paths are forbidden: {relative}")
+        if index < len(relative.parts) - 1 and not stat.S_ISDIR(final_status.st_mode):
+            raise ValueError(f"artifact parent is not a directory: {relative}")
+    return final_status
+
+
+def _git_regular_blob(
+    repo_root: Path,
+    revision: str,
+    relative: Path,
+    *,
+    expected_mode: str = "100644",
+) -> bytes:
+    try:
+        result = subprocess.run(
+            ["git", "ls-tree", "-z", revision, "--", relative.as_posix()],
+            cwd=repo_root,
+            check=True,
+            capture_output=True,
+        )
+    except subprocess.CalledProcessError as exc:
+        raise ValueError(
+            f"cannot inspect committed tree entry {revision}:{relative}"
+        ) from exc
+    entries = [entry for entry in result.stdout.split(b"\0") if entry]
+    if len(entries) != 1 or b"\t" not in entries[0]:
+        raise ValueError(f"artifact is not an exact committed tree entry: {relative}")
+    header, encoded_name = entries[0].split(b"\t", 1)
+    parts = header.split()
+    if len(parts) != 3:
+        raise ValueError(f"committed tree entry is malformed: {relative}")
+    mode, kind, object_id = (part.decode("ascii") for part in parts)
+    if encoded_name.decode("utf-8") != relative.as_posix():
+        raise ValueError(f"committed tree path identity drifted: {relative}")
+    if mode == "120000":
+        raise ValueError(f"committed symlink entries are forbidden: {relative}")
+    if kind != "blob" or mode != expected_mode:
+        raise ValueError(
+            f"committed artifact must be a regular {expected_mode} blob, "
+            f"got {mode} {kind}: {relative}"
+        )
+    try:
+        return subprocess.run(
+            ["git", "cat-file", "blob", object_id],
             cwd=repo_root,
             check=True,
             capture_output=True,
         ).stdout
     except subprocess.CalledProcessError as exc:
-        raise ValueError(f"artifact is not committed at HEAD: {relative}") from exc
-    actual = path.read_bytes()
+        raise ValueError(f"cannot read committed blob {revision}:{relative}") from exc
+
+
+def _committed_regular_file_bytes(
+    repo_root: Path,
+    path: str | Path,
+    *,
+    revision: str = "HEAD",
+    expected_mode: str = "100644",
+) -> bytes:
+    """Read only a lexical, regular, exact-mode file matching a committed blob."""
+    source, relative = _lexical_repo_relative(repo_root, path)
+    committed = _git_regular_blob(
+        repo_root, revision, relative, expected_mode=expected_mode
+    )
+    status = _reject_symlink_components(repo_root, relative)
+    if not stat.S_ISREG(status.st_mode):
+        raise ValueError(f"artifact is not a regular file: {relative}")
+    actual = source.read_bytes()
     if actual != committed:
-        raise ValueError(f"artifact bytes differ from the committed HEAD blob: {relative}")
+        raise ValueError(
+            f"artifact bytes differ from committed {revision} blob: {relative}"
+        )
     return committed
+
+
+def _committed_file_bytes(repo_root: Path, path: Path) -> bytes:
+    """Compatibility wrapper for exact regular data artifacts at HEAD."""
+    return _committed_regular_file_bytes(repo_root, path)
+
+
+def _validate_frozen_dependency_blobs(repo_root: Path, selected_source: str) -> None:
+    """Prove post-development interpretation code is byte-identical to selection."""
+    _digest(selected_source, "selected source commit", length=40)
+    for relative in _FROZEN_POST_DEVELOPMENT_DEPENDENCIES:
+        path = Path(os.path.abspath(repo_root)) / relative
+        current = _committed_regular_file_bytes(repo_root, path)
+        selected = _git_regular_blob(repo_root, selected_source, relative)
+        if current != selected:
+            raise ValueError(
+                f"post-development dependency drifted from selected source: {relative}"
+            )
 
 
 def _is_ancestor(repo_root: Path, older: str, newer: str) -> bool:
@@ -349,47 +467,107 @@ def _ordered_power_artifacts(
     return output
 
 
-def _require_committed_development_inputs(
+def _preflight_development_inputs(
     repo_root: Path,
     manifest_paths: Sequence[str | Path],
-    artifacts: Sequence[Mapping[str, object]],
-) -> None:
-    """Prove every byte used by the selector is the byte committed at HEAD."""
-    results_root = (repo_root / "results").resolve()
+    *,
+    metadata: Mapping[str, object],
+    selected_source: str,
+) -> tuple[Path, ...]:
+    """Validate every registered development path and byte before the loader opens it."""
+    if len(manifest_paths) != len(DEVELOPMENT_FAMILIES):
+        raise ValueError("power planning requires exactly five development manifests")
+    expected_relatives = {
+        family: Path(
+            f"results/spade-development-{family}-000-050.jsonl.gz.manifest.json"
+        )
+        for family in DEVELOPMENT_FAMILIES
+    }
+    expected_by_name = {
+        relative.name: (family, relative)
+        for family, relative in expected_relatives.items()
+    }
     supplied: dict[str, Path] = {}
     for value in manifest_paths:
-        path = Path(value)
-        if not path.is_absolute():
-            path = repo_root / path
-        if path.parent.resolve() != results_root or path.name in supplied:
-            raise ValueError(
-                "development manifests must be unique files in the registered results directory"
-            )
-        supplied[path.name] = path
-    expected_names = {str(artifact["manifest_file"]) for artifact in artifacts}
-    if set(supplied) != expected_names:
-        raise ValueError("supplied development manifest files disagree with selection")
+        name = Path(value).name
+        if name not in expected_by_name or name in supplied:
+            raise ValueError("development manifest path is not a unique registered identity")
+        _, expected_relative = expected_by_name[name]
+        supplied[name] = _exact_registered_path(
+            repo_root, value, expected_relative, "development manifest"
+        )
+    if set(supplied) != set(expected_by_name):
+        raise ValueError("development manifest paths do not cover the registered families")
 
-    for artifact in artifacts:
-        manifest_path = supplied[str(artifact["manifest_file"])]
-        raw_path = results_root / str(artifact["raw_file"])
-        resume_path = results_root / str(artifact["resume_file"])
-        sidecar_path = Path(f"{raw_path}.sha256")
+    records: dict[str, tuple[dict[str, object], Path, Path, Path, Path]] = {}
+    for family in DEVELOPMENT_FAMILIES:
+        manifest_path = supplied[expected_relatives[family].name]
         manifest_bytes = _committed_file_bytes(repo_root, manifest_path)
+        manifest = development.validate_shard_manifest(
+            _parse_canonical_json(manifest_bytes, f"development manifest {family}")
+        )
+        raw_name = f"spade-development-{family}-000-050.jsonl.gz"
+        resume_name = f"{raw_name}.resume.json"
+        expected_identity = {
+            "family": family,
+            "start": 0,
+            "stop": development.CAMPAIGNS_PER_FAMILY,
+            "raw_file": raw_name,
+            "resume_file": resume_name,
+            "study_protocol_digest": metadata["study_protocol_digest"],
+            "spec_digest": metadata["spec_digest"],
+            "config_digest": metadata["config_digest"],
+            "generator_digest": metadata["generator_digest"],
+            "generator_manifest_sha256": metadata["generator_manifest_sha256"],
+            "source_commit": selected_source,
+            "source_dirty": False,
+        }
+        for field, expected in expected_identity.items():
+            if manifest[field] != expected:
+                raise ValueError(
+                    f"development manifest {family} registered {field} identity mismatch"
+                )
+        raw_path = _exact_registered_path(
+            repo_root,
+            Path("results") / str(manifest["raw_file"]),
+            Path("results") / raw_name,
+            "development raw shard",
+        )
+        resume_path = _exact_registered_path(
+            repo_root,
+            Path("results") / str(manifest["resume_file"]),
+            Path("results") / resume_name,
+            "development resume checkpoint",
+        )
+        sidecar_path = _exact_registered_path(
+            repo_root,
+            Path("results") / f"{manifest['raw_file']}.sha256",
+            Path("results") / f"{raw_name}.sha256",
+            "development SHA-256 sidecar",
+        )
+        records[family] = (
+            manifest,
+            manifest_path,
+            raw_path,
+            resume_path,
+            sidecar_path,
+        )
+
+    for family in DEVELOPMENT_FAMILIES:
+        manifest, _, raw_path, resume_path, sidecar_path = records[family]
         raw_bytes = _committed_file_bytes(repo_root, raw_path)
         resume_bytes = _committed_file_bytes(repo_root, resume_path)
         sidecar_bytes = _committed_file_bytes(repo_root, sidecar_path)
-        if _sha256_bytes(manifest_bytes) != artifact["manifest_sha256"]:
-            raise ValueError("committed development manifest SHA-256 mismatch")
-        if _sha256_bytes(raw_bytes) != artifact["raw_sha256"]:
+        if _sha256_bytes(raw_bytes) != manifest["raw_sha256"]:
             raise ValueError("committed development raw SHA-256 mismatch")
-        if _sha256_bytes(resume_bytes) != artifact["resume_sha256"]:
+        if _sha256_bytes(resume_bytes) != manifest["resume_sha256"]:
             raise ValueError("committed development resume SHA-256 mismatch")
         expected_sidecar = (
-            f"{artifact['raw_sha256']}  {artifact['raw_file']}\n".encode("ascii")
+            f"{manifest['raw_sha256']}  {manifest['raw_file']}\n".encode("ascii")
         )
         if sidecar_bytes != expected_sidecar:
             raise ValueError("committed development SHA-256 sidecar mismatch")
+    return tuple(records[family][1] for family in DEVELOPMENT_FAMILIES)
 
 
 def power_payload_from_shards(
@@ -399,11 +577,10 @@ def power_payload_from_shards(
     repo_root: Path = ROOT,
 ) -> dict[str, object]:
     """Build the exact power envelope from committed selection and held-out rows."""
-    root = Path(repo_root)
-    selection = Path(selection_path)
-    expected_selection = root / _REGISTERED_SELECTION
-    if selection.resolve() != expected_selection.resolve():
-        raise ValueError(f"selection must be the exact registered path {expected_selection}")
+    root = Path(os.path.abspath(repo_root))
+    selection = _exact_registered_path(
+        root, selection_path, _REGISTERED_SELECTION, "selection"
+    )
     current_commit, dirty = git_state(root)
     if dirty:
         raise ValueError("power planning refuses a dirty source tree")
@@ -420,6 +597,7 @@ def power_payload_from_shards(
     selected_source = str(selected["source_commit"])
     if not _is_ancestor(root, selected_source, current_commit):
         raise ValueError("selected development source commit is not an ancestor of HEAD")
+    _validate_frozen_dependency_blobs(root, selected_source)
 
     analysis_path = root / _REGISTERED_ANALYSIS
     analysis_bytes = _committed_file_bytes(root, analysis_path)
@@ -427,14 +605,19 @@ def power_payload_from_shards(
         raise ValueError("committed development analysis SHA-256 mismatch")
     stored_analysis = _parse_canonical_json(analysis_bytes, "development analysis")
 
-    rows, artifacts = selector._load_complete_shards(
+    registered_manifests = _preflight_development_inputs(
+        root,
         manifest_paths,
+        metadata=metadata,
+        selected_source=selected_source,
+    )
+    rows, artifacts = selector._load_complete_shards(
+        registered_manifests,
         metadata=metadata,
         source_commit=selected_source,
     )
     if _canonical_json(artifacts) != _canonical_json(selected["development_artifacts"]):
         raise ValueError("selected development artifact hashes disagree with loaded bytes")
-    _require_committed_development_inputs(root, manifest_paths, artifacts)
     recomputed_analysis = selector.analyse_development(
         rows,
         protocol_digest=str(metadata["study_protocol_digest"]),
@@ -537,12 +720,14 @@ def write_power_plan(
     output_path: str | Path,
     repo_root: Path = ROOT,
 ) -> dict[str, object]:
-    root = Path(repo_root)
-    destination = Path(output_path)
-    expected = root / _REGISTERED_OUTPUT
-    if destination.resolve() != expected.resolve():
-        raise ValueError(f"power output must be the exact registered path {expected}")
-    if destination.exists():
+    root = Path(os.path.abspath(repo_root))
+    destination = _exact_registered_path(
+        root, output_path, _REGISTERED_OUTPUT, "power output"
+    )
+    parent_status = _reject_symlink_components(root, _REGISTERED_OUTPUT.parent)
+    if not stat.S_ISDIR(parent_status.st_mode):
+        raise ValueError("registered results path is not a directory")
+    if os.path.lexists(destination):
         raise ValueError("power plan is write-once and already exists")
     payload = power_payload_from_shards(
         manifest_paths,
@@ -550,6 +735,9 @@ def write_power_plan(
         repo_root=root,
     )
     _write_once_json(destination, payload)
+    installed_status = _reject_symlink_components(root, _REGISTERED_OUTPUT)
+    if not stat.S_ISREG(installed_status.st_mode):
+        raise RuntimeError("installed power plan is not a regular file")
     if destination.read_bytes() != _canonical_bytes(payload):
         raise RuntimeError("installed power plan bytes failed canonical verification")
     return payload

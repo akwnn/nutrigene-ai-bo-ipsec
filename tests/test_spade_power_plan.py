@@ -62,6 +62,30 @@ def _metadata() -> dict[str, object]:
     }
 
 
+def _registered_manifest(
+    family: str,
+    *,
+    raw_file: str | None = None,
+    resume_file: str | None = None,
+) -> dict[str, object]:
+    expected_raw = f"spade-development-{family}-000-050.jsonl.gz"
+    return development.make_shard_manifest(
+        family=family,
+        start=0,
+        stop=50,
+        row_count=50 * len(development.DEVELOPMENT_ARM_IDS),
+        raw_file=raw_file or expected_raw,
+        raw_sha256=_sha256(f"raw:{family}".encode("ascii")),
+        resume_file=resume_file or f"{expected_raw}.resume.json",
+        resume_sha256=_sha256(f"resume:{family}".encode("ascii")),
+        row_chain_head=_sha256(f"chain:{family}".encode("ascii")),
+        metadata={**_metadata(), "source_commit": SOURCE},
+        smoke=False,
+        complete=True,
+        command_args=(),
+    )
+
+
 def _artifacts() -> list[dict[str, object]]:
     artifacts = []
     for family in sorted(DEVELOPMENT_FAMILIES):
@@ -237,6 +261,18 @@ def planner_case(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> dict[str, o
     monkeypatch.setattr(planner, "registered_metadata", lambda _root: _metadata())
     monkeypatch.setattr(planner, "git_state", lambda _root: (CURRENT, False))
     monkeypatch.setattr(planner, "_is_ancestor", lambda *_args: True)
+    monkeypatch.setattr(
+        planner,
+        "_validate_frozen_dependency_blobs",
+        lambda *_args, **_kwargs: None,
+        raising=False,
+    )
+    monkeypatch.setattr(
+        planner,
+        "_preflight_development_inputs",
+        lambda _root, paths, **_kwargs: tuple(Path(path) for path in paths),
+        raising=False,
+    )
     def committed_bytes(_root, path):
         source = Path(path)
         if source in {analysis_path, selection_path}:
@@ -313,28 +349,208 @@ def test_power_payload_passes_selected_source_to_complete_shard_loader(
     assert observed["metadata"]["source_commit"] == CURRENT
 
 
-def test_power_payload_requires_every_development_input_to_be_committed(
+def test_power_payload_preflights_before_loader_opens_any_development_input(
     planner_case, monkeypatch
 ):
-    observed: set[str] = set()
+    loader_called = False
 
-    def committed(_root, path):
+    def refuse_preflight(_root, _paths, **_kwargs):
+        raise ValueError("manifest preflight refused before open")
+
+    def load(*_args, **_kwargs):
+        nonlocal loader_called
+        loader_called = True
+        raise AssertionError("loader must not run after failed preflight")
+
+    monkeypatch.setattr(
+        planner,
+        "_preflight_development_inputs",
+        refuse_preflight,
+        raising=False,
+    )
+    monkeypatch.setattr(selector, "_load_complete_shards", load)
+    with pytest.raises(ValueError, match="preflight"):
+        _payload(planner_case)
+    assert loader_called is False
+
+
+@pytest.mark.parametrize(
+    "unregistered",
+    [
+        "results/spade-lockbox-hill-0000-0050.jsonl.gz.manifest.json",
+        "results/../secret.json",
+        "/tmp/arbitrary-development-manifest.json",
+    ],
+)
+def test_preflight_rejects_unregistered_manifest_path_before_read(
+    tmp_path, monkeypatch, unregistered
+):
+    observed: list[Path] = []
+
+    def committed(*_args, **_kwargs):
+        observed.append(Path(_args[1]))
+        raise AssertionError("unregistered path must never be read")
+
+    monkeypatch.setattr(
+        planner,
+        "_committed_regular_file_bytes",
+        committed,
+        raising=False,
+    )
+    manifests = [
+        Path("results")
+        / f"spade-development-{family}-000-050.jsonl.gz.manifest.json"
+        for family in DEVELOPMENT_FAMILIES
+    ]
+    manifests[0] = Path(unregistered)
+    with pytest.raises(ValueError, match="registered|manifest|path"):
+        planner._preflight_development_inputs(
+            tmp_path,
+            manifests,
+            metadata=_metadata(),
+            selected_source=SOURCE,
+        )
+    assert observed == []
+
+
+def test_preflight_rejects_manifest_contained_lockbox_path_before_child_read(
+    tmp_path, monkeypatch
+):
+    manifests = [
+        tmp_path
+        / "results"
+        / f"spade-development-{family}-000-050.jsonl.gz.manifest.json"
+        for family in DEVELOPMENT_FAMILIES
+    ]
+    malicious = _registered_manifest(
+        DEVELOPMENT_FAMILIES[0],
+        raw_file="spade-lockbox-toroidal_rastrigin-0000-0050.jsonl.gz",
+    )
+    observed: list[str] = []
+
+    def committed(_root, path, **_kwargs):
         source = Path(path)
-        observed.add(source.name)
-        if source in {
-            Path(planner_case["analysis_path"]),
-            Path(planner_case["selection_path"]),
-        }:
-            return source.read_bytes()
-        return _development_artifact_bytes(source, planner_case["artifacts"])
+        observed.append(source.name)
+        family = next(
+            family for family in DEVELOPMENT_FAMILIES if family in source.name
+        )
+        payload = malicious if family == DEVELOPMENT_FAMILIES[0] else _registered_manifest(family)
+        return _canonical_bytes(payload)
 
-    monkeypatch.setattr(planner, "_committed_file_bytes", committed)
-    _payload(planner_case)
-    for artifact in planner_case["artifacts"]:
-        assert artifact["raw_file"] in observed
-        assert artifact["manifest_file"] in observed
-        assert artifact["resume_file"] in observed
-        assert f"{artifact['raw_file']}.sha256" in observed
+    monkeypatch.setattr(
+        planner,
+        "_committed_regular_file_bytes",
+        committed,
+        raising=False,
+    )
+    with pytest.raises(ValueError, match="raw|registered|identity"):
+        planner._preflight_development_inputs(
+            tmp_path,
+            manifests,
+            metadata=_metadata(),
+            selected_source=SOURCE,
+        )
+    assert all("spade-lockbox" not in name for name in observed)
+    assert observed
+    assert set(observed) <= {path.name for path in manifests}
+
+
+def test_dependency_pinning_runs_before_loader(planner_case, monkeypatch):
+    loader_called = False
+
+    def reject_dependencies(*_args, **_kwargs):
+        raise ValueError("selected source dependency drift")
+
+    def load(*_args, **_kwargs):
+        nonlocal loader_called
+        loader_called = True
+        raise AssertionError("loader must not run after dependency drift")
+
+    monkeypatch.setattr(
+        planner,
+        "_validate_frozen_dependency_blobs",
+        reject_dependencies,
+        raising=False,
+    )
+    monkeypatch.setattr(selector, "_load_complete_shards", load)
+    with pytest.raises(ValueError, match="dependency drift"):
+        _payload(planner_case)
+    assert loader_called is False
+
+
+def test_dependency_pinning_rejects_descendant_selector_reinterpretation(
+    tmp_path, monkeypatch
+):
+    subprocess.run(["git", "init", "-q"], cwd=tmp_path, check=True)
+    subprocess.run(
+        ["git", "config", "user.email", "test@example.com"], cwd=tmp_path, check=True
+    )
+    subprocess.run(
+        ["git", "config", "user.name", "Test"], cwd=tmp_path, check=True
+    )
+    relative = Path("scripts/select_spade_protocol.py")
+    source = tmp_path / relative
+    source.parent.mkdir()
+    source.write_text("FROZEN = 1\n", encoding="utf-8")
+    subprocess.run(["git", "add", relative.as_posix()], cwd=tmp_path, check=True)
+    subprocess.run(["git", "commit", "-qm", "frozen selector"], cwd=tmp_path, check=True)
+    selected_source = subprocess.run(
+        ["git", "rev-parse", "HEAD"],
+        cwd=tmp_path,
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+    source.write_text("FROZEN = 2\n", encoding="utf-8")
+    subprocess.run(["git", "add", relative.as_posix()], cwd=tmp_path, check=True)
+    subprocess.run(["git", "commit", "-qm", "reinterpret rows"], cwd=tmp_path, check=True)
+    monkeypatch.setattr(
+        planner,
+        "_FROZEN_POST_DEVELOPMENT_DEPENDENCIES",
+        (relative,),
+        raising=False,
+    )
+    with pytest.raises(ValueError, match="dependency|selected source|drift"):
+        planner._validate_frozen_dependency_blobs(tmp_path, selected_source)
+
+
+def test_committed_reader_rejects_worktree_and_head_symlinks_and_wrong_mode(tmp_path):
+    subprocess.run(["git", "init", "-q"], cwd=tmp_path, check=True)
+    subprocess.run(
+        ["git", "config", "user.email", "test@example.com"], cwd=tmp_path, check=True
+    )
+    subprocess.run(
+        ["git", "config", "user.name", "Test"], cwd=tmp_path, check=True
+    )
+    results = tmp_path / "results"
+    results.mkdir()
+    path = results / "spade-selected-protocol.json"
+    path.write_text("{}\n", encoding="utf-8")
+    subprocess.run(["git", "add", "results/spade-selected-protocol.json"], cwd=tmp_path, check=True)
+    subprocess.run(["git", "commit", "-qm", "regular"], cwd=tmp_path, check=True)
+    assert planner._committed_regular_file_bytes(tmp_path, path) == b"{}\n"
+
+    target = results / "target.json"
+    target.write_text("{}\n", encoding="utf-8")
+    path.unlink()
+    path.symlink_to(target.name)
+    with pytest.raises(ValueError, match="symlink"):
+        planner._committed_regular_file_bytes(tmp_path, path)
+
+    path.unlink()
+    path.write_text("{}\n", encoding="utf-8")
+    path.chmod(0o755)
+    subprocess.run(["git", "add", "results/spade-selected-protocol.json"], cwd=tmp_path, check=True)
+    subprocess.run(["git", "commit", "-qm", "executable"], cwd=tmp_path, check=True)
+    with pytest.raises(ValueError, match="mode|100644"):
+        planner._committed_regular_file_bytes(tmp_path, path)
+
+    path.unlink()
+    path.symlink_to(target.name)
+    subprocess.run(["git", "add", "results/spade-selected-protocol.json"], cwd=tmp_path, check=True)
+    subprocess.run(["git", "commit", "-qm", "tracked symlink"], cwd=tmp_path, check=True)
+    with pytest.raises(ValueError, match="symlink|mode|regular"):
+        planner._committed_regular_file_bytes(tmp_path, path)
 
 
 def test_power_payload_refuses_dirty_tree(planner_case, monkeypatch):
