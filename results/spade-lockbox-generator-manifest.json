@@ -1,0 +1,141 @@
+{
+  "schema": "boec-spade-lockbox-generator-manifest-v1",
+  "status": "FROZEN_UNOPENED",
+  "frozen_date": "2026-08-25",
+  "freeze_parent_commit": "d1fab2c2099926945e399f741ccc79123a539066",
+  "dimension": 6,
+  "domain": [
+    0.0,
+    1.0
+  ],
+  "families": [
+    "toroidal_rastrigin",
+    "gaussian_basin_mixture",
+    "curved_ridge",
+    "soft_plateau"
+  ],
+  "instance_keys": {
+    "reserved": {
+      "first": 0,
+      "last": 1999,
+      "count": 2000
+    },
+    "selected_prefix": {
+      "first": 0,
+      "last": 349,
+      "count": 350
+    }
+  },
+  "seed_derivation": {
+    "algorithm": "sha256_labelled_stateless",
+    "label": "lockbox_generator_parameters",
+    "identity": "family_and_instance_seed"
+  },
+  "normalization": {
+    "range": [
+      0.0,
+      1.0
+    ],
+    "optimum_value": 1.0,
+    "optimum_location": "interior_0.2_through_0.8_on_every_axis",
+    "audit_tolerance": 0.000001
+  },
+  "generator_definitions": {
+    "toroidal_rastrigin": {
+      "form": "wrapped_shifted_rotated_rastrigin_exponential",
+      "shift": [
+        0.2,
+        0.8
+      ],
+      "frequency_integer": [
+        2,
+        5
+      ],
+      "anisotropy": [
+        2.0,
+        7.0
+      ],
+      "oscillation": [
+        0.15,
+        0.45
+      ],
+      "temperature": [
+        1.2,
+        2.4
+      ],
+      "rotation": "seeded_qr_fixed_sign_positive_determinant",
+      "optimum_audit": "analytic_unique_plus_4096_point_scrambled_sobol_challenge"
+    },
+    "gaussian_basin_mixture": {
+      "form": "log_sum_exp_anisotropic_gaussian_mixture",
+      "component_count_integer": [
+        3,
+        5
+      ],
+      "centers": [
+        0.2,
+        0.8
+      ],
+      "minimum_center_distance": 0.38,
+      "component_weight": [
+        0.35,
+        1.0
+      ],
+      "axis_width": [
+        0.045,
+        0.13
+      ],
+      "rotation": "independent_seeded_qr_fixed_sign_positive_determinant",
+      "optimum_audit": "component_centers_plus_4096_sobol_top12_multistart_with_independent_slsqp_repolish"
+    },
+    "curved_ridge": {
+      "form": "exponential_curved_ridge_penalty",
+      "shift": [
+        0.2,
+        0.8
+      ],
+      "curvature": [
+        -1.2,
+        1.2
+      ],
+      "along_scale": [
+        0.2,
+        0.38
+      ],
+      "ridge_width": [
+        0.035,
+        0.085
+      ],
+      "rotation": "seeded_qr_fixed_sign_positive_determinant",
+      "optimum_audit": "analytic_unique_plus_4096_point_scrambled_sobol_challenge"
+    },
+    "soft_plateau": {
+      "form": "normalized_radial_logistic_soft_plateau",
+      "shift": [
+        0.2,
+        0.8
+      ],
+      "axis_scale": [
+        0.16,
+        0.34
+      ],
+      "plateau_radius": [
+        0.72,
+        1.18
+      ],
+      "edge_width": [
+        0.055,
+        0.12
+      ],
+      "rotation": "seeded_qr_fixed_sign_positive_determinant",
+      "optimum_audit": "analytic_unique_plus_4096_point_scrambled_sobol_challenge"
+    }
+  },
+  "digests": {
+    "lockbox_oracles_source_sha256": "7c72e50194243c181e6d3a7234787a0c7879eb7c0b71389a01b8a438b374563e",
+    "spade_study_source_sha256": "5d09d14b0f1589f53c25543e876b21cddc65356e8b71a23cd94a5dc902c6dd09",
+    "spec_sha256": "f05aa18cf6c302d5396fdee1286f0df777dc70e2123bcfb7c3ef3cdba882adcc",
+    "config_file_sha256": "c1198e4db937b6c1527b18d2df63d996b32fc41fa7a4f4d08c196153c9dd40dc",
+    "protocol_payload_sha256": "ddfa4e36cb789efd2bce2106e42ec0b3bd8cf613a1b1b7deaacca3a5dabd6878"
+  }
+}

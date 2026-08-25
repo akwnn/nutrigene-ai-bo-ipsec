@@ -1,0 +1,126 @@
+schema: boec-spade-joint-protocol-v1
+study_id: spade-joint-48-2026-08-25
+status: FROZEN_BEFORE_DEVELOPMENT_SELECTION
+public_method_name: SPADE
+claim_scope: computational_synthetic_benchmark_only
+
+protocol:
+  dimension: 6
+  budget: 48
+  batch_size: 4
+  bounds: [[0.0, 0.0, 0.0, 0.0, 0.0, 0.0], [1.0, 1.0, 1.0, 1.0, 1.0, 1.0]]
+  noise: {sigma_rel: 0.10, sigma_add: 0.01}
+  reliability: {gamma: 0.95, alpha: 0.95, q_tau: 0.75}
+
+  threshold:
+    target: future_response_reliability_margin
+    formula: "quantile(f - z_gamma * sqrt(sigma_rel^2*f^2 + sigma_add^2), q_tau)"
+    per_landscape_instance: true
+    sealed_oracle_only: true
+
+  surrogate:
+    type: SingleTaskGP
+    kernel: matern_5_2_ard
+    input_transform: unit_cube_normalize
+    outcome_transform: standardize
+    observation_noise: learned_homoskedastic
+    likelihood_noise_interval: [0.000001, 1.0]
+    fit_restarts: 4
+
+  adaptive_pool:
+    design: scrambled_sobol
+    candidate_menu_size: 16384
+    ivr_reference_grid_size: 2048
+    qlognei_mc_samples: 256
+    unique_without_replacement: true
+
+  spade_candidates:
+    openings: [32, 40, 44]
+    opening_design: scrambled_sobol
+    replicate_reserve: 0
+    oa_lhs_included: false
+    policies: [staged, fixed_hybrid, validity_gated]
+    count: 9
+    rounds_by_opening: {32: 5, 40: 3, 44: 2}
+    batch_schedules:
+      32: [32, 4, 4, 4, 4]
+      40: [40, 4, 4]
+      44: [44, 4]
+    boundary_ess_min: 32
+    whole_batch_objectives: [qlognei, global_ivr, boundary_ivr]
+    policy_definitions:
+      staged: qlognei_every_adaptive_batch
+      fixed_hybrid: alternate_qlognei_and_global_ivr_starting_qlognei
+      validity_gated: alternate_qlognei_and_boundary_or_global_ivr_starting_qlognei
+
+  comparator_arms:
+    sobol48:
+      opening: 48
+      batch_schedule: [48]
+      rounds: 1
+    qlognei48:
+      opening: 14
+      batch_schedule: [14, 4, 4, 4, 4, 4, 4, 4, 4, 2]
+      rounds: 10
+
+  grids: {calibration: 65536, terminal: 16384, map: 8192, certificate: 2048}
+  certificate_draws: {total: 4096, selection: 2048, evaluation: 2048, rho_grid: 64}
+  terminal_rule: P
+  map_primary: integrated_squared_probability_error
+  certificate_primary: [answer_rate, empirical_truth_containment_conditional_on_nonempty]
+  certificate_diagnostic: model_conditional_crossfit_containment
+  empty_certificate_policy: answer_failure_and_excluded_from_conditional_containment
+
+  development:
+    families: [hill, ackley, hartmann6, levy, rosenbrock]
+    campaigns_per_family_arm: 50
+    arms_per_family: 11
+    total_noisy_evaluations: 132000
+    hill_instances: 25
+    hill_campaign_seeds_per_instance: 2
+    selection: nested_leave_one_family_out
+    minimum_answer_rate_point_estimate: 0.50
+    minimum_empirical_containment_point_estimate: 0.90
+    regret_noninferiority_margin: 0.02
+    one_sided_confidence: 0.95
+    tie_break_policy_order: [fixed_hybrid, validity_gated, staged]
+
+  lockbox:
+    families: [toroidal_rastrigin, gaussian_basin_mixture, curved_ridge, soft_plateau]
+    minimum_campaigns_per_family_arm: 350
+    reserved_instance_keys: {first: 0, last: 1999, count: 2000}
+    selected_instance_prefix: {first: 0, last: 349, count: 350}
+    arms: [SPADE, Sobol48, qLogNEI48]
+    evaluations_at_minimum_sample_size: 201600
+    target_joint_power: 0.80
+    planning_answer_rate: 0.60
+    planning_conditional_containment: 0.95
+    estimated_certificate_joint_power_at_350: 0.825
+    paired_bootstrap_replicates: 10000
+    one_sided_confidence: 0.95
+    secondary_multiplicity: Holm
+
+  total_noisy_evaluations_at_minimum_sample_size: 333600
+
+  success_by_each_lockbox_family:
+    map_noninferiority_margin_vs_sobol48: 0.02
+    regret_noninferiority_margin_vs_qlognei48: 0.02
+    minimum_answer_rate_exact_lower_bound: 0.50
+    minimum_empirical_containment_exact_lower_bound: 0.90
+    certificate_nominal_alpha: 0.95
+    no_family_pooling: true
+
+  reproducibility:
+    seed_derivation: sha256_labelled_stateless
+    indexed_observation_noise: true
+    gzip_jsonl_mtime: 0
+    raw_row_schema: boec-spade-study-row-v1
+    source_must_be_clean: true
+    lockbox_outcomes_before_selected_protocol_commit: forbidden
+
+digests:
+  digest_definition: "sha256; protocol payload uses canonical sorted compact JSON of the parsed protocol mapping"
+  protocol_payload_sha256: ddfa4e36cb789efd2bce2106e42ec0b3bd8cf613a1b1b7deaacca3a5dabd6878
+  spec_sha256: f05aa18cf6c302d5396fdee1286f0df777dc70e2123bcfb7c3ef3cdba882adcc
+  lockbox_oracles_source_sha256: 7c72e50194243c181e6d3a7234787a0c7879eb7c0b71389a01b8a438b374563e
+  spade_study_source_sha256: 5d09d14b0f1589f53c25543e876b21cddc65356e8b71a23cd94a5dc902c6dd09
