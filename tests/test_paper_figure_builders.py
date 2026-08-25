@@ -94,6 +94,26 @@ def test_figure2_encodes_same_campaign_rules_contrasts_and_decomposition():
     plt.close(bundle.figure)
 
 
+def test_figure2_rendered_text_states_terminal_rule_semantics():
+    bundle = build_figure2(build_figure2_data(Path("results")), get_preset("portable"))
+    bundle.figure.canvas.draw()
+    rendered_text = {
+        " ".join(text.get_text().split())
+        for text in bundle.figure.findobj(match=Text)
+        if text.get_text()
+    }
+
+    assert "Rule A = search loss + identification loss" in rendered_text
+    assert any(
+        "blue: search loss" in text and "orange: identification loss" in text
+        for text in rendered_text
+    )
+    assert any("← P lower" in text and "P higher →" in text for text in rendered_text)
+    assert {"Classical DoE", "qLogEI", "qLogNEI", "SPADE"} <= rendered_text
+
+    plt.close(bundle.figure)
+
+
 def test_figure2_portable_text_stays_inside_the_rendered_figure():
     bundle = build_figure2(build_figure2_data(Path("results")), get_preset("portable"))
     figure = bundle.figure

@@ -322,6 +322,3 @@ COMMIT_MSG.txt
 # per-arm-per-condition campaign files (kf3-followup-c*-spade_cf_*.json/.ckpt.jsonl, bulk,
 # regenerable).
 !results/kf3-followup-analysis.json
-
-# Local isolated feature worktrees.
-.worktrees/

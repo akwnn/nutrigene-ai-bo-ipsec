@@ -100,8 +100,13 @@ def build_figure2(data: dict, preset: VenuePreset) -> FigureBundle:
         maximum_regret = float(np.max(search_loss + identification_loss))
         axis_c.set_xlim(0, maximum_regret * 1.06)
         axis_c.set_xticks(np.arange(0, maximum_regret, 0.05))
-        axis_c.set_xlabel("Rule-A simple regret\nblue: search\norange: identification")
-        axis_c.set_title("Rule A = search +\nidentification loss", loc="left", fontsize=preset.body_pt)
+        axis_c.set_xlabel("Rule-A simple regret\nblue: search loss\norange: identification loss")
+        axis_c.set_title(
+            "Rule A = search loss + identification loss",
+            loc="left",
+            fontsize=preset.body_pt,
+            wrap=True,
+        )
 
     panel_data = {
         "A": {"rows": rule_means, "pairing": "same campaigns"},
