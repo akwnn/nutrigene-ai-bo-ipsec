@@ -112,10 +112,9 @@ def test_figure2_rendered_text_states_terminal_rule_semantics():
     }
 
     assert "Rule A = search loss + identification loss" in rendered_text
-    assert any(
-        "blue: search loss" in text and "orange: identification loss" in text
-        for text in rendered_text
-    )
+    assert "Search loss" in rendered_text
+    assert "Identification loss" in rendered_text
+    assert not any("blue:" in text or "orange:" in text for text in rendered_text)
     assert any("← P lower" in text and "P higher →" in text for text in rendered_text)
     panel_a_labels = {
         " ".join(text.get_text().split())
@@ -123,12 +122,16 @@ def test_figure2_rendered_text_states_terminal_rule_semantics():
         if text.get_text()
     }
     assert {"Classical DoE", "qLogEI", "qLogNEI", "SPADE"} <= panel_a_labels
+    assert all(text.get_color() == "#243746" for text in bundle.figure.axes[0].texts if text.get_text() in panel_a_labels)
+    assert all(linewidth <= 1.0 for collection in bundle.figure.axes[1].collections for linewidth in collection.get_linewidths())
+    assert {patch.get_hatch() for patch in bundle.figure.axes[2].patches} >= {"////", "...."}
 
     plt.close(bundle.figure)
 
 
-def test_figure2_portable_text_stays_inside_the_rendered_figure():
-    bundle = build_figure2(build_figure2_data(Path("results")), get_preset("portable"))
+@pytest.mark.parametrize("preset_name", ["portable", "rsc", "nature", "plos"])
+def test_figure2_text_stays_inside_the_rendered_figure_for_every_preset(preset_name):
+    bundle = build_figure2(build_figure2_data(Path("results")), get_preset(preset_name))
     figure = bundle.figure
     figure.canvas.draw()
     renderer = figure.canvas.get_renderer()
