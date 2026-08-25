@@ -26,6 +26,33 @@ CURRENT_SOURCE = "3" * 40
 POWER_HASH = "9" * 64
 
 
+def _environment(
+    executable: str = "/opt/host-a/bin/python",
+    *,
+    platform_name: str = "macOS-15.6.1-arm64-arm-64bit",
+    torch_threads: int = 4,
+) -> dict[str, object]:
+    return {
+        "python": "3.11.13",
+        "platform": platform_name,
+        "packages": {
+            "numpy": "2.3.2",
+            "scipy": "1.16.1",
+            "torch": "2.7.1",
+            "gpytorch": "1.14",
+            "botorch": "0.15.0",
+        },
+        "threads": {
+            "torch": torch_threads,
+            "torch_interop": 1,
+            "omp_num_threads": "4",
+            "mkl_num_threads": None,
+        },
+        "executable": executable,
+        "boec_distribution": "0.1.0",
+    }
+
+
 def _canonical_bytes(value: object) -> bytes:
     return (
         json.dumps(
@@ -96,6 +123,74 @@ def _install_trusted_merge_access(
             )
         },
     )
+
+
+def _write_synthetic_lockbox_shard(
+    directory: Path,
+    *,
+    family: str,
+    start: int,
+    stop: int,
+    sample_size: int,
+    metadata: dict[str, object],
+    environment: dict[str, object],
+) -> Path:
+    directory.mkdir(parents=True, exist_ok=True)
+    raw = directory / lockbox.registered_raw_filename(
+        family, start, stop, sample_size=sample_size
+    )
+    # Deliberately not JSONL/gzip: merge may authenticate bytes, but must not inspect
+    # outcome rows or metrics before the completed distributed artifact is analysed.
+    raw.write_bytes(f"synthetic-no-outcome:{family}:{start}:{stop}".encode("ascii"))
+    raw_sha256 = hashlib.sha256(raw.read_bytes()).hexdigest()
+    Path(f"{raw}.sha256").write_text(f"{raw_sha256}  {raw.name}\n")
+    shard = {
+        "schema": lockbox.MANIFEST_SCHEMA,
+        "status": "COMPLETE",
+        "family": family,
+        "start": start,
+        "stop": stop,
+        "sample_size": sample_size,
+        "expected_rows": (stop - start) * len(lockbox.LOCKBOX_ARMS),
+        "row_count": (stop - start) * len(lockbox.LOCKBOX_ARMS),
+        "complete": True,
+        "raw_file": raw.name,
+        "raw_sha256": raw_sha256,
+        **metadata,
+        "environment_compatibility": lockbox.environment_compatibility_projection(
+            environment
+        ),
+        "command_args": ["--family", family, "--start", str(start), "--stop", str(stop)],
+    }
+    manifest = Path(f"{raw}.manifest.json")
+    manifest.write_bytes(_canonical_bytes(shard))
+    return manifest
+
+
+def _distributed_synthetic_shards(
+    tmp_path: Path,
+    *,
+    metadata: dict[str, object],
+    sample_size: int = 350,
+) -> list[Path]:
+    intervals = ((0, 73), (73, 181), (181, 271), (271, sample_size))
+    paths: list[Path] = []
+    for family_index, family in enumerate(lockbox.LOCKBOX_FAMILIES):
+        for shard_index, (start, stop) in enumerate(intervals):
+            paths.append(
+                _write_synthetic_lockbox_shard(
+                    tmp_path / f"host-{family_index}-{shard_index}",
+                    family=family,
+                    start=start,
+                    stop=stop,
+                    sample_size=sample_size,
+                    metadata=metadata,
+                    environment=_environment(
+                        f"/opt/worker-{family_index}-{shard_index}/bin/python"
+                    ),
+                )
+            )
+    return paths
 
 
 def _development_artifacts() -> list[dict[str, object]]:
@@ -477,7 +572,7 @@ def test_final_manifest_requires_complete_non_overlapping_shards(tmp_path, monke
         raw.write_bytes(family.encode())
         raw_hash = hashlib.sha256(raw.read_bytes()).hexdigest()
         (tmp_path / f"{raw.name}.sha256").write_text(f"{raw_hash}  {raw.name}\n")
-        manifest = {"schema": lockbox.MANIFEST_SCHEMA, "status": "COMPLETE", "family": family, "start": 0, "stop": 412, "sample_size": 412, "expected_rows": 1236, "row_count": 1236, "complete": True, "raw_file": raw.name, "raw_sha256": raw_hash, **metadata}
+        manifest = {"schema": lockbox.MANIFEST_SCHEMA, "status": "COMPLETE", "family": family, "start": 0, "stop": 412, "sample_size": 412, "expected_rows": 1236, "row_count": 1236, "complete": True, "raw_file": raw.name, "raw_sha256": raw_hash, **metadata, "environment_compatibility": lockbox.environment_compatibility_projection(_environment())}
         path = tmp_path / f"{raw.name}.manifest.json"
         path.write_text(json.dumps(manifest))
         paths.append(path)
@@ -495,6 +590,106 @@ def test_final_manifest_requires_complete_non_overlapping_shards(tmp_path, monke
     paths[0].write_text(json.dumps(broken))
     with pytest.raises(ValueError, match="row count"):
         lockbox.merge_lockbox_manifests(paths, output=tmp_path / "second.json", metadata=metadata, sample_size=412)
+
+
+def test_environment_compatibility_projection_excludes_only_host_executable():
+    host_a = _environment("/opt/host-a/bin/python")
+    host_b = _environment("/srv/host-b/venv/bin/python")
+    projection = lockbox.environment_compatibility_projection(host_a)
+
+    assert projection == lockbox.environment_compatibility_projection(host_b)
+    assert "executable" not in projection
+    assert projection["python"] == host_a["python"]
+    assert projection["platform"] == host_a["platform"]
+    assert projection["packages"] == host_a["packages"]
+    assert projection["threads"] == host_a["threads"]
+    assert projection["boec_distribution"] == host_a["boec_distribution"]
+
+    for field, incompatible in (
+        ("platform", _environment(platform_name="Linux-6.8-x86_64")),
+        ("threads", _environment(torch_threads=8)),
+    ):
+        assert lockbox.environment_compatibility_projection(incompatible) != projection, field
+
+
+def test_merge_accepts_arbitrary_cross_host_shards_without_loading_outcomes(
+    tmp_path, monkeypatch
+):
+    metadata = _lockbox_metadata()
+    _install_trusted_merge_access(monkeypatch, metadata, sample_size=350)
+    paths = _distributed_synthetic_shards(tmp_path, metadata=metadata)
+
+    merged = lockbox.merge_lockbox_manifests(
+        list(reversed(paths)),
+        output=tmp_path / "spade-lockbox-manifest.json",
+        metadata=metadata,
+        sample_size=350,
+    )
+
+    assert len(merged["raw_shards"]) == 16
+    assert merged["environment_compatibility"] == (
+        lockbox.environment_compatibility_projection(_environment())
+    )
+    assert "executable" not in merged["environment_compatibility"]
+    assert {
+        Path(path).parent.name for path in paths
+    } == {f"host-{family}-{shard}" for family in range(4) for shard in range(4)}
+
+
+@pytest.mark.parametrize("defect", ["gap", "overlap", "duplicate"])
+def test_merge_rejects_distributed_range_defects_without_loading_outcomes(
+    tmp_path, monkeypatch, defect
+):
+    metadata = _lockbox_metadata()
+    _install_trusted_merge_access(monkeypatch, metadata, sample_size=350)
+    paths = _distributed_synthetic_shards(tmp_path, metadata=metadata)
+    family_paths = [
+        path for path in paths if lockbox.LOCKBOX_FAMILIES[0] in path.name
+    ]
+    if defect == "gap":
+        paths.remove(family_paths[1])
+    elif defect == "overlap":
+        paths.remove(family_paths[1])
+        paths.append(
+            _write_synthetic_lockbox_shard(
+                tmp_path / "overlap-host",
+                family=lockbox.LOCKBOX_FAMILIES[0],
+                start=70,
+                stop=181,
+                sample_size=350,
+                metadata=metadata,
+                environment=_environment("/overlap-host/bin/python"),
+            )
+        )
+    else:
+        paths.append(family_paths[0])
+
+    with pytest.raises(ValueError, match="missing|overlapping|incomplete"):
+        lockbox.merge_lockbox_manifests(
+            paths,
+            output=tmp_path / "spade-lockbox-manifest.json",
+            metadata=metadata,
+            sample_size=350,
+        )
+
+
+def test_merge_rejects_science_incompatible_distributed_environment(
+    tmp_path, monkeypatch
+):
+    metadata = _lockbox_metadata()
+    _install_trusted_merge_access(monkeypatch, metadata, sample_size=350)
+    paths = _distributed_synthetic_shards(tmp_path, metadata=metadata)
+    drifted = json.loads(paths[-1].read_text())
+    drifted["environment_compatibility"]["packages"]["torch"] = "9.9.9"
+    paths[-1].write_bytes(_canonical_bytes(drifted))
+
+    with pytest.raises(ValueError, match="environment compatibility"):
+        lockbox.merge_lockbox_manifests(
+            paths,
+            output=tmp_path / "spade-lockbox-manifest.json",
+            metadata=metadata,
+            sample_size=350,
+        )
 
 
 def test_merge_requires_fresh_validated_access_before_processing_shards(
@@ -578,7 +773,7 @@ def test_merge_keeps_distinct_shard_command_args(tmp_path, monkeypatch):
         raw = tmp_path / f"spade-lockbox-{family}-0000-0412.jsonl.gz"
         raw.write_bytes(family.encode()); digest = hashlib.sha256(raw.read_bytes()).hexdigest()
         (tmp_path / f"{raw.name}.sha256").write_text(f"{digest}  {raw.name}\n")
-        shard = {"schema": lockbox.MANIFEST_SCHEMA, "status": "COMPLETE", "family": family, "start": 0, "stop": 412, "sample_size": 412, "expected_rows": 1236, "row_count": 1236, "complete": True, "raw_file": raw.name, "raw_sha256": digest, **metadata, "command_args": ["--family", family, "--out", str(raw), str(index)]}
+        shard = {"schema": lockbox.MANIFEST_SCHEMA, "status": "COMPLETE", "family": family, "start": 0, "stop": 412, "sample_size": 412, "expected_rows": 1236, "row_count": 1236, "complete": True, "raw_file": raw.name, "raw_sha256": digest, **metadata, "environment_compatibility": lockbox.environment_compatibility_projection(_environment()), "command_args": ["--family", family, "--out", str(raw), str(index)]}
         path = tmp_path / f"{raw.name}.manifest.json"; path.write_text(json.dumps(shard)); paths.append(path)
     merged = lockbox.merge_lockbox_manifests(paths, output=tmp_path / "merged.json", metadata=metadata, sample_size=412)
     expected = {family: ["--family", family, "--out", str(tmp_path / f"spade-lockbox-{family}-0000-0412.jsonl.gz"), str(index)] for index, family in enumerate(lockbox.LOCKBOX_FAMILIES)}
@@ -667,10 +862,13 @@ def _registered_provenance(sample_size: int) -> dict[str, object]:
         "generator_digest": GENERATOR,
         "generator_manifest_sha256": "c" * 64,
         "source_commit": CURRENT_SOURCE,
+        "selected_protocol_sha256": "b" * 64,
         "power_plan_sha256": POWER_HASH,
         "power_source_commit": POWER_SOURCE,
         "sample_size": sample_size,
-        "environment": {"python": "test"},
+        "environment_compatibility": lockbox.environment_compatibility_projection(
+            _environment()
+        ),
     }
 
 
@@ -687,10 +885,11 @@ def _registered_rows(sample_size: int) -> list[dict[str, object]]:
                     "config_digest": CONFIG,
                     "source_commit": CURRENT_SOURCE,
                     "source_dirty": False,
-                    "environment": {"python": "test"},
+                    "environment": _environment(),
                     "parent_artifacts": {
                         "generator": GENERATOR,
                         "generator_manifest": "c" * 64,
+                        "selected_protocol": "b" * 64,
                         "power_plan": POWER_HASH,
                     },
                 }
@@ -767,11 +966,52 @@ def test_registered_analysis_uses_exact_power_controlled_sample_size(sample_size
         bootstrap_replicates=17,
         bootstrap_seed=23,
     )
-    assert result["schema"] == "boec-spade-lockbox-analysis-v2"
+    assert result["schema"] == analysis.SCHEMA
     assert result["overall_verdict"] == "PASS"
     assert result["provenance"] == provenance
     assert result["provenance"]["sample_size"] == sample_size
     assert result["provenance"]["power_plan_sha256"] == POWER_HASH
+
+
+def test_registered_analysis_accepts_cross_host_executables_but_not_science_drift():
+    rows = _registered_rows(350)
+    for index, row in enumerate(rows):
+        row["environment"]["executable"] = f"/host-{index % 7}/venv/bin/python"
+    provenance = _registered_provenance(350)
+
+    result = analysis.analyse_lockbox_rows(
+        rows,
+        execution_mode="REGISTERED",
+        sample_size=350,
+        provenance=provenance,
+        bootstrap_replicates=17,
+    )
+    assert result["provenance"]["selected_protocol_sha256"] == "b" * 64
+    assert "executable" not in result["provenance"]["environment_compatibility"]
+
+    incompatible = copy.deepcopy(rows)
+    incompatible[0]["environment"]["threads"]["torch"] = 8
+    with pytest.raises(ValueError, match="environment compatibility"):
+        analysis.analyse_lockbox_rows(
+            incompatible,
+            execution_mode="REGISTERED",
+            sample_size=350,
+            provenance=provenance,
+            bootstrap_replicates=17,
+        )
+
+
+def test_registered_analysis_requires_every_row_selected_protocol_parent():
+    rows = _registered_rows(350)
+    rows[0]["parent_artifacts"]["selected_protocol"] = "0" * 64
+    with pytest.raises(ValueError, match="parent provenance|selected protocol"):
+        analysis.analyse_lockbox_rows(
+            rows,
+            execution_mode="REGISTERED",
+            sample_size=350,
+            provenance=_registered_provenance(350),
+            bootstrap_replicates=17,
+        )
 
 
 def test_registered_analysis_rejects_grid_or_power_provenance_drift():
@@ -850,6 +1090,9 @@ def test_merged_analysis_hashes_actual_power_and_passes_manifest_size(
             "raw_file": raw.name,
             "raw_sha256": raw_sha256,
             **metadata,
+            "environment_compatibility": lockbox.environment_compatibility_projection(
+                _environment()
+            ),
             "command_args": ["--family", family],
         }
         manifest_path = Path(f"{raw}.manifest.json")
@@ -884,6 +1127,10 @@ def test_merged_analysis_hashes_actual_power_and_passes_manifest_size(
     ) == {"schema": "captured"}
     assert captured["sample_size"] == 350
     assert captured["provenance"]["power_plan_sha256"] == power_sha256
+    assert captured["provenance"]["selected_protocol_sha256"] == "b" * 64
+    assert captured["provenance"]["environment_compatibility"] == (
+        lockbox.environment_compatibility_projection(_environment())
+    )
     assert len(captured["rows"]) == 4 * 350 * 3
 
     power_path.write_bytes(_canonical_bytes({**power_payload, "status": "changed"}))
@@ -897,6 +1144,8 @@ def test_shard_schema_and_merged_schema_share_protocol_and_provenance_keys():
     assert "study_protocol_digest" not in lockbox.MERGED_MANIFEST_FIELDS
     assert "selected_protocol_sha256" in lockbox.SHARD_MANIFEST_FIELDS
     assert {"power_plan_sha256", "power_source_commit"} <= lockbox.SHARD_MANIFEST_FIELDS
+    assert "environment_compatibility" in lockbox.SHARD_MANIFEST_FIELDS
+    assert "environment_compatibility" in lockbox.MERGED_MANIFEST_FIELDS
     assert lockbox.MANIFEST_SCHEMA == "boec-spade-lockbox-shard-v2"
     assert lockbox.MERGED_MANIFEST_SCHEMA == "boec-spade-lockbox-manifest-v2"
     assert "command_args" in lockbox.SHARD_MANIFEST_FIELDS

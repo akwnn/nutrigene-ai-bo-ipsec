@@ -137,12 +137,17 @@ def _score(row: Mapping[str, object], name: str) -> float:
 
 
 def _registered_row_contract(rows: Sequence[Mapping[str, object]], provenance: Mapping[str, object], *, sample_size: int) -> None:
+    from scripts import run_spade_lockbox as lockbox_contract
+
     registered_n = _registered_sample_size(sample_size)
-    required_provenance = {"protocol_digest", "spec_digest", "config_digest", "generator_digest", "generator_manifest_sha256", "source_commit", "power_plan_sha256", "power_source_commit", "sample_size", "environment"}
+    required_provenance = {"protocol_digest", "spec_digest", "config_digest", "generator_digest", "generator_manifest_sha256", "source_commit", "selected_protocol_sha256", "power_plan_sha256", "power_source_commit", "sample_size", "environment_compatibility"}
     if set(provenance) != required_provenance:
         raise ValueError("registered analysis provenance schema drift")
     if provenance.get("sample_size") != registered_n:
         raise ValueError("registered analysis sample size provenance mismatch")
+    expected_environment = lockbox_contract.validate_environment_compatibility(
+        provenance.get("environment_compatibility")
+    )
     expected_keys = {(family, key, 0, arm) for family in LOCKBOX_FAMILIES for key in range(registered_n) for arm in ARMS}
     actual_keys = set()
     for row in rows:
@@ -158,10 +163,16 @@ def _registered_row_contract(rows: Sequence[Mapping[str, object]], provenance: M
             if row.get(field) != provenance[field]:
                 raise ValueError("registered analysis row provenance mismatch")
         parent = row.get("parent_artifacts")
-        if not isinstance(parent, Mapping) or parent.get("generator") != provenance["generator_digest"] or parent.get("generator_manifest") != provenance["generator_manifest_sha256"] or parent.get("power_plan") != provenance["power_plan_sha256"]:
+        if not isinstance(parent, Mapping) or parent.get("generator") != provenance["generator_digest"] or parent.get("generator_manifest") != provenance["generator_manifest_sha256"] or parent.get("selected_protocol") != provenance["selected_protocol_sha256"] or parent.get("power_plan") != provenance["power_plan_sha256"]:
             raise ValueError("registered analysis row parent provenance mismatch")
-        if row.get("environment") != provenance["environment"]:
-            raise ValueError("registered analysis common environment mismatch")
+        try:
+            row_environment = lockbox_contract.environment_compatibility_projection(
+                row.get("environment")
+            )
+        except ValueError as exc:
+            raise ValueError("registered analysis row environment compatibility drift") from exc
+        if row_environment != expected_environment:
+            raise ValueError("registered analysis row environment compatibility mismatch")
         score = row.get("scores")
         if not isinstance(score, Mapping) or score.get("budget") != 48 or score.get("terminal_rule") != "P" or score.get("execution_mode") != "REGISTERED":
             raise ValueError("registered analysis score contract drift")
@@ -326,9 +337,8 @@ def analyse_merged_manifest(manifest_path: Path, *, power_path: Path | None = No
         ))
     if not rows:
         raise ValueError("merged lockbox manifest has no rows")
-    provenance = {field: manifest[field] for field in ("protocol_digest", "spec_digest", "config_digest", "generator_digest", "generator_manifest_sha256", "source_commit", "power_plan_sha256", "power_source_commit")}
+    provenance = {field: manifest[field] for field in ("protocol_digest", "spec_digest", "config_digest", "generator_digest", "generator_manifest_sha256", "source_commit", "selected_protocol_sha256", "power_plan_sha256", "power_source_commit", "environment_compatibility")}
     provenance["sample_size"] = sample_size
-    provenance["environment"] = rows[0]["environment"]
     return analyse_lockbox_rows(rows, execution_mode="REGISTERED", sample_size=sample_size, provenance=provenance)
 
 

@@ -30,7 +30,7 @@ from boec.lockbox_oracles import LOCKBOX_FAMILIES, make_lockbox_oracle  # noqa: 
 from boec.seedbook import IndexedGaussianNoise, derive_seed  # noqa: E402
 from boec.spade import SpadeConfig, run_qlognei48, run_sobol48, run_spade  # noqa: E402
 from boec.spade_power import DEVELOPMENT_FAMILIES, validate_power_plan_payload  # noqa: E402
-from boec.spade_study import SealedOracleHarness, _validate_rows, build_study_row, controlled_tau, score_campaign, write_jsonl_gzip  # noqa: E402
+from boec.spade_study import SealedOracleHarness, _validate_rows, build_study_row, collect_environment_provenance, controlled_tau, score_campaign, write_jsonl_gzip  # noqa: E402
 from boec.torch_oracle import TorchEvaluator  # noqa: E402
 
 
@@ -40,21 +40,22 @@ SIGMA_REL, SIGMA_ADD, GAMMA, ALPHA, Q_TAU = .10, .01, .95, .95, .75
 MANIFEST_SCHEMA = "boec-spade-lockbox-shard-v2"
 MERGED_MANIFEST_SCHEMA = "boec-spade-lockbox-manifest-v2"
 RESUME_SCHEMA = "boec-spade-lockbox-resume-v2"
-GENERATOR_FREEZE_SHA256 = "116e9dfb75fe027cee783d1d42154593c254e27d832fc50b549f3308718b658c"
+GENERATOR_FREEZE_SHA256 = "cf4b57f9e087391f3d971b46fa3b688700f0f03ead6fad410729aafa1af54404"
 GENERATOR_FREEZE_PARENT_COMMIT = "d1fab2c2099926945e399f741ccc79123a539066"
+ENVIRONMENT_COMPATIBILITY_SCHEMA = "boec-spade-environment-compatibility-v1"
 SHARD_MANIFEST_FIELDS = frozenset({
     "schema", "status", "family", "start", "stop", "sample_size", "expected_rows",
     "row_count", "complete", "raw_file", "raw_sha256", "protocol_digest",
     "spec_digest", "config_digest", "generator_digest", "generator_manifest_sha256",
     "source_commit", "source_dirty", "selected_protocol_sha256",
     "selection_source_commit", "power_plan_sha256", "power_source_commit",
-    "command_args",
+    "environment_compatibility", "command_args",
 })
 MERGED_MANIFEST_FIELDS = frozenset({
     "schema", "status", "sample_size", "raw_shards", "protocol_digest", "spec_digest",
     "config_digest", "generator_digest", "generator_manifest_sha256", "source_commit",
     "source_dirty", "selected_protocol_sha256", "selection_source_commit",
-    "power_plan_sha256", "power_source_commit",
+    "power_plan_sha256", "power_source_commit", "environment_compatibility",
 })
 MERGED_RAW_SHARD_FIELDS = frozenset({
     "family", "start", "stop", "raw_file", "raw_sha256", "command_args",
@@ -88,6 +89,85 @@ def _canonical_bytes(value: object) -> bytes:
 
 def _sha256(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def validate_environment_compatibility(value: object) -> dict[str, object]:
+    """Validate the science-affecting cross-host environment projection."""
+    fields = {
+        "schema", "python", "platform", "packages", "threads",
+        "boec_distribution",
+    }
+    package_fields = {"numpy", "scipy", "torch", "gpytorch", "botorch"}
+    thread_fields = {
+        "torch", "torch_interop", "omp_num_threads", "mkl_num_threads",
+    }
+    if not isinstance(value, Mapping) or set(value) != fields:
+        raise ValueError("lockbox environment compatibility schema drift")
+    result = dict(value)
+    if result.get("schema") != ENVIRONMENT_COMPATIBILITY_SCHEMA:
+        raise ValueError("lockbox environment compatibility schema drift")
+    for field in ("python", "platform", "boec_distribution"):
+        if not isinstance(result.get(field), str) or not result[field]:
+            raise ValueError(f"lockbox environment compatibility {field} drift")
+    packages = result.get("packages")
+    if (
+        not isinstance(packages, Mapping)
+        or set(packages) != package_fields
+        or any(not isinstance(version, str) or not version for version in packages.values())
+    ):
+        raise ValueError("lockbox environment compatibility package-version drift")
+    threads = result.get("threads")
+    if not isinstance(threads, Mapping) or set(threads) != thread_fields:
+        raise ValueError("lockbox environment compatibility thread schema drift")
+    for field in ("torch", "torch_interop"):
+        thread_count = threads.get(field)
+        if isinstance(thread_count, bool) or not isinstance(thread_count, int) or thread_count < 1:
+            raise ValueError("lockbox environment compatibility thread-count drift")
+    for field in ("omp_num_threads", "mkl_num_threads"):
+        if threads.get(field) is not None and not isinstance(threads[field], str):
+            raise ValueError("lockbox environment compatibility thread-setting drift")
+    result["packages"] = dict(packages)
+    result["threads"] = dict(threads)
+    return result
+
+
+def environment_compatibility_projection(environment: object) -> dict[str, object]:
+    """Project full row provenance onto science-affecting cross-host fields.
+
+    ``executable`` remains in every raw row for auditability, but is deliberately absent
+    here because an absolute interpreter path is host-local rather than scientific state.
+    """
+    fields = {
+        "python", "platform", "packages", "threads", "executable",
+        "boec_distribution",
+    }
+    if not isinstance(environment, Mapping) or set(environment) != fields:
+        raise ValueError("lockbox row environment schema drift")
+    executable = environment.get("executable")
+    if not isinstance(executable, str) or not executable:
+        raise ValueError("lockbox row environment executable drift")
+    return validate_environment_compatibility({
+        "schema": ENVIRONMENT_COMPATIBILITY_SCHEMA,
+        "python": environment.get("python"),
+        "platform": environment.get("platform"),
+        "packages": environment.get("packages"),
+        "threads": environment.get("threads"),
+        "boec_distribution": environment.get("boec_distribution"),
+    })
+
+
+def common_environment_compatibility(
+    rows: Sequence[Mapping[str, object]],
+) -> dict[str, object]:
+    if not rows:
+        raise ValueError("lockbox shard has no rows for environment compatibility")
+    expected = environment_compatibility_projection(rows[0].get("environment"))
+    if any(
+        environment_compatibility_projection(row.get("environment")) != expected
+        for row in rows[1:]
+    ):
+        raise ValueError("lockbox shard row environment compatibility drift")
+    return expected
 
 
 def _require_hex(value: object, name: str, *, length: int = 64) -> str:
@@ -515,6 +595,9 @@ def validate_completed_shard_contract(
     command_args = result.get("command_args")
     if not isinstance(command_args, list) or any(not isinstance(value, str) for value in command_args):
         raise ValueError("lockbox shard command args schema drift")
+    result["environment_compatibility"] = validate_environment_compatibility(
+        result.get("environment_compatibility")
+    )
     if merged_entry is not None:
         if set(merged_entry) != MERGED_RAW_SHARD_FIELDS:
             raise ValueError("lockbox merged raw-shard schema drift")
@@ -528,6 +611,7 @@ def validate_completed_shard_contract(
             "generator_manifest_sha256", "source_commit", "source_dirty",
             "selected_protocol_sha256", "selection_source_commit",
             "power_plan_sha256", "power_source_commit",
+            "environment_compatibility",
         ):
             if result.get(field) != merged_manifest.get(field):
                 raise ValueError(f"lockbox shard {field} identity drift")
@@ -681,6 +765,11 @@ def run_lockbox_shard(*, family: str, start: int, stop: int, output: str | Path,
             rows = validate_resume_payload(json.loads(resume_path.read_text()), metadata=metadata, family=family, start=start, stop=stop, sample_size=sample_size, raw_file=destination.name)
         except json.JSONDecodeError as exc:
             raise ValueError("resume checkpoint is invalid JSON") from exc
+    runtime_environment_compatibility = environment_compatibility_projection(
+        collect_environment_provenance()
+    )
+    if rows and common_environment_compatibility(rows) != runtime_environment_compatibility:
+        raise ValueError("resume row environment compatibility differs from this worker")
     completed_keys = {int(row["instance_seed"]) for row in rows}
     keys = range(start, min(stop, start + limit) if limit is not None else stop)
     for key in keys:
@@ -689,12 +778,13 @@ def run_lockbox_shard(*, family: str, start: int, stop: int, output: str | Path,
             _atomic_json(resume_path, make_resume_payload(family=family, start=start, stop=stop, sample_size=sample_size, raw_file=destination.name, rows=rows, metadata=metadata))
     if len(rows) != (stop - start) * len(LOCKBOX_ARMS):
         raise RuntimeError("lockbox shard is incomplete; every requested key needs all three arms")
+    environment_compatibility = common_environment_compatibility(rows)
     destination.parent.mkdir(parents=True, exist_ok=True)
     with tempfile.TemporaryDirectory(prefix=f".{destination.name}.", dir=destination.parent) as staging_name:
         staged_raw = Path(staging_name) / destination.name
         digest = write_jsonl_gzip(staged_raw, rows, protocol_digest=metadata["protocol_digest"])
         staged_sidecar = Path(f"{staged_raw}.sha256")
-        manifest = {"schema": MANIFEST_SCHEMA, "status": "COMPLETE", "family": family, "start": start, "stop": stop, "sample_size": sample_size, "expected_rows": (stop-start)*3, "row_count": len(rows), "complete": True, "raw_file": destination.name, "raw_sha256": digest, **metadata, "command_args": list(command_args)}
+        manifest = {"schema": MANIFEST_SCHEMA, "status": "COMPLETE", "family": family, "start": start, "stop": stop, "sample_size": sample_size, "expected_rows": (stop-start)*3, "row_count": len(rows), "complete": True, "raw_file": destination.name, "raw_sha256": digest, **metadata, "environment_compatibility": environment_compatibility, "command_args": list(command_args)}
         if set(manifest) != SHARD_MANIFEST_FIELDS:
             raise RuntimeError("lockbox shard manifest schema drift")
         staged_manifest = Path(f"{staged_raw}.manifest.json")
@@ -745,6 +835,7 @@ def merge_lockbox_manifests(
     output_path = Path(output)
     shards: list[dict[str, object]] = []
     ranges: dict[str, list[tuple[int, int]]] = {family: [] for family in LOCKBOX_FAMILIES}
+    environment_compatibility: dict[str, object] | None = None
     for manifest_path in manifest_paths:
         try:
             shard = json.loads(Path(manifest_path).read_text())
@@ -752,6 +843,11 @@ def merge_lockbox_manifests(
             raise ValueError("lockbox shard manifest is missing or invalid") from exc
         shard = validate_completed_shard_contract(shard, sample_size=registered_n)
         family, start, stop = shard["family"], shard["start"], shard["stop"]
+        shard_environment = shard["environment_compatibility"]
+        if environment_compatibility is None:
+            environment_compatibility = shard_environment
+        elif shard_environment != environment_compatibility:
+            raise ValueError("lockbox shard environment compatibility drift")
         if any(shard.get(field) != trusted_metadata[field] for field in expected_metadata):
             raise ValueError("lockbox shard provenance drift")
         raw_file = shard.get("raw_file")
@@ -775,7 +871,9 @@ def merge_lockbox_manifests(
         if cursor != registered_n:
             raise ValueError("lockbox manifests are incomplete")
     shards.sort(key=lambda item: (item["family"], item["start"], item["stop"]))
-    final = {"schema": MERGED_MANIFEST_SCHEMA, "status": "COMPLETE", "sample_size": registered_n, "raw_shards": shards, **trusted_metadata}
+    if environment_compatibility is None:
+        raise ValueError("lockbox manifests are incomplete")
+    final = {"schema": MERGED_MANIFEST_SCHEMA, "status": "COMPLETE", "sample_size": registered_n, "raw_shards": shards, **trusted_metadata, "environment_compatibility": environment_compatibility}
     if set(final) != MERGED_MANIFEST_FIELDS:
         raise RuntimeError("lockbox merged manifest schema drift")
     _atomic_json(output_path, final)
