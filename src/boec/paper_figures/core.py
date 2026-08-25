@@ -18,6 +18,8 @@ class FigureBundle:
     figure: Figure
     panel_data: dict[str, Any]
     alt_text: str
+    caption: str
+    long_description: str
 
 
 def load_json(path: Path) -> dict[str, Any]:
