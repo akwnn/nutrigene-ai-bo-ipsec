@@ -94,6 +94,16 @@ _POWER_DESIGN_PATH = Path(
 )
 _POWER_ENGINE_PATH = Path("src/boec/spade_power.py")
 _POWER_PLANNER_PATH = Path("scripts/plan_spade_lockbox_power.py")
+_EXECUTION_SOURCE_PATHS = {
+    "actions_workflow_sha256": Path(".github/workflows/spade-distributed.yml"),
+    "actions_matrix_sha256": Path("scripts/make_spade_actions_matrix.py"),
+    "actions_worker_sha256": Path("scripts/run_spade_actions_worker.py"),
+    "development_merger_sha256": Path("scripts/merge_spade_development_shards.py"),
+    "requirements_sha256": Path("requirements.txt"),
+}
+_EXECUTION_PAYLOAD_SHA256 = (
+    "5dae76d1495c009cf2ea0989142fe4563c2f2140d2dbe832249bdcc41fa4f80d"
+)
 _REGISTERED_METADATA_FIELDS = frozenset(
     {
         "study_protocol_digest",
@@ -431,12 +441,25 @@ def registered_metadata(repo_root: Path = ROOT) -> dict[str, object]:
             raise ValueError(f"required frozen artifact is missing: {path}")
     config = yaml.safe_load(config_path.read_text(encoding="utf-8"))
     protocol = config.get("protocol")
+    execution = config.get("execution")
     digests = config.get("digests")
-    if not isinstance(protocol, Mapping) or not isinstance(digests, Mapping):
-        raise ValueError("SPADE config is missing protocol/digests mappings")
+    if (
+        not isinstance(protocol, Mapping)
+        or not isinstance(execution, Mapping)
+        or not isinstance(digests, Mapping)
+    ):
+        raise ValueError("SPADE config is missing protocol/execution/digests mappings")
     protocol_digest = hashlib.sha256(_canonical_json(protocol).encode("utf-8")).hexdigest()
     if protocol_digest != digests.get("protocol_payload_sha256"):
         raise ValueError("configured study protocol digest does not match canonical protocol")
+    execution_digest = hashlib.sha256(
+        _canonical_json(execution).encode("utf-8")
+    ).hexdigest()
+    if (
+        execution_digest != _EXECUTION_PAYLOAD_SHA256
+        or digests.get("execution_payload_sha256") != _EXECUTION_PAYLOAD_SHA256
+    ):
+        raise ValueError("configured execution payload digest mismatch")
     spec_digest = _sha256(spec_path)
     generator_digest = _sha256(generator_path)
     power_design_digest = _sha256(power_design_path)
@@ -453,6 +476,9 @@ def registered_metadata(repo_root: Path = ROOT) -> dict[str, object]:
     ):
         if actual != digests.get(field):
             raise ValueError(f"frozen {field.removesuffix('_sha256')} digest mismatch")
+    for field, relative in _EXECUTION_SOURCE_PATHS.items():
+        if _sha256(repo_root / relative) != digests.get(field):
+            raise ValueError(f"frozen execution source digest mismatch: {field}")
     try:
         generator_manifest = json.loads(
             generator_manifest_path.read_text(encoding="utf-8")

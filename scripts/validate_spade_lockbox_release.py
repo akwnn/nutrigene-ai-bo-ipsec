@@ -14,6 +14,8 @@ import tempfile
 from collections.abc import Mapping, Sequence
 from pathlib import Path
 
+import yaml
+
 from boec.spade_power import validate_power_plan_payload
 from scripts import analyse_spade_lockbox as confirmatory
 from scripts import run_spade_lockbox as lockbox_contract
@@ -31,6 +33,17 @@ POWER_SOURCE_BLOBS = {
     ),
     "power_engine_sha256": Path("src/boec/spade_power.py"),
     "power_planner_sha256": Path("scripts/plan_spade_lockbox_power.py"),
+}
+CONFIG_RELATIVE_PATH = Path("configs/experiment/spade-joint.yaml")
+EXECUTION_PAYLOAD_SHA256 = (
+    "5dae76d1495c009cf2ea0989142fe4563c2f2140d2dbe832249bdcc41fa4f80d"
+)
+EXECUTION_SOURCE_BLOBS = {
+    "actions_workflow_sha256": Path(".github/workflows/spade-distributed.yml"),
+    "actions_matrix_sha256": Path("scripts/make_spade_actions_matrix.py"),
+    "actions_worker_sha256": Path("scripts/run_spade_actions_worker.py"),
+    "development_merger_sha256": Path("scripts/merge_spade_development_shards.py"),
+    "requirements_sha256": Path("requirements.txt"),
 }
 PERMISSIBLE_PASS_CLAIM = (
     "After prespecified selection on development families, the frozen 48-evaluation "
@@ -214,7 +227,7 @@ def _git_is_ancestor(repo_root: Path, older: str, newer: str) -> bool:
     return completed.returncode == 0
 
 
-def _committed_blob_sha256(repo_root: Path, commit: str, path: Path) -> str:
+def _committed_blob_bytes(repo_root: Path, commit: str, path: Path) -> bytes:
     relative = path.as_posix()
     entry = _git_output(repo_root, "ls-tree", "-z", commit, "--", relative)
     try:
@@ -227,7 +240,85 @@ def _committed_blob_sha256(repo_root: Path, commit: str, path: Path) -> str:
         b"100755",
     }:
         raise ValueError(f"registered source path is not a regular blob: {relative}")
-    return hashlib.sha256(_git_output(repo_root, "show", f"{commit}:{relative}")).hexdigest()
+    return _git_output(repo_root, "show", f"{commit}:{relative}")
+
+
+def _committed_blob_sha256(repo_root: Path, commit: str, path: Path) -> str:
+    return hashlib.sha256(_committed_blob_bytes(repo_root, commit, path)).hexdigest()
+
+
+def _authenticate_execution_source(
+    repo_root: Path,
+    execution_commit: str,
+    manifest: Mapping[str, object],
+    *,
+    violations: list[str],
+) -> None:
+    """Authenticate the committed execution config and every blob it freezes."""
+    try:
+        config_bytes = _committed_blob_bytes(
+            repo_root, execution_commit, CONFIG_RELATIVE_PATH
+        )
+    except (UnicodeDecodeError, ValueError) as exc:
+        _violation(
+            violations, f"execution source configuration provenance violation: {exc}"
+        )
+        return
+    config_sha256 = hashlib.sha256(config_bytes).hexdigest()
+    if config_sha256 != manifest.get("config_digest"):
+        _violation(violations, "execution source configuration digest mismatch")
+    try:
+        config = yaml.safe_load(config_bytes.decode("utf-8"))
+    except (UnicodeDecodeError, yaml.YAMLError) as exc:
+        _violation(
+            violations, f"execution source configuration parse violation: {exc}"
+        )
+        return
+    if not isinstance(config, Mapping):
+        _violation(violations, "execution source configuration schema violation")
+        return
+    protocol = config.get("protocol")
+    execution = config.get("execution")
+    digests = config.get("digests")
+    if (
+        not isinstance(protocol, Mapping)
+        or not isinstance(execution, Mapping)
+        or not isinstance(digests, Mapping)
+    ):
+        _violation(violations, "execution source configuration schema violation")
+        return
+    try:
+        protocol_digest = hashlib.sha256(
+            _canonical_json(protocol).encode("utf-8")
+        ).hexdigest()
+        execution_digest = hashlib.sha256(
+            _canonical_json(execution).encode("utf-8")
+        ).hexdigest()
+    except (TypeError, ValueError) as exc:
+        _violation(
+            violations, f"execution source configuration canonicalization violation: {exc}"
+        )
+        return
+    if (
+        protocol_digest != digests.get("protocol_payload_sha256")
+        or protocol_digest != manifest.get("protocol_digest")
+    ):
+        _violation(violations, "execution source protocol payload digest mismatch")
+    if (
+        execution_digest != EXECUTION_PAYLOAD_SHA256
+        or digests.get("execution_payload_sha256") != EXECUTION_PAYLOAD_SHA256
+    ):
+        _violation(violations, "execution source payload digest mismatch")
+    for field, path in EXECUTION_SOURCE_BLOBS.items():
+        try:
+            actual = _committed_blob_sha256(repo_root, execution_commit, path)
+        except (UnicodeDecodeError, ValueError) as exc:
+            _violation(
+                violations, f"execution source blob provenance violation: {exc}"
+            )
+            continue
+        if digests.get(field) != actual:
+            _violation(violations, f"execution source blob digest mismatch: {field}")
 
 
 def _load_power_plan(
@@ -452,6 +543,12 @@ def _preflight_power_bindings(
             _violation(violations, "power source is not an ancestor of execution source")
         if not _git_is_ancestor(repo_root, execution_commit, head):
             _violation(violations, "execution source is not an ancestor of release HEAD")
+        _authenticate_execution_source(
+            repo_root,
+            execution_commit,
+            manifest,
+            violations=violations,
+        )
         if isinstance(power_digests, Mapping):
             for field, path in POWER_SOURCE_BLOBS.items():
                 try:

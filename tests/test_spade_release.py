@@ -10,6 +10,7 @@ from pathlib import Path
 import subprocess
 
 import pytest
+import yaml
 
 import boec.spade_power as power
 from boec.spade import SpadeConfig
@@ -292,7 +293,30 @@ def _payload():
 
 def _write_complete_release_tree(tmp_path: Path) -> dict[str, object]:
     payload = _payload()
-    selection_source, power_source, power_code_digests = _init_source_repo(tmp_path)
+    (
+        selection_source,
+        power_source,
+        power_code_digests,
+        protocol_digest,
+        config_digest,
+    ) = _init_source_repo(tmp_path)
+    payload["selection"].update(
+        study_protocol_digest=protocol_digest,
+        config_digest=config_digest,
+    )
+    payload["power_plan"]["digests"].update(
+        study_protocol_sha256=protocol_digest,
+        configuration_sha256=config_digest,
+    )
+    payload["manifest"].update(
+        protocol_digest=protocol_digest,
+        config_digest=config_digest,
+    )
+    for shard_rows in payload["rows"].values():
+        for row in shard_rows:
+            row["protocol_digest"] = protocol_digest
+            row["config_digest"] = config_digest
+            row["parent_artifacts"]["config"] = config_digest
     payload["selection"]["source_commit"] = selection_source
     selection_path = tmp_path / "spade-selected-protocol.json"
     selection_path.write_bytes(_canonical_bytes(payload["selection"]))
@@ -322,9 +346,9 @@ def _write_complete_release_tree(tmp_path: Path) -> dict[str, object]:
             row["parent_artifacts"]["power_plan"] = power_sha256
     all_rows = [row for values in payload["rows"].values() for row in values]
     provenance = {
-        "protocol_digest": DIGEST,
+        "protocol_digest": protocol_digest,
         "spec_digest": SPEC,
-        "config_digest": CONFIG,
+        "config_digest": config_digest,
         "generator_digest": GENERATOR,
         "generator_manifest_sha256": GENERATOR_MANIFEST,
         "source_commit": execution_source,
@@ -395,7 +419,7 @@ def _commit_path(repo_root: Path, path: Path, message: str) -> None:
 
 def _init_source_repo(
     repo_root: Path,
-) -> tuple[str, str, dict[str, str]]:
+) -> tuple[str, str, dict[str, str], str, str]:
     subprocess.run(["git", "init", "-q", str(repo_root)], check=True)
     subprocess.run(
         ["git", "-C", str(repo_root), "config", "user.email", "test@example.invalid"],
@@ -417,6 +441,22 @@ def _init_source_repo(
             Path("scripts/plan_spade_lockbox_power.py"), b"registered power planner\n"
         ),
     }
+    project_root = Path(__file__).resolve().parents[1]
+    execution_paths = (
+        Path("configs/experiment/spade-joint.yaml"),
+        Path(".github/workflows/spade-distributed.yml"),
+        Path("scripts/make_spade_actions_matrix.py"),
+        Path("scripts/run_spade_actions_worker.py"),
+        Path("scripts/merge_spade_development_shards.py"),
+        Path("requirements.txt"),
+    )
+    for path in execution_paths:
+        destination = repo_root / path
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        destination.write_bytes((project_root / path).read_bytes())
+        subprocess.run(
+            ["git", "-C", str(repo_root), "add", path.as_posix()], check=True
+        )
     for path, data in registered.values():
         destination = repo_root / path
         destination.parent.mkdir(parents=True, exist_ok=True)
@@ -437,7 +477,15 @@ def _init_source_repo(
         name: hashlib.sha256(data).hexdigest()
         for name, (_path, data) in registered.items()
     }
-    return selection_source, power_source, digests
+    config_path = repo_root / "configs/experiment/spade-joint.yaml"
+    config = yaml.safe_load(config_path.read_text(encoding="utf-8"))
+    return (
+        selection_source,
+        power_source,
+        digests,
+        str(config["digests"]["protocol_payload_sha256"]),
+        hashlib.sha256(config_path.read_bytes()).hexdigest(),
+    )
 
 
 def _init_power_repo(repo_root: Path, power_path: Path) -> None:
@@ -466,7 +514,9 @@ def _rewrite_shard(
     rows: list[dict[str, object]],
 ) -> dict[str, object]:
     raw_path = directory / item["raw_file"]
-    raw_digest = lockbox.write_jsonl_gzip(raw_path, rows, protocol_digest=DIGEST)
+    raw_digest = lockbox.write_jsonl_gzip(
+        raw_path, rows, protocol_digest=str(manifest["protocol_digest"])
+    )
     item["raw_sha256"] = raw_digest
     sidecar_path = Path(f"{raw_path}.sha256")
     item["sha256_sha256"] = hashlib.sha256(sidecar_path.read_bytes()).hexdigest()
@@ -1044,6 +1094,37 @@ def test_release_rejects_manifest_power_hash_before_outcome_reads(
     report = _run_complete_tree(tree)
     assert report["verdict"] == "FAIL"
     assert any("power hash" in value.lower() for value in report["violations"])
+
+
+@pytest.mark.parametrize(
+    "relative",
+    [
+        "configs/experiment/spade-joint.yaml",
+        ".github/workflows/spade-distributed.yml",
+        "scripts/make_spade_actions_matrix.py",
+        "scripts/run_spade_actions_worker.py",
+        "scripts/merge_spade_development_shards.py",
+        "requirements.txt",
+    ],
+)
+def test_release_authenticates_execution_source_blobs_before_outcome_reads(
+    tmp_path, monkeypatch, relative
+):
+    tree = _write_complete_release_tree(tmp_path)
+    path = tmp_path / relative
+    path.write_bytes(path.read_bytes() + b"\n# adversarial execution drift\n")
+    _commit_path(tmp_path, path, "execution drift")
+    tree["manifest"]["source_commit"] = _git_head(tmp_path)
+    _rewrite_merged(tree)
+
+    _forbid_outcome_reads(monkeypatch)
+    report = _run_complete_tree(tree)
+
+    assert report["verdict"] == "FAIL"
+    assert any(
+        "execution source" in value.lower() or "configuration" in value.lower()
+        for value in report["violations"]
+    )
 
 
 def test_release_requires_selection_source_to_precede_power_source(

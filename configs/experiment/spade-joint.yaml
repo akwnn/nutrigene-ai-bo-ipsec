@@ -135,10 +135,70 @@ protocol:
     source_must_be_clean: true
     lockbox_outcomes_before_selected_protocol_commit: forbidden
 
+execution:
+  schema: boec-spade-registered-execution-v1
+  dispatch:
+    trigger: workflow_dispatch
+    dispatches_per_phase: 1
+    source_sha_input: exact_40_character_lowercase_commit
+    event_sha_equals_source_sha: true
+    workflow_sha_equals_source_sha: true
+    checkout_ref: source_sha
+    checked_out_head_equals_source_sha: true
+    clean_checkout_required: true
+    permissions: {contents: read}
+  runtime:
+    runner: ubuntu-24.04
+    platform: linux/amd64
+    python: 3.11.15
+    container: python@sha256:eaeffb6e8511935426934aac863940fbd004ef31dab0d7fc27a129bb7c19d9a8
+    actions:
+      checkout: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      upload_artifact: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+    environment:
+      OMP_NUM_THREADS: "1"
+      MKL_NUM_THREADS: "1"
+      OPENBLAS_NUM_THREADS: "1"
+      NUMEXPR_NUM_THREADS: "1"
+      PYTHONHASHSEED: "0"
+      CUDA_VISIBLE_DEVICES: ""
+    torch_threads: 1
+    torch_interop_threads: 1
+  parallelism:
+    matrix_max_parallel: 40
+    processes_per_job_maximum: 2
+  development_sharding:
+    family_count: 5
+    keys_per_family: 50
+    key_width: 4
+    logical_shards: 65
+    jobs: 33
+    enabled_slots_per_job_maximum: 2
+  lockbox_sharding:
+    family_count: 4
+    key_width: 10
+    jobs_at_minimum_n_350: 35
+    jobs_at_maximum_n_2000: 200
+    family_pairs:
+      - [toroidal_rastrigin, gaussian_basin_mixture]
+      - [curved_ridge, soft_plateau]
+  artifacts:
+    one_upload_per_enabled_slot: true
+    files_per_slot: [raw_jsonl_gzip, sha256_sidecar, resume_json, manifest_json]
+    compression_level: 0
+    overwrite: false
+    retention_days: 90
+
 digests:
-  digest_definition: "sha256; protocol payload uses canonical sorted compact JSON of the parsed protocol mapping"
+  digest_definition: "sha256; protocol and execution payloads each use canonical sorted compact JSON of their parsed mappings"
   protocol_payload_sha256: 00ce6971a990749645052273215897f57562106610777d0d8ce417e8e9afdd1a
-  spec_sha256: 1d78408a42b87820ab43c9adac76ef9faf40a6b62da1148078299cdc24aaecc4
+  execution_payload_sha256: 5dae76d1495c009cf2ea0989142fe4563c2f2140d2dbe832249bdcc41fa4f80d
+  actions_workflow_sha256: 5240e0a2c302d91afdab7df87abfba83f01983bd7aa9b8550334771c5603722d
+  actions_matrix_sha256: 52230fffe9fcc9317de68f6c7f4c1ef5b97debf58332c62b39380cbd185d951d
+  actions_worker_sha256: caadff076e8654c45dd6c9efb94ab9e96bd0ec8db14017896d98fe1a22fada26
+  development_merger_sha256: 4dd56d59cd06cbd56a10d65e6b4f72fc2fe17e475d5b6db114e80b7b6b72a74d
+  requirements_sha256: 96a00b1abb366bd48318d7957703608b348393aa280a6808ef91652c28471687
+  spec_sha256: 000f75bd5b89a58ba9aef4d30907b0a561c4da68333e58c5e8f9e334d697f712
   lockbox_oracles_source_sha256: 1a79abd6e62d503852fe98957e67d4d4f6d7e9f8b52788176f2359ed38d3e0c3
   spade_study_source_sha256: cf981ec0735eb98b98585b3b026537dca874ef9ab93ac2e3c8d4784626071a05
   power_design_sha256: 6fec13c194468fbbab83758760a60b0161314b03d5c97d3146d14c52af226d7b

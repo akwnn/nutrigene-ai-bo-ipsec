@@ -40,7 +40,7 @@ SIGMA_REL, SIGMA_ADD, GAMMA, ALPHA, Q_TAU = .10, .01, .95, .95, .75
 MANIFEST_SCHEMA = "boec-spade-lockbox-shard-v2"
 MERGED_MANIFEST_SCHEMA = "boec-spade-lockbox-manifest-v2"
 RESUME_SCHEMA = "boec-spade-lockbox-resume-v2"
-GENERATOR_FREEZE_SHA256 = "cf4b57f9e087391f3d971b46fa3b688700f0f03ead6fad410729aafa1af54404"
+GENERATOR_FREEZE_SHA256 = "0689eaab57dfb24aa5a4d9c9f067ba1c54906388a23219813fd7c950d1551575"
 GENERATOR_FREEZE_PARENT_COMMIT = "d1fab2c2099926945e399f741ccc79123a539066"
 ENVIRONMENT_COMPATIBILITY_SCHEMA = "boec-spade-environment-compatibility-v1"
 SHARD_MANIFEST_FIELDS = frozenset({
@@ -77,6 +77,16 @@ _POWER_PATH = Path("results/spade-lockbox-power.json")
 _POWER_DESIGN_PATH = Path("docs/superpowers/specs/2026-08-25-spade-lockbox-power-design.md")
 _POWER_ENGINE_PATH = Path("src/boec/spade_power.py")
 _POWER_PLANNER_PATH = Path("scripts/plan_spade_lockbox_power.py")
+_EXECUTION_SOURCE_PATHS = {
+    "actions_workflow_sha256": Path(".github/workflows/spade-distributed.yml"),
+    "actions_matrix_sha256": Path("scripts/make_spade_actions_matrix.py"),
+    "actions_worker_sha256": Path("scripts/run_spade_actions_worker.py"),
+    "development_merger_sha256": Path("scripts/merge_spade_development_shards.py"),
+    "requirements_sha256": Path("requirements.txt"),
+}
+_EXECUTION_PAYLOAD_SHA256 = (
+    "5dae76d1495c009cf2ea0989142fe4563c2f2140d2dbe832249bdcc41fa4f80d"
+)
 
 
 def _canonical_json(value: object) -> str:
@@ -279,12 +289,23 @@ def registered_metadata(repo_root: Path = ROOT) -> dict[str, object]:
     config_path, spec_path, generator_path = (repo_root / _CONFIG_PATH, repo_root / _SPEC_PATH, repo_root / _GENERATOR_PATH)
     config = yaml.safe_load(config_path.read_text())
     protocol = config.get("protocol") if isinstance(config, Mapping) else None
+    execution = config.get("execution") if isinstance(config, Mapping) else None
     digests = config.get("digests") if isinstance(config, Mapping) else None
-    if not isinstance(protocol, Mapping) or not isinstance(digests, Mapping):
-        raise ValueError("SPADE config is missing frozen protocol digests")
+    if (
+        not isinstance(protocol, Mapping)
+        or not isinstance(execution, Mapping)
+        or not isinstance(digests, Mapping)
+    ):
+        raise ValueError("SPADE config is missing frozen protocol/execution digests")
     protocol_digest = hashlib.sha256(_canonical_json(protocol).encode()).hexdigest()
     if protocol_digest != digests.get("protocol_payload_sha256"):
         raise ValueError("configured study protocol digest mismatch")
+    execution_digest = hashlib.sha256(_canonical_json(execution).encode()).hexdigest()
+    if (
+        execution_digest != _EXECUTION_PAYLOAD_SHA256
+        or digests.get("execution_payload_sha256") != _EXECUTION_PAYLOAD_SHA256
+    ):
+        raise ValueError("configured execution payload digest mismatch")
     metadata = {
         "protocol_digest": protocol_digest,
         "spec_digest": _sha256(spec_path),
@@ -303,6 +324,9 @@ def registered_metadata(repo_root: Path = ROOT) -> dict[str, object]:
     }
     if any(digests.get(field) != digest for field, digest in expected_digests.items()):
         raise ValueError("frozen source digest mismatch")
+    for field, relative in _EXECUTION_SOURCE_PATHS.items():
+        if _sha256(repo_root / relative) != digests.get(field):
+            raise ValueError(f"frozen execution source digest mismatch: {field}")
     metadata["source_commit"], metadata["source_dirty"] = git_state(repo_root)
     metadata["generator_manifest_sha256"] = _sha256(repo_root / _GENERATOR_MANIFEST)
     return metadata
