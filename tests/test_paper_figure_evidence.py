@@ -54,6 +54,25 @@ def test_figure4_exact_hill_cell_preserves_denominator():
     assert cell["estimator"] == "crossfit"
 
 
+def test_figure4_cross_family_answer_rate_uses_alpha_095_campaigns():
+    data = build_figure4_data(RESULTS)
+    answer_rows = {row["family"]: row for row in data["cross_family_answer_rate"]}
+
+    assert {
+        family: (row["answered"], row["n_campaigns"])
+        for family, row in answer_rows.items()
+    } == {
+        "ackley": (0, 50),
+        "hartmann6": (11, 50),
+        "hill": (50, 50),
+        "levy": (49, 50),
+        "rosenbrock": (50, 50),
+    }
+    assert answer_rows["ackley"]["answer_rate"] == 0.0
+    assert all("alpha=0.95" in row["definition"] for row in answer_rows.values())
+    assert all("campaign" in row["definition"] for row in answer_rows.values())
+
+
 def test_ambiguous_duplicate_certificate_cell_fails(tmp_path):
     source = json.loads((RESULTS / "final-spade-certificate.json").read_text())
     source["cells"].append(source["cells"][0])

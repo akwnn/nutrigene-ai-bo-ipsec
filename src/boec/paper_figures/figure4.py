@@ -141,9 +141,9 @@ def build_figure4(data: dict, preset: VenuePreset) -> FigureBundle:
         axis_c.set_yticks(range(len(answer_rows)), [row["family"] for row in answer_rows])
         axis_c.invert_yaxis()
         axis_c.set_xlim(0, 1)
-        axis_c.set_xlabel("Campaigns returning any non-empty certificate")
+        axis_c.set_xlabel("Campaigns with any non-empty γ×τ certificate")
         axis_c.set_title(
-            "Answer rate\n0 = declined to certify (not zero containment)",
+            "Campaign answer rate (α=0.95)\n0 = declined to certify (not zero containment)",
             loc="left",
             fontsize=preset.body_pt,
         )
@@ -185,7 +185,11 @@ def build_figure4(data: dict, preset: VenuePreset) -> FigureBundle:
             "interval": "Clopper-Pearson 95% exact",
             "empty_policy": "exclude from numerator and denominator",
         },
-        "C": {"rows": answer_rows, "zero_means": "declined to certify"},
+        "C": {
+            "rows": answer_rows,
+            "scope": "alpha=0.95 campaigns; any non-empty gamma-by-tau certificate",
+            "zero_means": "declined to certify",
+        },
         "D": {
             "rows": conditional_rows,
             "effect": "containment minus nominal",

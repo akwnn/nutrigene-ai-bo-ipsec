@@ -371,20 +371,22 @@ def build_figure4_data(results_dir: Path) -> dict[str, Any]:
 
     require_keys(predictions, {"stats"}, predictions_source)
     stats_by_family = _mapping(predictions["stats"], f"{predictions_source}.stats")
-    family_stats: dict[str, tuple[int, int]] = {}
+    family_stats: dict[str, tuple[int, int, int]] = {}
     for family, value in stats_by_family.items():
         _string(family, f"{predictions_source}.stats family")
         stats = _mapping(value, f"{predictions_source}.stats.{family}")
-        _record(stats, {"n_campaigns", "all_empty"}, predictions_source, f"stats.{family}")
+        _record(stats, {"n_campaigns", "n_cells", "all_empty"}, predictions_source, f"stats.{family}")
         n_campaigns = _count(stats["n_campaigns"], f"{predictions_source}.stats.{family}.n_campaigns", positive=True)
+        n_cells = _count(stats["n_cells"], f"{predictions_source}.stats.{family}.n_cells", positive=True)
         all_empty = _count(stats["all_empty"], f"{predictions_source}.stats.{family}.all_empty")
-        if all_empty > n_campaigns:
-            raise ValueError(f"{predictions_source}.stats.{family}: all_empty exceeds n_campaigns")
-        family_stats[family] = (n_campaigns, all_empty)
+        if all_empty > n_cells:
+            raise ValueError(f"{predictions_source}.stats.{family}: all_empty exceeds n_cells")
+        family_stats[family] = (n_campaigns, n_cells, all_empty)
 
     family_rows = _records(families, "rows", families_source)
     family_names: set[str] = set()
     selected_by_family: dict[str, list[dict[str, Any]]] = {}
+    campaign_cells_by_family: dict[str, dict[tuple[str, str, int], list[dict[str, Any]]]] = {}
     for index, row in enumerate(family_rows):
         label = f"record {index}"
         _record(row, {"family", "arm", "ce_empty_0.8"}, families_source, label)
@@ -393,7 +395,18 @@ def build_figure4_data(results_dir: Path) -> dict[str, Any]:
         arm = _string(row["arm"], f"{_context(families_source, label)}.arm")
         if not isinstance(row["ce_empty_0.8"], bool):
             raise ValueError(f"{_context(families_source, label)}.ce_empty_0.8: expected a boolean")
-        if arm == "versionb" and not row["ce_empty_0.8"]:
+        if arm != "versionb":
+            continue
+        _record(row, {"instance", "seed", "gamma", "tau_frac", "ce_empty_0.95"}, families_source, label)
+        instance = _string(row["instance"], f"{_context(families_source, label)}.instance")
+        seed = _count(row["seed"], f"{_context(families_source, label)}.seed")
+        _probability(row["gamma"], f"{_context(families_source, label)}.gamma")
+        _probability(row["tau_frac"], f"{_context(families_source, label)}.tau_frac")
+        if not isinstance(row["ce_empty_0.95"], bool):
+            raise ValueError(f"{_context(families_source, label)}.ce_empty_0.95: expected a boolean")
+        campaign_id = (family, instance, seed)
+        campaign_cells_by_family.setdefault(family, {}).setdefault(campaign_id, []).append(row)
+        if not row["ce_empty_0.8"]:
             _record(row, {"ce_empirical_0.8"}, families_source, label)
             _probability(row["ce_empirical_0.8"], f"{_context(families_source, label)}.ce_empirical_0.8")
             selected_by_family.setdefault(family, []).append(row)
@@ -408,16 +421,47 @@ def build_figure4_data(results_dir: Path) -> dict[str, Any]:
             f"stats={sorted(family_stats)}, certificate_rows={sorted(family_names)}"
         )
 
-    answer_rate = [
-        {
-            "family": family,
-            "answered": n_campaigns - all_empty,
-            "n_campaigns": n_campaigns,
-            "answer_rate": 1.0 - all_empty / n_campaigns,
-            "definition": "campaign returned at least one non-empty certificate",
-        }
-        for family, (n_campaigns, all_empty) in family_stats.items()
-    ]
+    answer_rate = []
+    for family in sorted(family_names):
+        n_campaigns, n_cells, expected_all_empty = family_stats[family]
+        campaigns = campaign_cells_by_family.get(family, {})
+        if len(campaigns) != n_campaigns:
+            raise ValueError(
+                f"{families_source} {family}: expected {n_campaigns} versionb campaigns, found {len(campaigns)}"
+            )
+        cells_by_configuration: dict[tuple[float, float], list[dict[str, Any]]] = {}
+        for campaign_id, cells in campaigns.items():
+            if len(cells) != n_cells:
+                raise ValueError(
+                    f"{families_source} {family} campaign {campaign_id}: expected {n_cells} gamma-by-tau cells, found {len(cells)}"
+                )
+            configurations = [(row["gamma"], row["tau_frac"]) for row in cells]
+            if len(set(configurations)) != n_cells:
+                raise ValueError(f"{families_source} {family} campaign {campaign_id}: duplicate gamma-by-tau cell")
+            for configuration, row in zip(configurations, cells, strict=True):
+                cells_by_configuration.setdefault(configuration, []).append(row)
+        if len(cells_by_configuration) != n_cells or any(
+            len(cells) != n_campaigns for cells in cells_by_configuration.values()
+        ):
+            raise ValueError(f"{families_source} {family}: inconsistent gamma-by-tau campaign grid")
+        all_empty = sum(
+            all(row["ce_empty_0.95"] for row in cells)
+            for cells in cells_by_configuration.values()
+        )
+        if all_empty != expected_all_empty:
+            raise ValueError(
+                f"{predictions_source} {family}: all_empty does not match alpha=0.95 certificate rows"
+            )
+        answered = sum(any(not row["ce_empty_0.95"] for row in cells) for cells in campaigns.values())
+        answer_rate.append(
+            {
+                "family": family,
+                "answered": answered,
+                "n_campaigns": n_campaigns,
+                "answer_rate": answered / n_campaigns,
+                "definition": "alpha=0.95 campaign returned any non-empty gamma-by-tau certificate",
+            }
+        )
 
     conditional = []
     for family in sorted(family_names):

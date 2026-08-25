@@ -345,8 +345,17 @@ def test_figure4_rendered_panels_keep_exact_denominators_and_certification_state
             assert "0/0" not in {text.get_text() for text in panel_b.texts}
 
     answer_bars = {patch.get_gid(): patch for patch in panel_c.patches}
-    for row in data["cross_family_answer_rate"]:
-        assert answer_bars[f"answer-rate:{row['family']}"].get_width() == pytest.approx(row["answer_rate"])
+    expected_answer_counts = {
+        "ackley": (0, 50),
+        "hartmann6": (11, 50),
+        "hill": (50, 50),
+        "levy": (49, 50),
+        "rosenbrock": (50, 50),
+    }
+    for family, (answered, n_campaigns) in expected_answer_counts.items():
+        assert answer_bars[f"answer-rate:{family}"].get_width() == pytest.approx(answered / n_campaigns)
+        assert f"{answered}/{n_campaigns}" in {text.get_text() for text in panel_c.texts}
+    assert bundle.panel_data["C"]["scope"] == "alpha=0.95 campaigns; any non-empty gamma-by-tau certificate"
     assert "declined to certify" in panel_c.get_title(loc="left").lower()
     assert "not zero containment" in panel_c.get_title(loc="left").lower()
 
