@@ -43,3 +43,33 @@ def test_figure1_estimand_table_uses_preset_body_typography(name):
     assert all(cell.get_text().get_fontsize() >= preset.body_pt for cell in table.get_celld().values())
 
     plt.close(bundle.figure)
+
+
+def test_figure1_portable_text_stays_inside_decision_boxes_and_ledger_cells():
+    bundle = build_figure1(get_preset("portable"))
+    figure = bundle.figure
+    figure.canvas.draw()
+    renderer = figure.canvas.get_renderer()
+
+    panel_b = figure.axes[1]
+    decision_boxes = [patch for patch in panel_b.patches if patch.get_linestyle() == "--"]
+    assert len(decision_boxes) == 2
+    for box in decision_boxes:
+        box_bounds = box.get_window_extent(renderer)
+        text = next(
+            text for text in panel_b.texts if text.get_text().startswith(
+                "Point decision" if box is decision_boxes[0] else "Region decision"
+            )
+        )
+        text_bounds = text.get_window_extent(renderer)
+        assert box_bounds.contains(*text_bounds.get_points()[0])
+        assert box_bounds.contains(*text_bounds.get_points()[1])
+
+    table = figure.axes[2].tables[0]
+    for cell in table.get_celld().values():
+        cell_bounds = cell.get_window_extent(renderer)
+        text_bounds = cell.get_text().get_window_extent(renderer)
+        assert cell_bounds.contains(*text_bounds.get_points()[0])
+        assert cell_bounds.contains(*text_bounds.get_points()[1])
+
+    plt.close(figure)

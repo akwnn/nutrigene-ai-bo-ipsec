@@ -111,10 +111,10 @@ def build_figure1(preset: VenuePreset) -> FigureBundle:
         _node(
             ax_b,
             0.38,
-            0.60,
             0.56,
-            0.25,
-            "Point decision\ntested-best | noisy selection\nmodel recommendation | confirmation",
+            0.56,
+            0.32,
+            "Point decision\ntested-best\nnoisy selection\nmodel recommendation\nconfirmation",
             _CAMPAIGN_FILL,
             preset,
             dashed=True,
@@ -148,7 +148,7 @@ def build_figure1(preset: VenuePreset) -> FigureBundle:
             ("Measured\nselection", "one tested\nwell", "yes", "Rule-A\nregret", "0", "campaign"),
             ("Model\nrecommendation", "predicted\noptimum", "yes", "Rule-P\nregret", "0", "campaign"),
             ("Confirmation\nprotocol", "confirmed\ntested well", "yes", "confirmed\nregret", "protocol", "campaign +\nconfirmation"),
-            ("Acceptable-region\nmap", "set of\nacceptable inputs", "yes", "symmetric\ndifference", "0", "campaign"),
+            ("Acceptable-\nregion map", "set of\nacceptable inputs", "yes", "symmetric\ndifference", "0", "campaign"),
             ("Certificate", "conservative\nsubset", "yes", "joint\ncontainment", "0", "campaign"),
         )
         table = ax_c.table(
@@ -157,6 +157,7 @@ def build_figure1(preset: VenuePreset) -> FigureBundle:
             cellLoc="left",
             colLoc="left",
             bbox=(0.01, 0.04, 0.98, 0.86),
+            colWidths=(0.18, 0.18, 0.15, 0.16, 0.13, 0.20),
         )
         table.auto_set_font_size(False)
         table.set_fontsize(preset.body_pt)
