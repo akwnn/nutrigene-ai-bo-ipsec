@@ -32,6 +32,7 @@ from boec.reliable_region import (
     true_reliability_probability,
 )
 from boec.seedbook import derive_seed
+from boec.surrogate import build_learned_noise_gp
 
 __all__ = [
     "REGISTERED_SCORING_SETTINGS",
@@ -126,6 +127,7 @@ class ScoringExecutionSettings:
     certificate_grid_size: int
     certificate_draws: int
     certificate_rho_grid_size: int
+    fit_restarts: int
 
     def __post_init__(self) -> None:
         for field in (
@@ -137,6 +139,9 @@ class ScoringExecutionSettings:
             "certificate_rho_grid_size",
         ):
             object.__setattr__(self, field, _integer(getattr(self, field), field, minimum=2))
+        object.__setattr__(
+            self, "fit_restarts", _integer(self.fit_restarts, "fit_restarts", minimum=1)
+        )
         if self.certificate_draws % 2:
             raise ValueError("certificate_draws must be even for the registered split")
 
@@ -152,6 +157,7 @@ REGISTERED_SCORING_SETTINGS = ScoringExecutionSettings(
     certificate_grid_size=2_048,
     certificate_draws=4_096,
     certificate_rho_grid_size=64,
+    fit_restarts=4,
 )
 
 
@@ -247,6 +253,10 @@ class ControlledThreshold:
     truth_digest: str
     margin_digest: str
     reliable_fraction: float
+    target_reliable_fraction: float
+    prevalence_tolerance: float
+    margin_tie_count: int
+    tau_adjustment: str
     execution_mode: str
     settings_digest: str
     oracle_identity: str
@@ -379,11 +389,40 @@ def controlled_tau(
     z_gamma = float(norm.ppf(gamma_f))
     noise_sd = (sigma_rel_f**2 * truth.square() + sigma_add_f**2).sqrt()
     margin = truth - z_gamma * noise_sd
-    tau = float(torch.quantile(margin, q_tau_f))
-    true_probability = true_reliability_probability(
-        truth, tau, sigma_rel_f, sigma_add_f
+    quantile_tau = float(torch.quantile(margin, q_tau_f))
+    target_reliable_fraction = 1.0 - q_tau_f
+    prevalence_tolerance = 1.0 / effective.calibration_grid_size
+    candidates = (
+        ("quantile", quantile_tau),
+        ("nextafter_up", float(np.nextafter(quantile_tau, math.inf))),
+        ("nextafter_down", float(np.nextafter(quantile_tau, -math.inf))),
     )
-    reliable_fraction = float((true_probability >= gamma_f).double().mean())
+    evaluated: list[tuple[float, str, float, float]] = []
+    for adjustment, candidate_tau in candidates:
+        probability = true_reliability_probability(
+            truth, candidate_tau, sigma_rel_f, sigma_add_f
+        )
+        fraction = float((probability >= gamma_f).double().mean())
+        evaluated.append(
+            (
+                abs(fraction - target_reliable_fraction),
+                adjustment,
+                candidate_tau,
+                fraction,
+            )
+        )
+    deviation, tau_adjustment, tau, reliable_fraction = min(
+        evaluated, key=lambda row: (row[0], candidates.index((row[1], row[2])))
+    )
+    numerical_slack = 8.0 * np.finfo(float).eps
+    if deviation > prevalence_tolerance + numerical_slack:
+        raise RuntimeError(
+            "controlled reliable prevalence is not achievable within one calibration "
+            f"grid cell: target={target_reliable_fraction:.17g}, "
+            f"best={reliable_fraction:.17g}, deviation={deviation:.17g}, "
+            f"tolerance={prevalence_tolerance:.17g}"
+        )
+    margin_tie_count = int((margin == quantile_tau).sum())
     grid_digest = hashlib.sha256(grid.numpy().tobytes()).hexdigest()
     truth_digest = hashlib.sha256(truth.numpy().tobytes()).hexdigest()
     margin_digest = hashlib.sha256(margin.numpy().tobytes()).hexdigest()
@@ -401,6 +440,10 @@ def controlled_tau(
         "truth_digest": truth_digest,
         "margin_digest": margin_digest,
         "reliable_fraction_hex": reliable_fraction.hex(),
+        "target_reliable_fraction_hex": target_reliable_fraction.hex(),
+        "prevalence_tolerance_hex": prevalence_tolerance.hex(),
+        "margin_tie_count": margin_tie_count,
+        "tau_adjustment": tau_adjustment,
         "execution_mode": execution_mode,
         "settings_digest": effective.digest,
         "oracle_identity": harness._oracle_identity,
@@ -418,6 +461,10 @@ def controlled_tau(
         truth_digest=truth_digest,
         margin_digest=margin_digest,
         reliable_fraction=reliable_fraction,
+        target_reliable_fraction=target_reliable_fraction,
+        prevalence_tolerance=prevalence_tolerance,
+        margin_tie_count=margin_tie_count,
+        tau_adjustment=tau_adjustment,
         execution_mode=execution_mode,
         settings_digest=effective.digest,
         oracle_identity=harness._oracle_identity,
@@ -440,11 +487,19 @@ class StudyScore:
     scoring_settings_digest: str
     threshold_record_digest: str
     scoring_seed: int
+    terminal_fit_seed: int
+    terminal_fit_restarts: int
     terminal_grid_seed: int
     map_grid_seed: int
     certificate_grid_seed: int
     certificate_draw_seed: int
     decision_digest: str
+    tau: float
+    sigma_rel: float
+    sigma_add: float
+    gamma: float
+    alpha: float
+    q_tau: float
     terminal_x: tuple[float, ...]
     terminal_truth: float
     regret_rule_p: float
@@ -553,9 +608,29 @@ def score_campaign(
         raise ValueError("campaign result must contain 48 finite one-outcome observations")
     if not bool(torch.isfinite(X).all()) or torch.unique(X, dim=0).shape[0] != 48:
         raise ValueError("campaign evaluated rows must be finite and unique")
-    model = getattr(campaign_result, "terminal_model", None)
-    if model is None:
-        raise ValueError("campaign result must contain the final common model")
+    arm_protocol_digest = _hex_digest(
+        getattr(campaign_result, "protocol_digest"), "protocol_digest"
+    )
+    run_digest = _hex_digest(getattr(campaign_result, "run_digest"), "run_digest")
+    terminal_fit_seed = derive_seed(
+        scoring_seed_i,
+        "score_terminal_common_gp",
+        run_digest,
+        effective.digest,
+    )
+    bounds = torch.stack(
+        [
+            torch.zeros(dimension, dtype=torch.double),
+            torch.ones(dimension, dtype=torch.double),
+        ]
+    )
+    model = build_learned_noise_gp(
+        X.detach().double().clone(),
+        Y.detach().double().clone(),
+        bounds,
+        fit_restarts=effective.fit_restarts,
+        seed=terminal_fit_seed,
+    )
 
     terminal_seed = derive_seed(scoring_seed_i, "terminal_rule_p_grid")
     map_seed = derive_seed(scoring_seed_i, "probability_map_grid")
@@ -590,6 +665,8 @@ def score_campaign(
         "map_grid_seed": map_seed,
         "certificate_grid_seed": certificate_seed,
         "certificate_draw_seed": draw_seed,
+        "terminal_fit_seed": terminal_fit_seed,
+        "terminal_fit_restarts": effective.fit_restarts,
         "settings_digest": effective.digest,
     }
     decision_digest = _sha256_json(decision_payload)
@@ -636,8 +713,8 @@ def score_campaign(
     return StudyScore(
         schema="boec-spade-score-v1",
         arm=str(getattr(campaign_result, "arm")),
-        protocol_digest=_hex_digest(getattr(campaign_result, "protocol_digest"), "protocol_digest"),
-        run_digest=_hex_digest(getattr(campaign_result, "run_digest"), "run_digest"),
+        protocol_digest=arm_protocol_digest,
+        run_digest=run_digest,
         terminal_rule="P",
         budget=48,
         rounds=_integer(getattr(campaign_result, "rounds"), "rounds"),
@@ -645,11 +722,19 @@ def score_campaign(
         scoring_settings_digest=effective.digest,
         threshold_record_digest=scorer_oracle.threshold.record_digest,
         scoring_seed=scoring_seed_i,
+        terminal_fit_seed=terminal_fit_seed,
+        terminal_fit_restarts=effective.fit_restarts,
         terminal_grid_seed=terminal_seed,
         map_grid_seed=map_seed,
         certificate_grid_seed=certificate_seed,
         certificate_draw_seed=draw_seed,
         decision_digest=decision_digest,
+        tau=tau_f,
+        sigma_rel=sigma_rel_f,
+        sigma_add=sigma_add_f,
+        gamma=gamma_f,
+        alpha=alpha_f,
+        q_tau=scorer_oracle.threshold.q_tau,
         terminal_x=decision.terminal_x,
         terminal_truth=terminal_truth,
         regret_rule_p=max(0.0, regret),
@@ -694,7 +779,6 @@ def collect_environment_provenance() -> dict[str, object]:
 def build_study_row(
     score: StudyScore,
     *,
-    campaign_key: str,
     study_protocol_digest: str,
     spec_digest: str,
     config_digest: str,
@@ -707,16 +791,28 @@ def build_study_row(
     campaign_seed: int,
     root_seed: int,
     derived_seeds: Mapping[str, int],
-    q_tau: float,
-    gamma: float,
-    alpha: float,
 ) -> dict[str, object]:
     """Construct the sole raw-row schema with complete provenance."""
+    instance_seed_i = _seed(instance_seed, "instance_seed")
+    campaign_seed_i = _seed(campaign_seed, "campaign_seed")
+    root_seed_i = _seed(root_seed, "root_seed")
+    arm_protocol_digest = _hex_digest(score.protocol_digest, "arm_protocol_digest")
+    run_digest = _hex_digest(score.run_digest, "run_digest")
+    campaign_key = {
+        "family": family,
+        "instance_seed": instance_seed_i,
+        "campaign_seed": campaign_seed_i,
+        "arm": score.arm,
+        "arm_protocol_digest": arm_protocol_digest,
+        "run_digest": run_digest,
+    }
+    score_payload = json.loads(_canonical_json(score.as_dict()))
     row = {
         "schema": STUDY_ROW_SCHEMA,
         "campaign_key": campaign_key,
         "protocol_digest": _hex_digest(study_protocol_digest, "study_protocol_digest"),
-        "arm_protocol_digest": score.protocol_digest,
+        "arm_protocol_digest": arm_protocol_digest,
+        "run_digest": run_digest,
         "spec_digest": _hex_digest(spec_digest, "spec_digest"),
         "config_digest": _hex_digest(config_digest, "config_digest"),
         "source_commit": _hex_digest(source_commit, "source_commit", length=40),
@@ -725,46 +821,289 @@ def build_study_row(
         "command_args": list(command_args),
         "parent_artifacts": dict(parent_artifacts),
         "family": family,
-        "instance_seed": int(instance_seed),
-        "campaign_seed": int(campaign_seed),
-        "root_seed": int(root_seed),
+        "instance_seed": instance_seed_i,
+        "campaign_seed": campaign_seed_i,
+        "root_seed": root_seed_i,
         "derived_seeds": dict(derived_seeds),
         "arm": score.arm,
         "budget": score.budget,
         "rounds": score.rounds,
         "terminal_rule": score.terminal_rule,
-        "estimands": {"gamma": gamma, "alpha": alpha, "q_tau": q_tau},
-        "scores": score.as_dict(),
+        "estimands": {
+            "target": "future_response_reliability",
+            "tau": score.tau,
+            "sigma_rel": score.sigma_rel,
+            "sigma_add": score.sigma_add,
+            "gamma": score.gamma,
+            "alpha": score.alpha,
+            "q_tau": score.q_tau,
+            "map_metric": "integrated_squared_probability_error",
+            "terminal_rule": "P",
+            "certificate_draws": {
+                "total": score.certificate_selection_draws
+                + score.certificate_evaluation_draws,
+                "selection": score.certificate_selection_draws,
+                "evaluation": score.certificate_evaluation_draws,
+            },
+        },
+        "scores": score_payload,
     }
     _validate_rows([row], row["protocol_digest"])
     return row
 
 
-_REQUIRED_ROW_FIELDS = frozenset(
+_ROW_FIELDS = frozenset(
     {
-        "schema",
-        "campaign_key",
-        "protocol_digest",
-        "spec_digest",
-        "config_digest",
-        "source_commit",
-        "source_dirty",
-        "environment",
-        "command_args",
-        "parent_artifacts",
-        "family",
-        "instance_seed",
-        "campaign_seed",
-        "root_seed",
-        "derived_seeds",
-        "arm",
-        "budget",
-        "rounds",
-        "terminal_rule",
-        "estimands",
-        "scores",
+        "schema", "campaign_key", "protocol_digest", "arm_protocol_digest",
+        "run_digest", "spec_digest", "config_digest", "source_commit",
+        "source_dirty", "environment", "command_args", "parent_artifacts",
+        "family", "instance_seed", "campaign_seed", "root_seed",
+        "derived_seeds", "arm", "budget", "rounds", "terminal_rule",
+        "estimands", "scores",
     }
 )
+_CAMPAIGN_KEY_FIELDS = frozenset(
+    {"family", "instance_seed", "campaign_seed", "arm", "arm_protocol_digest", "run_digest"}
+)
+_ENVIRONMENT_FIELDS = frozenset(
+    {"python", "platform", "packages", "threads", "executable", "boec_distribution"}
+)
+_PACKAGE_FIELDS = frozenset({"numpy", "scipy", "torch", "gpytorch", "botorch"})
+_THREAD_FIELDS = frozenset(
+    {"torch", "torch_interop", "omp_num_threads", "mkl_num_threads"}
+)
+_ESTIMAND_FIELDS = frozenset(
+    {
+        "target", "tau", "sigma_rel", "sigma_add", "gamma", "alpha", "q_tau",
+        "map_metric", "terminal_rule", "certificate_draws",
+    }
+)
+_CERTIFICATE_DRAW_FIELDS = frozenset({"total", "selection", "evaluation"})
+_SCORE_FIELDS = frozenset(
+    {
+        "schema", "arm", "protocol_digest", "run_digest", "terminal_rule",
+        "budget", "rounds", "execution_mode", "scoring_settings_digest",
+        "threshold_record_digest", "scoring_seed", "terminal_fit_seed",
+        "terminal_fit_restarts", "terminal_grid_seed", "map_grid_seed",
+        "certificate_grid_seed", "certificate_draw_seed", "decision_digest",
+        "tau", "sigma_rel", "sigma_add", "gamma", "alpha", "q_tau",
+        "terminal_x", "terminal_truth", "regret_rule_p", "map_loss",
+        "map_brier", "map_auc", "map_iou", "map_symmetric_difference",
+        "certificate_nonempty", "certificate_volume",
+        "certificate_selection_containment", "certificate_crossfit_containment",
+        "certificate_empirical_containment", "certificate_selection_draws",
+        "certificate_evaluation_draws",
+    }
+)
+_ARMS = frozenset({"spade", "sobol48", "qlognei48"})
+
+
+def _exact_mapping(value: object, fields: frozenset[str], context: str) -> dict[str, object]:
+    if not isinstance(value, Mapping):
+        raise ValueError(f"{context} must be an object")
+    result = dict(value)
+    missing = fields - result.keys()
+    extra = result.keys() - fields
+    if missing or extra:
+        raise ValueError(
+            f"{context} schema mismatch; missing={sorted(missing)}, extra={sorted(extra)}"
+        )
+    return result
+
+
+def _strict_nonnegative_int(value: object, context: str) -> int:
+    if isinstance(value, bool) or not isinstance(value, Integral) or int(value) < 0:
+        raise ValueError(f"{context} must be a nonnegative integer")
+    return int(value)
+
+
+def _finite_number(
+    value: object,
+    context: str,
+    *,
+    minimum: float | None = None,
+    maximum: float | None = None,
+) -> float:
+    if isinstance(value, bool) or not isinstance(value, Real):
+        raise ValueError(f"{context} must be a finite number")
+    result = float(value)
+    if not math.isfinite(result):
+        raise ValueError(f"{context} must be finite")
+    if minimum is not None and result < minimum:
+        raise ValueError(f"{context} must be at least {minimum}")
+    if maximum is not None and result > maximum:
+        raise ValueError(f"{context} must be at most {maximum}")
+    return result
+
+
+def _nullable_probability(value: object, context: str) -> float | None:
+    if value is None:
+        return None
+    return _finite_number(value, context, minimum=0.0, maximum=1.0)
+
+
+def _validate_estimands(value: object, index: int) -> dict[str, object]:
+    context = f"row {index} estimands"
+    estimands = _exact_mapping(value, _ESTIMAND_FIELDS, context)
+    if estimands["target"] != "future_response_reliability":
+        raise ValueError(f"{context}.target drift")
+    if estimands["map_metric"] != "integrated_squared_probability_error":
+        raise ValueError(f"{context}.map_metric drift")
+    if estimands["terminal_rule"] != "P":
+        raise ValueError(f"{context}.terminal_rule drift")
+    _finite_number(estimands["tau"], f"{context}.tau")
+    for name in ("sigma_rel", "sigma_add"):
+        _finite_number(estimands[name], f"{context}.{name}", minimum=0.0)
+    for name in ("gamma", "alpha", "q_tau"):
+        probability = _finite_number(
+            estimands[name], f"{context}.{name}", minimum=0.0, maximum=1.0
+        )
+        if not 0.0 < probability < 1.0:
+            raise ValueError(f"{context}.{name} must lie strictly between zero and one")
+    draws = _exact_mapping(
+        estimands["certificate_draws"], _CERTIFICATE_DRAW_FIELDS,
+        f"{context}.certificate_draws",
+    )
+    draw_values = {
+        name: _strict_nonnegative_int(draw, f"{context}.certificate_draws.{name}")
+        for name, draw in draws.items()
+    }
+    if (
+        min(draw_values.values()) < 1
+        or draw_values["selection"] + draw_values["evaluation"] != draw_values["total"]
+    ):
+        raise ValueError(f"{context}.certificate_draws split is invalid")
+    estimands["certificate_draws"] = draws
+    return estimands
+
+
+def _validate_score(score_value: object, row: Mapping[str, object], index: int) -> dict[str, object]:
+    context = f"row {index} scores"
+    score = _exact_mapping(score_value, _SCORE_FIELDS, context)
+    if score["schema"] != "boec-spade-score-v1":
+        raise ValueError(f"{context}.schema drift")
+    if score["arm"] not in _ARMS:
+        raise ValueError(f"{context}.arm is invalid")
+    score_budget = _strict_nonnegative_int(score["budget"], f"{context}.budget")
+    if score["terminal_rule"] != "P" or score_budget != 48:
+        raise ValueError(f"{context} violates Rule P or exact budget")
+    if score["execution_mode"] not in _EXECUTION_MODES:
+        raise ValueError(f"{context}.execution_mode is invalid")
+    for name in (
+        "protocol_digest", "run_digest", "scoring_settings_digest",
+        "threshold_record_digest", "decision_digest",
+    ):
+        _hex_digest(score[name], f"{context}.{name}")
+    for name in (
+        "scoring_seed", "terminal_fit_seed", "terminal_grid_seed", "map_grid_seed",
+        "certificate_grid_seed", "certificate_draw_seed",
+    ):
+        _seed(score[name], f"{context}.{name}")
+    rounds = _strict_nonnegative_int(score["rounds"], f"{context}.rounds")
+    restarts = _strict_nonnegative_int(
+        score["terminal_fit_restarts"], f"{context}.terminal_fit_restarts"
+    )
+    if rounds < 1 or restarts < 1:
+        raise ValueError(f"{context} rounds and terminal fit restarts must be positive")
+    numeric_estimands = {
+        "tau": _finite_number(score["tau"], f"{context}.tau"),
+        "sigma_rel": _finite_number(score["sigma_rel"], f"{context}.sigma_rel", minimum=0.0),
+        "sigma_add": _finite_number(score["sigma_add"], f"{context}.sigma_add", minimum=0.0),
+        "gamma": _finite_number(score["gamma"], f"{context}.gamma", minimum=0.0, maximum=1.0),
+        "alpha": _finite_number(score["alpha"], f"{context}.alpha", minimum=0.0, maximum=1.0),
+        "q_tau": _finite_number(score["q_tau"], f"{context}.q_tau", minimum=0.0, maximum=1.0),
+    }
+    if any(not 0.0 < numeric_estimands[name] < 1.0 for name in ("gamma", "alpha", "q_tau")):
+        raise ValueError(f"{context} probability estimands must be strictly internal")
+    terminal_x = score["terminal_x"]
+    if (
+        not isinstance(terminal_x, list)
+        or len(terminal_x) != _PRIMARY_DIM
+        or any(
+            isinstance(coordinate, bool)
+            or not isinstance(coordinate, Real)
+            or not math.isfinite(float(coordinate))
+            or not 0.0 <= float(coordinate) <= 1.0
+            for coordinate in terminal_x
+        )
+    ):
+        raise ValueError(f"{context}.terminal_x must be six finite unit-cube coordinates")
+    for name in (
+        "terminal_truth", "regret_rule_p", "map_loss", "map_brier", "map_iou",
+        "map_symmetric_difference", "certificate_volume",
+    ):
+        _finite_number(score[name], f"{context}.{name}", minimum=0.0, maximum=1.0)
+    _nullable_probability(score["map_auc"], f"{context}.map_auc")
+    selection = _nullable_probability(
+        score["certificate_selection_containment"],
+        f"{context}.certificate_selection_containment",
+    )
+    crossfit = _nullable_probability(
+        score["certificate_crossfit_containment"],
+        f"{context}.certificate_crossfit_containment",
+    )
+    empirical = score["certificate_empirical_containment"]
+    if empirical is not None and not isinstance(empirical, bool):
+        raise ValueError(f"{context}.certificate_empirical_containment must be bool or null")
+    nonempty = score["certificate_nonempty"]
+    if not isinstance(nonempty, bool):
+        raise ValueError(f"{context}.certificate_nonempty must be boolean")
+    volume = float(score["certificate_volume"])
+    if nonempty:
+        if volume <= 0.0 or selection is None or crossfit is None or empirical is None:
+            raise ValueError(f"{context} nonempty certificate has incomplete containment")
+    elif volume != 0.0 or selection is not None or crossfit is not None or empirical is not None:
+        raise ValueError(f"{context} empty certificate must have null containment and zero volume")
+    selection_draws = _strict_nonnegative_int(
+        score["certificate_selection_draws"], f"{context}.certificate_selection_draws"
+    )
+    evaluation_draws = _strict_nonnegative_int(
+        score["certificate_evaluation_draws"], f"{context}.certificate_evaluation_draws"
+    )
+    if selection_draws < 1 or evaluation_draws < 1:
+        raise ValueError(f"{context} certificate draw halves must be positive")
+    if score["execution_mode"] == "REGISTERED" and (
+        restarts, selection_draws, evaluation_draws
+    ) != (4, 2048, 2048):
+        raise ValueError(f"{context} REGISTERED numerical settings drift")
+    if score["execution_mode"] == "REGISTERED":
+        if score["scoring_settings_digest"] != REGISTERED_SCORING_SETTINGS.digest:
+            raise ValueError(f"{context} REGISTERED settings digest drift")
+        registered_values = (
+            numeric_estimands["sigma_rel"], numeric_estimands["sigma_add"],
+            numeric_estimands["gamma"], numeric_estimands["alpha"],
+            numeric_estimands["q_tau"],
+        )
+        if registered_values != (
+            _PRIMARY_SIGMA_REL, _PRIMARY_SIGMA_ADD, _PRIMARY_GAMMA,
+            _PRIMARY_ALPHA, _PRIMARY_Q_TAU,
+        ):
+            raise ValueError(f"{context} REGISTERED estimand drift")
+    elif score["scoring_settings_digest"] == REGISTERED_SCORING_SETTINGS.digest:
+        raise ValueError(f"{context} TEST_ONLY row masquerades as REGISTERED settings")
+    identities = {
+        "arm": score["arm"], "protocol_digest": score["protocol_digest"],
+        "run_digest": score["run_digest"], "budget": score["budget"],
+        "rounds": score["rounds"], "terminal_rule": score["terminal_rule"],
+    }
+    expected = {
+        "arm": row["arm"], "protocol_digest": row["arm_protocol_digest"],
+        "run_digest": row["run_digest"], "budget": row["budget"],
+        "rounds": row["rounds"], "terminal_rule": row["terminal_rule"],
+    }
+    if identities != expected:
+        raise ValueError(f"{context} identity does not match its containing row")
+    estimands = row["estimands"]
+    if any(numeric_estimands[name] != estimands[name] for name in numeric_estimands):
+        raise ValueError(f"{context} estimands do not match containing row")
+    draws = estimands["certificate_draws"]
+    if (
+        selection_draws != draws["selection"]
+        or evaluation_draws != draws["evaluation"]
+        or selection_draws + evaluation_draws != draws["total"]
+    ):
+        raise ValueError(f"{context} certificate draws do not match row estimands")
+    return score
 
 
 def _validate_rows(
@@ -775,36 +1114,79 @@ def _validate_rows(
     validated: list[dict[str, object]] = []
     keys: set[str] = set()
     for index, source in enumerate(rows):
-        if not isinstance(source, Mapping):
-            raise ValueError(f"row {index} must be a JSON object")
-        row = dict(source)
-        missing = _REQUIRED_ROW_FIELDS - row.keys()
-        if missing:
-            raise ValueError(f"row {index} missing required fields: {sorted(missing)}")
+        row = _exact_mapping(source, _ROW_FIELDS, f"row {index}")
         if row["schema"] != STUDY_ROW_SCHEMA:
             raise ValueError(f"row {index} schema drift")
         if row["protocol_digest"] != expected_protocol:
             raise ValueError(f"row {index} protocol drift")
-        key = row["campaign_key"]
-        if not isinstance(key, str) or not key:
-            raise ValueError(f"row {index} campaign_key must be non-empty")
-        if key in keys:
-            raise ValueError(f"duplicate campaign_key {key!r}")
-        keys.add(key)
-        if row["budget"] != 48 or row["terminal_rule"] != "P":
+        for digest_name in (
+            "arm_protocol_digest", "run_digest", "spec_digest", "config_digest",
+        ):
+            _hex_digest(row[digest_name], f"row {index}.{digest_name}")
+        _hex_digest(row["source_commit"], f"row {index}.source_commit", length=40)
+        row_budget = _strict_nonnegative_int(row["budget"], f"row {index}.budget")
+        row_rounds = _strict_nonnegative_int(row["rounds"], f"row {index}.rounds")
+        if row_budget != 48 or row_rounds < 1 or row["terminal_rule"] != "P":
             raise ValueError(f"row {index} violates budget or terminal-rule contract")
         if not isinstance(row["source_dirty"], bool):
             raise ValueError(f"row {index} source_dirty must be boolean")
-        environment = row["environment"]
-        environment_fields = {"python", "platform", "packages", "threads", "executable"}
-        if not isinstance(environment, Mapping) or not environment_fields <= environment.keys():
-            raise ValueError(f"row {index} environment provenance is incomplete")
-        package_fields = {"numpy", "scipy", "torch", "gpytorch", "botorch"}
-        if not isinstance(environment["packages"], Mapping) or not package_fields <= environment["packages"].keys():
-            raise ValueError(f"row {index} environment package provenance is incomplete")
-        thread_fields = {"torch", "torch_interop", "omp_num_threads", "mkl_num_threads"}
-        if not isinstance(environment["threads"], Mapping) or not thread_fields <= environment["threads"].keys():
-            raise ValueError(f"row {index} environment thread provenance is incomplete")
+        family = row["family"]
+        if not isinstance(family, str) or not family:
+            raise ValueError(f"row {index}.family must be nonempty")
+        instance_seed = _strict_nonnegative_int(row["instance_seed"], f"row {index}.instance_seed")
+        campaign_seed = _strict_nonnegative_int(row["campaign_seed"], f"row {index}.campaign_seed")
+        _seed(row["root_seed"], f"row {index}.root_seed")
+        if row["arm"] not in _ARMS:
+            raise ValueError(f"row {index}.arm is invalid")
+        key = _exact_mapping(row["campaign_key"], _CAMPAIGN_KEY_FIELDS, f"row {index}.campaign_key")
+        if not isinstance(key["family"], str) or not key["family"]:
+            raise ValueError(f"row {index}.campaign_key.family must be nonempty")
+        key_instance_seed = _strict_nonnegative_int(
+            key["instance_seed"], f"row {index}.campaign_key.instance_seed"
+        )
+        key_campaign_seed = _strict_nonnegative_int(
+            key["campaign_seed"], f"row {index}.campaign_key.campaign_seed"
+        )
+        if key["arm"] not in _ARMS:
+            raise ValueError(f"row {index}.campaign_key.arm is invalid")
+        _hex_digest(
+            key["arm_protocol_digest"], f"row {index}.campaign_key.arm_protocol_digest"
+        )
+        _hex_digest(key["run_digest"], f"row {index}.campaign_key.run_digest")
+        expected_key = {
+            "family": family, "instance_seed": instance_seed,
+            "campaign_seed": campaign_seed, "arm": row["arm"],
+            "arm_protocol_digest": row["arm_protocol_digest"],
+            "run_digest": row["run_digest"],
+        }
+        if key_instance_seed != instance_seed or key_campaign_seed != campaign_seed:
+            raise ValueError(f"row {index}.campaign_key seed identity mismatch")
+        if key != expected_key:
+            raise ValueError(f"row {index}.campaign_key identity mismatch")
+        canonical_key = _canonical_json(key)
+        if canonical_key in keys:
+            raise ValueError(f"duplicate campaign_key {canonical_key}")
+        keys.add(canonical_key)
+        environment = _exact_mapping(
+            row["environment"], _ENVIRONMENT_FIELDS, f"row {index}.environment"
+        )
+        packages = _exact_mapping(
+            environment["packages"], _PACKAGE_FIELDS, f"row {index}.environment.packages"
+        )
+        threads = _exact_mapping(
+            environment["threads"], _THREAD_FIELDS, f"row {index}.environment.threads"
+        )
+        for name in ("python", "platform", "executable", "boec_distribution"):
+            if not isinstance(environment[name], str) or not environment[name]:
+                raise ValueError(f"row {index}.environment.{name} must be nonempty")
+        if not all(isinstance(version, str) and version for version in packages.values()):
+            raise ValueError(f"row {index}.environment package versions must be strings")
+        for name in ("torch", "torch_interop"):
+            if _strict_nonnegative_int(threads[name], f"row {index}.environment.threads.{name}") < 1:
+                raise ValueError(f"row {index}.environment.threads.{name} must be positive")
+        for name in ("omp_num_threads", "mkl_num_threads"):
+            if threads[name] is not None and not isinstance(threads[name], str):
+                raise ValueError(f"row {index}.environment.threads.{name} must be string or null")
         if not isinstance(row["command_args"], list) or not all(
             isinstance(arg, str) for arg in row["command_args"]
         ):
@@ -814,18 +1196,15 @@ def _validate_rows(
         for name, digest in row["parent_artifacts"].items():
             if not isinstance(name, str):
                 raise ValueError(f"row {index} parent artifact names must be strings")
-            _hex_digest(digest, f"parent_artifacts[{name!r}]")
-        if not isinstance(row["derived_seeds"], Mapping) or not all(
-            isinstance(name, str)
-            and not isinstance(seed, bool)
-            and isinstance(seed, Integral)
-            and 0 <= int(seed) < 2**63
+            _hex_digest(digest, f"row {index}.parent_artifacts[{name!r}]")
+        if not isinstance(row["derived_seeds"], Mapping) or not row["derived_seeds"] or not all(
+            isinstance(name, str) and name and not isinstance(seed, bool)
+            and isinstance(seed, Integral) and 0 <= int(seed) < 2**63
             for name, seed in row["derived_seeds"].items()
         ):
             raise ValueError(f"row {index} derived_seeds are invalid")
-        for digest_name in ("spec_digest", "config_digest"):
-            _hex_digest(row[digest_name], digest_name)
-        _hex_digest(row["source_commit"], "source_commit", length=40)
+        row["estimands"] = _validate_estimands(row["estimands"], index)
+        row["scores"] = _validate_score(row["scores"], row, index)
         try:
             _canonical_json(row)
         except (TypeError, ValueError) as exc:

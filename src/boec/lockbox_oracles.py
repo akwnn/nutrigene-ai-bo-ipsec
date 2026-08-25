@@ -112,7 +112,7 @@ class LockboxInstanceRecord:
 class LockboxOracle:
     """Numpy oracle with a torch-only scorer view and immutable public metadata."""
 
-    __slots__ = ("_family", "_parameters", "_record")
+    __slots__ = ("_family", "_parameters_json", "_record")
 
     def __init__(
         self,
@@ -120,9 +120,22 @@ class LockboxOracle:
         parameters: dict[str, object],
         record: LockboxInstanceRecord,
     ) -> None:
+        parameters_json = _canonical_json(_jsonable_parameters(parameters))
+        expected_digest = hashlib.sha256(parameters_json.encode("utf-8")).hexdigest()
+        if (
+            record.schema != "boec-lockbox-instance-v1"
+            or record.family != family
+            or record.dim != _DIM
+            or parameters_json != record.parameters_json
+            or record.parameter_digest != expected_digest
+        ):
+            raise ValueError("oracle parameters do not match the immutable instance record")
         object.__setattr__(self, "_family", family)
-        object.__setattr__(self, "_parameters", parameters)
+        object.__setattr__(self, "_parameters_json", parameters_json)
         object.__setattr__(self, "_record", record)
+
+    def __setattr__(self, name: str, value: object) -> None:
+        raise AttributeError("LockboxOracle state is immutable")
 
     @property
     def name(self) -> str:
@@ -156,7 +169,7 @@ class LockboxOracle:
 
     def f(self, X: np.ndarray) -> np.ndarray:
         values = self._check_X(X)
-        p = self._parameters
+        p = _runtime_parameters(self._parameters_json)
         if self._family == "toroidal_rastrigin":
             shift = p["shift"]
             delta = np.remainder(values - shift + 0.5, 1.0) - 0.5
@@ -176,7 +189,13 @@ class LockboxOracle:
             bent = z[:, 1:] - p["curvature"][None, :] * along[:, None] ** 2
             penalty = (along / p["along_scale"]) ** 2
             penalty += ((bent / p["ridge_width"][None, :]) ** 2).sum(axis=1)
-            result = np.exp(-0.5 * penalty)
+            ridge = np.exp(-0.5 * penalty)
+            background_penalty = (
+                (z / p["background_scale"][None, :]) ** 2
+            ).sum(axis=1)
+            background = np.exp(-0.5 * background_penalty)
+            weight = p["background_weight"]
+            result = (1.0 - weight) * ridge + weight * background
         elif self._family == "soft_plateau":
             z = (values - p["shift"]) @ p["rotation"]
             radius = np.sqrt(((z / p["axis_scale"]) ** 2).sum(axis=1))
@@ -223,20 +242,31 @@ def _jsonable_parameters(parameters: dict[str, object]) -> dict[str, object]:
     return result
 
 
+def _runtime_parameters(parameters_json: str) -> dict[str, object]:
+    """Create disposable arrays from the canonical immutable parameter payload."""
+    payload = json.loads(parameters_json)
+    return {
+        key: np.asarray(value, dtype=float) if isinstance(value, list) else value
+        for key, value in payload.items()
+    }
+
+
 def _analytic_audit(
     family: str,
     parameters: dict[str, object],
     optimum: np.ndarray,
     instance_seed: int,
 ) -> LockboxOptimumAudit:
+    serialized = _jsonable_parameters(parameters)
+    parameters_json = _canonical_json(serialized)
     placeholder = LockboxInstanceRecord(
         schema="boec-lockbox-instance-v1",
         family=family,
         dim=_DIM,
         instance_seed=instance_seed,
         parameter_seed=0,
-        parameters_json="{}",
-        parameter_digest="0" * 64,
+        parameters_json=parameters_json,
+        parameter_digest=hashlib.sha256(parameters_json.encode("utf-8")).hexdigest(),
         audit=LockboxOptimumAudit("pending", tuple(optimum), 1.0, tuple(optimum), 1.0, 0.0, 0, 0.0, False),
     )
     oracle = LockboxOracle(family, parameters, placeholder)
@@ -377,9 +407,11 @@ def _parameters(family: str, instance_seed: int) -> tuple[dict[str, object], int
         parameters = {
             "shift": rng.uniform(0.2, 0.8, size=_DIM),
             "rotation": _orthogonal(rng),
-            "curvature": rng.uniform(-1.2, 1.2, size=_DIM - 1),
-            "along_scale": float(rng.uniform(0.20, 0.38)),
-            "ridge_width": rng.uniform(0.035, 0.085, size=_DIM - 1),
+            "curvature": rng.uniform(-0.9, 0.9, size=_DIM - 1),
+            "along_scale": float(rng.uniform(0.25, 0.42)),
+            "ridge_width": rng.uniform(0.06, 0.13, size=_DIM - 1),
+            "background_weight": float(rng.uniform(0.15, 0.22)),
+            "background_scale": rng.uniform(0.48, 0.68, size=_DIM),
         }
     elif family == "soft_plateau":
         parameters = {

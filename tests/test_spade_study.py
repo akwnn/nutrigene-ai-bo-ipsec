@@ -4,18 +4,23 @@ import gzip
 import hashlib
 import json
 import math
+import copy
 from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
 import torch
 import yaml
+import boec.spade_study as study_module
 
+from boec.seedbook import derive_seed
 from boec.spade_study import (
     REGISTERED_SCORING_SETTINGS,
     STUDY_ROW_SCHEMA,
     ScoringExecutionSettings,
     SealedOracleHarness,
+    StudyScore,
+    build_study_row,
     controlled_tau,
     read_jsonl_gzip,
     score_campaign,
@@ -83,7 +88,28 @@ def _test_settings():
         certificate_grid_size=24,
         certificate_draws=32,
         certificate_rho_grid_size=8,
+        fit_restarts=1,
     )
+
+
+@pytest.fixture(autouse=True)
+def _capture_common_terminal_fits(monkeypatch):
+    calls = []
+
+    def fit(train_X, train_Y, bounds, *, fit_restarts, seed):
+        calls.append(
+            {
+                "X": train_X.detach().clone(),
+                "Y": train_Y.detach().clone(),
+                "bounds": bounds.detach().clone(),
+                "fit_restarts": fit_restarts,
+                "seed": seed,
+            }
+        )
+        return _Model()
+
+    monkeypatch.setattr(study_module, "build_learned_noise_gp", fit, raising=False)
+    return calls
 
 
 def test_registered_scoring_sizes_are_exact_and_immutable():
@@ -94,6 +120,7 @@ def test_registered_scoring_sizes_are_exact_and_immutable():
         certificate_grid_size=2_048,
         certificate_draws=4_096,
         certificate_rho_grid_size=64,
+        fit_restarts=4,
     )
 
 
@@ -168,6 +195,46 @@ def test_score_freezes_rule_p_and_certificate_before_any_truth_call():
     assert result.certificate_evaluation_draws == 16
 
 
+def test_score_refits_common_model_on_all_48_and_ignores_injected_model(
+    _capture_common_terminal_fits,
+):
+    class MaliciousModel:
+        def posterior(self, *args, **kwargs):
+            raise AssertionError("injected terminal model was trusted")
+
+    settings = _test_settings()
+    campaign = _campaign()
+    campaign.terminal_model = MaliciousModel()
+    harness = SealedOracleHarness(_truth, optimum_value=1.0, oracle_identity="toy")
+    threshold = controlled_tau(
+        harness, sigma_rel=.1, sigma_add=.01, gamma=.95, q_tau=.75,
+        root_seed=9, execution_mode="TEST_ONLY", settings=settings,
+    )
+    campaign.tau = threshold.tau
+    score = score_campaign(
+        campaign, threshold.tau, harness.scorer(),
+        sigma_rel=.1, sigma_add=.01, gamma=.95, alpha=.95,
+        scoring_seed=73, execution_mode="TEST_ONLY", settings=settings,
+    )
+
+    assert len(_capture_common_terminal_fits) == 1
+    call = _capture_common_terminal_fits[0]
+    assert torch.equal(call["X"], campaign.X)
+    assert torch.equal(call["Y"], campaign.Y)
+    assert call["X"].shape == (48, 6)
+    assert call["Y"].shape == (48, 1)
+    assert call["fit_restarts"] == 1
+    expected_seed = derive_seed(
+        73,
+        "score_terminal_common_gp",
+        campaign.run_digest,
+        settings.digest,
+    )
+    assert call["seed"] == expected_seed
+    assert score.terminal_fit_seed == expected_seed
+    assert score.terminal_fit_restarts == 1
+
+
 def test_score_rejects_campaign_mode_or_tau_identity_drift():
     settings = _test_settings()
     harness = SealedOracleHarness(_truth, optimum_value=1.0, oracle_identity="toy")
@@ -211,7 +278,8 @@ def test_scorer_uses_identical_arm_neutral_paths_and_map_loss_reference():
         sigma_rel=.1, sigma_add=.01, gamma=.95, alpha=.95,
         scoring_seed=52, execution_mode="TEST_ONLY", settings=settings,
     )
-    assert a.decision_digest == b.decision_digest
+    assert a.terminal_fit_seed != b.terminal_fit_seed
+    assert a.terminal_x == b.terminal_x
     assert a.map_loss == b.map_loss
     assert a.regret_rule_p == b.regret_rule_p
 
@@ -226,11 +294,65 @@ def test_scorer_uses_identical_arm_neutral_paths_and_map_loss_reference():
     assert a.map_loss == pytest.approx(float((p_hat - p_true).square().mean()), abs=1e-12)
 
 
-def _row(key, protocol="d" * 64):
+def _score_payload():
+    return {
+        "schema": "boec-spade-score-v1",
+        "arm": "spade",
+        "protocol_digest": "a" * 64,
+        "run_digest": "b" * 64,
+        "terminal_rule": "P",
+        "budget": 48,
+        "rounds": 2,
+        "execution_mode": "REGISTERED",
+        "scoring_settings_digest": REGISTERED_SCORING_SETTINGS.digest,
+        "threshold_record_digest": "3" * 64,
+        "scoring_seed": 4,
+        "terminal_fit_seed": 5,
+        "terminal_fit_restarts": 4,
+        "terminal_grid_seed": 6,
+        "map_grid_seed": 7,
+        "certificate_grid_seed": 8,
+        "certificate_draw_seed": 9,
+        "decision_digest": "4" * 64,
+        "tau": .5,
+        "sigma_rel": .1,
+        "sigma_add": .01,
+        "gamma": .95,
+        "alpha": .95,
+        "q_tau": .75,
+        "terminal_x": [.2, .3, .4, .5, .6, .7],
+        "terminal_truth": .8,
+        "regret_rule_p": .2,
+        "map_loss": .1,
+        "map_brier": .12,
+        "map_auc": .75,
+        "map_iou": .6,
+        "map_symmetric_difference": .2,
+        "certificate_nonempty": True,
+        "certificate_volume": .1,
+        "certificate_selection_containment": .96,
+        "certificate_crossfit_containment": .94,
+        "certificate_empirical_containment": True,
+        "certificate_selection_draws": 2048,
+        "certificate_evaluation_draws": 2048,
+    }
+
+
+def _row(campaign_seed, protocol="d" * 64):
+    scores = _score_payload()
     return {
         "schema": STUDY_ROW_SCHEMA,
-        "campaign_key": key,
+        "campaign_key": {
+            "family": "toroidal_rastrigin",
+            "instance_seed": 0,
+            "campaign_seed": campaign_seed,
+            "arm": "spade",
+            "arm_protocol_digest": "a" * 64,
+            "run_digest": "b" * 64,
+        },
         "protocol_digest": protocol,
+        "arm_protocol_digest": "a" * 64,
+        "run_digest": "b" * 64,
         "spec_digest": "e" * 64,
         "config_digest": "f" * 64,
         "source_commit": "1" * 40,
@@ -241,27 +363,71 @@ def _row(key, protocol="d" * 64):
             "packages": {"numpy": "1", "scipy": "1", "torch": "1", "gpytorch": "1", "botorch": "1"},
             "threads": {"torch": 1, "torch_interop": 1, "omp_num_threads": None, "mkl_num_threads": None},
             "executable": "/python",
+            "boec_distribution": "0.1.0",
         },
         "command_args": ["--shard", "0"],
         "parent_artifacts": {},
         "family": "toroidal_rastrigin",
         "instance_seed": 0,
-        "campaign_seed": 0,
+        "campaign_seed": campaign_seed,
         "root_seed": 1,
         "derived_seeds": {"noise": 2},
         "arm": "spade",
         "budget": 48,
         "rounds": 2,
         "terminal_rule": "P",
-        "estimands": {"gamma": .95, "alpha": .95, "q_tau": .75},
-        "scores": {"map_loss": .1},
+        "estimands": {
+            "target": "future_response_reliability",
+            "tau": .5,
+            "sigma_rel": .1,
+            "sigma_add": .01,
+            "gamma": .95,
+            "alpha": .95,
+            "q_tau": .75,
+            "map_metric": "integrated_squared_probability_error",
+            "terminal_rule": "P",
+            "certificate_draws": {"total": 4096, "selection": 2048, "evaluation": 2048},
+        },
+        "scores": scores,
     }
+
+
+def test_build_study_row_constructs_the_exact_identity_bound_schema(tmp_path):
+    payload = _score_payload()
+    payload["terminal_x"] = tuple(payload["terminal_x"])
+    score = StudyScore(**payload)
+    row = build_study_row(
+        score,
+        study_protocol_digest="d" * 64,
+        spec_digest="e" * 64,
+        config_digest="f" * 64,
+        source_commit="1" * 40,
+        source_dirty=False,
+        command_args=("--shard", "0"),
+        parent_artifacts={},
+        family="toroidal_rastrigin",
+        instance_seed=0,
+        campaign_seed=0,
+        root_seed=1,
+        derived_seeds={"noise": 2},
+    )
+    assert row["campaign_key"] == {
+        "family": "toroidal_rastrigin",
+        "instance_seed": 0,
+        "campaign_seed": 0,
+        "arm": "spade",
+        "arm_protocol_digest": "a" * 64,
+        "run_digest": "b" * 64,
+    }
+    write_jsonl_gzip(
+        tmp_path / "row.jsonl.gz", [row], protocol_digest="d" * 64
+    )
 
 
 def test_deterministic_atomic_gzip_roundtrip_sha_and_fail_closed_validation(tmp_path):
     a = tmp_path / "a.jsonl.gz"
     b = tmp_path / "b.jsonl.gz"
-    rows = [_row("k0"), _row("k1")]
+    rows = [_row(0), _row(1)]
     write_jsonl_gzip(a, rows, protocol_digest="d" * 64)
     write_jsonl_gzip(b, rows, protocol_digest="d" * 64)
     assert a.read_bytes() == b.read_bytes()
@@ -279,15 +445,91 @@ def test_deterministic_atomic_gzip_roundtrip_sha_and_fail_closed_validation(tmp_
 def test_jsonl_refuses_duplicates_schema_or_protocol_drift(tmp_path):
     path = tmp_path / "rows.jsonl.gz"
     with pytest.raises(ValueError, match="duplicate campaign_key"):
-        write_jsonl_gzip(path, [_row("same"), _row("same")], protocol_digest="d" * 64)
+        write_jsonl_gzip(path, [_row(0), _row(0)], protocol_digest="d" * 64)
     with pytest.raises(ValueError, match="schema"):
-        write_jsonl_gzip(path, [{**_row("k"), "schema": "wrong"}], protocol_digest="d" * 64)
+        write_jsonl_gzip(path, [{**_row(0), "schema": "wrong"}], protocol_digest="d" * 64)
     with pytest.raises(ValueError, match="protocol"):
-        write_jsonl_gzip(path, [_row("k", protocol="0" * 64)], protocol_digest="d" * 64)
+        write_jsonl_gzip(path, [_row(0, protocol="0" * 64)], protocol_digest="d" * 64)
     with pytest.raises(ValueError, match="environment"):
         write_jsonl_gzip(
-            path, [{**_row("k"), "environment": {}}], protocol_digest="d" * 64
+            path, [{**_row(0), "environment": {}}], protocol_digest="d" * 64
         )
+
+
+def test_jsonl_schema_is_exact_and_identity_bound(tmp_path):
+    path = tmp_path / "rows.jsonl.gz"
+    mutations = []
+
+    extra_top = _row(0)
+    extra_top["unexpected"] = 1
+    mutations.append(extra_top)
+
+    extra_score = _row(0)
+    extra_score["scores"]["unexpected"] = 1
+    mutations.append(extra_score)
+
+    extra_key = _row(0)
+    extra_key["campaign_key"]["unexpected"] = 1
+    mutations.append(extra_key)
+
+    arm_drift = _row(0)
+    arm_drift["campaign_key"]["arm"] = "sobol48"
+    mutations.append(arm_drift)
+
+    protocol_drift = _row(0)
+    protocol_drift["scores"]["protocol_digest"] = "0" * 64
+    mutations.append(protocol_drift)
+
+    run_drift = _row(0)
+    run_drift["run_digest"] = "0" * 64
+    mutations.append(run_drift)
+
+    float_budget = _row(0)
+    float_budget["scores"]["budget"] = 48.0
+    mutations.append(float_budget)
+
+    float_key_seed = _row(0)
+    float_key_seed["campaign_key"]["campaign_seed"] = 0.0
+    mutations.append(float_key_seed)
+
+    for row in mutations:
+        with pytest.raises(ValueError):
+            write_jsonl_gzip(path, [row], protocol_digest="d" * 64)
+
+
+@pytest.mark.parametrize(
+    ("field", "bad"),
+    [
+        ("map_loss", -0.1),
+        ("regret_rule_p", float("nan")),
+        ("certificate_volume", 1.1),
+        ("map_auc", 1.1),
+        ("certificate_empirical_containment", 1),
+        ("terminal_x", [.2] * 5),
+    ],
+)
+def test_jsonl_rejects_corrupt_score_values(tmp_path, field, bad):
+    row = _row(0)
+    row["scores"][field] = bad
+    with pytest.raises(ValueError, match="scores"):
+        write_jsonl_gzip(tmp_path / "rows.jsonl.gz", [row], protocol_digest="d" * 64)
+
+
+def test_jsonl_containment_nullability_is_consistent(tmp_path):
+    valid = _row(0)
+    valid["scores"].update(
+        certificate_nonempty=False,
+        certificate_volume=0.0,
+        certificate_selection_containment=None,
+        certificate_crossfit_containment=None,
+        certificate_empirical_containment=None,
+    )
+    write_jsonl_gzip(tmp_path / "valid.jsonl.gz", [valid], protocol_digest="d" * 64)
+
+    invalid = copy.deepcopy(valid)
+    invalid["scores"]["certificate_empirical_containment"] = True
+    with pytest.raises(ValueError, match="scores"):
+        write_jsonl_gzip(tmp_path / "invalid.jsonl.gz", [invalid], protocol_digest="d" * 64)
 
 
 def test_yaml_freezes_every_registered_design_value_and_its_payload_digest():
@@ -299,6 +541,10 @@ def test_yaml_freezes_every_registered_design_value_and_its_payload_digest():
     assert p["dimension"] == 6
     assert p["noise"] == {"sigma_rel": .10, "sigma_add": .01}
     assert p["reliability"] == {"gamma": .95, "alpha": .95, "q_tau": .75}
+    assert p["threshold"]["achieved_reliable_prevalence"] == .25
+    assert p["threshold"]["registered_tolerance_grid_cells"] == 1
+    assert p["threshold"]["unachievable_tie_policy"] == "fail_closed"
+    assert p["surrogate"]["terminal_scoring_refit_on_all_observations"] is True
     assert p["grids"] == {"calibration": 65536, "terminal": 16384, "map": 8192, "certificate": 2048}
     assert p["certificate_draws"] == {"total": 4096, "selection": 2048, "evaluation": 2048, "rho_grid": 64}
     assert p["development"]["families"] == ["hill", "ackley", "hartmann6", "levy", "rosenbrock"]

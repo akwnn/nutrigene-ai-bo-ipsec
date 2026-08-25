@@ -89,22 +89,30 @@
       "optimum_audit": "component_centers_plus_4096_sobol_top12_multistart_with_independent_slsqp_repolish"
     },
     "curved_ridge": {
-      "form": "exponential_curved_ridge_penalty",
+      "form": "weighted_exponential_curved_ridge_plus_broad_anisotropic_background",
       "shift": [
         0.2,
         0.8
       ],
       "curvature": [
-        -1.2,
-        1.2
+        -0.9,
+        0.9
       ],
       "along_scale": [
-        0.2,
-        0.38
+        0.25,
+        0.42
       ],
       "ridge_width": [
-        0.035,
-        0.085
+        0.06,
+        0.13
+      ],
+      "background_weight": [
+        0.15,
+        0.22
+      ],
+      "background_scale": [
+        0.48,
+        0.68
       ],
       "rotation": "seeded_qr_fixed_sign_positive_determinant",
       "optimum_audit": "analytic_unique_plus_4096_point_scrambled_sobol_challenge"
@@ -132,10 +140,10 @@
     }
   },
   "digests": {
-    "lockbox_oracles_source_sha256": "7c72e50194243c181e6d3a7234787a0c7879eb7c0b71389a01b8a438b374563e",
-    "spade_study_source_sha256": "5d09d14b0f1589f53c25543e876b21cddc65356e8b71a23cd94a5dc902c6dd09",
+    "lockbox_oracles_source_sha256": "1a79abd6e62d503852fe98957e67d4d4f6d7e9f8b52788176f2359ed38d3e0c3",
+    "spade_study_source_sha256": "da90498a28dfd0158866810315f75c30cd451ec46344adcad55e38f57c4d0a17",
     "spec_sha256": "f05aa18cf6c302d5396fdee1286f0df777dc70e2123bcfb7c3ef3cdba882adcc",
-    "config_file_sha256": "c1198e4db937b6c1527b18d2df63d996b32fc41fa7a4f4d08c196153c9dd40dc",
-    "protocol_payload_sha256": "ddfa4e36cb789efd2bce2106e42ec0b3bd8cf613a1b1b7deaacca3a5dabd6878"
+    "config_file_sha256": "5711975ccc8fdb5efcc4ff812736cfb4bc050dac283d9cbc9369d0f5cfc4c67d",
+    "protocol_payload_sha256": "fe64d814cdea8d2f5812faf894af9bb813a65c45e2fc4690b064d11779d966d2"
   }
 }

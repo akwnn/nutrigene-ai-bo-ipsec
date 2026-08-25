@@ -17,6 +17,10 @@ protocol:
     formula: "quantile(f - z_gamma * sqrt(sigma_rel^2*f^2 + sigma_add^2), q_tau)"
     per_landscape_instance: true
     sealed_oracle_only: true
+    achieved_reliable_prevalence: 0.25
+    registered_tolerance_grid_cells: 1
+    adjacent_float_tie_check: true
+    unachievable_tie_policy: fail_closed
 
   surrogate:
     type: SingleTaskGP
@@ -26,6 +30,9 @@ protocol:
     observation_noise: learned_homoskedastic
     likelihood_noise_interval: [0.000001, 1.0]
     fit_restarts: 4
+    terminal_scoring_refit_on_all_observations: true
+    terminal_scoring_fit_seed_identity: [scoring_seed, arm_run_digest, scoring_settings_digest]
+    supplied_campaign_terminal_model: ignored
 
   adaptive_pool:
     design: scrambled_sobol
@@ -120,7 +127,7 @@ protocol:
 
 digests:
   digest_definition: "sha256; protocol payload uses canonical sorted compact JSON of the parsed protocol mapping"
-  protocol_payload_sha256: ddfa4e36cb789efd2bce2106e42ec0b3bd8cf613a1b1b7deaacca3a5dabd6878
+  protocol_payload_sha256: fe64d814cdea8d2f5812faf894af9bb813a65c45e2fc4690b064d11779d966d2
   spec_sha256: f05aa18cf6c302d5396fdee1286f0df777dc70e2123bcfb7c3ef3cdba882adcc
-  lockbox_oracles_source_sha256: 7c72e50194243c181e6d3a7234787a0c7879eb7c0b71389a01b8a438b374563e
-  spade_study_source_sha256: 5d09d14b0f1589f53c25543e876b21cddc65356e8b71a23cd94a5dc902c6dd09
+  lockbox_oracles_source_sha256: 1a79abd6e62d503852fe98957e67d4d4f6d7e9f8b52788176f2359ed38d3e0c3
+  spade_study_source_sha256: da90498a28dfd0158866810315f75c30cd451ec46344adcad55e38f57c4d0a17

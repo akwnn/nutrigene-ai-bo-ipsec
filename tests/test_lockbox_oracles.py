@@ -9,7 +9,8 @@ import numpy as np
 import pytest
 import torch
 
-from boec.lockbox_oracles import LOCKBOX_FAMILIES, make_lockbox_oracle
+from boec.lockbox_oracles import LOCKBOX_FAMILIES, LockboxOracle, make_lockbox_oracle
+from boec.spade_study import SealedOracleHarness, controlled_tau
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -65,12 +66,92 @@ def test_instances_are_distinct_and_change_map_topology(family):
     assert not np.allclose(a.f(grid), b.f(grid), rtol=0.0, atol=1e-12)
 
 
+@pytest.mark.parametrize("family", LOCKBOX_FAMILIES)
+def test_oracle_state_is_deeply_immutable_and_digest_covers_effective_parameters(family):
+    oracle = make_lockbox_oracle(family, 84)
+    grid = _audit_grid()
+    before = oracle.f(grid).copy()
+    optimum_before = oracle.optimum_x
+    digest_before = oracle.record.parameter_digest
+
+    assert not any(
+        isinstance(getattr(oracle, slot), np.ndarray)
+        for slot in oracle.__slots__
+        if hasattr(oracle, slot)
+    )
+    with pytest.raises((AttributeError, TypeError, ValueError)):
+        oracle._record = None
+    with pytest.raises((AttributeError, TypeError, ValueError)):
+        oracle._parameters["shift"][0] = 0.0
+
+    detached = json.loads(oracle.record.parameters_json)
+    first_list = next(value for value in detached.values() if isinstance(value, list))
+    first_list[0] = 999.0
+    optimum_copy = oracle.optimum_x
+    optimum_copy[0] = 0.0
+
+    assert np.array_equal(oracle.f(grid), before)
+    assert np.array_equal(oracle.optimum_x, optimum_before)
+    assert oracle.record.parameter_digest == digest_before
+    canonical = json.dumps(
+        json.loads(oracle.record.parameters_json),
+        sort_keys=True,
+        separators=(",", ":"),
+        ensure_ascii=False,
+        allow_nan=False,
+    ).encode()
+    assert hashlib.sha256(canonical).hexdigest() == digest_before
+    forged = dataclasses.replace(oracle.record, parameter_digest="0" * 64)
+    with pytest.raises(ValueError, match="immutable instance record"):
+        LockboxOracle(family, json.loads(oracle.record.parameters_json), forged)
+
+
 def test_unknown_family_and_out_of_range_key_fail_closed():
     with pytest.raises(ValueError, match="unknown lockbox family"):
         make_lockbox_oracle("ackley", 0)
     for bad in (-1, 2000, True, 1.5):
         with pytest.raises(ValueError, match="instance_seed"):
             make_lockbox_oracle(LOCKBOX_FAMILIES[0], bad)
+
+
+@pytest.mark.parametrize("family", LOCKBOX_FAMILIES)
+@pytest.mark.parametrize("seed", [0, 84, 349, 1999])
+def test_registered_threshold_achieves_quarter_reliable_prevalence(family, seed):
+    oracle = make_lockbox_oracle(family, seed)
+    harness = SealedOracleHarness(
+        oracle,
+        optimum_value=oracle.optimum_value,
+        oracle_identity=f"{family}:{seed}",
+    )
+    threshold = controlled_tau(
+        harness,
+        sigma_rel=.10,
+        sigma_add=.01,
+        gamma=.95,
+        q_tau=.75,
+        root_seed=seed,
+    )
+    assert abs(threshold.reliable_fraction - .25) <= 1 / 65_536
+
+
+def test_registered_threshold_fails_closed_when_ties_make_quarter_unachievable():
+    def constant_truth(X):
+        return torch.full((X.shape[0],), .25, dtype=torch.double)
+
+    harness = SealedOracleHarness(
+        constant_truth,
+        optimum_value=1.0,
+        oracle_identity="constant-tie-oracle",
+    )
+    with pytest.raises(RuntimeError, match="controlled reliable prevalence"):
+        controlled_tau(
+            harness,
+            sigma_rel=.10,
+            sigma_add=.01,
+            gamma=.95,
+            q_tau=.75,
+            root_seed=0,
+        )
 
 
 def test_frozen_manifest_has_no_outcomes_and_binds_sources_and_key_prefix():
@@ -84,6 +165,12 @@ def test_frozen_manifest_has_no_outcomes_and_binds_sources_and_key_prefix():
         "reserved": {"first": 0, "last": 1999, "count": 2000},
         "selected_prefix": {"first": 0, "last": 349, "count": 350},
     }
+    curved = manifest["generator_definitions"]["curved_ridge"]
+    assert curved["curvature"] == [-0.9, 0.9]
+    assert curved["along_scale"] == [0.25, 0.42]
+    assert curved["ridge_width"] == [0.06, 0.13]
+    assert curved["background_weight"] == [0.15, 0.22]
+    assert curved["background_scale"] == [0.48, 0.68]
     for forbidden in ("map_loss", "regret", "answer_rate", "containment_rate", "verdict"):
         assert forbidden not in encoded
 
