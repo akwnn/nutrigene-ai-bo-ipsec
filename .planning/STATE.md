@@ -37,8 +37,11 @@ mismatches already recorded in `.planning/codebase/CONCERNS.md`.
   RNG state for byte-identical resume.
 - The committed tau-quantile, oracle-noise ceiling, and OA-LHS design-lottery evidence from
   `origin/main` is merged into this branch.
+- Task 2 common learned-noise GP, explicitly seeded qLogNEI, and Schur-updated IVR passed
+  independent numerical review. The focused suite is 96 passed, including randomized
+  brute-force conditioning and extreme-weight tests.
 
 ## Next action
 
-Implement and independently review the common learned-noise surrogate, discrete candidate
-pool, acquisition, and batch-objective primitives used by SPADE and its comparators.
+Implement and independently review the gamma-aware predictive reliable region and split,
+empirically testable certificate.
