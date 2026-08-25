@@ -1,1 +1,1 @@
-The same campaigns change ordering under Rules A and P. Paired intervals show method-specific terminal-rule changes relative to zero, while Rule-A stacked components show that measured selection combines search and identification losses for compatible arms.
+The same campaigns (n=50 per method) change ordering under Rules A and P. SPADE, qLogEI and qLogNEI have negative paired Rule-P-minus-Rule-A effects, whereas Classical DoE has a positive effect. Rule-A regret is decomposed into search and identification losses.

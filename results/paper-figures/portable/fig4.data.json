@@ -1,5 +1,6 @@
 {
   "A": {
+    "display": "aligned dot strips",
     "evidence": "retrospective Hill; descriptive",
     "rows": [
       {
@@ -121,7 +122,8 @@
         "tau_frac": 0.25,
         "x": 0
       }
-    ]
+    ],
+    "status_gutter": true
   },
   "C": {
     "rows": [
@@ -219,6 +221,7 @@
         "proportion": 0.9207100591715977,
         "x": 778
       }
-    ]
+    ],
+    "warning_encoding": "red triangle plus status text"
   }
 }
