@@ -1,5 +1,5 @@
 # Environments — .venv is ~950 MB. Never commit it.
-.venv/
+.venv
 venv/
 env/
 .python-version
