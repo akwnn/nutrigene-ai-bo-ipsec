@@ -207,6 +207,45 @@ def test_power_constants_reject_invalid_values(changes: dict[str, object]):
         replace(PowerConstants(), **changes)
 
 
+@pytest.mark.parametrize(
+    "changes",
+    [
+        {"minimum_n": 351},
+        {"maximum_n": 1999},
+        {"margin": 0.03},
+        {"alpha": 0.10},
+        {"target_power": 0.90},
+        {"sensitivity_replicates": 1999},
+        {"sensitivity_confidence": 0.90},
+        {"root_seed": 2_026_08_26},
+    ],
+)
+def test_valid_looking_power_constant_drift_is_rejected(changes):
+    with pytest.raises(ValueError, match="frozen|registered"):
+        replace(PowerConstants(), **changes)
+
+
+def test_functions_reject_subclasses_that_bypass_frozen_constant_validation():
+    class UnfrozenPowerConstants(PowerConstants):
+        def __post_init__(self) -> None:
+            pass
+
+    bypass = UnfrozenPowerConstants(margin=0.03)
+    calls = [
+        lambda: paired_normal_power(0.0, 0.2, 350, bypass),
+        lambda: sensitivity_power_curve(
+            _held_out()["hill"]["map"],
+            family="hill",
+            endpoint="map",
+            constants=bypass,
+        ),
+        lambda: plan_lockbox_sample_size(_held_out(), constants=bypass),
+    ]
+    for call in calls:
+        with pytest.raises(TypeError, match="frozen|PowerConstants"):
+            call()
+
+
 def test_paired_normal_power_matches_literal_fixture():
     constants = PowerConstants()
     got = paired_normal_power(
@@ -262,6 +301,40 @@ def test_sensitivity_curve_is_seeded_nested_and_exactly_bounded():
     )
 
 
+@pytest.mark.parametrize(
+    ("value", "expected_successes"),
+    [(0.7, 0), (-0.7, 2000)],
+)
+def test_sensitivity_constant_translations_have_exact_zero_variance(
+    value: float, expected_successes: int
+):
+    curve = sensitivity_power_curve([value] * 50, family="hill", endpoint="map")
+    assert all(point.successes == expected_successes for point in curve)
+
+
+def test_centered_prefix_moments_preserve_means_and_translation_invariant_variance():
+    sampled = np.array(
+        [
+            [0.01, 0.02, -0.01, 0.03, 0.00],
+            [-0.02, 0.01, 0.04, -0.01, 0.02],
+        ],
+        dtype=np.float64,
+    )
+    means, variances = power._centered_prefix_moments(
+        sampled, minimum_n=2, maximum_n=5
+    )
+    for shift in (0.7, -0.7):
+        shifted_means, shifted_variances = power._centered_prefix_moments(
+            sampled + shift, minimum_n=2, maximum_n=5
+        )
+        assert shifted_means == pytest.approx(means + shift, abs=2e-16)
+        assert shifted_variances == pytest.approx(variances, abs=2e-18)
+    expected_variances = np.column_stack(
+        [sampled[:, :n].var(axis=1, ddof=1) for n in range(2, 6)]
+    )
+    assert variances == pytest.approx(expected_variances, abs=2e-18)
+
+
 def test_sensitivity_first_prefix_matches_independent_literal_calculation():
     values = np.linspace(-0.03, 0.07, 50)
     got = sensitivity_power_curve(values, family="hill", endpoint="map")[0]
@@ -309,7 +382,10 @@ def test_family_and_endpoint_labels_derive_independent_sensitivity_streams():
         [0.0] * 49 + [math.nan],
         [0.0] * 49 + [math.inf],
         [True] * 50,
+        [0.0] * 49 + ["-0.01"],
+        [0.0] * 48 + [False, "-0.01"],
         [1j] * 50,
+        np.array([0.0] * 49 + ["-0.01"], dtype=object),
         np.zeros((50, 1)),
     ],
 )
@@ -481,6 +557,26 @@ def test_power_plan_validator_does_not_alias_caller_payload(exact_powered_payloa
     assert payload["environment"]["python"] == "3.11.9"
 
 
+@pytest.mark.parametrize("bad_value", [True, "-0.01"])
+def test_fully_recomputed_artifact_rejects_non_real_source_elements(
+    exact_powered_payload, bad_value
+):
+    payload = copy.deepcopy(exact_powered_payload)
+    payload["held_out_differences"]["hill"]["map"][0] = bad_value
+    with pytest.raises(TypeError, match=r"finite .*Real"):
+        decision = plan_lockbox_sample_size(payload["held_out_differences"]).as_dict()
+        payload["status"] = decision["status"]
+        payload["decision"] = decision
+        payload["decision_sha256"] = _canonical_sha256(decision)
+        validate_power_plan_payload(payload)
+
+
+@pytest.mark.parametrize("unicode_digit", ["٠", "𝟘", "０"])
+def test_digest_validation_rejects_non_ascii_hex_digits(unicode_digit: str):
+    with pytest.raises(ValueError, match="ASCII|hex"):
+        power._lower_hex(unicode_digit * 40, "source_commit", 40)
+
+
 def test_sensitivity_point_rejects_impossible_probabilities():
     with pytest.raises((TypeError, ValueError)):
         SensitivityPoint(n=350, successes=2001, point_power=1.0, lower_bound=1.0)
@@ -598,3 +694,45 @@ def test_power_plan_payload_requires_exact_held_out_vectors(
     mutation(payload["held_out_differences"])
     with pytest.raises((TypeError, ValueError)):
         validate_power_plan_payload(payload)
+
+
+def test_power_decision_prefix_is_derived_and_cannot_mutate_decision_or_digest():
+    decision = plan_lockbox_sample_size(_held_out())
+    digest = decision.decision_sha256
+    prefix = decision.selected_instance_prefix
+    assert prefix == {"first": 0, "last": 349, "count": 350}
+    prefix["last"] = 999
+    prefix["count"] = 1000
+    assert decision.selected_instance_prefix == {
+        "first": 0,
+        "last": 349,
+        "count": 350,
+    }
+    assert decision.decision_sha256 == digest
+
+
+def test_power_decision_direct_construction_rejects_contradictory_invariants():
+    powered = plan_lockbox_sample_size(_held_out())
+    insufficient = plan_lockbox_sample_size(_held_out(0.03))
+    invalid = [
+        lambda: replace(powered, status="INSUFFICIENT_POWER"),
+        lambda: replace(powered, status="UNKNOWN"),
+        lambda: replace(powered, selected_sample_size=None),
+        lambda: replace(powered, selected_sample_size=True),
+        lambda: replace(powered, selected_sample_size=np.int64(350)),
+        lambda: replace(powered, selected_sample_size=349),
+        lambda: replace(powered, selected_sample_size=2001),
+        lambda: replace(insufficient, selected_sample_size=350),
+        lambda: replace(powered, constants=object()),
+        lambda: replace(powered, families=powered.families[:-1]),
+        lambda: replace(
+            powered,
+            families=(
+                (powered.families[0][0], powered.families[0][1][:-1]),
+                *powered.families[1:],
+            ),
+        ),
+    ]
+    for construct in invalid:
+        with pytest.raises((TypeError, ValueError)):
+            construct()

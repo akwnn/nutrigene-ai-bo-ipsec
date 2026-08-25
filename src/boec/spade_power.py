@@ -5,6 +5,7 @@ from __future__ import annotations
 import hashlib
 import json
 import math
+import re
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from numbers import Integral, Real
@@ -31,6 +32,17 @@ __all__ = [
 DEVELOPMENT_FAMILIES = ("hill", "ackley", "hartmann6", "levy", "rosenbrock")
 POWER_ENDPOINTS = ("map", "regret")
 POWER_PLAN_SCHEMA = "boec-spade-lockbox-power-v1"
+
+_REGISTERED_CONSTANT_VALUES = {
+    "minimum_n": 350,
+    "maximum_n": 2000,
+    "margin": 0.02,
+    "alpha": 0.05,
+    "target_power": 0.80,
+    "sensitivity_replicates": 2000,
+    "sensitivity_confidence": 0.95,
+    "root_seed": 2_026_08_25,
+}
 
 _ANALYTIC_FORMULA = (
     "Phi((margin-mean)*sqrt(n)/standard_deviation-z_(1-alpha))"
@@ -99,14 +111,11 @@ def _canonical_sha256(value: object) -> str:
 
 
 def _lower_hex(value: object, name: str, length: int) -> str:
-    if not isinstance(value, str) or len(value) != length:
-        raise ValueError(f"{name} must be a {length}-character lowercase hex string")
-    if value != value.lower():
-        raise ValueError(f"{name} must use lowercase hexadecimal")
-    try:
-        int(value, 16)
-    except ValueError as exc:
-        raise ValueError(f"{name} must be hexadecimal") from exc
+    pattern = rf"[0-9a-f]{{{length}}}"
+    if not isinstance(value, str) or re.fullmatch(pattern, value, re.ASCII) is None:
+        raise ValueError(
+            f"{name} must be exactly {length} lowercase ASCII hex characters"
+        )
     return value
 
 
@@ -132,28 +141,22 @@ class PowerConstants:
     root_seed: int = 2_026_08_25
 
     def __post_init__(self) -> None:
-        minimum_n = _integer(self.minimum_n, "minimum_n")
-        maximum_n = _integer(self.maximum_n, "maximum_n")
-        replicates = _integer(self.sensitivity_replicates, "sensitivity_replicates")
-        root_seed = _integer(self.root_seed, "root_seed")
-        if minimum_n < 2:
-            raise ValueError("minimum_n must be at least two for a sample variance")
-        if maximum_n < minimum_n:
-            raise ValueError("maximum_n must be at least minimum_n")
-        if replicates < 1:
-            raise ValueError("sensitivity_replicates must be positive")
-        if root_seed < 0:
-            raise ValueError("root_seed must be nonnegative")
-        margin = _finite_real(self.margin, "margin")
-        if margin <= 0.0:
-            raise ValueError("margin must be positive")
-        _probability(self.alpha, "alpha", open_interval=True)
-        _probability(self.target_power, "target_power", open_interval=True)
-        _probability(
-            self.sensitivity_confidence,
-            "sensitivity_confidence",
-            open_interval=True,
-        )
+        actual = {
+            "minimum_n": _integer(self.minimum_n, "minimum_n"),
+            "maximum_n": _integer(self.maximum_n, "maximum_n"),
+            "margin": _finite_real(self.margin, "margin"),
+            "alpha": _finite_real(self.alpha, "alpha"),
+            "target_power": _finite_real(self.target_power, "target_power"),
+            "sensitivity_replicates": _integer(
+                self.sensitivity_replicates, "sensitivity_replicates"
+            ),
+            "sensitivity_confidence": _finite_real(
+                self.sensitivity_confidence, "sensitivity_confidence"
+            ),
+            "root_seed": _integer(self.root_seed, "root_seed"),
+        }
+        if actual != _REGISTERED_CONSTANT_VALUES:
+            raise ValueError("PowerConstants are frozen to the registered literals")
 
     def as_dict(self) -> dict[str, int | float]:
         return {
@@ -235,19 +238,96 @@ class PowerDecision:
 
     status: str
     selected_sample_size: int | None
-    selected_instance_prefix: dict[str, int] | None
     families: tuple[tuple[str, tuple[tuple[str, _EndpointDecision], ...]], ...]
     constants: PowerConstants = PowerConstants()
+
+    def __post_init__(self) -> None:
+        if type(self.constants) is not PowerConstants:
+            raise TypeError("constants must be frozen PowerConstants")
+        if self.status == "POWERED":
+            if type(self.selected_sample_size) is not int:
+                raise TypeError("selected_sample_size must be a built-in integer")
+            selected_n = _integer(
+                self.selected_sample_size, "selected_sample_size"
+            )
+            if not self.constants.minimum_n <= selected_n <= self.constants.maximum_n:
+                raise ValueError("POWERED sample size lies outside the registered range")
+            reported_n = selected_n
+        elif self.status == "INSUFFICIENT_POWER":
+            if self.selected_sample_size is not None:
+                raise ValueError(
+                    "INSUFFICIENT_POWER requires a null selected sample size"
+                )
+            reported_n = self.constants.maximum_n
+        else:
+            raise ValueError("status must be POWERED or INSUFFICIENT_POWER")
+        if not isinstance(self.families, tuple) or len(self.families) != len(
+            DEVELOPMENT_FAMILIES
+        ):
+            raise ValueError("families must be the exact immutable registered structure")
+        endpoint_powers: list[tuple[float, float]] = []
+        for expected_family, family_entry in zip(
+            DEVELOPMENT_FAMILIES, self.families, strict=True
+        ):
+            if (
+                not isinstance(family_entry, tuple)
+                or len(family_entry) != 2
+                or family_entry[0] != expected_family
+                or not isinstance(family_entry[1], tuple)
+                or len(family_entry[1]) != len(POWER_ENDPOINTS)
+            ):
+                raise ValueError("family decision structure or order drifted")
+            for expected_endpoint, endpoint_entry in zip(
+                POWER_ENDPOINTS, family_entry[1], strict=True
+            ):
+                if (
+                    not isinstance(endpoint_entry, tuple)
+                    or len(endpoint_entry) != 2
+                    or endpoint_entry[0] != expected_endpoint
+                    or not isinstance(endpoint_entry[1], _EndpointDecision)
+                ):
+                    raise ValueError("endpoint decision structure or order drifted")
+                result = endpoint_entry[1]
+                endpoint_powers.append(
+                    _validate_endpoint_metrics(
+                        result.as_dict(),
+                        name=f"families.{expected_family}.{expected_endpoint}",
+                        status=self.status,
+                        reported_n=reported_n,
+                    )
+                )
+                expected_seed = derive_seed(
+                    self.constants.root_seed,
+                    "lockbox_power_sensitivity",
+                    expected_family,
+                    expected_endpoint,
+                )
+                if result.sensitivity_seed != expected_seed:
+                    raise ValueError("endpoint sensitivity seed label drifted")
+        if self.status == "INSUFFICIENT_POWER" and all(
+            analytic >= self.constants.target_power
+            and lower >= self.constants.target_power
+            for analytic, lower in endpoint_powers
+        ):
+            raise ValueError(
+                "INSUFFICIENT_POWER must fail at least one endpoint at maximum_n"
+            )
+
+    @property
+    def selected_instance_prefix(self) -> dict[str, int] | None:
+        if self.selected_sample_size is None:
+            return None
+        return {
+            "first": 0,
+            "last": self.selected_sample_size - 1,
+            "count": self.selected_sample_size,
+        }
 
     def as_dict(self) -> dict[str, object]:
         return {
             "status": self.status,
             "selected_sample_size": self.selected_sample_size,
-            "selected_instance_prefix": (
-                None
-                if self.selected_instance_prefix is None
-                else dict(self.selected_instance_prefix)
-            ),
+            "selected_instance_prefix": self.selected_instance_prefix,
             "constants": self.constants.as_dict(),
             "formulas": dict(_FORMULAS),
             "families": {
@@ -270,7 +350,7 @@ def paired_normal_power(
     constants: PowerConstants = PowerConstants(),
 ) -> float:
     """Return registered one-sided paired-normal non-inferiority planning power."""
-    if not isinstance(constants, PowerConstants):
+    if type(constants) is not PowerConstants:
         raise TypeError("constants must be PowerConstants")
     mean_value = _finite_real(mean, "mean")
     standard_deviation_value = _finite_real(
@@ -301,23 +381,62 @@ def paired_normal_power(
 def _held_out_array(values: Sequence[float] | np.ndarray, name: str) -> np.ndarray:
     if isinstance(values, (str, bytes)):
         raise TypeError(f"{name} must be a numeric vector")
-    try:
-        array = np.asarray(values)
-    except (TypeError, ValueError) as exc:
-        raise TypeError(f"{name} must be a numeric vector") from exc
-    if array.shape != (50,):
+    if isinstance(values, np.ndarray):
+        if values.shape != (50,):
+            raise ValueError(f"{name} must contain exactly 50 scalar differences")
+        source_values = values.tolist()
+    elif isinstance(values, Sequence):
+        if len(values) != 50:
+            raise ValueError(f"{name} must contain exactly 50 scalar differences")
+        source_values = list(values)
+    else:
+        raise TypeError(f"{name} must be a numeric vector")
+    if len(source_values) != 50:
         raise ValueError(f"{name} must contain exactly 50 scalar differences")
-    if np.issubdtype(array.dtype, np.bool_):
-        raise TypeError(f"{name} cannot contain booleans")
-    if np.issubdtype(array.dtype, np.complexfloating):
-        raise TypeError(f"{name} cannot contain complex values")
-    try:
-        result = np.asarray(array, dtype=np.float64)
-    except (TypeError, ValueError) as exc:
-        raise TypeError(f"{name} must contain real numbers") from exc
-    if not bool(np.isfinite(result).all()):
-        raise ValueError(f"{name} must contain only finite differences")
-    return result
+    converted: list[float] = []
+    for index, item in enumerate(source_values):
+        if isinstance(item, bool) or not isinstance(item, Real):
+            raise TypeError(f"{name}[{index}] must be a finite numbers.Real value")
+        converted.append(_finite_real(item, f"{name}[{index}]"))
+    return np.asarray(converted, dtype=np.float64)
+
+
+def _centered_prefix_moments(
+    sampled: np.ndarray,
+    *,
+    minimum_n: int,
+    maximum_n: int,
+) -> tuple[np.ndarray, np.ndarray]:
+    """Return stable row-wise prefix means and Bessel-corrected variances."""
+    array = np.asarray(sampled, dtype=np.float64)
+    if array.ndim != 2 or array.shape[1] < maximum_n:
+        raise ValueError("sampled values do not cover the requested prefix range")
+    if not bool(np.isfinite(array).all()):
+        raise ValueError("sampled values must be finite")
+    offsets = array[:, :1]
+    centered = array - offsets
+    with np.errstate(over="ignore", invalid="ignore"):
+        cumulative_sum = np.cumsum(centered, axis=1, dtype=np.float64)
+        np.square(centered, out=centered)
+        cumulative_square_sum = np.cumsum(centered, axis=1, dtype=np.float64)
+    start = minimum_n - 1
+    sums = cumulative_sum[:, start:maximum_n]
+    square_sums = cumulative_square_sum[:, start:maximum_n]
+    sample_sizes = np.arange(minimum_n, maximum_n + 1, dtype=np.float64)[
+        None, :
+    ]
+    with np.errstate(over="ignore", invalid="ignore", divide="ignore"):
+        centered_means = sums / sample_sizes
+        means = centered_means + offsets
+        variances = (square_sums - np.square(sums) / sample_sizes) / (
+            sample_sizes - 1.0
+        )
+    if not bool(np.isfinite(means).all()) or not bool(np.isfinite(variances).all()):
+        raise ValueError("sensitivity prefix moments are nonfinite")
+    if bool(np.any(variances < -1e-14)):
+        raise ValueError("sensitivity sample variance is materially negative")
+    variances[variances < 0.0] = 0.0
+    return means, variances
 
 
 def sensitivity_power_curve(
@@ -328,7 +447,7 @@ def sensitivity_power_curve(
     constants: PowerConstants = PowerConstants(),
 ) -> tuple[SensitivityPoint, ...]:
     """Build the frozen deterministic nested-prefix sensitivity power curve."""
-    if not isinstance(constants, PowerConstants):
+    if type(constants) is not PowerConstants:
         raise TypeError("constants must be PowerConstants")
     if isinstance(family, bool) or family not in DEVELOPMENT_FAMILIES:
         raise ValueError(f"family must be one of {DEVELOPMENT_FAMILIES}")
@@ -348,29 +467,15 @@ def sensitivity_power_curve(
         dtype=np.int32,
     )
     sampled = differences[indices]
-    with np.errstate(over="ignore", invalid="ignore"):
-        cumulative_sum = np.cumsum(sampled, axis=1, dtype=np.float64)
-        np.square(sampled, out=sampled)
-        cumulative_square_sum = np.cumsum(sampled, axis=1, dtype=np.float64)
+    means, variances = _centered_prefix_moments(
+        sampled,
+        minimum_n=constants.minimum_n,
+        maximum_n=constants.maximum_n,
+    )
     del sampled, indices
-
-    start = constants.minimum_n - 1
-    stop = constants.maximum_n
-    sums = cumulative_sum[:, start:stop]
-    square_sums = cumulative_square_sum[:, start:stop]
     sample_sizes = np.arange(
         constants.minimum_n, constants.maximum_n + 1, dtype=np.float64
     )[None, :]
-    with np.errstate(over="ignore", invalid="ignore", divide="ignore"):
-        means = sums / sample_sizes
-        variances = (square_sums - np.square(sums) / sample_sizes) / (
-            sample_sizes - 1.0
-        )
-    if not bool(np.isfinite(means).all()) or not bool(np.isfinite(variances).all()):
-        raise ValueError("sensitivity prefix moments are nonfinite")
-    if bool(np.any(variances < -1e-14)):
-        raise ValueError("sensitivity sample variance is materially negative")
-    variances[variances < 0.0] = 0.0
     standard_deviations = np.sqrt(variances)
     z_confidence = float(norm.ppf(constants.sensitivity_confidence))
     upper = means + z_confidence * standard_deviations / np.sqrt(sample_sizes)
@@ -438,7 +543,7 @@ def plan_lockbox_sample_size(
     constants: PowerConstants = PowerConstants(),
 ) -> PowerDecision:
     """Select the first candidate passing every frozen power conjunction."""
-    if not isinstance(constants, PowerConstants):
+    if type(constants) is not PowerConstants:
         raise TypeError("constants must be PowerConstants")
     held_out = _validate_held_out(held_out_differences)
     curves: dict[
@@ -533,15 +638,9 @@ def plan_lockbox_sample_size(
                 )
             )
         family_results.append((family, tuple(endpoint_results)))
-    prefix = (
-        None
-        if selected_n is None
-        else {"first": 0, "last": selected_n - 1, "count": selected_n}
-    )
     return PowerDecision(
         status=status,
         selected_sample_size=selected_n,
-        selected_instance_prefix=prefix,
         families=tuple(family_results),
         constants=constants,
     )
