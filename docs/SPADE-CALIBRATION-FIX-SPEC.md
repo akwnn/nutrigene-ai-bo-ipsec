@@ -119,10 +119,23 @@ different mechanism is found.
 
 ## 4. K2 — the design lottery (gates Piece B, OA-LHS)
 
-**Exact rule, `docs/ODIN-VERDICT.md` §6, K2, adopted verbatim:** 20 design draws each of
-{plain LHS, maximin-LHS, strength-2 OA-LHS at n=49}, at d=6, on **hill and hartmann6**
-(the tie family and the lose family — not the full 5-family sweep). Report **design SD**
-of regret across the 20 draws per design type, not mean regret.
+**Exact rule, `docs/ODIN-VERDICT.md` §6, K2, adopted in spirit; the sampling structure is
+matched exactly to the already-committed comparator, not invented fresh.**
+`results/q53-spread-gp-hartmann6.json` (d=6, σ=0.25, `BUDGET=48`) reports **25 seeds ×
+5 LHS draws per seed**, giving 25 independent per-seed design-SD estimates, range
+[0.051, 0.272] (the source of "0.140–0.153"). **This spec runs the identical structure —
+25 seeds × 5 OA-LHS draws each, on `hartmann6` only** — substituting only the design
+generator and its required `n=49`, so the two distributions are directly comparable.
+`plain LHS` is not re-run — Q53's own committed number is the comparator. **Maximin-LHS is
+dropped from this pass**: no generator exists in this codebase, `ODIN-VERDICT.md` only
+proposes it as a fallback for when `n=48` doesn't admit strength-2 OA-LHS (not this
+project's case, since OA-LHS runs at its own specified `n=49`), and building one is
+separable, lower-priority work not gated by anything above.
+
+**One-well mismatch, reported openly, not hidden** (`docs/ODIN-VERDICT.md` §4(a)): OA-LHS
+runs at `n=49` against the committed plain-LHS reference's `n=48`. `SPADE-SPEC.md` Stage 1
+itself accepts exactly this mismatch ("at exactly 48 you must drop to maximin-LHS, which
+loses the Stein guarantee").
 
 - **Win:** OA-LHS cuts hartmann6 design SD materially below plain-LHS's measured
   0.140–0.153 (`Q53`) → Stage 1 has a mechanism, worth building into SPADE's actual Plate 1.
@@ -132,16 +145,16 @@ of regret across the 20 draws per design type, not mean regret.
 
 **Well-count note.** `SPADE-SPEC.md` Stage 1 specifies OA-LHS at n=49 (not 48) — "at exactly
 48 you must drop to maximin-LHS, which loses the Stein guarantee." K2 measures OA-LHS at its
-specified n=49 for exactly this reason; the one-well mismatch against this project's 48-well
-baseline is reported openly, not silently absorbed, per `ODIN-VERDICT.md` §4(a).
+**Scope**: 25 seeds × 5 draws = **125 OA-LHS campaigns**, `hartmann6` only, scored for
+`(rule_a, rule_c)` regret via `boec.spread_gp.spread_gp_once`'s exact GP-fit/locator
+settings (the same function that produced the committed comparator), so the two numbers
+are commensurable. No certificate/calibration scoring needed — K2 answers a design-variance
+question, not a certificate question. A firewalled timing pilot (5 campaigns, timing only)
+runs before committing to the full 125, per this project's standard protocol.
 
-**Scope**: 20 draws × 3 design types × 2 families = **60 design draws**, each scored for
-regret only (no certificate/calibration scoring needed at this stage — K2 answers a design-
-variance question, not a certificate question). A firewalled timing pilot (5 draws, timing
-only) runs before committing to the full 60, per this project's standard protocol.
-
-**This spec does not yet build the OA-LHS generator or the replicate-noise estimator.**
-Both are gated; §3/§5 record whether either gate opens before either is built.
+**Neither the OA-LHS generator nor the replicate-noise estimator was built before this
+spec was frozen.** `oa_lhs_design` (TDD, `src/boec/optimizers.py`) is built now, gated by
+this section; Piece A (the replicate estimator) was killed by K1 (§3b) and is not built.
 
 ## 5. K2 result
 
