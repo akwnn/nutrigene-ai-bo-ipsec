@@ -61,6 +61,16 @@ def _manifest_time() -> str | None:
     return _git_value("show", "-s", "--format=%cI", "HEAD")
 
 
+def _strip_svg_trailing_whitespace(path: Path) -> None:
+    """Keep generated SVGs compatible with Git's whitespace check."""
+    path = Path(path)
+    text = path.read_text(encoding="utf-8")
+    path.write_text(
+        "\n".join(line.rstrip() for line in text.splitlines()) + "\n",
+        encoding="utf-8",
+    )
+
+
 def export_bundle(bundle: FigureBundle, output_dir: Path, preset: VenuePreset | str) -> dict[str, Any]:
     """Write all publication formats and machine-readable panel sidecars."""
     if isinstance(preset, str):
@@ -95,6 +105,7 @@ def export_bundle(bundle: FigureBundle, output_dir: Path, preset: VenuePreset | 
                 paths["svg"], format="svg",
                 metadata={"Creator": "boec.paper_figures", "Date": "2000-01-01T00:00:00+00:00"},
             )
+            _strip_svg_trailing_whitespace(paths["svg"])
             bundle.figure.savefig(paths["png"], format="png", dpi=preset.png_dpi)
             bundle.figure.savefig(
                 paths["tiff"], format="tiff", dpi=preset.tiff_dpi,

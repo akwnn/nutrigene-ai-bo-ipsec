@@ -8,7 +8,9 @@ from PIL import Image
 import pytest
 
 import boec.paper_figures.export as export
+from boec.paper_figures.figure1 import build_figure1
 from boec.paper_figures.export import build_all
+from boec.paper_figures.style import get_preset
 
 
 def test_build_all_writes_complete_bundle(tmp_path):
@@ -33,6 +35,16 @@ def test_raster_dimensions_match_declared_dpi(tmp_path):
         assert abs(png.width - round(178.0 / 25.4 * 450)) <= 3
         assert abs(tiff.width - round(178.0 / 25.4 * 600)) <= 3
         assert png.mode == tiff.mode == "RGB"
+
+
+def test_export_bundle_strips_svg_trailing_whitespace(tmp_path):
+    bundle = build_figure1(get_preset("portable"))
+    export.export_bundle(bundle, tmp_path, "portable")
+
+    assert all(
+        line == line.rstrip()
+        for line in (tmp_path / "fig1.svg").read_text(encoding="utf-8").splitlines()
+    )
 
 
 def test_panel_data_alt_text_and_manifest_are_traceable(tmp_path):
