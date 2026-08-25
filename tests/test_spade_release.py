@@ -424,6 +424,14 @@ def _init_source_repo(
         subprocess.run(
             ["git", "-C", str(repo_root), "add", path.as_posix()], check=True
         )
+    source_root = Path(__file__).resolve().parents[1]
+    for path in release.EXECUTION_SOURCE_BLOBS:
+        destination = repo_root / path
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        destination.write_bytes((source_root / path).read_bytes())
+        subprocess.run(
+            ["git", "-C", str(repo_root), "add", path.as_posix()], check=True
+        )
     subprocess.run(
         ["git", "-C", str(repo_root), "commit", "-q", "-m", "selection source"],
         check=True,
@@ -576,6 +584,7 @@ def _forbid_outcome_reads(monkeypatch) -> None:
         raise AssertionError("raw outcome opened before power preflight passed")
 
     monkeypatch.setattr(study, "read_jsonl_gzip", forbidden_raw_reader)
+    monkeypatch.setattr(study, "read_jsonl_gzip_bytes", forbidden_raw_reader)
 
 
 def _analysis_with_bound_literal(literal: str) -> str:
@@ -635,6 +644,10 @@ def test_clean_release_uses_only_computed_permissible_claim(tmp_path):
     path = tmp_path / "release.json"
     release.write_release_report(path, report)
     assert json.loads(path.read_text()) == report
+    original = path.read_bytes()
+    with pytest.raises(ValueError, match="immutable|exists"):
+        release.write_release_report(path, {**report, "verdict": "FAIL"})
+    assert path.read_bytes() == original
 
 
 def test_pass_claim_is_rejected_when_a_computed_primary_bound_fails():
@@ -1072,6 +1085,24 @@ def test_release_requires_selection_source_to_precede_power_source(
     assert report["verdict"] == "FAIL"
     assert any(
         "selection source is not an ancestor of power source" in value.lower()
+        for value in report["violations"]
+    )
+
+
+def test_release_rejects_post_outcome_execution_code_reinterpretation_before_reads(
+    tmp_path, monkeypatch
+):
+    tree = _write_complete_release_tree(tmp_path)
+    analyzer_path = tmp_path / "scripts" / "analyse_spade_lockbox.py"
+    analyzer_path.write_text("# post-outcome reinterpretation\n")
+    _commit_path(tmp_path, analyzer_path, "alter analyzer after outcomes")
+    tree["manifest"]["source_commit"] = _git_head(tmp_path)
+    _rewrite_merged(tree)
+    _forbid_outcome_reads(monkeypatch)
+    report = _run_complete_tree(tree)
+    assert report["verdict"] == "FAIL"
+    assert any(
+        "execution source blob digest mismatch" in value.lower()
         for value in report["violations"]
     )
 
