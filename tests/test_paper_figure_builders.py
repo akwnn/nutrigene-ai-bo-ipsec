@@ -106,6 +106,17 @@ def test_figure2_defines_campaign_decisions_and_estimands():
     plt.close(bundle.figure)
 
 
+def test_figure2_campaign_observation_path_is_a_closed_loop():
+    bundle = build_figure2(get_preset("portable"))
+
+    panel_a_connectors = bundle.figure.axes[1].findobj(match=FancyArrowPatch)
+    assert {connector.get_gid() for connector in panel_a_connectors} >= {
+        "campaign-return-loop"
+    }
+
+    plt.close(bundle.figure)
+
+
 def test_figure2_panel_b_names_required_point_deliverables():
     bundle = build_figure2(get_preset("portable"))
 

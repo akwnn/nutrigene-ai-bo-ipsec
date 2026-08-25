@@ -169,6 +169,43 @@ def _boundary_arrow(axis: Axes, source: EditorialText, target: EditorialText) ->
     return connector
 
 
+def _campaign_return_arrow(
+    axis: Axes,
+    source: EditorialText,
+    target: EditorialText,
+) -> FancyArrowPatch:
+    """Close the experimental loop below the forward observation path."""
+    axis.figure.canvas.draw()
+    renderer = axis.figure.canvas.get_renderer()
+    inverse = axis.transAxes.inverted()
+    source_bounds = source.patch.get_window_extent(renderer)
+    target_bounds = target.patch.get_window_extent(renderer)
+    start = inverse.transform(((source_bounds.x0 + source_bounds.x1) / 2, source_bounds.y0))
+    end = inverse.transform(
+        (
+            (target_bounds.x0 + target_bounds.x1) / 2,
+            target_bounds.y0 - renderer.points_to_pixels(3.0),
+        )
+    )
+    corridor_y = 0.08
+    route = Path(
+        (start, (start[0], corridor_y), (end[0], corridor_y), end),
+        (Path.MOVETO, Path.LINETO, Path.LINETO, Path.LINETO),
+    )
+    connector = FancyArrowPatch(
+        path=route,
+        transform=axis.transAxes,
+        arrowstyle="-|>",
+        mutation_scale=7,
+        linewidth=0.8,
+        color=_INK,
+        zorder=4,
+    )
+    connector.set_gid("campaign-return-loop")
+    axis.add_patch(connector)
+    return connector
+
+
 def _draw_campaign_loop(axis: Axes, preset: VenuePreset) -> None:
     specs = (
         ((0.11, 0.49), "Formulation\nvariables", _NEUTRAL_FILL, "campaign-formulation"),
@@ -189,6 +226,7 @@ def _draw_campaign_loop(axis: Axes, preset: VenuePreset) -> None:
             nodes[index + 1].patch,
             padding_pt=0.0,
         )
+    _campaign_return_arrow(axis, nodes[-1], nodes[0])
 
 
 def _draw_decision_lanes(axis: Axes, preset: VenuePreset) -> None:
