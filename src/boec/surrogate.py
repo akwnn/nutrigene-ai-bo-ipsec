@@ -62,6 +62,7 @@ back.
 from __future__ import annotations
 
 import copy
+import math
 from dataclasses import dataclass
 
 import gpytorch
@@ -71,11 +72,14 @@ from botorch.models import SingleTaskGP
 from botorch.models.transforms.input import ChainedInputTransform, Normalize, Warp
 from botorch.models.transforms.outcome import Standardize
 from botorch.models.utils.gpytorch_modules import get_covar_module_with_dim_scaled_prior
-from gpytorch.constraints import GreaterThan
+from gpytorch.constraints import GreaterThan, Interval
 from gpytorch.kernels import AdditiveKernel, Kernel, MaternKernel, RBFKernel, ScaleKernel
+from gpytorch.likelihoods import GaussianLikelihood
 from gpytorch.priors import GammaPrior, LogNormalPrior
 from gpytorch.mlls import ExactMarginalLogLikelihood
 from torch import Tensor
+
+from boec.seedbook import derive_seed
 
 __all__ = [
     "KERNEL_STRUCTURES",
@@ -84,6 +88,7 @@ __all__ = [
     "base_kernel",
     "biphasic_mean_from_fit",
     "build_gp",
+    "build_learned_noise_gp",
     "component_variances",
     "is_additive",
     "kernel_is_matern",
@@ -523,6 +528,121 @@ def build_gp(
 
     return _finish(train_X, train_Y, train_Yvar, bounds, covar, d, m,
                    mean_module, fit, input_warping, fit_restarts)
+
+
+def build_learned_noise_gp(
+    train_X: Tensor,
+    train_Y: Tensor,
+    bounds: Tensor,
+    *,
+    fit_restarts: int,
+    seed: int,
+) -> SingleTaskGP:
+    """Fit the joint protocol's common homoskedastic learned-noise GP.
+
+    Each restart receives a stateless labelled seed, so fitting is reproducible
+    without consuming or depending on the caller's ambient Torch RNG stream.
+    Per-restart outcomes are attached to the selected model as
+    ``_boec_fit_diagnostics`` for campaign audit records.
+    """
+    if train_X.ndim != 2:
+        raise ValueError(f"train_X must be (n, d), got {tuple(train_X.shape)}")
+    if train_Y.ndim != 2:
+        raise ValueError(
+            f"train_Y must be (n, m) even at m=1, got {tuple(train_Y.shape)}"
+        )
+    if train_X.shape[0] != train_Y.shape[0]:
+        raise ValueError(
+            f"train_X has {train_X.shape[0]} rows, train_Y has {train_Y.shape[0]}"
+        )
+    if train_Y.shape[1] != 1:
+        raise ValueError(
+            "build_learned_noise_gp currently supports one outcome; "
+            f"got {train_Y.shape[1]}"
+        )
+    if bounds.ndim != 2 or bounds.shape != (2, train_X.shape[1]):
+        raise ValueError(
+            f"bounds must be (2, d) with d={train_X.shape[1]}, "
+            f"got {tuple(bounds.shape)}"
+        )
+    if not bool(torch.all(bounds[1] > bounds[0])):
+        raise ValueError("every upper bound must exceed its lower bound")
+    if isinstance(fit_restarts, bool) or not isinstance(fit_restarts, int) or fit_restarts < 1:
+        raise ValueError(f"fit_restarts must be a positive integer, got {fit_restarts!r}")
+
+    d = train_X.shape[1]
+    covar = ScaleKernel(
+        get_covar_module_with_dim_scaled_prior(
+            ard_num_dims=d,
+            use_rbf_kernel=False,
+        )
+    )
+    input_transform = Normalize(d=d, bounds=bounds.double())
+
+    def build() -> SingleTaskGP:
+        likelihood = GaussianLikelihood(
+            noise_prior=LogNormalPrior(-4.0, 1.0),
+            noise_constraint=Interval(1e-6, 1.0, initial_value=0.01),
+        )
+        return SingleTaskGP(
+            train_X.double(),
+            train_Y.double(),
+            train_Yvar=None,
+            likelihood=likelihood,
+            covar_module=copy.deepcopy(covar),
+            input_transform=copy.deepcopy(input_transform),
+            outcome_transform=Standardize(m=1),
+        )
+
+    diagnostics: list[dict[str, object]] = []
+    fitted: list[tuple[float, int, SingleTaskGP]] = []
+    for restart in range(fit_restarts):
+        restart_seed = derive_seed(seed, "gp_fit_restart", restart)
+        row: dict[str, object] = {
+            "restart": restart,
+            "restart_seed": restart_seed,
+            "success": False,
+            "mll": None,
+            "selected": False,
+        }
+        try:
+            with torch.random.fork_rng():
+                torch.manual_seed(restart_seed)
+                candidate = build()
+                if restart:
+                    with torch.no_grad():
+                        for parameter in candidate.parameters():
+                            parameter.add_(torch.randn_like(parameter) * 0.25)
+                mll = ExactMarginalLogLikelihood(candidate.likelihood, candidate)
+                fit_gpytorch_mll(mll)
+                with torch.no_grad():
+                    candidate.train()
+                    score = float(
+                        mll(
+                            candidate(*candidate.train_inputs),
+                            candidate.train_targets,
+                        ).sum()
+                    )
+                    candidate.eval()
+            if not math.isfinite(score):
+                raise RuntimeError("fit returned a nonfinite marginal likelihood")
+            row["success"] = True
+            row["mll"] = score
+            fitted.append((score, restart, candidate))
+        except Exception as exc:
+            row["error"] = f"{type(exc).__name__}: {exc}"
+        diagnostics.append(row)
+
+    if not fitted:
+        raise RuntimeError(
+            f"all {fit_restarts} learned-noise hyperparameter fits failed; "
+            f"diagnostics={diagnostics!r}"
+        )
+
+    _, selected_restart, best = max(fitted, key=lambda item: (item[0], -item[1]))
+    diagnostics[selected_restart]["selected"] = True
+    best._boec_fit_diagnostics = tuple(diagnostics)
+    return best
 
 
 def _finish(train_X, train_Y, train_Yvar, bounds, covar, d, m,

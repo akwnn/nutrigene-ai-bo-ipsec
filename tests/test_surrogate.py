@@ -19,12 +19,14 @@ from gpytorch.kernels import MaternKernel, RBFKernel, ScaleKernel
 from boec.surrogate import (
     base_kernel,
     build_gp,
+    build_learned_noise_gp,
     kernel_is_matern,
     lengthscale_lower_bound,
     lengthscales,
     outcome_scale,
     predictive,
 )
+from boec.seedbook import derive_seed
 
 D = 4
 UNIT = torch.stack([torch.zeros(D, dtype=torch.double), torch.ones(D, dtype=torch.double)])
@@ -42,6 +44,55 @@ def data():
 @pytest.fixture
 def model(data):
     return build_gp(*data, UNIT, fit=False)
+
+
+# --------------------------------------------------------------------------
+# Common learned-noise model for the joint 48-evaluation protocol
+# --------------------------------------------------------------------------
+
+def test_learned_noise_gp_learns_bounded_positive_noise(data):
+    X, Y, _ = data
+    model = build_learned_noise_gp(X, Y, UNIT, fit_restarts=2, seed=3)
+
+    noise = model.likelihood.noise.detach()
+    constraint = model.likelihood.noise_covar.raw_noise_constraint
+    assert bool(torch.all(torch.isfinite(noise)))
+    assert bool(torch.all(noise > 0))
+    assert float(constraint.lower_bound) > 0
+    assert math.isfinite(float(constraint.upper_bound))
+
+
+def test_learned_noise_gp_restarts_are_seeded_and_auditable(data):
+    X, Y, _ = data
+    model = build_learned_noise_gp(X, Y, UNIT, fit_restarts=2, seed=17)
+
+    diagnostics = model._boec_fit_diagnostics
+    assert len(diagnostics) == 2
+    assert [row["restart_seed"] for row in diagnostics] == [
+        derive_seed(17, "gp_fit_restart", 0),
+        derive_seed(17, "gp_fit_restart", 1),
+    ]
+    assert sum(bool(row["selected"]) for row in diagnostics) == 1
+    assert all("success" in row and "mll" in row for row in diagnostics)
+
+
+def test_learned_noise_gp_is_independent_of_ambient_rng(data):
+    X, Y, _ = data
+    torch.manual_seed(1)
+    first = build_learned_noise_gp(X, Y, UNIT, fit_restarts=2, seed=29)
+    torch.manual_seed(999)
+    second = build_learned_noise_gp(X, Y, UNIT, fit_restarts=2, seed=29)
+
+    for name, value in first.state_dict().items():
+        assert torch.equal(value, second.state_dict()[name]), name
+    assert first._boec_fit_diagnostics == second._boec_fit_diagnostics
+
+
+@pytest.mark.parametrize("fit_restarts", [0, -1])
+def test_learned_noise_gp_rejects_nonpositive_restart_count(data, fit_restarts):
+    X, Y, _ = data
+    with pytest.raises(ValueError, match="fit_restarts must be"):
+        build_learned_noise_gp(X, Y, UNIT, fit_restarts=fit_restarts, seed=0)
 
 
 # --------------------------------------------------------------------------
