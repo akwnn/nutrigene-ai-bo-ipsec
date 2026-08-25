@@ -44,7 +44,6 @@ def content_box(
             "fontfamily": "Arial",
             "fontweight": fontweight,
             "ha": "center",
-            "va": "center",
             "linespacing": 1.15,
         },
     )

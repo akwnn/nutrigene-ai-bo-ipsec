@@ -18,6 +18,7 @@ from boec.paper_figures.figure1 import build_figure1
 from boec.paper_figures.figure2 import build_figure2
 from boec.paper_figures.figure3 import build_figure3
 from boec.paper_figures.figure4 import build_figure4
+from boec.paper_figures.qa import assert_registered_geometry
 from boec.paper_figures.style import get_preset
 
 
@@ -56,25 +57,16 @@ def test_figure1_estimand_table_uses_preset_body_typography(name):
     plt.close(bundle.figure)
 
 
-def test_figure1_portable_text_stays_inside_decision_boxes_and_ledger_cells():
-    bundle = build_figure1(get_preset("portable"))
+@pytest.mark.parametrize("preset_name", ["portable", "rsc", "nature", "plos"])
+def test_figure1_text_stays_inside_nodes_and_ledger_cells_for_every_preset(preset_name):
+    bundle = build_figure1(get_preset(preset_name))
     figure = bundle.figure
     figure.canvas.draw()
     renderer = figure.canvas.get_renderer()
 
-    panel_b = figure.axes[1]
-    decision_boxes = [patch for patch in panel_b.patches if patch.get_linestyle() == "--"]
-    assert len(decision_boxes) == 2
-    for box in decision_boxes:
-        box_bounds = box.get_window_extent(renderer)
-        text = next(
-            text for text in panel_b.texts if text.get_text().startswith(
-                "Point decision" if box is decision_boxes[0] else "Region decision"
-            )
-        )
-        text_bounds = text.get_window_extent(renderer)
-        assert box_bounds.contains(*text_bounds.get_points()[0])
-        assert box_bounds.contains(*text_bounds.get_points()[1])
+    assert_registered_geometry(figure)
+    registered_labels = {item.label for item in figure._paper_geometry}
+    assert "same-sampled-campaign" in registered_labels
 
     table = figure.axes[2].tables[0]
     for cell in table.get_celld().values():
@@ -84,6 +76,16 @@ def test_figure1_portable_text_stays_inside_decision_boxes_and_ledger_cells():
         assert cell_bounds.contains(*text_bounds.get_points()[1])
 
     plt.close(figure)
+
+
+def test_figure1_includes_editorial_caption_and_long_description():
+    bundle = build_figure1(get_preset("portable"))
+
+    assert "no performance result" in bundle.caption.lower()
+    assert "point" in bundle.long_description.lower()
+    assert "region" in bundle.long_description.lower()
+
+    plt.close(bundle.figure)
 
 
 def test_figure2_encodes_same_campaign_rules_contrasts_and_decomposition():
