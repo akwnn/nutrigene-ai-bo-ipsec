@@ -89,6 +89,39 @@ no outcome inspected) confirms the ~20–30s/campaign estimate from P8's own log
 measured cost exceeds 2× that estimate, the run is paused and reported before continuing,
 not silently extended.
 
+## 6b. Result — real, substantial, but does not uniformly clear the registered bar
+
+**400 campaigns, 9,600 rows, 0 gate failures** (`results/tau-quantile-followup.json`).
+Fraction of `(arm, seed, p)` cells producing a non-empty certified set, vs. the original
+fixed-fraction grid's **0/24 (ackley) and 2/24 = 8.3% (hartmann6), always**:
+
+| p (target true prevalence) | ackley | hartmann6 |
+|---|---|---|
+| 0.30 | **41.9%** | **81.2%** |
+| 0.10 | 10.7% | 17.0% |
+| 0.03 | 0.7% | 0.7% |
+| 0.01 | 0.0% | 0.0% |
+| **overall (all p pooled)** | **13.3%** | **24.7%** |
+
+**Prediction 1 (§5) — "at least half of cells non-empty" — does not clear in aggregate for
+either family**, though it clears decisively for hartmann6 at the loosest target (p=0.30,
+81.2%) and comes close for ackley at the same p (41.9%). Reported exactly as measured
+rather than forced into a pass/fail: **both families move from a near-total inability to
+certify anything (0% and 8.3%) to a partial, p-dependent ability to certify (13.3% and
+24.7% pooled, up to 81% at the loosest target)** — a real, large improvement, and evidence
+the original grid was a genuine cause of the emptiness (§1) — but not a full fix. At the
+tightest targets (p=0.03, p=0.01), both families remain almost entirely empty on either
+grid: a genuine sample-size/power limit at 48 wells for a very small target region, not
+something any threshold definition can repair.
+
+**Reframed conclusion.** τ-as-quantile is a real, worthwhile scoring correction — it
+should replace the fixed-fraction grid in any future cross-family certificate work — but
+it narrows, rather than closes, FINDINGS-SPADE.md §41's "ackley/hartmann6 decline to
+certify" finding. The honest updated statement: *ackley and hartmann6 can be made to
+answer a meaningful fraction of the time at looser assurance targets once scored on a
+comparable threshold, but both remain largely unable to certify small target regions at 48
+wells, on either scoring convention.*
+
 ## 7. Fix 2 (Piece A / Piece B) — registered separately
 
 Fix 2 (a replicate-pooled noise estimator; the specified OA-LHS Plate-1 design) is **not**
