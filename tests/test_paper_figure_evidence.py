@@ -117,6 +117,73 @@ def test_figure4_rejects_missing_selected_certificate_cell(tmp_path):
         build_figure4_data(tmp_path)
 
 
+def test_figure4_rejects_expected_certificate_id_with_infeasible_status(tmp_path):
+    certificate = json.loads((RESULTS / "final-spade-certificate.json").read_text())
+    cell = next(
+        cell
+        for cell in certificate["cells"]
+        if cell["cell_id"] == "spade_cf_m0|hill-d6-s0.1|tf0.25|g0.95|a0.95"
+    )
+    cell["infeasible"] = True
+    (tmp_path / "final-spade-certificate.json").write_text(json.dumps(certificate))
+    _copy_sources(tmp_path, "p7-murphy.json", "p8-predictions.json", "p8-certificate-families.json")
+
+    with pytest.raises(ValueError, match="final-spade-certificate.json.*infeasible"):
+        build_figure4_data(tmp_path)
+
+
+@pytest.mark.parametrize(
+    ("source", "mutate", "match"),
+    [
+        (
+            "p8-predictions.json",
+            lambda payload: payload["stats"].pop("ackley"),
+            "p8-predictions.json.*family set",
+        ),
+        (
+            "p8-certificate-families.json",
+            lambda payload: payload.__setitem__("rows", []),
+            "p8-certificate-families.json.*family set",
+        ),
+    ],
+)
+def test_figure4_rejects_empty_or_mismatched_cross_family_sources(
+    tmp_path, source, mutate, match
+):
+    payload = json.loads((RESULTS / source).read_text())
+    mutate(payload)
+    (tmp_path / source).write_text(json.dumps(payload))
+    _copy_sources(
+        tmp_path,
+        *(
+            name
+            for name in (
+                "p7-murphy.json",
+                "final-spade-certificate.json",
+                "p8-predictions.json",
+                "p8-certificate-families.json",
+            )
+            if name != source
+        ),
+    )
+
+    with pytest.raises(ValueError, match=match):
+        build_figure4_data(tmp_path)
+
+
+def test_figure2_rejects_oracle_raw_count_that_does_not_reconcile(tmp_path):
+    oracle = json.loads((RESULTS / "step0-oracle-best.json").read_text())
+    for index, row in enumerate(oracle["rows"]):
+        if row["arm"] == "doe":
+            del oracle["rows"][index]
+            break
+    (tmp_path / "step0-oracle-best.json").write_text(json.dumps(oracle))
+    _copy_sources(tmp_path, "fix1-terminal-rule.json", "fix1-analysis.json")
+
+    with pytest.raises(ValueError, match="step0-oracle-best.json.*doe.*raw-row count"):
+        build_figure2_data(tmp_path)
+
+
 @pytest.mark.parametrize(
     ("source", "mutate", "builder", "required"),
     [

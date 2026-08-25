@@ -24,6 +24,14 @@ FIGURE4_HILL_CELL_IDS = frozenset(
         "spade_cf_m0|hill-d6-s0.25|tf0.25|g0.5|a0.95",
     }
 )
+FIGURE4_HILL_CELL_SPECS = {
+    "spade_cf_m0|hill-d6-s0.1|tf0.25|g0.5|a0.8": ("hill-d6-s0.1", 0.25, 0.5, 0.8),
+    "spade_cf_m0|hill-d6-s0.1|tf0.25|g0.5|a0.95": ("hill-d6-s0.1", 0.25, 0.5, 0.95),
+    "spade_cf_m0|hill-d6-s0.1|tf0.25|g0.95|a0.8": ("hill-d6-s0.1", 0.25, 0.95, 0.8),
+    "spade_cf_m0|hill-d6-s0.1|tf0.25|g0.95|a0.95": ("hill-d6-s0.1", 0.25, 0.95, 0.95),
+    "spade_cf_m0|hill-d6-s0.25|tf0.25|g0.5|a0.8": ("hill-d6-s0.25", 0.25, 0.5, 0.8),
+    "spade_cf_m0|hill-d6-s0.25|tf0.25|g0.5|a0.95": ("hill-d6-s0.25", 0.25, 0.5, 0.95),
+}
 
 
 def _context(source: str, record: str) -> str:
@@ -152,6 +160,13 @@ def build_figure2_data(results_dir: Path) -> dict[str, Any]:
             raise ValueError(f"{_context(analysis_source, label)}: contrast n does not match arm n")
         per_arm[arm] = row
 
+    decomposition_counts: dict[str, int] = {}
+    for arm in FIGURE2_DECOMPOSITION_ARMS:
+        index, row = _exactly_one(((i, value) for i, value in enumerate(analysis_rows) if value["arm"] == arm), analysis_source, f"decomposition arm {arm}")
+        label = f"record {index} ({arm})"
+        _record(row, {"n"}, analysis_source, label)
+        decomposition_counts[arm] = _count(row["n"], f"{_context(analysis_source, label)}.n", positive=True)
+
     selected_terminal: dict[str, list[dict[str, Any]]] = {arm: [] for arm in FIGURE2_RULE_ARMS}
     for index, row in enumerate(terminal_rows):
         _record(row, {"arm"}, terminal_source, f"record {index}")
@@ -181,8 +196,8 @@ def build_figure2_data(results_dir: Path) -> dict[str, Any]:
             grouped[arm].append(row)
     decomposition = []
     for arm, rows in grouped.items():
-        if not rows:
-            raise ValueError(f"{oracle_source} selected arm {arm}: expected at least one record")
+        if len(rows) != decomposition_counts[arm]:
+            raise ValueError(f"{oracle_source} selected arm {arm}: raw-row count does not match fix1 analysis")
         rule_a = float(np.mean([row["rule_a"] for row in rows]))
         oracle_best = float(np.mean([row["oracle_best"] for row in rows]))
         gap = float(np.mean([row["identification_gap"] for row in rows]))
@@ -318,6 +333,18 @@ def build_figure4_data(results_dir: Path) -> dict[str, Any]:
     for cell_id in sorted(FIGURE4_HILL_CELL_IDS):
         cell = by_id[cell_id]
         label = f"cell {cell_id}"
+        expected_condition, expected_tau_frac, expected_gamma, expected_alpha = FIGURE4_HILL_CELL_SPECS[cell_id]
+        expected_fields = {
+            "arm": "spade_cf_m0",
+            "condition": expected_condition,
+            "tau_frac": expected_tau_frac,
+            "gamma": expected_gamma,
+            "alpha": expected_alpha,
+            "infeasible": False,
+        }
+        for field, expected in expected_fields.items():
+            if cell[field] != expected:
+                raise ValueError(f"{certificate_source} {label}.{field}: expected {expected!r}")
         _record(cell, {"n_nonempty", "empty_rate", "crossfit"}, certificate_source, label)
         n_nonempty = _count(cell["n_nonempty"], f"{_context(certificate_source, label)}.n_nonempty")
         empty_rate = _probability(cell["empty_rate"], f"{_context(certificate_source, label)}.empty_rate")
@@ -344,7 +371,7 @@ def build_figure4_data(results_dir: Path) -> dict[str, Any]:
 
     require_keys(predictions, {"stats"}, predictions_source)
     stats_by_family = _mapping(predictions["stats"], f"{predictions_source}.stats")
-    answer_rate = []
+    family_stats: dict[str, tuple[int, int]] = {}
     for family, value in stats_by_family.items():
         _string(family, f"{predictions_source}.stats family")
         stats = _mapping(value, f"{predictions_source}.stats.{family}")
@@ -353,7 +380,7 @@ def build_figure4_data(results_dir: Path) -> dict[str, Any]:
         all_empty = _count(stats["all_empty"], f"{predictions_source}.stats.{family}.all_empty")
         if all_empty > n_campaigns:
             raise ValueError(f"{predictions_source}.stats.{family}: all_empty exceeds n_campaigns")
-        answer_rate.append({"family": family, "answered": n_campaigns - all_empty, "n_campaigns": n_campaigns, "answer_rate": 1.0 - all_empty / n_campaigns, "definition": "campaign returned at least one non-empty certificate"})
+        family_stats[family] = (n_campaigns, all_empty)
 
     family_rows = _records(families, "rows", families_source)
     family_names: set[str] = set()
@@ -370,6 +397,27 @@ def build_figure4_data(results_dir: Path) -> dict[str, Any]:
             _record(row, {"ce_empirical_0.8"}, families_source, label)
             _probability(row["ce_empirical_0.8"], f"{_context(families_source, label)}.ce_empirical_0.8")
             selected_by_family.setdefault(family, []).append(row)
+
+    if not family_stats:
+        raise ValueError(f"{predictions_source} family set: expected at least one family")
+    if not family_names:
+        raise ValueError(f"{families_source} family set: expected at least one family")
+    if set(family_stats) != family_names:
+        raise ValueError(
+            f"{predictions_source} family set does not match {families_source}: "
+            f"stats={sorted(family_stats)}, certificate_rows={sorted(family_names)}"
+        )
+
+    answer_rate = [
+        {
+            "family": family,
+            "answered": n_campaigns - all_empty,
+            "n_campaigns": n_campaigns,
+            "answer_rate": 1.0 - all_empty / n_campaigns,
+            "definition": "campaign returned at least one non-empty certificate",
+        }
+        for family, (n_campaigns, all_empty) in family_stats.items()
+    ]
 
     conditional = []
     for family in sorted(family_names):
