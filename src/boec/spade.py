@@ -9,6 +9,8 @@ from __future__ import annotations
 import hashlib
 import json
 import math
+import threading
+from contextlib import contextmanager
 from dataclasses import asdict, dataclass
 from numbers import Integral, Real
 from typing import Literal
@@ -25,6 +27,7 @@ from boec.variance_reduction import greedy_ivr
 __all__ = [
     "SpadeCampaignResult",
     "SpadeConfig",
+    "SpadeExecutionSettings",
     "run_qlognei48",
     "run_sobol48",
     "run_spade",
@@ -36,25 +39,36 @@ Objective = Literal["sobol_opening", "sobol48", "qlognei", "global_ivr", "bounda
 
 _BUDGET = 48
 _BATCH_SIZE = 4
+_CANDIDATE_MENU_SIZE = 16_384
+_REFERENCE_GRID_SIZE = 2_048
+_FIT_RESTARTS = 4
+_QLOGNEI_MC_SAMPLES = 256
+_GAMMA = 0.95
+_BOUNDARY_ESS_MIN = 32
 _OPENINGS = frozenset({32, 40, 44})
 _POLICIES = frozenset({"staged", "fixed_hybrid", "validity_gated"})
+_EXECUTION_MODES = frozenset({"REGISTERED", "TEST_ONLY"})
+_CPU_RNG_LOCK = threading.RLock()
+
+
+def _integer(value: object, name: str) -> int:
+    if isinstance(value, bool) or not isinstance(value, Integral):
+        raise ValueError(f"{name} must be an integer, got {value!r}")
+    return int(value)
 
 
 def _positive_integer(value: object, name: str) -> int:
-    if isinstance(value, bool) or not isinstance(value, Integral) or int(value) < 1:
+    result = _integer(value, name)
+    if result < 1:
         raise ValueError(f"{name} must be a positive integer, got {value!r}")
-    return int(value)
+    return result
 
 
 def _nonnegative_seed(value: object, name: str = "root_seed") -> int:
-    if (
-        isinstance(value, bool)
-        or not isinstance(value, Integral)
-        or int(value) < 0
-        or int(value) >= 2**63
-    ):
+    result = _integer(value, name)
+    if result < 0 or result >= 2**63:
         raise ValueError(f"{name} must be an integer in [0, 2**63), got {value!r}")
-    return int(value)
+    return result
 
 
 def _finite_real(value: object, name: str) -> float:
@@ -75,46 +89,83 @@ class SpadeConfig:
     root_seed: int = 0
     budget: int = _BUDGET
     batch_size: int = _BATCH_SIZE
-    candidate_menu_size: int = 16_384
-    reference_grid_size: int = 2_048
-    fit_restarts: int = 4
-    qlognei_mc_samples: int = 256
-    gamma: float = 0.95
-    boundary_ess_min: float = 32.0
+    candidate_menu_size: int = _CANDIDATE_MENU_SIZE
+    reference_grid_size: int = _REFERENCE_GRID_SIZE
+    fit_restarts: int = _FIT_RESTARTS
+    qlognei_mc_samples: int = _QLOGNEI_MC_SAMPLES
+    gamma: float = _GAMMA
+    boundary_ess_min: int = _BOUNDARY_ESS_MIN
 
     def __post_init__(self) -> None:
-        if isinstance(self.opening, bool) or self.opening not in _OPENINGS:
+        opening = _integer(self.opening, "opening")
+        budget = _integer(self.budget, "budget")
+        batch_size = _integer(self.batch_size, "batch_size")
+        menu_size = _integer(self.candidate_menu_size, "candidate_menu_size")
+        reference_size = _integer(self.reference_grid_size, "reference_grid_size")
+        fit_restarts = _integer(self.fit_restarts, "fit_restarts")
+        mc_samples = _integer(self.qlognei_mc_samples, "qlognei_mc_samples")
+        ess_min = _integer(self.boundary_ess_min, "boundary_ess_min")
+        root_seed = _nonnegative_seed(self.root_seed)
+        gamma = _finite_real(self.gamma, "gamma")
+
+        if opening not in _OPENINGS:
             raise ValueError(
-                f"opening must be one of {sorted(_OPENINGS)}, got {self.opening!r}"
+                f"opening must be one of {sorted(_OPENINGS)}, got {opening!r}"
             )
         if self.policy not in _POLICIES:
             raise ValueError(
                 f"policy must be one of {sorted(_POLICIES)}, got {self.policy!r}"
             )
-        if isinstance(self.budget, bool) or self.budget != _BUDGET:
-            raise ValueError(f"budget is registered at exactly {_BUDGET}, got {self.budget!r}")
-        if isinstance(self.batch_size, bool) or self.batch_size != _BATCH_SIZE:
+        if budget != _BUDGET:
+            raise ValueError(f"budget is registered at exactly {_BUDGET}, got {budget!r}")
+        if batch_size != _BATCH_SIZE:
             raise ValueError(
-                f"batch_size is registered at exactly {_BATCH_SIZE}, got {self.batch_size!r}"
+                f"batch_size is registered at exactly {_BATCH_SIZE}, got {batch_size!r}"
             )
-        if (self.budget - self.opening) % self.batch_size:
+        if menu_size != _CANDIDATE_MENU_SIZE:
+            raise ValueError(
+                "candidate_menu_size is registered at exactly "
+                f"{_CANDIDATE_MENU_SIZE}, got {menu_size!r}"
+            )
+        if reference_size != _REFERENCE_GRID_SIZE:
+            raise ValueError(
+                "reference_grid_size is registered at exactly "
+                f"{_REFERENCE_GRID_SIZE}, got {reference_size!r}"
+            )
+        if fit_restarts != _FIT_RESTARTS:
+            raise ValueError(
+                f"fit_restarts is registered at exactly {_FIT_RESTARTS}, "
+                f"got {fit_restarts!r}"
+            )
+        if mc_samples != _QLOGNEI_MC_SAMPLES:
+            raise ValueError(
+                "qlognei_mc_samples is registered at exactly "
+                f"{_QLOGNEI_MC_SAMPLES}, got {mc_samples!r}"
+            )
+        if gamma != _GAMMA:
+            raise ValueError(f"gamma is registered at exactly {_GAMMA}, got {gamma!r}")
+        if ess_min != _BOUNDARY_ESS_MIN:
+            raise ValueError(
+                "boundary_ess_min is registered at exactly "
+                f"{_BOUNDARY_ESS_MIN}, got {ess_min!r}"
+            )
+        if (budget - opening) % batch_size:
             raise ValueError("opening must leave only complete adaptive batches")
 
-        menu_size = _positive_integer(self.candidate_menu_size, "candidate_menu_size")
-        reference_size = _positive_integer(self.reference_grid_size, "reference_grid_size")
-        _positive_integer(self.fit_restarts, "fit_restarts")
-        _positive_integer(self.qlognei_mc_samples, "qlognei_mc_samples")
-        if menu_size < self.budget - min(_OPENINGS):
-            raise ValueError("candidate_menu_size cannot cover the largest adaptive budget")
-        gamma = _finite_real(self.gamma, "gamma")
-        if not 0.0 < gamma < 1.0:
-            raise ValueError(f"gamma must lie strictly between 0 and 1, got {gamma}")
-        ess_min = _finite_real(self.boundary_ess_min, "boundary_ess_min")
-        if ess_min <= 0:
-            raise ValueError("boundary_ess_min must be positive")
-        if ess_min > reference_size:
-            raise ValueError("boundary_ess_min cannot exceed reference_grid_size")
-        _nonnegative_seed(self.root_seed)
+        # Normalize non-bool Integral implementations before canonical JSON hashing.
+        for field_name, value in (
+            ("opening", opening),
+            ("root_seed", root_seed),
+            ("budget", budget),
+            ("batch_size", batch_size),
+            ("candidate_menu_size", menu_size),
+            ("reference_grid_size", reference_size),
+            ("fit_restarts", fit_restarts),
+            ("qlognei_mc_samples", mc_samples),
+            ("gamma", gamma),
+            ("boundary_ess_min", ess_min),
+        ):
+            object.__setattr__(self, field_name, value)
 
     @property
     def canonical_json(self) -> str:
@@ -133,9 +184,58 @@ class SpadeConfig:
 
 
 @dataclass(frozen=True)
+class SpadeExecutionSettings:
+    """Effective numerical settings of one execution, registered or test-only."""
+
+    candidate_menu_size: int
+    reference_grid_size: int
+    fit_restarts: int
+    qlognei_mc_samples: int
+
+    def __post_init__(self) -> None:
+        for name in (
+            "candidate_menu_size",
+            "reference_grid_size",
+            "fit_restarts",
+            "qlognei_mc_samples",
+        ):
+            value = _positive_integer(getattr(self, name), name)
+            object.__setattr__(self, name, value)
+
+
+def _registered_settings() -> SpadeExecutionSettings:
+    return SpadeExecutionSettings(
+        candidate_menu_size=_CANDIDATE_MENU_SIZE,
+        reference_grid_size=_REFERENCE_GRID_SIZE,
+        fit_restarts=_FIT_RESTARTS,
+        qlognei_mc_samples=_QLOGNEI_MC_SAMPLES,
+    )
+
+
+@dataclass(frozen=True)
+class _RunIdentity:
+    arm: str
+    protocol_digest: str
+    run_digest: str
+    execution_mode: str
+    registered: bool
+    tau: float
+    root_seed: int
+    opening: int
+    batch_schedule: tuple[int, ...]
+    effective_settings: SpadeExecutionSettings
+
+
+@dataclass(frozen=True)
 class SpadeRoundLog:
     """Everything known when a batch was selected, before its outcomes existed."""
 
+    arm: str
+    protocol_digest: str
+    run_digest: str
+    execution_mode: str
+    registered: bool
+    tau: float
     round_index: int
     n_train_before: int
     scheduled_objective: str
@@ -159,6 +259,14 @@ class SpadeCampaignResult:
 
     arm: str
     protocol_digest: str
+    run_digest: str
+    execution_mode: str
+    registered: bool
+    tau: float
+    root_seed: int
+    opening: int
+    batch_schedule: tuple[int, ...]
+    effective_settings: SpadeExecutionSettings
     config: SpadeConfig | None
     X: Tensor
     Y: Tensor
@@ -169,6 +277,51 @@ class SpadeCampaignResult:
     terminal_fit_diagnostics: tuple[tuple[tuple[str, object], ...], ...]
 
     def __post_init__(self) -> None:
+        if self.execution_mode not in _EXECUTION_MODES:
+            raise ValueError(f"unknown execution_mode {self.execution_mode!r}")
+        if not isinstance(self.registered, bool):
+            raise ValueError("registered must be boolean")
+        expected_registered = self.execution_mode == "REGISTERED"
+        if self.registered is not expected_registered:
+            raise ValueError("registered flag does not match execution_mode")
+        registered_settings = _registered_settings()
+        if self.registered and self.effective_settings != registered_settings:
+            raise ValueError("REGISTERED result does not use all registered settings")
+        if not self.registered and self.effective_settings == registered_settings:
+            raise ValueError("TEST_ONLY result must expose its reduced effective settings")
+
+        tau = _finite_real(self.tau, "tau")
+        root_seed = _nonnegative_seed(self.root_seed)
+        opening = _positive_integer(self.opening, "opening")
+        schedule = _validate_schedule(self.batch_schedule, opening)
+        expected_run_digest = _run_digest(
+            protocol_digest=self.protocol_digest,
+            arm=self.arm,
+            tau=tau,
+            opening=opening,
+            batch_schedule=schedule,
+            execution_mode=self.execution_mode,
+            effective_settings=self.effective_settings,
+        )
+        if self.run_digest != expected_run_digest:
+            raise ValueError("run_digest does not match immutable campaign identity")
+
+        if self.arm == "spade":
+            if self.config is None:
+                raise ValueError("SPADE result must retain its SpadeConfig")
+            if self.protocol_digest != self.config.protocol_digest:
+                raise ValueError("SPADE result protocol_digest does not match config")
+            if root_seed != self.config.root_seed or opening != self.config.opening:
+                raise ValueError("SPADE result seed/opening does not match config")
+        else:
+            if self.config is not None:
+                raise ValueError("comparator result cannot carry a SPADE config")
+            expected_protocol = _common_protocol_digest(
+                self.arm, root_seed, opening, schedule
+            )
+            if self.protocol_digest != expected_protocol:
+                raise ValueError("comparator protocol_digest does not match arm schedule")
+
         if self.X.ndim != 2 or self.X.shape[0] != _BUDGET:
             raise ValueError(f"campaign result must contain exactly {_BUDGET} X rows")
         if self.Y.shape != (_BUDGET, 1) or self.Yvar.shape != (_BUDGET, 1):
@@ -178,35 +331,37 @@ class SpadeCampaignResult:
         logged_evaluations = sum(log.X_proposed.shape[0] for log in self.round_logs)
         if not self.round_logs or logged_evaluations != _BUDGET:
             raise ValueError("round logs do not account for the exact 48-evaluation budget")
+        for log in self.round_logs:
+            if (
+                log.arm != self.arm
+                or log.protocol_digest != self.protocol_digest
+                or log.run_digest != self.run_digest
+                or log.execution_mode != self.execution_mode
+                or log.registered is not self.registered
+                or log.tau != tau
+            ):
+                raise ValueError("round log identity does not match campaign result")
 
     @property
     def rounds(self) -> int:
         return len(self.round_logs)
 
 
-@dataclass(frozen=True)
-class _RuntimeConfig:
-    candidate_menu_size: int
-    reference_grid_size: int
-    fit_restarts: int
-    qlognei_mc_samples: int
-
-
-def _runtime(config: SpadeConfig, fast: bool) -> _RuntimeConfig:
+def _runtime(config: SpadeConfig, fast: bool) -> SpadeExecutionSettings:
     if not isinstance(fast, bool):
         raise ValueError(f"fast must be boolean, got {fast!r}")
     if not fast:
-        return _RuntimeConfig(
+        return SpadeExecutionSettings(
             config.candidate_menu_size,
             config.reference_grid_size,
             config.fit_restarts,
             config.qlognei_mc_samples,
         )
-    return _RuntimeConfig(
-        min(config.candidate_menu_size, 64),
-        min(config.reference_grid_size, 64),
+    return SpadeExecutionSettings(
+        64,
+        64,
         1,
-        min(config.qlognei_mc_samples, 16),
+        16,
     )
 
 
@@ -261,20 +416,162 @@ def _remove_selected(menu: Tensor, selected: Tensor) -> Tensor:
     return menu[keep]
 
 
-def _common_protocol_digest(arm: str, root_seed: int) -> str:
+def _validate_schedule(schedule: object, opening: int) -> tuple[int, ...]:
+    if not isinstance(schedule, tuple) or not schedule:
+        raise ValueError("batch_schedule must be a non-empty tuple of integers")
+    values = tuple(_positive_integer(value, "batch_schedule") for value in schedule)
+    if values[0] != opening:
+        raise ValueError("batch_schedule must begin with opening")
+    if sum(values) != _BUDGET:
+        raise ValueError("batch_schedule must total exactly 48 evaluations")
+    return values
+
+
+def _sha256_json(payload: dict[str, object]) -> str:
+    encoded = json.dumps(
+        payload,
+        sort_keys=True,
+        separators=(",", ":"),
+        ensure_ascii=False,
+        allow_nan=False,
+    ).encode("utf-8")
+    return hashlib.sha256(encoded).hexdigest()
+
+
+def _common_protocol_digest(
+    arm: str,
+    root_seed: int,
+    opening: int,
+    batch_schedule: tuple[int, ...],
+) -> str:
+    root_seed = _nonnegative_seed(root_seed)
+    opening = _positive_integer(opening, "opening")
+    schedule = _validate_schedule(batch_schedule, opening)
+    if arm == "sobol48" and schedule != (_BUDGET,):
+        raise ValueError("sobol48 protocol requires the one-batch (48,) schedule")
+    if arm == "qlognei48" and schedule != (14, *([4] * 8), 2):
+        raise ValueError("qlognei48 protocol requires the 14 + 8x4 + 2 schedule")
+    if arm not in {"sobol48", "qlognei48"}:
+        raise ValueError(f"unknown comparator arm {arm!r}")
     payload = {
+        "schema": "boec-spade-comparator-protocol-v1",
         "arm": arm,
+        "opening": opening,
+        "batch_schedule": schedule,
         "batch_size": _BATCH_SIZE,
         "budget": _BUDGET,
-        "candidate_menu_size": 16_384,
-        "fit_restarts": 4,
+        "candidate_menu_size": _CANDIDATE_MENU_SIZE,
+        "fit_restarts": _FIT_RESTARTS,
         "model": "learned_noise_matern52_ard",
-        "qlognei_mc_samples": 256,
-        "reference_grid_size": 2_048,
-        "root_seed": _nonnegative_seed(root_seed),
+        "qlognei_mc_samples": _QLOGNEI_MC_SAMPLES,
+        "reference_grid_size": _REFERENCE_GRID_SIZE,
+        "root_seed": root_seed,
     }
-    encoded = json.dumps(payload, sort_keys=True, separators=(",", ":")).encode()
-    return hashlib.sha256(encoded).hexdigest()
+    return _sha256_json(payload)
+
+
+def _run_digest(
+    *,
+    protocol_digest: str,
+    arm: str,
+    tau: float,
+    opening: int,
+    batch_schedule: tuple[int, ...],
+    execution_mode: str,
+    effective_settings: SpadeExecutionSettings,
+) -> str:
+    if execution_mode not in _EXECUTION_MODES:
+        raise ValueError(f"unknown execution_mode {execution_mode!r}")
+    tau = _finite_real(tau, "tau")
+    opening = _positive_integer(opening, "opening")
+    schedule = _validate_schedule(batch_schedule, opening)
+    return _sha256_json(
+        {
+            "schema": "boec-spade-run-v1",
+            "protocol_digest": protocol_digest,
+            "arm": arm,
+            "tau_hex": tau.hex(),
+            "opening": opening,
+            "batch_schedule": schedule,
+            "execution_mode": execution_mode,
+            "registered": execution_mode == "REGISTERED",
+            "effective_settings": asdict(effective_settings),
+        }
+    )
+
+
+def _make_identity(
+    *,
+    arm: str,
+    protocol_digest: str,
+    tau: float,
+    root_seed: int,
+    opening: int,
+    batch_schedule: tuple[int, ...],
+    runtime: SpadeExecutionSettings,
+    fast: bool,
+) -> _RunIdentity:
+    tau = _finite_real(tau, "tau")
+    root_seed = _nonnegative_seed(root_seed)
+    opening = _positive_integer(opening, "opening")
+    schedule = _validate_schedule(batch_schedule, opening)
+    execution_mode = "TEST_ONLY" if fast else "REGISTERED"
+    return _RunIdentity(
+        arm=arm,
+        protocol_digest=protocol_digest,
+        run_digest=_run_digest(
+            protocol_digest=protocol_digest,
+            arm=arm,
+            tau=tau,
+            opening=opening,
+            batch_schedule=schedule,
+            execution_mode=execution_mode,
+            effective_settings=runtime,
+        ),
+        execution_mode=execution_mode,
+        registered=not fast,
+        tau=tau,
+        root_seed=root_seed,
+        opening=opening,
+        batch_schedule=schedule,
+        effective_settings=runtime,
+    )
+
+
+@contextmanager
+def _preserve_ambient_cpu_rng():
+    """Isolate CPU randomness without seeding any accelerator generator."""
+    with _CPU_RNG_LOCK:
+        state = torch.get_rng_state().clone()
+        original_manual_seed = torch.manual_seed
+        original_fork_rng = torch.random.fork_rng
+
+        def cpu_only_manual_seed(seed: int):
+            return torch.random.default_generator.manual_seed(int(seed))
+
+        def cpu_only_fork_rng(
+            devices=None,
+            enabled=True,
+            _caller="fork_rng",
+            _devices_kw="devices",
+            device_type=None,
+        ):
+            return original_fork_rng(
+                devices=[],
+                enabled=enabled,
+                _caller=_caller,
+                _devices_kw=_devices_kw,
+                device_type=device_type,
+            )
+
+        torch.manual_seed = cpu_only_manual_seed
+        torch.random.fork_rng = cpu_only_fork_rng
+        try:
+            yield
+        finally:
+            torch.random.fork_rng = original_fork_rng
+            torch.manual_seed = original_manual_seed
+            torch.set_rng_state(state)
 
 
 class _CampaignEngine:
@@ -283,7 +580,8 @@ class _CampaignEngine:
         evaluator: object,
         bounds: Tensor,
         root_seed: int,
-        runtime: _RuntimeConfig,
+        runtime: SpadeExecutionSettings,
+        identity: _RunIdentity,
     ) -> None:
         evaluate = getattr(evaluator, "evaluate", None)
         if not callable(evaluate):
@@ -292,6 +590,11 @@ class _CampaignEngine:
         self.bounds = _validate_bounds(bounds)
         self.root_seed = _nonnegative_seed(root_seed)
         self.runtime = runtime
+        self.identity = identity
+        if self.root_seed != identity.root_seed:
+            raise ValueError("engine root_seed does not match run identity")
+        if self.runtime != identity.effective_settings:
+            raise ValueError("engine settings do not match run identity")
         self.X = torch.empty((0, self.bounds.shape[1]), dtype=torch.double)
         self.Y = torch.empty((0, 1), dtype=torch.double)
         self.Yvar = torch.empty((0, 1), dtype=torch.double)
@@ -360,6 +663,12 @@ class _CampaignEngine:
         self.evaluate(
             X,
             SpadeRoundLog(
+                arm=self.identity.arm,
+                protocol_digest=self.identity.protocol_digest,
+                run_digest=self.identity.run_digest,
+                execution_mode=self.identity.execution_mode,
+                registered=self.identity.registered,
+                tau=self.identity.tau,
                 round_index=0,
                 n_train_before=0,
                 scheduled_objective=objective,
@@ -376,16 +685,22 @@ class _CampaignEngine:
 
     def result(
         self,
-        arm: str,
-        protocol_digest: str,
         config: SpadeConfig | None,
     ) -> SpadeCampaignResult:
         if self.n != _BUDGET:
             raise RuntimeError(f"campaign stopped at {self.n}, not the exact budget of 48")
         terminal_model, terminal_fit_seed = self.fit()
         return SpadeCampaignResult(
-            arm=arm,
-            protocol_digest=protocol_digest,
+            arm=self.identity.arm,
+            protocol_digest=self.identity.protocol_digest,
+            run_digest=self.identity.run_digest,
+            execution_mode=self.identity.execution_mode,
+            registered=self.identity.registered,
+            tau=self.identity.tau,
+            root_seed=self.identity.root_seed,
+            opening=self.identity.opening,
+            batch_schedule=self.identity.batch_schedule,
+            effective_settings=self.identity.effective_settings,
             config=config,
             X=self.X.clone(),
             Y=self.Y.clone(),
@@ -509,6 +824,12 @@ def _adaptive_log(
 ) -> SpadeRoundLog:
     mean, variance = _posterior_diagnostics(model, selected)
     return SpadeRoundLog(
+        arm=engine.identity.arm,
+        protocol_digest=engine.identity.protocol_digest,
+        run_digest=engine.identity.run_digest,
+        execution_mode=engine.identity.execution_mode,
+        registered=engine.identity.registered,
+        tau=engine.identity.tau,
         round_index=len(engine.logs),
         n_train_before=engine.n,
         scheduled_objective=scheduled_objective,
@@ -526,22 +847,31 @@ def _adaptive_log(
     )
 
 
-def run_spade(
+def _run_spade_impl(
     evaluator: object,
     bounds: Tensor,
     config: SpadeConfig,
     *,
-    tau: float | None = None,
+    tau: float,
     fast: bool = False,
 ) -> SpadeCampaignResult:
-    """Run one registered SPADE candidate without access to scoring truth."""
-    if not isinstance(config, SpadeConfig):
-        raise TypeError("config must be a SpadeConfig")
-    if config.policy == "validity_gated" and tau is None:
-        raise ValueError("tau is required for the validity_gated policy")
-    tau_f = _finite_real(tau, "tau") if tau is not None else None
+    tau_f = _finite_real(tau, "tau")
     runtime = _runtime(config, fast)
-    engine = _CampaignEngine(evaluator, bounds, config.root_seed, runtime)
+    n_batches = (config.budget - config.opening) // config.batch_size
+    schedule = (config.opening, *([config.batch_size] * n_batches))
+    identity = _make_identity(
+        arm="spade",
+        protocol_digest=config.protocol_digest,
+        tau=tau_f,
+        root_seed=config.root_seed,
+        opening=config.opening,
+        batch_schedule=schedule,
+        runtime=runtime,
+        fast=fast,
+    )
+    engine = _CampaignEngine(
+        evaluator, bounds, config.root_seed, runtime, identity
+    )
     engine.opening(config.opening, "sobol_opening")
 
     menu = sobol_design(
@@ -556,7 +886,6 @@ def run_spade(
         seed=engine.seed("ivr_reference_grid"),
     )
 
-    n_batches = (config.budget - config.opening) // config.batch_size
     for batch_index in range(n_batches):
         model, fit_seed = engine.fit()
         if config.policy == "staged" or batch_index % 2 == 0:
@@ -579,7 +908,6 @@ def run_spade(
         else:
             objective = "global_ivr"
             if config.policy == "validity_gated":
-                assert tau_f is not None
                 probability = model_reliability_probability(model, reference, tau_f)
                 if probability.shape != (reference.shape[0],):
                     raise ValueError("reliability probability must have one value per reference")
@@ -629,7 +957,7 @@ def run_spade(
         menu = _remove_selected(menu, selected)
         engine.evaluate(selected, log)
 
-    return engine.result("spade", config.protocol_digest, config)
+    return engine.result(config)
 
 
 def run_sobol48(
@@ -637,15 +965,64 @@ def run_sobol48(
     bounds: Tensor,
     *,
     root_seed: int = 0,
+    tau: float | None = None,
     fast: bool = False,
 ) -> SpadeCampaignResult:
     """Run the one-shot scrambled-Sobol specialist comparator."""
+    if tau is None:
+        raise ValueError("tau is required for campaign identity")
+    with _preserve_ambient_cpu_rng():
+        return _run_sobol48_impl(
+            evaluator, bounds, root_seed=root_seed, tau=tau, fast=fast
+        )
+
+
+def run_spade(
+    evaluator: object,
+    bounds: Tensor,
+    config: SpadeConfig,
+    *,
+    tau: float | None = None,
+    fast: bool = False,
+) -> SpadeCampaignResult:
+    """Run one SPADE candidate without scoring truth or ambient RNG mutation."""
+    if not isinstance(config, SpadeConfig):
+        raise TypeError("config must be a SpadeConfig")
+    if tau is None:
+        raise ValueError("tau is required for campaign identity")
+    with _preserve_ambient_cpu_rng():
+        return _run_spade_impl(
+            evaluator, bounds, config, tau=tau, fast=fast
+        )
+
+
+def _run_sobol48_impl(
+    evaluator: object,
+    bounds: Tensor,
+    *,
+    root_seed: int = 0,
+    tau: float,
+    fast: bool = False,
+) -> SpadeCampaignResult:
     common = SpadeConfig(root_seed=_nonnegative_seed(root_seed))
-    engine = _CampaignEngine(evaluator, bounds, root_seed, _runtime(common, fast))
-    engine.opening(_BUDGET, "sobol48")
-    return engine.result(
-        "sobol48", _common_protocol_digest("sobol48", root_seed), None
+    runtime = _runtime(common, fast)
+    schedule = (_BUDGET,)
+    protocol_digest = _common_protocol_digest(
+        "sobol48", root_seed, _BUDGET, schedule
     )
+    identity = _make_identity(
+        arm="sobol48",
+        protocol_digest=protocol_digest,
+        tau=tau,
+        root_seed=root_seed,
+        opening=_BUDGET,
+        batch_schedule=schedule,
+        runtime=runtime,
+        fast=fast,
+    )
+    engine = _CampaignEngine(evaluator, bounds, root_seed, runtime, identity)
+    engine.opening(_BUDGET, "sobol48")
+    return engine.result(None)
 
 
 def run_qlognei48(
@@ -653,12 +1030,43 @@ def run_qlognei48(
     bounds: Tensor,
     *,
     root_seed: int = 0,
+    tau: float | None = None,
     fast: bool = False,
 ) -> SpadeCampaignResult:
     """Run the registered 14 + 8x4 + 2 discrete qLogNEI comparator."""
+    if tau is None:
+        raise ValueError("tau is required for campaign identity")
+    with _preserve_ambient_cpu_rng():
+        return _run_qlognei48_impl(
+            evaluator, bounds, root_seed=root_seed, tau=tau, fast=fast
+        )
+
+
+def _run_qlognei48_impl(
+    evaluator: object,
+    bounds: Tensor,
+    *,
+    root_seed: int = 0,
+    tau: float,
+    fast: bool = False,
+) -> SpadeCampaignResult:
     common = SpadeConfig(root_seed=_nonnegative_seed(root_seed))
     runtime = _runtime(common, fast)
-    engine = _CampaignEngine(evaluator, bounds, root_seed, runtime)
+    schedule = (14, *([4] * 8), 2)
+    protocol_digest = _common_protocol_digest(
+        "qlognei48", root_seed, 14, schedule
+    )
+    identity = _make_identity(
+        arm="qlognei48",
+        protocol_digest=protocol_digest,
+        tau=tau,
+        root_seed=root_seed,
+        opening=14,
+        batch_schedule=schedule,
+        runtime=runtime,
+        fast=fast,
+    )
+    engine = _CampaignEngine(evaluator, bounds, root_seed, runtime, identity)
     engine.opening(14, "sobol_opening")
     menu = sobol_design(
         engine.bounds,
@@ -685,6 +1093,4 @@ def run_qlognei48(
         menu = _remove_selected(menu, selected)
         engine.evaluate(selected, log)
 
-    return engine.result(
-        "qlognei48", _common_protocol_digest("qlognei48", root_seed), None
-    )
+    return engine.result(None)
