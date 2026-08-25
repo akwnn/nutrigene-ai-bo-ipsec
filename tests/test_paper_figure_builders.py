@@ -304,6 +304,9 @@ def test_figure4_keeps_calibration_containment_and_answer_rate_distinct():
     assert all(row["estimator"] == "crossfit" for row in bundle.panel_data["B"]["rows"])
     assert bundle.panel_data["C"]["zero_means"] == "declined to certify"
     assert bundle.panel_data["D"]["effect"] == "containment minus nominal"
+    assert bundle.panel_data["A"]["display"] == "aligned dot strips"
+    assert bundle.panel_data["B"]["status_gutter"] is True
+    assert bundle.panel_data["D"]["warning_encoding"] == "red triangle plus status text"
     assert "non-empty" in bundle.alt_text
     assert len(bundle.figure.axes) == 4
 
@@ -321,6 +324,9 @@ def test_figure4_rendered_panels_keep_exact_denominators_and_certification_state
 
     assert "retrospective hill" in panel_a.get_title(loc="left").lower()
     assert "descriptive" in panel_a.get_title(loc="left").lower()
+    assert [axis.get_title(loc="left") for axis in panel_a.child_axes] == [
+        "Calibration error ↓", "Refinement ↑"
+    ]
     assert all(row["estimator"] == "crossfit" for row in bundle.panel_data["B"]["rows"])
 
     hill_points = {
@@ -343,6 +349,7 @@ def test_figure4_rendered_panels_keep_exact_denominators_and_certification_state
             assert f"{row['x']}/{row['n']}" in {text.get_text() for text in panel_b.texts}
             expected_colour = "#b2182b" if row["ci_hi"] < row["alpha"] else "#009e73"
             assert to_hex(point.get_facecolors()[0]) == expected_colour
+            assert all(linewidth <= 1.0 for linewidth in interval.get_linewidths())
         else:
             assert point_id not in hill_points
             assert any(
