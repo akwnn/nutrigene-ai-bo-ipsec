@@ -188,8 +188,13 @@ class SensitivityPoint:
         lower = _probability(self.lower_bound, "lower_bound", open_interval=False)
         if point != successes / 2000:
             raise ValueError("point_power must equal successes / 2000 exactly")
-        if lower > point:
-            raise ValueError("Clopper-Pearson lower bound cannot exceed point power")
+        expected_lower = (
+            0.0
+            if successes == 0
+            else float(beta.ppf(0.05, successes, 2000 - successes + 1))
+        )
+        if lower != expected_lower:
+            raise ValueError("Clopper-Pearson lower bound is not exact")
 
 
 @dataclass(frozen=True)
@@ -254,12 +259,8 @@ class PowerDecision:
         }
 
     @property
-    def canonical_json(self) -> str:
-        return _canonical_json(self.as_dict())
-
-    @property
     def decision_sha256(self) -> str:
-        return hashlib.sha256(self.canonical_json.encode("utf-8")).hexdigest()
+        return _canonical_sha256(self.as_dict())
 
 
 def paired_normal_power(
@@ -378,12 +379,15 @@ def sensitivity_power_curve(
     successes = np.count_nonzero(upper < constants.margin, axis=0).astype(np.int64)
     point_power = successes.astype(np.float64) / constants.sensitivity_replicates
     lower_bound = np.zeros_like(point_power)
-    positive = successes > 0
-    lower_bound[positive] = beta.ppf(
-        1.0 - constants.sensitivity_confidence,
-        successes[positive],
-        constants.sensitivity_replicates - successes[positive] + 1,
-    )
+    for success_count in np.unique(successes):
+        if success_count > 0:
+            lower_bound[successes == success_count] = float(
+                beta.ppf(
+                    0.05,
+                    int(success_count),
+                    constants.sensitivity_replicates - int(success_count) + 1,
+                )
+            )
     if not bool(np.isfinite(lower_bound).all()):
         raise ValueError("Clopper-Pearson lower bounds are nonfinite")
     return tuple(
@@ -709,6 +713,33 @@ def _validate_decision(value: object) -> Mapping[str, object]:
     return decision
 
 
+def _validate_payload_held_out_differences(
+    value: object,
+) -> dict[str, dict[str, list[float]]]:
+    families = _exact_fields(
+        value, set(DEVELOPMENT_FAMILIES), "held_out_differences"
+    )
+    validated: dict[str, dict[str, list[float]]] = {}
+    for family in DEVELOPMENT_FAMILIES:
+        endpoints = _exact_fields(
+            families[family],
+            set(POWER_ENDPOINTS),
+            f"held_out_differences.{family}",
+        )
+        validated[family] = {}
+        for endpoint in POWER_ENDPOINTS:
+            vector = endpoints[endpoint]
+            if not isinstance(vector, list):
+                raise TypeError(
+                    f"held_out_differences.{family}.{endpoint} must be a JSON array"
+                )
+            array = _held_out_array(
+                vector, f"held_out_differences.{family}.{endpoint}"
+            )
+            validated[family][endpoint] = array.tolist()
+    return validated
+
+
 def validate_power_plan_payload(payload: object) -> dict[str, object]:
     """Validate and defensively copy the exact immutable power-artifact schema."""
     expected = {
@@ -721,6 +752,7 @@ def validate_power_plan_payload(payload: object) -> dict[str, object]:
         "selected_protocol",
         "development_artifacts",
         "held_out_proof",
+        "held_out_differences",
         "decision",
         "decision_sha256",
     }
@@ -798,12 +830,23 @@ def validate_power_plan_payload(payload: object) -> dict[str, object]:
         ):
             raise ValueError("held-out fold identity or unanimous selection drifted")
 
+    held_out_differences = _validate_payload_held_out_differences(
+        top["held_out_differences"]
+    )
     decision = _validate_decision(top["decision"])
     if top["status"] != decision["status"]:
         raise ValueError("top-level status disagrees with decision status")
     decision_digest = _lower_hex(top["decision_sha256"], "decision_sha256", 64)
     if decision_digest != _canonical_sha256(decision):
         raise ValueError("decision_sha256 does not bind the canonical decision")
+    recomputed = plan_lockbox_sample_size(held_out_differences)
+    recomputed_decision = recomputed.as_dict()
+    if _canonical_json(decision) != _canonical_json(recomputed_decision):
+        raise ValueError("stored decision disagrees with recomputed held-out decision")
+    if decision_digest != recomputed.decision_sha256:
+        raise ValueError("decision_sha256 disagrees with recomputed held-out decision")
+    if top["status"] != recomputed.status:
+        raise ValueError("top-level status disagrees with recomputed held-out decision")
     try:
         return json.loads(_canonical_json(top))
     except (TypeError, ValueError) as exc:

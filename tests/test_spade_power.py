@@ -49,7 +49,11 @@ def _install_literal_curves(
     ) -> float:
         del mean, standard_deviation, constants
         family, endpoint = state["identity"].split(":")
-        return 0.80 if n >= analytic_gate.get((family, endpoint), 350) else 0.79
+        return (
+            0.80
+            if n >= analytic_gate.get((family, endpoint), 350)
+            else 0.80 - 1e-15
+        )
 
     def fake_sensitivity(
         values: object,
@@ -64,9 +68,11 @@ def _install_literal_curves(
         return tuple(
             SensitivityPoint(
                 n=n,
-                successes=1800,
-                point_power=0.90,
-                lower_bound=0.80 if n >= gate else 0.80 - 1e-15,
+                successes=1630 if n >= gate else 1629,
+                point_power=(1630 if n >= gate else 1629) / 2000,
+                lower_bound=(
+                    0.8001290149827873 if n >= gate else 0.7996146866285787
+                ),
             )
             for n in range(constants.minimum_n, constants.maximum_n + 1)
         )
@@ -86,13 +92,15 @@ def _canonical_sha256(value: object) -> str:
     return hashlib.sha256(encoded).hexdigest()
 
 
-def _valid_payload(monkeypatch: pytest.MonkeyPatch) -> dict[str, object]:
-    _install_literal_curves(monkeypatch)
-    decision = plan_lockbox_sample_size(_held_out()).as_dict()
+def _valid_payload(
+    held_out: dict[str, dict[str, list[float]]] | None = None,
+) -> dict[str, object]:
+    held_out = copy.deepcopy(held_out if held_out is not None else _held_out())
+    decision = plan_lockbox_sample_size(held_out).as_dict()
     selected = "spade-o44-fixed_hybrid"
     payload: dict[str, object] = {
         "schema": "boec-spade-lockbox-power-v1",
-        "status": "POWERED",
+        "status": decision["status"],
         "source_commit": "a" * 40,
         "source_dirty": False,
         "environment": {
@@ -142,10 +150,21 @@ def _valid_payload(monkeypatch: pytest.MonkeyPatch) -> dict[str, object]:
                 for family in DEVELOPMENT_FAMILIES
             ],
         },
+        "held_out_differences": held_out,
         "decision": decision,
         "decision_sha256": _canonical_sha256(decision),
     }
     return payload
+
+
+@pytest.fixture(scope="module")
+def exact_powered_payload() -> dict[str, object]:
+    return _valid_payload()
+
+
+@pytest.fixture(scope="module")
+def exact_insufficient_payload() -> dict[str, object]:
+    return _valid_payload(_held_out(0.03))
 
 
 def test_frozen_power_constants_are_literal_and_immutable():
@@ -394,8 +413,8 @@ def test_plan_requires_exact_finite_held_out_schema(mutation):
         plan_lockbox_sample_size(values)
 
 
-def test_power_plan_validator_accepts_exact_canonical_schema(monkeypatch):
-    payload = _valid_payload(monkeypatch)
+def test_power_plan_validator_accepts_exact_canonical_schema(exact_powered_payload):
+    payload = copy.deepcopy(exact_powered_payload)
     assert validate_power_plan_payload(payload) == payload
 
 
@@ -431,9 +450,9 @@ def test_power_plan_validator_accepts_exact_canonical_schema(monkeypatch):
     ],
 )
 def test_power_plan_validator_rejects_schema_provenance_and_decision_drift(
-    monkeypatch: pytest.MonkeyPatch, mutation
+    exact_powered_payload, mutation
 ):
-    payload = _valid_payload(monkeypatch)
+    payload = copy.deepcopy(exact_powered_payload)
     mutation(payload)
     if payload.get("decision_sha256") != "f" * 64:
         try:
@@ -446,23 +465,15 @@ def test_power_plan_validator_rejects_schema_provenance_and_decision_drift(
         validate_power_plan_payload(payload)
 
 
-def test_power_plan_validator_enforces_negative_status_null_semantics(monkeypatch):
-    payload = _valid_payload(monkeypatch)
-    payload["status"] = "INSUFFICIENT_POWER"
-    decision = payload["decision"]
-    decision["status"] = "INSUFFICIENT_POWER"
-    decision["selected_sample_size"] = None
-    decision["selected_instance_prefix"] = None
-    for family in DEVELOPMENT_FAMILIES:
-        for endpoint in POWER_ENDPOINTS:
-            decision["families"][family][endpoint]["reported_n"] = 2000
-    decision["families"]["hill"]["map"]["sensitivity_lower_bound"] = 0.79
-    payload["decision_sha256"] = _canonical_sha256(decision)
+def test_power_plan_validator_enforces_negative_status_null_semantics(
+    exact_insufficient_payload,
+):
+    payload = copy.deepcopy(exact_insufficient_payload)
     assert validate_power_plan_payload(payload)["status"] == "INSUFFICIENT_POWER"
 
 
-def test_power_plan_validator_does_not_alias_caller_payload(monkeypatch):
-    payload = _valid_payload(monkeypatch)
+def test_power_plan_validator_does_not_alias_caller_payload(exact_powered_payload):
+    payload = copy.deepcopy(exact_powered_payload)
     validated = validate_power_plan_payload(payload)
     assert validated == payload
     assert validated is not payload
@@ -475,3 +486,115 @@ def test_sensitivity_point_rejects_impossible_probabilities():
         SensitivityPoint(n=350, successes=2001, point_power=1.0, lower_bound=1.0)
     with pytest.raises((TypeError, ValueError)):
         SensitivityPoint(n=350, successes=1000, point_power=0.4, lower_bound=0.5)
+
+
+def test_clopper_pearson_1629_fails_and_1630_passes_literal_target():
+    lower_1629 = float(beta.ppf(0.05, 1629, 2000 - 1629 + 1))
+    lower_1630 = float(beta.ppf(0.05, 1630, 2000 - 1630 + 1))
+    assert lower_1629 == pytest.approx(0.7996146866285787, abs=1e-16)
+    assert lower_1630 == pytest.approx(0.8001290149827873, abs=1e-16)
+    assert lower_1629 < 0.80 <= lower_1630
+    with pytest.raises(ValueError, match="Clopper-Pearson"):
+        SensitivityPoint(
+            n=350,
+            successes=1629,
+            point_power=1629 / 2000,
+            lower_bound=0.80,
+        )
+    assert SensitivityPoint(
+        n=350,
+        successes=1630,
+        point_power=1630 / 2000,
+        lower_bound=0.8001290149827873,
+    ).lower_bound >= 0.80
+
+
+def _endpoint(payload: dict[str, object]) -> dict[str, object]:
+    return payload["decision"]["families"]["hill"]["map"]
+
+
+def _select_nonminimal_351(payload: dict[str, object]) -> None:
+    decision = payload["decision"]
+    decision["selected_sample_size"] = 351
+    decision["selected_instance_prefix"] = {"first": 0, "last": 350, "count": 351}
+    for family in DEVELOPMENT_FAMILIES:
+        for endpoint in POWER_ENDPOINTS:
+            decision["families"][family][endpoint]["reported_n"] = 351
+
+
+@pytest.mark.parametrize(
+    ("name", "mutate"),
+    [
+        (
+            "forged_clopper_pearson_lower_bound",
+            lambda payload: _endpoint(payload).update(
+                sensitivity_successes=1629,
+                sensitivity_point_power=1629 / 2000,
+                sensitivity_lower_bound=0.80,
+            ),
+        ),
+        (
+            "wrong_labelled_seed",
+            lambda payload: _endpoint(payload).__setitem__(
+                "sensitivity_seed", _endpoint(payload)["sensitivity_seed"] + 1
+            ),
+        ),
+        ("forged_mean", lambda payload: _endpoint(payload).__setitem__("mean", -0.02)),
+        (
+            "forged_standard_deviation",
+            lambda payload: _endpoint(payload).__setitem__(
+                "standard_deviation", 0.001
+            ),
+        ),
+        (
+            "forged_analytic_power",
+            lambda payload: _endpoint(payload).__setitem__("analytic_power", 0.99),
+        ),
+        ("nonminimal_selected_n", _select_nonminimal_351),
+        (
+            "forged_required_n",
+            lambda payload: (
+                _select_nonminimal_351(payload),
+                _endpoint(payload).__setitem__("required_n", 351),
+            ),
+        ),
+    ],
+    ids=lambda value: value if isinstance(value, str) else None,
+)
+def test_power_plan_validator_recomputes_complete_decision(
+    exact_powered_payload, name, mutate
+):
+    del name
+    payload = copy.deepcopy(exact_powered_payload)
+    mutate(payload)
+    payload["decision_sha256"] = _canonical_sha256(payload["decision"])
+    with pytest.raises(ValueError, match="recomputed"):
+        validate_power_plan_payload(payload)
+
+
+def test_power_plan_validator_rejects_held_out_vector_tampering(
+    exact_powered_payload,
+):
+    payload = copy.deepcopy(exact_powered_payload)
+    payload["held_out_differences"]["hill"]["map"][0] = 0.03
+    with pytest.raises(ValueError, match="recomputed"):
+        validate_power_plan_payload(payload)
+
+
+@pytest.mark.parametrize(
+    "mutation",
+    [
+        lambda values: values.pop("hill"),
+        lambda values: values["hill"].pop("map"),
+        lambda values: values["hill"].__setitem__("map", [0.0] * 49),
+        lambda values: values["hill"]["map"].__setitem__(0, math.nan),
+        lambda values: values["hill"]["map"].__setitem__(0, True),
+    ],
+)
+def test_power_plan_payload_requires_exact_held_out_vectors(
+    exact_powered_payload, mutation
+):
+    payload = copy.deepcopy(exact_powered_payload)
+    mutation(payload["held_out_differences"])
+    with pytest.raises((TypeError, ValueError)):
+        validate_power_plan_payload(payload)
