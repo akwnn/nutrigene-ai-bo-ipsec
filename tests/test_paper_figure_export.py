@@ -3,8 +3,11 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+import matplotlib.pyplot as plt
 from PIL import Image
+import pytest
 
+import boec.paper_figures.export as export
 from boec.paper_figures.export import build_all
 
 
@@ -56,3 +59,19 @@ def test_rebuild_is_deterministic(tmp_path):
             a = (tmp_path / "one" / "portable" / f"{figure_id}.{suffix}").read_bytes()
             b = (tmp_path / "two" / "portable" / f"{figure_id}.{suffix}").read_bytes()
             assert a == b
+
+
+def test_builder_failure_closes_figures_and_invalidates_manifest(tmp_path, monkeypatch):
+    manifest_path = tmp_path / "build-manifest.json"
+    manifest_path.write_text('{"valid": true}\n')
+    before = set(plt.get_fignums())
+
+    def broken_builder(_preset):
+        plt.figure()
+        raise RuntimeError("synthetic builder failure")
+
+    monkeypatch.setattr(export, "build_figure1", broken_builder)
+    with pytest.raises(RuntimeError, match="synthetic builder failure"):
+        build_all(Path("results"), tmp_path, "portable")
+    assert set(plt.get_fignums()) == before
+    assert not manifest_path.exists()

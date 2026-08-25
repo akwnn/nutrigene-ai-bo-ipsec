@@ -160,6 +160,10 @@ def build_all(results_dir: Path, output_dir: Path, preset_name: str = "portable"
     preset = get_preset(preset_name)
     results_dir, output_dir = Path(results_dir), Path(output_dir)
     figure_dir = output_dir / preset.name
+    # Never leave a previous manifest claiming validity once an overwrite starts.
+    manifest_path = output_dir / "build-manifest.json"
+    if manifest_path.exists():
+        manifest_path.unlink()
     evidence_paths = source_paths(results_dir)
     if missing := [path for path in evidence_paths if not path.exists()]:
         raise FileNotFoundError(f"required evidence source is missing: {missing[0]}")
@@ -174,12 +178,19 @@ def build_all(results_dir: Path, output_dir: Path, preset_name: str = "portable"
         (build_figure1, None), (build_figure2, data2),
         (build_figure3, data3), (build_figure4, data4),
     ):
-        bundle = builder(preset) if data is None else builder(data, preset)
-        records = export_bundle(bundle, figure_dir, preset)
-        figures[bundle.figure_id] = {
-            key: {**record, "path": str(Path(preset.name) / record["path"])}
-            for key, record in records.items()
-        }
+        before = set(plt.get_fignums())
+        try:
+            bundle = builder(preset) if data is None else builder(data, preset)
+            records = export_bundle(bundle, figure_dir, preset)
+            figures[bundle.figure_id] = {
+                key: {**record, "path": str(Path(preset.name) / record["path"])}
+                for key, record in records.items()
+            }
+        finally:
+            # Covers builders that fail after creating a Figure but before
+            # returning a FigureBundle (export_bundle handles its own case).
+            for number in set(plt.get_fignums()) - before:
+                plt.close(number)
     make_contact_sheet([figure_dir / f"fig{i}.png" for i in range(1, 5)], output_dir / "paper-figures-contact-sheet.png")
     sources = {str(path): digest for path, digest in source_hashes.items()}
     for path, digest in source_hashes.items():
@@ -193,5 +204,5 @@ def build_all(results_dir: Path, output_dir: Path, preset_name: str = "portable"
         "figures": figures,
         "supplementary_reservations": SUPPLEMENTARY_RESERVATIONS,
     }
-    write_manifest(manifest, output_dir / "build-manifest.json")
+    write_manifest(manifest, manifest_path)
     return manifest
