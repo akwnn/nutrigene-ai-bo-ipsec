@@ -82,6 +82,16 @@ values, oracle probabilities, or calibration-grid truth.
 This is explicitly a controlled-prevalence synthetic estimand, not an operational method
 for choosing a real assay threshold.
 
+This incorporates the pre-registered tau-quantile follow-up without copying its remaining
+limitation. That follow-up showed that equalising latent superlevel-set prevalence makes
+Ackley and Hartmann6 more answerable at `p = 0.30`, but leaves `p = 0.03` and `p = 0.01`
+almost entirely unanswerable at 48 evaluations. The primary benchmark therefore uses one
+moderate target prevalence and takes the quantile of `m_gamma`, not of `f`: the controlled
+quantity is the actual future-response reliability event, including `gamma` and both noise
+terms. The threshold is computed separately for every sealed landscape instance so a
+randomized family cannot leak instance-to-instance prevalence differences into the method
+comparison.
+
 ### 3.2 Probability-map endpoint
 
 On a separate deterministic 8,192-point Sobol scoring grid, each fitted model emits
@@ -176,6 +186,13 @@ of freedom. Its adequacy is judged by held-out probability-map calibration and e
 certificate containment. A sensitivity analysis may fit the legacy plug-in fixed-noise
 model, but it cannot replace the primary model after lockbox outcomes are known.
 
+The K1 oracle-noise study is used narrowly: changing the legacy GP from response-plug-in
+variance to oracle pointwise variance improved mean Rule-P regret by `0.00816`, below its
+registered `0.01` build bar. That result is enough to reject spending scarce evaluations on
+the proposed pooled-replicate estimator in this 48-evaluation protocol. It is not evidence
+that noise modelling is irrelevant to map calibration or certificate containment, so those
+endpoints remain explicit gates for the learned-noise primary model.
+
 ## 6. Deterministic campaign inputs
 
 Each campaign derives independent stateless seeds from a root campaign identity for:
@@ -203,6 +220,12 @@ Resume must produce byte-identical rows to uninterrupted execution.
 
 SPADE begins with one scrambled Sobol opening of size `n0`. Development compares exactly
 `n0 in {32, 40, 44}`. No replicate reserve and no additional confirmation budget exist.
+
+OA-LHS is excluded rather than left as an untested alternative. Its strength-2 construction
+requires 49 points, violating the common 48-evaluation budget, and the matched Hartmann6 K2
+study did not reduce design-lottery SD (`+0.0132` OA-minus-plain, 95% bootstrap CI
+`[-0.0196, +0.0450]`). Sobol is therefore the only opening design in development; this
+choice is frozen before joint-policy outcomes are inspected.
 
 ### 7.2 Adaptive candidate pool
 
