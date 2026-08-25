@@ -28,7 +28,7 @@ from boec.paper_figures.figure4 import build_figure4
 from boec.paper_figures.figure5 import build_figure5
 from boec.paper_figures.landscape_glyphs import LANDSCAPE_FAMILIES, landscape_slice
 from boec.paper_figures.qa import assert_registered_geometry
-from boec.paper_figures.style import get_preset
+from boec.paper_figures.style import get_preset, method_style
 
 
 def test_figure1_separates_landscapes_methods_campaign_and_outputs():
@@ -347,6 +347,53 @@ def test_figure3_rendered_text_states_terminal_rule_semantics():
     assert {patch.get_hatch() for patch in bundle.figure.axes[3].patches} >= {"////", "...."}
 
     plt.close(bundle.figure)
+
+
+@pytest.mark.parametrize("preset_name", ["portable", "rsc", "nature", "plos"])
+def test_figure3_forest_labels_clear_same_row_intervals_and_markers(preset_name):
+    # Regression coverage for the reviewed finding: at PLOS's larger body size the
+    # "SPADE" row label encroached on its own confidence interval by a few pixels
+    # because the label-to-interval gap was a hard-coded data coordinate rather
+    # than a physical (points) quantity. Every row's label is registered against
+    # its own interval artist via the shared QA collision machinery, with a
+    # non-zero point padding, so any regression in the gap is caught at every
+    # preset's actual body size rather than relying on a hand-rolled pixel check.
+    bundle = build_figure3(build_terminal_rule_data(Path("results")), get_preset(preset_name))
+    figure = bundle.figure
+    panel_a = figure.axes[1]
+
+    collisions = getattr(figure, "_paper_collisions", [])
+    registered_by_label = {item.label: item for item in collisions}
+    expected_registrations = {
+        f"paired-label-clears-interval-{arm}" for arm in ("doe", "qlogei", "qlognei", "versionb")
+    }
+    assert expected_registrations <= set(registered_by_label)
+    for label in expected_registrations:
+        registration = registered_by_label[label]
+        assert registration.padding_pt > 0.0
+        assert isinstance(registration.first, Text)
+        assert registration.second in panel_a.collections
+
+    # Raises AssertionError if any registered label/interval pair overlaps once
+    # rendered at this preset's actual physical point sizes.
+    assert_registered_geometry(figure)
+
+    # The marker sits between the interval's own lo/hi, so a label clearing the
+    # interval's left edge also clears the marker; confirm that directly too.
+    figure.canvas.draw()
+    renderer = figure.canvas.get_renderer()
+    for arm in ("doe", "qlogei", "qlognei", "versionb"):
+        label = next(text for text in panel_a.texts if text.get_text() == method_style(arm).label)
+        marker = next(
+            collection
+            for collection in panel_a.collections
+            if collection.get_gid() == f"paired-point:{arm}"
+        )
+        label_bounds = label.get_window_extent(renderer)
+        marker_bounds = marker.get_window_extent(renderer)
+        assert label_bounds.x1 <= marker_bounds.x0
+
+    plt.close(figure)
 
 
 @pytest.mark.parametrize("preset_name", ["portable", "rsc", "nature", "plos"])

@@ -5,10 +5,12 @@ from __future__ import annotations
 from importlib.resources import files
 
 import matplotlib.pyplot as plt
+from matplotlib.transforms import Bbox
 import numpy as np
 
 from .core import FigureBundle
 from .layout import editorial_figure, panel_heading
+from .qa import register_collision
 from .style import VenuePreset, apply_axis_style, method_style
 
 
@@ -28,9 +30,84 @@ def _keep_x_ticks_within_view(axis) -> None:
     axis.set_xticks([tick for tick in axis.get_xticks() if lower <= tick <= upper])
 
 
+def _forest_gutter_left_limit(
+    axis, renderer, *, label_anchor: float, right_limit: float, gutter_px: float
+) -> float:
+    """Return an xlim left bound that reserves exactly `gutter_px` pixels of data
+    space to the left of `label_anchor`, given the axes' fixed physical pixel width.
+
+    The axes' pixel width is set by the GridSpec position, not by the data range,
+    so this is solved algebraically rather than guessed: widening xlim leftward
+    both grows the reserved gutter and rescales pixels-per-data-unit, so the two
+    effects are resolved together instead of iterated.
+    """
+
+    axis_width_px = axis.get_window_extent(renderer).width
+    target_ratio = gutter_px / axis_width_px
+    if target_ratio >= 1.0:
+        raise ValueError("row labels do not fit the reserved forest gutter at this preset")
+    return (label_anchor - target_ratio * right_limit) / (1.0 - target_ratio)
+
+
+def _bind_interval_window_extent(interval, axis) -> None:
+    """Bind a live, correct `get_window_extent` to an hlines-created LineCollection.
+
+    `Collection.get_window_extent()` returns a null (inf) Bbox for a plain,
+    offset-less path collection such as `axis.hlines` produces: its default
+    implementation only resolves the paths' data limits when queried against
+    an identity transform, which excludes ordinary `axis.transData`-based
+    collections. Binding an instance-level override lets the shared QA
+    collision machinery (`register_collision` / `assert_no_registered_collisions`,
+    which call `get_window_extent` on every registered artist) measure this
+    interval correctly. The override recomputes from the live transform and
+    renderer on every call, so it stays correct across the export-time figure
+    resize in `export.py`, not just at build time.
+    """
+
+    def _window_extent(renderer=None, *, _interval=interval, _axis=axis):
+        if renderer is None:
+            renderer = _axis.figure.canvas.get_renderer()
+        segment = _axis.transData.transform(_interval.get_segments()[0])
+        half_stroke = renderer.points_to_pixels(_interval.get_linewidths()[0]) / 2.0
+        return Bbox.from_extents(
+            float(segment[:, 0].min()) - half_stroke,
+            float(segment[:, 1].min()) - half_stroke,
+            float(segment[:, 0].max()) + half_stroke,
+            float(segment[:, 1].max()) + half_stroke,
+        )
+
+    interval.get_window_extent = _window_extent
+
+
 def _draw_paired_forest(axis, contrasts: list[dict], preset: VenuePreset) -> None:
+    figure = axis.figure
+    label_gap_pt = 6.0
+    collision_padding_pt = 2.0
+    right_limit = 0.15
+    label_anchor = min(row["lo"] for row in contrasts)
+    styles = {row["arm"]: method_style(row["arm"]) for row in contrasts}
+
+    # Measure the widest row label at this preset's actual body size so the
+    # reserved gutter is a deterministic physical (points) quantity rather than
+    # a hard-coded data coordinate tuned for one font size.
+    figure.canvas.draw()
+    renderer = figure.canvas.get_renderer()
+    probes = [axis.text(0, 0, style.label, fontsize=preset.body_pt) for style in styles.values()]
+    figure.canvas.draw()
+    max_label_width_px = max(probe.get_window_extent(renderer).width for probe in probes)
+    for probe in probes:
+        probe.remove()
+    gap_px = renderer.points_to_pixels(label_gap_pt)
+    left_limit = _forest_gutter_left_limit(
+        axis,
+        renderer,
+        label_anchor=label_anchor,
+        right_limit=right_limit,
+        gutter_px=max_label_width_px + gap_px,
+    )
+
     for y_position, row in enumerate(contrasts):
-        style = method_style(row["arm"])
+        style = styles[row["arm"]]
         interval = axis.hlines(
             y_position,
             row["lo"],
@@ -40,6 +117,7 @@ def _draw_paired_forest(axis, contrasts: list[dict], preset: VenuePreset) -> Non
             zorder=2,
         )
         interval.set_gid(f"paired:{row['arm']}")
+        _bind_interval_window_extent(interval, axis)
         point = axis.scatter(
             row["mean"],
             y_position,
@@ -51,14 +129,24 @@ def _draw_paired_forest(axis, contrasts: list[dict], preset: VenuePreset) -> Non
             zorder=3,
         )
         point.set_gid(f"paired-point:{row['arm']}")
-        axis.text(
-            -0.084,
-            y_position,
+        label = axis.annotate(
             style.label,
+            (label_anchor, y_position),
+            xycoords="data",
+            xytext=(-label_gap_pt, 0),
+            textcoords="offset points",
             color=_INK,
-            ha="left",
+            ha="right",
             va="center",
             fontsize=preset.body_pt,
+        )
+        label.set_gid(f"paired-label:{row['arm']}")
+        register_collision(
+            figure,
+            f"paired-label-clears-interval-{row['arm']}",
+            label,
+            interval,
+            padding_pt=collision_padding_pt,
         )
 
     axis.axvline(0, color=_INK, linewidth=0.8, zorder=0)
@@ -93,7 +181,7 @@ def _draw_paired_forest(axis, contrasts: list[dict], preset: VenuePreset) -> Non
         va="top",
         fontsize=preset.body_pt,
     )
-    axis.set_xlim(-0.09, 0.15)
+    axis.set_xlim(left_limit, right_limit)
     axis.set_ylim(len(contrasts) - 0.55, -0.55)
     axis.set_yticks(())
     axis.set_xlabel(
