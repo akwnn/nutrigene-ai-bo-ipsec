@@ -73,7 +73,18 @@ over a larger false window.
 - Historical largest rule remains testable via an explicit argument but is **not**
   used for REGISTERED scoring in this recovery protocol.
 
-### 3.2 Unchanged
+### 3.2 Predictive observation noise (mandatory)
+
+Map probabilities and certificate set-draws use the **sealed assay noise law**
+(`sigma_rel`, `sigma_add`) on latent posterior samples/means, not the GP's learned
+homoskedastic likelihood noise. The assay specification is already provided to every
+arm; aligning the predictive event with oracle truth is required for manufacturing-
+credible containment. Learned homoskedastic noise remains available only as an
+explicit non-registered option.
+
+- Registered default: `predictive_observation_noise: assay_relative_additive`
+
+### 3.3 Unchanged
 
 - 48-evaluation budget, γ=0.95, α=0.95, q_τ=0.75
 - Development openings {32,40,44} and policies {staged, fixed_hybrid, validity_gated}
@@ -81,9 +92,9 @@ over a larger false window.
 - Lockbox generators remain `FROZEN_UNOPENED`
 - Prior `NO_SELECTION` study must not be power-planned or lockbox-opened
 
-### 3.3 Provenance
+### 3.4 Provenance
 
-- New study id / protocol payload digest after the volume-rule change
+- New study id / protocol payload digest after the volume-rule and assay-noise changes
 - Historical joint-v1 development artifacts archived under
   `results/historical-joint-v1-noselection/`
 - New development writes fresh `results/spade-development-*` shards

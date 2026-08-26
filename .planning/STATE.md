@@ -136,7 +136,7 @@ regressions and are not being repaired inside the prospective study branch.
 - Redesign: registered `certificate_volume_rule: smallest` in
   `conservative_set_split` / scoring settings / joint yaml.
 - New study id `spade-joint-48-mfg-cert-2026-08-26`; protocol digest
-  `bebbaba1ee330f6a4c699b6f05e27df811158ceff15152cea78f0bf7ce0cc656`.
+  `f6eca0728829719a36280dbb9479f3699db60c335491ba9ae7964121773914bb` (smallest CE + assay predictive noise).
 - Prior v1 shards archived; new development must write fresh live `results/spade-development-*`.
 
 ## Next action

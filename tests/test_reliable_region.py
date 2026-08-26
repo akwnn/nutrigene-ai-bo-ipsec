@@ -100,6 +100,36 @@ def test_model_reliability_probability_includes_latent_and_learned_noise(model, 
     assert got.shape == (4,)
 
 
+def test_model_reliability_probability_can_use_assay_noise_law(model, grid):
+    got = model_reliability_probability(
+        model, grid, tau=0.9, sigma_rel=0.10, sigma_add=0.01
+    )
+    mean = model._posterior.mean.flatten()
+    latent_var = model._posterior.variance.flatten()
+    noise_var = 0.10**2 * mean.square() + 0.01**2
+    expected = 1.0 - torch.distributions.Normal(0.0, 1.0).cdf(
+        (0.9 - mean) / (latent_var + noise_var).sqrt()
+    )
+    assert torch.allclose(got, expected)
+    learned = model_reliability_probability(model, grid, tau=0.9)
+    assert not torch.allclose(got, learned)
+
+
+def test_assay_noise_changes_reliable_set_draws(model, grid):
+    learned = reliable_set_draws(model, grid, tau=1.2, gamma=0.9, n_draws=128, seed=1)
+    assay = reliable_set_draws(
+        model,
+        grid,
+        tau=1.2,
+        gamma=0.9,
+        n_draws=128,
+        seed=1,
+        sigma_rel=0.50,
+        sigma_add=0.20,
+    )
+    assert int(learned.sum()) != int(assay.sum()) or not torch.equal(learned, assay)
+
+
 def test_gamma_changes_the_reliable_set_draws(model, grid):
     low = reliable_set_draws(model, grid, tau=0.5, gamma=0.5, n_draws=128, seed=1)
     high = reliable_set_draws(model, grid, tau=0.5, gamma=0.95, n_draws=128, seed=1)

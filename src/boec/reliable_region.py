@@ -142,17 +142,37 @@ def true_reliability_probability(
     return 1.0 - _standard_normal_cdf(standardized)
 
 
-def model_reliability_probability(model, X: Tensor, tau: Real) -> Tensor:
-    """Model ``P(Y_new >= tau | data)`` using common learned homoskedastic noise.
+def model_reliability_probability(
+    model,
+    X: Tensor,
+    tau: Real,
+    *,
+    sigma_rel: Real | None = None,
+    sigma_add: Real | None = None,
+) -> Tensor:
+    """Model ``P(Y_new >= tau | data)``.
 
-    The latent posterior variance and the learned observation-noise variance are added
-    on the original outcome scale.  This is the joint protocol's homoskedastic model
-    approximation; it is intentionally distinct from oracle relative/additive noise.
+    When ``sigma_rel``/``sigma_add`` are provided, the future-observation noise matches
+    the sealed assay law used by oracle truth (manufacturing recovery default).
+    Otherwise the joint protocol's learned homoskedastic likelihood noise is used.
     """
     tau_f = _finite_scalar(tau, "tau")
-    noise_variance = _learned_noise_variance(model)
     _, mean, latent_variance = _latent_posterior(model, X)
-    total_sd = (latent_variance + noise_variance.to(latent_variance)).sqrt()
+    if sigma_rel is None and sigma_add is None:
+        noise_variance = _learned_noise_variance(model).to(latent_variance).expand_as(
+            latent_variance
+        )
+    else:
+        if sigma_rel is None or sigma_add is None:
+            raise ValueError("sigma_rel and sigma_add must be provided together")
+        sigma_rel_f = _finite_scalar(sigma_rel, "sigma_rel")
+        sigma_add_f = _finite_scalar(sigma_add, "sigma_add")
+        if sigma_rel_f < 0.0 or sigma_add_f < 0.0:
+            raise ValueError("noise sigmas must be nonnegative")
+        noise_variance = sigma_rel_f**2 * mean.square() + sigma_add_f**2
+        if bool(torch.any(noise_variance <= 0.0)):
+            raise ValueError("assay noise standard deviation must be positive everywhere")
+    total_sd = (latent_variance + noise_variance).sqrt()
     return 1.0 - _standard_normal_cdf((tau_f - mean) / total_sd)
 
 
@@ -163,13 +183,18 @@ def reliable_set_draws(
     gamma: Real,
     n_draws: int,
     seed: int,
+    *,
+    sigma_rel: Real | None = None,
+    sigma_add: Real | None = None,
 ) -> Tensor:
     """Joint posterior draws of the future-response reliable set.
 
     Each row is one jointly sampled latent field converted to conditional
-    future-observation probabilities using the model's learned likelihood noise, then
-    thresholded at ``gamma``.  An even count is mandatory because certification uses
-    equal selection and evaluation halves.
+    future-observation probabilities, then thresholded at ``gamma``.  When assay
+    ``sigma_rel``/``sigma_add`` are supplied, each draw uses the same relative-plus-
+    additive noise law as sealed truth; otherwise learned homoskedastic likelihood
+    noise is used.  An even count is mandatory because certification uses equal
+    selection and evaluation halves.
     """
     tau_f = _finite_scalar(tau, "tau")
     gamma_f = _open_probability(gamma, "gamma")
@@ -183,8 +208,19 @@ def reliable_set_draws(
     seed_i = int(seed)
     if not 0 <= seed_i < 2**63:
         raise ValueError(f"seed must lie in [0, 2**63), got {seed_i}")
+    use_assay = not (sigma_rel is None and sigma_add is None)
+    if use_assay and (sigma_rel is None or sigma_add is None):
+        raise ValueError("sigma_rel and sigma_add must be provided together")
+    if use_assay:
+        sigma_rel_f = _finite_scalar(sigma_rel, "sigma_rel")
+        sigma_add_f = _finite_scalar(sigma_add, "sigma_add")
+        if sigma_rel_f < 0.0 or sigma_add_f < 0.0:
+            raise ValueError("noise sigmas must be nonnegative")
+        learned_noise_variance = None
+    else:
+        sigma_rel_f = sigma_add_f = None
+        learned_noise_variance = _learned_noise_variance(model)
 
-    noise_variance = _learned_noise_variance(model)
     posterior, posterior_mean, _ = _latent_posterior(model, X)
     try:
         base_sample_shape = torch.Size(posterior.base_sample_shape)
@@ -218,7 +254,13 @@ def reliable_set_draws(
         raise ValueError("joint posterior draws must be finite")
 
     latent = latent.squeeze(-1).double()
-    observation_sd = noise_variance.to(latent).sqrt()
+    if use_assay:
+        noise_variance = sigma_rel_f**2 * latent.square() + sigma_add_f**2
+        if bool(torch.any(noise_variance <= 0.0)):
+            raise ValueError("assay noise standard deviation must be positive everywhere")
+        observation_sd = noise_variance.sqrt()
+    else:
+        observation_sd = learned_noise_variance.to(latent).sqrt()
     probability = 1.0 - _standard_normal_cdf((tau_f - latent) / observation_sd)
     return probability >= gamma_f
 

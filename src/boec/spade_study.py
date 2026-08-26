@@ -130,6 +130,7 @@ class ScoringExecutionSettings:
     certificate_rho_grid_size: int
     fit_restarts: int
     certificate_volume_rule: str = "smallest"
+    predictive_observation_noise: str = "assay_relative_additive"
 
     def __post_init__(self) -> None:
         for field in (
@@ -151,6 +152,14 @@ class ScoringExecutionSettings:
                 "certificate_volume_rule must be 'smallest' or 'largest', "
                 f"got {self.certificate_volume_rule!r}"
             )
+        if self.predictive_observation_noise not in {
+            "assay_relative_additive",
+            "learned_homoskedastic",
+        }:
+            raise ValueError(
+                "predictive_observation_noise must be 'assay_relative_additive' or "
+                f"'learned_homoskedastic', got {self.predictive_observation_noise!r}"
+            )
 
     @property
     def digest(self) -> str:
@@ -166,6 +175,7 @@ REGISTERED_SCORING_SETTINGS = ScoringExecutionSettings(
     certificate_rho_grid_size=64,
     fit_restarts=4,
     certificate_volume_rule="smallest",
+    predictive_observation_noise="assay_relative_additive",
 )
 
 
@@ -684,9 +694,15 @@ def score_campaign(
     certificate_grid = sobol_grid(dimension, effective.certificate_grid_size, certificate_seed)
 
     # All model-only choices are fixed before the scorer-only oracle becomes callable.
+    if effective.predictive_observation_noise == "assay_relative_additive":
+        predictive_noise = {"sigma_rel": sigma_rel_f, "sigma_add": sigma_add_f}
+    else:
+        predictive_noise = {}
     terminal_mean = _posterior_mean(model, terminal_grid)
     terminal_x_tensor = terminal_grid[int(torch.argmax(terminal_mean))].clone()
-    map_probability = model_reliability_probability(model, map_grid, tau_f).detach().double()
+    map_probability = model_reliability_probability(
+        model, map_grid, tau_f, **predictive_noise
+    ).detach().double()
     set_draws = reliable_set_draws(
         model,
         certificate_grid,
@@ -694,6 +710,7 @@ def score_campaign(
         gamma_f,
         effective.certificate_draws,
         draw_seed,
+        **predictive_noise,
     )
     certificate = conservative_set_split(
         set_draws,

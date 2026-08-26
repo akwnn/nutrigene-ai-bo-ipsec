@@ -122,6 +122,7 @@ def test_registered_scoring_sizes_are_exact_and_immutable():
         certificate_rho_grid_size=64,
         fit_restarts=4,
         certificate_volume_rule="smallest",
+        predictive_observation_noise="assay_relative_additive",
     )
 
 
@@ -394,8 +395,10 @@ def test_scorer_uses_identical_arm_neutral_paths_and_map_loss_reference():
         (threshold.tau - _truth(grid))
         / (.1**2 * _truth(grid).square() + .01**2).sqrt()
     )
+    mean = torch.full_like(p_true, .62)
+    assay_noise = .1**2 * mean.square() + .01**2
     p_hat = 1 - torch.distributions.Normal(0.0, 1.0).cdf(
-        torch.full_like(p_true, (threshold.tau - .62) / math.sqrt(.04 + .03))
+        (threshold.tau - mean) / (.04 + assay_noise).sqrt()
     )
     assert a.map_loss == pytest.approx(float((p_hat - p_true).square().mean()), abs=1e-12)
 
@@ -667,9 +670,10 @@ def test_yaml_freezes_every_registered_design_value_and_its_payload_digest():
     canonical = json.dumps(p, sort_keys=True, separators=(",", ":"), allow_nan=False).encode()
     assert cfg["digests"]["protocol_payload_sha256"] == hashlib.sha256(canonical).hexdigest()
     assert cfg["digests"]["protocol_payload_sha256"] == (
-        "bebbaba1ee330f6a4c699b6f05e27df811158ceff15152cea78f0bf7ce0cc656"
+        "f6eca0728829719a36280dbb9479f3699db60c335491ba9ae7964121773914bb"
     )
     assert p["certificate_volume_rule"] == "smallest"
+    assert p["predictive_observation_noise"] == "assay_relative_additive"
     execution = cfg["execution"]
     assert execution == {
         "schema": "boec-spade-registered-execution-v1",

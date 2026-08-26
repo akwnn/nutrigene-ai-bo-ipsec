@@ -127,13 +127,16 @@ The observed-best Rule A result is secondary. Terminal-rule mixing is prohibited
 For each campaign, draw 4,096 joint latent posterior samples on a deterministic
 2,048-point certificate grid. For every draw, convert latent values into future-response
 probabilities using that fitted model's observation-noise estimate, then threshold at
-`gamma`. This produces 4,096 random reliable-set draws. The first 2,048 draws select the
+`gamma`. This produces 4,096 random reliable-set draws. Predictive observation noise for
+both the probability map and these set draws uses the sealed assay law
+(`sigma_rel`, `sigma_add`) on latent samples, not learned homoskedastic likelihood noise.
+The first 2,048 draws select the
 smallest non-empty Vorob'ev quantile whose model-conditional containment is at least
 `alpha` (manufacturing-honest volume rule; see
 `2026-08-26-spade-manufacturing-certificate-recovery-design.md`); the
 second 2,048 estimate model-conditional cross-fit containment. The historical largest-
-quantile rule is retained only as an explicit non-registered option and must not be used
-for REGISTERED scoring in this protocol.
+quantile rule and learned-noise predictive margin are retained only as explicit
+non-registered options and must not be used for REGISTERED scoring in this protocol.
 
 The two confirmatory endpoints are evaluated across independent lockbox campaigns:
 
