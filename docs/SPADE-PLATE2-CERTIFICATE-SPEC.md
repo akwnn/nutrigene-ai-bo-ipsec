@@ -133,6 +133,34 @@ Fresh campaigns — this is prospective, not a re-score. d=6, σ=0.25, `N_DRAWS=
 seeds matched to P8's registered grid. Firewalled timing pilot first; if the projection exceeds
 8 hours, seeds are cut and the reduction recorded **before** the run, as KU §5/§5b did.
 
+## 7a. Scope fixed before the run, from the firewalled pilot
+
+Pilot: **8 campaigns, 12.7 s/campaign, 0 arm collisions out of 2 checked.** Twelve times faster
+than KU's observed 152 s/campaign because KV's scorer computes the **certificate columns only** —
+the joint draw on the 2,000-point subset — and skips the 20,000-point grid map columns
+(`sup_err`, `grid_r2`, both probability maps, `inscribed_box_from_mask`, Brier/AUC/AUPRC across
+24 cells) that KV does not read. That same certificate-only path had its **reproduction gate
+against committed α=0.95 pass 0/72** in `run_kt_assurance_fast.py`.
+
+**Two scope decisions, recorded here BEFORE the run:**
+
+1. **Families: `levy`, `rosenbrock`, `ackley`, `hartmann6` — `hill` excluded.** Same technical
+   reason as `SPADE-PREVALENCE-MATCHED-SPEC.md` §5a: `hill` is an ensemble reached through
+   `instance_by_id` + `BiphasicOracle`, and `regenerate(family, ...)` for the `plate1_only` arm
+   cannot take `"hill"` as an instance id. Adding it means forking a committed path. This also
+   makes KV's family set **identical to KU's**, so the two studies are directly comparable.
+   `hill` is the family whose certificate is already validated, so its exclusion removes the
+   easiest case.
+
+2. **Scoring grid: τ-as-quantile, `p ∈ (0.30, 0.10, 0.03, 0.01)`, not `tau_frac`.** Adopted per
+   `SPADE-TAU-QUANTILE-SPEC.md` §6b ("it should replace the fixed-fraction grid in any future
+   cross-family certificate work") and because this session established that mixing the two grids
+   is exactly the confound that invalidated KR's and KS's transfer comparisons
+   (`SPADE-PREVALENCE-MATCHED-SPEC.md` §1). KV must not repeat it.
+
+**Resulting scope: 4 families × 50 seeds × 4 arms = 800 campaigns, ~2.8 h** — inside §7's
+8-hour ceiling at **full** seed count, so no seed reduction is needed and none is taken.
+
 ## 8. What KV does not decide
 
 KV does not test the certificate's family-generality — that is KU
