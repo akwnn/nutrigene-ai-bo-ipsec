@@ -168,6 +168,72 @@ It does not license any claim that SPADE beats a comparator.
 
 `NO_SELECTION` is preserved; the lockbox stays sealed.
 
-## 7. Result
+## 7. Result — KU-1 PASSES pooled, KU-2 FAILS, and the incidental finding is larger than both
 
-*(Empty at freeze. Filled once, immediately after, from the run.)*
+**400 campaigns, 9,600 rows, 0 gate failures** (`results/ku-prevalence-matched.json`,
+`results/ku-analysis.json`). levy 505.7 min, rosenbrock 50.1 min — a 10x difference that is
+itself explained below.
+
+### 7.1 The gates
+
+| gate | bar | measured | verdict |
+|---|---|---|---|
+| **KU-1** pooled transfer | 95% LB ≥ 0.90 | 660/708 = 0.9322, **LB 0.9146** | **PASS** |
+| **KU-2** per-family | ≥ 3 of 4 clear LB 0.90 | **1 of 3** | **FAIL** |
+| **KU-3** answer rate | ≥ 0.30 | 0.463 | PASS |
+
+Leave-one-family-out, calibrate on the others, apply unchanged:
+
+| held out | cap | uncalibrated | calibrated | 95% LB | answer rate | n | |
+|---|---|---|---|---|---|---|---|
+| ackley | 0.003 | 0.8889 | 0.9067 | 0.8810 | 0.926 | 450 | FAIL |
+| hartmann6 | 0.001 | 0.8081 | **0.9756** | 0.9524 | 0.238 | 246 | PASS |
+| levy | 0.001 | 1.0000 | 1.0000 | 0.7791 | 1.000 | **12** | FAIL |
+| rosenbrock | — | — | — | — | — | **0** | no data |
+
+**KU-1's PASS must not be read as a clean win.** It pools 450 + 246 + 12 retained campaigns;
+`rosenbrock` contributed **nothing** and `levy` contributed twelve. `levy`'s FAIL is a power
+artifact — 12 of 12 contained, but n=12 cannot support a 0.90 lower bound. The registered
+"3 of 4" bar was written expecting four usable families and only three exist.
+
+### 7.2 The incidental finding, which is larger than the gates
+
+Non-empty certificate rate, same families, the two scoring conventions side by side:
+
+| family | grid | α=0.50 | α=0.80 | α=0.95 |
+|---|---|---|---|---|
+| levy | `tau_frac` (P8, prevalence ≈0.98) | 0.8421 | 0.6302 | **0.4019** |
+| levy | τ-quantile (KU, prevalence 0.01–0.30) | 0.1837 | 0.0225 | **0.0025** |
+| rosenbrock | `tau_frac` | 0.8850 | 0.6948 | **0.5123** |
+| rosenbrock | τ-quantile | 0.2775 | 0.0387 | **0.0000** |
+
+**levy and rosenbrock were never "easy families." They were families being asked to certify
+almost the whole box.** Measured prevalence under `tau_frac` is ≈0.98; under the quantile grid
+it is 0.01–0.30 by construction. Asked for a realistically-sized operating window, `levy`
+certifies something in **0.25%** of scored rows at γ=0.95 and `rosenbrock` in **none at all**.
+
+This **inverts** the narrative in `SPADE-RESULTS-AND-ANALYSIS.md` §3, which records
+`ackley`/`hartmann6` as the families that "decline to certify" and `hill`/`levy`/`rosenbrock`
+as the ones that answer. Under a **common** convention the ordering reverses: ackley and
+hartmann6 produce non-empty certificates at 0.158 of rows, roughly **60x** levy's rate. The
+earlier ordering was a property of the scoring grid, not of the families.
+
+It also explains the 10x runtime gap: `conservative_estimate` scans 64 Vorob'ev levels and
+its cost scales with the size of the sets it is testing, so a family certifying near-whole-box
+regions is far more expensive than one certifying nothing.
+
+### 7.3 What this does and does not settle
+
+**Settles:** the prevalence confound in §1 was real and is now measured directly. Mixing the
+two grids across calibration and test was not a small methodological blemish — the two
+conventions differ by a factor of ~160 in non-empty rate on the same family.
+
+**Does not settle:** whether volume-conditional calibration transfers family-generally. KU was
+designed to answer that with four families and delivered two usable ones. KU-1 passes pooled;
+KU-2, the stricter and more informative gate, **fails**. The honest statement is *"transfer is
+not refuted, and is not established."*
+
+**Raises, unregistered:** at a realistic target size and γ=0.95, the certificate is empty far
+more often than any prior document in this project records. That is a finding about the
+**method's usable operating range**, not about calibration, and it needs its own
+pre-registration before any claim rests on it. It is not evidence for or against KU-1.
