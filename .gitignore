@@ -361,3 +361,15 @@ COMMIT_MSG.txt
 !results/k0-calibration-gate.json
 !results/k1-noise-ceiling.json
 !results/k2-design-lottery.json
+
+# SPADE joint development execution audit trail (2026-08-26)
+!results/spade-joint-development-run-ledger.json
+!results/spade-joint-development-execution.log
+!results/spade-joint-pipeline.log
+!results/spade-joint-select.log
+!results/spade-joint-focused-tests.log
+!results/spade-joint-hill-merge.log
+!results/spade-joint-levy-wrap.log
+!results/spade-joint-hill-isolate-path.txt
+!results/spade-joint-continue-dev.sh
+!results/spade-development-*.log

@@ -1,0 +1,14 @@
+........................................................................ [ 19%]
+........................................................................ [ 38%]
+........................................................................ [ 57%]
+........................................................................ [ 76%]
+........................................................................ [ 95%]
+................                                                         [100%]
+=============================== warnings summary ===============================
+../../.venv/lib/python3.11/site-packages/torch/jit/_script.py:1488
+../../.venv/lib/python3.11/site-packages/torch/jit/_script.py:1488
+  /Users/alanakwan/Personal Projects/nutrigene-ai-bo-ipsec/.venv/lib/python3.11/site-packages/torch/jit/_script.py:1488: DeprecationWarning: `torch.jit.script` is deprecated. Please switch to `torch.compile` or `torch.export`.
+    warnings.warn(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+376 passed, 2 warnings in 710.01s (0:11:50)

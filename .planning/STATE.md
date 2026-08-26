@@ -125,6 +125,8 @@ regressions and are not being repaired inside the prospective study branch.
   step 1, so steps 2–4 were skipped.
 - Per the frozen protocol, lockbox access is **forbidden**. Do not run power planning or
   open lockbox outcomes. Historical final-SPADE artifacts remain provenance-separated.
+- Full execution audit trail is logged under `results/spade-joint-*` (pipeline, select,
+  focused tests, hill merge, run ledger JSON, and human-readable execution log).
 
 ## Next action
 
