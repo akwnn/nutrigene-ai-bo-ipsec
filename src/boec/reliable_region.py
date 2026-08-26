@@ -186,6 +186,7 @@ def reliable_set_draws(
     *,
     sigma_rel: Real | None = None,
     sigma_add: Real | None = None,
+    latent_inflation: Real = 1.0,
 ) -> Tensor:
     """Joint posterior draws of the future-response reliable set.
 
@@ -193,11 +194,16 @@ def reliable_set_draws(
     future-observation probabilities, then thresholded at ``gamma``.  When assay
     ``sigma_rel``/``sigma_add`` are supplied, each draw uses the same relative-plus-
     additive noise law as sealed truth; otherwise learned homoskedastic likelihood
-    noise is used.  An even count is mandatory because certification uses equal
+    noise is used.  ``latent_inflation`` ≥ 1 scales deviations of each joint draw
+    from the posterior mean (LOO self-calibration uses this to widen overconfident
+    surrogates).  An even count is mandatory because certification uses equal
     selection and evaluation halves.
     """
     tau_f = _finite_scalar(tau, "tau")
     gamma_f = _open_probability(gamma, "gamma")
+    kappa_f = _finite_scalar(latent_inflation, "latent_inflation")
+    if kappa_f < 1.0:
+        raise ValueError(f"latent_inflation must be >= 1, got {kappa_f}")
     if isinstance(n_draws, bool) or not isinstance(n_draws, Integral):
         raise ValueError(f"n_draws must be an even integer, got {n_draws!r}")
     n_draws_i = int(n_draws)
@@ -254,6 +260,9 @@ def reliable_set_draws(
         raise ValueError("joint posterior draws must be finite")
 
     latent = latent.squeeze(-1).double()
+    if kappa_f != 1.0:
+        mean = posterior_mean.double().unsqueeze(0)
+        latent = mean + kappa_f * (latent - mean)
     if use_assay:
         noise_variance = sigma_rel_f**2 * latent.square() + sigma_add_f**2
         if bool(torch.any(noise_variance <= 0.0)):

@@ -89,6 +89,10 @@ def _test_settings():
         certificate_draws=32,
         certificate_rho_grid_size=8,
         fit_restarts=1,
+        certificate_volume_rule="smallest",
+        predictive_observation_noise="assay_relative_additive",
+        latent_draw_inflation="none",
+        certificate_max_volume=0.001,
     )
 
 
@@ -123,6 +127,8 @@ def test_registered_scoring_sizes_are_exact_and_immutable():
         fit_restarts=4,
         certificate_volume_rule="smallest",
         predictive_observation_noise="assay_relative_additive",
+        latent_draw_inflation="loo_calibration",
+        certificate_max_volume=0.001,
     )
 
 
@@ -670,10 +676,12 @@ def test_yaml_freezes_every_registered_design_value_and_its_payload_digest():
     canonical = json.dumps(p, sort_keys=True, separators=(",", ":"), allow_nan=False).encode()
     assert cfg["digests"]["protocol_payload_sha256"] == hashlib.sha256(canonical).hexdigest()
     assert cfg["digests"]["protocol_payload_sha256"] == (
-        "f6eca0728829719a36280dbb9479f3699db60c335491ba9ae7964121773914bb"
+        "6e6dec2a1671e602833be195d51b6b3f13fa443a56a3780de28db3312ed2d75b"
     )
     assert p["certificate_volume_rule"] == "smallest"
     assert p["predictive_observation_noise"] == "assay_relative_additive"
+    assert p["latent_draw_inflation"] == "loo_calibration"
+    assert p["certificate_max_volume"] == 0.001
     execution = cfg["execution"]
     assert execution == {
         "schema": "boec-spade-registered-execution-v1",

@@ -25,6 +25,7 @@ from scipy.stats import norm, rankdata
 from torch import Tensor
 
 from boec.reliable_region import (
+    ConservativeSetResult,
     conservative_set_split,
     empirical_set_containment,
     model_reliability_probability,
@@ -32,6 +33,7 @@ from boec.reliable_region import (
     true_reliability_probability,
 )
 from boec.seedbook import derive_seed
+from boec.selfcalib import calibration_inflation, loo_residuals
 from boec.surrogate import build_learned_noise_gp
 
 __all__ = [
@@ -131,6 +133,8 @@ class ScoringExecutionSettings:
     fit_restarts: int
     certificate_volume_rule: str = "smallest"
     predictive_observation_noise: str = "assay_relative_additive"
+    latent_draw_inflation: str = "loo_calibration"
+    certificate_max_volume: float = 0.001
 
     def __post_init__(self) -> None:
         for field in (
@@ -160,6 +164,18 @@ class ScoringExecutionSettings:
                 "predictive_observation_noise must be 'assay_relative_additive' or "
                 f"'learned_homoskedastic', got {self.predictive_observation_noise!r}"
             )
+        if self.latent_draw_inflation not in {"none", "loo_calibration"}:
+            raise ValueError(
+                "latent_draw_inflation must be 'none' or 'loo_calibration', "
+                f"got {self.latent_draw_inflation!r}"
+            )
+        max_vol = float(self.certificate_max_volume)
+        if not math.isfinite(max_vol) or not 0.0 < max_vol <= 1.0:
+            raise ValueError(
+                "certificate_max_volume must lie in (0, 1], "
+                f"got {self.certificate_max_volume!r}"
+            )
+        object.__setattr__(self, "certificate_max_volume", max_vol)
 
     @property
     def digest(self) -> str:
@@ -176,6 +192,8 @@ REGISTERED_SCORING_SETTINGS = ScoringExecutionSettings(
     fit_restarts=4,
     certificate_volume_rule="smallest",
     predictive_observation_noise="assay_relative_additive",
+    latent_draw_inflation="loo_calibration",
+    certificate_max_volume=0.001,
 )
 
 
@@ -582,6 +600,31 @@ def _posterior_mean(model: object, X: Tensor) -> Tensor:
     return mean
 
 
+def _loo_latent_inflation(model: object) -> float:
+    """Widen latent certificate draws using the campaign's own LOO residuals.
+
+    Returns ``max(1, calibration_inflation)`` so we never shrink uncertainty. LOO is
+    predictive (noise-inclusive); treating it as a lower bound on the needed latent
+    correction is intentional and documented in ``boec.selfcalib``.
+    """
+    try:
+        train_x = model.train_inputs[0].detach().double()
+        train_y = model.train_targets.detach().double().reshape(-1)
+        with torch.no_grad():
+            cov = model.covar_module(train_x).to_dense().double()
+            noise = model.likelihood.noise.detach().double().reshape(-1)[0]
+            cov = cov + noise * torch.eye(
+                cov.shape[0], dtype=torch.double, device=cov.device
+            )
+    except (AttributeError, IndexError, RuntimeError, TypeError, ValueError) as exc:
+        raise ValueError("model must support LOO residual self-calibration") from exc
+    mu, var = loo_residuals(cov.detach().cpu().numpy(), train_y.detach().cpu().numpy())
+    kappa = float(calibration_inflation(train_y.detach().cpu().numpy(), mu, np.sqrt(var)))
+    if not math.isfinite(kappa):
+        raise ValueError("LOO calibration inflation must be finite")
+    return max(1.0, kappa)
+
+
 def _binary_auc(labels: Tensor, probabilities: Tensor) -> float | None:
     y = labels.detach().cpu().numpy().astype(bool)
     score = probabilities.detach().cpu().numpy()
@@ -698,6 +741,10 @@ def score_campaign(
         predictive_noise = {"sigma_rel": sigma_rel_f, "sigma_add": sigma_add_f}
     else:
         predictive_noise = {}
+    if effective.latent_draw_inflation == "loo_calibration":
+        latent_inflation = _loo_latent_inflation(model)
+    else:
+        latent_inflation = 1.0
     terminal_mean = _posterior_mean(model, terminal_grid)
     terminal_x_tensor = terminal_grid[int(torch.argmax(terminal_mean))].clone()
     map_probability = model_reliability_probability(
@@ -710,6 +757,7 @@ def score_campaign(
         gamma_f,
         effective.certificate_draws,
         draw_seed,
+        latent_inflation=latent_inflation,
         **predictive_noise,
     )
     certificate = conservative_set_split(
@@ -718,6 +766,16 @@ def score_campaign(
         n_rho=effective.certificate_rho_grid_size,
         volume_rule=effective.certificate_volume_rule,
     )
+    if certificate.volume > effective.certificate_max_volume:
+        empty = torch.zeros_like(certificate.mask)
+        certificate = ConservativeSetResult(
+            mask=empty,
+            crossfit_containment=None,
+            selection_containment=None,
+            volume=0.0,
+            selection_draws=certificate.selection_draws,
+            evaluation_draws=certificate.evaluation_draws,
+        )
     decision_payload = {
         "schema": "boec-frozen-score-decision-v1",
         "terminal_x_hex": [float(x).hex() for x in terminal_x_tensor.tolist()],

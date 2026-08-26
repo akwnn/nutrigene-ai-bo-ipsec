@@ -232,6 +232,11 @@ COMMIT_MSG.txt
 # Archived joint-v1 NO_SELECTION development (do not reopen for lockbox).
 !results/historical-joint-v1-noselection/
 !results/historical-joint-v1-noselection/**
+# Archived mfg-cert assay-only shortfall / incomplete shards.
+!results/historical-mfg-cert-assay-shortfall/
+!results/historical-mfg-cert-assay-shortfall/**
+!results/historical-mfg-cert-assay-incomplete/
+!results/historical-mfg-cert-assay-incomplete/**
 
 # Frozen lockbox evidence: raw shards are compressed and hash-bound; the final manifest,
 # confirmatory analysis, and release report are the only allowlisted lockbox artifacts.

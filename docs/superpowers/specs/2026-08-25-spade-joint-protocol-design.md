@@ -367,10 +367,12 @@ shards.
 The machine-readable config has a top-level `execution` mapping outside `protocol`.
 This is an execution-only amendment: it does not change the scientific design or the
 canonical `protocol_payload_sha256`, which remains
-`f6eca0728829719a36280dbb9479f3699db60c335491ba9ae7964121773914bb`
+`6e6dec2a1671e602833be195d51b6b3f13fa443a56a3780de28db3312ed2d75b`
 after the manufacturing certificate recovery
-(`certificate_volume_rule: smallest` and
-`predictive_observation_noise: assay_relative_additive`).
+(`certificate_volume_rule: smallest`,
+`predictive_observation_noise: assay_relative_additive`,
+`latent_draw_inflation: loo_calibration`,
+`certificate_max_volume: 0.001`).
 The execution mapping has its own canonical sorted compact-JSON SHA-256, and the config
 also records live SHA-256 hashes for the workflow, matrix builder, worker, development
 merger, and frozen requirements file. Both registered runners authenticate those bytes
