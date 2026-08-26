@@ -304,6 +304,33 @@ def test_conservative_set_split_rejects_unknown_volume_rule():
         conservative_set_split(_split_fixture(), alpha=0.75, n_rho=5, volume_rule="median")
 
 
+def test_latent_inflation_rejects_values_below_one(model, grid):
+    with pytest.raises(ValueError, match="latent_inflation"):
+        reliable_set_draws(
+            model, grid, tau=0.5, gamma=0.9, n_draws=8, seed=1, latent_inflation=0.5
+        )
+
+
+def test_latent_inflation_is_deterministic_and_changes_sets(model, grid):
+    kwargs = dict(
+        model=model,
+        X=grid,
+        tau=0.9,
+        gamma=0.9,
+        n_draws=16,
+        seed=11,
+        sigma_rel=0.1,
+        sigma_add=0.01,
+    )
+    base = reliable_set_draws(**kwargs, latent_inflation=1.0)
+    wide = reliable_set_draws(**kwargs, latent_inflation=3.0)
+    again = reliable_set_draws(**kwargs, latent_inflation=3.0)
+    assert wide.shape == base.shape == (16, 4)
+    assert torch.equal(wide, again)
+    # Inflating the latent field around the mean must be able to change membership.
+    assert not torch.equal(base, wide)
+
+
 def test_validation_half_cannot_change_selected_set_or_selection_score():
     draws = _split_fixture()
     first = conservative_set_split(draws, alpha=0.75, n_rho=5, volume_rule="largest")

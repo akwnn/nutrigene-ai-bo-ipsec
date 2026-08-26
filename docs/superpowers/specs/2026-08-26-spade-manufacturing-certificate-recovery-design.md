@@ -99,6 +99,27 @@ explicit non-registered option.
   `results/historical-joint-v1-noselection/`
 - New development writes fresh `results/spade-development-*` shards
 
+### 3.5 LOO inflation + volume cap (current registered recovery)
+
+Assay+smallest alone raised hill best-candidate empirical containment to **0.878**
+(still < 0.9) and levy to ~**0.67**. The current registered recovery therefore adds:
+
+1. **`latent_draw_inflation: loo_calibration`** — widen joint latent certificate draws by
+   `max(1, LOO calibration_inflation)` from the campaign's own residuals
+   (`boec.selfcalib`). Family-agnostic by construction; never shrinks uncertainty.
+2. **`certificate_max_volume: 0.001`** — if the selected Vorob'ev CE exceeds this fraction
+   of the box, abstain (empty certificate / answer failure) rather than issue an
+   oversized window. Chosen from the volume law where small CEs retain high truth
+   containment on development evidence.
+
+Study id: `spade-joint-48-mfg-cert-loo-vmax-2026-08-26`  
+Protocol digest: `6e6dec2a1671e602833be195d51b6b3f13fa443a56a3780de28db3312ed2d75b`  
+Assay-only shortfall shards: `results/historical-mfg-cert-assay-shortfall/`
+
+KS previously **failed** as a *volume-cap transfer* conditioner; this uses LOO only to
+inflate draws, then applies a registered absolute volume abstention — a different
+mechanism. It must still clear LOFO ≥0.9 before any manufacturing claim.
+
 ## 4. Success
 
 SPADE may be claimed as the better manufacturing method only when the new development
@@ -106,3 +127,18 @@ returns `SELECTED`, power returns `POWERED`, and lockbox release PASSes the four
 conjunction in every family. Until then, manufacturing-facing prose must state that the
 recovered certificate rule is implemented but confirmatory outcomes are pending or
 failed.
+
+## 5. Cross-workstream consolidation (2026-08-26)
+
+`origin/main` had no competing commits at freeze time; local recovery commits live on
+this worktree. External certificate R&D on `origin/kr-effective-resolution`:
+
+| item | status | action here |
+|---|---|---|
+| Volume law / E3 underdispersion | Established | Motivates smallest CE + Vmax |
+| Family-local volume calibration ≥90% | Works | Not deployed as a library rule |
+| `k_eff` (KR) / `kappa_tail` transfer (KS) | FAILED / DROP | Not re-adopted |
+| KU / KT / KV | Open / frozen | Follow-on studies only after this digest closes |
+
+Durable runner: `scripts/spade_development_watchdog.sh` (resume, backups, LOFO on complete).
+

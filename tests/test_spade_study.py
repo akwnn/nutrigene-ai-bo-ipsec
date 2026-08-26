@@ -132,6 +132,31 @@ def test_registered_scoring_sizes_are_exact_and_immutable():
     )
 
 
+def test_scoring_settings_reject_unknown_latent_inflation_and_bad_max_volume():
+    with pytest.raises(ValueError, match="latent_draw_inflation"):
+        ScoringExecutionSettings(
+            calibration_grid_size=256,
+            terminal_grid_size=64,
+            map_grid_size=48,
+            certificate_grid_size=24,
+            certificate_draws=32,
+            certificate_rho_grid_size=8,
+            fit_restarts=1,
+            latent_draw_inflation="family_library",
+        )
+    with pytest.raises(ValueError, match="certificate_max_volume"):
+        ScoringExecutionSettings(
+            calibration_grid_size=256,
+            terminal_grid_size=64,
+            map_grid_size=48,
+            certificate_grid_size=24,
+            certificate_draws=32,
+            certificate_rho_grid_size=8,
+            fit_restarts=1,
+            certificate_max_volume=0.0,
+        )
+
+
 def test_controlled_tau_makes_quarter_grid_reliable_and_releases_numeric_only():
     harness = SealedOracleHarness(_truth, optimum_value=1.0, oracle_identity="toy")
     threshold = controlled_tau(
