@@ -129,6 +129,7 @@ class ScoringExecutionSettings:
     certificate_draws: int
     certificate_rho_grid_size: int
     fit_restarts: int
+    certificate_volume_rule: str = "smallest"
 
     def __post_init__(self) -> None:
         for field in (
@@ -145,6 +146,11 @@ class ScoringExecutionSettings:
         )
         if self.certificate_draws % 2:
             raise ValueError("certificate_draws must be even for the registered split")
+        if self.certificate_volume_rule not in {"smallest", "largest"}:
+            raise ValueError(
+                "certificate_volume_rule must be 'smallest' or 'largest', "
+                f"got {self.certificate_volume_rule!r}"
+            )
 
     @property
     def digest(self) -> str:
@@ -159,6 +165,7 @@ REGISTERED_SCORING_SETTINGS = ScoringExecutionSettings(
     certificate_draws=4_096,
     certificate_rho_grid_size=64,
     fit_restarts=4,
+    certificate_volume_rule="smallest",
 )
 
 
@@ -692,6 +699,7 @@ def score_campaign(
         set_draws,
         alpha_f,
         n_rho=effective.certificate_rho_grid_size,
+        volume_rule=effective.certificate_volume_rule,
     )
     decision_payload = {
         "schema": "boec-frozen-score-decision-v1",

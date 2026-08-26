@@ -121,6 +121,7 @@ def test_registered_scoring_sizes_are_exact_and_immutable():
         certificate_draws=4_096,
         certificate_rho_grid_size=64,
         fit_restarts=4,
+        certificate_volume_rule="smallest",
     )
 
 
@@ -666,8 +667,9 @@ def test_yaml_freezes_every_registered_design_value_and_its_payload_digest():
     canonical = json.dumps(p, sort_keys=True, separators=(",", ":"), allow_nan=False).encode()
     assert cfg["digests"]["protocol_payload_sha256"] == hashlib.sha256(canonical).hexdigest()
     assert cfg["digests"]["protocol_payload_sha256"] == (
-        "00ce6971a990749645052273215897f57562106610777d0d8ce417e8e9afdd1a"
+        "bebbaba1ee330f6a4c699b6f05e27df811158ceff15152cea78f0bf7ce0cc656"
     )
+    assert p["certificate_volume_rule"] == "smallest"
     execution = cfg["execution"]
     assert execution == {
         "schema": "boec-spade-registered-execution-v1",

@@ -250,7 +250,9 @@ def _split_fixture() -> torch.Tensor:
 
 
 def test_conservative_set_split_selects_largest_jointly_contained_quantile():
-    result = conservative_set_split(_split_fixture(), alpha=0.75, n_rho=5)
+    result = conservative_set_split(
+        _split_fixture(), alpha=0.75, n_rho=5, volume_rule="largest"
+    )
     assert isinstance(result, ConservativeSetResult)
     assert torch.equal(result.mask, torch.tensor([True, True, False, False]))
     assert result.selection_containment == 0.75
@@ -259,12 +261,25 @@ def test_conservative_set_split_selects_largest_jointly_contained_quantile():
     assert result.selection_draws == result.evaluation_draws == 4
 
 
+def test_conservative_set_split_defaults_to_smallest_manufacturing_rule():
+    result = conservative_set_split(_split_fixture(), alpha=0.75, n_rho=5)
+    assert torch.equal(result.mask, torch.tensor([True, False, False, False]))
+    assert result.selection_containment == 1.0
+    assert result.volume == 0.25
+    assert result.selection_draws == result.evaluation_draws == 4
+
+
+def test_conservative_set_split_rejects_unknown_volume_rule():
+    with pytest.raises(ValueError, match="volume_rule"):
+        conservative_set_split(_split_fixture(), alpha=0.75, n_rho=5, volume_rule="median")
+
+
 def test_validation_half_cannot_change_selected_set_or_selection_score():
     draws = _split_fixture()
-    first = conservative_set_split(draws, alpha=0.75, n_rho=5)
+    first = conservative_set_split(draws, alpha=0.75, n_rho=5, volume_rule="largest")
     perturbed = draws.clone()
     perturbed[4:] = ~perturbed[4:]
-    second = conservative_set_split(perturbed, alpha=0.75, n_rho=5)
+    second = conservative_set_split(perturbed, alpha=0.75, n_rho=5, volume_rule="largest")
     assert torch.equal(first.mask, second.mask)
     assert first.selection_containment == second.selection_containment
     assert first.crossfit_containment != second.crossfit_containment
@@ -274,7 +289,7 @@ def test_crossfit_score_uses_only_frozen_mask_and_validation_half():
     draws = _split_fixture()
     perturbed = draws.clone()
     perturbed[:4] = True
-    result = conservative_set_split(perturbed, alpha=0.75, n_rho=5)
+    result = conservative_set_split(perturbed, alpha=0.75, n_rho=5, volume_rule="largest")
     manual = float(draws[4:, result.mask].all(dim=1).double().mean())
     assert result.crossfit_containment == manual
 

@@ -229,6 +229,10 @@ COMMIT_MSG.txt
 !results/spade-selected-protocol.json
 !results/spade-lockbox-power.json
 
+# Archived joint-v1 NO_SELECTION development (do not reopen for lockbox).
+!results/historical-joint-v1-noselection/
+!results/historical-joint-v1-noselection/**
+
 # Frozen lockbox evidence: raw shards are compressed and hash-bound; the final manifest,
 # confirmatory analysis, and release report are the only allowlisted lockbox artifacts.
 !results/spade-lockbox-*.jsonl.gz

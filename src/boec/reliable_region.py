@@ -227,9 +227,21 @@ def conservative_set_split(
     set_draws: Tensor,
     alpha: Real,
     n_rho: int = 64,
+    *,
+    volume_rule: str = "smallest",
 ) -> ConservativeSetResult:
-    """Select a conservative Vorob'ev set and cross-fit its model containment."""
+    """Select a conservative Vorob'ev set and cross-fit its model containment.
+
+    ``volume_rule="smallest"`` (registered manufacturing default) issues the smallest
+    non-empty quantile whose selection-half model containment is at least ``alpha``.
+    ``volume_rule="largest"`` retains the historical maximal-volume rule, which was
+    over-willing under misspecified plug-in models.
+    """
     alpha_f = _open_probability(alpha, "alpha")
+    if volume_rule not in {"smallest", "largest"}:
+        raise ValueError(
+            f"volume_rule must be 'smallest' or 'largest', got {volume_rule!r}"
+        )
     if not isinstance(set_draws, Tensor) or set_draws.ndim != 2:
         shape = tuple(set_draws.shape) if isinstance(set_draws, Tensor) else type(set_draws).__name__
         raise ValueError(f"set draws must have shape (n_draws, n_grid), got {shape}")
@@ -254,12 +266,20 @@ def conservative_set_split(
     ).tolist():
         mask = vorobev_quantile(inclusion, rho)
         size = int(mask.sum())
-        if size == 0 or size <= int(best.sum()):
+        if size == 0:
             continue
         containment = set_containment_probability(selection, mask)
-        if containment >= alpha_f:
+        if containment < alpha_f:
+            continue
+        if volume_rule == "smallest":
+            # rho decreases from 1→0, so the first admissible mask is the smallest.
             best = mask.clone()
             best_containment = containment
+            break
+        if size <= int(best.sum()):
+            continue
+        best = mask.clone()
+        best_containment = containment
 
     if int(best.sum()) == 0:
         crossfit = None

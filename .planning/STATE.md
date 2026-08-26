@@ -117,20 +117,32 @@ regressions and are not being repaired inside the prospective study branch.
 
 - Local REGISTERED development completed on commit `c9199a3` with single-thread BLAS.
 - All five families have complete `000-050` shards (Hill via merged parent ledger after a
-  path-normalized `000-001` re-run). Artifacts: `results/spade-development-*.jsonl.gz*`,
-  `results/spade-development-analysis.json`.
-- Unanimous LOFO selection wrote `results/spade-selected-protocol.json` with status
+  path-normalized `000-001` re-run). Artifacts archived under
+  `results/historical-joint-v1-noselection/`.
+- Unanimous LOFO selection wrote `spade-selected-protocol.json` with status
   `NO_SELECTION`: every SPADE candidate failed the registered empirical-containment ≥ 0.9
   gate on every training fold (and on the all-five refit diagnostic). No candidate survived
   step 1, so steps 2–4 were skipped.
-- Per the frozen protocol, lockbox access is **forbidden**. Do not run power planning or
-  open lockbox outcomes. Historical final-SPADE artifacts remain provenance-separated.
-- Full execution audit trail is logged under `results/spade-joint-*` (pipeline, select,
-  focused tests, hill merge, run ledger JSON, and human-readable execution log).
+- Per the frozen protocol, lockbox access for that study is **forbidden**.
+
+## Manufacturing certificate recovery (2026-08-26)
+
+- Claim hierarchy locked in
+  `docs/superpowers/specs/2026-08-26-spade-manufacturing-certificate-recovery-design.md`:
+  qualified operating region + round economy + setpoint/map parity; KF-3 targeting is not
+  the selling point.
+- Root cause: largest Vorob'ev CE under a misspecified plug-in GP was over-willing
+  (answer rate ≈1, empirical containment often 0.15–0.5).
+- Redesign: registered `certificate_volume_rule: smallest` in
+  `conservative_set_split` / scoring settings / joint yaml.
+- New study id `spade-joint-48-mfg-cert-2026-08-26`; protocol digest
+  `bebbaba1ee330f6a4c699b6f05e27df811158ceff15152cea78f0bf7ce0cc656`.
+- Prior v1 shards archived; new development must write fresh live `results/spade-development-*`.
 
 ## Next action
 
-Development `NO_SELECTION` evidence is frozen in-repo. Draft manuscript joint-protocol
-prose from `results/spade-selected-protocol.json` and `results/spade-development-analysis.json`
-only. Do not invent a selected SPADE protocol or run lockbox. Historical final-SPADE
-publication track remains separate.
+Commit the recovery freeze on a clean tree, then re-run REGISTERED development (50 keys ×
+five families), LOFO selection, and — only if `SELECTED` and `POWERED` — lockbox. Do not
+reopen the archived v1 lockbox path. Update RESEARCH-SUMMARY manufacturing claims only
+after confirmatory PASS.
+
