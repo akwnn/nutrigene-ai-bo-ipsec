@@ -34,6 +34,7 @@ DOI 10.1038/s41598-025-09256-9, *Scientific Reports* 15:24479, open access.
 | Statistical software: **JMP** | ✅ |
 | Figure heatmaps report **coded** concentrations, 0 = lowest per protein, 1 = highest | ✅ figure captions |
 | Table 2's run pattern is **coded** (minus, zero, plus), not absolute | ✅ table caption |
+| Stage 1 lists **23 formulations** and stage 2 lists **25 formulations** | ✅ Tables 1 and 2; describe this as a 23+25 two-stage study, not a published 20+27+1 pipeline |
 
 **Internal inconsistency in the source, unresolved:** the Results section lists the stage-1 Collagen IV high as **28 µg/mL**; the Methods section lists **56 µg/mL**. Every other value in both lists matches. See Doc 2 §B.4.1.
 
@@ -79,13 +80,24 @@ Botorch 0.18.1 · gpytorch 1.15.2 · torch 2.13.0 · Python 3.11.15, macOS/arm64
 | Full grid is ~0.4 h single-threaded, not 3–5 h | ✅ measured |
 | 92–96% of run time is `optimize_acqf`; GP fitting is 4–8% | ✅ measured |
 
-## 1.3 Published precedent — verified in project research
+## 1.3 Published precedent — rechecked against original full texts
 
-Narayanan et al. 2025 (*Nat Commun* 16:6055, DOI, CC-BY, the three optimization cases, the 33–50% categorical-kernel figure, the 3× and 10–30× efficiency figures, the GitHub repo and Zenodo DOI) · Kanda et al. *eLife* 2022 (LabDroid, 7 parameters, ~200 million combinations, 143 conditions, 111 days, 88% improvement) · Bader et al. 2023 · Gisperg et al. 2025 review · Cosenza et al. 2022 · Romero, Krause & Arnold *PNAS* 2013 · Honegumi, BoFire, BayBE, Olympus/Atlas repositories and licenses · botorch 0.18.1 and ax-platform 1.3.1 versions · Ax 1.0.0 `Client` API · one-hot categorical default (Discussion #3063) · equality-constraint issue #1227 · Matérn 5/2 kernel formula · Expected Improvement formula · LogEI / Ament et al. 2023 · EHVI/NEHVI/qLogNEHVI and Daulton et al. · Turner et al. 2021 PMLR v133 · *npj Comput. Mater.* 2021 50-seed benchmark · arXiv 2504.03943, 2505.07750, 2511.16230 · Acharki et al. arXiv 2106.05396 · Hill / four-parameter-logistic formulation · SAASBO, TuRBO.
+| Source | Confirmed use and required wording |
+|---|---|
+| Hall, Lin & Ogle (2025) | Six extracellular-matrix factors were reduced to four for an on-face response-surface stage. The source tables list 23 stage-1 and 25 stage-2 formulations. The project's 20+27+1 implementation is therefore an in-house matched-budget design choice, not Hall et al.'s published pipeline. |
+| Rummukainen et al. (2024) | The study used a 15-run Box--Behnken design and a BO sequence that reused five of those experiments before ten new BO experiments. No common post-campaign best-measured terminal score was reported: noisy EI selected the first nine new BO experiments, and posterior mean selected the tenth experiment. |
+| Lapierre et al. (2025) | The source supports a shared-screen, multicycle batch-BO versus two-step DoE workflow and reports 28% higher maximum backscatter in microbioreactors and 19% higher maximum OD600 in the 2-L test. It does not support calling the optimization design a CCD or asserting an exactly 48-condition shared screen. |
+| Ndahiro et al. (2025) | The equal-count experimental comparator was a 12-formulation JMP space-filling design, not classical RSM/DoE; both groups were run in biological duplicate. |
+| Narayanan et al. (2025) | The reported approximately 2.5--3-fold and 10--30-fold efficiencies are comparisons with predicted/traditional DoE requirements, not an executed equal-budget DoE arm. |
+| Gisperg et al. (2025) | This is a mini-review suitable for broad field context, not primary evidence for a particular budget, comparator, or terminal rule. |
+| Jones, Schonlau & Welch (1998) | Expected improvement is the expected gain above the current best under the GP model; it grows with both posterior mean relative to the incumbent and posterior uncertainty. This source does not establish noisy EI. |
+| Frazier (2018) | In noisy BO, final selection by posterior mean is a standard decision rule; a raw noisy argmax is an operational comparator, not a generally preferred terminal rule. |
+
+Other project precedents retained for contextual use include Kanda et al. *eLife* 2022, Bader et al. 2023, Cosenza et al. 2022, Romero, Krause & Arnold *PNAS* 2013, and the documented BoTorch, Ax, BoFire, BayBE, Olympus and Atlas software sources. Their individual quantitative claims must still be tied to the cited primary source in the manuscript.
 
 ## 1.4 Standard results, no citation risk
 
-The OLS prediction-variance formula `σ̂²x₀ᵀ(XᵀX)⁻¹x₀` and the response-surface variance-dispersion literature are textbook regression. Ridge analysis (Hoerl 1959; Draper 1963), canonical analysis, Box & Draper, and Myers & Montgomery are the standard references for extrapolated stationary points. Gneiting & Raftery 2007 (proper scoring rules) and Demšar 2006 (critical-difference diagrams) are well-established.
+The OLS prediction-variance formula `σ̂²x₀ᵀ(XᵀX)⁻¹x₀` and the response-surface variance-dispersion literature are textbook regression. Canonical analysis classifies a stationary point as a maximum, minimum, or saddle; ridge analysis is a separate constrained procedure and must not be listed as a fourth canonical class. If the implementation only maximizes over the explored box, call it a **constrained in-region model recommendation**, not ridge analysis. Box & Wilson (1951) supports sequential local response-surface work and steepest ascent; Box & Draper and Myers et al. remain the fuller references for canonical, constrained/ridge, and relocated analyses. Gneiting & Raftery 2007 (proper scoring rules) and Demšar 2006 (critical-difference diagrams) are well-established.
 
 The closed-form results derived for this project are verified algebraically: the biphasic peak at `x* = √(EC50·IC50)`, the peak height `(s/(1+s))²`, the normalized response `f̃(v) = v^n(1+s)²/((1+s·v^n)(s+v^n))`, and the depth-inversion quadratic `V(1−c)s² + [2V − c(1+V²)]s + V(1−c) = 0` with reciprocal roots. The inversion is checked numerically: `(x* = 0.4, n = 2, δ = 0.414) → s = 3.9917 → r = 4`.
 
@@ -96,7 +108,7 @@ The closed-form results derived for this project are verified algebraically: the
 | Item | Status |
 |---|---|
 | **Whether TheO's Collagen IV exceeded the tested range** | Depends on the Results-versus-Methods contradiction. **Permanently unresolved — we are not contacting the authors.** Blocks one sentence; blocks nothing in the build. Do not assert it either way. |
-| **The 23-run / 25-run / ~48-condition split** | From earlier project notes, not confirmed against the paper's tables. Affects only the E2 budget rationale. |
+| ~~**The 23-run / 25-run split**~~ | ✅ **RESOLVED — moved to Part 1.1.** Confirmed from Hall et al.'s Tables 1 and 2. Any 47-condition digitization remains a separate in-house data-extraction count and must not be described as the number of published formulations. |
 | **The Ax `AxClient` removal version** | A deprecation warning exists; the specific removal version is unconfirmed. Do not cite a version number. |
 | **Summit's license** | Not confirmed from its LICENSE file. Verify before any redistribution. |
 
