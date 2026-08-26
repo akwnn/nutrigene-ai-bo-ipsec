@@ -54,6 +54,7 @@ import numpy as np
 import torch
 
 from boec.designspace import gp_adapter, brier_and_auc, predictive_probability_map
+from boec.certstraddle import batch_lse_rho, certificate_straddle
 from boec.lse import (batch_lse, exclusion_radius, min_pairwise_chebyshev,
                       predictive_sigma, straddle_predictive_score, straddle_score)
 from boec.norms import sobol_grid
@@ -128,6 +129,22 @@ def _plate2_diag(X2, radius=None, topq=None, score=None):
     return d
 
 
+#: Every plate-2 rule this function knows. The dispatch below used to be
+#: `if mode == "random": ... else: <latent straddle>`, so ANY unrecognised string -- a typo,
+#: a stale config value, a renamed arm -- silently produced a row labelled with that string
+#: and computed by the committed `versionb` criterion. That is the same class of defect as
+#: this project's three existing errata (`EV(x)` reading ground truth, `exclusion_radius`
+#: hardcoded to 0.1, `above_ceiling` copied across rows), and it is why KV §4 makes an
+#: arm-distinctness assertion mandatory. Unknown modes now raise.
+PLATE2_MODES = ("lse", "predictive", "random", "cert")
+
+#: KV §3: the Vorob'ev level `mode="cert"` straddles. REGISTERED at 0.95 -- the assurance
+#: level the certificate is scored at -- not swept, and not selected after seeing an outcome.
+#: At 0.5 `batch_lse_rho` is bit-identical to the committed `batch_lse`, so this constant is
+#: the only thing separating the new arm from the old one.
+CERT_RHO = 0.95
+
+
 def _two_plate(orc, dim, seed, mu_max, mode: str):
     """Plate 1 space-filling; plate 2 by the latent straddle, the predictive straddle, or
     at random. Returns ``(X, Y, Yvar, diag)``.
@@ -137,6 +154,12 @@ def _two_plate(orc, dim, seed, mu_max, mode: str):
     off the same deterministic (mean, sd) the batch was chosen from, so they describe the
     batch that was actually taken rather than a re-derivation of it.
     """
+    if mode not in PLATE2_MODES:
+        raise ValueError(
+            f"unknown plate-2 mode {mode!r}; expected one of {PLATE2_MODES}. Falling through "
+            "to the latent straddle would label a row with this mode and compute it with "
+            "another arm's criterion.")
+
     bounds = unit_bounds(dim)
     X1 = static_design(bounds, "lhs", N_PLATE1, seed)
     Y1, V1 = orc.evaluate(X1)
@@ -155,10 +178,17 @@ def _two_plate(orc, dim, seed, mu_max, mode: str):
         if mode == "predictive":
             sig = predictive_sigma(mean, orc.sigma_rel, orc.sigma_add)
             score = straddle_predictive_score(mean, sd, theta, sig)
+            X2 = batch_lse(ad, cand, theta, N_PLATE2, exclude=radius, sigma=sig)
+        elif mode == "cert":
+            # KV §3. The certificate's frontier is `{p(x) >= rho_alpha}`, not the p=0.5
+            # contour Bryan's straddle targets. rho is REGISTERED at 0.95, not swept.
+            sig = None
+            score = certificate_straddle(mean, sd, theta, CERT_RHO)
+            X2 = batch_lse_rho(ad, cand, theta, N_PLATE2, exclude=radius, rho=CERT_RHO)
         else:
             sig = None
             score = straddle_score(mean, sd, theta)
-        X2 = batch_lse(ad, cand, theta, N_PLATE2, exclude=radius, sigma=sig)
+            X2 = batch_lse(ad, cand, theta, N_PLATE2, exclude=radius, sigma=sig)
         topq = cand[torch.topk(score, N_PLATE2).indices]
         diag = _plate2_diag(X2, radius=radius, topq=topq, score=score)
         del cand, mean, sd, score, topq
