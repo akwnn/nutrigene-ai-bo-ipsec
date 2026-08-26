@@ -32,7 +32,7 @@
 
 ## Abstract
 
-**Background.** Reported advantages of Bayesian optimization (BO) over response-surface methodology (RSM) may depend as much on how the terminal formulation is selected as on where either method samples. Narayanan et al. (2025) report ~2.5–3× fewer experiments than the **predicted** count for standard DoE (and ~10–30× in a nine-factor transfer case): a resource-planning denominator, not an executed equal-budget DoE arm. Rummukainen et al. (2024) ran both methods at 15 experiments, scored the best measured condition, used noisy expected improvement then a posterior-mean final pick, and found no reduction in experiment count. Lapierre et al. (2025) and Ndahiro et al. (2025) add executed media/bioprocess comparisons in which BO improved biomass or titer; those studies compare complete workflows whose screening cuts, factor sets and terminal picks are not factorially separated. Both the “BO saves experiments” and the “no saving at matched budget” findings can be correct if their denominators and terminal decisions differ.
+**Background.** Reported advantages of Bayesian optimization (BO) over response-surface methodology (RSM) may depend as much on how the terminal formulation is selected as on where either method samples. Narayanan et al. (2025) report ~2.5–3× fewer experiments than the **predicted** count for standard DoE (and ~10–30× in a nine-factor transfer case): a resource-planning denominator, not an executed equal-budget DoE arm. Rummukainen et al. (2024) compared a 15-run Box–Behnken design with a BO sequence that reused five of those experiments and added ten; noisy expected improvement selected the first nine new experiments and posterior mean selected the tenth, but the paper did not apply a common post-campaign best-measured terminal score. Lapierre et al. (2025) and Ndahiro et al. (2025) add executed media/bioprocess comparisons in which BO improved biomass or titer; those studies compare complete workflows whose screening cuts, factor sets and terminal picks are not factorially separated. Both the “BO saves experiments” and the “no saving at matched budget” findings can be correct if their denominators and terminal decisions differ.
 
 **Methods.** A synthetic Hill benchmark, **structurally inspired by** the six-factor / 6→4 screen of Hall, Lin and Ogle (2025), not fitted to endothelial data. The optimizer observes y = f(x) + ε. Simple regret is 1 − f(x∗). On identical 48-well campaigns we vary the terminal decision: **hidden tested-best**, **measured-value argmax** (single noisy readout; stored E2 “best observed”), **naïve unconstrained quadratic or GP recommendation**, **in-region / ridge recommendation**, and — on the same campaigns — **replicate, top-3 confirmation, and posterior-mean-at-visited** picks. Cost is counted in wells and in plate rounds. Named BO is qLogEI; **qLogNEI is co-primary** under observation noise. Sequential RSM with steepest-ascent relocation is the long-run classical arm (`doe_ascent`); `doe_repeat` is retained as the non-relocating control.
 
@@ -50,13 +50,13 @@ Optimization of culture media and extracellular-matrix (ECM) coatings is an expe
 
 Two families of methods dominate this setting.
 
-**Classical DoE and RSM** (Box and Wilson, 1951; Myers et al.) treat the unknown response as locally quadratic. A screening design identifies a subset of active factors. A **central composite design** (CCD) is then executed in that subregion and a second-order polynomial is fitted. Canonical analysis classifies the stationary point as a maximum, minimum, saddle or ridge. Classical RSM then uses **steepest ascent**, **ridge analysis**, and often a relocated CCD — not unconstrained maximization of a saddle over the whole box.
+**Classical DoE and RSM** (Box and Wilson, 1951; Myers et al.) treat the unknown response as locally quadratic. A screening design can identify a subset of active factors. A **central composite design** (CCD) may then be executed in that subregion and a second-order polynomial fitted. Canonical analysis classifies the stationary point as a maximum, minimum, or saddle. **Ridge analysis is a separate constrained procedure.** Sequential RSM may also use steepest ascent and a relocated design rather than unconstrained maximization of a saddle over the whole box.
 
 **Bayesian optimization** (Močkus, 1975; Jones, Schonlau and Welch, 1998; Frazier, 2018) places a Gaussian-process prior on the latent response and picks the next batch with an acquisition function. We report **qLogEI** and **qLogNEI** as co-primary under observation noise. The distinction between using the best noisy observation and using a posterior-mean incumbent is already standard in noisy BO; this paper asks whether that already-known distinction is large enough to reverse a BO-versus-RSM ranking, and whether a short confirmation protocol is.
 
 That RSM maps a design region while BO concentrates accuracy near promising conditions is **background**, not a finding. Rummukainen et al. (2024) already state it, and note that RSM remains usable if the criterion later changes whereas BO needs an explicit scalar objective.
 
-Executed comparisons already exist. Rummukainen: 15-run Box–Behnken versus 5 initial + 10 sequential BO experiments, noisy EI then posterior-mean final pick, best measured condition, no reduction in experiment count. **Lapierre et al. (2025)** compared CCD/RSM after factor reduction with batch BO that kept all factors, after a shared 48-condition screen, on *Sporosarcina pasteurii* growth media; the BO medium gave higher biomass. **Ndahiro et al. (2025)** reported mammalian (CHO) media BO with thermodynamic constraints and higher titers than classical DoE **at the same experiment count**. **Narayanan et al. (2025)** report ~2.5–3× fewer experiments than the **predicted** standard-DoE count (SI calculation), and ~10–30× in a nine-factor transfer case. That is a different scientific experiment from giving each method 48 evaluations on the same landscape. Synthetic optimizer benchmarks (Olympus and related platforms; materials-science BO suites) already exist; novelty here is not “we ran a benchmark.”
+Executed comparisons already exist. Rummukainen used a 15-run Box–Behnken design and a BO sequence of 5 shared initial experiments plus 10 new experiments, with noisy EI for the first nine BO selections and posterior mean for the tenth; it did not apply a common terminal best-measured score. **Lapierre et al. (2025)** compared a shared-screen, multicycle batch-BO workflow with a two-step DoE workflow on *Sporosarcina pasteurii* growth media and reported higher biomass with the BO medium; the source does not identify the optimization design as a CCD or the shared screen as exactly 48 conditions. **Ndahiro et al. (2025)** reported thermodynamically constrained CHO-media BO with higher titers than an equal-count **JMP space-filling design** (12 versus 12 formulations), not classical RSM. **Narayanan et al. (2025)** report ~2.5–3× fewer experiments than the **predicted** standard-DoE count, and ~10–30× in a nine-factor transfer case. That is a different scientific experiment from giving each method 48 evaluations on the same landscape. Synthetic optimizer benchmarks (Olympus and related platforms; materials-science BO suites) already exist; novelty here is not “we ran a benchmark.”
 
 **Hypothesis.** Apparently conflicting BO-versus-DoE conclusions can arise without contradictory algorithmic behaviour when studies bundle different terminal decisions, surrogate readouts, screening cuts, and budget definitions. Previous experimental papers compare complete workflows. We hold components under experimental control: same campaigns, several terminal rules; same points, both surrogates; same surrogate dimension, both designs; wells versus rounds.
 
@@ -174,7 +174,7 @@ The second-order model on the retained factors is
 
 The Hessian of f̂ may be negative definite (local maximum), positive definite (local minimum) or indefinite (**saddle**). A saddle has a stationary point that is not a maximum; on a compact box the maximum of a saddle lies on the boundary. An unconstrained argmax of a saddle fit is therefore forced onto a face or corner, typically outside the region in which the polynomial was identified. Ridge analysis is the classical remedy.
 
-The DoE procedure implemented here follows a published three-stage pipeline: (i) a 20-run screen (fractional factorial with centre points) retaining four factors, matching Hall/Ogle 6→4; (ii) a 27-run **face-centred CCD** on those four factors; (iii) one confirmation at the fitted stationary point. There is **no steepest-ascent stage** after the CCD. Cost-curve comparisons are therefore biased in favour of BO, which we state wherever those comparisons appear.
+The DoE procedure implemented here is an **in-house 48-well benchmark construction**: (i) a 20-run screen (fractional factorial with centre points) retaining four factors, structurally matching Hall/Ogle's 6→4 reduction; (ii) a 27-run **face-centred CCD** on those four factors; and (iii) one confirmation at the fitted model recommendation. Hall et al.'s published tables instead list 23 stage-1 and 25 stage-2 formulations, so the implemented 20+27+1 split must not be attributed to that paper. There is **no steepest-ascent stage** after the CCD. Cost-curve comparisons are therefore biased in favour of BO, which we state wherever those comparisons appear.
 
 **D-efficiency** quantifies the information matrix of a stated model on a stated region. High in-region D-efficiency does not imply a useful recommendation outside that region.
 
@@ -223,7 +223,7 @@ d = 6 matches the six ECM proteins of Hall/Ogle; axis labels are nominal. d = 8 
 
 σ = 0.25 and σ = 0.10 are **higher-noise** and **lower-noise benchmark conditions**. A Hall/Ogle box-plot coefficient of variation (~68%) mixes biological variation, measurement variation, between-condition heterogeneity and scaling; it is not this additive Gaussian σ. Do not call 0.25 “realistic assay noise” until σ is estimated from replicated raw observations on the same normalized scale. The 2.7-fold comparison to that CV is background only.
 
-Replication is 25 instances × 2 seeds (50 rows). Tests use n = 25. Unless otherwise stated the experimental budget is N = 48, the published 20+27+1 pipeline length; BO is given the same evaluation count.
+Replication is 25 instances × 2 seeds (50 rows). Tests use n = 25. Unless otherwise stated the experimental budget is N = 48, an in-house matched-budget choice; BO is given the same evaluation count.
 
 ### 4.3 Procedures
 
@@ -809,24 +809,24 @@ Rummukainen, Lapierre and Ndahiro already compared BO and DoE experimentally. Na
 
 Box, G. E. P., Draper, N. R. *Empirical Model-Building and Response Surfaces.*
 
-Box, G. E. P., Wilson, K. B., 1951. On the experimental attainment of optimum conditions. *J. R. Stat. Soc. B* 13, 1–45.
+Box, G. E. P., Wilson, K. B., 1951. On the experimental attainment of optimum conditions. *J. R. Stat. Soc. B* 13, 1–38.
 
 Frazier, P. I., 2018. A tutorial on Bayesian optimization. arXiv:1807.02811.
 
-Gisperg, F., et al., 2025. Bayesian optimization in bioprocess engineering—where do we stand today? *Biotechnol. Bioeng.*
+Gisperg, F., et al., 2025. Bayesian optimization in bioprocess engineering—where do we stand today? *Biotechnol. Bioeng.* 122, 1313–1325. doi:10.1002/bit.28960
 
-Hall, Lin, Ogle, 2025. iPSC-to-endothelial ECM screen. *Sci. Rep.*
+Hall, M. L., Lin, W.-H., Ogle, B. M., 2025. Optimizing extracellular matrix for endothelial differentiation using a design of experiments approach. *Sci. Rep.* 15, 24479. doi:10.1038/s41598-025-09256-9
 
 Jones, D. R., Schonlau, M., Welch, W. J., 1998. Efficient global optimization of expensive black-box functions. *J. Global Optim.* 13, 455–492.
 
-Lapierre, A., et al., 2025. Comparison of design of experiments and batch Bayesian optimization for growth-medium optimization of *Sporosarcina pasteurii*. *J. Chem. Technol. Biotechnol.* 100, 1571–1583. doi:10.1002/jctb.7860
+Lapierre, A., et al., 2025. Multi-cycle high-throughput growth media optimization using batch Bayesian optimization. *J. Chem. Technol. Biotechnol.* 100, 1571–1583. doi:10.1002/jctb.7860
 
 Močkus, J., 1975. On Bayesian methods for seeking the extremum. In: *Optimization Techniques IFIP Technical Conference.*
 
 Myers, R. H., Montgomery, D. C., Anderson-Cook, C. M. *Response Surface Methodology.*
 
-Narayanan, H., et al., 2025. Bayesian optimization of cell culture media. *Nat. Commun.* 16, 6055. doi:10.1038/s41467-025-61113-5
+Narayanan, H., et al., 2025. Accelerating cell culture media development using Bayesian optimization-based iterative experimental design. *Nat. Commun.* 16, 6055. doi:10.1038/s41467-025-61113-5
 
-Ndahiro, R. K., et al., 2025. Bayesian optimization of mammalian cell-culture media with solution-thermodynamic constraints. *iScience.* doi:10.1016/j.isci.2025.112944
+Ndahiro, R. K., et al., 2025. Integration of Bayesian optimization and solution thermodynamics to optimize media design for mammalian biomanufacturing. *iScience* 28, 112944. doi:10.1016/j.isci.2025.112944
 
-Rummukainen, H., Hörhammer, H., Kuusela, P., Kilpi, J., Sirviö, J., Mäkelä, M., 2024. Traditional or adaptive design of experiments? A pilot-scale comparison on wood delignification. *Heliyon* 10, e24484.
+Rummukainen, H., Hörhammer, H., Kuusela, P., Kilpi, J., Sirviö, J., Mäkelä, M., 2024. Traditional or adaptive design of experiments? A pilot-scale comparison on wood delignification. *Heliyon* 10, e24484. doi:10.1016/j.heliyon.2024.e24484
