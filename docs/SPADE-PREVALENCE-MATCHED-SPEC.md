@@ -134,6 +134,29 @@ seed count **identical to the committed `ackley`/`hartmann6` rows** it will be c
 exists to make. §5's warning that "KU-2's per-family bounds will be correspondingly wider" no
 longer applies and is superseded here.
 
+## 5c. Erratum: the pilot's cost estimate was wrong by ~5x
+
+The firewalled pilot (§5b) measured **27.8 s/campaign** and projected **3.1 h** for 400
+campaigns. The run has been executing **8.3 h** at 98.8% CPU with `levy`'s 200 campaigns not yet
+complete, implying **>150 s/campaign** -- roughly **5x** the pilot's estimate and past §5's
+8-hour ceiling.
+
+**The run was authorised on a projection that was wrong, not on a ceiling that was waived.**
+Recorded here rather than discovered in the result. The process is verified healthy, not hung:
+98.8% CPU, state `RN`, RSS cycling 875-925 MB (allocating and freeing, i.e. computing).
+`torch.set_num_threads(1)` is deliberate in the runner for determinism, so it is single-core by
+design and the machine's other 7 cores are idle.
+
+**Two defects in how this was launched, for the next run to fix:**
+1. **No `-u`.** `run_tau_quantile_followup.py`'s own docstring specifies
+   `.venv/bin/python -u`; without it stdout is block-buffered and the only flushed progress
+   print fires **per family**, so a 0-byte log after 8 h is uninformative rather than alarming.
+2. **No checkpointing.** The runner writes its JSON once, at the end. A crash at hour 16 loses
+   everything. KR's runner wrote a PARTIAL payload every 25 campaigns; this one does not.
+
+Neither defect changes any number KU will produce. The estimate error does mean §5's reduction
+rule was never actually triggered when it should have been, and that is the honest reading.
+
 ## 6. What KU does not decide
 
 KU does not revisit Plate-2 allocation (settled this session: well-powered null on map error,
