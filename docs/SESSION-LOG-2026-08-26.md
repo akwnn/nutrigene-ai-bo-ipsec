@@ -371,3 +371,72 @@ estimands, and the latter is what a batch record or an ICH Q8 design space asser
 4. **24/24 budget split** — §9.3 predicts leverage is linear in density change; 8/40 gives 20%,
    24/24 gives 100%.
 5. **KT** if KU fails.
+
+---
+
+## 13. RESUME HERE — state at session end
+
+### 13.1 What is running, and what happens to it
+
+**KU is running in the background** (`nohup`, pid recorded at ~29 min of ~3.1 h, log
+`/tmp/ku_run.log`). It writes `results/ku-prevalence-matched.json` **once, at the end** — there
+is no partial file, so an absent file means it has not finished, not that it failed.
+
+    # is it alive?
+    pgrep -f run_ku_prevalence && tail -5 /tmp/ku_run.log
+
+    # if the machine slept / it died, just restart it -- it is idempotent
+    nohup .venv/bin/python scripts/run_ku_prevalence_matched.py > /tmp/ku_run.log 2>&1 &
+
+**When it finishes, adjudicate it against the frozen spec — do not eyeball it.** The analyser
+for KU is NOT yet written (KR's and KS's are). It must implement
+`SPADE-PREVALENCE-MATCHED-SPEC.md` §4/§5 exactly: leave-one-family-out across the **four**
+families now on the quantile grid (`levy`, `rosenbrock`, `ackley`, `hartmann6`), volume-
+conditional calibration by the §5 rule, one-sided 95% Clopper–Pearson lower bound, KU-1 pooled
+≥ 0.90, KU-2 at least 3 of 4, KU-3 answer rate ≥ 0.30, KU-4 the ceiling. `scripts/analyse_
+ks_self_calibration.py` is the closest template — copy its `fit_1d`/`apply_1d`/`report`
+helpers, and **keep the finite-edge behaviour**: out-of-range means abstain, never inherit the
+nearest bin's verdict (that was this session's analyser erratum, §5).
+
+### 13.2 Frozen and unrun
+
+| spec | commit | status |
+|---|---|---|
+| `SPADE-EFFECTIVE-RESOLUTION-SPEC.md` (KR) | `7ae6fc6` | **Run. FAILED, `k_eff` dropped.** §7 filled. |
+| `SPADE-SELF-CALIBRATION-SPEC.md` (KS) | `1a3d927` | **Run. FAILED, `kappa_tail` dropped.** |
+| `SPADE-ASSURANCE-CALIBRATION-SPEC.md` (KT) | `6848e2f` | **Frozen, UNRUN.** `run_kt_assurance_fast.py` ready; reproduction gate passed 0/72. ~30 h at full scope — needs a scope reduction recorded before running, per its §4. |
+| `SPADE-PREVALENCE-MATCHED-SPEC.md` (KU) | `e5b59dc`/`e298b93` | **RUNNING.** §7 empty. |
+| `SPADE-PLATE2-CERTIFICATE-SPEC.md` (KV) | `1df991a` | **Frozen, UNRUN.** Needs fresh campaigns; runner not yet written. |
+
+### 13.3 KV is the highest-value open item, and what it still needs
+
+`src/boec/certstraddle.py` (`certificate_straddle`, `batch_lse_rho`) is built and tested
+(13 tests, including bit-identity with committed `batch_lse` at `rho=0.5`). **What does not
+exist yet** is the arm wiring: `scripts/run_versionb.py::_two_plate` dispatches on `mode`
+(`"random"` / `"predictive"` / else latent straddle) and needs a `"cert"` branch calling
+`batch_lse_rho(..., rho=0.95)`. Then a runner, then the firewalled pilot, then the run.
+
+**Do not skip the arm-distinctness assertion** (KV §4). Two arms silently identical is the
+failure mode a `rho` parameter most invites, and this repo has three errata of that exact shape.
+
+### 13.4 Two things a future session must not quietly undo
+
+1. **The retractions in §9.2 stand.** The "+19.1% certified volume" claim is withdrawn
+   (bootstrap CI [−0.114, +0.232]); the calibrated cap cannot rank arms, its CI is wider than
+   its own point estimate. If a later analysis reproduces "+19%", check the calibration split
+   before believing it.
+2. **KR-1 and KS-1 FAILED and are not amended.** §6 explains *why* the comparison was
+   confounded, but the verdicts are correct verdicts on the comparisons that were run. KU is
+   the prospective retest; it is not a re-scoring of KR/KS.
+
+### 13.5 Not achievable from the data that exists
+
+"SPADE is the best method for cell-media optimization" is not available and this project's own
+preregistration forbids it: KF-8 is regret **parity**, not a win; `sobol` still beats SPADE on
+calibration/Brier/containment; there is no wet-lab validation; `oracle_defensibility.md` shows
+`hill` contradicts the one real dataset on both structural properties that matter; and σ=0.25 is
+~2.7× optimistic against the real implied CV of 68.2%. The defensible claim is narrower and
+stronger: **a design-space certificate whose ≥90% containment holds without assuming the
+surrogate is correctly specified** — which is also what distinguishes it from
+[Dette et al. 2026](https://arxiv.org/abs/2608.19815) (§10), who control an expected
+false-inclusion *fraction* rather than *simultaneous* containment.
