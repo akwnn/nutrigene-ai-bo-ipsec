@@ -119,7 +119,22 @@ def score(family: str, seed: int, arm: str, grid, X_sub, tau_by_p) -> list[dict]
     rows = []
     for gamma in p2.GAMMAS:
         for p_val, tau in tau_by_p.items():
-            rows.append({"family": family, "seed": seed, "arm": arm, "dim": P.DIM,
+            # KV-4 needs MAP error, and the certificate-only path does not produce it.
+            # Computed here from the draws already in hand, on the 2,000-point subset:
+            #   p(x) = fraction of joint draws clearing tau; fitted set = {p >= 0.5};
+            #   error = |fitted set XOR true set| / N.
+            # Named `map_total_error_vol_sub` and NOT `total_error_vol`, because the
+            # committed column of that name is computed on the 20,000-point grid and the two
+            # are not interchangeable. KV-4 is a WITHIN-KV arm comparison, so a subset-
+            # resolution map error is sufficient for it and comparability with P8 is not
+            # required -- but conflating the names would invite exactly that mistake later.
+            with torch.no_grad():
+                pmap = (draws >= tau).double().mean(dim=0)
+                fitted = pmap >= 0.5
+                true_set = truth_sub >= tau
+                map_err = float((fitted ^ true_set).double().mean())
+            rows.append({"map_total_error_vol_sub": map_err,
+                         "family": family, "seed": seed, "arm": arm, "dim": P.DIM,
                          "sigma": P.SIGMA, "n_wells": int(X.shape[0]), "regret": regret,
                          "gamma": gamma, "p_value": p_val, "tau": tau,
                          "n_draws": P.N_DRAWS,
