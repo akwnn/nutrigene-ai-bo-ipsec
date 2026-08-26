@@ -145,11 +145,24 @@ def _power_payload(
 @pytest.fixture(autouse=True)
 def _fast_exact_power_recompute(monkeypatch, tmp_path):
     monkeypatch.setattr(release, "ROOT", tmp_path)
+    monkeypatch.setattr(analysis, "ROOT", tmp_path)
     monkeypatch.setattr(
         analysis,
         "paired_bootstrap_upper",
         lambda values, **_kwargs: sum(values) / len(values),
     )
+
+    def synthetic_access(*, repo_root, power_path=None, **_kwargs):
+        actual_power_path = power_path or repo_root / "results/spade-lockbox-power.json"
+        power_bytes = Path(actual_power_path).read_bytes()
+        return {
+            "selection": {},
+            "power_plan": json.loads(power_bytes),
+            "sample_size": POWER_SIZE,
+            "power_plan_sha256": hashlib.sha256(power_bytes).hexdigest(),
+        }
+
+    monkeypatch.setattr(lockbox, "validate_lockbox_access", synthetic_access)
 
 
 def _selection() -> dict:

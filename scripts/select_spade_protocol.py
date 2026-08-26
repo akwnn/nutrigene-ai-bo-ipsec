@@ -51,6 +51,14 @@ def _sha256_bytes(data: bytes) -> str:
     return hashlib.sha256(data).hexdigest()
 
 
+def _fsync_directory(path: Path) -> None:
+    descriptor = os.open(path, os.O_RDONLY)
+    try:
+        os.fsync(descriptor)
+    finally:
+        os.close(descriptor)
+
+
 def _require_digest(value: object, name: str, length: int = 64) -> str:
     if not isinstance(value, str) or len(value) != length:
         raise ValueError(f"{name} must be a {length}-character hexadecimal digest")
@@ -66,15 +74,37 @@ def _atomic_json(path: Path, payload: Mapping[str, object]) -> str:
     data = (_canonical_json(payload) + "\n").encode("utf-8")
     descriptor, temporary_name = tempfile.mkstemp(prefix=f".{path.name}.", dir=path.parent)
     temporary = Path(temporary_name)
+    installed = False
     try:
         with os.fdopen(descriptor, "wb") as handle:
             handle.write(data)
             handle.flush()
             os.fsync(handle.fileno())
-        os.replace(temporary, path)
+        try:
+            os.link(temporary, path)
+        except FileExistsError as exc:
+            raise ValueError(
+                f"selection artifact appeared during write-once publication: {path}"
+            ) from exc
+        installed = True
+        _fsync_directory(path.parent)
     except BaseException:
-        temporary.unlink(missing_ok=True)
+        if installed:
+            temporary_status = temporary.stat(follow_symlinks=False)
+            try:
+                installed_status = path.stat(follow_symlinks=False)
+            except FileNotFoundError:
+                pass
+            else:
+                if (
+                    temporary_status.st_dev == installed_status.st_dev
+                    and temporary_status.st_ino == installed_status.st_ino
+                ):
+                    path.unlink()
+                    _fsync_directory(path.parent)
         raise
+    finally:
+        temporary.unlink(missing_ok=True)
     return _sha256_bytes(data)
 
 
@@ -884,8 +914,15 @@ def select_from_shards(
         raise ValueError(f"analysis output must be the exact registered path {expected_analysis}")
     if selected_path.resolve() != expected_selected.resolve():
         raise ValueError(f"selected artifact must be the exact registered path {expected_selected}")
-    if selected_path.exists():
-        raise ValueError("selected protocol artifact is write-once and already exists")
+    existing = [
+        path
+        for path in (analysis_path, selected_path)
+        if path.exists() or path.is_symlink()
+    ]
+    if existing:
+        raise ValueError(
+            f"selection artifacts are write-once and already exist: {existing[0]}"
+        )
     analysis, selected = selection_payload_from_shards(
         manifest_paths,
         repo_root=repo_root,
@@ -893,7 +930,22 @@ def select_from_shards(
     analysis_sha = _atomic_json(analysis_path, analysis)
     if analysis_sha != selected["analysis_sha256"]:
         raise RuntimeError("analysis serialization hash drifted before selected-artifact write")
-    _atomic_json(selected_path, selected)
+    analysis_status = analysis_path.stat(follow_symlinks=False)
+    try:
+        _atomic_json(selected_path, selected)
+    except BaseException:
+        try:
+            current_status = analysis_path.stat(follow_symlinks=False)
+        except FileNotFoundError:
+            pass
+        else:
+            if (
+                analysis_status.st_dev == current_status.st_dev
+                and analysis_status.st_ino == current_status.st_ino
+            ):
+                analysis_path.unlink()
+                _fsync_directory(analysis_path.parent)
+        raise
     return selected
 
 
