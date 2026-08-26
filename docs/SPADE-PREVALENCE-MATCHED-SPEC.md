@@ -59,7 +59,7 @@ prevalence convention for the first time.
 **KU-1 (PRIMARY — full cross-family transfer at matched prevalence).** With all five families on
 the quantile grid, leave-one-family-out volume-conditional calibration — calibrate on four,
 apply **unchanged** to the fifth — achieves a one-sided 95% Clopper–Pearson lower bound
-**≥ 0.90 pooled across all five held-out families**, at γ=0.95.
+**≥ 0.90 pooled across all held-out families** (see §5a: four families, not five), at γ=0.95.
 *Comparators, fixed: the confounded version gave LB 0.8175 (`k_eff`) and 0.8074
 (`kappa_tail`).*
 - **PASS** → the certificate is family-general under a single, declarable scoring convention,
@@ -67,7 +67,7 @@ apply **unchanged** to the fifth — achieves a one-sided 95% Clopper–Pearson 
 - **FAIL** → the prevalence confound is not the explanation, the post-hoc signal in §2 does not
   survive prospective test, and KU-4 applies.
 
-**KU-2 (per-family, the stricter version).** At least **4 of 5** held-out families individually
+**KU-2 (per-family, the stricter version).** At least **3 of 4** held-out families (§5a) individually
 clear LB ≥ 0.90. *`hartmann6 → ackley` already misses at 0.8810 in the post-hoc data, so this
 gate is registered expecting it to be tight, and a 5/5 is not required.*
 
@@ -84,7 +84,7 @@ That, with the 0/50 scope detector, is four independent confirmations and is the
 
 ## 5. Scope, cost, and the reduction rule
 
-`hill`, `levy`, `rosenbrock` × 4 arms × `P_VALUES = (0.30, 0.10, 0.03, 0.01)`, γ grid unchanged,
+`levy`, `rosenbrock` × 4 arms (see §5a) × `P_VALUES = (0.30, 0.10, 0.03, 0.01)`, γ grid unchanged,
 `N_DRAWS = 4096`, d=6, σ=0.25 — the exact configuration `run_tau_quantile_followup.py` already
 applies to the hard families, extended in **families only**.
 
@@ -98,6 +98,26 @@ here, before the run, not discovered in the result.** The reduced power is state
 result: 25 seeds against the hard families' 50 halves the per-family n, and KU-2's per-family
 bounds will be correspondingly wider. If the pilot projects beyond 8 h even at 25 seeds, arms are
 cut to `versionb` and `plate1_only` and that further reduction is reported the same way.
+
+## 5a. Amendment: `hill` is excluded, for a technical reason, recorded before the run
+
+`run_tau_quantile_followup.score_family` reaches the oracle through
+`boec.replay.family_evaluator`, which raises `KeyError` on `'hill'` -- hill is an **ensemble**
+and goes through `instance_by_id` + `BiphasicOracle`, a separate path that P8's
+`evaluator_for` implements and the quantile scorer does not. Adding it would mean forking the
+committed scorer for KU's convenience.
+
+**KU therefore runs `levy` and `rosenbrock` only**, which with the existing `ackley` and
+`hartmann6` puts **four** families on one prevalence convention. KU-1's leave-one-family-out
+becomes leave-one-of-four-out, and KU-2's bar moves from "4 of 5" to **"3 of 4"**, preserving
+the same one-family-may-miss tolerance.
+
+This exclusion is technical, was found by the pilot crashing, and is recorded **before any KU
+number exists**. It is not a response to any result. hill remains the one family whose
+certificate was already validated on its own grid (`SPADE-RESULTS-AND-ANALYSIS.md` §3), so its
+absence removes the easiest case from the test rather than a hard one — KU is if anything
+harder for excluding it, and that is stated so the result is not read as flattered by the
+choice.
 
 ## 6. What KU does not decide
 
