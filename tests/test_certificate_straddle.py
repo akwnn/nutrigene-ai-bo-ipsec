@@ -108,3 +108,66 @@ def test_matches_hand_arithmetic():
     sd = torch.tensor([0.5], dtype=torch.double)
     want = 1.96 * 0.5 - abs(1.2 - 1.6448536269514722 * 0.5 - 0.7)
     assert float(certificate_straddle(mean, sd, 0.7, 0.95)[0]) == pytest.approx(want, rel=1e-9)
+
+
+# ------------------------------------------------- batch selection at the certificate contour
+
+class _FakeGP:
+    """Deterministic (mean, sd) so the batch is checkable by hand."""
+
+    def __init__(self, mean, sd):
+        self._m, self._s = mean, sd
+
+    def posterior_mean_and_sd(self, Z):
+        return self._m, self._s
+
+
+def _grid_model(n=200):
+    X = torch.linspace(0.0, 1.0, n, dtype=torch.double).reshape(-1, 1)
+    mean = 2.0 * X.reshape(-1)
+    sd = torch.full_like(mean, 0.25)
+    return X, _FakeGP(mean, sd)
+
+
+def test_batch_lse_rho_at_one_half_is_bit_identical_to_the_committed_batch_lse():
+    """The committed `versionb` column must not move. This is the whole safety argument
+    for adding a parameter to a function an adjudicated arm already depends on."""
+    from boec.lse import batch_lse
+    from boec.certstraddle import batch_lse_rho
+
+    X, m = _grid_model()
+    a = batch_lse(m, X, theta=1.0, q=5, exclude=0.05)
+    b = batch_lse_rho(m, X, theta=1.0, q=5, exclude=0.05, rho=0.5)
+    assert torch.equal(a, b)
+
+
+def test_batch_lse_rho_at_high_rho_picks_deeper_inside_the_region():
+    """theta=1.0, sd=0.25, mean=2x. rho=0.5 targets mean=1.0 (x=0.5); rho=0.95 targets
+    mean = 1.0 + 1.645*0.25 = 1.411 (x=0.706). The first pick must move accordingly."""
+    from boec.certstraddle import batch_lse_rho
+
+    X, m = _grid_model()
+    lo = float(batch_lse_rho(m, X, theta=1.0, q=1, exclude=0.05, rho=0.5)[0, 0])
+    hi = float(batch_lse_rho(m, X, theta=1.0, q=1, exclude=0.05, rho=0.95)[0, 0])
+    assert lo == pytest.approx(0.5, abs=0.01)
+    assert hi == pytest.approx(0.706, abs=0.01)
+    assert hi > lo
+
+
+def test_batch_lse_rho_never_duplicates_a_point():
+    from boec.certstraddle import batch_lse_rho
+
+    X, m = _grid_model()
+    b = batch_lse_rho(m, X, theta=1.0, q=6, exclude=0.05, rho=0.95)
+    assert len({tuple(r.tolist()) for r in b}) == b.shape[0]
+
+
+def test_batch_lse_rho_returns_fewer_than_q_rather_than_duplicating_when_exclusion_empties():
+    """Same contract as `batch_lse`: a starved pool returns a short batch, never a
+    replicate dressed up as a design."""
+    from boec.certstraddle import batch_lse_rho
+
+    X, m = _grid_model()
+    b = batch_lse_rho(m, X, theta=1.0, q=50, exclude=0.9, rho=0.95)
+    assert b.shape[0] < 50
+    assert b.shape[0] >= 1

@@ -57,7 +57,7 @@ from torch import Tensor
 
 from boec.lse import STRADDLE_Z
 
-__all__ = ["certificate_straddle", "rho_contour_offset"]
+__all__ = ["batch_lse_rho", "certificate_straddle", "rho_contour_offset"]
 
 
 def rho_contour_offset(rho: float) -> float:
@@ -106,3 +106,41 @@ def certificate_straddle(mean: Tensor, sd: Tensor, theta: float, rho: float) -> 
     if bool((sd < 0).any()):
         raise ValueError("sd must be non-negative; a negative posterior SD is a bug upstream")
     return STRADDLE_Z * sd - (mean - z * sd - theta).abs()
+
+
+def batch_lse_rho(model, X_cand: Tensor, theta: float, q: int,
+                  exclude: float = 0.1, rho: float = 0.5) -> Tensor:
+    """`boec.lse.batch_lse` with the target contour moved to the Vorob'ev level ``rho``.
+
+    ``rho = 0.5`` is **bit-identical** to :func:`boec.lse.batch_lse` with ``sigma=None`` --
+    asserted by ``test_batch_lse_rho_at_one_half_is_bit_identical_to_the_committed_batch_lse``.
+    That is the entire safety argument for introducing this: the adjudicated ``versionb``
+    column depends on the committed selection, and a new parameter that could not reproduce it
+    exactly would put every prior number in question.
+
+    The greedy loop, the exclusion ball, the Chebyshev radius and the short-batch contract are
+    `batch_lse`'s, unchanged and for its documented reasons: with no exclusion the loop
+    re-selects its own argmax every iteration and returns ``q`` wells at one location, a
+    replicate dressed up as a design.
+
+    Args:
+        rho: the Vorob'ev level whose contour to straddle. The certificate's frontier sits at
+            ``rho_alpha``, which is well above 0.5 for a joint claim; 0.5 reproduces Bryan's
+            published latent straddle.
+    """
+    mean, sd = model.posterior_mean_and_sd(X_cand)
+    score = certificate_straddle(mean, sd, theta, rho)
+    available = torch.ones(X_cand.shape[0], dtype=torch.bool)
+    picks: list[Tensor] = []
+
+    for _ in range(q):
+        if not bool(available.any()):
+            break
+        masked = torch.where(available, score,
+                             torch.tensor(float("-inf"), dtype=score.dtype))
+        idx = int(torch.argmax(masked))
+        picks.append(X_cand[idx])
+        far = (X_cand - X_cand[idx]).abs().max(dim=1).values >= exclude
+        available = available & far
+
+    return torch.stack(picks) if picks else X_cand[:0]
