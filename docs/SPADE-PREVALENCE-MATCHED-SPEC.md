@@ -119,6 +119,21 @@ absence removes the easiest case from the test rather than a hard one — KU is 
 harder for excluding it, and that is stated so the result is not read as flattered by the
 choice.
 
+## 5b. Amendment: seeds RESTORED to 50, recorded before the run
+
+§5 cut seeds to 25 on a cost estimate of 85-113 s/campaign taken from the KT path. The
+firewalled KU pilot -- **timing only, no outcome inspected, nothing written** -- measures
+**27.8 s/campaign**, because the quantile scorer runs P8's 3-alpha `ALPHAS` rather than KT's
+5-alpha grid. At 50 seeds the full run is 400 campaigns and **3.1 h**, well inside §5's 8-hour
+ceiling.
+
+**Seeds are therefore restored to 50.** This is a pre-result change driven by a firewalled
+timing measurement, it strictly *increases* power rather than trading it away, and it makes KU's
+seed count **identical to the committed `ackley`/`hartmann6` rows** it will be compared against
+-- removing an n-mismatch the §5 reduction would have introduced into the very comparison KU
+exists to make. §5's warning that "KU-2's per-family bounds will be correspondingly wider" no
+longer applies and is superseded here.
+
 ## 6. What KU does not decide
 
 KU does not revisit Plate-2 allocation (settled this session: well-powered null on map error,

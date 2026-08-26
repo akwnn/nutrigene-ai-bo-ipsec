@@ -33,7 +33,7 @@ sys.path.insert(0, str(ROOT / "src"))
 KU_FAMILIES = ("levy", "rosenbrock")   # hill excluded: ensemble evaluator path, see spec §5a
 #: Spec §5: 25, reduced from 50 BEFORE the run because the comparable path measures
 #: ~85-113 s/campaign and 600 campaigns would project past the 8-hour ceiling.
-KU_SEEDS = 25
+KU_SEEDS = 50   # restored from 25: pilot measured 27.8s/campaign -> 3.1h, see spec §5b
 
 
 def load_tq():
