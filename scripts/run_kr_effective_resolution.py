@@ -30,6 +30,7 @@ import time
 import warnings
 from pathlib import Path
 
+import numpy as np
 import torch
 
 warnings.filterwarnings("ignore")
@@ -39,7 +40,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
 P8_COMMITTED = ROOT / "results" / "p8-certificate-families.json"
-OUT_DEFAULT = ROOT / "results" / "kr-effective-resolution.json"
+OUT_DEFAULT = ROOT / "results" / "ks-self-calibration.json"
 
 
 def _mod(name: str, filename: str):
@@ -106,11 +107,43 @@ def one_campaign(family: str, instance: str, arm: str, seed: int, committed: dic
 
     model = build_gp(rec.X, rec.Y, rec.Yvar, unit_bounds(P.DIM))
     ell = ard_lengthscales(model)
+    k_tail, k_mean = loo_calibration(model)
 
     return {"family": family, "instance": instance, "arm": arm, "seed": seed,
             "dim": P.DIM, "sigma": P.SIGMA, "n_wells": int(n_wells), "regret": regret,
-            "lengthscales": ell, "gate_ok": gate_ok,
+            "lengthscales": ell, "kappa_tail": k_tail, "kappa_mean": k_mean,
+            "gate_ok": gate_ok,
             "gate_delta_regret": d_regret, "gate_delta_wells": d_wells}
+
+
+def loo_calibration(model) -> tuple[float, float]:
+    """`(kappa_tail, kappa_mean)` from the fitted model's own leave-one-out residuals.
+
+    Everything is taken in the model's INTERNAL (transformed) space -- `train_targets` and
+    `covar_module` are both post-transform, so mixing an untransformed `Y` in here would
+    standardise the numerator and not the denominator and report nonsense.
+
+    The covariance passed to `loo_residuals` includes the likelihood's noise on the
+    diagonal, per `docs/SPADE-SELF-CALIBRATION-SPEC.md` §4; `loo_residuals` rejects a
+    noise-free matrix on its condition number rather than returning round-off.
+    """
+    from boec.selfcalib import calibration_inflation, calibration_tail, loo_residuals
+
+    with torch.no_grad():
+        Xtr = model.train_inputs[0]
+        ytr = model.train_targets.reshape(-1).double()
+        Kf = model.covar_module(Xtr).to_dense().double().reshape(ytr.numel(), -1)
+        noise = model.likelihood.noise.reshape(-1).double()
+        if noise.numel() == 1:
+            noise = noise.expand(ytr.numel())
+        K = (Kf + torch.diag(noise)).cpu().numpy()
+        m = model.mean_module(Xtr).reshape(-1).double().cpu().numpy()
+        y = ytr.cpu().numpy()
+
+    mu_c, var_loo = loo_residuals(K, y - m)
+    mu_loo, sd_loo = mu_c + m, np.sqrt(var_loo)
+    return (calibration_tail(y, mu_loo, sd_loo),
+            calibration_inflation(y, mu_loo, sd_loo))
 
 
 def _provenance(argv) -> dict:
