@@ -18,8 +18,10 @@ from typing import Literal
 import torch
 from torch import Tensor
 
+from boec.certstraddle import batch_lse_rho, certificate_straddle, rho_contour_offset
+from boec.designspace import gp_adapter
 from boec.optimizers import AcqConfig, make_acquisition, propose, sobol_design
-from boec.reliable_region import model_reliability_probability
+from boec.reliable_region import _learned_noise_variance, model_reliability_probability
 from boec.seedbook import derive_seed
 from boec.surrogate import build_learned_noise_gp, outcome_scale
 from boec.variance_reduction import greedy_ivr
@@ -34,8 +36,11 @@ __all__ = [
 ]
 
 
-Policy = Literal["staged", "fixed_hybrid", "validity_gated"]
-Objective = Literal["sobol_opening", "sobol48", "qlognei", "global_ivr", "boundary_ivr"]
+Policy = Literal["staged", "fixed_hybrid", "validity_gated", "certificate_targeted"]
+Objective = Literal[
+    "sobol_opening", "sobol48", "qlognei", "global_ivr", "boundary_ivr",
+    "certificate_straddle",
+]
 
 _BUDGET = 48
 _BATCH_SIZE = 4
@@ -46,9 +51,25 @@ _QLOGNEI_MC_SAMPLES = 256
 _GAMMA = 0.95
 _BOUNDARY_ESS_MIN = 32
 _OPENINGS = frozenset({32, 40, 44})
-_POLICIES = frozenset({"staged", "fixed_hybrid", "validity_gated"})
+_POLICIES = frozenset(
+    {"staged", "fixed_hybrid", "validity_gated", "certificate_targeted"}
+)
+#: Vorob'ev level whose contour ``certificate_targeted`` straddles. 0.5 is Bryan's
+#: published latent straddle; the certificate's own frontier sits well above it.
+_CERTIFICATE_RHO = 0.5
 _EXECUTION_MODES = frozenset({"REGISTERED", "TEST_ONLY"})
 _CPU_RNG_LOCK = threading.RLock()
+
+
+def _reliability_contour(model: object, tau: float, gamma: float) -> float:
+    """Latent ``theta`` with ``P(Y >= tau | f = theta) == gamma``.
+
+    Uses the campaign-side learned homoskedastic noise, matching the convention
+    :func:`model_reliability_probability` already uses inside the campaign loop, so the
+    contour the design targets is the same one the campaign's own reliability map draws.
+    """
+    variance = _learned_noise_variance(model)
+    return float(tau) + rho_contour_offset(float(gamma)) * float(variance.sqrt())
 
 
 def _integer(value: object, name: str) -> int:
@@ -95,6 +116,7 @@ class SpadeConfig:
     qlognei_mc_samples: int = _QLOGNEI_MC_SAMPLES
     gamma: float = _GAMMA
     boundary_ess_min: int = _BOUNDARY_ESS_MIN
+    certificate_rho: float = _CERTIFICATE_RHO
 
     def __post_init__(self) -> None:
         opening = _integer(self.opening, "opening")
@@ -107,6 +129,12 @@ class SpadeConfig:
         ess_min = _integer(self.boundary_ess_min, "boundary_ess_min")
         root_seed = _nonnegative_seed(self.root_seed)
         gamma = _finite_real(self.gamma, "gamma")
+        certificate_rho = _finite_real(self.certificate_rho, "certificate_rho")
+        if not 0.0 < certificate_rho < 1.0:
+            raise ValueError(
+                "certificate_rho must lie strictly between 0 and 1, got "
+                f"{certificate_rho!r}"
+            )
 
         if opening not in _OPENINGS:
             raise ValueError(
@@ -169,9 +197,19 @@ class SpadeConfig:
 
     @property
     def canonical_json(self) -> str:
-        """Canonical sorted representation used for audit and hashing."""
+        """Canonical sorted representation used for audit and hashing.
+
+        ``certificate_rho`` is emitted **only** for the policy that reads it. Every
+        registered arm predates that parameter, so including it unconditionally would
+        move all nine committed protocol digests and put every prior row in question.
+        The omission is not cosmetic: a field the campaign never consults must not
+        enter the identity of a campaign that never consulted it.
+        """
+        payload = asdict(self)
+        if self.policy != "certificate_targeted":
+            payload.pop("certificate_rho", None)
         return json.dumps(
-            asdict(self),
+            payload,
             sort_keys=True,
             separators=(",", ":"),
             ensure_ascii=False,
@@ -892,6 +930,8 @@ def _run_spade_impl(
             scheduled = "qlognei"
         elif config.policy == "fixed_hybrid":
             scheduled = "global_ivr"
+        elif config.policy == "certificate_targeted":
+            scheduled = "certificate_straddle"
         else:
             scheduled = "map"
         reliable_count: int | None = None
@@ -905,6 +945,23 @@ def _run_spade_impl(
             selected, objective_values, qmc_seed = _qlognei_batch(
                 engine, model, menu, config.batch_size
             )
+        elif config.policy == "certificate_targeted":
+            # The certified region is bounded by a high-exceedance contour, not the
+            # median one, so the adaptive half straddles that contour directly rather
+            # than reducing variance globally.
+            objective = "certificate_straddle"
+            theta = _reliability_contour(model, tau_f, config.gamma)
+            selected = batch_lse_rho(
+                gp_adapter(model),
+                menu,
+                theta,
+                config.batch_size,
+                rho=config.certificate_rho,
+            ).detach().double()
+            mean_sel, sd_sel = gp_adapter(model).posterior_mean_and_sd(selected)
+            objective_values = certificate_straddle(
+                mean_sel, sd_sel, theta, config.certificate_rho
+            ).detach().double()
         else:
             objective = "global_ivr"
             if config.policy == "validity_gated":
