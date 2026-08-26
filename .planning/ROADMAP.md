@@ -22,23 +22,25 @@ map/regret/certificate scoring.
 
 Requirements: CERT-01 through CERT-05.
 
-## Phase 4 — Development selection — NEXT
+## Phase 4 — Development selection — COMPLETE (`NO_SELECTION`)
 
-Run the registered nine-candidate development study, analyze nested family folds, and
-commit one selected SPADE protocol or stop with `NO_SELECTION`.
+Ran the registered nine-candidate development study and nested family folds. Selection
+status is `NO_SELECTION` (no candidate met empirical containment ≥ 0.9 on any LOFO
+training fold). Locked artifacts are under `results/spade-development-*` and
+`results/spade-selected-protocol.json`.
 
 Requirement: EVAL-01.
 
-## Phase 5 — Lockbox evidence — PENDING OUTCOMES
+## Phase 5 — Lockbox evidence — STOPPED (selection gate)
 
-Implement and freeze four randomized generator families, run the powered paired lockbox,
-merge immutable shards, and adjudicate the intersection-union success rule.
+Lockbox is forbidden after `NO_SELECTION`. Generators remain frozen/unopened; no powered
+sample size and no lockbox outcomes may be produced for this protocol instance.
 
-Requirements: EVAL-02 through EVAL-04, REP-02.
+Requirements: EVAL-02 through EVAL-04, REP-02 — N/A under stop rule.
 
-## Phase 6 — Publication release — PENDING OUTCOMES
+## Phase 6 — Publication release — NEXT (negative-stop handoff)
 
-Run the fail-closed release validator, complete full tests and independent review, freeze
-artifacts, and hand off evidence and bounded claims for manuscript drafting.
+Freeze the `NO_SELECTION` evidence, update methods/summary from selection artifacts only,
+and hand off bounded joint-protocol claims (registered negative stop; no lockbox claims).
 
-Requirements: REP-03, REP-05.
+Requirements: REP-03, REP-05 (as applicable without lockbox release).

@@ -2,7 +2,7 @@
 
 **Milestone:** SPADE joint protocol  
 **Status:** active  
-**Current phase:** Phase 4 — Development selection (pre-outcome)
+**Current phase:** Phase 4 — Development selection COMPLETE (`NO_SELECTION`)
 
 ## Decisions frozen
 
@@ -113,12 +113,22 @@ regressions and are not being repaired inside the prospective study branch.
   the clean integrated affected suite passed 203 tests with two pre-existing Torch
   deprecation warnings. No workflow was launched and no outcome was read.
 
+## Development campaign outcome (2026-08-26)
+
+- Local REGISTERED development completed on commit `c9199a3` with single-thread BLAS.
+- All five families have complete `000-050` shards (Hill via merged parent ledger after a
+  path-normalized `000-001` re-run). Artifacts: `results/spade-development-*.jsonl.gz*`,
+  `results/spade-development-analysis.json`.
+- Unanimous LOFO selection wrote `results/spade-selected-protocol.json` with status
+  `NO_SELECTION`: every SPADE candidate failed the registered empirical-containment ≥ 0.9
+  gate on every training fold (and on the all-five refit diagnostic). No candidate survived
+  step 1, so steps 2–4 were skipped.
+- Per the frozen protocol, lockbox access is **forbidden**. Do not run power planning or
+  open lockbox outcomes. Historical final-SPADE artifacts remain provenance-separated.
+
 ## Next action
 
-Push the exact clean source commit, then execute the development campaign grid locally and
-apply the prespecified unanimous leave-one-family-out selection. Only after a committed
-`SELECTED` protocol may the planner create the committed power artifact. Do not open lockbox
-outcomes unless that artifact is `POWERED` with an exact instance prefix no larger than the
-2,000 reserved keys and verified homogeneous local capacity can finish that prefix without
-a partial run. Historical final-SPADE raw artifacts are restored and validated; they must
-remain provenance-separated from the new joint-protocol outcomes.
+Development `NO_SELECTION` evidence is frozen in-repo. Draft manuscript joint-protocol
+prose from `results/spade-selected-protocol.json` and `results/spade-development-analysis.json`
+only. Do not invent a selected SPADE protocol or run lockbox. Historical final-SPADE
+publication track remains separate.
