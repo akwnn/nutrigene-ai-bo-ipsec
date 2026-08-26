@@ -1,0 +1,8 @@
+tau-quantile follow-up: families=('ackley', 'hartmann6') arms=('versionb', 'versionb_random', 'versionb_predictive', 'plate1_only') p_values=(0.3, 0.1, 0.03, 0.01) n_draws=4096
+400 campaigns
+
+[ 200/400] ackley      done rows=  4800 gate_fail=0 (36.7m)
+[ 400/400] hartmann6   done rows=  9600 gate_fail=0 (76.3m)
+
+gate failures: 0
+wrote tau-quantile-followup.json - 9600 rows

@@ -54,7 +54,11 @@ from __future__ import annotations
 import numpy as np
 from numpy.typing import ArrayLike
 
-__all__ = ["calibration_inflation", "loo_residuals"]
+#: Reject the leave-one-out identity above this condition number. A noise-inclusive
+#: covariance on 48 wells sits many orders below it; a noise-free kernel does not.
+COND_MAX = 1e10
+
+__all__ = ["calibration_inflation", "calibration_tail", "loo_residuals", "COND_MAX"]
 
 
 def loo_residuals(K: ArrayLike, y: ArrayLike) -> tuple[np.ndarray, np.ndarray]:
@@ -78,6 +82,18 @@ def loo_residuals(K: ArrayLike, y: ArrayLike) -> tuple[np.ndarray, np.ndarray]:
         raise ValueError(f"K must be square, got shape {Km.shape}")
     if Km.shape[0] != yv.size:
         raise ValueError(f"K is {Km.shape[0]}x{Km.shape[0]} but y has {yv.size} entries")
+
+    # A noise-FREE kernel matrix on densely sampled inputs is near-singular, and
+    # `1 / [K^-1]_ii` computed from it is numerical garbage rather than a LOO variance.
+    # That is the exact mistake -- passing the kernel instead of the noise-inclusive
+    # covariance -- that would inflate every standardised residual and manufacture a
+    # calibration signal out of round-off. Refused loudly, not returned quietly.
+    cond = float(np.linalg.cond(Km))
+    if not np.isfinite(cond) or cond > COND_MAX:
+        raise ValueError(
+            f"K is too ill-conditioned for the leave-one-out identity (cond={cond:.3g} "
+            f"> {COND_MAX:.0g}). Pass the covariance INCLUDING the noise diagonal, not "
+            "the noise-free kernel.")
 
     Kinv = np.linalg.inv(Km)
     diag = np.diag(Kinv)
@@ -116,3 +132,43 @@ def calibration_inflation(y: ArrayLike, mu: ArrayLike, sd: ArrayLike) -> float:
 
     z = (yv - mv) / sv
     return float(np.sqrt(np.mean(z ** 2)))
+
+
+def calibration_tail(y: ArrayLike, mu: ArrayLike, sd: ArrayLike, q: float = 1.0) -> float:
+    """The ``q``-quantile of ``|z|``, the worst-case counterpart to
+    :func:`calibration_inflation`.
+
+    **Why a tail statistic and not a mean, decided before any KS number existed.** The
+    certificate is a *simultaneous* claim -- it fails if **any** point in the region is
+    wrong -- so the diagnostic that matches it is worst-case, not average-case. A landscape
+    whose structure the kernel cannot capture (ackley's narrow spikes) produces a few badly
+    predicted wells while leaving the mean-square residual close to nominal, and
+    ``test_calibration_tail_sees_localized_misspecification_that_the_mean_hides`` asserts
+    exactly that case: two campaigns with identical ``calibration_inflation`` that this
+    statistic separates.
+
+    **Why the default is the MAX and not the 0.90 quantile.** The spec first registered
+    ``q = 0.90``; a unit test written before any KS number existed showed that choice cannot
+    detect the very case it was chosen for. With 2 badly-predicted wells in 20, the 0.90
+    quantile interpolates to 0.47 -- *below* a uniformly-mediocre campaign's 1.5 -- because
+    the spikes sit at the 90th percentile boundary. On 48 wells a handful of bad predictions
+    is precisely the ackley signature, so ``q`` defaults to 1.0. Amended in
+    ``docs/SPADE-SELF-CALIBRATION-SPEC.md`` §2a on the strength of the synthetic test alone,
+    **before** any campaign was scored.
+
+    Raises:
+        ValueError: on ``q`` outside ``[0, 1]``, or anything
+            :func:`calibration_inflation` would reject.
+    """
+    if not 0.0 <= float(q) <= 1.0:
+        raise ValueError(f"q must be a quantile in [0, 1], got {q}")
+    yv = np.asarray(y, dtype=float).reshape(-1)
+    mv = np.asarray(mu, dtype=float).reshape(-1)
+    sv = np.asarray(sd, dtype=float).reshape(-1)
+    if yv.size == 0:
+        raise ValueError("no residuals: calibration is undefined without observations")
+    if not (yv.size == mv.size == sv.size):
+        raise ValueError(f"length mismatch: y={yv.size}, mu={mv.size}, sd={sv.size}")
+    if np.any(sv <= 0.0):
+        raise ValueError("every predictive sd must be positive")
+    return float(np.quantile(np.abs((yv - mv) / sv), float(q)))

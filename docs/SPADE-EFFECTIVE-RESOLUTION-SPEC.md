@@ -132,6 +132,55 @@ Plate-2 allocation question (KF-3/3b/3c killed boundary targeting on *map error*
 counts), does not revisit regret, and does not license any claim that SPADE beats a
 comparator. `NO_SELECTION` is preserved and the lockbox stays sealed.
 
-## 7. Result
+## 7. Result — KR-1 FAILS, KR-4 FIRES, `k_eff` IS DROPPED
 
-*(Empty at freeze. Filled once, immediately after, from the run.)*
+**1,000 campaigns regenerated, 0 gate failures** (851s; `results/kr-effective-resolution.json`,
+`results/kr-analysis.json`). Every campaign reproduced its committed P8 `regret`/`n_wells` at
+`|delta| = 0`, so the lengthscales are read off the same campaigns P8 scored.
+
+| gate | bar | measured | verdict |
+|---|---|---|---|
+| **KR-1** transfer | 95% LB ≥ 0.90 | `k_eff` cap 3.6158 → containment 0.8340, **LB 0.8175** | **FAIL** |
+| **KR-2** cap dispersion | `k_eff` spread < 4× | `k_eff` **1138×**, box volume 370× | **FAIL** |
+| **KR-3** abstention floor | answer rate ≥ 0.30 | 1.000 (the cap never binds) | PASS, vacuously |
+| **KR-4** Occam | drop if identical to box volume | both FAIL at exactly LB 0.8175 | **DROP `k_eff`** |
+
+`k_eff` did not merely fail to help — it made cap dispersion **three times worse** (1138× against
+370×) and separates contained from failed campaigns *less* well than raw box volume does, in
+both family groups (easy 1.48 SD vs 2.40; hard 1.17 SD vs 1.22). It is strictly dominated by
+the simpler statistic it was meant to replace. **Verdict: dropped, per KR-4, permanently.**
+
+**The mechanism is sane; the hypothesis was wrong.** Sanity check on the arithmetic: hill's
+`k_eff` cap 10.614 against its box-volume cap 0.37025 implies a correlation cell of 0.0349,
+i.e. `l = 0.578` — which matches this repository's own independently measured median ARD
+lengthscale of 0.5982 (`src/boec/lse.py`). The lengthscales are right; `k_eff` is simply not
+the variable that governs failure.
+
+**What the failure reveals — two distinct failure modes, not one.**
+
+| family | median `k_eff` | fraction with `k_eff` < 1 | median `l` | truth containment |
+|---|---|---|---|---|
+| hill | 0.597 | 0.566 | 0.627 | 0.9939 |
+| levy | 0.899 | 0.512 | 0.572 | 0.8958 |
+| rosenbrock | 1.861 | 0.425 | 0.612 | 0.8930 |
+| ackley | **0.061** | **0.988** | 0.524 | 0.8889 |
+| hartmann6 | **0.082** | **1.000** | 0.710 | 0.8081 |
+
+On ackley and hartmann6, **98.8% and 100% of certified regions are smaller than a single
+correlation cell** — and they still fail 11% and 19% of the time. A region spanning less than
+one independent location cannot fail a *simultaneous* claim by accumulating locations. That is
+not a resolution failure:
+
+- **Resolution failure (hill/levy/rosenbrock).** Regions span 0.6–1.9 cells at the median and
+  43 cells when they fail. Volume conditioning addresses this, and does: per-family calibration
+  reaches 0.9730–0.9988 held out (§1d).
+- **Localization failure (ackley/hartmann6).** Sub-resolution regions, confidently placed in the
+  wrong part of the box. **No conditioning on the region's own geometry can repair a placement
+  error**, which is why a cap calibrated on the easy families never binds here (answer rate
+  1.000): the hard families' regions already sit far below any easy-family cap.
+
+**Consequence for the programme.** Volume-conditional calibration stays valid where the GP fits
+and is now understood to be a *resolution* correction specifically. The remaining failure needs a
+statistic that detects **a confidently misplaced region**, which is a property of the model's fit
+on that campaign, not of the region's size. That is registered separately in
+`docs/SPADE-SELF-CALIBRATION-SPEC.md` (KS), frozen before its result exists.
