@@ -53,3 +53,52 @@ licenses a registered confirmatory run, not a claim.
 
 **What KZ cannot establish.** It is still simulation. It tests whether the *mechanism*
 survives realistic noise, not whether SPADE works in a wet lab.
+
+## 6. KZ RESULT — the certificate is VACUOUS at real noise, and that is the finding
+
+4 families x 12 seeds x 2 arms x 2 sigma, `alpha = 0.95`.
+
+### 6.1 KZ-3 control PASSES, so the verdict is readable
+
+At `sigma_rel = 0.25` the harness reproduces `SPADE-SELECTION-BLIND-SPEC.md` §6.2's
+direction: targeted plate 2 beats random on non-empty certificates **16 v 1**
+(p = 2.7e-04) at c=1.0 and **12 v 2** (p = 1.3e-02) at c=1.5.
+
+### 6.2 At sigma_rel = 0.68 nothing certifies at all
+
+| sigma | c | targeted answer rate | random answer rate |
+|---|---|---|---|
+| 0.25 | 1.0 | 24.0% | 8.3% |
+| 0.25 | 1.5 | 15.6% | 5.2% |
+| **0.68** | 1.0 | **0.0%** | **0.0%** |
+| **0.68** | 1.5 | **0.0%** | **0.0%** |
+| **0.68** | 2.0 | **0.0%** | **0.0%** |
+
+**KZ-1 is not adjudicable as targeting-vs-random**, because both arms are vacuous. The
+discordant counts are 0 and 0. Recorded as such rather than as a PASS or a FAIL: the gate
+asked a question the data cannot answer, and the reason it cannot is itself the result.
+
+### 6.3 The finding, and it is consistent with the real data
+
+**At real cell-manufacturing noise, the REGION certificate on 48 wells answers 0% of the
+time.** This is the simulated counterpart of `SPADE-PUBLISHED-ECM-RESULT.md` §4, where
+Hall & Ogle's SNR of 0.10 supported no composition-specific claim, and §5, where resolving
+a one-signal-sd effect needed ~27 replicates per composition.
+
+Two independent routes -- a published real dataset and a controlled simulation -- now give
+the same answer: **the binding constraint at realistic noise is replication, not
+acquisition design.** No inflation, no acquisition rule and no calibration recovers
+information that was never measured.
+
+**Registered consequence for the targeting claim.** Every result in this repo showing
+plate-2 targeting earns its place is hereby **conditional on `sigma_rel <= 0.25`**. It is
+not established at CV 68%, because at CV 68% there is no certificate to earn.
+
+### 6.4 What is tested next, registered before it runs
+
+The region estimand must include the points it is least sure about; the finite-set
+estimand (`boec.topk`) may choose. If the finite set still answers where the region is
+vacuous, it is not a convenience -- it is **the only form of certification viable at real
+cell-manufacturing noise**. `hill`, the biphasic dose-response family, is added because it
+is the only family in the suite that resembles a real dose-response and it was absent from
+KZ. Sigma is extended to 0.50 to give a trend rather than two points.
