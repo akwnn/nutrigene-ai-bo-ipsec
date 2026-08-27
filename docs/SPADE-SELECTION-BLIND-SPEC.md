@@ -152,6 +152,40 @@ an uncalibrated certificate or by map error, and earns a 3x answer rate and ~4x 
 certified volume when judged by a calibrated one.* The prospective KF-3 map-error null stands
 unqualified; KV-1's containment FAIL stands as measured at `c = 1.0`.
 
+### 6.3b CORRECTIONS to §6.2, found by stress-testing my own claims
+
+**Retracted: "targeting is the only arm clearing LB >= 0.90."** That is a POWER ARTIFACT, the
+same one that made `levy` FAIL in KU. At c=1.5 the point estimates are `versionb` 0.9677
+(n=62), `versionb_random` 0.9524 (n=21), `plate1_only` 1.0000 (n=18). The controls' lower
+bounds fail **only on sample size**, not on performance. The correct statement is: *all three
+arms have point-estimate containment >= 0.95 at c=1.5; only `versionb` certifies often enough
+to prove it.*
+
+**Weakened: "both families independently select the same c* = 1.5."** True, but the selection
+rule is more fragile than that phrasing implies. `ackley`'s failure bound is **non-monotone**
+in c -- 0.165, 0.101, 0.069, **0.181** -- so c=2.0 fails for ackley and the rule lands on 1.5
+partly by that failure. Diagnosed: containment itself IS monotone (0.9048 -> 0.9667 -> 1.0000
+-> 1.0000); the *bound* rises at c=2.0 only because n collapses to 15 and `cp_up(0,15)=0.181`.
+This is the same composition effect KT-2 was registered to catch for Lever A, now observed on
+Lever B. The nesting property holds; the **selection rule** is confounded by shrinking n.
+
+**What survives the stress test, and is the real result.** The answer-rate advantage is robust
+across the ENTIRE c grid, not an artefact of c=1.5:
+
+| c | targeted-only answers | random-only | p | targeted truth | random truth |
+|---|---|---|---|---|---|
+| 1.00 | 76 | 5 | 2.3e-17 | **0.7938** | 1.0000 |
+| 1.25 | 63 | 3 | 1.3e-15 | 0.9286 | 1.0000 |
+| **1.50** | 49 | 8 | 2.7e-08 | **0.9677** | 0.9524 |
+| 2.00 | 26 | 4 | 5.9e-05 | 1.0000 | 1.0000 |
+
+**The mechanism, stated correctly.** Calibration did not *reveal* that targeting was good. At
+c=1.0 targeting already answered far more often (76 vs 5) — but its containment was 0.7938
+against random's 1.0000, so **it answered more and was wrong more, and the extra answers were
+worthless.** Inflation removes the containment penalty (0.7938 -> 0.9677) while leaving the
+answer-rate advantage intact (49 vs 8). *That* is what changed: not targeting's value, but
+whether its extra answers can be trusted.
+
 ### 6.4 Status, stated precisely
 
 This is a **re-score** of prospectively-generated campaigns (KV generated the wells live),
