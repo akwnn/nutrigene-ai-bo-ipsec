@@ -30,7 +30,7 @@ sys.path.insert(0, str(ROOT / "src"))
 
 SRC = ROOT / "data/lab/derived/candidate_campaign_coating_flow.csv"
 #: Manufacturing spec sweep. 40% sits at the median of the 12 measured tubes.
-TAUS = (35.0, 40.0, 45.0)
+TAUS = (25.0, 28.0, 30.0, 32.0, 35.0)
 #: Calibration levers. c=1.0 is the identity control.
 CS = (1.0, 1.5, 2.0, 3.0)
 ALPHAS = (0.5, 0.8, 0.95)
