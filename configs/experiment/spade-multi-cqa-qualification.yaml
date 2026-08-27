@@ -1,0 +1,49 @@
+# Synthetic registration for the SPADE multi-CQA manufacturing overlay.
+# These values are computational fixtures, not ESC-to-EC release evidence.
+schema: boec-spade-multi-cqa-qualification-v1
+study_id: spade-multi-cqa-qualification-synthetic-2026-08-27
+status: FROZEN_BEFORE_IMPLEMENTATION_EVALUATION
+claim_scope: computational_synthetic_only
+
+protocol:
+  dimension: 6
+  alpha: 0.95
+  n_draws: 512
+  n_rho: 64
+  base_seed: 270827
+  certificate_volume_rule: smallest
+  predictive_observation_noise: assay_relative_additive
+  latent_draw_inflation: 1.0
+  empty_certificate_policy: abstain_empty_joint
+
+# Example release attributes for an ESC-to-EC workflow. Values are synthetic and
+# must be replaced by signed, compensated, repeated assays before any biological
+# or manufacturing claim is made.
+cqas:
+  - name: identity
+    units: fraction_cd31_positive
+    threshold: 0.70
+    direction: greater_equal
+    gamma: 0.95
+    assay_id: synthetic-ec-identity
+    assay_version: synthetic-v1
+    sigma_rel: 0.10
+    sigma_add: 0.01
+  - name: viability
+    units: fraction_live
+    threshold: 0.80
+    direction: greater_equal
+    gamma: 0.95
+    assay_id: synthetic-viability
+    assay_version: synthetic-v1
+    sigma_rel: 0.05
+    sigma_add: 0.01
+  - name: yield
+    units: cells_per_input_cell
+    threshold: 0.50
+    direction: greater_equal
+    gamma: 0.95
+    assay_id: synthetic-ec-yield
+    assay_version: synthetic-v1
+    sigma_rel: 0.10
+    sigma_add: 0.01
