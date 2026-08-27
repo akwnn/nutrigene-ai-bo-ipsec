@@ -1,6 +1,19 @@
 # What we fixed in SPADE, and what's still broken
 
-Written 2026-08-27. Every number here comes from a real result file you can re-run.
+Written 2026-08-27. Every number here comes from a result file in `results/`, with the
+script that made it in `scripts/`. Nothing is quoted from memory.
+
+| what | data file | script |
+|---|---|---|
+| calibration sweep | `results/ktb-inflation.json`, `ktb-inflation-fine.json` | `run_ktb_inflation.py` |
+| model-too-confident bug, test problems | `results/probe-meanmarg-benchmarks.json` | `probe_meanmarg_benchmarks.py` |
+| model-too-confident bug, your cells | -- | `run_real_ipsc_certification.py` |
+| model-too-confident bug, published study | -- | `certify_hall_ogle.py` |
+| safety factor from real data | -- | `probe_loo_real_assay.py`, `certify_hall_ogle.py` |
+| "pick a few recipes" version | `results/probe-topk-finite-set.json` | `probe_topk_finite_set.py` |
+| real-noise test | `results/probe-kz-realistic-noise.json` | `probe_kz_realistic_noise.py` |
+| 75% stall investigation | `results/probe-hypermix-6seed.json` | `probe_hypermix_saturation.py` |
+| head-to-head vs BO | `results/final-spade-combined.json` | committed study |
 
 ---
 
@@ -53,9 +66,17 @@ We fixed it properly (no fudge factor, no tuning). Now it says plus or minus 3.4
 correctly refuses to make the 35% claim.
 
 **We then checked it on a totally different dataset — the published Hall & Ogle iPSC-EC
-study — and the same bug was there, worse. It said plus or minus 0.0003 on data ranging
-0.5 to 1.4. That's 297x too confident.** So it's not a quirk of your lab. It's a real bug
-in how everyone does this.
+study — and the same bug was there, worse.** So it's not a quirk of your lab.
+
+| data | model said +/- | should have said | how wrong |
+|---|---|---|---|
+| our 4 test problems | -- | -- | **1.004x - 1.011x** (basically fine) |
+| your iPSC-EC cells | 0.007 | 3.388 | **484x** |
+| published Hall & Ogle | **0.0003** | 0.0818 | **297x** |
+
+Your cells: 12 tubes, CD31+ from 22.6% to 47.3%, measured noise 12.1 pp.
+Published study: 23 ECM recipes, response 0.509 to 1.446, noise **10x bigger than the
+signal**.
 
 ### 4. A code bug that silently ran the wrong thing
 
@@ -79,8 +100,11 @@ publishing on its own, and it applies to everyone doing this, not just us.
 We tuned the safety factor on simulated data and got **1.5**. Then we measured what real
 data actually needs:
 
-- Your iPSC-EC data: **0.71**
-- Published Hall & Ogle data: **0.53**
+| dataset | safety factor it actually needs | how we checked |
+|---|---|---|
+| simulated test problems | 1.5 | tuned on fake data |
+| your iPSC-EC cells | **0.71** | leave-one-tube-out, 11 of 12 inside a 68% band |
+| published Hall & Ogle | **0.53** | leave-one-recipe-out, 22 of 23 inside |
 
 Both under 1. Meaning the real data is *less* noisy than our simulations assumed, and using
 1.5 makes SPADE about **3x more cautious than it needs to be**. Using the right number
@@ -93,17 +117,31 @@ And we can measure this from data you already have — no new experiments needed
 If the model is *unsure*, widening helps. If the model is *wrong*, widening does nothing —
 because widening only makes the answer fuzzier, it never moves it.
 
-We can see both happen. On two test problems, widening keeps improving accuracy up to 93%.
-On two others it **stalls at 75% and stops**, no matter how much we widen. Those are cases
-where the model is confidently wrong, and there's no fixing that with a safety factor.
+We can see both happen. Accuracy as we widen (same cases at every setting, so nothing is
+cherry-picked):
+
+| test problem | 1x | 2x | 3x | 4x | |
+|---|---|---|---|---|---|
+| ackley | 35% | 75% | 89% | **93%** | keeps improving |
+| hartmann6 | 20% | 58% | 82% | **88%** | keeps improving |
+| levy | 33% | 75% | 75% | **75%** | **stuck** |
+| rosenbrock | 64% | 73% | 73% | **73%** | **stuck** |
+
+Those bottom two are cases where the model is confidently wrong, and no safety factor
+fixes that.
 
 ### At real-world noise levels, SPADE can't certify anything
 
 Real cell data is noisy. The published study has noise **10x bigger than the signal**.
 
-At that noise level, on 48 wells, SPADE certifies **nothing, 0% of the time**. Not because
-it's broken — we checked, it works fine at lower noise — but because **the data genuinely
-doesn't contain the answer.**
+| noise | targeted 8 wells | random 8 wells |
+|---|---|---|
+| normal (0.25) | answers 24% of the time | answers 8% |
+| **real (0.68)** | **0%** | **0%** |
+
+At real noise, on 48 wells, SPADE certifies **nothing, 0% of the time**. Not because it's
+broken — at 0.25 the targeted wells still beat random 16 to 1 (p = 0.00027), so the test
+harness works — but because **the data genuinely doesn't contain the answer.**
 
 We got the same result two different ways: on the real published data, and in simulation.
 
@@ -119,10 +157,17 @@ dose-response curve shape — the kind you actually see with media and coatings.
 On `hill`, SPADE **beats** standard Bayesian optimization. And the noisier it gets, the
 bigger SPADE's lead:
 
-| noise level | who wins |
-|---|---|
-| low (0.10) | BO, slightly |
-| realistic (0.25) | **SPADE, clearly** |
+| test problem | noise | SPADE vs BO | who wins |
+|---|---|---|---|
+| **hill** (dose-response) | 0.10 | +0.018 | BO, slightly |
+| **hill** (dose-response) | **0.25** | **-0.031** | **SPADE, clearly** |
+| rosenbrock | 0.25 | -0.013 | SPADE, barely |
+| levy | 0.25 | +0.023 | tie |
+| ackley | 0.25 | +0.102 | BO |
+| hartmann6 | 0.25 | +0.162 | BO |
+
+(negative = SPADE better; anything under 0.02 is a tie. The two `hill` rows don't overlap
+statistically, so the flip is real, not noise.)
 
 On the abstract math problems, BO wins. Those have one sharp peak to find, which is exactly
 what BO is built for — and nothing in cell manufacturing looks like that.
@@ -133,6 +178,21 @@ what BO is built for — and nothing in cell manufacturing looks like that.
 
 > **Across both fibronectin and vitronectin, at every dose from 0.5 to 20 µg/mL,
 > CD31+ is at least 31.6% — with 95% confidence.**
+
+How that number moves with how cautious you want to be:
+
+| safety factor | 50% sure | 80% sure | **95% sure** | 99% sure |
+|---|---|---|---|---|
+| 1.0 (what your data supports) | 37.1% | 34.3% | **31.6%** | 29.2% |
+| 1.5 (what simulation said) | 37.0% | 32.8% | **28.8%** | 25.2% |
+| 2.0 | 37.0% | 31.4% | 26.0% | 21.3% |
+
+Your 12 measured tubes, for reference:
+
+| dose µg/mL | 0.5 | 1 | 2.5 | 5 | 10 | 20 |
+|---|---|---|---|---|---|---|
+| fibronectin | 31.7 | **47.3** | 46.8 | 38.7 | 46.3 | 36.4 |
+| vitronectin | 22.6 | 40.1 | 39.6 | 41.3 | 34.3 | 39.8 |
 
 And here's how many tubes you'd need for a stricter target, at your current noise:
 
@@ -159,8 +219,16 @@ Tightening that gate, or running repeats, buys you far more than testing more co
    noise there's no certificate at all, so there's nothing for them to improve.
 5. **No wet-lab proof.** Your 12 CD31 gates still need signing in CytExpert. That's one
    afternoon, and it's the only thing standing between this and a real result.
-6. **It still says "I don't know" too often.** We built a version that answers 2.3x more
-   often at the same accuracy, but only tested it on 64 cases so far.
+6. **It still says "I don't know" too often.** We built a version that picks a handful of
+   recipes instead of a whole region:
+
+   | version | answers | accuracy | recipes handed back |
+   |---|---|---|---|
+   | whole region | 4.7% | 100% | -- |
+   | **pick a few** | **10.9%** | **100%** | **6.3** |
+
+   Same accuracy, **2.3x more answers**. But only 64 test cases so far, and we expect it to
+   hit the same 75% stall for the same reason.
 7. **We never compared SPADE to BO on real data.** Only on simulations. So we can't claim
    it's better on real cells.
 8. **The multi-CQA work isn't in this repo.** No code, no branch. Can't check it. If it

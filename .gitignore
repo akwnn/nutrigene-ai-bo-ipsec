@@ -329,3 +329,15 @@ COMMIT_MSG.txt
 !results/k0-calibration-gate.json
 !results/k1-noise-ceiling.json
 !results/k2-design-lottery.json
+
+# 2026-08-27: the probe results behind `docs/SPADE-STATE-OF-THE-METHOD.md`. These back
+# its headline numbers -- the 484x/297x over-confidence, the 2.3x answer rate of the
+# finite-set estimand, the 0% answer rate at realistic noise, and the 75% saturation --
+# and every one of them lived only in a scratch directory until now, which made the doc
+# unreproducible from a clean clone. That is the same failure mode this file already
+# records twice above (`e2-grid.json`, `e2-doe-d8.json`): written to disk, ignored by
+# `results/*`, and nobody noticed. Un-ignored BY PATH so it cannot happen a third time.
+!results/probe-topk-finite-set.json
+!results/probe-meanmarg-benchmarks.json
+!results/probe-kz-realistic-noise.json
+!results/probe-hypermix-6seed.json
