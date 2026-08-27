@@ -146,8 +146,11 @@ Protocol digest: `1c5c3b7e…`
 
 | Tree | Study | Protocol digest | Notes |
 |---|---|---|---|
-| `.worktrees/spade-campaign` (live) | `…-floor15-loo-tail-2026-08-27` | `681947bc…` | Gate running |
-| `.worktrees/spade-merge-joseph` | `…-floor15-loo-tail-meanmarg-2026-08-27` | `1c5c3b7e…` | Combined implementation |
+| `.worktrees/spade-campaign` (live) | `…-floor15-loo-tail-meanmarg-2026-08-27` | `1c5c3b7e…` | Gate running after floor15 FAIL |
+| archived | `…-floor15-loo-tail-2026-08-27` | `681947bc…` | **gate FAIL** (0 survivors) |
+
+Floor-1.5 hill-only survivors (`o32-staged`, `o40-staged`) all failed levy emp≥0.9.
+Next registered attempt adds Joseph mean-marginalisation on the same recovery stack.
 
 ---
 
