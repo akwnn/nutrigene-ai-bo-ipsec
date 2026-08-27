@@ -89,3 +89,40 @@ At the current gate noise (12.1 pp), tubes required to certify a spec over the b
 **The binding constraint is gate noise, not well count.** The highest-leverage next
 experiment is tightening the CD31 gate or adding replicates -- not adding coating
 conditions.
+
+## 6. The defect is invisible in simulation — measured in both directions
+
+The obvious objection to §2 is that a defect this large should have shown up in the
+benchmark suite. It does not, and the reason is quantitative.
+
+Posterior width ADDED by mean-marginalisation, `versionb` arm, 24 campaigns
+(4 families x 6 seeds, exploratory):
+
+| data | mean posterior sd, raw | mean-marginalised | ratio |
+|---|---|---|---|
+| ackley | 0.0167 | 0.0168 | **1.008x** |
+| hartmann6 | 0.0390 | 0.0392 | **1.004x** |
+| levy | 0.1321 | 0.1333 | 1.009x |
+| rosenbrock | 0.1270 | 0.1284 | 1.011x |
+| **real iPSC-EC** | **0.007** | **3.388** | **484x** |
+
+Certificate behaviour on the benchmarks is correspondingly unchanged (alpha=0.95:
+answer rate 22.9% -> 20.8%, containment 0.8182 -> 0.8000, n=11 and 10 — within noise at
+this sample size).
+
+**Interpretation.** The correction contributes `sigma^2 / n` relative to the kernel's
+own variance. Every simulated family runs at 48 wells with enough signal that the constant
+mean is well determined, so the omitted term is negligible. The real assay runs at n=12
+with SNR 0.34, where MLE drives the outputscale to zero and the omitted term becomes
+**the entire posterior width**.
+
+**Consequence for method validation, stated as the finding:** *a structural defect in
+GP-based certification can add under 1% of posterior width across an entire benchmark
+suite while accounting for 100% of it on real data. Benchmark-only validation cannot
+detect this class of failure.*
+
+**Why the committed benchmark results are NOT retroactively re-scored.** The change is
+within noise there (<= 1.1% width), and re-scoring would break provenance against every
+committed run for no measurable gain. `boec.meanmarg` is therefore used by the real-data
+path and is available, not defaulted. **Recommendation on record: it should be ON for any
+low-SNR or small-n assay**, which is every real one this project has seen.
