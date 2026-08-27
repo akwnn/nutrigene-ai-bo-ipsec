@@ -127,7 +127,7 @@ def test_registered_scoring_sizes_are_exact_and_immutable():
         fit_restarts=4,
         certificate_volume_rule="smallest",
         predictive_observation_noise="assay_relative_additive",
-        latent_draw_inflation="loo_calibration",
+        latent_draw_inflation="loo_calibration_tail",
         certificate_max_volume=0.001,
     )
 
@@ -155,6 +155,26 @@ def test_scoring_settings_reject_unknown_latent_inflation_and_bad_max_volume():
             fit_restarts=1,
             certificate_max_volume=0.0,
         )
+
+
+def test_loo_tail_inflation_sees_localized_spike_that_rms_hides():
+    """Mean-square LOO can look almost calibrated while one bad well ruins the CE."""
+    import numpy as np
+    from scipy.stats import norm
+
+    y = np.array([1.0, -1.0, 1.0, -1.0, 4.0])
+    mu = np.zeros(5)
+    sd = np.ones(5)
+    rms = study_module._latent_inflation_from_loo_residuals(
+        y, mu, sd, mode="loo_calibration"
+    )
+    tail = study_module._latent_inflation_from_loo_residuals(
+        y, mu, sd, mode="loo_calibration_tail"
+    )
+    assert rms == pytest.approx(math.sqrt((1 + 1 + 1 + 1 + 16) / 5))
+    assert tail == pytest.approx(max(rms, 4.0 / float(norm.ppf(0.975))))
+    assert tail > rms
+
 
 
 def test_controlled_tau_makes_quarter_grid_reliable_and_releases_numeric_only():
@@ -701,11 +721,11 @@ def test_yaml_freezes_every_registered_design_value_and_its_payload_digest():
     canonical = json.dumps(p, sort_keys=True, separators=(",", ":"), allow_nan=False).encode()
     assert cfg["digests"]["protocol_payload_sha256"] == hashlib.sha256(canonical).hexdigest()
     assert cfg["digests"]["protocol_payload_sha256"] == (
-        "6e6dec2a1671e602833be195d51b6b3f13fa443a56a3780de28db3312ed2d75b"
+        "6f38077ebc8cb0788e460d9e15ec3bc1ef4427865838f7290626cbe9a27afd57"
     )
     assert p["certificate_volume_rule"] == "smallest"
     assert p["predictive_observation_noise"] == "assay_relative_additive"
-    assert p["latent_draw_inflation"] == "loo_calibration"
+    assert p["latent_draw_inflation"] == "loo_calibration_tail"
     assert p["certificate_max_volume"] == 0.001
     execution = cfg["execution"]
     assert execution == {

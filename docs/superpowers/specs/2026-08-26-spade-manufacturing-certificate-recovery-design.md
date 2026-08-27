@@ -99,26 +99,29 @@ explicit non-registered option.
   `results/historical-joint-v1-noselection/`
 - New development writes fresh `results/spade-development-*` shards
 
-### 3.5 LOO inflation + volume cap (current registered recovery)
+### 3.5 LOO inflation + volume cap (registered recovery history)
 
 Assay+smallest alone raised hill best-candidate empirical containment to **0.878**
-(still < 0.9) and levy to ~**0.67**. The current registered recovery therefore adds:
+(still < 0.9) and levy to ~**0.67**. LOO **RMS** inflation + `Vmax=0.001`
+(`6e6dec2a…`) cleared hill for `spade-o32-staged` (emp 1.0, ans 0.54) but levy
+stalled at emp ~**0.72** with failures at the same tiny volumes as successes — a
+localization / misspecification problem RMS cannot see.
 
-1. **`latent_draw_inflation: loo_calibration`** — widen joint latent certificate draws by
-   `max(1, LOO calibration_inflation)` from the campaign's own residuals
-   (`boec.selfcalib`). Family-agnostic by construction; never shrinks uncertainty.
-2. **`certificate_max_volume: 0.001`** — if the selected Vorob'ev CE exceeds this fraction
-   of the box, abstain (empty certificate / answer failure) rather than issue an
-   oversized window. Chosen from the volume law where small CEs retain high truth
-   containment on development evidence.
+Current registered recovery therefore uses:
 
-Study id: `spade-joint-48-mfg-cert-loo-vmax-2026-08-26`  
-Protocol digest: `6e6dec2a1671e602833be195d51b6b3f13fa443a56a3780de28db3312ed2d75b`  
+1. **`latent_draw_inflation: loo_calibration_tail`** — widen joint latent draws by
+   `max(1, RMS, max|z| / z_{0.975})` from the campaign's own LOO residuals
+   (`boec.selfcalib`). This is **not** the dropped KS volume-cap *transfer*
+   conditioner; it is still campaign-local LOO, using the tail statistic the
+   self-calibration module already registers for simultaneous certificate claims.
+2. **`certificate_max_volume: 0.001`** — abstain if the selected Vorob'ev CE exceeds
+   this fraction of the box.
+
+Study id: `spade-joint-48-mfg-cert-loo-tail-vmax-2026-08-27`  
+Prior LOO-RMS+Vmax shards: `results/historical-mfg-cert-loo-vmax-rms-shortfall/`  
 Assay-only shortfall shards: `results/historical-mfg-cert-assay-shortfall/`
 
-KS previously **failed** as a *volume-cap transfer* conditioner; this uses LOO only to
-inflate draws, then applies a registered absolute volume abstention — a different
-mechanism. It must still clear LOFO ≥0.9 before any manufacturing claim.
+Must still clear LOFO ≥0.9 before any manufacturing claim.
 
 ## 4. Success
 

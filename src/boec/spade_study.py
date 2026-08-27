@@ -33,7 +33,7 @@ from boec.reliable_region import (
     true_reliability_probability,
 )
 from boec.seedbook import derive_seed
-from boec.selfcalib import calibration_inflation, loo_residuals
+from boec.selfcalib import calibration_inflation, calibration_tail, loo_residuals
 from boec.surrogate import build_learned_noise_gp
 
 __all__ = [
@@ -133,7 +133,7 @@ class ScoringExecutionSettings:
     fit_restarts: int
     certificate_volume_rule: str = "smallest"
     predictive_observation_noise: str = "assay_relative_additive"
-    latent_draw_inflation: str = "loo_calibration"
+    latent_draw_inflation: str = "loo_calibration_tail"
     certificate_max_volume: float = 0.001
 
     def __post_init__(self) -> None:
@@ -164,10 +164,14 @@ class ScoringExecutionSettings:
                 "predictive_observation_noise must be 'assay_relative_additive' or "
                 f"'learned_homoskedastic', got {self.predictive_observation_noise!r}"
             )
-        if self.latent_draw_inflation not in {"none", "loo_calibration"}:
+        if self.latent_draw_inflation not in {
+            "none",
+            "loo_calibration",
+            "loo_calibration_tail",
+        }:
             raise ValueError(
-                "latent_draw_inflation must be 'none' or 'loo_calibration', "
-                f"got {self.latent_draw_inflation!r}"
+                "latent_draw_inflation must be 'none', 'loo_calibration', or "
+                f"'loo_calibration_tail', got {self.latent_draw_inflation!r}"
             )
         max_vol = float(self.certificate_max_volume)
         if not math.isfinite(max_vol) or not 0.0 < max_vol <= 1.0:
@@ -192,7 +196,7 @@ REGISTERED_SCORING_SETTINGS = ScoringExecutionSettings(
     fit_restarts=4,
     certificate_volume_rule="smallest",
     predictive_observation_noise="assay_relative_additive",
-    latent_draw_inflation="loo_calibration",
+    latent_draw_inflation="loo_calibration_tail",
     certificate_max_volume=0.001,
 )
 
@@ -600,12 +604,35 @@ def _posterior_mean(model: object, X: Tensor) -> Tensor:
     return mean
 
 
-def _loo_latent_inflation(model: object) -> float:
+def _latent_inflation_from_loo_residuals(
+    y: np.ndarray, mu: np.ndarray, sd: np.ndarray, *, mode: str
+) -> float:
+    """Map LOO predictive residuals to a latent draw inflation ≥ 1.
+
+    ``loo_calibration`` uses RMS standardized residuals. ``loo_calibration_tail`` takes
+    the max of that RMS and ``max|z| / z_{0.975}`` so localized misspecification that a
+    mean-square statistic hides still widens the certificate draws. Dividing by the
+    univariate 95% Gaussian quantile keeps a well-calibrated campaign near mild
+    inflation rather than treating the extreme-order statistic as a raw multiplier.
+    """
+    if mode == "loo_calibration":
+        kappa = float(calibration_inflation(y, mu, sd))
+    elif mode == "loo_calibration_tail":
+        rms = float(calibration_inflation(y, mu, sd))
+        tail = float(calibration_tail(y, mu, sd))
+        kappa = max(rms, tail / float(norm.ppf(0.975)))
+    else:
+        raise ValueError(f"unsupported LOO inflation mode: {mode!r}")
+    if not math.isfinite(kappa):
+        raise ValueError("LOO calibration inflation must be finite")
+    return max(1.0, kappa)
+
+
+def _loo_latent_inflation(model: object, *, mode: str = "loo_calibration_tail") -> float:
     """Widen latent certificate draws using the campaign's own LOO residuals.
 
-    Returns ``max(1, calibration_inflation)`` so we never shrink uncertainty. LOO is
-    predictive (noise-inclusive); treating it as a lower bound on the needed latent
-    correction is intentional and documented in ``boec.selfcalib``.
+    LOO is predictive (noise-inclusive); treating it as a lower bound on the needed
+    latent correction is intentional and documented in ``boec.selfcalib``.
     """
     try:
         train_x = model.train_inputs[0].detach().double()
@@ -618,11 +645,9 @@ def _loo_latent_inflation(model: object) -> float:
             )
     except (AttributeError, IndexError, RuntimeError, TypeError, ValueError) as exc:
         raise ValueError("model must support LOO residual self-calibration") from exc
-    mu, var = loo_residuals(cov.detach().cpu().numpy(), train_y.detach().cpu().numpy())
-    kappa = float(calibration_inflation(train_y.detach().cpu().numpy(), mu, np.sqrt(var)))
-    if not math.isfinite(kappa):
-        raise ValueError("LOO calibration inflation must be finite")
-    return max(1.0, kappa)
+    y = train_y.detach().cpu().numpy()
+    mu, var = loo_residuals(cov.detach().cpu().numpy(), y)
+    return _latent_inflation_from_loo_residuals(y, mu, np.sqrt(var), mode=mode)
 
 
 def _binary_auc(labels: Tensor, probabilities: Tensor) -> float | None:
@@ -741,8 +766,10 @@ def score_campaign(
         predictive_noise = {"sigma_rel": sigma_rel_f, "sigma_add": sigma_add_f}
     else:
         predictive_noise = {}
-    if effective.latent_draw_inflation == "loo_calibration":
-        latent_inflation = _loo_latent_inflation(model)
+    if effective.latent_draw_inflation in {"loo_calibration", "loo_calibration_tail"}:
+        latent_inflation = _loo_latent_inflation(
+            model, mode=effective.latent_draw_inflation
+        )
     else:
         latent_inflation = 1.0
     terminal_mean = _posterior_mean(model, terminal_grid)
