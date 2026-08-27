@@ -281,3 +281,40 @@ the noise is not.
 4. **KT-7a's alpha=0.50 four-family test is still the right test**, and is now interpretable:
    if it fails, the reason is predicted in advance to be levy's and rosenbrock's 4-13x worse
    threshold SNR, not a failure of `c` to generalise.
+
+
+## 9a. RETRACTION of §9 — the SNR explanation does not survive expansion
+
+§9 claimed threshold SNR explains certifiability with "perfect rank agreement." **That claim
+rested on four data points** — one per family, at a single alpha (0.95) and a single target
+size (p=0.30). Expanded to all sixteen `(family, p)` cells at alpha=0.50:
+
+**Spearman(margin/sigma, non-empty rate) = +0.237, p = 0.377. Not significant.**
+
+Stratifying by SNR and ignoring family does not separate the outcome either:
+
+| SNR stratum | cells | families | non-empty | containment |
+|---|---|---|---|---|
+| [0.0, 0.3) | 8 | levy, rosenbrock | 0.228 | 0.476 |
+| [0.6, 1.2) | 5 | ackley, hartmann6 | 0.265 | 0.467 |
+
+Two strata differing 3x in SNR give the same non-empty rate. And `levy` at p=0.30 certifies
+**more** often (0.475) than `ackley` at p=0.10 (0.355) despite **3.6x lower** SNR.
+
+**Retracted:** "the certificate's operating range is governed by signal-to-noise at the
+threshold." **Retracted:** the claim that `(mean - tau)/sigma_pred` is the run-time detector
+five earlier attempts were missing — it has no established predictive validity and must not be
+built on.
+
+**What survives.** §9's *refutation* of the shape hypothesis stands (rosenbrock's region is
+geometrically better than ackley's and certifies nothing). §8.2's original statement — that
+`levy` and `rosenbrock` cannot support a gamma=0.95 certificate at realistic target sizes on 48
+wells — **stands as measured**, and §9's attempt to explain it away as a benchmark artefact is
+withdrawn. The cause remains **unexplained**.
+
+**Recorded as an open question, not a finding.** Certifiability at alpha=0.50 is driven mostly
+by target size `p` (0.47-0.98 at p=0.30 against 0-0.14 at p=0.01) with a residual family effect
+at matched `p` that neither shape nor SNR accounts for. Anyone continuing this should note that
+`levy`/`rosenbrock` have *better* containment at alpha=0.50 when they do certify (0.705, 0.816)
+than `ackley`/`hartmann6` (0.440, 0.264) — the inverse of the alpha=0.95 ordering, which is
+itself unexplained.
