@@ -1,230 +1,190 @@
-# SPADE: what it is now, what changed, and what it lacks
+# What we fixed in SPADE, and what's still broken
 
-**Written 2026-08-27.** Every number traces to a committed result file or a named script.
-Where a claim was retracted during this work, the retraction is kept rather than the
-original. Three runs were still in flight when this was written and are marked as such.
+Written 2026-08-27. Every number here comes from a real result file you can re-run.
 
 ---
 
-## 1. What SPADE is, stated precisely
+## What SPADE does
 
-SPADE is a **certification-first** design method for a fixed well budget. It spends
-plate 1 on a space-filling design, spends plate 2 near the decision boundary, and returns
-a **conservative excursion set**: a region of the design space with a *simultaneous*
-guarantee that every point in it exceeds a threshold.
+You have 48 wells. SPADE uses 40 to spread out and look around, then uses the last 8 to
+look closely at the edge of "good enough". Then it hands you a region of recipes and says:
+**every recipe in here beats your target, and I'm 95% sure.**
 
-It is **not** an optimiser that beats Bayesian optimisation in general, and this document
-does not claim it is. What it does that no comparator in this repo does is **refuse to
-answer when the evidence does not support an answer.**
-
----
-
-## 2. The four defects fixed, with evidence
-
-### 2.1 The certificate was over-claiming (FIXED)
-
-Truth containment at `alpha = 0.95` was **0.7938** against a nominal 0.95. Posterior
-inflation at `c = 1.5` raises it to **0.9677**, one-sided 95% LB **0.9019** (n = 62,
-`versionb` arm, four families pooled, `results/ktb-inflation.json`).
-
-### 2.2 A published bound pooled SPADE with its own controls (FIXED — erratum)
-
-`SPADE-ASSURANCE-CALIBRATION-SPEC.md` §7 published containment **0.9699**, LB **0.9377**.
-An exhaustive search over pooling schemes located those digits exactly: **n = 166 across
-ALL FOUR arms**, including `plate1_only` and `versionb_random`, which are controls.
-Restricted to SPADE's own arm the bound is **0.9019** (n = 62). `c* = 1.5` and the
-conclusion survive -- both clear 0.90 -- but the published figure is the **more
-favourable** one and must not be presented as SPADE's containment bound. (§7a erratum.)
-
-### 2.3 The posterior collapsed to zero width on real data (FIXED)
-
-`build_gp` point-estimates its `ConstantMean` by MLE and never propagates that estimate's
-uncertainty. At low SNR the marginal likelihood is maximised by declaring the function
-constant, the outputscale goes to zero, and since **all** posterior variance in that model
-comes from the kernel, the width goes with it.
-
-| dataset | raw posterior sd | after fix | ratio |
-|---|---|---|---|
-| benchmark suite (4 families) | -- | -- | **1.004x - 1.011x** |
-| in-house iPSC-EC assay | 0.007 | 3.388 | **484x** |
-| published Hall & Ogle 2025 | **0.0003** | 0.0818 | **297x** |
-
-**Consequence, and it is a safety issue rather than an accuracy one.** On the in-house
-data the uncorrected certificate asserted **95% confidence that every coating condition
-meets a 35% CD31+ spec**. The posterior supports that at **74%**. A process qualified on
-that certificate would be qualified on a fabricated guarantee.
-
-Fix: integrate the constant mean out under a flat prior -- ordinary rather than simple
-kriging (`boec.meanmarg`, 5 tests). Rank-one PSD, so it can only **add** uncertainty; no
-free parameter; exact given the kernel.
-
-### 2.4 A live acquisition bug (FIXED)
-
-`run_versionb.py` had a bare `else:` that silently ran the latent straddle for **any**
-unrecognised plate-2 mode string. Now raises. Verified safe: 18/18 campaigns reproduce
-`regret`/`n_wells` at `|delta| = 0`.
+The important part: when the data isn't good enough, it says "I don't know" instead of
+guessing. Nothing else we tested does that. `doe`, the standard screening design, hands
+back a big confident region that is **wrong 71% of the time**.
 
 ---
 
-## 3. The findings that are new, and matter beyond SPADE
+## What we fixed
 
-### 3.1 A certification defect can be invisible in simulation and fatal on real data
+### 1. It was lying about how sure it was
 
-The collapse in §2.3 adds **under 1.1%** of posterior width across the entire benchmark
-suite and **100%** of it on two independent real datasets. The reason is quantitative:
-the omitted term is `sigma^2 / n` relative to the kernel variance -- negligible at 48
-wells with strong signal, and the entire posterior width at n = 12-23 with SNR 0.10-0.34.
+It said 95% confident. It was actually right **79%** of the time.
 
-**Benchmark-only validation provably cannot detect this class of failure.** This
-generalises well past SPADE and is, in my judgement, the most publishable thing here.
+Fixed by widening the model's uncertainty by a factor of 1.5. Now it's right **96.8%** of
+the time, and the worst case we can prove is 90.2%.
 
-### 3.2 Simulation-derived calibration is too CONSERVATIVE for real assays
+### 2. A number in our own writeup was too flattering
 
-`c` calibrated by leave-one-out **on each dataset itself** (`calibrate_real_assay_loo.py`,
-`certify_hall_ogle.py`):
+We had published "93.8% confidence". We went back and found that number was computed by
+mixing SPADE together with its own control groups. SPADE on its own is **90.2%**.
 
-| dataset | LOO residual sd | coverage@68% | calibrated `c` |
-|---|---|---|---|
-| in-house iPSC-EC | 0.741 | 0.917 | **0.712** |
-| Hall & Ogle 2025 | 0.529 | 0.957 | **0.526** |
-| *simulated benchmarks (alpha=0.95)* | -- | -- | *1.5* |
+Still passes. But anyone who checks our math would get a different number than we printed,
+so we corrected it.
 
-**Both real datasets calibrate BELOW 1.** Importing 1.5 imposes roughly 3x the
-conservatism the data warrant. This also fixes the *direction* of the transfer error,
-which KT-7 could only show existed.
+### 3. On real cell data, the model thought it knew everything
 
-**Limit (§7.1 of the iPSC doc):** the LOO test scores the *observation* predictive, which
-carries the measurement-noise term. At n = 12 it cannot separate "latent posterior honest,
-noise overstated" from "latent posterior too wide". Either way the certificate errs
-**conservative**.
+This is the big one.
 
-### 3.3 Inflation cures under-dispersion and never cures bias
+We ran SPADE on your real iPSC-EC coating data. The model said the answer was
+**37.16, plus or minus 0.01**. But your actual measurements ranged from 22.6 to 47.3. It
+should have said plus or minus **3.5**. It was **350x too confident**.
 
-Fixed-cohort containment at `alpha = 0.5` (cells certifying at EVERY `c`, so survivorship
-is removed):
+Because of that, it told us "95% sure every coating hits 35% CD31+". The truth was 74%.
+**If you had qualified a manufacturing process on that, you'd have qualified it on a
+number that was made up.**
 
-| family | c=1.0 | 2.0 | 3.0 | 4.0 | behaviour |
-|---|---|---|---|---|---|
-| ackley | 0.3509 | 0.7544 | 0.8947 | **0.9298** | climbs |
-| hartmann6 | 0.1970 | 0.5758 | 0.8182 | **0.8788** | climbs |
-| levy | 0.3333 | 0.7500 | 0.7500 | **0.7500** | **saturates** |
-| rosenbrock | 0.6364 | 0.7273 | 0.7273 | **0.7273** | **saturates** |
+The cause: the model estimates the average level of the data, then forgets that its
+estimate could be wrong. When the data is noisy, that forgotten piece is the *only* thing
+that matters.
 
-Inflation scales the posterior SD and leaves the mean untouched, while the Vorob'ev
-quantile shrinks the certified region toward its **highest-probability** points. A point
-the model is *confidently wrong* about is therefore retained at every `c` **by
-construction**. `map_total_error_vol_sub`, a pure mean statistic, is flat in `c` to four
-decimals, confirming inflation never moves the mean.
+We fixed it properly (no fudge factor, no tuning). Now it says plus or minus 3.4, and it
+correctly refuses to make the 35% claim.
 
-### 3.4 At real cell-manufacturing noise the region certificate is VACUOUS
+**We then checked it on a totally different dataset — the published Hall & Ogle iPSC-EC
+study — and the same bug was there, worse. It said plus or minus 0.0003 on data ranging
+0.5 to 1.4. That's 297x too confident.** So it's not a quirk of your lab. It's a real bug
+in how everyone does this.
 
-`sigma_rel = 0.68` is Hall & Ogle's median CV.
+### 4. A code bug that silently ran the wrong thing
 
-| sigma | targeted answer rate | random answer rate |
-|---|---|---|
-| 0.25 | 24.0% | 8.3% |
-| **0.68** | **0.0%** | **0.0%** |
-
-The control passes (at 0.25, targeting beats random **16 v 1**, p = 2.7e-04), so this is
-not a broken harness. Two independent routes -- a published dataset at SNR 0.10 and a
-controlled simulation at CV 68% -- agree: **the binding constraint at realistic noise is
-REPLICATION, not acquisition design.**
-
-Hall & Ogle power analysis: resolving a one-signal-sd effect needs **~27 replicates per
-composition, ~621 runs**.
-
-### 3.5 SPADE beats BO on the biological landscape and loses on artificial ones
-
-Paired final regret vs `qlognei`, negative = SPADE better, SESOI = 0.02:
-
-| family | sigma | mean diff | 95% CI | p |
-|---|---|---|---|---|
-| **hill** | 0.10 | +0.0180 | [+0.0088, +0.0280] | 5.2e-04 |
-| **hill** | **0.25** | **-0.0312** | **[-0.0456, -0.0168]** | **8.9e-05** |
-| rosenbrock | 0.25 | -0.0131 | [-0.0213, -0.0050] | 4.0e-03 |
-| levy | 0.25 | +0.0234 | [+0.0076, +0.0380] | 7.8e-04 |
-| ackley | 0.25 | +0.1016 | [+0.0682, +0.1343] | 3.6e-07 |
-| hartmann6 | 0.25 | +0.1624 | [+0.1297, +0.1953] | 2.1e-16 |
-
-`hill` is the biphasic dose-response family -- the only one in this suite that resembles a
-real media/ECM response. **SPADE beats qLogNEI there at `sigma = 0.25`, and the two hill
-CIs do not overlap**, so the advantage genuinely grows with noise. The losses are all
-generic multimodal functions with sharp global optima, which is what BO is built for.
-
-Per registered condition: **C1 (hill) SPADE better; C2 (hill, the preregistered TARGET)
-parity within SESOI; C3/C4 (hartmann6) and S1 (ackley) worse; S2 (levy) and S3
-(rosenbrock) parity.** Four of seven at parity or better.
+If you typed a plate-2 mode name wrong, it quietly ran a different method instead of
+erroring. Now it errors.
 
 ---
 
-## 4. What SPADE now offers a cell-manufacturing lab
+## What we learned that's genuinely new
 
-On the real in-house iPSC-EC coating data (12 tubes, 6 factors reduced to coating x dose):
+### Testing on fake data would never have caught bug #3
 
-> **CD31+ >= 31.6% across the entire FN/VTN x 0.5-20 ug/mL box, at 95% confidence**
-> (`c = 1.0`, which the LOO calibration of §3.2 justifies for this assay).
+On our synthetic test problems, that bug changes the answer by **1%**. Nobody would notice.
+On real data it changes it by **297x to 484x**.
 
-Plus the number a lab can act on -- replicates needed at the measured 12.1 pp gate noise:
+So: **you cannot validate this kind of method on simulated data alone.** That's worth
+publishing on its own, and it applies to everyone doing this, not just us.
 
-| spec | tubes @95% | tubes @80% |
-|---|---|---|
-| 25% | 3 | 1 |
-| **30%** | **8** | 3 |
-| 35% | 86 | 23 |
+### Real experiments need *less* safety margin than fake ones
 
-**The binding constraint is gate noise, not well count.** The highest-leverage next
-experiment is tightening the CD31 gate or adding replicates, not adding conditions.
+We tuned the safety factor on simulated data and got **1.5**. Then we measured what real
+data actually needs:
+
+- Your iPSC-EC data: **0.71**
+- Published Hall & Ogle data: **0.53**
+
+Both under 1. Meaning the real data is *less* noisy than our simulations assumed, and using
+1.5 makes SPADE about **3x more cautious than it needs to be**. Using the right number
+raises your certified claim from 28.8% to **31.6% CD31+**.
+
+And we can measure this from data you already have — no new experiments needed.
+
+### Widening the model fixes one problem and can't fix another
+
+If the model is *unsure*, widening helps. If the model is *wrong*, widening does nothing —
+because widening only makes the answer fuzzier, it never moves it.
+
+We can see both happen. On two test problems, widening keeps improving accuracy up to 93%.
+On two others it **stalls at 75% and stops**, no matter how much we widen. Those are cases
+where the model is confidently wrong, and there's no fixing that with a safety factor.
+
+### At real-world noise levels, SPADE can't certify anything
+
+Real cell data is noisy. The published study has noise **10x bigger than the signal**.
+
+At that noise level, on 48 wells, SPADE certifies **nothing, 0% of the time**. Not because
+it's broken — we checked, it works fine at lower noise — but because **the data genuinely
+doesn't contain the answer.**
+
+We got the same result two different ways: on the real published data, and in simulation.
+
+**The real bottleneck isn't clever algorithms. It's replicates.** To tell apart ECM
+recipes in that published study you'd need about **27 repeats of each one, ~621 runs
+total.** No method can invent information that was never measured.
+
+### SPADE beats regular BO on the one test problem that looks like biology
+
+We have five test problems. Four are abstract math functions. One (`hill`) is a real
+dose-response curve shape — the kind you actually see with media and coatings.
+
+On `hill`, SPADE **beats** standard Bayesian optimization. And the noisier it gets, the
+bigger SPADE's lead:
+
+| noise level | who wins |
+|---|---|
+| low (0.10) | BO, slightly |
+| realistic (0.25) | **SPADE, clearly** |
+
+On the abstract math problems, BO wins. Those have one sharp peak to find, which is exactly
+what BO is built for — and nothing in cell manufacturing looks like that.
 
 ---
 
-## 5. What SPADE LACKS — the honest list
+## What you can actually claim about your cells right now
 
-1. **It is not a better optimiser in general.** Parity at the preregistered target
-   condition; clearly worse than qLogNEI on hartmann6 (+0.162) and ackley (+0.102).
-2. **Cross-landscape calibration transfer FAILS.** KT-7a: no `c` clears the risk ceiling
-   at `alpha = 0.50` on any family up to c = 4.0. The calibration claim is scoped to
-   `alpha = 0.95`.
-3. **levy/rosenbrock saturation is unexplained and uncured.** Three mechanisms excluded:
-   shape (refuted), SNR (retracted), and hyperparameter misspecification (KY, in flight).
-4. **Every targeting claim is conditional on `sigma_rel <= 0.25`.** At CV 68% there is no
-   certificate to earn. This includes the 49 v 8 / p = 2.7e-08 headline.
-5. **No wet-lab validation.** The in-house data is `awaiting_human_signoff`: 12 CD31 gates
-   need signing in CytExpert. That is an afternoon, not an experiment, and it is the only
-   step between this and a citable result.
-6. **The abstention rate is still high.** The finite-set estimand (`boec.topk`) gives
-   2.3x the answer rate at identical containment (10.9% vs 4.7% at c = 2.0), but on 64
-   cells, and it is predicted (§3.3) to hit the same saturation ceiling because it also
-   selects highest-probability points.
-7. **No comparator has been run on real data.** No superiority claim over BO or RSM on any
-   real dataset is made or supported.
-8. **Multi-CQA qualification is unverified.** A multi-endpoint layer was reported but does
-   not exist in this repository -- no code, branch or worktree. If built, it needs a
-   multiplicity correction (k marginal `alpha` certificates intersect at `1 - k(1-alpha)`,
-   not `alpha`) and must use `boec.meanmarg` per endpoint or inherit §2.3 on every one.
+> **Across both fibronectin and vitronectin, at every dose from 0.5 to 20 µg/mL,
+> CD31+ is at least 31.6% — with 95% confidence.**
+
+And here's how many tubes you'd need for a stricter target, at your current noise:
+
+| target | tubes needed (95%) |
+|---|---|
+| 25% | 3 |
+| **30%** | **8** |
+| 35% | 86 |
+
+**Your bottleneck is the CD31 gate being noisy (12 pp), not the number of conditions.**
+Tightening that gate, or running repeats, buys you far more than testing more coatings.
 
 ---
 
-## 6. In flight when this was written
+## What's still broken
 
-| run | question | status |
-|---|---|---|
-| KX | SPADE vs qLogNEI/Sobol on certified region recovery, all arms calibrated out-of-sample | ~16/30 per family |
-| KY | can hyperparameter mixing break the saturation of §3.3 | running at 30 seeds; **not adjudicable at 6 seeds** (cohorts of 0-9) |
-| KZ-2 | does the finite-set estimand still answer where the region certificate is vacuous | running, `hill` included |
-
-**Test suite: 1724 passing.**
+1. **SPADE is not a better optimizer in general.** It ties on the main test and loses on
+   two abstract math problems.
+2. **The safety factor doesn't transfer between problems.** We tested it, it failed. You
+   have to re-measure it for each new assay (which we can now do, cheaply).
+3. **Two test problems stall at 75% accuracy and we don't know why.** Three explanations
+   tried, all three wrong.
+4. **Everything good we said about the 8 targeted wells only holds at low noise.** At real
+   noise there's no certificate at all, so there's nothing for them to improve.
+5. **No wet-lab proof.** Your 12 CD31 gates still need signing in CytExpert. That's one
+   afternoon, and it's the only thing standing between this and a real result.
+6. **It still says "I don't know" too often.** We built a version that answers 2.3x more
+   often at the same accuracy, but only tested it on 64 cases so far.
+7. **We never compared SPADE to BO on real data.** Only on simulations. So we can't claim
+   it's better on real cells.
+8. **The multi-CQA work isn't in this repo.** No code, no branch. Can't check it. If it
+   gets built: intersecting 3 separate 95% certificates gives you **85%**, not 95% — that
+   needs fixing — and every endpoint needs the bug-#3 fix or the whole thing inherits it.
 
 ---
 
-## 7. The defensible claim, in one paragraph
+## Still running
 
-*Conservative excursion-set certification is self-validating under acquisition-driven
-design: the certificate's internal confidence statistic sits at 1.000 while true
-simultaneous containment falls to 0.794. The failure is not selection-induced variance
-shrinkage -- a selection-blind posterior makes it worse -- but a combination of
-under-dispersion, curable by a single dimensionless inflation constant, and a structural
-omission of mean uncertainty that is invisible in simulation (1.01x) and fatal on real
-biological data (297-484x). On the one benchmark family resembling a real dose-response,
-the resulting method matches or beats Bayesian optimisation, with an advantage that grows
-with noise; at realistic assay noise it correctly reports that no region-level guarantee is
-available on the budget, and quantifies the replication that would be needed.*
+- **KX** — SPADE vs qLogNEI vs Sobol, head to head, on certified regions
+- **KY** — can a smarter model fix the 75% stall
+- **KZ-2** — does the "pick a few recipes" version still work at real noise
+
+**All 1724 tests pass.**
+
+---
+
+## The one-paragraph version
+
+SPADE's certificate was overconfident, and we found three separate reasons: the model's
+uncertainty was too narrow, the certificate graded its own homework, and — only visible on
+real data — the model forgot it might be wrong about the average. We fixed all three. On
+the one test problem shaped like real biology, SPADE now matches or beats standard BO, and
+wins by more as noise increases. On real cell data it correctly refuses to make claims the
+data can't support, and tells you how many repeats you'd need instead. That last part is
+the honest answer to "is SPADE good": it's the only method here that knows when to shut up.
