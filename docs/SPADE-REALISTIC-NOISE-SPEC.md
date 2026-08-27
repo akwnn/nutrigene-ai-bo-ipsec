@@ -102,3 +102,42 @@ vacuous, it is not a convenience -- it is **the only form of certification viabl
 cell-manufacturing noise**. `hill`, the biphasic dose-response family, is added because it
 is the only family in the suite that resembles a real dose-response and it was absent from
 KZ. Sigma is extended to 0.50 to give a trend rather than two points.
+
+## 7. RETRACTION of §6.4 — the finite-set estimand buys nothing on real data
+
+§6.4 registered the expectation that if the finite set answered where the region
+certificate is vacuous, it would be *"the only form of certification viable at real
+cell-manufacturing noise."* Measured on both real datasets
+(`scripts/probe_finite_set_frontier.py`), highest threshold certifiable, `c` LOO-calibrated
+per dataset:
+
+| dataset | confidence | region floor | finite-set floor | gain |
+|---|---|---|---|---|
+| in-house iPSC-EC | 0.95 | 33.19% | 33.20% | **+0.01** |
+| in-house iPSC-EC | 0.99 | 31.53% | 31.55% | +0.02 |
+| Hall & Ogle | 0.95 | 0.74 | 0.74 | **+0.00** |
+| Hall & Ogle | 0.99 | 0.71 | 0.71 | +0.00 |
+
+**RETRACTED.** The finite set gains nothing on real data.
+
+**Why, and the reason matters more than the result.** The finite-set estimand wins by
+selecting the points the posterior is MOST confident about, which requires the posterior to
+have spatial structure -- some recipes genuinely safer than others. At SNR 0.10-0.34 the
+fitted posterior is effectively **constant** (`SPADE-PUBLISHED-ECM-RESULT.md` §4: posterior
+mean range 0.00 across the whole design box). Every candidate is equally uncertain, so
+there is nothing to select. **A method that wins by choosing cannot win when every choice
+is identical.**
+
+The 2.3x answer-rate gain recorded in `bf4845b` stands **as measured on synthetic
+benchmarks at `sigma_rel = 0.25`**, where the posterior does have structure. It does not
+transfer to real assay noise, and `boec.topk`'s docstring claim that it addresses the
+abstention problem must be read as conditional on that regime.
+
+**What this strengthens.** Three separate mechanisms have now been tried against the
+real-noise wall -- inflation (`SPADE-ASSURANCE-CALIBRATION-SPEC.md` §10), hyperparameter
+mixing (`SPADE-HYPERMIX-SPEC.md` §6) and the finite-set estimand (here) -- and none moves
+it. Together with the ~27-replicate power analysis
+(`SPADE-PUBLISHED-ECM-RESULT.md` §5), the conclusion is now well supported rather than
+merely stated: **at realistic cell-manufacturing noise the binding constraint is
+replication, and no change to the estimator, the calibration or the acquisition
+substitutes for it.**
