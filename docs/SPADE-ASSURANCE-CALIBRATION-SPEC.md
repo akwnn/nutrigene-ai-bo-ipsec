@@ -318,3 +318,35 @@ at matched `p` that neither shape nor SNR accounts for. Anyone continuing this s
 `levy`/`rosenbrock` have *better* containment at alpha=0.50 when they do certify (0.705, 0.816)
 than `ackley`/`hartmann6` (0.440, 0.264) — the inverse of the alpha=0.95 ordering, which is
 itself unexplained.
+
+## 7a. ERRATUM to §7 — the published bound pools SPADE with its own controls
+
+§7 reports pooled truth containment **0.9699**, 95% LB **0.9377**, at `c = 1.5`. Attempting
+to reproduce those digits from `results/ktb-inflation.json` under the stated rule failed,
+and an exhaustive search over pooling schemes located them exactly:
+
+    arms  = (plate1_only, spade_cert_rho95, versionb, versionb_random)   <- ALL FOUR
+    fams  = (ackley, hartmann6)
+    c=1.5, alpha=0.95  ->  n=166, k=161, containment=0.9698795, LB=0.9377155
+
+**The denominator pools SPADE with `plate1_only` and `versionb_random`, which are its
+control arms.** Restricted to SPADE's own arm:
+
+| pooling | n | containment | 95% LB |
+|---|---|---|---|
+| all four arms (as published) | 166 | 0.9699 | **0.9377** |
+| `versionb` only (SPADE) | 62 | 0.9677 | **0.9019** |
+
+**What survives.** `c* = 1.5` is unchanged, and **both** poolings clear the 0.90 bar, so
+§7's conclusion stands. The RCPS selection is also unchanged: at `c=1.5` the failure-rate
+upper bound on `versionb` alone is 0.0981 <= 0.10, and 1.25 does not clear it.
+
+**What must change before publication.** The 0.9377 figure must not be presented as
+SPADE's containment bound. Pooling arms is defensible *only* under the explicit claim that
+`c` calibrates the **posterior**, which is a property of the model and not of the
+acquisition -- and under that claim the controls belong in the denominator. That argument
+was never stated in §7, and a reader recomputing on the SPADE arm will get 0.9019.
+
+**Report both, or state the pooling.** Recorded here rather than silently corrected,
+because the published number is *more favourable* than the SPADE-only number and the
+direction of an unexplained discrepancy matters.
