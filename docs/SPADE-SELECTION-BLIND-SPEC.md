@@ -95,6 +95,69 @@ license any comparator claim. The `certificate_straddle` module remains unused b
 
 `NO_SELECTION` is preserved; the lockbox stays sealed.
 
-## 6. Result
+## 6. Result — KW-1/KW-2 FAIL; but KW-4 PASSES under a DIFFERENT honesty mechanism
 
-*(Empty at freeze. Filled once, immediately after, from the run.)*
+### 6.1 Selection-blind certification fails, and makes things worse
+
+800 campaigns (`results/kw-selection-blind.json`). The null control is exact: `plate1_only`'s
+non-empty rate is **0.0400 → 0.0400, ratio 1.000**, so the implementation is right and the
+result is real.
+
+| gate | bar | measured | verdict |
+|---|---|---|---|
+| **KW-1** gap closes | < +0.05, from +0.2171 | **+0.1924**, 95% CI [−0.0194, +0.4033] | **FAIL** |
+| **KW-2** containment | LB ≥ 0.90 | 0.7938 → **0.6667**, LB 0.5792 | **FAIL** |
+
+The absolute gaps got **worse**, not better: targeted +0.1972 → +0.3353, random −0.0199 →
++0.1429. The mechanism is now clear and is a genuine lesson: pairing a **sharp mean** (48 wells)
+with a **wide covariance** (40 wells) is not a valid posterior, it is a mismatched pair. The
+excursion probability `Phi((mean − theta)/sd)` then mixes a confident numerator with a diffuse
+denominator, and the Vorob'ev quantile selects on a distorted surface. **Selection-induced
+variance shrinkage is not the binding defect.** §1's diagnosis identified a real correlate, not
+the cause.
+
+### 6.2 KW-4 passes once the certificate is made honest by inflation instead
+
+KT-5 (`SPADE-ASSURANCE-CALIBRATION-SPEC.md` §7) *did* make the certificate honest: at
+inflation `c = 1.5`, pooled truth containment 0.9699, LB 0.9377, and the factor transfers
+leave-one-family-out. **KW-4 asks whether targeting earns anything once the certificate is
+honest — it does not specify which mechanism supplies the honesty.** Evaluated at `c = 1.5`:
+
+| arm | answer rate | truth containment | 95% LB | mean certified volume |
+|---|---|---|---|---|
+| **`versionb` (targeted)** | **0.0775** | 0.9677 | **0.9019 PASS** | **0.00167** |
+| `versionb_random` | 0.0262 | 0.9524 | 0.7933 | 0.00117 |
+| `plate1_only` | 0.0225 | 1.0000 | 0.8467 | 0.00117 |
+
+Paired across all 800 campaign-cells (McNemar on discordant pairs):
+
+| comparison | targeted-only | other-only | p |
+|---|---|---|---|
+| vs `versionb_random` | **49** | 8 | **2.7e-08** |
+| vs `plate1_only` | **52** | 8 | **5.2e-09** |
+
+End-to-end certified volume per campaign, **abstentions counted as zero** — the honest measure
+of what a lab actually receives: **+0.00010, 95% CI [+0.00006, +0.00015]** against both
+controls, roughly **4x** the expected certified volume. **KW-4 PASSES.**
+
+### 6.3 What this does to KV-6
+
+**KV-6's closure was reached with an UNCALIBRATED certificate**, and that is exactly the
+condition under which targeting looks bad: its extra volume is unearned, so it inflates the
+region without inflating the guarantee. Once the certificate is calibrated, the fake volume is
+removed from every arm and what remains is real — and targeting has more of it, more often.
+
+**KV-6 is therefore narrowed, not overturned:** *Plate-2 targeting earns nothing when judged by
+an uncalibrated certificate or by map error, and earns a 3x answer rate and ~4x expected
+certified volume when judged by a calibrated one.* The prospective KF-3 map-error null stands
+unqualified; KV-1's containment FAIL stands as measured at `c = 1.0`.
+
+### 6.4 Status, stated precisely
+
+This is a **re-score** of prospectively-generated campaigns (KV generated the wells live),
+analysed under a gate — KW-4 — registered before any of it ran. **The deviation is recorded:
+KW-4 was written expecting selection-blindness to supply the honesty; inflation supplied it
+instead.** The answer-rate results (p ~ 1e-8, 1e-9) survive any multiplicity correction this
+session could reasonably apply; the volume CI excludes zero. A fully prospective confirmation,
+with `c` calibrated on held-out families before the run rather than after, is still owed and is
+the single remaining step.
