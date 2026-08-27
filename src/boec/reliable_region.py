@@ -187,6 +187,7 @@ def reliable_set_draws(
     sigma_rel: Real | None = None,
     sigma_add: Real | None = None,
     latent_inflation: Real = 1.0,
+    mean_marginalisation: bool = False,
 ) -> Tensor:
     """Joint posterior draws of the future-response reliable set.
 
@@ -196,7 +197,10 @@ def reliable_set_draws(
     additive noise law as sealed truth; otherwise learned homoskedastic likelihood
     noise is used.  ``latent_inflation`` ≥ 1 scales deviations of each joint draw
     from the posterior mean (LOO self-calibration uses this to widen overconfident
-    surrogates).  An even count is mandatory because certification uses equal
+    surrogates).  ``mean_marginalisation`` integrates out the GP constant mean
+    (ordinary kriging; see :mod:`boec.meanmarg`) before sampling — independent of
+    inflation, and required on noise-dominated assays where simple-kriging width
+    collapses.  An even count is mandatory because certification uses equal
     selection and evaluation halves.
     """
     tau_f = _finite_scalar(tau, "tau")
@@ -204,6 +208,10 @@ def reliable_set_draws(
     kappa_f = _finite_scalar(latent_inflation, "latent_inflation")
     if kappa_f < 1.0:
         raise ValueError(f"latent_inflation must be >= 1, got {kappa_f}")
+    if not isinstance(mean_marginalisation, bool):
+        raise ValueError(
+            f"mean_marginalisation must be bool, got {mean_marginalisation!r}"
+        )
     if isinstance(n_draws, bool) or not isinstance(n_draws, Integral):
         raise ValueError(f"n_draws must be an even integer, got {n_draws!r}")
     n_draws_i = int(n_draws)
@@ -228,40 +236,71 @@ def reliable_set_draws(
         learned_noise_variance = _learned_noise_variance(model)
 
     posterior, posterior_mean, _ = _latent_posterior(model, X)
-    try:
-        base_sample_shape = torch.Size(posterior.base_sample_shape)
-        sample_from_base = posterior.rsample_from_base_samples
-    except (AttributeError, TypeError) as exc:
-        raise ValueError(
-            "posterior must support deterministic joint sampling from base samples"
-        ) from exc
-    if len(base_sample_shape) == 0 or math.prod(base_sample_shape) < 1:
-        raise ValueError(
-            f"posterior base_sample_shape must be non-empty, got {base_sample_shape}"
-        )
-
-    sample_shape = torch.Size([n_draws_i])
     generator = torch.Generator(device="cpu")
     generator.manual_seed(seed_i)
-    base_samples = torch.randn(
-        sample_shape + base_sample_shape,
-        generator=generator,
-        dtype=torch.double,
-        device="cpu",
-    ).to(dtype=posterior_mean.dtype, device=posterior_mean.device)
-    with torch.no_grad():
-        latent = sample_from_base(sample_shape, base_samples)
-    expected = (n_draws_i, X.shape[0], 1)
-    if tuple(latent.shape) != expected:
-        raise ValueError(
-            f"joint posterior draws must have shape {expected}, got {tuple(latent.shape)}"
+
+    if mean_marginalisation:
+        from boec.meanmarg import mean_marginalised_covariance
+
+        mean_vec = posterior_mean.reshape(-1).double()
+        n_grid = int(mean_vec.numel())
+        with torch.no_grad():
+            cov = mean_marginalised_covariance(model, X.detach().double())
+        if tuple(cov.shape) != (n_grid, n_grid):
+            raise ValueError(
+                "mean-marginalised covariance must have shape "
+                f"({n_grid}, {n_grid}), got {tuple(cov.shape)}"
+            )
+        jitter = 1e-8 * torch.eye(n_grid, dtype=torch.double)
+        try:
+            chol = torch.linalg.cholesky(cov + jitter)
+        except RuntimeError as exc:
+            raise ValueError(
+                "mean-marginalised covariance is not positive definite"
+            ) from exc
+        z = torch.randn(
+            n_draws_i,
+            n_grid,
+            generator=generator,
+            dtype=torch.double,
+            device="cpu",
         )
+        latent = mean_vec.unsqueeze(0) + z @ chol.transpose(0, 1)
+    else:
+        try:
+            base_sample_shape = torch.Size(posterior.base_sample_shape)
+            sample_from_base = posterior.rsample_from_base_samples
+        except (AttributeError, TypeError) as exc:
+            raise ValueError(
+                "posterior must support deterministic joint sampling from base samples"
+            ) from exc
+        if len(base_sample_shape) == 0 or math.prod(base_sample_shape) < 1:
+            raise ValueError(
+                f"posterior base_sample_shape must be non-empty, got {base_sample_shape}"
+            )
+
+        sample_shape = torch.Size([n_draws_i])
+        base_samples = torch.randn(
+            sample_shape + base_sample_shape,
+            generator=generator,
+            dtype=torch.double,
+            device="cpu",
+        ).to(dtype=posterior_mean.dtype, device=posterior_mean.device)
+        with torch.no_grad():
+            latent = sample_from_base(sample_shape, base_samples)
+        expected = (n_draws_i, X.shape[0], 1)
+        if tuple(latent.shape) != expected:
+            raise ValueError(
+                f"joint posterior draws must have shape {expected}, got {tuple(latent.shape)}"
+            )
+        if not bool(torch.isfinite(latent).all()):
+            raise ValueError("joint posterior draws must be finite")
+        latent = latent.squeeze(-1).double()
+
     if not bool(torch.isfinite(latent).all()):
         raise ValueError("joint posterior draws must be finite")
-
-    latent = latent.squeeze(-1).double()
     if kappa_f != 1.0:
-        mean = posterior_mean.double().unsqueeze(0)
+        mean = posterior_mean.double().reshape(1, -1)
         latent = mean + kappa_f * (latent - mean)
     if use_assay:
         noise_variance = sigma_rel_f**2 * latent.square() + sigma_add_f**2

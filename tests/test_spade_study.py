@@ -94,6 +94,7 @@ def _test_settings():
         latent_draw_inflation="none",
         certificate_max_volume=0.001,
         latent_inflation_floor=1.0,
+        mean_marginalisation=False,
     )
 
 
@@ -131,6 +132,7 @@ def test_registered_scoring_sizes_are_exact_and_immutable():
         latent_draw_inflation="loo_calibration_tail",
         certificate_max_volume=0.001,
         latent_inflation_floor=1.5,
+        mean_marginalisation=True,
     )
 
 
@@ -762,12 +764,13 @@ def test_yaml_freezes_every_registered_design_value_and_its_payload_digest():
     canonical = json.dumps(p, sort_keys=True, separators=(",", ":"), allow_nan=False).encode()
     assert cfg["digests"]["protocol_payload_sha256"] == hashlib.sha256(canonical).hexdigest()
     assert cfg["digests"]["protocol_payload_sha256"] == (
-        "681947bcd05f0e021785d971c499bb11dfb725b146ce903eae5f4d70d2d9d342"
+        "1c5c3b7ef5e067774c1f4b198a3b1a36e26b8f162e9f3f4a7d09657c0cf3a250"
     )
     assert p["certificate_volume_rule"] == "smallest"
     assert p["predictive_observation_noise"] == "assay_relative_additive"
     assert p["latent_draw_inflation"] == "loo_calibration_tail"
     assert p["latent_inflation_floor"] == 1.5
+    assert p["mean_marginalisation"] is True
     assert p["certificate_max_volume"] == 0.001
     execution = cfg["execution"]
     assert execution == {

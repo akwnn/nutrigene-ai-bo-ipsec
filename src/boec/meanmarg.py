@@ -68,8 +68,16 @@ def mean_marginalised_covariance(model, X_test: torch.Tensor) -> torch.Tensor:
     """
     X_test = torch.as_tensor(X_test).double()
     with torch.no_grad():
-        post = model.posterior(X_test)
-        cov = post.mvn.covariance_matrix.double()
+        post = model.posterior(X_test, observation_noise=False)
+        if hasattr(post, "mvn"):
+            cov = post.mvn.covariance_matrix.double()
+        elif hasattr(post, "covariance_matrix"):
+            cov = post.covariance_matrix.double()
+        else:
+            raise TypeError(
+                "posterior must expose mvn.covariance_matrix or covariance_matrix "
+                "for mean marginalisation"
+            )
 
         Xtr = model.train_inputs[0]
         # transform_inputs is idempotent on already-transformed training inputs, so the

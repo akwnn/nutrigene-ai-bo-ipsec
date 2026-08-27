@@ -136,6 +136,7 @@ class ScoringExecutionSettings:
     latent_draw_inflation: str = "loo_calibration_tail"
     certificate_max_volume: float = 0.001
     latent_inflation_floor: float = 1.5
+    mean_marginalisation: bool = True
 
     def __post_init__(self) -> None:
         for field in (
@@ -188,6 +189,11 @@ class ScoringExecutionSettings:
                 f"got {self.latent_inflation_floor!r}"
             )
         object.__setattr__(self, "latent_inflation_floor", floor)
+        if not isinstance(self.mean_marginalisation, bool):
+            raise ValueError(
+                "mean_marginalisation must be bool, "
+                f"got {self.mean_marginalisation!r}"
+            )
 
     @property
     def digest(self) -> str:
@@ -207,6 +213,7 @@ REGISTERED_SCORING_SETTINGS = ScoringExecutionSettings(
     latent_draw_inflation="loo_calibration_tail",
     certificate_max_volume=0.001,
     latent_inflation_floor=1.5,
+    mean_marginalisation=True,
 )
 
 
@@ -806,6 +813,7 @@ def score_campaign(
         effective.certificate_draws,
         draw_seed,
         latent_inflation=latent_inflation,
+        mean_marginalisation=effective.mean_marginalisation,
         **predictive_noise,
     )
     certificate = conservative_set_split(

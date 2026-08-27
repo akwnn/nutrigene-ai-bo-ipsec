@@ -113,8 +113,16 @@ Current registered recovery therefore uses:
    **`latent_inflation_floor: 1.5`** — `c_eff = max(1.5, LOO-tail factor)` (KT-5-style
    fixed floor; campaign-local, not a family detector).
 2. **`certificate_max_volume: 0.001`** — abstain if CE exceeds this box fraction.
+3. **`mean_marginalisation: true`** (Joseph) — ordinary-kriging covariance in
+   certificate joint draws; independent of inflation; required so noise-dominated
+   posteriors cannot collapse before inflation is applied.
 
-Study id: `spade-joint-48-mfg-cert-floor15-loo-tail-2026-08-27`  
+Live gate (in flight, no meanmarg): study
+`spade-joint-48-mfg-cert-floor15-loo-tail-2026-08-27` digest `681947bc…`.
+
+Combined next (merge branch): study
+`spade-joint-48-mfg-cert-floor15-loo-tail-meanmarg-2026-08-27` digest `1c5c3b7e…`.
+
 Prior LOO-tail gate FAIL: `results/historical-mfg-cert-loo-tail-gate-fail/`  
 Assay-only shortfall: `results/historical-mfg-cert-assay-shortfall/`
 

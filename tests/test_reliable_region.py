@@ -331,6 +331,36 @@ def test_latent_inflation_is_deterministic_and_changes_sets(model, grid):
     assert not torch.equal(base, wide)
 
 
+def test_mean_marginalisation_is_deterministic_and_composes_with_inflation():
+    from boec.surrogate import build_gp
+
+    g = torch.Generator().manual_seed(0)
+    X = torch.rand(12, 2, generator=g, dtype=torch.double)
+    Y = 0.4 + 0.05 * torch.randn(12, 1, generator=g, dtype=torch.double)
+    Yvar = torch.full((12, 1), 0.01, dtype=torch.double)
+    bounds = torch.tensor([[0.0, 0.0], [1.0, 1.0]], dtype=torch.double)
+    model = build_gp(X, Y, Yvar, bounds)
+    grid = torch.rand(8, 2, generator=g, dtype=torch.double)
+    kwargs = dict(
+        model=model,
+        X=grid,
+        tau=0.35,
+        gamma=0.8,
+        n_draws=16,
+        seed=11,
+        sigma_rel=0.1,
+        sigma_add=0.01,
+        mean_marginalisation=True,
+        latent_inflation=1.5,
+    )
+    first = reliable_set_draws(**kwargs)
+    second = reliable_set_draws(**kwargs)
+    plain = reliable_set_draws(**{**kwargs, "mean_marginalisation": False})
+    assert torch.equal(first, second)
+    assert first.shape == plain.shape == (16, 8)
+    assert not torch.equal(first, plain)
+
+
 def test_validation_half_cannot_change_selected_set_or_selection_score():
     draws = _split_fixture()
     first = conservative_set_split(draws, alpha=0.75, n_rho=5, volume_rule="largest")
