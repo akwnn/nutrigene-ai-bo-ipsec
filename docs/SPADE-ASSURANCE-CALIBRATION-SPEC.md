@@ -350,3 +350,65 @@ was never stated in §7, and a reader recomputing on the SPADE arm will get 0.90
 **Report both, or state the pooling.** Recorded here rather than silently corrected,
 because the published number is *more favourable* than the SPADE-only number and the
 direction of an unexplained discrepancy matters.
+
+## 10. KT-7 RESULT — 7a FAILS, and the failure answers §9a's open question
+
+Adjudicated by `scripts/analyse_kt7_inflation_fine.py`, written and reproduction-checked
+before the data landed. 190/200 campaign-jobs, all four families complete.
+
+### 10.1 The registered gates
+
+| gate | bar | measured | verdict |
+|---|---|---|---|
+| **KT-7a** four-family LOFO at alpha=0.5 | pooled LB >= 0.90 | **no `c*` selected at any grid value** | **FAIL** |
+| **KT-7b** per-family `c*` spread | < 2x | undefined (no `c*`) | **FAIL** |
+| **KT-7c** answer rate at `c*` | >= 0.10 | undefined | **FAIL** |
+| **KT-7d** resolve `c*` at alpha=0.95 | one decimal | ackley **1.5**, hartmann6 **1.5** | reported |
+
+**§7's claim is now permanently narrowed to alpha = 0.95 on the families that can answer
+there.** `c` does not generalise downward to alpha = 0.50.
+
+### 10.2 Why — and this closes the question §9a left open
+
+Per-family truth containment at alpha=0.5, on a **fixed cohort** (cells that certify at
+EVERY `c`, so the survivorship confound §6.3b flagged is removed):
+
+| family | cohort | c=1.0 | 1.5 | 2.0 | 2.5 | 3.0 | 4.0 |
+|---|---|---|---|---|---|---|---|
+| ackley | 57 | 0.3509 | 0.5614 | 0.7544 | 0.8421 | 0.8947 | **0.9298** |
+| hartmann6 | 66 | 0.1970 | 0.4242 | 0.5758 | 0.6667 | 0.8182 | **0.8788** |
+| levy | 12 | 0.3333 | 0.4167 | 0.7500 | 0.7500 | 0.7500 | **0.7500** |
+| rosenbrock | 11 | 0.6364 | 0.7273 | 0.7273 | 0.7273 | 0.7273 | **0.7273** |
+
+**ackley and hartmann6 climb monotonically. levy and rosenbrock SATURATE** -- flat from
+c=2.0 and c=1.5 respectively, and no further inflation moves them.
+
+**The mechanism.** Inflation is a **variance** correction: it scales the posterior SD and
+leaves the posterior mean untouched. The Vorob'ev quantile shrinks the certified region
+toward its **highest-excursion-probability** points. Therefore a point where the GP is
+*confidently wrong* -- high posterior excursion probability, truly below tau -- is
+**retained at every `c` by construction**, because shrinkage keeps exactly the points
+inflation cannot demote. Inflation can cure an under-dispersed posterior. It cannot cure a
+biased one.
+
+**Corroboration, and its limit.** `map_total_error_vol_sub` is a pure mean statistic and is
+**flat in `c` to four decimals** (ackley 0.1030 -> 0.1031 across the whole grid), confirming
+inflation does not move the mean. But its *level* is only slightly worse for levy and
+rosenbrock (0.1114, 0.1091) than for ackley and hartmann6 (0.1030, 0.0917) -- so **gross**
+mean error does not by itself explain a 0.93-vs-0.75 gap. The operative quantity is whether
+the mean error falls **inside the high-confidence core**, which is not measured here.
+**Recorded as the mechanism with direct evidence for saturation and indirect evidence for
+its cause.** A localized-bias measurement is the confirmatory step and has not been run.
+
+### 10.3 What this changes about the product
+
+1. **`c` is not a universal constant and must not be published as one.** It is a
+   per-landscape, per-assurance-level quantity requiring held-out calibration.
+2. **Saturation is a real operating limit, and the honest product declares it.** When
+   containment stops improving with `c` below the target, the correct output is *"this
+   landscape cannot be certified at this assurance level on this budget"* -- not more
+   inflation. §8.2's original statement is thereby **reinstated on new evidence**, and
+   §9's "benchmark artefact" withdrawal stands withdrawn.
+3. **This predicts a limit on `boec.topk` too.** The finite-set estimand also selects the
+   highest-marginal-probability points, so a confidently-wrong point is equally invulnerable
+   to inflation there. Registered as a prediction before KX-4 is read.
