@@ -175,3 +175,57 @@ under-dispersed by roughly a scale factor, and `c ≈ 1.5` is the size of that c
    confirmation still needs its own run.
 5. **It does not fix Plate-2 targeting.** KV-6 stands: targeting still earns nothing over random.
    KT-5 fixes calibration and transfer, not allocation.
+
+
+## 8. Amendment KT-7 — the alpha-generality test, registered before its run
+
+### 8.1 What §7's result does NOT cover, measured
+
+§7 validated `c` at **alpha = 0.95 on ackley and hartmann6 only**. Tested at the other
+assurance levels, where `levy` and `rosenbrock` DO produce certificates:
+
+| alpha | usable families | pooled LOFO containment | 95% LB | `c*` selected | verdict |
+|---|---|---|---|---|---|
+| 0.50 | all four (levy 151, rosen 214, ackley 259, h6 273) | 0.7510 | 0.7242 | **2.0 = grid max** | **FAIL** |
+| 0.80 | rosen, ackley, h6 | 0.8951 | 0.8616 | **2.0 = grid max** | **FAIL** |
+| 0.95 | ackley, h6 only | 0.9699 | 0.9377 | 1.5 | PASS |
+
+**`c*` hit the grid ceiling at both lower alpha.** That is a truncated search, not a settled
+failure, and it is exactly the "coarse 4-point grid" limitation §7.4 recorded.
+
+### 8.2 A hard limit, named rather than engineered around
+
+At alpha = 0.95, `levy` and `rosenbrock` yield **fewer than 10 non-empty certificates at every
+`c` in the grid**. Inflation only ever SHRINKS a certified region — it cannot create one where
+none exists. So no value of `c` can make those families testable at alpha = 0.95.
+
+**Recorded conclusion: `levy` and `rosenbrock` cannot support a gamma=0.95 certificate at
+realistic target sizes (tau-quantile, p <= 0.30) on 48 wells, with or without this correction.**
+That is an information limit of the budget, consistent with `SPADE-PREVALENCE-MATCHED-SPEC.md`
+§7.2 (non-empty rates 0.0025 and 0.0000), and it is not a defect any calibration can repair.
+
+### 8.3 KT-7, registered now
+
+Extended grid `C_FINE = (1.0, 1.2, 1.3, 1.4, 1.5, 1.75, 2.0, 2.5, 3.0, 4.0)` — resolving the
+unresolved (1.25, 1.5] interval AND extending past the ceiling `c*` kept hitting.
+
+**KT-7a (four-family transfer).** At alpha = 0.50, leave-one-family-out over **all four**
+families reaches pooled 95% LB **>= 0.90**.
+- **PASS** -> the correction is general across families; §7's two-family limit was a grid
+  artefact.
+- **FAIL** -> the correction is alpha-specific, `c` does not generalise downward, and §7's
+  claim is permanently narrowed to alpha = 0.95 on the families that can answer there.
+
+**KT-7b (is one constant enough?).** The per-family `c*` values at alpha = 0.50 span **< 2x**.
+- **FAIL** -> `c` is not one universal constant but a per-landscape quantity, and the honest
+  product is "calibrate `c` on your own family library," not "use c = 1.5."
+
+**KT-7c (no free lunch).** Pooled answer rate at the selected `c*` is **>= 0.10**.
+*Inflation shrinks regions; at c = 4.0 it may empty them entirely, in which case a passing
+KT-7a would be meaningless.*
+
+**KT-7d (resolve c\*).** With the finer spacing, the alpha = 0.95 `c*` for ackley and hartmann6
+is reported to one decimal place, replacing §7.4's "somewhere in (1.25, 1.5]".
+
+Firewalled pilot measured **26.0 s/campaign -> 5.8 h** for 4 families x 50 seeds x 4 arms,
+inside the 8-hour ceiling. No new campaigns are simulated; this re-scores KV's wells.

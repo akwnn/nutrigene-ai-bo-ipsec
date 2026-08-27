@@ -20,10 +20,10 @@ torch.set_num_threads(1)
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
-OUT_DEFAULT = ROOT / "results" / "ktb-inflation.json"
+OUT_DEFAULT = ROOT / "results" / "ktb-inflation-fine.json"
 
 #: KT §2 Lever B, registered grid. 1.0 is the identity control.
-C_GRID = (1.0, 1.25, 1.5, 2.0)
+C_GRID = (1.0, 1.2, 1.3, 1.4, 1.5, 1.75, 2.0, 2.5, 3.0, 4.0)
 
 
 def _mod(name, filename):
