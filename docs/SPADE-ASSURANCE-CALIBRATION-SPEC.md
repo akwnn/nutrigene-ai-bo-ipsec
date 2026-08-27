@@ -229,3 +229,55 @@ is reported to one decimal place, replacing §7.4's "somewhere in (1.25, 1.5]".
 
 Firewalled pilot measured **26.0 s/campaign -> 5.8 h** for 4 families x 50 seeds x 4 arms,
 inside the 8-hour ceiling. No new campaigns are simulated; this re-scores KV's wells.
+
+
+## 9. Why some families certify and others cannot — the answer, and it is not the landscape
+
+§8.2 recorded "levy and rosenbrock cannot support a gamma=0.95 certificate" as a brute
+information limit. That was incomplete. Diagnosed here:
+
+**Hypothesis 1, SHAPE — REFUTED.** Compactness of the true acceptable region (mean fraction of
+a point's 20 nearest neighbours also inside it) at matched prevalence p=0.30:
+
+| family | compactness | deep points | certifies |
+|---|---|---|---|
+| rosenbrock | **0.648** | **0.107** | **0.0000** |
+| ackley | 0.555 | 0.069 | 0.1580 |
+
+Rosenbrock's region is *geometrically better* than ackley's and certifies nothing. Shape is not
+the mechanism.
+
+**Hypothesis 2, MARGIN — CONFIRMED, with perfect rank agreement.** Distance of the acceptable
+region above its own threshold, in units of the observation noise, at p=0.30:
+
+| family | tau | median margin/sigma | 10th pct | certifies |
+|---|---|---|---|---|
+| hartmann6 | 0.0774 | **2.1181** | 0.4889 | 0.1580 |
+| ackley | 0.0587 | **0.8617** | 0.1578 | 0.1580 |
+| levy | 0.8310 | **0.2393** | 0.0491 | 0.0025 |
+| rosenbrock | 0.9006 | **0.1585** | 0.0337 | 0.0000 |
+
+**The cause is the noise model, not the family.** `sigma = sigma_rel * f(x)` is multiplicative
+(`boec.lse.predictive_sigma`). `UnitScaled` places levy's and rosenbrock's acceptable regions at
+`f ~ 0.83-0.90`, where `sigma ~ 0.21-0.23`; ackley's and hartmann6's sit at `f ~ 0.06-0.08`,
+where `sigma ~ 0.015-0.019` -- **more than 10x smaller**. The absolute margins are comparable;
+the noise is not.
+
+**Consequences.**
+
+1. **"levy/rosenbrock are uncertifiable" is a benchmark-construction artefact**, produced by
+   `UnitScaled` interacting with a multiplicative noise model — not a property of those
+   landscapes. §8.2's "information limit of the budget" is **withdrawn as stated**: the limit
+   is real for these *instances as scored*, and is not evidence about the method's generality.
+2. **The certificate's operating range is governed by signal-to-noise at the threshold**, a
+   single scalar, and this project has never reported it. It explains KU §7.2's 60x
+   certifiability gap, which was recorded as an unexplained inversion.
+3. **It supplies the run-time detector every previous attempt lacked.** `k_eff`,
+   `kappa_tail`, `alpha_star` and Vorob'ev deviation all failed to predict certificate failure.
+   The estimated threshold margin `(mean(x) - tau) / sigma_pred(x)` over the candidate set is
+   computable from the fitted GP alone, with no ground truth. **This is registered as an
+   observation, not a result** — it needs its own pre-registration and a held-out test before
+   anything rests on it.
+4. **KT-7a's alpha=0.50 four-family test is still the right test**, and is now interpretable:
+   if it fails, the reason is predicted in advance to be levy's and rosenbrock's 4-13x worse
+   threshold SNR, not a failure of `c` to generalise.
