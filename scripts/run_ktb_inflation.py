@@ -1,4 +1,4 @@
-"""KW · re-score KV's campaigns with SELECTION-BLIND certification.
+"""KT Lever B · posterior INFLATION sweep. Registered in SPADE-ASSURANCE-CALIBRATION-SPEC.md §2 (Lever B) and §3 (KT-5), frozen at 6848e2f, never run until now.
 
 Registered in `docs/SPADE-SELECTION-BLIND-SPEC.md`, frozen at `09275d7` **before this file
 existed**.
@@ -20,7 +20,10 @@ torch.set_num_threads(1)
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
-OUT_DEFAULT = ROOT / "results" / "kw-selection-blind.json"
+OUT_DEFAULT = ROOT / "results" / "ktb-inflation.json"
+
+#: KT §2 Lever B, registered grid. 1.0 is the identity control.
+C_GRID = (1.0, 1.25, 1.5, 2.0)
 
 
 def _mod(name, filename):
@@ -54,31 +57,43 @@ def score_blind(family, seed, arm, X_sub, tau_by_p):
 
     b = unit_bounds(P.DIM)
     m_full = build_gp(X, Y, Yvar, b)
-    n1 = VB.N_PLATE1 if arm != "plate1_only" else X.shape[0]
-    m_blind = build_gp(X[:n1], Y[:n1], Yvar[:n1], b) if n1 < X.shape[0] else m_full
 
+    # KT Lever B: scale the posterior SD by c >= 1 before drawing. Scaling SD shrinks the
+    # excursion probability toward 0.5 monotonically, so the family of certified sets is
+    # NESTED in c -- a legitimate RCPS lambda, exactly as alpha is. c=1.0 is the identity
+    # control and MUST reproduce the standard certificate.
     with torch.no_grad():
-        mean = m_full.posterior(X_sub).mean.reshape(-1, 1).double()
-        cov = selection_blind_covariance(m_blind, X_sub)
-        cov = cov + 1e-8 * torch.eye(cov.shape[0], dtype=torch.double)
-        L = torch.linalg.cholesky(cov)
+        post = m_full.posterior(X_sub)
+        mean = post.mean.reshape(-1, 1).double()
+        cov0 = post.mvn.covariance_matrix.double()
+        cov0 = cov0 + 1e-8 * torch.eye(cov0.shape[0], dtype=torch.double)
+        L0 = torch.linalg.cholesky(cov0)
         g = torch.Generator().manual_seed(seed)
-        z = torch.randn(cov.shape[0], P.N_DRAWS, generator=g, dtype=torch.double)
-        draws = (mean + L @ z).T
+        z = torch.randn(cov0.shape[0], P.N_DRAWS, generator=g, dtype=torch.double)
 
     rows = []
-    # ERRATUM (mine): see the note above -- the gamma loop was 6x redundant.
-    if True:
-        for p_val, tau in tau_by_p.items():
-            with torch.no_grad():
-                pmap = (draws >= tau).double().mean(dim=0)
-                map_err = float(((pmap >= 0.5) ^ (truth_sub >= tau)).double().mean())
-            rows.append({"map_total_error_vol_sub": map_err, "family": family, "seed": seed,
-                         "arm": arm, "dim": P.DIM, "sigma": P.SIGMA, "regret": regret,
-                         "gamma": None, "p_value": p_val, "tau": tau,
-                         "n_plate1_for_cov": int(n1), "n_wells": int(X.shape[0]),
-                         **p2.vorobev_columns(draws, truth_sub, tau, p2.ALPHAS)})
-    del m_full, m_blind, draws
+    for c in C_GRID:
+        with torch.no_grad():
+            draws = (mean + (float(c) * L0) @ z).T
+        # ERRATUM (mine): the gamma loop was redundant. `tau` comes from
+        # `tau_quantile(p_val)` and never from gamma, so the six gamma values produced six
+        # IDENTICAL rows differing only in a label -- verified directly on KV's output, where
+        # ce_vol/ce_empirical/ce_contain/ce_empty/tau all take exactly 1 distinct value across
+        # the six. The certificate was being computed 6x. Removing it changes no number: the
+        # analyser averages a campaign's cells, and averaging 4 rows equals averaging the same
+        # 4 rows repeated 6 times. KV's committed output keeps its duplicates; only the cost
+        # changes here.
+            for p_val, tau in tau_by_p.items():
+                with torch.no_grad():
+                    pmap = (draws >= tau).double().mean(dim=0)
+                    map_err = float(((pmap >= 0.5) ^ (truth_sub >= tau)).double().mean())
+                rows.append({"map_total_error_vol_sub": map_err, "family": family,
+                             "seed": seed, "arm": arm, "dim": P.DIM, "sigma": P.SIGMA,
+                             "regret": regret, "gamma": None, "p_value": p_val, "tau": tau,
+                             "inflation_c": float(c), "n_wells": int(X.shape[0]),
+                             **p2.vorobev_columns(draws, truth_sub, tau, p2.ALPHAS)})
+        del draws
+    del m_full
     gc.collect()
     return rows
 
