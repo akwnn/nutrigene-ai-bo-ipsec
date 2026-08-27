@@ -382,3 +382,6 @@ COMMIT_MSG.txt
 !results/spade-joint-hill-isolate-path.txt
 !results/spade-joint-continue-dev.sh
 !results/spade-development-*.log
+
+# Watchdog-quarantined shards from wrong protocol digests
+results/stale-wrong-digest/
