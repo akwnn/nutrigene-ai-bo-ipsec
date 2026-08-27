@@ -26,6 +26,20 @@ stated whenever a result from this module is reported.
 **What it does NOT do.** It does not rescue a miscalibrated posterior. If the GP is
 overconfident, this is overconfident in exactly the same proportion, and it needs the
 same inflation calibration (`SPADE-ASSURANCE-CALIBRATION-SPEC.md`) to be honest.
+
+**Selection effect, stated up front because it is this project's own central pathology.**
+The set S is CHOSEN using the same draws against which its joint probability is then
+evaluated. The reported joint probability is therefore an in-sample quantity and is
+optimistic; it is not a guarantee on its own. The region certificate shares this defect --
+the Vorob'ev quantile is also selected from its draws -- but this estimand selects harder,
+greedily over the whole candidate set to maximise |S|, so its optimism should be LARGER.
+
+The exploratory probe behind `bf4845b` shows exactly that: at `c=1.5`, region truth
+containment 1.0000 against finite-set 0.9286, on identical draws. **The remedy is the
+same and it is not optional: calibrate `c` against TRUTH containment
+(`topk_contain`), never against the posterior's own joint probability.** Anything that
+quotes the in-sample joint probability as the guarantee is repeating the error described
+in `SPADE-SELECTION-BLIND-SPEC.md` §1.
 """
 from __future__ import annotations
 
