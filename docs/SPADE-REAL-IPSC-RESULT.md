@@ -126,3 +126,41 @@ within noise there (<= 1.1% width), and re-scoring would break provenance agains
 committed run for no measurable gain. `boec.meanmarg` is therefore used by the real-data
 path and is available, not defaulted. **Recommendation on record: it should be ON for any
 low-SNR or small-n assay**, which is every real one this project has seen.
+
+## 7. Calibrating `c` on THIS assay, with no new experiments
+
+The open item was: `c = 1.5` came from simulated benchmarks, and
+`SPADE-ASSURANCE-CALIBRATION-SPEC.md` §10 proved it does not transfer. Calibrating it
+here does **not** require replicates. Each of the 12 tubes is held out, predicted from the
+other 11, and its standardised residual computed; if the posterior is honest those
+residuals are N(0,1), and the inflation that makes them so is `c` for this assay.
+Reproduce with `scripts/calibrate_real_assay_loo.py`.
+
+| posterior | LOO residual sd | coverage @68% | coverage @95% | calibrated `c` |
+|---|---|---|---|---|
+| raw | 0.741 | 0.917 | 1.000 | **0.712** |
+| mean-marginalised | 0.697 | 0.917 | 1.000 | **0.671** |
+
+**`c < 1`: the predictive distribution is OVER-dispersed, not under-dispersed.** Eleven of
+twelve tubes fall inside a nominal-68% interval. Importing `c = 1.5` was unwarranted
+conservatism, and the honest headline for this assay is the **`c = 1.0` row of §3:
+CD31+ >= 31.6% at 95% confidence**, not 28.8%.
+
+### 7.1 What this does NOT show, and it is a real limit
+
+The LOO test scores the **observation** predictive, which carries the 12.1 pp noise term.
+The certificate is a claim about the **latent** `f`. At n = 12 these cannot be separated:
+an over-dispersed predictive is equally consistent with
+
+1. the latent posterior being honest and `y_spread_pp` **overstating** the noise, or
+2. the latent posterior being over-wide.
+
+Backing the ratio out of (1) gives a true measurement noise near **8.8 pp** against the
+12.1 pp proxy -- entirely plausible, since gate-threshold sensitivity is a conservative
+stand-in for tube-to-tube reproducibility, not a measurement of it.
+
+**What survives either way:** the certificate on this assay errs **conservative**, which is
+the safe direction for a manufacturing claim, and `c = 1.5` is not justified here.
+**What is still owed:** replicate tubes, which would measure the noise directly and
+separate the two explanations. That is the experiment worth running, and it is the same
+experiment §5's power table already recommends.
