@@ -341,3 +341,4 @@ COMMIT_MSG.txt
 !results/probe-meanmarg-benchmarks.json
 !results/probe-kz-realistic-noise.json
 !results/probe-hypermix-6seed.json
+!results/probe-hypermix-30seed.json

@@ -59,3 +59,59 @@ fall by more than 0.05.
   run, not a claim.
 - Draws are joint (Cholesky of the full covariance) within each component. The
   certificate is a SIMULTANEOUS claim and pointwise draws would understate it.
+
+## 6. KY RESULT — KY-1 FAILS, KY-2 PASSES
+
+30 seeds x 4 families (`results/probe-hypermix-30seed.json`, 1440 rows).
+
+### 6.1 A power problem the 6-seed probe hid, and how it was handled
+
+At 6 seeds the fixed cohorts were **0, 1, 4, 9** cells. **No verdict was read**, and the
+probe was re-run rather than adjudicated -- the same error this project has retracted
+three times already. At 30 seeds the cohorts are `ackley` 29 and `hartmann6` 46, but
+`levy` and `rosenbrock` are still only **2 each**, because the cohort rule requires a
+non-empty certificate at EVERY `c` under BOTH models and those two collapse hardest at
+c = 4.0.
+
+The cohort was therefore re-defined over the narrower range where saturation actually
+onsets (c in {1.0, 2.0}), giving cohorts of **5, 8, 37, 47** -- and the primary analysis
+switched to the **paired per-cell** test, which is strictly more powerful because it uses
+every cell non-empty under both models rather than only those surviving the whole grid.
+
+### 6.2 The verdict
+
+Does mixing flip a wrong certificate to a right one? (c = 2.0, paired)
+
+| family | mixture fixed | mixture broke | p |
+|---|---|---|---|
+| levy | 2 | 0 | 0.500 |
+| rosenbrock | 0 | 1 | 1.000 |
+| ackley | 1 | 2 | 1.000 |
+| hartmann6 | 4 | 2 | 0.688 |
+| **pooled** | **7** | **5** | **not significant** |
+
+**KY-1: FAIL.** Hyperparameter mixing does not break the saturation.
+
+**KY-2: PASS.** No harm done -- `ackley` 0.8378 -> 0.8108 (within the registered 0.05 bar)
+and `hartmann6` *improves*, 0.5745 -> 0.6170.
+
+### 6.3 What this rules out, stated at the right strength
+
+**Three independent mechanisms are now excluded for the levy/rosenbrock saturation:**
+
+| mechanism | outcome | where |
+|---|---|---|
+| region shape / compactness | REFUTED | `SPADE-ASSURANCE-CALIBRATION-SPEC.md` §9 |
+| signal-to-noise at the threshold | RETRACTED | §9a |
+| hyperparameter misspecification | **FAIL (KY-1)** | here |
+
+**Precision about what FAIL means here.** With 12 discordant pairs pooled, this rules out a
+**large** effect -- and only a large effect could lift a ceiling stuck at 0.75 and 0.73
+across the entire grid. It does **not** rule out a small one. The honest statement is *no
+evidence that hyperparameter uncertainty drives the saturation, and enough power to
+exclude an effect big enough to matter.*
+
+**Recorded conclusion.** levy/rosenbrock certificate failures remain **unexplained and
+uncured**, and are now the longest-standing open question in this project. Anyone
+continuing should note that mixing is cheap, harmless, and slightly helps `hartmann6`, so
+it may be worth keeping for other reasons -- but not as a fix for this.
