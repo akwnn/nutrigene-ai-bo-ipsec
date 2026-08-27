@@ -23,7 +23,7 @@ OUT_DEFAULT = ROOT / "results" / "kx-calibrated-benchmark.json"
 
 #: KX §7. Wider than KT's -- a comparator may need far more inflation. A c* landing on
 #: the ceiling is reported as TRUNCATED, not passed.
-C_GRID = (1.0, 1.5, 2.0, 2.5, 3.0, 4.0, 6.0, 8.0)
+C_GRID = (1.0, 1.5, 2.0, 4.0, 6.0, 8.0)
 
 #: SPADE's own arm plus every comparator `boec.replay.regenerate` can build.
 SPADE_ARM = "versionb"
@@ -62,6 +62,7 @@ def build_arm(family, arm, seed):
 def score(family, seed, arm, X_sub, tau_by_p):
     from boec.replay import scored_curve, unit_bounds
     from boec.surrogate import build_gp
+    from boec.topk import topk_columns
 
     KV = kv(); P = KV.p8(); p2 = P.p2()
     ev = P.evaluator_for(family, family, seed)
@@ -89,7 +90,10 @@ def score(family, seed, arm, X_sub, tau_by_p):
                              "sigma": P.SIGMA, "regret": regret, "p_value": p_val,
                              "tau": tau, "inflation_c": float(c),
                              "n_wells": int(X.shape[0]),
-                             **p2.vorobev_columns(draws, truth_sub, tau, p2.ALPHAS)})
+                             **p2.vorobev_columns(draws, truth_sub, tau, p2.ALPHAS),
+                             # Same draws, same tau, same inflation: the two estimands
+                             # differ ONLY in what they are asked to certify.
+                             **topk_columns(draws, truth_sub, tau, p2.ALPHAS)})
         del draws
     del m_full
     gc.collect()

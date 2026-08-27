@@ -87,3 +87,43 @@ because `doe` is a screening design and the comparison is not like-for-like.
 KX is simulation at `sigma_rel = 0.25` on benchmark landscapes. It cannot support any claim
 about cell-media performance, and a KX-1 PASS is a claim about **certified region recovery
 under a fixed 48-well budget**, not about optimisation and not about wet-lab behaviour.
+
+## 7a. Amendment, made BEFORE any KX row was read
+
+The first KX launch projected **15.5 h** at 280 s/job under three-way CPU contention.
+Amended now, with the partial output discarded unread:
+
+1. **`C_GRID` narrowed from 8 values to `(1.0, 1.5, 2.0, 4.0, 6.0, 8.0)`.** The dropped
+   values are the *interior* ones (2.5, 3.0). The wide ceiling that §7 registered as the
+   rationale -- "a comparator may need far more inflation" -- is **preserved intact**, and
+   the truncation rule still applies at 8.0. Resolution between 2.0 and 4.0 is the only
+   thing lost, and no gate depends on it.
+2. **Seeds 50 -> 30.** KX-1's unit is `(family, seed, p)`, so this is 4 x 30 x 4 = 480
+   paired cells per arm, ample for the registered bootstrap.
+3. **The finite-set estimand is scored alongside the region estimand**, from the *same
+   draws, same tau, same inflation*. The two differ only in what they are asked to
+   certify. No KX gate is changed by this; it adds columns, and any claim about them
+   requires its own registration (§7b).
+
+**Nothing above was informed by a KX result.** The partial file from the first launch was
+deleted without being analysed.
+
+## 7b. KX-4, registered now — the finite-set estimand against real BO
+
+Motivated by an exploratory probe (64 cells, `versionb` only, committed at `bf4845b` with
+its own caveats): at `c=2.0` the finite-set estimand answered **10.9%** against the region
+estimand's **4.7%** at identical containment 1.0000.
+
+**KX-4 PASSES iff, at each arm's own calibrated `c*` (selected exactly as KX-1 selects it,
+but on finite-set containment), SPADE's finite-set answer rate exceeds every comparator's
+AND its held-out finite-set containment lower bound is >= 0.90.**
+
+- **FAIL** -> the finite-set estimand is not a SPADE advantage; it is an estimand change
+  that helps every design equally, and must be reported as such rather than as a SPADE
+  result. **This is the outcome I consider most likely** and it is registered first.
+
+**Registered interpretation constraint.** The finite-set guarantee is strictly weaker than
+the region guarantee: a certified region implies it for any subset, and the converse is
+false. Every reported KX-4 number must carry that sentence. An answer-rate gain bought by
+weakening the claim is a trade, not a free improvement, and must never be presented as
+the region result.
