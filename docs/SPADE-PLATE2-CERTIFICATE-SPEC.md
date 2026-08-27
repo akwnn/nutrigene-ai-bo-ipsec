@@ -85,6 +85,34 @@ errata of exactly this shape (`EV(x)` reading ground truth; `exclusion_radius` h
 mode a `rho` parameter most invites. Identical batches on any campaign **pause KV** and are
 reported.
 
+## 4a. Amendment: degenerate-fit campaigns are excluded, on a mathematical identity
+
+The run fired §4's arm-distinctness assertion on **2 of 200 campaigns** (`rosenbrock`
+seeds 10 and 44) and paused, as registered. Diagnosed before any gate was inspected:
+
+    rosenbrock seed=10   sd = [0.000, 0.000]   mean - theta = [-0.05, -0.05]
+    rosenbrock seed=44   sd = [0.000, 0.000]   mean - theta = [+0.04, +0.04]
+    rosenbrock seed=0    sd = [0.082, 0.133]   argmax differs   (healthy)
+    levy       seed=0    sd = [0.096, 0.159]   argmax differs   (healthy)
+
+On those two campaigns the plate-1 GP collapsed to a **constant mean with zero posterior
+variance** across the whole candidate grid. At `sd = 0`,
+
+    certificate_straddle = 1.96*sd - |mean - z_rho*sd - theta|  ->  -|mean - theta|
+    straddle_score       = 1.96*sd - |mean - theta|             ->  -|mean - theta|
+
+the two criteria are **algebraically identical for every value of `rho`**. The arms did not
+silently collapse into one; the contrast KV-2 measures is *undefined* on a degenerate fit.
+
+**Campaigns whose plate-1 posterior SD is identically zero on the candidate grid are therefore
+excluded from KV-2's contrast and reported as a separate count.** The justification is an
+identity, not an outcome — it holds for any data and was written before any gate was read.
+The exclusion is **not** applied to KV-1, KV-3 or KV-5, which do not involve the new arm.
+
+**Reported, not hidden:** 2 of 200 campaigns (1.0%) produced a degenerate plate-1 fit on
+`rosenbrock`. That is itself a finding about the surrogate at 40 wells and is recorded as
+unregistered — it needs its own pre-registration before anything rests on it.
+
 ## 5. Falsifiable predictions, registered now
 
 **KV-1 (PRIMARY — confirmation).** Prospectively, `versionb` beats `versionb_random` on truth
