@@ -28,7 +28,7 @@
 **Interfaces:**
 - `CqaDefinition` is a frozen dataclass with fields `name`, `units`, `threshold`, `direction`, `gamma`, `assay_id`, `assay_version`, `sigma_rel`, `sigma_add`.
 - `bonferroni_endpoint_alpha(alpha: float, n_cqas: int) -> float`.
-- `qualify_multi_cqa(X, Y, Yvar, bounds, cqas, *, alpha=0.95, n_draws=512, n_rho=64, base_seed=0, latent_inflation=1.0, volume_rule="smallest", utility=None, truth_masks=None, cqa_names=None, fit_restarts=1) -> ManufacturingQualificationResult`.
+- `qualify_multi_cqa(X, Y, Yvar, bounds, cqas, *, grid=None, alpha=0.95, n_draws=512, n_rho=64, base_seed=0, latent_inflation=1.0, volume_rule="smallest", utility=None, truth_masks=None, cqa_names=None, fit_restarts=1) -> ManufacturingQualificationResult` (fits on observed `X` and scores the shared candidate `grid`; `grid=None` uses `X`).
 
 - [ ] **Step 1: Write failing validation and alpha tests**
 

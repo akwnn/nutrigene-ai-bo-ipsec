@@ -67,14 +67,18 @@ or any active `results/` files. The overlay may call stable existing primitives
 
 ## 4. Input contract
 
-The implementation accepts a common design and observations:
+The implementation accepts observed training recipes, measurements, and a shared
+candidate grid:
 
-- `X`: finite floating tensor/array of shape `(n, d)`, one row per recipe and one
-  shared factorization/order for all CQAs.
+- `X`: finite floating tensor/array of shape `(n, d)`, one observed recipe per row
+  and one shared factorization/order for all CQAs.
 - `Y`: finite floating tensor/array of shape `(n, m)`, one observed CQA column per
   recipe. `m >= 2` for this overlay; scalar SPADE remains the existing path.
 - `Yvar`: finite, strictly positive tensor/array of shape `(n, m)` giving known
   observation variances. It is not silently replaced by a learned noise estimate.
+- `grid`: finite floating tensor/array of shape `(n_grid, d)` on which certificates
+  are issued. It uses the same factor bounds and column order as `X`; if omitted,
+  the implementation uses `X` as a convenience fallback.
 - `cqas`: an ordered tuple of exactly `m` definitions.
 
 Each `CqaDefinition` contains:
@@ -102,7 +106,8 @@ such. The generic implementation does not special-case biological markers.
 
 ## 5. Statistical procedure
 
-For each CQA `j`, in registry order:
+For each CQA `j`, in registry order, fit on the observed `X`/`Y[:, j]` rows and
+score the resulting certificate on the shared `grid`:
 
 1. Validate `X`, `Y[:, j]`, `Yvar[:, j]`, and the definition. Reject shape,
    non-finite, non-positive variance, duplicate-name, mixed-assay, or incomplete
