@@ -99,8 +99,13 @@ def main() -> None:
     print(f"KV adjudication · {payload.get('status')} · {len(rows)} rows · "
           f"cert_rho={payload.get('cert_rho')} · gamma={GAMMA_PRIMARY} · SESOI={SESOI}\n")
     if coll:
-        print(f"ARM COLLISIONS: {len(coll)} -- KV is PAUSED per spec §4. "
-              "Reported, not patched.\n")
+        print(f"ARM COLLISIONS: {len(coll)} of 200 campaigns -- diagnosed as DEGENERATE "
+              "plate-1 fits\n  (posterior sd identically 0, where the two criteria are "
+              "algebraically identical for\n  every rho). Excluded from KV-2 only, per spec "
+              "§4a. See that section.\n")
+        drop = {(c["family"], c["seed"]) for c in coll}
+        rows = [r for r in rows if (r["family"], r["seed"]) not in drop
+                or r["arm"] != "spade_cert_rho95"]
 
     cc = cluster(rows, CONTAIN, require_nonempty=True)
     cm = cluster(rows, MAPERR, require_nonempty=False)

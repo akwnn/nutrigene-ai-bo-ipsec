@@ -200,6 +200,44 @@ needs its own registration.
 
 `NO_SELECTION` is preserved; the lockbox stays sealed.
 
-## 9. Result
+## 9. Result — KV-1 FAILS. The post-hoc finding did NOT replicate. KV-6 fires.
 
-*(Empty at freeze. Filled once, immediately after, from the run.)*
+**800 campaigns, 19,200 rows, prospective** (`results/kv-plate2-certificate.json`,
+`results/kv-analysis.json`). 2 of 200 campaigns excluded from KV-2 per §4a.
+
+| gate | n | effect | 95% CI | p_raw | p_holm | verdict |
+|---|---|---|---|---|---|---|
+| **KV-1** targeted vs random | 21 | **−0.2143** | [−0.3810, −0.0714] | 0.0244 | 0.0731 | **FAIL** |
+| **KV-2** cert-ρ95 vs targeted | 66 | +0.0227 | [−0.0833, +0.1288] | 0.702 | 1.0 | **FAIL** |
+| KV-3 random 2-plate vs 1-plate | 8 | — | — | — | — | INSUFFICIENT |
+| KV-4 map not degraded | 198 | +0.0004 | [−0.0004, +0.0014] | 0.729 | 1.0 | PASS |
+| KV-5 answer rate gap | — | 0.008 | — | — | — | PASS (bar 0.05) |
+
+**The post-hoc +0.0239 did not replicate, and the point estimate reversed sign.**
+Prospectively, targeted plate 2 is *nominally worse* than random placement by −0.2143. The
+effect is raw-significant (p=0.0244) but does not survive Holm correction across the KV family
+(p=0.0731), which is exactly the multiplicity control §1 flagged as missing from the post-hoc
+table.
+
+**§1's table is therefore recorded as a re-score artefact**, per KV-1's registered FAIL branch,
+and the KF-3/KF-3b/KF-3c line stands unqualified. The claim *"random placement of the extra 8
+wells is worth nothing; the second plate has value only when targeted"* is **WITHDRAWN**.
+
+**KV-2 also fails.** Aiming at the certificate's own ρ=0.95 contour does not enlarge the
+effect: +0.0227, CI spanning zero, p=0.702. Per §5, `rho=0.5` stays and the adaptive-`rho`
+follow-up is **not** run. `certificate_straddle` is retained in the codebase as a tested,
+bit-identical-at-ρ=0.5 generalisation, but **no arm uses it**.
+
+**The honest caveat on power.** KV-1 rests on n=21 paired campaigns, not the 149 the post-hoc
+table used, because under the τ-quantile grid the certificate is non-empty far less often
+(`SPADE-PREVALENCE-MATCHED-SPEC.md` §7.2: levy 0.0025, rosenbrock 0.0000 at γ=0.95). KV was
+scoped on the assumption that the prospective n would resemble the post-hoc n. It did not, and
+**the reason is a finding this project only made in the same session.** KV-1 is therefore a
+FAIL on a small sample, not a well-powered null like KF-3's — that distinction is recorded
+rather than glossed, and it is the one thing a future study could legitimately revisit with a
+grid chosen for answer rate.
+
+**KV-6 FIRES.** Plate-2 targeting has now been tested prospectively on **both** deliverables —
+map error (KF-3/3b/3c, well-powered, n=250, MDE 0.0057) and certificate containment (KV,
+underpowered, n=21) — and earns its complexity on neither. The question is **closed**. No
+further Plate-2 acquisition rule is built without a new pre-registration.
