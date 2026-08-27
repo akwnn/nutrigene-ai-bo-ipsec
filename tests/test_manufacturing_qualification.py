@@ -213,6 +213,37 @@ def test_empty_intersection_abstains_without_setpoint(monkeypatch):
     assert result.limiting_cqa is None
 
 
+def test_candidate_grid_is_separate_from_observed_training_recipes(monkeypatch):
+    X, Y, Yvar, bounds = valid_inputs()
+    grid = torch.linspace(0.0, 1.0, 6, dtype=torch.double).unsqueeze(-1)
+    monkeypatch.setattr(
+        "boec.manufacturing_qualification.build_gp", lambda *args, **kwargs: 0
+    )
+    monkeypatch.setattr(
+        "boec.manufacturing_qualification.reliable_set_draws",
+        lambda *args, **kwargs: torch.ones((2, 6), dtype=torch.bool),
+    )
+    monkeypatch.setattr(
+        "boec.manufacturing_qualification.conservative_set_split",
+        lambda draws, *args, **kwargs: SimpleNamespace(
+            mask=draws[0], volume=1.0, selection_containment=1.0, crossfit_containment=1.0
+        ),
+    )
+    result = qualify_multi_cqa(
+        X,
+        Y,
+        Yvar,
+        bounds,
+        (definition("a"), definition("b")),
+        grid=grid,
+        n_draws=2,
+        utility=torch.arange(6, dtype=torch.double),
+    )
+    assert result.grid.shape == (6, 1)
+    assert result.joint_mask.shape == (6,)
+    assert result.setpoint_index == 5
+
+
 def test_limiting_cqa_and_setpoint_ties_are_deterministic(monkeypatch):
     X, Y, Yvar, bounds = valid_inputs()
     masks = iter(

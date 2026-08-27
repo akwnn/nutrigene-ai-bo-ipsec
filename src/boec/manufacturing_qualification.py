@@ -242,6 +242,7 @@ def qualify_multi_cqa(
     bounds,
     cqas: Sequence[CqaDefinition],
     *,
+    grid=None,
     alpha: Real = 0.95,
     n_draws: int = 512,
     n_rho: int = 64,
@@ -253,12 +254,19 @@ def qualify_multi_cqa(
     cqa_names: Sequence[str] | None = None,
     fit_restarts: int = 1,
 ) -> ManufacturingQualificationResult:
-    """Fit independent CQA GPs and return their conservative-mask intersection."""
+    """Fit independent CQA GPs and return their conservative-mask intersection.
+
+    ``X``/``Y``/``Yvar`` are observed training recipes and CQA measurements.
+    ``grid`` is the shared candidate grid on which the operating-region masks are
+    issued; when omitted, the observed recipes are used as the grid.
+    """
     X_t = _as_double_tensor(X, "X")
+    grid_t = X_t if grid is None else _as_double_tensor(grid, "grid")
     Y_t = _as_double_tensor(Y, "Y")
     Yvar_t = _as_double_tensor(Yvar, "Yvar")
     bounds_t = _as_double_tensor(bounds, "bounds")
     _validate_grid(X_t, bounds_t)
+    _validate_grid(grid_t, bounds_t)
     if Y_t.ndim != 2:
         raise ValueError(f"Y must have shape (n, m), got {tuple(Y_t.shape)}")
     if Yvar_t.ndim != 2:
@@ -307,15 +315,15 @@ def qualify_multi_cqa(
     utility_t: Tensor | None = None
     if utility is not None:
         utility_t = _as_double_tensor(utility, "utility").reshape(-1)
-        if utility_t.shape != (X_t.shape[0],):
-            raise ValueError(f"utility must have shape ({X_t.shape[0]},)")
+        if utility_t.shape != (grid_t.shape[0],):
+            raise ValueError(f"utility must have shape ({grid_t.shape[0]},)")
         if not bool(torch.isfinite(utility_t).all()):
             raise ValueError("utility must contain only finite values")
 
     truth_t: tuple[Tensor, ...] | None = None
     if truth_masks is not None:
         truth_t = tuple(
-            _validate_mask(mask, X_t.shape[0], f"truth_masks[{index}]")
+            _validate_mask(mask, grid_t.shape[0], f"truth_masks[{index}]")
             for index, mask in enumerate(truth_masks)
         )
         if len(truth_t) != len(definitions):
@@ -333,7 +341,7 @@ def qualify_multi_cqa(
     )
 
     endpoint_results: list[EndpointQualification] = []
-    joint_mask = torch.ones(X_t.shape[0], dtype=torch.bool)
+    joint_mask = torch.ones(grid_t.shape[0], dtype=torch.bool)
     for index, definition in enumerate(definitions):
         if definition.direction == "less_equal":
             train_y = -Y_t[:, index]
@@ -352,7 +360,7 @@ def qualify_multi_cqa(
         seed = derive_seed(base_seed_i, "manufacturing-cqa", definition.name, index)
         draws = reliable_set_draws(
             model,
-            X_t,
+            grid_t,
             transformed_threshold,
             float(definition.gamma),
             n_draws_i,
@@ -361,10 +369,10 @@ def qualify_multi_cqa(
             sigma_add=float(definition.sigma_add),
             latent_inflation=latent_inflation_f,
         )
-        if draws.ndim != 2 or draws.shape[1] != X_t.shape[0] or draws.dtype != torch.bool:
+        if draws.ndim != 2 or draws.shape[1] != grid_t.shape[0] or draws.dtype != torch.bool:
             raise ValueError(
                 f"reliable-set draws for {definition.name} must have shape "
-                f"(n_draws, {X_t.shape[0]}) and boolean dtype"
+                f"(n_draws, {grid_t.shape[0]}) and boolean dtype"
             )
         certificate: ConservativeSetResult = conservative_set_split(
             draws,
@@ -372,7 +380,7 @@ def qualify_multi_cqa(
             n_rho=n_rho_i,
             volume_rule=volume_rule,
         )
-        mask = _validate_mask(certificate.mask, X_t.shape[0], f"certificate[{definition.name}]")
+        mask = _validate_mask(certificate.mask, grid_t.shape[0], f"certificate[{definition.name}]")
         truth_containment = (
             empirical_set_containment(mask, truth_t[index]) if truth_t is not None else None
         )
@@ -408,19 +416,19 @@ def qualify_multi_cqa(
         max_value = torch.max(candidate_values)
         tied = candidate_indices[candidate_values == max_value]
         setpoint_index = int(tied[0])
-        setpoint = tuple(float(value) for value in X_t[setpoint_index].tolist())
+        setpoint = tuple(float(value) for value in grid_t[setpoint_index].tolist())
         utility_value = float(max_value)
 
     joint_truth_containment = None
     if truth_t is not None:
-        truth_joint = torch.ones(X_t.shape[0], dtype=torch.bool)
+        truth_joint = torch.ones(grid_t.shape[0], dtype=torch.bool)
         for truth_mask in truth_t:
             truth_joint = torch.logical_and(truth_joint, truth_mask)
         joint_truth_containment = empirical_set_containment(joint_mask, truth_joint)
 
     return ManufacturingQualificationResult(
         status=status,
-        grid=X_t,
+        grid=grid_t,
         endpoint_results=tuple(endpoint_results),
         joint_mask=joint_mask.clone(),
         joint_volume=joint_volume,
