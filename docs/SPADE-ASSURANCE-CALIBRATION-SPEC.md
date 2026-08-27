@@ -114,6 +114,64 @@ CI on the arm difference is [−0.114, +0.232].
 
 `NO_SELECTION` is preserved; the lockbox stays sealed.
 
-## 7. Result
+## 7. Result — KT-5 (Lever B) PASSES. A single dimensionless inflation factor transfers.
 
-*(Empty at freeze. Filled once, immediately after, from the run.)*
+**12,800 rows over KV's prospective campaigns** (`results/ktb-inflation.json`). Lever A (alpha
+above 0.95) remains unrun; Lever B was registered in §2 as SECONDARY and is reported as such.
+
+### 7.1 The sweep
+
+| `c` | non-empty rate | model-internal | **truth** | 95% LB | mean certified vol |
+|---|---|---|---|---|---|
+| 1.00 (identity control) | 0.0803 | 0.9846 | 0.8327 | 0.7896 | 0.00604 |
+| 1.25 | 0.0666 | 0.9824 | 0.9296 | 0.8936 | 0.00292 |
+| **1.50** | 0.0519 | 0.9792 | **0.9699** | **0.9377** | 0.00155 |
+| 2.00 | 0.0222 | 0.9692 | 1.0000 | 0.9587 | 0.00127 |
+
+`c = 1.0` reproduces the standard certificate, as the identity control requires.
+
+### 7.2 The transfer test, which is the point
+
+`c` chosen on one family by standard RCPS selection over the nested family — the **smallest**
+`c` whose 95% Clopper–Pearson upper bound on failure is ≤ 0.10 — then applied **unchanged** to
+a family it never saw:
+
+| calibrate on | `c*` | apply to | at `c`=1.0 | **calibrated** | 95% LB | answer rate | n | |
+|---|---|---|---|---|---|---|---|---|
+| ackley | 1.5 | hartmann6 | 0.7953 | **0.9597** | 0.9171 | 0.155 | 124 | **PASS** |
+| hartmann6 | 1.5 | ackley | 0.9048 | **1.0000** | 0.9312 | 0.053 | 42 | **PASS** |
+| **pooled** | | | | **0.9699** | **0.9377** | | 166 | **PASS** |
+
+*Comparators, all fixed and previously measured:* `k_eff` LB 0.8175 FAIL · `kappa_tail`
+LB 0.8074 FAIL · box-volume cap LB 0.8175 FAIL.
+
+**Both families independently select the same `c* = 1.5`.** That is the transfer property
+demonstrated rather than assumed, and it is why a dimensionless factor succeeds where a cap in
+box-volume units failed: `c` carries no units to be re-scaled per landscape.
+
+### 7.3 Why this works when five other corrections did not
+
+`k_eff`, `kappa_tail`, `alpha_star`, Vorob'ev deviation and the 0/50 scope detector all tried
+to **predict which campaigns would fail** from run-time observables. Every one failed. `c` does
+not predict anything — it **widens the posterior until the guarantee holds empirically**, which
+is the standard risk-controlling construction over a nested family and needs no detector.
+
+E3 is why a multiplicative factor is the right form: latent coverage 0.7644–0.8189 against
+nominal 0.95, while **predictive** coverage recovers to 0.9087–0.9156. The latent posterior is
+under-dispersed by roughly a scale factor, and `c ≈ 1.5` is the size of that correction.
+
+### 7.4 Limits, stated
+
+1. **Two usable families.** `levy` and `rosenbrock` certify almost nothing at the quantile grid
+   at γ=0.95 (`SPADE-PREVALENCE-MATCHED-SPEC.md` §7.2), so the transfer test rests on
+   ackley↔hartmann6. It is a two-family result, not a five-family one.
+2. **The guarantee costs answer rate and volume.** Non-empty falls 0.0803 → 0.0519 and mean
+   certified volume 0.00604 → 0.00155, a 3.9× smaller region. That is the price and it is not
+   hidden.
+3. **The `c` grid is coarse** (4 values). `c*` = 1.5 in both directions, but the true optimum
+   lies somewhere in (1.25, 1.5] and is not resolved.
+4. **This is a re-score of prospectively-generated campaigns.** KV generated the wells live, so
+   the designs are prospective; the inflation is applied at scoring time. A fully prospective
+   confirmation still needs its own run.
+5. **It does not fix Plate-2 targeting.** KV-6 stands: targeting still earns nothing over random.
+   KT-5 fixes calibration and transfer, not allocation.
