@@ -135,6 +135,7 @@ class ScoringExecutionSettings:
     predictive_observation_noise: str = "assay_relative_additive"
     latent_draw_inflation: str = "loo_calibration_tail"
     certificate_max_volume: float = 0.001
+    latent_inflation_floor: float = 1.5
 
     def __post_init__(self) -> None:
         for field in (
@@ -180,6 +181,13 @@ class ScoringExecutionSettings:
                 f"got {self.certificate_max_volume!r}"
             )
         object.__setattr__(self, "certificate_max_volume", max_vol)
+        floor = float(self.latent_inflation_floor)
+        if not math.isfinite(floor) or floor < 1.0:
+            raise ValueError(
+                "latent_inflation_floor must be finite and >= 1, "
+                f"got {self.latent_inflation_floor!r}"
+            )
+        object.__setattr__(self, "latent_inflation_floor", floor)
 
     @property
     def digest(self) -> str:
@@ -198,6 +206,7 @@ REGISTERED_SCORING_SETTINGS = ScoringExecutionSettings(
     predictive_observation_noise="assay_relative_additive",
     latent_draw_inflation="loo_calibration_tail",
     certificate_max_volume=0.001,
+    latent_inflation_floor=1.5,
 )
 
 
@@ -605,15 +614,18 @@ def _posterior_mean(model: object, X: Tensor) -> Tensor:
 
 
 def _latent_inflation_from_loo_residuals(
-    y: np.ndarray, mu: np.ndarray, sd: np.ndarray, *, mode: str
+    y: np.ndarray, mu: np.ndarray, sd: np.ndarray, *, mode: str, floor: float = 1.0
 ) -> float:
-    """Map LOO predictive residuals to a latent draw inflation ≥ 1.
+    """Map LOO predictive residuals to a latent draw inflation ≥ ``floor``.
 
     ``loo_calibration`` uses RMS standardized residuals. ``loo_calibration_tail`` takes
     the max of that RMS and ``max|z| / z_{0.975}`` so localized misspecification that a
     mean-square statistic hides still widens the certificate draws. Dividing by the
     univariate 95% Gaussian quantile keeps a well-calibrated campaign near mild
     inflation rather than treating the extreme-order statistic as a raw multiplier.
+
+    ``floor`` implements the registered KT-5-style fixed inflation
+    ``c_eff = max(c_floor, loo_factor)`` (never a family detector).
     """
     if mode == "loo_calibration":
         kappa = float(calibration_inflation(y, mu, sd))
@@ -625,10 +637,15 @@ def _latent_inflation_from_loo_residuals(
         raise ValueError(f"unsupported LOO inflation mode: {mode!r}")
     if not math.isfinite(kappa):
         raise ValueError("LOO calibration inflation must be finite")
-    return max(1.0, kappa)
+    floor_f = float(floor)
+    if not math.isfinite(floor_f) or floor_f < 1.0:
+        raise ValueError(f"latent inflation floor must be finite and >= 1, got {floor!r}")
+    return max(floor_f, max(1.0, kappa))
 
 
-def _loo_latent_inflation(model: object, *, mode: str = "loo_calibration_tail") -> float:
+def _loo_latent_inflation(
+    model: object, *, mode: str = "loo_calibration_tail", floor: float = 1.5
+) -> float:
     """Widen latent certificate draws using the campaign's own LOO residuals.
 
     LOO is predictive (noise-inclusive); treating it as a lower bound on the needed
@@ -647,7 +664,9 @@ def _loo_latent_inflation(model: object, *, mode: str = "loo_calibration_tail") 
         raise ValueError("model must support LOO residual self-calibration") from exc
     y = train_y.detach().cpu().numpy()
     mu, var = loo_residuals(cov.detach().cpu().numpy(), y)
-    return _latent_inflation_from_loo_residuals(y, mu, np.sqrt(var), mode=mode)
+    return _latent_inflation_from_loo_residuals(
+        y, mu, np.sqrt(var), mode=mode, floor=floor
+    )
 
 
 def _binary_auc(labels: Tensor, probabilities: Tensor) -> float | None:
@@ -768,7 +787,9 @@ def score_campaign(
         predictive_noise = {}
     if effective.latent_draw_inflation in {"loo_calibration", "loo_calibration_tail"}:
         latent_inflation = _loo_latent_inflation(
-            model, mode=effective.latent_draw_inflation
+            model,
+            mode=effective.latent_draw_inflation,
+            floor=effective.latent_inflation_floor,
         )
     else:
         latent_inflation = 1.0

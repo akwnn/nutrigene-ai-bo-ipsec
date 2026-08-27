@@ -1,5 +1,5 @@
 schema: boec-spade-joint-protocol-v1
-study_id: spade-joint-48-mfg-cert-loo-tail-vmax-2026-08-27
+study_id: spade-joint-48-mfg-cert-floor15-loo-tail-2026-08-27
 status: FROZEN_BEFORE_DEVELOPMENT_SELECTION
 public_method_name: SPADE
 claim_scope: computational_synthetic_benchmark_only
@@ -76,6 +76,7 @@ protocol:
   certificate_volume_rule: smallest
   predictive_observation_noise: assay_relative_additive
   latent_draw_inflation: loo_calibration_tail
+  latent_inflation_floor: 1.5
   certificate_max_volume: 0.001
   terminal_rule: P
   map_primary: integrated_squared_probability_error
@@ -196,7 +197,7 @@ execution:
 
 digests:
   digest_definition: "sha256; protocol and execution payloads each use canonical sorted compact JSON of their parsed mappings"
-  protocol_payload_sha256: 6f38077ebc8cb0788e460d9e15ec3bc1ef4427865838f7290626cbe9a27afd57
+  protocol_payload_sha256: 681947bcd05f0e021785d971c499bb11dfb725b146ce903eae5f4d70d2d9d342
   execution_payload_sha256: 5dae76d1495c009cf2ea0989142fe4563c2f2140d2dbe832249bdcc41fa4f80d
   actions_workflow_sha256: 5240e0a2c302d91afdab7df87abfba83f01983bd7aa9b8550334771c5603722d
   actions_matrix_sha256: 52230fffe9fcc9317de68f6c7f4c1ef5b97debf58332c62b39380cbd185d951d
@@ -205,7 +206,7 @@ digests:
   requirements_sha256: 96a00b1abb366bd48318d7957703608b348393aa280a6808ef91652c28471687
   spec_sha256: 21c07a4107dd39770facabd3f3c9b52c45b65239c0d60b3cc5f7ce7648bdf403
   lockbox_oracles_source_sha256: 1a79abd6e62d503852fe98957e67d4d4f6d7e9f8b52788176f2359ed38d3e0c3
-  spade_study_source_sha256: 129100963fd905f395cffc6c5001e5079ca5108704a9f274ce1ef48644d4d021
+  spade_study_source_sha256: cf87fbd286cfff6d5571ec89c2fc4d08ff26e05a07340962b85a668c8684e5df
   power_design_sha256: 6fec13c194468fbbab83758760a60b0161314b03d5c97d3146d14c52af226d7b
   power_engine_sha256: bb3fb81c44a41318bf14dbabc399a9aed7e2225dd4dcea27706a081d152ac97b
   power_planner_sha256: 408dcadecbdbf52fff18928eb189ad6963cf8668c8035bb54f2b61e3732ac865

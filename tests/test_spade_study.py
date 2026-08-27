@@ -93,6 +93,7 @@ def _test_settings():
         predictive_observation_noise="assay_relative_additive",
         latent_draw_inflation="none",
         certificate_max_volume=0.001,
+        latent_inflation_floor=1.0,
     )
 
 
@@ -129,6 +130,7 @@ def test_registered_scoring_sizes_are_exact_and_immutable():
         predictive_observation_noise="assay_relative_additive",
         latent_draw_inflation="loo_calibration_tail",
         certificate_max_volume=0.001,
+        latent_inflation_floor=1.5,
     )
 
 
@@ -174,6 +176,45 @@ def test_loo_tail_inflation_sees_localized_spike_that_rms_hides():
     assert rms == pytest.approx(math.sqrt((1 + 1 + 1 + 1 + 16) / 5))
     assert tail == pytest.approx(max(rms, 4.0 / float(norm.ppf(0.975))))
     assert tail > rms
+
+
+def test_fixed_floor_raises_mild_loo_tail_to_registered_c_floor():
+    """KT-5 style floor: c_eff = max(1.5, loo_tail); never shrink below the floor."""
+    import numpy as np
+
+    # Perfectly calibrated |z|=1 → loo_tail factor is ~1/z_0.975 < 1 → clamped to 1 without floor
+    y = np.array([1.0, -1.0, 1.0, -1.0])
+    mu = np.zeros(4)
+    sd = np.ones(4)
+    mild = study_module._latent_inflation_from_loo_residuals(
+        y, mu, sd, mode="loo_calibration_tail", floor=1.0
+    )
+    floored = study_module._latent_inflation_from_loo_residuals(
+        y, mu, sd, mode="loo_calibration_tail", floor=1.5
+    )
+    assert mild == pytest.approx(1.0)
+    assert floored == pytest.approx(1.5)
+
+    # When loo_tail already exceeds the floor, the tail wins
+    y_spike = np.array([1.0, -1.0, 1.0, -1.0, 6.0])
+    strong = study_module._latent_inflation_from_loo_residuals(
+        y_spike, np.zeros(5), np.ones(5), mode="loo_calibration_tail", floor=1.5
+    )
+    assert strong > 1.5
+
+
+def test_scoring_settings_reject_inflation_floor_below_one():
+    with pytest.raises(ValueError, match="latent_inflation_floor"):
+        ScoringExecutionSettings(
+            calibration_grid_size=256,
+            terminal_grid_size=64,
+            map_grid_size=48,
+            certificate_grid_size=24,
+            certificate_draws=32,
+            certificate_rho_grid_size=8,
+            fit_restarts=1,
+            latent_inflation_floor=0.5,
+        )
 
 
 
@@ -721,11 +762,12 @@ def test_yaml_freezes_every_registered_design_value_and_its_payload_digest():
     canonical = json.dumps(p, sort_keys=True, separators=(",", ":"), allow_nan=False).encode()
     assert cfg["digests"]["protocol_payload_sha256"] == hashlib.sha256(canonical).hexdigest()
     assert cfg["digests"]["protocol_payload_sha256"] == (
-        "6f38077ebc8cb0788e460d9e15ec3bc1ef4427865838f7290626cbe9a27afd57"
+        "681947bcd05f0e021785d971c499bb11dfb725b146ce903eae5f4d70d2d9d342"
     )
     assert p["certificate_volume_rule"] == "smallest"
     assert p["predictive_observation_noise"] == "assay_relative_additive"
     assert p["latent_draw_inflation"] == "loo_calibration_tail"
+    assert p["latent_inflation_floor"] == 1.5
     assert p["certificate_max_volume"] == 0.001
     execution = cfg["execution"]
     assert execution == {

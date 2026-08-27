@@ -104,24 +104,22 @@ explicit non-registered option.
 Assay+smallest alone raised hill best-candidate empirical containment to **0.878**
 (still < 0.9) and levy to ~**0.67**. LOO **RMS** inflation + `Vmax=0.001`
 (`6e6dec2a…`) cleared hill for `spade-o32-staged` (emp 1.0, ans 0.54) but levy
-stalled at emp ~**0.72** with failures at the same tiny volumes as successes — a
-localization / misspecification problem RMS cannot see.
+stalled at emp ~**0.72**. LOO-**tail** + Vmax (`6f38077e…`) cleared hill again but
+levy best emp **0.875** (7/8) — gate **FAIL**.
 
 Current registered recovery therefore uses:
 
-1. **`latent_draw_inflation: loo_calibration_tail`** — widen joint latent draws by
-   `max(1, RMS, max|z| / z_{0.975})` from the campaign's own LOO residuals
-   (`boec.selfcalib`). This is **not** the dropped KS volume-cap *transfer*
-   conditioner; it is still campaign-local LOO, using the tail statistic the
-   self-calibration module already registers for simultaneous certificate claims.
-2. **`certificate_max_volume: 0.001`** — abstain if the selected Vorob'ev CE exceeds
-   this fraction of the box.
+1. **`latent_draw_inflation: loo_calibration_tail`** with
+   **`latent_inflation_floor: 1.5`** — `c_eff = max(1.5, LOO-tail factor)` (KT-5-style
+   fixed floor; campaign-local, not a family detector).
+2. **`certificate_max_volume: 0.001`** — abstain if CE exceeds this box fraction.
 
-Study id: `spade-joint-48-mfg-cert-loo-tail-vmax-2026-08-27`  
-Prior LOO-RMS+Vmax shards: `results/historical-mfg-cert-loo-vmax-rms-shortfall/`  
-Assay-only shortfall shards: `results/historical-mfg-cert-assay-shortfall/`
+Study id: `spade-joint-48-mfg-cert-floor15-loo-tail-2026-08-27`  
+Prior LOO-tail gate FAIL: `results/historical-mfg-cert-loo-tail-gate-fail/`  
+Assay-only shortfall: `results/historical-mfg-cert-assay-shortfall/`
 
 Must still clear LOFO ≥0.9 before any manufacturing claim.
+
 
 ## 4. Success
 
@@ -142,6 +140,9 @@ this worktree. External certificate R&D on `origin/kr-effective-resolution`:
 | Family-local volume calibration ≥90% | Works | Not deployed as a library rule |
 | `k_eff` (KR) / `kappa_tail` transfer (KS) | FAILED / DROP | Not re-adopted |
 | KU / KT / KV | Open / frozen | Follow-on studies only after this digest closes |
+
+**Full implement / do-not ledger (2026-08-27):**
+`docs/superpowers/specs/2026-08-27-spade-certificate-improvement-decisions.md`
 
 Durable runner: `scripts/spade_development_watchdog.sh` (resume, backups, LOFO on complete).
 
