@@ -101,6 +101,69 @@ def lofo(cells, arm, R, fams, grid):
             "e_vol": (sum(vols.values()) / len(vols)) if vols else 0.0}
 
 
+# ---------------------------------------------------------------------------
+# POST-HOC ADDITION, added after the frozen gates were committed and after the
+# LOFO degeneracy below was observed. Labelled as post-hoc; it changes no gate
+# threshold (BAR, MIN_ANSWER, SESOI and the LOFO procedure are untouched).
+#
+# WHY: leave-one-FAMILY-out is degenerate here. Only ackley and hartmann6 supply
+# certificates at a usable rate, so a fold that holds out a live family destroys
+# the calibration signal, and a fold that holds out a saturated family cannot
+# answer. LOFO therefore reports ~0 for reasons that have nothing to do with
+# whether the certificate is sound.
+#
+# Leave-one-SEED-out keeps every family in the calibration set and still scores
+# out-of-sample. Read it for what it is: out-of-sample with respect to a RUN
+# (noise and design realisation). Except for `hill`, every seed of a family
+# shares one landscape, so LOSO does NOT demonstrate generalisation to a new
+# landscape -- LOFO is that test, and it is the one saturation has broken.
+# ---------------------------------------------------------------------------
+
+
+def sub_pooled(cells, arm, R, c, keep):
+    n = k = ne = tot = 0
+    for (a, r, f, s, p, cc), (nonempty, good, _v) in cells.items():
+        if a != arm or r != R or cc != c or not keep(f, s):
+            continue
+        tot += 1
+        ne += nonempty
+        if nonempty:
+            n += 1
+            k += good
+    return cp_lower(k, n), n, (ne / tot if tot else 0.0)
+
+
+def select_keep(cells, arm, R, grid, keep):
+    for c in grid:
+        lb, n, ar = sub_pooled(cells, arm, R, c, keep)
+        if lb >= BAR and ar >= MIN_ANSWER:
+            return c
+    return None
+
+
+def loso(cells, arm, R, grid, seeds):
+    """Calibrate c on all seeds but s, score the held-out seed. Abstain if no c."""
+    good, ne, tot, used = [0, 0], 0, 0, 0
+    for s in seeds:
+        c = select_keep(cells, arm, R, grid, lambda f, ss, s=s: ss != s)
+        if c is None:
+            tot += sum(1 for k in cells
+                       if k[0] == arm and k[1] == R and k[3] == s and k[5] == grid[0])
+            continue
+        used += 1
+        for (a, r, f, sd, p, cc), (nonempty, ok_, _v) in cells.items():
+            if a != arm or r != R or sd != s or cc != c:
+                continue
+            tot += 1
+            ne += nonempty
+            if nonempty:
+                good[1] += 1
+                good[0] += ok_
+    return {"lb": cp_lower(good[0], good[1]), "n": good[1], "folds": used,
+            "containment": (good[0] / good[1]) if good[1] else None,
+            "answer": (ne / tot if tot else 0.0)}
+
+
 def verdict_lc1(lo, hi):
     if lo >= -SESOI and hi <= SESOI:
         return "PASS -- parity within the registered SESOI"
@@ -148,15 +211,19 @@ def main():
     print()
 
     # ---- which families are live (spec §7) ---------------------------------
-    live = []
+    print("=== certificate supply per family (spec §7: which families are live) ===")
+    print(f"{'family':<12}{'cells':>8}{'non-empty':>11}{'rate':>9}")
+    live, dead = [], []
     for f in fams:
         ne = [nonempty for (arm, r, ff, s, p, c), (nonempty, _g, _v) in cells.items()
               if ff == f]
-        if any(ne):
-            live.append(f)
-    dead = [f for f in fams if f not in live]
-    print(f"live families (certify at least once, either arm): {live}")
-    print(f"structural zeros (never certify): {dead}\n")
+        rate = sum(ne) / len(ne) if ne else 0.0
+        # A family is LIVE only if it supplies certificates at a usable rate. A single
+        # non-empty cell in hundreds is saturation, not life.
+        (live if rate >= MIN_ANSWER else dead).append(f)
+        print(f"{f:<12}{len(ne):>8}{sum(ne):>11}{100*rate:>8.1f}%")
+    print(f"\n  live (rate >= {MIN_ANSWER:.0%}): {live}")
+    print(f"  saturated (never usefully certify): {dead}\n")
 
     # ---- LC-1 --------------------------------------------------------------
     print("=== LC-1 (PRIMARY): SPADE R=5 vs qLogNEI R=10 on regret, ONE process ===")
@@ -173,20 +240,44 @@ def main():
 
     # ---- LC-2 --------------------------------------------------------------
     print("=== LC-2: certification, LOFO-calibrated c (LB>=0.90 at answer>=0.05) ===")
-    print(f"{'arm':<10}{'R':>3}{'c*':>6}{'answer%':>9}{'contain':>9}{'LB':>8}"
-          f"{'E[vol]':>10}  certifies?")
+    print("  POOLED = c chosen on all families (diagnostic).")
+    print("  LOFO   = the registered path (spec §2): calibrate on the others,")
+    print("           evaluate on the held-out family.\n")
+    print(f"{'arm':<9}{'R':>3} | {'pool c*':>8}{'pool LB':>9}{'pool ans':>9} | "
+          f"{'folds c':>10}{'LOFO ans':>9}{'LOFO LB':>9}{'E[vol]':>10}  certifies?")
     cert = {}
     for arm in ("spade", "qlognei"):
         for R in rounds:
             c = select_c(cells, arm, R, fams, grid)
+            plb, pn, pct, par = pooled(cells, arm, R, fams, c) if c else (0., 0, None, 0.)
             res = lofo(cells, arm, R, fams, grid)
             ok = res["lb"] >= BAR and res["answer"] >= MIN_ANSWER
             cert[(arm, R)] = ok
-            ct = res["containment"]
-            print(f"{arm:<10}{R:>3}{(f'{c:g}' if c else 'none'):>6}"
-                  f"{100*res['answer']:>8.1f}%"
-                  f"{(f'{ct:.4f}' if ct is not None else 'n/a'):>9}"
-                  f"{res['lb']:>8.4f}{res['e_vol']:>10.6f}  {'YES' if ok else 'no'}")
+            nsel = sum(1 for _f, cc in res["folds"] if cc is not None)
+            print(f"{arm:<9}{R:>3} | {(f'{c:g}' if c else 'none'):>8}{plb:>9.4f}"
+                  f"{100*par:>8.1f}% | {f'{nsel}/{len(fams)}':>10}"
+                  f"{100*res['answer']:>8.1f}%{res['lb']:>9.4f}{res['e_vol']:>10.6f}"
+                  f"  {'YES' if ok else 'no'}")
+    print("\n  'folds c' = how many leave-one-out folds selected any c at all.")
+
+    print("\n  --- POST-HOC: leave-one-SEED-out (see note at top of file) ---")
+    print("  LOFO is degenerate under saturation; this keeps every family in the")
+    print("  calibration set. Out-of-sample w.r.t. RUN, not w.r.t. landscape.")
+    seeds_all = sorted({k[3] for k in cells})
+    print(f"\n{'arm':<9}{'R':>3}{'LOSO LB':>10}{'contain':>9}{'answer':>9}"
+          f"{'folds':>8}  certifies OOS?")
+    for arm in ("spade", "qlognei"):
+        for R in rounds:
+            r_ = loso(cells, arm, R, grid, seeds_all)
+            ok = r_["lb"] >= BAR and r_["answer"] >= MIN_ANSWER
+            ct = r_["containment"]
+            ctxt = f"{ct:.4f}" if ct is not None else "n/a"
+            folds = f"{r_['folds']}/{len(seeds_all)}"
+            print(f"{arm:<9}{R:>3}{r_['lb']:>10.4f}{ctxt:>9}"
+                  f"{100*r_['answer']:>8.1f}%{folds:>8}"
+                  f"  {'YES' if ok else 'no'}")
+    print("\n  If LOSO LB equals pooled LB, every fold chose the same c -- selection")
+    print("  is STABLE and the pooled number was not an in-sample artefact.")
     exp = cert.get(("spade", 5)) and not cert.get(("qlognei", 5)) \
         and cert.get(("qlognei", 10))
     print(f"\n  registered pattern (SPADE certifies at R=5, qLogNEI only at R=10): "
