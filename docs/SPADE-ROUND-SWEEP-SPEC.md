@@ -129,3 +129,41 @@ before LB-1 is a headline.
 
 **And the ceiling stands:** at `sigma_rel = 0.68` nothing certifies for any arm at any
 round count tested (`SPADE-REALISTIC-NOISE-SPEC.md` §6). LB is a `sigma = 0.25` result.
+
+## 8. The headline comparison: SPADE at 5 rounds vs qLogNEI at 10
+
+Paired on the same 40 `(family, seed)` landscapes, same 48 wells, same `sigma = 0.25`
+(SPADE R=5 from `results/lb-*.json`, qLogNEI R=10 from `results/la-*.json`; the oracle is
+seeded by `(family, seed)` so the underlying landscape is identical in both):
+
+| | rounds | median regret | certifies? |
+|---|---|---|---|
+| **SPADE** | **5** | **0.1489** | **YES -- LB 0.9342, 27.5% answered, no inflation** |
+| `qlognei` | 10 | 0.1564 | yes (LA §7.1: 21.2%, LB 0.9321) |
+
+**Regret: mean difference -0.0098, 95% CI [-0.0539, +0.0298], p = 0.705 -- PARITY within
+the registered SESOI of 0.02.**
+
+**SPADE reaches the same optimisation quality in five rounds that qLogNEI needs ten to
+reach, and obtains a certificate at five rounds where qLogNEI obtains none until ten.**
+
+### 8.1 Why this is the claim that matters for cell manufacturing
+
+Wells are cheap; **rounds are not**. A round is a full differentiation cycle -- thaw,
+plate, differentiate, assay -- days to weeks of wall-clock, a fresh cell lot, and operator
+time each. Halving the round count at equal well count and equal optimisation quality is a
+reduction in the resource that actually binds a process-development lab.
+
+### 8.2 Stated at the right strength
+
+- **"Parity" means no DETECTABLE difference, not proven equality.** The CI spans
+  [-0.0539, +0.0298] at n = 40; a true difference up to ~0.03 either way remains
+  consistent with this data. A larger confirmatory run is owed.
+- **The certification half is more robust than the regret half.** LB 0.9342 against *no
+  attainable certificate* is a qualitative gap, not a margin, and does not depend on a
+  power calculation.
+- This is a **cross-experiment pairing** (LA and LB are separate runs). Families, seeds,
+  sigma, well count and certification path are identical, but the two were not executed in
+  one process, and that is recorded rather than glossed.
+- **Conditional on `sigma_rel = 0.25`.** At 0.68 nothing certifies for any arm at any
+  round count (`SPADE-REALISTIC-NOISE-SPEC.md` §6).
