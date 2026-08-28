@@ -343,3 +343,4 @@ COMMIT_MSG.txt
 !results/probe-hypermix-6seed.json
 !results/probe-hypermix-30seed.json
 !results/kx-calibrated-benchmark.json
+!results/probe-kz2-finite-set-noise.json

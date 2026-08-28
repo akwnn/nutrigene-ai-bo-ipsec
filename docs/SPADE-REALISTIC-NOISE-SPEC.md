@@ -141,3 +141,43 @@ it. Together with the ~27-replicate power analysis
 merely stated: **at realistic cell-manufacturing noise the binding constraint is
 replication, and no change to the estimator, the calibration or the acquisition
 substitutes for it.**
+
+## 8. KZ-2 — the finite set works at sigma=0.25 and dies with everything else above it
+
+5 families x 10 seeds x 3 sigma (`results/probe-kz2-finite-set-noise.json`), `alpha=0.95`,
+`versionb` arm. **`hill` is EXCLUDED and its rows must not be read** -- see §8.3.
+
+### 8.1 At sigma = 0.25, calibrated, the finite set is a real gain
+
+| `c` | region answers | region containment | finite-set answers | finite-set containment | recipes |
+|---|---|---|---|---|---|
+| 1.0 | 23.8% | 0.8421 | 26.2% | 0.5714 | 25.9 |
+| 1.5 | 12.5% | 1.0000 | 21.2% | 0.8824 | 10.0 |
+| **2.0** | **3.8%** | **1.0000** | **11.2%** | **1.0000** | **6.6** |
+
+At `c = 2.0` the finite set answers **2.9x** as often at **identical** containment,
+returning ~7 named recipes. This independently confirms `bf4845b`'s 2.3x on fresh
+campaigns with a different family set.
+
+**The uncalibrated rows are the warning.** At `c = 1.0` the finite set is markedly *less*
+accurate (0.5714 vs 0.8421) -- exactly the selection effect documented in
+`boec.topk`'s docstring: it selects harder than the Vorob'ev quantile, so its in-sample
+optimism is larger. **The finite set is only safe once `c` is calibrated against truth.**
+
+### 8.2 It does not break the real-noise wall
+
+At `sigma = 0.50` and `0.68`, **both** estimands answer **0.0%** for every family at every
+`c`. Consistent with §7's retraction on real data, and with
+`SPADE-PUBLISHED-ECM-RESULT.md` §4. The wall is not an artefact of the region estimand.
+
+### 8.3 A bug in this probe, recorded rather than quietly dropped
+
+`hill` reports 0% at every sigma **including 0.25**, and that is **my error, not a result**.
+The probe computes `tau` from `tau_quantile` on instance 0's truth, but hill campaigns are
+keyed by `instance_id` and each seed draws a **different** instance from the 40-member
+ensemble. So `tau` was matched to the wrong landscape on 39 of 40 seeds. Every `hill` row
+here is void. The other four families are keyed by family label and are unaffected.
+
+**Consequence:** `hill` at realistic noise -- the family that matters most for cell
+manufacturing -- **remains untested**, and the §6.3 conclusion is therefore established on
+`ackley`, `hartmann6`, `levy` and `rosenbrock` only.
