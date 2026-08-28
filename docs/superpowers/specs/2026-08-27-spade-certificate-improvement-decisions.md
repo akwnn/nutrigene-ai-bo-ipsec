@@ -140,7 +140,20 @@ Offline replay on archived meanmarg rows first:
 - Abstain when selection passes but map symmetric difference > 0.30.
 - Goal: convert would-be false positives to honest abstentions; improve emp among answered.
 
-### 3.8 Research track — certificate-targeted acquisition (NOT registered)
+| **B2 alpha0.98+meanmarg** | `7ba21e73…` | **gate FAIL** (archived) |
+
+B2 diagnosis: α=0.98 collapsed levy answer rates (e.g. o32-staged ans 0.07) without
+producing any arm with ans≥0.5 & emp≥0.9 on **both** hill and levy. Archive:
+`results/historical-mfg-cert-floor15-loo-tail-meanmarg-alpha098-gate-fail/`.
+Analysis: `results/b2-alpha098-gate-analysis.json`.
+
+### 3.8 Phase B3 — Bagged certificate spike (**NEXT**, research)
+
+Offline replay on archived B2 shards using `bagged.py` intersection certs.
+Goal: address lengthscale/noise uncertainty LOO cannot see. Not registered until
+calibrated and preregistered.
+
+### 3.9 Research track — certificate-targeted acquisition (NOT registered)
 
 Branch `claude/spade-certificate-targeted-policy` (commit `9c51799`):
 
