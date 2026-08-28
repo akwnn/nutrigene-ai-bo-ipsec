@@ -20,7 +20,7 @@ sys.path.insert(0, str(ROOT / "src"))
 OUT = ROOT / "results" / "la-round-matched.json"
 
 C_GRID = (1.0, 1.5, 2.0, 3.0, 4.0)
-ARMS = ("versionb", "qlognei_r2", "qlognei_r10", "lhs")
+ARMS = ("versionb", "spade_cert_rho95", "qlognei_r2", "qlognei_r10", "lhs")
 
 
 def _mod(name, fn):
@@ -46,8 +46,13 @@ def build(family, arm, seed):
     from boec.replay import regenerate, unit_bounds
 
     KV = kv(); P = KV.p8()
-    if arm == "versionb":
-        X, Y, Yvar, _ = KV.build(family, "versionb", seed)
+    if arm in ("versionb", "spade_cert_rho95"):
+        # `versionb` targets the TRUE contour (mean = tau), where P(f>tau)=0.5 -- points
+        # that can never enter a certified region. `spade_cert_rho95` targets the
+        # CERTIFIED contour (mean - z_rho*sd = tau), i.e. the edge of what would actually
+        # be certified. The module has existed and been tested since KV; no arm has ever
+        # used it against a CALIBRATED certificate, which is what KV-2 lacked.
+        X, Y, Yvar, _ = KV.build(family, arm, seed)
         return X, Y, Yvar
     if arm == "lhs":
         rec = regenerate(family, P.DIM, P.SIGMA, seed, "lhs", family=family)
