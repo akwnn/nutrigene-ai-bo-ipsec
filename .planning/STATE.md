@@ -2,43 +2,45 @@
 
 **Milestone:** SPADE joint protocol  
 **Status:** active  
-**Current phase:** Manufacturing certificate recovery — **meanmarg gate FAIL**; next protocol TBD
+**Current phase:** Scalar recovery B1 — `latent_inflation_floor: 2.0` gate **running**
 
 ## Decisions frozen
 
 - Exactly 48 evaluations per arm per campaign.
 - Public method name remains SPADE.
 - Manufacturing claim hierarchy unchanged; Plate-2 tertiary only.
-- Last tested recovery stack: `smallest` + assay + `loo_calibration_tail` +
-  **`latent_inflation_floor: 1.5`** + **`mean_marginalisation: true`** + `Vmax=0.001`
-  (study `spade-joint-48-mfg-cert-floor15-loo-tail-meanmarg-2026-08-27`, digest `1c5c3b7e…`).
-- Floor-1.5+LOO-tail+meanmarg gate (`1c5c3b7e…`) **FAIL** (0 survivors) — archived
-  `results/historical-mfg-cert-floor15-loo-tail-meanmarg-gate-fail/`.
-- Floor-1.5+LOO-tail gate (`681947bc…`) **FAIL** (0 survivors) — archived
-  `results/historical-mfg-cert-floor15-loo-tail-gate-fail/`.
-- Joseph `kr-effective-resolution` merged into `main` (modules + meanmarg wiring retained).
-- Multi-CQA synthetic safety benchmark **PASS** (`results/spade-multi-cqa-benchmark.json`).
+- Recovery stack base: `smallest` + assay + `loo_calibration_tail` + meanmarg + `Vmax=0.001`.
+- Meanmarg gate (`1c5c3b7e…`) **FAIL** — archived.
+- Floor15 gate (`681947bc…`) **FAIL** — archived.
+- Multi-CQA synthetic benchmark **PASS** (`b29bb57e…`).
+- `origin/codex/spade-gate-fix` **merged** (LOFO/lockbox hardening).
+- Phase A instrumentation: `latent_inflation_factor` + `certificate_abstention_reason` in scores.
 
 ## Protocol digests
 
 | study | digest | outcome |
 |---|---|---|
 | joint v1 | `00ce6971…` | `NO_SELECTION` |
-| mfg assay+smallest | `f6eca072…` | shortfall; archived |
-| mfg LOO-RMS+Vmax | `6e6dec2a…` | levy ~0.72; archived |
-| mfg LOO-tail+Vmax | `6f38077e…` | **gate FAIL** (archived) |
-| mfg floor-1.5+LOO-tail | `681947bc…` | **gate FAIL** (archived) |
-| mfg floor-1.5+LOO-tail+meanmarg | `1c5c3b7e…` | **gate FAIL** (archived) |
+| mfg floor-1.5+LOO-tail | `681947bc…` | **gate FAIL** |
+| mfg floor-1.5+LOO-tail+meanmarg | `1c5c3b7e…` | **gate FAIL** |
+| multi-CQA benchmark | `b29bb57e…` | **PASS** |
+| **B1 floor20+meanmarg** | `b846fe2d…` | **gate running** |
 
-## Gate verdict (meanmarg, 2026-08-28)
+## Gate diagnosis (meanmarg, 2026-08-28)
 
-0 survivors. Hill clears on several configs (e.g. o32-staged emp 1.0); levy best
-o32-validity_gated emp **0.90** but hill emp only **0.875** on that config; o32-staged
-levy emp **0.875**. Meanmarg did not fix the cross-family pairing.
+0 survivors. Hill emp 1.0 (`o32-staged`); levy emp 0.90 (`o32-validity_gated`) but
+hill emp 0.875 on that arm — complementary pairing. Model-internal containment
+~97% on failed runs; levy is binding family.
 
 ## Next action
 
-1. Do **not** start full 5×50 on `1c5c3b7e…`.
-2. Preregister next scalar-recovery change (new digest) or pivot manufacturing narrative
-   to multi-CQA synthetic evidence until a scalar gate passes.
-3. Ledger: `docs/superpowers/specs/2026-08-27-spade-certificate-improvement-decisions.md`
+1. Hill+levy 0–15 gate on digest `b846fe2d…`.
+2. If PASS → full 5×50 → LOFO → power → lockbox.
+3. If FAIL → B2 alpha sweep per ledger §3.6.
+4. Ledger: `docs/superpowers/specs/2026-08-27-spade-certificate-improvement-decisions.md` §9
+
+## Ops durability
+
+- `~/spade-ops/` LaunchAgents: meta, persist, health
+- Backups: `~/spade-ops/persist-backups/`
+- Check: `~/spade-ops/spade_health.sh`

@@ -146,6 +146,8 @@ def _row(
         "certificate_empirical_containment": contained if answer else None,
         "certificate_selection_draws": selection_draws,
         "certificate_evaluation_draws": evaluation_draws,
+        "latent_inflation_factor": 2.0 if registered else 1.0,
+        "certificate_abstention_reason": "issued" if answer else "no_feasible_ce",
     }
     derived_seeds = {
         "noise": registered_seed_identity["noise"],

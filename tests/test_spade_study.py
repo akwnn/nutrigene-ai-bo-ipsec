@@ -131,7 +131,7 @@ def test_registered_scoring_sizes_are_exact_and_immutable():
         predictive_observation_noise="assay_relative_additive",
         latent_draw_inflation="loo_calibration_tail",
         certificate_max_volume=0.001,
-        latent_inflation_floor=1.5,
+        latent_inflation_floor=2.0,
         mean_marginalisation=True,
     )
 
@@ -394,6 +394,72 @@ def test_score_freezes_rule_p_and_certificate_before_any_truth_call():
     assert len(result.terminal_x) == 6
     assert result.certificate_selection_draws == 16
     assert result.certificate_evaluation_draws == 16
+    assert result.latent_inflation_factor == pytest.approx(1.0)
+    if result.certificate_nonempty:
+        assert result.certificate_abstention_reason == "issued"
+    else:
+        assert result.certificate_abstention_reason in {
+            "volume_cap", "no_feasible_ce", "map_disagreement",
+        }
+
+
+def test_score_records_loo_tail_latent_inflation_factor(monkeypatch):
+    settings = ScoringExecutionSettings(
+        calibration_grid_size=256,
+        terminal_grid_size=64,
+        map_grid_size=48,
+        certificate_grid_size=24,
+        certificate_draws=32,
+        certificate_rho_grid_size=8,
+        fit_restarts=1,
+        latent_draw_inflation="loo_calibration_tail",
+        latent_inflation_floor=2.0,
+        mean_marginalisation=False,
+    )
+    monkeypatch.setattr(study_module, "_loo_latent_inflation", lambda *args, **kwargs: 2.25)
+    harness = SealedOracleHarness(_truth, optimum_value=1.0, oracle_identity="toy")
+    threshold = controlled_tau(
+        harness, sigma_rel=.1, sigma_add=.01, gamma=.95, q_tau=.75,
+        root_seed=11, execution_mode="TEST_ONLY", settings=settings,
+    )
+    score = score_campaign(
+        _campaign(tau=threshold.tau), threshold.tau, harness.scorer(),
+        sigma_rel=.1, sigma_add=.01, gamma=.95, alpha=.95,
+        scoring_seed=42, execution_mode="TEST_ONLY", settings=settings,
+    )
+    assert score.latent_inflation_factor == pytest.approx(2.25)
+
+
+def test_score_volume_cap_records_abstention_reason(monkeypatch):
+    from boec.reliable_region import ConservativeSetResult
+
+    settings = _test_settings()
+    fake_mask = torch.ones(24, dtype=torch.bool)
+    monkeypatch.setattr(
+        study_module,
+        "conservative_set_split",
+        lambda *args, **kwargs: ConservativeSetResult(
+            mask=fake_mask,
+            crossfit_containment=0.96,
+            selection_containment=0.95,
+            volume=0.5,
+            selection_draws=16,
+            evaluation_draws=16,
+        ),
+    )
+    harness = SealedOracleHarness(_truth, optimum_value=1.0, oracle_identity="toy")
+    threshold = controlled_tau(
+        harness, sigma_rel=.1, sigma_add=.01, gamma=.95, q_tau=.75,
+        root_seed=12, execution_mode="TEST_ONLY", settings=settings,
+    )
+    score = score_campaign(
+        _campaign(tau=threshold.tau), threshold.tau, harness.scorer(),
+        sigma_rel=.1, sigma_add=.01, gamma=.95, alpha=.95,
+        scoring_seed=43, execution_mode="TEST_ONLY", settings=settings,
+    )
+    assert score.certificate_abstention_reason == "volume_cap"
+    assert score.certificate_nonempty is False
+    assert score.certificate_volume == 0.0
 
 
 def test_score_refits_common_model_on_all_48_and_ignores_injected_model(
@@ -538,6 +604,8 @@ def _score_payload():
         "certificate_empirical_containment": True,
         "certificate_selection_draws": 2048,
         "certificate_evaluation_draws": 2048,
+        "latent_inflation_factor": 1.5,
+        "certificate_abstention_reason": "issued",
     }
 
 
@@ -718,6 +786,31 @@ def test_jsonl_rejects_corrupt_score_values(tmp_path, field, bad):
         write_jsonl_gzip(tmp_path / "rows.jsonl.gz", [row], protocol_digest="d" * 64)
 
 
+def test_jsonl_abstention_reason_matches_certificate_nonempty(tmp_path):
+    issued = _row(0)
+    issued["scores"].update(
+        certificate_nonempty=True,
+        certificate_abstention_reason="issued",
+    )
+    write_jsonl_gzip(tmp_path / "issued.jsonl.gz", [issued], protocol_digest="d" * 64)
+
+    abstained = copy.deepcopy(issued)
+    abstained["scores"].update(
+        certificate_nonempty=False,
+        certificate_volume=0.0,
+        certificate_selection_containment=None,
+        certificate_crossfit_containment=None,
+        certificate_empirical_containment=None,
+        certificate_abstention_reason="volume_cap",
+    )
+    write_jsonl_gzip(tmp_path / "abstained.jsonl.gz", [abstained], protocol_digest="d" * 64)
+
+    mismatch = copy.deepcopy(abstained)
+    mismatch["scores"]["certificate_abstention_reason"] = "issued"
+    with pytest.raises(ValueError, match="scores"):
+        write_jsonl_gzip(tmp_path / "mismatch.jsonl.gz", [mismatch], protocol_digest="d" * 64)
+
+
 def test_jsonl_containment_nullability_is_consistent(tmp_path):
     valid = _row(0)
     valid["scores"].update(
@@ -726,6 +819,7 @@ def test_jsonl_containment_nullability_is_consistent(tmp_path):
         certificate_selection_containment=None,
         certificate_crossfit_containment=None,
         certificate_empirical_containment=None,
+        certificate_abstention_reason="no_feasible_ce",
     )
     write_jsonl_gzip(tmp_path / "valid.jsonl.gz", [valid], protocol_digest="d" * 64)
 
@@ -764,12 +858,12 @@ def test_yaml_freezes_every_registered_design_value_and_its_payload_digest():
     canonical = json.dumps(p, sort_keys=True, separators=(",", ":"), allow_nan=False).encode()
     assert cfg["digests"]["protocol_payload_sha256"] == hashlib.sha256(canonical).hexdigest()
     assert cfg["digests"]["protocol_payload_sha256"] == (
-        "1c5c3b7ef5e067774c1f4b198a3b1a36e26b8f162e9f3f4a7d09657c0cf3a250"
+        "b846fe2d09237b656b8a9bb0341e4c9f64e6a5989144c0c6a1efb15c2bba4491"
     )
     assert p["certificate_volume_rule"] == "smallest"
     assert p["predictive_observation_noise"] == "assay_relative_additive"
     assert p["latent_draw_inflation"] == "loo_calibration_tail"
-    assert p["latent_inflation_floor"] == 1.5
+    assert p["latent_inflation_floor"] == 2.0
     assert p["mean_marginalisation"] is True
     assert p["certificate_max_volume"] == 0.001
     execution = cfg["execution"]

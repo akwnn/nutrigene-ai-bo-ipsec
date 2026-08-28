@@ -55,6 +55,12 @@ __all__ = [
 
 STUDY_ROW_SCHEMA = "boec-spade-study-row-v1"
 _EXECUTION_MODES = frozenset({"REGISTERED", "TEST_ONLY"})
+_CERTIFICATE_ABSTENTION_REASONS = frozenset(
+    {"volume_cap", "no_feasible_ce", "map_disagreement", "issued"}
+)
+_CERTIFICATE_ABSTENTION_REASONS = frozenset(
+    {"volume_cap", "no_feasible_ce", "map_disagreement", "issued"}
+)
 _PRIMARY_DIM = 6
 _PRIMARY_SIGMA_REL = 0.10
 _PRIMARY_SIGMA_ADD = 0.01
@@ -135,7 +141,7 @@ class ScoringExecutionSettings:
     predictive_observation_noise: str = "assay_relative_additive"
     latent_draw_inflation: str = "loo_calibration_tail"
     certificate_max_volume: float = 0.001
-    latent_inflation_floor: float = 1.5
+    latent_inflation_floor: float = 2.0
     mean_marginalisation: bool = True
 
     def __post_init__(self) -> None:
@@ -212,7 +218,7 @@ REGISTERED_SCORING_SETTINGS = ScoringExecutionSettings(
     predictive_observation_noise="assay_relative_additive",
     latent_draw_inflation="loo_calibration_tail",
     certificate_max_volume=0.001,
-    latent_inflation_floor=1.5,
+    latent_inflation_floor=2.0,
     mean_marginalisation=True,
 )
 
@@ -606,6 +612,8 @@ class StudyScore:
     certificate_empirical_containment: bool | None
     certificate_selection_draws: int
     certificate_evaluation_draws: int
+    latent_inflation_factor: float
+    certificate_abstention_reason: str
 
     def as_dict(self) -> dict[str, object]:
         return asdict(self)
@@ -822,7 +830,10 @@ def score_campaign(
         n_rho=effective.certificate_rho_grid_size,
         volume_rule=effective.certificate_volume_rule,
     )
-    if certificate.volume > effective.certificate_max_volume:
+    if not bool(certificate.mask.any()):
+        abstention_reason = "no_feasible_ce"
+    elif certificate.volume > effective.certificate_max_volume:
+        abstention_reason = "volume_cap"
         empty = torch.zeros_like(certificate.mask)
         certificate = ConservativeSetResult(
             mask=empty,
@@ -832,6 +843,8 @@ def score_campaign(
             selection_draws=certificate.selection_draws,
             evaluation_draws=certificate.evaluation_draws,
         )
+    else:
+        abstention_reason = "issued"
     decision_payload = {
         "schema": "boec-frozen-score-decision-v1",
         "terminal_x_hex": [float(x).hex() for x in terminal_x_tensor.tolist()],
@@ -925,6 +938,8 @@ def score_campaign(
         certificate_empirical_containment=empirical,
         certificate_selection_draws=certificate.selection_draws,
         certificate_evaluation_draws=certificate.evaluation_draws,
+        latent_inflation_factor=float(latent_inflation),
+        certificate_abstention_reason=abstention_reason,
     )
 
 
@@ -1067,7 +1082,8 @@ _SCORE_FIELDS = frozenset(
         "certificate_nonempty", "certificate_volume",
         "certificate_selection_containment", "certificate_crossfit_containment",
         "certificate_empirical_containment", "certificate_selection_draws",
-        "certificate_evaluation_draws",
+        "certificate_evaluation_draws", "latent_inflation_factor",
+        "certificate_abstention_reason",
     }
 )
 _ARMS = frozenset({"spade", "sobol48", "qlognei48"})
@@ -1237,6 +1253,20 @@ def _validate_score(score_value: object, row: Mapping[str, object], index: int) 
     )
     if selection_draws < 1 or evaluation_draws < 1:
         raise ValueError(f"{context} certificate draw halves must be positive")
+    _finite_number(
+        score["latent_inflation_factor"], f"{context}.latent_inflation_factor", minimum=1.0
+    )
+    abstention_reason = score["certificate_abstention_reason"]
+    if abstention_reason not in _CERTIFICATE_ABSTENTION_REASONS:
+        raise ValueError(f"{context}.certificate_abstention_reason is invalid")
+    if nonempty and abstention_reason != "issued":
+        raise ValueError(
+            f"{context} nonempty certificate must record certificate_abstention_reason='issued'"
+        )
+    if not nonempty and abstention_reason == "issued":
+        raise ValueError(
+            f"{context} empty certificate cannot record certificate_abstention_reason='issued'"
+        )
     if score["execution_mode"] == "REGISTERED" and (
         restarts, selection_draws, evaluation_draws
     ) != (4, 2048, 2048):
