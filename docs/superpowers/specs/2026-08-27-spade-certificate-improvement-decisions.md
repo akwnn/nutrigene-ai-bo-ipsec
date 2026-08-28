@@ -47,15 +47,16 @@ It is **not**:
 
 ## 3. DO IMPLEMENT — ordered queue
 
-### 3.1 Live gate (spade-campaign) — do not change code under the worker
+### 3.1 Meanmarg gate (completed 2026-08-28) — FAIL
 
-Running: hill+levy keys 0–15 under **floor15 + LOO-tail + Vmax** (no meanmarg).
+Hill+levy keys 0–15 on digest `1c5c3b7e…` finished with **0 survivors**.
+Archived: `results/historical-mfg-cert-floor15-loo-tail-meanmarg-gate-fail/`.
 
-1. Let durable watchdog finish gate; read `/tmp/spade-gate-tail-verdict.json`.
-2. Do **not** checkout/merge into `.worktrees/spade-campaign` while
-   `run_spade_development.py` is alive.
-3. If GATE PASS starts full 5×50 automatically: either let it finish on that digest,
-   or stop full **before** adopting the merge branch (new digest cannot resume old shards).
+Best near-miss: `spade-o32-validity_gated` levy emp **0.90** but hill emp **0.875**;
+`spade-o32-staged` hill emp **1.0** but levy emp **0.875**. Meanmarg improved hill
+containment vs floor15-only but did not close the cross-family pairing.
+
+Do **not** start full 5×50 on this digest.
 
 ### 3.2 Merged protocol (spade/merge-joseph-alana) — both sides kept
 
@@ -146,11 +147,11 @@ Protocol digest: `1c5c3b7e…`
 
 | Tree | Study | Protocol digest | Notes |
 |---|---|---|---|
-| `.worktrees/spade-campaign` (live) | `…-floor15-loo-tail-meanmarg-2026-08-27` | `1c5c3b7e…` | Gate running after floor15 FAIL |
+| `.worktrees/spade-campaign` | `…-floor15-loo-tail-meanmarg-2026-08-27` | `1c5c3b7e…` | **gate FAIL** (archived) |
 | archived | `…-floor15-loo-tail-2026-08-27` | `681947bc…` | **gate FAIL** (0 survivors) |
 
-Floor-1.5 hill-only survivors (`o32-staged`, `o40-staged`) all failed levy emp≥0.9.
-Next registered attempt adds Joseph mean-marginalisation on the same recovery stack.
+Meanmarg gate (2026-08-28): 0 survivors. Levy emp plateau ~0.875–0.90; hill OK.
+Next scalar attempt requires a **new** preregistered digest.
 
 ---
 

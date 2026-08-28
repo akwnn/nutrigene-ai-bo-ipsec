@@ -1,0 +1,5 @@
+# Meanmarg development gate (digest 1c5c3b7e…) — hill+levy keys 0-15
+# Completed 2026-08-28 UTC+8. Verdict: GATE FAIL, 0 survivors.
+# Eval: /tmp/spade_gate_tail_eval.py on resume shards.
+# Best near-miss: o32-validity_gated levy emp=0.90 / hill emp=0.875;
+# o32-staged hill emp=1.0 / levy emp=0.875.

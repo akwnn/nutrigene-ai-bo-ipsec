@@ -238,6 +238,10 @@ COMMIT_MSG.txt
 !results/historical-mfg-cert-assay-shortfall/**
 !results/historical-mfg-cert-assay-incomplete/
 !results/historical-mfg-cert-assay-incomplete/**
+!results/historical-mfg-cert-floor15-loo-tail-gate-fail/
+!results/historical-mfg-cert-floor15-loo-tail-gate-fail/**
+!results/historical-mfg-cert-floor15-loo-tail-meanmarg-gate-fail/
+!results/historical-mfg-cert-floor15-loo-tail-meanmarg-gate-fail/**
 
 # Frozen lockbox evidence: raw shards are compressed and hash-bound; the final manifest,
 # confirmatory analysis, and release report are the only allowlisted lockbox artifacts.
