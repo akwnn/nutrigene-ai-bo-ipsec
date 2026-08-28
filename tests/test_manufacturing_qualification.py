@@ -311,6 +311,8 @@ def test_registered_synthetic_configuration_is_explicit():
     config = yaml.safe_load(config_path.read_text())
     assert config["protocol"]["certificate_volume_rule"] == "smallest"
     assert config["protocol"]["predictive_observation_noise"] == "assay_relative_additive"
+    assert float(config["protocol"]["latent_draw_inflation"]) == 1.5
+    assert config["protocol"]["mean_marginalisation"] is True
     assert config["protocol"]["base_seed"] == 270827
     assert [entry["name"] for entry in config["cqas"]] == ["identity", "viability", "yield"]
     assert config["claim_scope"] == "computational_synthetic_only"

@@ -705,6 +705,44 @@ Sources: `results/k6-analysis.json`, `results/p6-families/` (8 shards + `results
 
 ---
 
+### 5.10 Multi-CQA manufacturing qualification (synthetic)
+
+The strongest manufacturing-oriented SPADE improvement is not a better second-plate
+acquisition. It is a **joint qualified operating region across simultaneous CQAs** —
+identity, viability, and yield — because a release decision that passes one optimized
+endpoint while failing another is not a manufacturing decision. The overlay
+(`src/boec/manufacturing_qualification.py`) fits one scalar GP and certificate per
+CQA, intersects the masks exactly, reports the limiting CQA and a setpoint inside the
+joint region when one exists, and abstains when the intersection is empty.
+
+**Why lockbox / tail calibration is foundational.** A multi-CQA intersection inherits
+every endpoint failure mode. The scalar recovery stack — assay-relative observation
+noise, LOO-tail latent inflation with floor 1.5, ordinary-kriging mean
+marginalisation, and smallest-volume certificates with a volume cap — is what makes
+each endpoint mask honest enough to intersect. Without that calibration, joint
+qualification would only multiply overconfident singles. Lockbox families remain the
+prospective gate for the scalar protocol; the multi-CQA overlay is a separate
+computational validation on three registered synthetic conflict families
+(`aligned`, `moderate_conflict`, `strong_conflict`) under a protocol-hashed benchmark
+(`configs/experiment/spade-multi-cqa-benchmark.yaml`).
+
+**How this compares with a 90% safety bar.** The registered synthetic benchmark
+(`results/spade-multi-cqa-benchmark.json`, protocol digest `b29bb57e…`) compares
+scalar-primary certification with joint multi-CQA certification on identical 48-well /
+4,096-grid campaigns (α=γ=0.95; relative+additive assay noise; latent inflation 1.5;
+mean marginalisation; 25 replicates × 2 algorithm seeds; metrics aggregated per
+replicate, not pooled grid points). Measured rates: joint containment **1.00** on
+aligned and moderate-conflict families (above the 90% bar); scalar-only joint
+containment **0.00** under moderate conflict with median unsafe fraction ≈ 0.54; under
+strong conflict, joint SPADE abstains on every replicate while scalar-only remains
+non-empty with median unsafe fraction **1.00**.
+
+**Scope.** This is synthetic computational validation only. It is not a biological
+efficacy claim, not ESC-to-EC wet-lab transfer, and not a multivariate joint-pass
+probability (endpoint GPs are independent; intersection ≠ joint batch-pass).
+
+---
+
 ## 6. Discussion
 
 The contribution is not that BO and RSM “address different scientific questions.” Rummukainen already states that RSM maps a region while BO concentrates near promising conditions. Lapierre and Ndahiro already report executed media/bioprocess comparisons. Narayanan already reports large experiment-count reductions against **predicted** DoE sizes. Synthetic BO benchmarks already exist. The best-observation versus posterior-recommendation distinction is already in the noisy-EI literature.

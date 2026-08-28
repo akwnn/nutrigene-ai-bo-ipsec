@@ -61,6 +61,8 @@ class BenchmarkConfig:
     sigma_add: float = 0.01
     threshold: float = 0.50
     volume_rule: str = "smallest"
+    latent_inflation: float = 1.5
+    mean_marginalisation: bool = True
 
     def __post_init__(self) -> None:
         integer_fields = ("dimension", "train_count", "grid_count", "n_draws", "n_rho")
@@ -88,6 +90,12 @@ class BenchmarkConfig:
             raise ValueError("threshold must be finite")
         if self.volume_rule not in {"smallest", "largest"}:
             raise ValueError("volume_rule must be 'smallest' or 'largest'")
+        inflation = float(self.latent_inflation)
+        if not math.isfinite(inflation) or inflation < 1.0:
+            raise ValueError("latent_inflation must be finite and >= 1")
+        object.__setattr__(self, "latent_inflation", inflation)
+        if not isinstance(self.mean_marginalisation, bool):
+            raise ValueError("mean_marginalisation must be bool")
 
     @property
     def digest(self) -> str:
@@ -105,6 +113,8 @@ class BenchmarkConfig:
                 "sigma_add",
                 "threshold",
                 "volume_rule",
+                "latent_inflation",
+                "mean_marginalisation",
             )
         }
         encoded = json.dumps(payload, sort_keys=True, separators=(",", ":")).encode()
@@ -313,6 +323,8 @@ def run_replicate(
         derive_seed(algorithm_seed_i, "manufacturing-benchmark-scalar", family.name),
         sigma_rel=config.sigma_rel,
         sigma_add=config.sigma_add,
+        latent_inflation=config.latent_inflation,
+        mean_marginalisation=config.mean_marginalisation,
     )
     scalar_certificate = conservative_set_split(
         scalar_draws,
@@ -332,6 +344,8 @@ def run_replicate(
         n_draws=config.n_draws,
         n_rho=config.n_rho,
         base_seed=derive_seed(algorithm_seed_i, "manufacturing-benchmark-joint", family.name),
+        latent_inflation=config.latent_inflation,
+        mean_marginalisation=config.mean_marginalisation,
         volume_rule=config.volume_rule,
         truth_masks=truth_masks,
     )

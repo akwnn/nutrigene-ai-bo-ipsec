@@ -101,6 +101,10 @@ def test_registered_benchmark_configuration_is_explicit():
     assert config["protocol"]["grid_count"] == 4096
     assert config["protocol"]["replicates"] == 25
     assert config["protocol"]["algorithm_seeds"] == 2
+    assert float(config["protocol"]["alpha"]) == 0.95
+    assert float(config["protocol"]["gamma"]) == 0.95
+    assert float(config["protocol"]["latent_inflation"]) == 1.5
+    assert config["protocol"]["mean_marginalisation"] is True
     assert config["families"] == ["aligned", "moderate_conflict", "strong_conflict"]
 
 

@@ -77,6 +77,8 @@ def main(argv: list[str] | None = None) -> int:
         sigma_add=float(protocol["sigma_add"]),
         threshold=float(protocol["threshold"]),
         volume_rule=str(protocol["volume_rule"]),
+        latent_inflation=float(protocol.get("latent_inflation", 1.5)),
+        mean_marginalisation=bool(protocol.get("mean_marginalisation", True)),
     )
     row_objects = []
     root_seed = 2_026_08_27

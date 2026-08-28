@@ -15,6 +15,8 @@ protocol:
   n_draws: 512
   n_rho: 64
   volume_rule: smallest
+  latent_inflation: 1.5
+  mean_marginalisation: true
   replicates: 25
   algorithm_seeds: 2
 

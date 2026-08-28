@@ -13,7 +13,8 @@ protocol:
   base_seed: 270827
   certificate_volume_rule: smallest
   predictive_observation_noise: assay_relative_additive
-  latent_draw_inflation: 1.0
+  latent_draw_inflation: 1.5
+  mean_marginalisation: true
   empty_certificate_policy: abstain_empty_joint
 
 # Example release attributes for an ESC-to-EC workflow. Values are synthetic and

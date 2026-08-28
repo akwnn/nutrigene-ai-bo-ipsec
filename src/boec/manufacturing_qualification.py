@@ -206,6 +206,7 @@ def _protocol_digest(
     base_seed: int,
     volume_rule: str,
     latent_inflation: float,
+    mean_marginalisation: bool,
 ) -> str:
     payload = {
         "schema": "boec-spade-multi-cqa-qualification-v1",
@@ -216,6 +217,7 @@ def _protocol_digest(
         "base_seed": base_seed,
         "volume_rule": volume_rule,
         "latent_inflation": latent_inflation,
+        "mean_marginalisation": bool(mean_marginalisation),
         "cqas": [
             {
                 "name": d.name,
@@ -248,6 +250,7 @@ def qualify_multi_cqa(
     n_rho: int = 64,
     base_seed: int = 270827,
     latent_inflation: Real = 1.0,
+    mean_marginalisation: bool = True,
     volume_rule: str = "smallest",
     utility=None,
     truth_masks: Sequence[Tensor] | None = None,
@@ -259,6 +262,9 @@ def qualify_multi_cqa(
     ``X``/``Y``/``Yvar`` are observed training recipes and CQA measurements.
     ``grid`` is the shared candidate grid on which the operating-region masks are
     issued; when omitted, the observed recipes are used as the grid.
+    ``mean_marginalisation`` enables ordinary-kriging covariance (see
+    :mod:`boec.meanmarg`) so noise-dominated endpoints cannot collapse before
+    inflation; it matches the registered scalar manufacturing recovery default.
     """
     X_t = _as_double_tensor(X, "X")
     grid_t = X_t if grid is None else _as_double_tensor(grid, "grid")
@@ -309,6 +315,10 @@ def qualify_multi_cqa(
     latent_inflation_f = _finite_scalar(latent_inflation, "latent_inflation")
     if latent_inflation_f < 1.0:
         raise ValueError("latent_inflation must be >= 1")
+    if not isinstance(mean_marginalisation, bool):
+        raise ValueError(
+            f"mean_marginalisation must be bool, got {mean_marginalisation!r}"
+        )
     base_seed_i = _validate_integer(base_seed, "base_seed", minimum=0)
     fit_restarts_i = _validate_integer(fit_restarts, "fit_restarts", minimum=1)
 
@@ -338,6 +348,7 @@ def qualify_multi_cqa(
         base_seed=base_seed_i,
         volume_rule=volume_rule,
         latent_inflation=latent_inflation_f,
+        mean_marginalisation=mean_marginalisation,
     )
 
     endpoint_results: list[EndpointQualification] = []
@@ -368,6 +379,7 @@ def qualify_multi_cqa(
             sigma_rel=float(definition.sigma_rel),
             sigma_add=float(definition.sigma_add),
             latent_inflation=latent_inflation_f,
+            mean_marginalisation=mean_marginalisation,
         )
         if draws.ndim != 2 or draws.shape[1] != grid_t.shape[0] or draws.dtype != torch.bool:
             raise ValueError(
