@@ -228,6 +228,7 @@ COMMIT_MSG.txt
 !results/spade-development-analysis.json
 !results/spade-selected-protocol.json
 !results/spade-lockbox-power.json
+!results/spade-multi-cqa-benchmark.json
 
 # Archived joint-v1 NO_SELECTION development (do not reopen for lockbox).
 !results/historical-joint-v1-noselection/

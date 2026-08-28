@@ -1,0 +1,17 @@
+........................................................................ [ 24%]
+........................................................................ [ 49%]
+........................................................................ [ 73%]
+........................................................................ [ 98%]
+.....                                                                    [100%]
+=============================== warnings summary ===============================
+../../.venv/lib/python3.11/site-packages/torch/jit/_script.py:1488
+../../.venv/lib/python3.11/site-packages/torch/jit/_script.py:1488
+  /Users/alanakwan/Personal Projects/nutrigene-ai-bo-ipsec/.venv/lib/python3.11/site-packages/torch/jit/_script.py:1488: DeprecationWarning: `torch.jit.script` is deprecated. Please switch to `torch.compile` or `torch.export`.
+    warnings.warn(
+
+tests/test_meanmarg.py::test_high_snr_data_is_barely_affected
+  /Users/alanakwan/Personal Projects/nutrigene-ai-bo-ipsec/.venv/lib/python3.11/site-packages/gpytorch/likelihoods/noise_models.py:150: NumericalWarning: Very small noise values detected. This will likely lead to numerical instabilities. Rounding small noise values up to 1e-06.
+    warnings.warn(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+293 passed, 3 warnings in 37.94s
