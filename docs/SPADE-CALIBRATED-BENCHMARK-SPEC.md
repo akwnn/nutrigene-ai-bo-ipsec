@@ -127,3 +127,67 @@ the region guarantee: a certified region implies it for any subset, and the conv
 false. Every reported KX-4 number must carry that sentence. An answer-rate gain bought by
 weakening the claim is a trade, not a free improvement, and must never be presented as
 the region result.
+
+## 9. KX RESULT — KX-1 FAILS. qLogNEI's certificate beats SPADE's.
+
+4 families x 30 seeds x 7 arms x 6 inflation values, 20160 rows
+(`results/kx-calibrated-benchmark.json`), adjudicated by
+`scripts/analyse_kx_calibrated_benchmark.py`, written before the data landed.
+
+### 9.1 The result
+
+Pooled over all four families at `alpha = 0.95`:
+
+| arm | best `c` | answer rate | containment | 95% LB | clears 0.90? |
+|---|---|---|---|---|---|
+| **`qlognei`** | **1.0 (none)** | **27.7%** | **0.9624** | **0.9226** | **YES** |
+| `versionb` (SPADE) | 1.5 | 7.5% | 0.9444 | 0.8353 | no |
+| `lhs` | 1.0 | 4.2% | 1.0000 | 0.8609 | no |
+| `sobol` | 1.0 | 3.5% | 1.0000 | 0.8384 | no |
+| `qlogei`, `random`, `doe` | -- | -- | -- | -- | no |
+
+**KX-2: `qlognei` is the ONLY arm that can be calibrated to an honest certificate**, and it
+requires **no inflation at all**. **KX-1: FAIL.** SPADE's held-out expected certified volume
+is **0.000000** against `qlognei`'s **0.000780**; paired difference **-0.000780**, 95% CI
+[-0.000982, -0.000596]. The CI excludes zero **in the comparator's favour**.
+
+This is not a power artefact. At `c = 1.0`, `qlognei` answers on **133** cells to SPADE's
+**54** and is simultaneously *more* accurate (0.9624 vs 0.7222).
+
+### 9.2 The mechanism, and it inverts this project's premise
+
+`qlognei` concentrates wells at the optimum, so the region it certifies sits **where the GP
+has the most data** -- tight posterior, honest certificate, small but real volume. SPADE
+spends plate 1 space-filling and plate 2 on the theta contour, i.e. deliberately at the
+place the model knows **least**. §3 predicted the opposite: that forcing honesty would cost
+`qlognei` more volume than SPADE because it "bought volume with confidence it had not
+earned at the boundary". **That prediction is refuted.** `qlognei` had not over-claimed; its
+certificate was honest at `c = 1.0` from the start.
+
+### 9.3 What this does and does not overturn
+
+**Overturned:** any claim that SPADE's two-plate design yields better certificates than
+Bayesian optimisation. `SPADE-SELECTION-BLIND-SPEC.md` §6.2's result -- targeting beats
+*random plate 2* and *one plate*, p ~ 1e-8 -- **stands as measured and is now known to be
+the wrong comparison**: it compared SPADE against its own weaker controls and never against
+BO. KX supplies the comparison that was missing, and SPADE loses it.
+
+**Not overturned:**
+1. The posterior-collapse fix (`boec.meanmarg`). It is a property of the GP, applies to
+   **every** arm including `qlognei`, and is what makes any of these certificates
+   trustworthy on real data (297-484x).
+2. Honest abstention. `doe` still certifies large regions at 0.2934 containment
+   (§2); the failure mode SPADE was built to prevent is real.
+3. The real-noise wall. At `sigma_rel = 0.68` nothing certifies, `qlognei` included.
+4. The `hill` regret advantage (`SPADE-STATE-OF-THE-METHOD.md`), which is a separate
+   estimand on a separate dataset.
+
+### 9.4 Recorded conclusion
+
+**The honest headline is that SPADE's contribution is the DIAGNOSIS and the FIX, not the
+design.** This session found that conservative excursion-set certification is
+self-validating, that its posterior collapses at low SNR in a way simulation cannot detect,
+and that simulation-calibrated inflation is 3x too conservative for real assays. Those
+findings apply to `qlognei`'s certificate exactly as much as to SPADE's -- and on this
+evidence, **the right recommendation for a lab is to run qLogNEI's design and SPADE's
+corrected certificate.**
