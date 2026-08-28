@@ -63,3 +63,69 @@ grows? Reported at every R. A win that exists only at R = 2 must be stated as su
 - **Rounds are not free.** A round is a differentiation cycle -- days to weeks, fresh cell
   lot, operator time. LB-2's answer is a COST in the currency labs actually spend, and any
   result here must be read with that price attached.
+
+## 7. LB RESULT — LB-1 PASSES. My registered prediction was wrong.
+
+4 families x 10 seeds x 4 round counts x 2 arms (`results/lb-*.json`).
+
+**§3 registered that I considered FAIL "more likely than not". That was wrong, and it is
+recorded here rather than quietly dropped.**
+
+### 7.1 LB-1: SPADE's certified volume beats qLogNEI's at matched rounds
+
+Paired over 160 cells at `c = 1.0`, positive = SPADE better:
+
+| rounds | mean diff | 95% CI | p |
+|---|---|---|---|
+| 2 | +0.000300 | [-0.000016, +0.000706] | 0.092 |
+| **3** | **+0.001000** | **[+0.000413, +0.001769]** | **0.0004** |
+| 4 | +0.000203 | [-0.000156, +0.000597] | 0.503 |
+| 5 | +0.000381 | [+0.000009, +0.000822] | 0.079 |
+
+**LB-1 PASSES at R = 3.** R = 5's CI also excludes zero, barely. **R = 4 is a tie, so the
+effect is NOT monotone in rounds** -- that is recorded as measured and is not explained.
+
+### 7.2 LB-2: the number a lab needs
+
+Smallest round count at which each arm reaches LB >= 0.90 at answer rate >= 0.05:
+
+| arm | certifies from | at R = 5 |
+|---|---|---|
+| **SPADE** | **R = 5** | `c = 1.0`, 27.5% answered, containment 1.0000, **LB 0.9342** |
+| `qlognei` | **not by R = 5** | 19.4% answered, no `c` reaches LB 0.90 |
+
+`SPADE-ROUND-MATCHED-SPEC.md` §7.1 measured `qlognei` first certifying at **R = 10**.
+**SPADE certifies at 5 rounds; qLogNEI needs 10.** In a cell-manufacturing protocol that
+is **half the differentiation cycles** -- weeks of wall-clock and a halved cell-lot count,
+which is the currency that actually binds.
+
+Answer rate climbs with rounds for both, SPADE ahead at every count:
+
+| rounds | 2 | 3 | 4 | 5 |
+|---|---|---|---|---|
+| SPADE | 6.9% | 15.0% | 17.5% | **27.5%** |
+| `qlognei` | 3.8% | 8.8% | 15.6% | 19.4% |
+
+### 7.3 LB-3: regret favours SPADE at every round count, none individually significant
+
+| rounds | mean diff | 95% CI | p |
+|---|---|---|---|
+| 2 | -0.0326 | [-0.0718, +0.0060] | 0.170 |
+| 3 | -0.0122 | [-0.0495, +0.0266] | 0.468 |
+| 4 | -0.0138 | [-0.0404, +0.0125] | 0.327 |
+| 5 | -0.0102 | [-0.0567, +0.0341] | 0.563 |
+
+All four negative, none significant at n = 40. Consistent direction, underpowered. LA's
+2-round regret win (p = 0.023, n = 80) had twice the sample; **this does not replicate it
+and does not refute it.**
+
+### 7.4 Stated at the right strength
+
+n = 10 seeds per family. LB-1 rests on **one** round count with a convincing p (R = 3,
+p = 0.0004) and one marginal (R = 5, p = 0.079), with R = 4 a tie. The **LB-2 result is
+more robust than LB-1**: SPADE reaching LB 0.9342 at R = 5 where qLogNEI reaches nothing
+is a qualitative gap, not a margin. A registered confirmatory run at larger n is owed
+before LB-1 is a headline.
+
+**And the ceiling stands:** at `sigma_rel = 0.68` nothing certifies for any arm at any
+round count tested (`SPADE-REALISTIC-NOISE-SPEC.md` §6). LB is a `sigma = 0.25` result.
