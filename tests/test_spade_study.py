@@ -131,7 +131,7 @@ def test_registered_scoring_sizes_are_exact_and_immutable():
         predictive_observation_noise="assay_relative_additive",
         latent_draw_inflation="loo_calibration_tail",
         certificate_max_volume=0.001,
-        latent_inflation_floor=2.0,
+        latent_inflation_floor=1.5,
         mean_marginalisation=True,
     )
 
@@ -413,7 +413,7 @@ def test_score_records_loo_tail_latent_inflation_factor(monkeypatch):
         certificate_rho_grid_size=8,
         fit_restarts=1,
         latent_draw_inflation="loo_calibration_tail",
-        latent_inflation_floor=2.0,
+        latent_inflation_floor=1.5,
         mean_marginalisation=False,
     )
     monkeypatch.setattr(study_module, "_loo_latent_inflation", lambda *args, **kwargs: 2.25)
@@ -587,7 +587,7 @@ def _score_payload():
         "sigma_rel": .1,
         "sigma_add": .01,
         "gamma": .95,
-        "alpha": .95,
+        "alpha": .98,
         "q_tau": .75,
         "terminal_x": [.2, .3, .4, .5, .6, .7],
         "terminal_truth": .8,
@@ -653,7 +653,7 @@ def _row(campaign_seed, protocol="d" * 64):
             "sigma_rel": .1,
             "sigma_add": .01,
             "gamma": .95,
-            "alpha": .95,
+            "alpha": .98,
             "q_tau": .75,
             "map_metric": "integrated_squared_probability_error",
             "terminal_rule": "P",
@@ -837,7 +837,7 @@ def test_yaml_freezes_every_registered_design_value_and_its_payload_digest():
     assert p["budget"] == 48
     assert p["dimension"] == 6
     assert p["noise"] == {"sigma_rel": .10, "sigma_add": .01}
-    assert p["reliability"] == {"gamma": .95, "alpha": .95, "q_tau": .75}
+    assert p["reliability"] == {"gamma": .95, "alpha": .98, "q_tau": .75}
     assert p["threshold"]["achieved_reliable_prevalence"] == .25
     assert p["threshold"]["registered_tolerance_grid_cells"] == 1
     assert p["threshold"]["unachievable_tie_policy"] == "fail_closed"
@@ -858,12 +858,12 @@ def test_yaml_freezes_every_registered_design_value_and_its_payload_digest():
     canonical = json.dumps(p, sort_keys=True, separators=(",", ":"), allow_nan=False).encode()
     assert cfg["digests"]["protocol_payload_sha256"] == hashlib.sha256(canonical).hexdigest()
     assert cfg["digests"]["protocol_payload_sha256"] == (
-        "b846fe2d09237b656b8a9bb0341e4c9f64e6a5989144c0c6a1efb15c2bba4491"
+        "7ba21e7319c6c6d7d84631a053d936d0c8aa063fa6b0150cbccb588ee1e3cb11"
     )
     assert p["certificate_volume_rule"] == "smallest"
     assert p["predictive_observation_noise"] == "assay_relative_additive"
     assert p["latent_draw_inflation"] == "loo_calibration_tail"
-    assert p["latent_inflation_floor"] == 2.0
+    assert p["latent_inflation_floor"] == 1.5
     assert p["mean_marginalisation"] is True
     assert p["certificate_max_volume"] == 0.001
     execution = cfg["execution"]

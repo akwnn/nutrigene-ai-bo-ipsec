@@ -65,7 +65,7 @@ _PRIMARY_DIM = 6
 _PRIMARY_SIGMA_REL = 0.10
 _PRIMARY_SIGMA_ADD = 0.01
 _PRIMARY_GAMMA = 0.95
-_PRIMARY_ALPHA = 0.95
+_PRIMARY_ALPHA = 0.98
 _PRIMARY_Q_TAU = 0.75
 _TRUTH_RANGE_CONTRACTS = frozenset({"strict_unit_interval", "legacy_unit_scaled"})
 
@@ -141,7 +141,7 @@ class ScoringExecutionSettings:
     predictive_observation_noise: str = "assay_relative_additive"
     latent_draw_inflation: str = "loo_calibration_tail"
     certificate_max_volume: float = 0.001
-    latent_inflation_floor: float = 2.0
+    latent_inflation_floor: float = 1.5
     mean_marginalisation: bool = True
 
     def __post_init__(self) -> None:
@@ -218,7 +218,7 @@ REGISTERED_SCORING_SETTINGS = ScoringExecutionSettings(
     predictive_observation_noise="assay_relative_additive",
     latent_draw_inflation="loo_calibration_tail",
     certificate_max_volume=0.001,
-    latent_inflation_floor=2.0,
+    latent_inflation_floor=1.5,
     mean_marginalisation=True,
 )
 

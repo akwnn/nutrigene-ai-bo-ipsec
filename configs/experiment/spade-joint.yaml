@@ -1,5 +1,5 @@
 schema: boec-spade-joint-protocol-v1
-study_id: spade-joint-48-mfg-cert-floor20-loo-tail-meanmarg-2026-08-28
+study_id: spade-joint-48-mfg-cert-floor15-loo-tail-meanmarg-alpha098-2026-08-28
 status: FROZEN_BEFORE_DEVELOPMENT_SELECTION
 public_method_name: SPADE
 claim_scope: computational_synthetic_benchmark_only
@@ -11,7 +11,7 @@ protocol:
   batch_size: 4
   bounds: [[0.0, 0.0, 0.0, 0.0, 0.0, 0.0], [1.0, 1.0, 1.0, 1.0, 1.0, 1.0]]
   noise: {sigma_rel: 0.10, sigma_add: 0.01}
-  reliability: {gamma: 0.95, alpha: 0.95, q_tau: 0.75}
+  reliability: {gamma: 0.95, alpha: 0.98, q_tau: 0.75}
 
   threshold:
     target: future_response_reliability_margin
@@ -76,7 +76,7 @@ protocol:
   certificate_volume_rule: smallest
   predictive_observation_noise: assay_relative_additive
   latent_draw_inflation: loo_calibration_tail
-  latent_inflation_floor: 2.0
+  latent_inflation_floor: 1.5
   mean_marginalisation: true
   certificate_max_volume: 0.001
   terminal_rule: P
@@ -198,7 +198,7 @@ execution:
 
 digests:
   digest_definition: "sha256; protocol and execution payloads each use canonical sorted compact JSON of their parsed mappings"
-  protocol_payload_sha256: b846fe2d09237b656b8a9bb0341e4c9f64e6a5989144c0c6a1efb15c2bba4491
+  protocol_payload_sha256: 7ba21e7319c6c6d7d84631a053d936d0c8aa063fa6b0150cbccb588ee1e3cb11
   execution_payload_sha256: 5dae76d1495c009cf2ea0989142fe4563c2f2140d2dbe832249bdcc41fa4f80d
   actions_workflow_sha256: 5240e0a2c302d91afdab7df87abfba83f01983bd7aa9b8550334771c5603722d
   actions_matrix_sha256: 52230fffe9fcc9317de68f6c7f4c1ef5b97debf58332c62b39380cbd185d951d
@@ -207,7 +207,7 @@ digests:
   requirements_sha256: 96a00b1abb366bd48318d7957703608b348393aa280a6808ef91652c28471687
   spec_sha256: 21c07a4107dd39770facabd3f3c9b52c45b65239c0d60b3cc5f7ce7648bdf403
   lockbox_oracles_source_sha256: 1a79abd6e62d503852fe98957e67d4d4f6d7e9f8b52788176f2359ed38d3e0c3
-  spade_study_source_sha256: 0ef7dc591802ec7db9245ea1a8a2821c81cd62e18ca3f9c9e47a844d76bde297
+  spade_study_source_sha256: 4d839170c7f3d48e34b8a957000efd25fad83d0f2551e4a2b110035e05374061
   power_design_sha256: 6fec13c194468fbbab83758760a60b0161314b03d5c97d3146d14c52af226d7b
   power_engine_sha256: bb3fb81c44a41318bf14dbabc399a9aed7e2225dd4dcea27706a081d152ac97b
   power_planner_sha256: 408dcadecbdbf52fff18928eb189ad6963cf8668c8035bb54f2b61e3732ac865

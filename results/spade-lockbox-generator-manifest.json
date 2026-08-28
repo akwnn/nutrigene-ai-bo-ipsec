@@ -1,9 +1,9 @@
 {
   "digests": {
-    "config_file_sha256": "58af53dd16bc1956ba12e5b4b4dfb29492c5ffa255c3085ee55013f6a225ec32",
+    "config_file_sha256": "d1aeb4e9fb60d7410eac35f1040dcb632f7261c6b0ea258f612ae7827afeb094",
     "lockbox_oracles_source_sha256": "1a79abd6e62d503852fe98957e67d4d4f6d7e9f8b52788176f2359ed38d3e0c3",
-    "protocol_payload_sha256": "b846fe2d09237b656b8a9bb0341e4c9f64e6a5989144c0c6a1efb15c2bba4491",
-    "spade_study_source_sha256": "0ef7dc591802ec7db9245ea1a8a2821c81cd62e18ca3f9c9e47a844d76bde297",
+    "protocol_payload_sha256": "7ba21e7319c6c6d7d84631a053d936d0c8aa063fa6b0150cbccb588ee1e3cb11",
+    "spade_study_source_sha256": "4d839170c7f3d48e34b8a957000efd25fad83d0f2551e4a2b110035e05374061",
     "spec_sha256": "21c07a4107dd39770facabd3f3c9b52c45b65239c0d60b3cc5f7ce7648bdf403"
   },
   "dimension": 6,
