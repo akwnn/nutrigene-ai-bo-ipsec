@@ -13,6 +13,8 @@
 - Floor20 gate (`b846fe2d…`) **FAIL** — archived; floor increase falsified.
 - Meanmarg gate (`1c5c3b7e…`) **FAIL** — archived.
 - Joseph `boec.sur` + `certificate_targeted` policy integrated (research-ready, not in 9-arm set).
+- Joseph hypermix/multiround + probe scripts ported (`2026-08-28` manifest).
+- Safeguard harness: `scripts/run_spade_safeguard_tests.sh`; watchdog calls it pre-spawn.
 - Phase A instrumentation in scores.
 
 ## Protocol digests
