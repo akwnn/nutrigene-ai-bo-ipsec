@@ -127,8 +127,80 @@ more robust than LB-1**: SPADE reaching LB 0.9342 at R = 5 where qLogNEI reaches
 is a qualitative gap, not a margin. A registered confirmatory run at larger n is owed
 before LB-1 is a headline.
 
+**And read §7.5 with this:** the effect is carried by **two of the four families** --
+levy and rosenbrock never certify for either arm, so they contribute exact zeros to all
+160 paired cells. The p-values are unaffected (the zeros are paired), but the family
+support is narrower than "4 families x 10 seeds" implies.
+
 **And the ceiling stands:** at `sigma_rel = 0.68` nothing certifies for any arm at any
 round count tested (`SPADE-REALISTIC-NOISE-SPEC.md` §6). LB is a `sigma = 0.25` result.
+### 7.5 The non-monotonicity, examined — EXPLORATORY, POST-HOC
+
+§7.4 recorded the R = 4 tie as "not explained." This subsection examines it.
+**The data already existed, so no gate could be honestly pre-registered here. Nothing below
+licenses a claim** — it can only dissolve the puzzle or sharpen it. It sharpens it.
+Analyser: `scripts/analyse_lb_monotonicity.py`, which reproduces §7.1's four published
+means exactly before computing anything new.
+
+**1. It is not sampling noise.** §7.1 tests each R against zero *separately*; four separate
+tests against zero cannot establish that two round counts **differ**. The contrast can,
+paired on the same `(family, seed, p)` landscape at both counts:
+
+| contrast | mean diff | 95% CI | p | |
+|---|---|---|---|---|
+| R2 − R3 | −0.000700 | [−0.001297, −0.000238] | 0.0008 | distinguishable |
+| R3 − R4 | **+0.000797** | **[+0.000197, +0.001531]** | **0.0035** | **distinguishable** |
+| R2 − R4 | +0.000097 | [−0.000363, +0.000613] | 0.7295 | indistinguishable |
+| R2 − R5 | −0.000081 | [−0.000425, +0.000281] | 0.6252 | indistinguishable |
+| R3 − R5 | +0.000619 | [−0.000031, +0.001388] | 0.0680 | indistinguishable |
+| R4 − R5 | −0.000178 | [−0.000784, +0.000441] | 0.5650 | indistinguishable |
+
+**The dip at R = 4 is a real difference, not a sampling accident.** Only the contrasts
+involving R = 3 separate; every other pair is indistinguishable. The shape is therefore a
+**spike at R = 3**, not a trend with an outlier — and "a reviewer will poke it" cannot be
+answered with "it is noise."
+
+**2. The dip replicates in both families that certify at all — but the LEVEL does not.**
+These are separable findings and must not be merged:
+
+| family | R=2 | R=3 | R=4 | R=5 | R3 − R4 contrast |
+|---|---|---|---|---|---|
+| ackley | +0.000087 | +0.000350 | −0.000187 | +0.000112 | **+0.000538, p = 0.0060** |
+| hartmann6 | +0.001112 | **+0.003650** | +0.001013 | +0.001413 | **+0.002638, p = 0.0227** |
+| levy | 0.000000 | 0.000000 | −0.000013 | 0.000000 | +0.000013, p = 0.7372 |
+| rosenbrock | 0.000000 | 0.000000 | 0.000000 | 0.000000 | — |
+
+The R = 3 spike appears **independently in ackley and in hartmann6**, which is much harder
+to dismiss than one family's fluke. But LB-1's headline *level* effect is carried almost
+entirely by **hartmann6**: ackley's own per-round tests are all null (p = 0.15 at R = 3).
+
+**3. Half the 160 cells are structural zeros — a generalisation limit, not an inflation.**
+levy is 100.0% empty for SPADE and 99.4% for qLogNEI; rosenbrock is 100% empty for both.
+They contribute exact zeros to every paired difference at every round count. This is the
+**saturation already documented in `SPADE-ASSURANCE-CALIBRATION-SPEC.md`** ("ackley and
+hartmann6 climb monotonically. levy and rosenbrock SATURATE"), reappearing here.
+
+Dropping them barely moves anything (R=3 p = 0.0000, R=4 p = 0.2715, R=5 p = 0.0455,
+R3−R4 p = 0.0063 on the live families) — because the zeros are **paired**, and shrink the
+mean and its standard error together. **So this is not a significance inflation, and §7.1's
+p-values stand as computed.** What it does limit is *generalisation*: "paired over 160
+cells" reads as broader family support than exists. **LB-1 is a two-family result reported
+over four.** §7.4 should be read with that attached.
+
+**4. It is not an empty-certificate artefact.** The empty rate falls monotonically in R for
+both arms — SPADE 90.0% → 79.4% → 78.8% → 72.5%, qLogNEI 93.1% → 88.1% → 81.9% → 77.5%.
+Nothing about *whether* cells certify is non-monotone. The non-monotonicity lives in
+**certified volume conditional on certifying**, so any mechanism proposed for it must act
+on volume, not on the answer rate. This rules out the first explanation most readers reach
+for and is the most useful negative result in this subsection.
+
+**5. LC, as launched, cannot resolve this.** `run_lc_confirmatory.py`'s `CONFIGS` is
+`(spade 3, spade 5, qlognei 3, qlognei 5, qlognei 10)` — **there is no R = 4 in either
+arm.** The confirmatory run will re-measure the R = 3 spike and the R = 5 margin at 25
+seeds with `hill` included, but it will not re-test the tie that makes the pattern
+non-monotone. Closing that needs `(spade, 4)` and `(qlognei, 4)` added to `CONFIGS`, which
+changes the per-seed row count and so cannot be merged into the run already in flight —
+it is a separate companion run.
 
 ## 8. The headline comparison: SPADE at 5 rounds vs qLogNEI at 10
 
