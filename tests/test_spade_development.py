@@ -10,7 +10,11 @@ import pytest
 import yaml
 
 from boec.spade import SpadeConfig
-from boec.spade_study import REGISTERED_SCORING_SETTINGS, write_jsonl_gzip
+from boec.spade_study import (
+    REGISTERED_SCORING_SETTINGS,
+    write_jsonl_gzip,
+)
+import boec.spade_study as study_module
 from boec.seedbook import derive_seed
 from scripts import run_spade_development as runner
 from scripts import select_spade_protocol as selector
@@ -311,6 +315,17 @@ def test_registered_metadata_binds_the_frozen_generator_manifest():
     assert metadata["generator_manifest_sha256"] == hashlib.sha256(
         manifest.read_bytes()
     ).hexdigest()
+
+
+def test_development_runner_reliability_matches_frozen_protocol_and_scoring():
+    root = Path(__file__).resolve().parents[1]
+    config = yaml.safe_load(
+        (root / "configs/experiment/spade-joint.yaml").read_text(encoding="utf-8")
+    )
+    rel = config["protocol"]["reliability"]
+    assert runner._GAMMA == rel["gamma"] == study_module._PRIMARY_GAMMA
+    assert runner._ALPHA == rel["alpha"] == study_module._PRIMARY_ALPHA
+    assert runner._Q_TAU == rel["q_tau"] == study_module._PRIMARY_Q_TAU
 
 
 def test_registered_metadata_binds_live_power_sources_and_dynamic_rule():

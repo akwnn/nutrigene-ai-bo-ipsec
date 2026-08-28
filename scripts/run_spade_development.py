@@ -129,9 +129,18 @@ _DEVELOPMENT_ARTIFACT_METADATA_FIELDS = (
 )
 _SIGMA_REL = 0.10
 _SIGMA_ADD = 0.01
-_GAMMA = 0.95
-_ALPHA = 0.95
-_Q_TAU = 0.75
+def _frozen_reliability(repo_root: Path = ROOT) -> tuple[float, float, float]:
+    """Load registered reliability estimands from the frozen joint protocol."""
+    config = yaml.safe_load((repo_root / _CONFIG_PATH).read_text(encoding="utf-8"))
+    reliability = config["protocol"]["reliability"]
+    return (
+        float(reliability["gamma"]),
+        float(reliability["alpha"]),
+        float(reliability["q_tau"]),
+    )
+
+
+_GAMMA, _ALPHA, _Q_TAU = _frozen_reliability()
 _SMOKE_SCORING_SETTINGS = ScoringExecutionSettings(
     calibration_grid_size=256,
     terminal_grid_size=64,
