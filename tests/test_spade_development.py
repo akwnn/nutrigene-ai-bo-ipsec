@@ -944,6 +944,71 @@ def test_selected_artifact_is_hash_bound_and_fail_closed(tmp_path, complete_rows
         )
 
 
+def test_selection_rejects_preexisting_analysis_without_overwriting_it(
+    tmp_path, complete_rows, monkeypatch
+):
+    manifests = _write_complete_shards(tmp_path, complete_rows)
+    monkeypatch.setattr(
+        selector, "registered_metadata", lambda _root: _registered_metadata()
+    )
+    monkeypatch.setattr(selector, "git_state", lambda _root: (SOURCE, False))
+    analysis_path = tmp_path / "results" / "spade-development-analysis.json"
+    selected_path = tmp_path / "results" / "spade-selected-protocol.json"
+    analysis_path.parent.mkdir()
+    analysis_path.write_bytes(b"pre-existing analysis\n")
+
+    with pytest.raises(ValueError, match="write-once|already exists"):
+        selector.select_from_shards(
+            manifests,
+            analysis_output=analysis_path,
+            selected_output=selected_path,
+            repo_root=tmp_path,
+        )
+
+    assert analysis_path.read_bytes() == b"pre-existing analysis\n"
+    assert not selected_path.exists()
+
+
+@pytest.mark.parametrize(
+    "racing_name",
+    ["spade-development-analysis.json", "spade-selected-protocol.json"],
+)
+def test_selection_never_overwrites_a_target_that_appears_during_promotion(
+    tmp_path, complete_rows, monkeypatch, racing_name
+):
+    manifests = _write_complete_shards(tmp_path, complete_rows)
+    monkeypatch.setattr(
+        selector, "registered_metadata", lambda _root: _registered_metadata()
+    )
+    monkeypatch.setattr(selector, "git_state", lambda _root: (SOURCE, False))
+    analysis_path = tmp_path / "results" / "spade-development-analysis.json"
+    selected_path = tmp_path / "results" / "spade-selected-protocol.json"
+    racing_path = tmp_path / "results" / racing_name
+    real_link = selector.os.link
+    raced = False
+
+    def race_link(source, destination):
+        nonlocal raced
+        if not raced and Path(destination) == racing_path:
+            raced = True
+            racing_path.write_bytes(b"racing artifact\n")
+        real_link(source, destination)
+
+    monkeypatch.setattr(selector.os, "link", race_link)
+    with pytest.raises(ValueError, match="write-once|appeared|already exists"):
+        selector.select_from_shards(
+            manifests,
+            analysis_output=analysis_path,
+            selected_output=selected_path,
+            repo_root=tmp_path,
+        )
+
+    assert racing_path.read_bytes() == b"racing artifact\n"
+    other_path = selected_path if racing_path == analysis_path else analysis_path
+    assert not other_path.exists()
+    assert set(racing_path.parent.iterdir()) == {racing_path}
+
+
 def test_selection_rejects_incomplete_or_wrong_digest_manifest(tmp_path, complete_rows, monkeypatch):
     manifests = _write_complete_shards(tmp_path, complete_rows)
     metadata = {

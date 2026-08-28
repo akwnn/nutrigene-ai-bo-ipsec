@@ -852,14 +852,14 @@ def merge_lockbox_manifests(
     manifest_paths: Sequence[str | Path],
     *,
     output: str | Path,
-    metadata: Mapping[str, object],
-    sample_size: int,
+    metadata: Mapping[str, object] | None = None,
+    sample_size: int | None = None,
     repo_root: Path = ROOT,
 ) -> dict[str, object]:
     """Hash and merge complete shard sidecars without loading outcome rows."""
     access = validate_lockbox_access(repo_root=repo_root)
     registered_n = _registered_sample_size(access["sample_size"])
-    if sample_size != registered_n:
+    if sample_size is not None and sample_size != registered_n:
         raise ValueError("lockbox merge caller sample size drift")
     expected_metadata = set(LOCKBOX_PROVENANCE_FIELDS)
     live_metadata = registered_metadata(repo_root)
@@ -876,6 +876,8 @@ def merge_lockbox_manifests(
         "power_plan_sha256": access["power_plan_sha256"],
         "power_source_commit": access["power_plan"]["source_commit"],
     })
+    if metadata is None:
+        metadata = trusted_metadata
     if (
         set(metadata) not in (expected_metadata, expected_metadata | {"command_args"})
         or trusted_metadata["source_dirty"] is not False
@@ -931,10 +933,35 @@ def merge_lockbox_manifests(
 
 
 def main(argv: Sequence[str] | None = None) -> int:
+    command_args = tuple(sys.argv[1:] if argv is None else argv)
+    if command_args[:1] == ("merge",):
+        parser = argparse.ArgumentParser(
+            description="Merge authenticated SPADE lockbox shard manifests."
+        )
+        parser.add_argument("--out", required=True, type=Path)
+        parser.add_argument("manifests", nargs="+", type=Path)
+        args = parser.parse_args(command_args[1:])
+        registered_output = ROOT / "results" / "spade-lockbox-manifest.json"
+        if args.out.resolve() != registered_output.resolve():
+            print(
+                "lockbox merge refused: merged manifest must use the exact "
+                "registered path",
+                file=sys.stderr,
+            )
+            return 2
+        try:
+            manifest = merge_lockbox_manifests(
+                args.manifests, output=args.out, repo_root=ROOT
+            )
+        except (OSError, ValueError) as exc:
+            print(f"lockbox merge refused: {exc}", file=sys.stderr)
+            return 2
+        print(_canonical_json(manifest))
+        return 0
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--family", required=True, choices=LOCKBOX_FAMILIES); parser.add_argument("--start", required=True, type=int); parser.add_argument("--stop", required=True, type=int); parser.add_argument("--out", required=True, type=Path); parser.add_argument("--limit", type=int); parser.add_argument("--smoke", action="store_true")
-    args = parser.parse_args(argv)
-    manifest = run_lockbox_shard(family=args.family, start=args.start, stop=args.stop, output=args.out, limit=args.limit, smoke=args.smoke, command_args=tuple(argv or sys.argv[1:]))
+    args = parser.parse_args(command_args)
+    manifest = run_lockbox_shard(family=args.family, start=args.start, stop=args.stop, output=args.out, limit=args.limit, smoke=args.smoke, command_args=command_args)
     print(_canonical_json(manifest)); return 0
 
 

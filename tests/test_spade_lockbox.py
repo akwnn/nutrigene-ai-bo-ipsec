@@ -660,6 +660,68 @@ def test_merge_accepts_arbitrary_cross_host_shards_without_loading_outcomes(
     } == {f"host-{family}-{shard}" for family in range(4) for shard in range(4)}
 
 
+def test_registered_merge_cli_derives_contract_and_returns_zero(
+    tmp_path, monkeypatch, capsys
+):
+    metadata = _lockbox_metadata()
+    monkeypatch.setattr(lockbox, "ROOT", tmp_path)
+    _install_trusted_merge_access(monkeypatch, metadata, sample_size=350)
+    paths = _distributed_synthetic_shards(tmp_path, metadata=metadata)
+    output = tmp_path / "results" / "spade-lockbox-manifest.json"
+
+    code = lockbox.main([
+        "merge", "--out", str(output), *(str(path) for path in reversed(paths))
+    ])
+
+    assert code == 0
+    assert json.loads(output.read_text())["status"] == "COMPLETE"
+    assert json.loads(capsys.readouterr().out)["schema"] == (
+        lockbox.MERGED_MANIFEST_SCHEMA
+    )
+
+
+def test_registered_merge_cli_returns_two_when_access_preflight_fails(
+    tmp_path, monkeypatch, capsys
+):
+    monkeypatch.setattr(lockbox, "ROOT", tmp_path)
+    monkeypatch.setattr(
+        lockbox,
+        "validate_lockbox_access",
+        lambda **_kwargs: (_ for _ in ()).throw(ValueError("access denied")),
+    )
+    output = tmp_path / "results" / "spade-lockbox-manifest.json"
+
+    code = lockbox.main([
+        "merge", "--out", str(output), str(tmp_path / "shard.manifest.json")
+    ])
+
+    assert code == 2
+    assert "access denied" in capsys.readouterr().err
+    assert not output.exists()
+
+
+def test_registered_merge_cli_rejects_a_noncanonical_output_path(
+    tmp_path, monkeypatch, capsys
+):
+    monkeypatch.setattr(lockbox, "ROOT", tmp_path)
+    monkeypatch.setattr(
+        lockbox,
+        "merge_lockbox_manifests",
+        lambda *_args, **_kwargs: pytest.fail(
+            "merge must not run for a noncanonical output path"
+        ),
+    )
+    output = tmp_path / "relocated-manifest.json"
+
+    code = lockbox.main([
+        "merge", "--out", str(output), str(tmp_path / "shard.manifest.json")
+    ])
+
+    assert code == 2
+    assert "registered path" in capsys.readouterr().err
+    assert not output.exists()
+
+
 @pytest.mark.parametrize("defect", ["gap", "overlap", "duplicate"])
 def test_merge_rejects_distributed_range_defects_without_loading_outcomes(
     tmp_path, monkeypatch, defect
@@ -1130,6 +1192,17 @@ def test_merged_analysis_hashes_actual_power_and_passes_manifest_size(
     monkeypatch.setattr(
         analysis, "validate_power_plan_payload", lambda payload: copy.deepcopy(payload)
     )
+
+    def analysis_access(**_kwargs):
+        power_bytes = power_path.read_bytes()
+        return {
+            "selection": {"source_commit": SOURCE},
+            "power_plan": json.loads(power_bytes),
+            "sample_size": 350,
+            "power_plan_sha256": hashlib.sha256(power_bytes).hexdigest(),
+        }
+
+    monkeypatch.setattr(lockbox, "validate_lockbox_access", analysis_access)
     import boec.spade_study as study
 
     monkeypatch.setattr(
@@ -1160,6 +1233,88 @@ def test_merged_analysis_hashes_actual_power_and_passes_manifest_size(
     power_path.write_bytes(_canonical_bytes({**power_payload, "status": "changed"}))
     with pytest.raises(ValueError, match="power.*hash"):
         analysis.analyse_merged_manifest(merged_path, power_path=power_path)
+
+
+def test_standalone_analysis_authenticates_access_before_manifest_read(
+    tmp_path, monkeypatch
+):
+    events: list[tuple[str, object]] = []
+    power_path = analysis.ROOT / "results" / "spade-lockbox-power.json"
+
+    def deny_access(**kwargs):
+        events.append(("access", kwargs))
+        raise ValueError("access denied")
+
+    def forbid_manifest_read(*_args, **_kwargs):
+        events.append(("manifest", None))
+        raise AssertionError("merged manifest opened before access preflight")
+
+    monkeypatch.setattr(lockbox, "validate_lockbox_access", deny_access)
+    monkeypatch.setattr(analysis, "_load_canonical_mapping", forbid_manifest_read)
+
+    with pytest.raises(ValueError, match="access denied"):
+        analysis.analyse_merged_manifest(tmp_path / "spade-lockbox-manifest.json")
+
+    assert events == [
+        ("access", {"repo_root": analysis.ROOT, "power_path": power_path})
+    ]
+
+
+def test_standalone_analysis_uses_preflight_power_without_reopening_it(
+    tmp_path, monkeypatch
+):
+    metadata = _lockbox_metadata()
+    power_plan = {
+        "status": "POWERED",
+        "source_commit": POWER_SOURCE,
+        "decision": {"selected_sample_size": 350},
+        "digests": {
+            "study_protocol_sha256": PROTOCOL,
+            "specification_sha256": SPEC,
+            "configuration_sha256": CONFIG,
+            "generator_sha256": GENERATOR,
+            "generator_manifest_sha256": "c" * 64,
+        },
+        "selected_protocol": {"sha256": "b" * 64, "source_commit": SOURCE},
+    }
+    manifest = {
+        "schema": lockbox.MERGED_MANIFEST_SCHEMA,
+        "status": "COMPLETE",
+        "sample_size": 350,
+        "raw_shards": [],
+        **metadata,
+        "environment_compatibility": lockbox.environment_compatibility_projection(
+            _environment()
+        ),
+    }
+    labels: list[str] = []
+
+    monkeypatch.setattr(
+        lockbox,
+        "validate_lockbox_access",
+        lambda **_kwargs: {
+            "selection": {"source_commit": SOURCE},
+            "power_plan": power_plan,
+            "sample_size": 350,
+            "power_plan_sha256": POWER_HASH,
+        },
+    )
+    monkeypatch.setattr(
+        analysis, "validate_power_plan_payload", lambda payload: payload
+    )
+
+    def load_once(_path, label):
+        labels.append(label)
+        if label == "merged lockbox manifest":
+            return manifest, _canonical_bytes(manifest)
+        raise AssertionError("authenticated power plan was reopened")
+
+    monkeypatch.setattr(analysis, "_load_canonical_mapping", load_once)
+
+    with pytest.raises(ValueError, match="no rows"):
+        analysis.analyse_merged_manifest(tmp_path / "spade-lockbox-manifest.json")
+
+    assert labels == ["merged lockbox manifest"]
 
 
 def test_shard_schema_and_merged_schema_share_protocol_and_provenance_keys():

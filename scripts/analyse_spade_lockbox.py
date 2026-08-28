@@ -241,15 +241,18 @@ def analyse_merged_manifest(manifest_path: Path, *, power_path: Path | None = No
     """Read only hash-validated raw shards named by a completed merged manifest."""
     from boec.spade_study import read_jsonl_gzip_bytes
     from scripts import run_spade_lockbox as lockbox_contract
+    actual_power_path = power_path or ROOT / "results" / "spade-lockbox-power.json"
+    access = lockbox_contract.validate_lockbox_access(
+        repo_root=ROOT, power_path=actual_power_path
+    )
     manifest, _manifest_bytes = _load_canonical_mapping(
         manifest_path, "merged lockbox manifest"
     )
     if set(manifest) != lockbox_contract.MERGED_MANIFEST_FIELDS or manifest.get("schema") != lockbox_contract.MERGED_MANIFEST_SCHEMA or manifest.get("status") != "COMPLETE" or manifest.get("source_dirty") is not False:
         raise ValueError("merged lockbox manifest schema/provenance drift")
     sample_size = _registered_sample_size(manifest.get("sample_size"))
-    actual_power_path = power_path or ROOT / "results" / "spade-lockbox-power.json"
-    parsed_power, power_bytes = _load_canonical_mapping(actual_power_path, "power plan")
-    actual_power_sha256 = hashlib.sha256(power_bytes).hexdigest()
+    parsed_power = access["power_plan"]
+    actual_power_sha256 = access["power_plan_sha256"]
     if manifest.get("power_plan_sha256") != actual_power_sha256:
         raise ValueError("merged lockbox power plan hash mismatch")
     power_plan = validate_power_plan_payload(parsed_power)
