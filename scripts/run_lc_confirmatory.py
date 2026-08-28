@@ -77,6 +77,10 @@ def main():
     ap.add_argument("--seeds", type=int, default=25)
     ap.add_argument("--families", default="hill,ackley,hartmann6,levy,rosenbrock")
     ap.add_argument("--out", type=Path, default=ROOT / "results" / "lc-confirmatory.json")
+    ap.add_argument("--resume", action="store_true",
+                    help="Keep rows already in --out and skip those (family, seed) jobs. "
+                         "Safe: every job is keyed by (family, seed) and all randomness "
+                         "derives from seed, so a resumed job reproduces exactly.")
     a = ap.parse_args()
 
     from boec.designspace import tau_quantile
@@ -100,8 +104,15 @@ def main():
             tau_cache[inst] = {p: float(tau_quantile(t, p)) for p in (0.30, 0.10)}
         return tau_cache[inst]
 
-    jobs = [(f, s) for s in range(a.seeds) for f in fams]
-    rows, t0, done = [], time.time(), 0
+    rows, have = [], set()
+    if a.resume and a.out.exists():
+        prev = json.loads(a.out.read_text())
+        rows = prev["rows"] if isinstance(prev, dict) else prev
+        have = {(r["family"], r["seed"]) for r in rows}
+        print(f"RESUME {a.out}: {len(rows)} rows, {len(have)} jobs already done",
+              flush=True)
+    jobs = [(f, s) for s in range(a.seeds) for f in fams if (f, s) not in have]
+    t0, done = time.time(), 0
     for family, seed in jobs:
         tb = taus(family, seed)
         for arm, R in CONFIGS:
