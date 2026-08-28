@@ -76,3 +76,71 @@ is a trade-off and must be named as one.
 - **LA cannot rescue the real-noise result.** At `sigma_rel = 0.68` nothing certifies for
   any arm (`SPADE-REALISTIC-NOISE-SPEC.md` §6). LA is run at 0.25 and its conclusions are
   conditional on that regime.
+
+## 7. LA RESULT — the round confound is confirmed, and SPADE wins at matched rounds
+
+4 families x 20 seeds x 5 arms (`results/la-*.json`), adjudicated by
+`scripts/analyse_la_round_matched.py`, written before the data landed.
+
+### 7.1 LA-2: ALL of KX's margin was the round count
+
+| arm | rounds | `c*` | answer rate | containment | LB |
+|---|---|---|---|---|---|
+| `qlognei_r10` | 10 | 1.5 | **21.2%** | 0.9853 | **0.9321** |
+| `qlognei_r2` | **2** | none | **0.0%** | -- | -- |
+| `versionb` | 2 | none | 0.0% | -- | -- |
+| `spade_cert_rho95` | 2 | none | 0.0% | -- | -- |
+| `lhs` | 1 | none | 0.0% | -- | -- |
+
+**Strip `qlognei` to two rounds and it certifies 0.0%** -- identical to every other 2-round
+arm. Held-out expected volume 0.000100 at ten rounds, **0.000000** at two.
+
+**`SPADE-CALIBRATED-BENCHMARK-SPEC.md` §9's conclusion is therefore WITHDRAWN as stated.**
+KX did not measure "BO's design beats SPADE's design"; it measured *ten adaptive rounds
+beat two*. The correct statement is: **adaptivity, not acquisition, is what buys a
+certificate at this budget.**
+
+### 7.2 LA-1: a tie at zero, recorded as the registered FAIL
+
+No 2-round arm certifies, so the paired difference is exactly 0.000000 and the CI cannot
+exclude zero. **By the frozen gate that is FAIL, and it is recorded as FAIL** -- but the
+honest reading is a tie at zero, not a defeat. SPADE does not beat `qlognei_r2` on
+certified volume because *nothing* certifies at two rounds.
+
+### 7.3 LA-3: at matched rounds SPADE WINS on regret, and the fix is what does it
+
+Paired over 80 campaigns, negative = SPADE better, SESOI = 0.02:
+
+| comparison | mean diff | median | 95% CI | p |
+|---|---|---|---|---|
+| **`spade_cert_rho95` vs `qlognei_r2`** | **-0.0310** | -0.0269 | **[-0.0633, -0.0004]** | **0.023** |
+| `versionb` vs `qlognei_r2` | -0.0062 | -0.0039 | [-0.0359, +0.0222] | 0.744 |
+| `spade_cert_rho95` vs `qlognei_r10` | +0.0561 | -- | [+0.0207, +0.0927] | 0.017 |
+
+**At two rounds, the certificate-contour acquisition beats qLogNEI on regret**, exceeding
+the registered SESOI. The classical straddle (`versionb`) is at **parity** -- so the win is
+created by the acquisition change, not by the two-plate structure. All four families point
+the same way (ackley -0.081, hartmann6 -0.036, levy -0.026, rosenbrock -0.015), though only
+`ackley` is individually significant.
+
+**The acquisition that produced this had been sitting unused since KV**, marked FAIL by
+KV-2 -- which was measured when the volume metric itself was uncalibrated and could not
+have detected it.
+
+### 7.4 Stated at the right strength
+
+The CI's upper bound is **-0.0004**. This is a real effect that clears the bar, but it
+clears it **narrowly**, on 80 pairs, with one of four families individually significant. It
+licenses a registered confirmatory run at larger n; **it is not yet a headline claim.**
+
+And it is a **regret** win, not a certification win: at two rounds nothing certifies, so
+SPADE is better at *finding* the optimum than BO under a realistic round budget, while
+neither can *guarantee* a region there.
+
+### 7.5 What this means for cell manufacturing
+
+Ten sequential differentiation rounds is not a protocol a lab runs. At the two-round
+budget that is realistic, **SPADE with the certificate-contour acquisition is the best
+optimiser tested**, and no method -- SPADE or BO -- can certify a region. The lever that
+would change the second half of that sentence is **rounds**, which `boec.multiround` now
+makes measurable.

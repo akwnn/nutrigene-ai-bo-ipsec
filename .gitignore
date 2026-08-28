@@ -344,3 +344,7 @@ COMMIT_MSG.txt
 !results/probe-hypermix-30seed.json
 !results/kx-calibrated-benchmark.json
 !results/probe-kz2-finite-set-noise.json
+!results/la-rosenbrock.json
+!results/la-levy.json
+!results/la-hartmann6.json
+!results/la-ackley.json
