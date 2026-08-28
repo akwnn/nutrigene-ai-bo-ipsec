@@ -795,6 +795,21 @@ def test_git_state_treats_modified_tracked_selected_artifact_as_dirty(tmp_path):
     assert dirty is True
 
 
+def test_git_state_allows_planning_state_updates(tmp_path):
+    subprocess.run(["git", "init", "-q"], cwd=tmp_path, check=True)
+    subprocess.run(["git", "config", "user.email", "test@example.com"], cwd=tmp_path, check=True)
+    subprocess.run(["git", "config", "user.name", "Test"], cwd=tmp_path, check=True)
+    planning = tmp_path / ".planning"
+    planning.mkdir()
+    state = planning / "STATE.md"
+    state.write_text("# State\n")
+    subprocess.run(["git", "add", ".planning/STATE.md"], cwd=tmp_path, check=True)
+    subprocess.run(["git", "commit", "-qm", "fixture"], cwd=tmp_path, check=True)
+    state.write_text("# State\nupdated\n")
+    _, dirty = runner.git_state(tmp_path)
+    assert dirty is False
+
+
 def test_each_mandatory_gate_and_no_selection_are_independently_exercised(complete_rows):
     answer_fail = copy.deepcopy(complete_rows)
     target = "spade-o32-staged"

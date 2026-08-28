@@ -369,8 +369,12 @@ def scorer_contract_digest(score: Mapping[str, object]) -> str:
     )
 
 
-def _allowed_generated_path(path: str) -> bool:
+def _ignored_worktree_change(path: str, status_code: str) -> bool:
     normalized = path.replace("\\", "/")
+    if normalized == ".planning/STATE.md":
+        return True
+    if status_code != "??":
+        return False
     name = normalized.rsplit("/", 1)[-1]
     return normalized.startswith("results/") and (
         name.startswith("spade-development-")
@@ -402,7 +406,7 @@ def git_state(repo_root: Path = ROOT) -> tuple[str, bool]:
         if " -> " in path:
             path = path.split(" -> ", 1)[1]
         status_code = line[:2]
-        if status_code != "??" or not _allowed_generated_path(path):
+        if not _ignored_worktree_change(path, status_code):
             dirty = True
             break
     return commit, dirty

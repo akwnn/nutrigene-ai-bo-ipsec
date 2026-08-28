@@ -27,6 +27,6 @@
 
 ## Next action
 
-1. Hill+levy 0–15 gate on digest `7ba21e73…`.
+1. Hill **COMPLETE** (165/165); levy 0–15 gate on digest `7ba21e73…` (**starting**).
 2. If PASS → full 5×50 → LOFO → power → lockbox.
 3. If FAIL → B3 abstention replay or cert-targeted 12-arm digest spike.
