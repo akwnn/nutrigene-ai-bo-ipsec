@@ -81,3 +81,67 @@ non-inferior to `spade`'s, and its empirical containment must not fall.
 - `sigma_rel = 0.25`. The real-noise ceiling (0.68, nothing certifies) is untouched.
 - No "X cannot certify" claim without reporting `answered` and `contained`
   (`SPADE-TAU-DEGENERACY-SPEC.md` §7.3's standing rule).
+
+---
+
+## 8. ACK-1 FAILS — and §1's root cause is RETRACTED
+
+Per §4: *"FAIL -> the threshold was not the cause. §1's root cause is then retracted."*
+It failed. `spade_adaptive` reproduced `spade` **bit-identically** — same design, same
+`Xsum`, same regret to 6 dp — despite provably using different thresholds
+(θ = 0.108 → 0.279 → 0.347 per round, against a fixed 0.80; instrumented and confirmed).
+
+### 8.1 Why: θ cancels out of the acquisition
+
+`certificate_straddle` is `1.96·sd − |mean − z_ρ·sd − θ|`. When θ exceeds `mean − z_ρ·sd`
+for **every** candidate, the absolute value resolves to `θ + z_ρ·sd − mean` and the score
+becomes:
+
+```
+score = 1.96·sd − θ − z_ρ·sd + mean = (1.96 − z_ρ)·sd + mean − θ
+```
+
+**θ is then a constant offset and drops out of the ranking entirely.** Measured at the
+opening round, ρ = 0.95, z_ρ = 1.6449:
+
+| family | θ | max(mean − z·sd) | candidates above θ | |
+|---|---|---|---|---|
+| ackley | 0.80 | 0.0437 | **0.0%** | θ cancels |
+| ackley | 0.108 (adaptive) | 0.0437 | **0.0%** | θ cancels |
+| hartmann6 | 0.80 | 0.0846 | **0.0%** | θ cancels |
+| hartmann6 | 0.179 (adaptive) | 0.0846 | **0.0%** | θ cancels |
+
+Rank correlation between the scores at the two θ values: **exactly 1.000000**, identical
+argmax, on both families.
+
+### 8.2 What SPADE's acquisition actually is
+
+**SPADE is not straddling the certificate contour.** In this regime it reduces to
+
+```
+argmax  (1.96 − z_ρ)·sd + mean
+```
+
+— a UCB whose exploration weight is set by **ρ**, not θ. At ρ = 0.95 that weight is
+`1.96 − 1.645 = 0.315`; at ρ = 0.50 it is `1.96`. **ρ controls exploration; θ does
+nothing.** The module docstring's claim that the acquisition targets "the certificate
+contour, not Bryan's straddle" describes an intent the code does not realise whenever the
+contour lies outside the posterior's range — which is every family, at the opening round.
+
+This also reinterprets `SPADE-ROUND-MATCHED-SPEC.md`'s measured gap between the
+certificate contour and the true-contour straddle (median regret 0.2996 vs 0.4008): that
+difference came from **ρ changing the sd weight**, not from moving the target contour.
+
+### 8.3 Consequences
+
+- **The ackley loss is NOT explained by the `mu_max` fallback.** §1's root cause is
+  withdrawn. The `getattr(orc, "mu_max", 1.0)` fallback is still a genuine latent bug —
+  no evaluator defines `mu_max` — and `resolve_theta` still fixes it, with 5 red-first
+  tests and a bit-identical regression gate. **But it changes no result, and must not be
+  presented as a fix.**
+- **The real lever is ρ**, the exploration weight. ackley is needle-in-haystack and
+  `0.315·sd` is very little exploration; that is the live hypothesis for the loss.
+- **ACK-2 and ACK-3 are moot** — with an identical design there is nothing to guard.
+- **Not yet tested, and not to be claimed:** whether lowering ρ fixes ackley, and what it
+  costs in certification. ρ is the certificate's Vorob'ev level, so moving it changes the
+  estimand, not just the search — that trade must be registered before it is run.
