@@ -192,3 +192,62 @@ qLogNEI. It is *not* "SPADE needs half the rounds."
   landscape. `hill` saturates.
 - **Ceiling, unchanged:** at the measured real assay noise (`sigma_rel = 0.68`) nothing
   certifies for any arm (`SPADE-REALISTIC-NOISE-SPEC.md` §6).
+
+---
+
+## 9. LC EXTENDED to 32 seeds — and why `hill` really saturates
+
+§8.2 showed LC-1 was underpowered: CI half-width 0.0226 against a SESOI of 0.0200.
+The run was extended to 32 seeds (`--resume`, so the original 25 are byte-identical).
+n = 160 pairs.
+
+### 9.1 What survived, and what did not
+
+| comparison | 25 seeds | 32 seeds | verdict |
+|---|---|---|---|
+| SPADE R=5 vs qLogNEI R=10, regret | +0.0015 [−0.0219,+0.0239] | **+0.0016 [−0.0184,+0.0208]** | **parity** (half-width 0.0196 < SESOI) |
+| SPADE R=3 vs qLogNEI R=10, regret | +0.0237 | +0.0263 [+0.0054,+0.0472] | SPADE worse — 3 rounds is not enough |
+| SPADE vs qLogNEI, matched R=3, regret | −0.0235 (excl. 0) | −0.0181 [−0.0373,+0.0013] | **DID NOT SURVIVE** |
+| SPADE vs qLogNEI, matched R=5, regret | −0.0051 | −0.0055 [−0.0251,+0.0142] | no difference |
+| SPADE vs qLogNEI, R=3, certified volume | +0.000242 (p<0.0001) | −0.000034 (p=0.456) | **DID NOT SURVIVE** |
+| **SPADE vs qLogNEI, R=5, certified volume** | +0.001326 | **+0.001353 (p<0.0001)** | **HELD** — ackley and hartmann6 both p<0.0001 |
+
+**Three effects vanished between 25 and 32 seeds.** Only effects several times their own CI
+survived. That is now the third such episode in this project (KX, LB-1 at R=3, and these),
+and it is a standing rule: **at n <= 25 seeds an effect here is not reliable.**
+
+**The defensible claim:** SPADE at 5 rounds matches qLogNEI at 10 on regret, and delivers
+substantially more certified volume at matched 5 rounds. It is NOT better on regret at
+matched rounds — that claim died at 32 seeds.
+
+### 9.2 ROOT CAUSE: `hill` does not saturate because it is a dose-response
+
+Measured on the shared Sobol grid, per family (seed 0), where `margin` is the mean excess
+of the good region over `tau` and `noise_sd` is `sigma_rel` x the good region's response:
+
+| family | median/max | margin over tau | noise sd | **margin/sd** | observed cert. rate |
+|---|---|---|---|---|---|
+| hartmann6 | 3% | 0.1320 | 0.0524 | **2.52** | 66.7% |
+| ackley | 11% | 0.0268 | 0.0214 | **1.25** | 33.8% |
+| hill | **71%** | 0.0658 | 0.2064 | **0.32** | 0.5% |
+| levy | 77% | 0.0567 | 0.2219 | **0.26** | 0.1% |
+| rosenbrock | 85% | 0.0396 | 0.2351 | **0.17** | 0.0% |
+
+`margin/sd` rank-orders the certification rate perfectly. The mechanism is **dynamic range
+under multiplicative noise**: noise is `sigma_rel * f`, so a landscape whose good region
+sits at high absolute response carries large absolute noise. `hill`'s median is 71% of its
+max — it is compressed near the top — so a 30th-percentile `tau` carves a band 0.066 wide
+while the noise sd there is 0.206.
+
+**Therefore `hill` saturating is NOT evidence that the certificate fails on dose-response
+landscapes.** It is evidence that **`tau` defined as a QUANTILE of the response is
+degenerate on compressed landscapes.** Note the real iPSC-EC certification
+(`SPADE-REAL-IPSC-RESULT.md`) used an ABSOLUTE threshold — "CD31+ >= 33.2%" — not a
+quantile. The quantile-`tau` is a benchmarking convenience, and it is the thing that fails.
+
+§8.3's conclusion is **narrowed accordingly**: it remains true that no dose-response
+landscape has yet been certified, but the reason is now known and is a property of the
+benchmark's target definition, not of SPADE.
+
+**This is testable and not yet tested.** The registered follow-up is in
+`docs/SPADE-TAU-DEGENERACY-SPEC.md`.
