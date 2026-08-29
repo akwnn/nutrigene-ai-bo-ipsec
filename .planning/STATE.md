@@ -1,48 +1,39 @@
 # State
 
 **Milestone:** SPADE joint protocol  
-**Status:** active — scalar recovery **B2 FAIL**; pivot to B3 research  
-**Current phase:** B3 bagged-certificate spike (offline) or B4 cert-targeted 12-arm digest
+**Status:** active — **B3 gate ready** (bagged5 + cert_targeted o32 + α=0.95)  
+**Current phase:** Launch hill+levy 0–15 gate on digest `2ef1875c…`
 
 ## Decisions frozen
 
 - Exactly 48 evaluations per arm per campaign.
-- Public method name remains SPADE.
-- Manufacturing claim hierarchy unchanged; Plate-2 tertiary only.
-- Recovery stack: `smallest` + assay + `loo_calibration_tail` + meanmarg + floor **1.5** + `Vmax=0.001`.
-- Floor20 gate (`b846fe2d…`) **FAIL** — archived; floor increase falsified.
-- Meanmarg gate (`1c5c3b7e…`) **FAIL** — archived.
-- **B2 alpha0.98** (`7ba21e73…`) **FAIL** — 0 survivors; archived `historical-mfg-cert-floor15-loo-tail-meanmarg-alpha098-gate-fail/`.
-- Joseph `boec.sur` + `certificate_targeted` policy integrated (research-ready, not in 9-arm set).
-- Joseph hypermix/multiround + probe scripts ported (`2026-08-28` manifest).
-- Safeguard harness: `scripts/run_spade_safeguard_tests.sh`; watchdog calls it pre-spawn.
-- Phase A instrumentation in scores.
+- Recovery stack: `smallest` + assay + `loo_calibration_tail` + meanmarg + floor **1.5** + `Vmax=0.001` + **bagged5**.
+- **α reverted to 0.95** (B2 α=0.98 FAIL — collapsed levy answer rates).
+- **10 SPADE arms** (o32 adds `certificate_targeted`; o40/o44 unchanged) + 2 comparators = **12 arms/family**.
+- Joseph real-data scripts ported (`calibrate_real_assay_loo`, `certify_hall_ogle`, `final_real_data_answer`, `probe_loo_real_assay`, `run_lc_confirmatory`).
+- Safeguard harness + watchdog pre-spawn checks active.
 
 ## Protocol digests
 
 | study | digest | outcome |
 |---|---|---|
-| mfg floor-1.5+meanmarg | `1c5c3b7e…` | **gate FAIL** |
-| mfg floor20+meanmarg | `b846fe2d…` | **gate FAIL** |
-| **B2 alpha0.98+meanmarg** | `7ba21e73…` | **gate FAIL** |
+| meanmarg floor15 | `1c5c3b7e…` | **gate FAIL** |
+| floor20 | `b846fe2d…` | **gate FAIL** |
+| B2 alpha0.98 | `7ba21e73…` | **gate FAIL** |
+| **B3 bagged5+cert_targeted** | `2ef1875c…` | **gate pending** |
 
-## B2 gate diagnosis (keys 0–15)
+## Diagnosis → fix
 
-Best complementary arms still do not co-pass:
-
-| Arm | hill ans / emp | levy ans / emp |
+| Failure | Root cause | B3 response |
 |---|---|---|
-| o32-staged | 0.47 / **1.00** | 0.07 / 1.00 |
-| o32-validity_gated | 0.33 / **1.00** | 0.47 / 0.86 |
-| o40-staged | 0.60 / **1.00** | 0.07 / 1.00 |
+| Complementary hill/levy winners | Single GP + inflation still overconfident on lengthscales/noise | **Bootstrap bagged** certificate (intersect 5 refits) |
+| α=0.98 hurt levy ans | Too conservative globally | **Revert α=0.95** |
+| o32-validity_gated near-miss | Acquisition not targeting cert contour on levy | **certificate_targeted** policy on o32 |
 
-α=0.98 **collapsed answer rates** on levy (o32-staged ans 0.07) without fixing cross-family pairing.
-
-Analysis: `results/b2-alpha098-gate-analysis.json`
+Offline replay: `scripts/replay_certificate_scoring.py` on archived shards.
 
 ## Next action
 
-1. **B3:** offline `bagged_certificate` replay on archived B2 shards (research spike).
-2. **B4 (if B3 insufficient):** freeze 12-arm digest with `certificate_targeted` policy; hill+levy gate.
-3. **Do not** start full 5×50 on failed digests.
-4. Multi-CQA benchmark remains the parallel winning narrative (PASS).
+1. Run `./scripts/run_spade_safeguard_tests.sh`
+2. Launch B3 hill+levy 0–15 gate (`~/spade-ops/spade_gate_then_full_watchdog.sh`)
+3. If PASS → full 5×50 → LOFO → power → lockbox

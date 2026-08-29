@@ -1,5 +1,5 @@
 schema: boec-spade-joint-protocol-v1
-study_id: spade-joint-48-mfg-cert-floor15-loo-tail-meanmarg-alpha098-2026-08-28
+study_id: spade-joint-48-mfg-cert-floor15-loo-tail-meanmarg-bagged5-2026-08-29
 status: FROZEN_BEFORE_DEVELOPMENT_SELECTION
 public_method_name: SPADE
 claim_scope: computational_synthetic_benchmark_only
@@ -11,7 +11,7 @@ protocol:
   batch_size: 4
   bounds: [[0.0, 0.0, 0.0, 0.0, 0.0, 0.0], [1.0, 1.0, 1.0, 1.0, 1.0, 1.0]]
   noise: {sigma_rel: 0.10, sigma_add: 0.01}
-  reliability: {gamma: 0.95, alpha: 0.98, q_tau: 0.75}
+  reliability: {gamma: 0.95, alpha: 0.95, q_tau: 0.75}
 
   threshold:
     target: future_response_reliability_margin
@@ -47,19 +47,21 @@ protocol:
     opening_design: scrambled_sobol
     replicate_reserve: 0
     oa_lhs_included: false
-    policies: [staged, fixed_hybrid, validity_gated]
-    count: 9
+    policies: [staged, fixed_hybrid, validity_gated, certificate_targeted]
+    certificate_targeted_opening: 32
+    count: 10
     rounds_by_opening: {32: 5, 40: 3, 44: 2}
     batch_schedules:
       32: [32, 4, 4, 4, 4]
       40: [40, 4, 4]
       44: [44, 4]
     boundary_ess_min: 32
-    whole_batch_objectives: [qlognei, global_ivr, boundary_ivr]
+    whole_batch_objectives: [qlognei, global_ivr, boundary_ivr, certificate_straddle]
     policy_definitions:
       staged: qlognei_every_adaptive_batch
       fixed_hybrid: alternate_qlognei_and_global_ivr_starting_qlognei
       validity_gated: alternate_qlognei_and_boundary_or_global_ivr_starting_qlognei
+      certificate_targeted: certificate_contour_straddle_batches
 
   comparator_arms:
     sobol48:
@@ -78,6 +80,7 @@ protocol:
   latent_draw_inflation: loo_calibration_tail
   latent_inflation_floor: 1.5
   mean_marginalisation: true
+  certificate_bootstrap_bags: 5
   certificate_max_volume: 0.001
   terminal_rule: P
   map_primary: integrated_squared_probability_error
@@ -89,7 +92,7 @@ protocol:
     families: [hill, ackley, hartmann6, levy, rosenbrock]
     truth_range_contracts: {hill: strict_unit_interval, external_families: legacy_unit_scaled}
     campaigns_per_family_arm: 50
-    arms_per_family: 11
+    arms_per_family: 12
     total_noisy_evaluations: 132000
     hill_instances: 25
     hill_campaign_seeds_per_instance: 2
@@ -198,7 +201,7 @@ execution:
 
 digests:
   digest_definition: "sha256; protocol and execution payloads each use canonical sorted compact JSON of their parsed mappings"
-  protocol_payload_sha256: 7ba21e7319c6c6d7d84631a053d936d0c8aa063fa6b0150cbccb588ee1e3cb11
+  protocol_payload_sha256: 2ef1875c66a4427c8eef70bb83763da4c071144e388859867eda94c8faa0faec
   execution_payload_sha256: 5dae76d1495c009cf2ea0989142fe4563c2f2140d2dbe832249bdcc41fa4f80d
   actions_workflow_sha256: 5240e0a2c302d91afdab7df87abfba83f01983bd7aa9b8550334771c5603722d
   actions_matrix_sha256: 52230fffe9fcc9317de68f6c7f4c1ef5b97debf58332c62b39380cbd185d951d
@@ -207,7 +210,7 @@ digests:
   requirements_sha256: 96a00b1abb366bd48318d7957703608b348393aa280a6808ef91652c28471687
   spec_sha256: 21c07a4107dd39770facabd3f3c9b52c45b65239c0d60b3cc5f7ce7648bdf403
   lockbox_oracles_source_sha256: 1a79abd6e62d503852fe98957e67d4d4f6d7e9f8b52788176f2359ed38d3e0c3
-  spade_study_source_sha256: 4d839170c7f3d48e34b8a957000efd25fad83d0f2551e4a2b110035e05374061
+  spade_study_source_sha256: 4c0497603fb623c9a488fb560879079153ed5a442d39f21a1e1a40cd28f75256
   power_design_sha256: 6fec13c194468fbbab83758760a60b0161314b03d5c97d3146d14c52af226d7b
   power_engine_sha256: bb3fb81c44a41318bf14dbabc399a9aed7e2225dd4dcea27706a081d152ac97b
   power_planner_sha256: 408dcadecbdbf52fff18928eb189ad6963cf8668c8035bb54f2b61e3732ac865

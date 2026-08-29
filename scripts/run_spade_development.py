@@ -44,9 +44,15 @@ from boec.torch_oracle import BiphasicOracle, TorchEvaluator  # noqa: E402
 
 DEVELOPMENT_FAMILIES = ("hill", "ackley", "hartmann6", "levy", "rosenbrock")
 OPENINGS = (32, 40, 44)
-POLICIES = ("staged", "fixed_hybrid", "validity_gated")
+BASE_POLICIES = ("staged", "fixed_hybrid", "validity_gated")
+CERT_TARGETED_OPENING = 32
+POLICIES = BASE_POLICIES + ("certificate_targeted",)
 CANDIDATE_ARM_IDS = tuple(
-    f"spade-o{opening}-{policy}" for opening in OPENINGS for policy in POLICIES
+    f"spade-o{opening}-{policy}"
+    for opening in OPENINGS
+    for policy in (
+        POLICIES if opening == CERT_TARGETED_OPENING else BASE_POLICIES
+    )
 )
 CONTROL_ARMS = ("sobol48", "qlognei48")
 DEVELOPMENT_ARM_IDS = CANDIDATE_ARM_IDS + CONTROL_ARMS
@@ -246,7 +252,8 @@ def candidate_spec(arm_id: str) -> tuple[int, str]:
         raise ValueError(f"unknown SPADE candidate {arm_id!r}")
     prefix, policy = arm_id.removeprefix("spade-o").split("-", 1)
     opening = int(prefix)
-    if opening not in OPENINGS or policy not in POLICIES:
+    allowed = POLICIES if opening == CERT_TARGETED_OPENING else BASE_POLICIES
+    if opening not in OPENINGS or policy not in allowed:
         raise ValueError(f"unregistered SPADE candidate {arm_id!r}")
     return opening, policy
 
@@ -815,6 +822,7 @@ def _development_threshold(
     threshold_seed: int,
     *,
     smoke: bool,
+    settings: ScoringExecutionSettings | None = None,
 ) -> tuple[SealedOracleHarness, ControlledThreshold]:
     truth_oracle, _, oracle_identity = _development_oracle(
         family, instance_seed, noise_seed
@@ -827,8 +835,12 @@ def _development_threshold(
             "strict_unit_interval" if family == "hill" else "legacy_unit_scaled"
         ),
     )
-    mode = "TEST_ONLY" if smoke else "REGISTERED"
-    settings = _SMOKE_SCORING_SETTINGS if smoke else None
+    mode = "TEST_ONLY" if smoke or settings is not None else "REGISTERED"
+    effective_settings = (
+        settings
+        if settings is not None
+        else (_SMOKE_SCORING_SETTINGS if smoke else None)
+    )
     threshold = controlled_tau(
         harness,
         sigma_rel=_SIGMA_REL,
@@ -837,7 +849,7 @@ def _development_threshold(
         q_tau=_Q_TAU,
         root_seed=threshold_seed,
         execution_mode=mode,
-        settings=settings,
+        settings=effective_settings,
     )
     return harness, threshold
 

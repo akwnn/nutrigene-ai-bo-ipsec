@@ -14,6 +14,9 @@ echo "== protocol / scoring alignment =="
 echo "== Joseph integration imports =="
 "$PY" -m pytest tests/test_hypermix.py tests/test_multiround.py tests/test_sur.py tests/test_certificate_straddle.py tests/test_certificate_targeted_policy.py -q
 
+echo "== replay / bootstrap =="
+"$PY" -m pytest tests/test_replay_certificate_scoring.py -q
+
 echo "== SPADE manufacturing core =="
 "$PY" -m pytest tests/test_spade_study.py tests/test_spade_development.py tests/test_spade_lockbox.py -q
 

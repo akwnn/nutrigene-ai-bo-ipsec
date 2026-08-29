@@ -65,7 +65,7 @@ _PRIMARY_DIM = 6
 _PRIMARY_SIGMA_REL = 0.10
 _PRIMARY_SIGMA_ADD = 0.01
 _PRIMARY_GAMMA = 0.95
-_PRIMARY_ALPHA = 0.98
+_PRIMARY_ALPHA = 0.95
 _PRIMARY_Q_TAU = 0.75
 _TRUTH_RANGE_CONTRACTS = frozenset({"strict_unit_interval", "legacy_unit_scaled"})
 
@@ -143,6 +143,7 @@ class ScoringExecutionSettings:
     certificate_max_volume: float = 0.001
     latent_inflation_floor: float = 1.5
     mean_marginalisation: bool = True
+    certificate_bootstrap_bags: int = 1
 
     def __post_init__(self) -> None:
         for field in (
@@ -200,6 +201,8 @@ class ScoringExecutionSettings:
                 "mean_marginalisation must be bool, "
                 f"got {self.mean_marginalisation!r}"
             )
+        bags = _integer(self.certificate_bootstrap_bags, "certificate_bootstrap_bags", minimum=1)
+        object.__setattr__(self, "certificate_bootstrap_bags", bags)
 
     @property
     def digest(self) -> str:
@@ -220,6 +223,7 @@ REGISTERED_SCORING_SETTINGS = ScoringExecutionSettings(
     certificate_max_volume=0.001,
     latent_inflation_floor=1.5,
     mean_marginalisation=True,
+    certificate_bootstrap_bags=5,
 )
 
 
@@ -701,6 +705,119 @@ def _mask_hex(mask: Tensor) -> str:
     return packed.tobytes().hex()
 
 
+def _certificate_from_campaign_model(
+    *,
+    model: object,
+    certificate_grid: Tensor,
+    tau: float,
+    gamma: float,
+    alpha: float,
+    draw_seed: int,
+    effective: ScoringExecutionSettings,
+    predictive_noise: Mapping[str, float],
+    latent_inflation: float,
+) -> ConservativeSetResult:
+    set_draws = reliable_set_draws(
+        model,
+        certificate_grid,
+        tau,
+        gamma,
+        effective.certificate_draws,
+        draw_seed,
+        latent_inflation=latent_inflation,
+        mean_marginalisation=effective.mean_marginalisation,
+        **predictive_noise,
+    )
+    return conservative_set_split(
+        set_draws,
+        alpha,
+        n_rho=effective.certificate_rho_grid_size,
+        volume_rule=effective.certificate_volume_rule,
+    )
+
+
+def _bootstrap_bagged_certificate(
+    *,
+    train_x: Tensor,
+    train_y: Tensor,
+    bounds: Tensor,
+    certificate_grid: Tensor,
+    tau: float,
+    gamma: float,
+    alpha: float,
+    scoring_seed: int,
+    effective: ScoringExecutionSettings,
+    predictive_noise: Mapping[str, float],
+) -> tuple[ConservativeSetResult, float]:
+    """Intersect per-bootstrap conservative certificates across refitted GPs."""
+    n_bags = effective.certificate_bootstrap_bags
+    n_train = int(train_x.shape[0])
+    combined: Tensor | None = None
+    inflations: list[float] = []
+    last_certificate: ConservativeSetResult | None = None
+    for bag in range(n_bags):
+        resample_seed = derive_seed(scoring_seed, "certificate_bootstrap_resample", bag)
+        generator = torch.Generator(device="cpu")
+        generator.manual_seed(resample_seed)
+        indices = torch.randint(
+            0,
+            n_train,
+            (n_train,),
+            generator=generator,
+            dtype=torch.long,
+        )
+        bag_x = train_x.index_select(0, indices).detach().double().clone()
+        bag_y = train_y.index_select(0, indices).detach().double().clone()
+        fit_seed = derive_seed(scoring_seed, "certificate_bootstrap_fit", bag)
+        bag_model = build_learned_noise_gp(
+            bag_x,
+            bag_y,
+            bounds,
+            fit_restarts=effective.fit_restarts,
+            seed=fit_seed,
+        )
+        if effective.latent_draw_inflation in {"loo_calibration", "loo_calibration_tail"}:
+            bag_inflation = _loo_latent_inflation(
+                bag_model,
+                mode=effective.latent_draw_inflation,
+                floor=effective.latent_inflation_floor,
+            )
+        else:
+            bag_inflation = 1.0
+        inflations.append(bag_inflation)
+        draw_seed = derive_seed(scoring_seed, "certificate_joint_draws", bag)
+        certificate = _certificate_from_campaign_model(
+            model=bag_model,
+            certificate_grid=certificate_grid,
+            tau=tau,
+            gamma=gamma,
+            alpha=alpha,
+            draw_seed=draw_seed,
+            effective=effective,
+            predictive_noise=predictive_noise,
+            latent_inflation=bag_inflation,
+        )
+        last_certificate = certificate
+        combined = (
+            certificate.mask.clone()
+            if combined is None
+            else (combined & certificate.mask)
+        )
+    assert combined is not None and last_certificate is not None
+    mean_inflation = float(sum(inflations) / len(inflations))
+    return (
+        ConservativeSetResult(
+            mask=combined,
+            crossfit_containment=last_certificate.crossfit_containment,
+            selection_containment=last_certificate.selection_containment,
+            volume=float(combined.double().mean()),
+            selection_draws=last_certificate.selection_draws,
+            evaluation_draws=last_certificate.evaluation_draws,
+        ),
+        mean_inflation,
+    )
+
+
 def score_campaign(
     campaign_result: object,
     tau: Real,
@@ -813,23 +930,31 @@ def score_campaign(
     map_probability = model_reliability_probability(
         model, map_grid, tau_f, **predictive_noise
     ).detach().double()
-    set_draws = reliable_set_draws(
-        model,
-        certificate_grid,
-        tau_f,
-        gamma_f,
-        effective.certificate_draws,
-        draw_seed,
-        latent_inflation=latent_inflation,
-        mean_marginalisation=effective.mean_marginalisation,
-        **predictive_noise,
-    )
-    certificate = conservative_set_split(
-        set_draws,
-        alpha_f,
-        n_rho=effective.certificate_rho_grid_size,
-        volume_rule=effective.certificate_volume_rule,
-    )
+    if effective.certificate_bootstrap_bags == 1:
+        certificate = _certificate_from_campaign_model(
+            model=model,
+            certificate_grid=certificate_grid,
+            tau=tau_f,
+            gamma=gamma_f,
+            alpha=alpha_f,
+            draw_seed=draw_seed,
+            effective=effective,
+            predictive_noise=predictive_noise,
+            latent_inflation=latent_inflation,
+        )
+    else:
+        certificate, latent_inflation = _bootstrap_bagged_certificate(
+            train_x=X.detach().double().clone(),
+            train_y=Y.detach().double().clone(),
+            bounds=bounds,
+            certificate_grid=certificate_grid,
+            tau=tau_f,
+            gamma=gamma_f,
+            alpha=alpha_f,
+            scoring_seed=scoring_seed_i,
+            effective=effective,
+            predictive_noise=predictive_noise,
+        )
     if not bool(certificate.mask.any()):
         abstention_reason = "no_feasible_ce"
     elif certificate.volume > effective.certificate_max_volume:

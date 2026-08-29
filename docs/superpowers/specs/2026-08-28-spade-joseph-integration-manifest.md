@@ -22,6 +22,20 @@ ported into manufacturing `main` without rewriting his history.
 | Multi-round schedules | `src/boec/multiround.py` | `origin/kr-effective-resolution` |
 | LA/LB runners + probes | `scripts/run_la_round_matched.py`, `run_lb_round_sweep.py`, `probe_*.py` | Joseph branch |
 | Certificate bench harness | `bench_certificate.py` | `9c51799` |
+| Real-data LOO calibration | `scripts/calibrate_real_assay_loo.py` | Joseph branch |
+| Hall/Ogle certification | `scripts/certify_hall_ogle.py` | Joseph branch |
+| Combined real-data answer | `scripts/final_real_data_answer.py` | Joseph branch |
+| Real assay LOO probe | `scripts/probe_loo_real_assay.py` | Joseph branch |
+| LC confirmatory (hill) | `scripts/run_lc_confirmatory.py` | Joseph branch |
+| B3 offline replay | `scripts/replay_certificate_scoring.py` | manufacturing |
+
+## Promoted to registered (B3 digest `2ef1875c…`)
+
+| Item | Setting |
+|------|---------|
+| `certificate_bootstrap_bags` | **5** (intersect bootstrap refits) |
+| `certificate_targeted` policy | **o32 only** (10th SPADE arm) |
+| `reliability.alpha` | **0.95** (reverted from failed B2) |
 
 ## Pending promotion (research → registered)
 

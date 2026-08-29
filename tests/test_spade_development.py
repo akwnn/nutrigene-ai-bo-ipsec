@@ -133,7 +133,7 @@ def _row(
         "sigma_rel": 0.1,
         "sigma_add": 0.01,
         "gamma": 0.95,
-        "alpha": 0.98,
+        "alpha": 0.95,
         "q_tau": 0.75,
         "terminal_x": [0.2, 0.3, 0.4, 0.5, 0.6, 0.7],
         "terminal_truth": 1.0 - regret,
@@ -243,7 +243,7 @@ def _row(
             "sigma_rel": 0.1,
             "sigma_add": 0.01,
             "gamma": 0.95,
-            "alpha": 0.98,
+            "alpha": 0.95,
             "q_tau": 0.75,
             "map_metric": "integrated_squared_probability_error",
             "terminal_rule": "P",
@@ -292,10 +292,15 @@ def test_frozen_development_grid_is_exact_and_common_keyed():
         "rosenbrock",
     )
     assert runner.OPENINGS == (32, 40, 44)
-    assert runner.POLICIES == ("staged", "fixed_hybrid", "validity_gated")
-    assert len(runner.CANDIDATE_ARM_IDS) == 9
+    assert runner.POLICIES == (
+        "staged",
+        "fixed_hybrid",
+        "validity_gated",
+        "certificate_targeted",
+    )
+    assert len(runner.CANDIDATE_ARM_IDS) == 10
     assert runner.CONTROL_ARMS == ("sobol48", "qlognei48")
-    assert len(runner.DEVELOPMENT_ARM_IDS) == 11
+    assert len(runner.DEVELOPMENT_ARM_IDS) == 12
     assert runner.development_campaign_key("hill", 0) == (0, 0)
     assert runner.development_campaign_key("hill", 49) == (24, 1)
     assert runner.development_campaign_key("ackley", 49) == (0, 49)
@@ -516,23 +521,25 @@ def test_real_development_threshold_path_accepts_every_registered_family(family)
     )
 
 
-def test_complete_grid_accepts_exactly_2750_rows(complete_rows):
+def test_complete_grid_accepts_exactly_3000_rows(complete_rows):
     grid = selector.validate_development_grid(complete_rows, protocol_digest=PROTOCOL)
-    assert grid["row_count"] == 5 * 50 * 11 == 2750
+    assert grid["row_count"] == 5 * 50 * 12 == 3000
     assert grid["campaigns_per_family"] == 50
-    assert grid["candidate_count"] == 9
+    assert grid["candidate_count"] == 10
     assert grid["control_count"] == 2
 
 
-def test_grid_rejects_tenth_candidate_missing_arm_and_heldout_role(complete_rows):
+def test_grid_rejects_eleventh_candidate_missing_arm_and_heldout_role(complete_rows):
     extra = copy.deepcopy(complete_rows[0])
+    extra["arm"] = "spade"
+    extra["campaign_key"]["arm"] = "spade-o32-not_a_policy"
     extra["arm_protocol_digest"] = "9" * 64
     extra["scores"]["protocol_digest"] = "9" * 64
     extra["campaign_key"]["arm_protocol_digest"] = "9" * 64
     extra["run_digest"] = "8" * 64
     extra["scores"]["run_digest"] = "8" * 64
     extra["campaign_key"]["run_digest"] = "8" * 64
-    with pytest.raises(ValueError, match="unregistered SPADE candidate"):
+    with pytest.raises(ValueError, match="unregistered|identity drift"):
         selector.validate_development_grid([*complete_rows, extra], protocol_digest=PROTOCOL)
 
     with pytest.raises(ValueError, match="missing|incomplete"):
@@ -547,7 +554,7 @@ def test_grid_rejects_tenth_candidate_missing_arm_and_heldout_role(complete_rows
         family="hill",
         start=0,
         stop=1,
-        row_count=11,
+        row_count=12,
         raw_file="x.jsonl.gz",
         raw_sha256="4" * 64,
         metadata={
@@ -615,7 +622,7 @@ def test_smoke_shard_is_scratch_only_marked_and_resumable(tmp_path, monkeypatch)
     )
     assert manifest["status"] == "SMOKE"
     assert manifest["complete"] is True
-    assert manifest["row_count"] == 22
+    assert manifest["row_count"] == 24
 
     rows = runner.read_shard_rows(output, PROTOCOL)
     rows[0]["scores"]["map_loss"] = 0.123
@@ -752,7 +759,7 @@ def test_all_eleven_arms_must_share_seed_and_scoring_identity(complete_rows):
         row for row in rows
         if row["family"] == "rosenbrock" and row["campaign_seed"] == 4
     ]
-    assert len(group) == 11
+    assert len(group) == 12
     for row in group:
         row["derived_seeds"]["noise"] = 999_995
         row["parent_artifacts"]["seed_contract"] = runner.seed_contract_digest(

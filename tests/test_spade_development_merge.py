@@ -115,8 +115,8 @@ def _write_shard(
 def _split_family(tmp_path: Path, family: str) -> list[Path]:
     rows = _family_rows(family)
     return [
-        _write_shard(tmp_path, family, 25, 50, rows[25 * 11 :]),
-        _write_shard(tmp_path, family, 0, 25, rows[: 25 * 11]),
+        _write_shard(tmp_path, family, 25, 50, rows[25 * 12 :]),
+        _write_shard(tmp_path, family, 0, 25, rows[: 25 * 12]),
     ]
 
 
@@ -157,7 +157,7 @@ def test_merge_emits_deterministic_canonical_artifacts_accepted_unchanged(
         manifest_path = Path(f"{output}.manifest.json")
         selector_manifests.append(manifest_path)
         assert manifest["status"] == "COMPLETE"
-        assert manifest["row_count"] == 550
+        assert manifest["row_count"] == 600
         resume = json.loads(Path(f"{output}.resume.json").read_bytes())
         output_rows = development.read_shard_rows(output, PROTOCOL)
         assert resume["command_args"] == manifest["command_args"]
@@ -221,13 +221,13 @@ def test_merge_emits_deterministic_canonical_artifacts_accepted_unchanged(
         metadata=_metadata(),
         source_commit=SOURCE,
     )
-    assert len(rows) == 2_750
+    assert len(rows) == 3_000
     powered_rows, artifacts = planner._load_verified_development_shards(
         verified,
         metadata=_metadata(),
         source_commit=SOURCE,
     )
-    assert len(powered_rows) == 2_750
+    assert len(powered_rows) == 3_000
     assert len(artifacts) == 5
 
 
@@ -238,15 +238,15 @@ def test_merge_rejects_invalid_grids_before_writing(
     merger = _import_merger()
     family = "ackley"
     rows = _family_rows(family)
-    first = _write_shard(tmp_path, family, 0, 25, rows[: 25 * 11])
+    first = _write_shard(tmp_path, family, 0, 25, rows[: 25 * 12])
     if failure == "gap":
-        second = _write_shard(tmp_path, family, 26, 50, rows[26 * 11 :])
+        second = _write_shard(tmp_path, family, 26, 50, rows[26 * 12 :])
     elif failure == "overlap":
-        second = _write_shard(tmp_path, family, 24, 50, rows[24 * 11 :])
+        second = _write_shard(tmp_path, family, 24, 50, rows[24 * 12 :])
     elif failure == "duplicate":
-        second = _write_shard(tmp_path, family, 25, 50, rows[25 * 11 :])
+        second = _write_shard(tmp_path, family, 25, 50, rows[25 * 12 :])
     else:
-        changed = copy.deepcopy(rows[25 * 11 :])
+        changed = copy.deepcopy(rows[25 * 12 :])
         changed[0]["environment"]["platform"] = "drifted"
         second = _write_shard(tmp_path, family, 25, 50, changed)
 
