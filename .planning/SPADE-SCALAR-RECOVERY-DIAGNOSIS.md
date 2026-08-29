@@ -27,7 +27,8 @@ artifacts live. Update when any gate completes (PASS or FAIL).
 | floor15+meanmarg | `1c5c3b7e` | Joseph meanmarg wired | **FAIL** 0 survivors | `results/historical-mfg-cert-floor15-loo-tail-meanmarg-gate-fail/` → [JSON](artifacts/gate-summaries/historical-mfg-cert-floor15-loo-tail-meanmarg-gate-fail.json) |
 | floor20 (B1) | `b846fe2d` | inflation floor 1.5→2.0 | **FAIL** — hurt levy | `results/historical-mfg-cert-floor20-loo-tail-meanmarg-gate-fail/` → [JSON](artifacts/gate-summaries/historical-mfg-cert-floor20-loo-tail-meanmarg-gate-fail.json) |
 | alpha0.98 (B2) | `7ba21e73` | reliability α 0.95→0.98 | **FAIL** — levy ans collapsed | `results/historical-mfg-cert-floor15-loo-tail-meanmarg-alpha098-gate-fail/` → [JSON](artifacts/gate-summaries/historical-mfg-cert-floor15-loo-tail-meanmarg-alpha098-gate-fail.json) |
-| **bagged5+cert_targeted (B3)** | `2ef1875c` | bagged cert + o32 cert_targeted + α=0.95 | **RUNNING** | `results/spade-development-hill-000-015.jsonl.gz` (live) |
+| **B4 Joseph-aligned (B3 fix)** | `967eb654` | ρ=0.95 + schedule (32,8,8) + per-round menu | **RUNNING** | live shards |
+| bagged5+cert_targeted (B3) | `2ef1875c` | ρ=0.5 + four×4 batches (wrong defaults) | **SUPERSEDED** | do not resume |
 
 **Commits (implementation):** `ddddfb8` (B3 protocol), `cc43b09` (manifest hash fix).
 
@@ -56,13 +57,15 @@ artifacts live. Update when any gate completes (PASS or FAIL).
 | o32 opening | Best mean emp hill/levy vs o40/o44 | Still no co-pass |
 | validity_gated policy | Best levy emp (0.90) | Hill emp 0.875 on same arm |
 
-### B3 hypothesis (testing now)
+### B4 hypothesis (Joseph-aligned acquisition)
 
-| Lever | Mechanism | Falsification |
-|-------|-----------|---------------|
-| **Bootstrap bagged cert (n=5)** | Intersect regions across GP refits — exposes lengthscale/noise uncertainty LOO cannot | Still 0 survivors at gate |
-| **certificate_targeted (o32)** | Acquisition straddles cert contour, not median | New arm; may help levy without killing hill ans |
-| **α=0.95** | Avoid B2 answer-rate collapse | — |
+| Lever | Mechanism | Source |
+|-------|-----------|--------|
+| **certificate_rho=0.95** | High-exceedance contour, not median 0.5 | Joseph LA `spade_cert_rho95` |
+| **Schedule (32,8,8)** | LB R=3 matched-round winner | `multiround` / LB-1 PASS |
+| **Per-round candidate menu** | Fresh Sobol menu each adaptive batch | `multiround.py` |
+
+B3 used ρ=0.5 (Bryan's median straddle) — Joseph measured that as wrong layer.
 
 ---
 

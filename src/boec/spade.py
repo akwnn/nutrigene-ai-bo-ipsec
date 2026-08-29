@@ -54,8 +54,12 @@ _OPENINGS = frozenset({32, 40, 44})
 _POLICIES = frozenset(
     {"staged", "fixed_hybrid", "validity_gated", "certificate_targeted"}
 )
-#: Vorob'ev level whose contour ``certificate_targeted`` straddles.
-_CERTIFICATE_RHO = 0.5
+#: Vorob'ev level whose contour ``certificate_targeted`` straddles. Joseph's LA/LB
+#: winner ``spade_cert_rho95`` and ``multiround_design`` both target rho=0.95 — the
+#: high-exceedance contour that bounds the certified region, not the median (0.5).
+_CERTIFICATE_RHO = 0.95
+#: Joseph LB-1 R=3 schedule at opening 32: two adaptive batches of eight wells.
+_CERTIFICATE_TARGETED_BATCHES_O32 = (8, 8)
 _EXECUTION_MODES = frozenset({"REGISTERED", "TEST_ONLY"})
 _CPU_RNG_LOCK = threading.RLock()
 
@@ -111,6 +115,7 @@ class SpadeConfig:
     gamma: float = _GAMMA
     boundary_ess_min: int = _BOUNDARY_ESS_MIN
     certificate_rho: float = _CERTIFICATE_RHO
+    adaptive_batch_sizes: tuple[int, ...] | None = None
 
     def __post_init__(self) -> None:
         opening = _integer(self.opening, "opening")
@@ -171,7 +176,21 @@ class SpadeConfig:
                 "boundary_ess_min is registered at exactly "
                 f"{_BOUNDARY_ESS_MIN}, got {ess_min!r}"
             )
-        if (budget - opening) % batch_size:
+        adaptive_batch_sizes = self.adaptive_batch_sizes
+        if self.policy == "certificate_targeted" and opening == 32:
+            if adaptive_batch_sizes is None:
+                adaptive_batch_sizes = _CERTIFICATE_TARGETED_BATCHES_O32
+        if adaptive_batch_sizes is not None:
+            normalized_batches = tuple(
+                _positive_integer(size, f"adaptive_batch_sizes[{index}]")
+                for index, size in enumerate(adaptive_batch_sizes)
+            )
+            if opening + sum(normalized_batches) != budget:
+                raise ValueError(
+                    "opening plus adaptive_batch_sizes must equal budget exactly"
+                )
+            adaptive_batch_sizes = normalized_batches
+        elif (budget - opening) % batch_size:
             raise ValueError("opening must leave only complete adaptive batches")
 
         # Normalize non-bool Integral implementations before canonical JSON hashing.
@@ -187,8 +206,16 @@ class SpadeConfig:
             ("gamma", gamma),
             ("boundary_ess_min", ess_min),
             ("certificate_rho", certificate_rho),
+            ("adaptive_batch_sizes", adaptive_batch_sizes),
         ):
             object.__setattr__(self, field_name, value)
+
+    @property
+    def batch_schedule(self) -> tuple[int, ...]:
+        if self.adaptive_batch_sizes is not None:
+            return (self.opening, *self.adaptive_batch_sizes)
+        n_batches = (self.budget - self.opening) // self.batch_size
+        return (self.opening, *([self.batch_size] * n_batches))
 
     @property
     def canonical_json(self) -> str:
@@ -196,6 +223,9 @@ class SpadeConfig:
         payload = asdict(self)
         if self.policy != "certificate_targeted":
             payload.pop("certificate_rho", None)
+            payload.pop("adaptive_batch_sizes", None)
+        elif payload.get("adaptive_batch_sizes") is None:
+            payload.pop("adaptive_batch_sizes", None)
         return json.dumps(
             payload,
             sort_keys=True,
@@ -883,8 +913,8 @@ def _run_spade_impl(
 ) -> SpadeCampaignResult:
     tau_f = _finite_real(tau, "tau")
     runtime = _runtime(config, fast)
-    n_batches = (config.budget - config.opening) // config.batch_size
-    schedule = (config.opening, *([config.batch_size] * n_batches))
+    schedule = config.batch_schedule
+    n_batches = len(schedule) - 1
     identity = _make_identity(
         arm="spade",
         protocol_digest=config.protocol_digest,
@@ -913,6 +943,14 @@ def _run_spade_impl(
     )
 
     for batch_index in range(n_batches):
+        batch_size = schedule[batch_index + 1]
+        if config.policy == "certificate_targeted":
+            menu = sobol_design(
+                engine.bounds,
+                runtime.candidate_menu_size,
+                seed=engine.seed(f"adaptive_candidate_menu_{batch_index}"),
+            )
+            menu = _remove_rows(menu, engine.X)
         model, fit_seed = engine.fit()
         if config.policy == "staged" or batch_index % 2 == 0:
             scheduled = "qlognei"
@@ -931,7 +969,7 @@ def _run_spade_impl(
         if config.policy == "staged" or batch_index % 2 == 0:
             objective: Objective = "qlognei"
             selected, objective_values, qmc_seed = _qlognei_batch(
-                engine, model, menu, config.batch_size
+                engine, model, menu, batch_size
             )
         elif config.policy == "certificate_targeted":
             objective = "certificate_straddle"
@@ -940,7 +978,7 @@ def _run_spade_impl(
                 gp_adapter(model),
                 menu,
                 theta,
-                config.batch_size,
+                batch_size,
                 rho=config.certificate_rho,
             ).detach().double()
             mean_sel, sd_sel = gp_adapter(model).posterior_mean_and_sd(selected)
@@ -976,7 +1014,7 @@ def _run_spade_impl(
                 model,
                 menu,
                 reference,
-                config.batch_size,
+                batch_size,
                 weights=weights,
             ).detach().double()
             objective_values = _selected_ivr_values(

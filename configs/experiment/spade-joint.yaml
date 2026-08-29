@@ -1,5 +1,5 @@
 schema: boec-spade-joint-protocol-v1
-study_id: spade-joint-48-mfg-cert-floor15-loo-tail-meanmarg-bagged5-2026-08-29
+study_id: spade-joint-48-mfg-cert-floor15-loo-tail-meanmarg-bagged5-rho95-r3-2026-08-29
 status: FROZEN_BEFORE_DEVELOPMENT_SELECTION
 public_method_name: SPADE
 claim_scope: computational_synthetic_benchmark_only
@@ -49,6 +49,8 @@ protocol:
     oa_lhs_included: false
     policies: [staged, fixed_hybrid, validity_gated, certificate_targeted]
     certificate_targeted_opening: 32
+    certificate_rho: 0.95
+    certificate_targeted_batch_schedule: [32, 8, 8]
     count: 10
     rounds_by_opening: {32: 5, 40: 3, 44: 2}
     batch_schedules:
@@ -61,7 +63,7 @@ protocol:
       staged: qlognei_every_adaptive_batch
       fixed_hybrid: alternate_qlognei_and_global_ivr_starting_qlognei
       validity_gated: alternate_qlognei_and_boundary_or_global_ivr_starting_qlognei
-      certificate_targeted: certificate_contour_straddle_batches
+      certificate_targeted: certificate_contour_straddle_batches_rho95_r3
 
   comparator_arms:
     sobol48:
@@ -201,7 +203,7 @@ execution:
 
 digests:
   digest_definition: "sha256; protocol and execution payloads each use canonical sorted compact JSON of their parsed mappings"
-  protocol_payload_sha256: 2ef1875c66a4427c8eef70bb83763da4c071144e388859867eda94c8faa0faec
+  protocol_payload_sha256: 967eb6544e1f438aaca3a3ea3bb9a7f4115d05cb014623bab0d1bdf8b8f4bfb6
   execution_payload_sha256: 5dae76d1495c009cf2ea0989142fe4563c2f2140d2dbe832249bdcc41fa4f80d
   actions_workflow_sha256: 5240e0a2c302d91afdab7df87abfba83f01983bd7aa9b8550334771c5603722d
   actions_matrix_sha256: 52230fffe9fcc9317de68f6c7f4c1ef5b97debf58332c62b39380cbd185d951d

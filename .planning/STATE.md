@@ -1,21 +1,25 @@
 # State
 
 **Milestone:** SPADE joint protocol  
-**Status:** active — **B3 gate RUNNING**  
+**Status:** active — **B4 gate** (Joseph-aligned cert_targeted)  
 **Diagnosis ledger:** [.planning/SPADE-SCALAR-RECOVERY-DIAGNOSIS.md](SPADE-SCALAR-RECOVERY-DIAGNOSIS.md)  
-**Current phase:** hill+levy 0–15 on digest `2ef1875c…` (12 arms × 15 keys = 180 rows/family)
+**Current phase:** hill+levy 0–15 on digest `967eb654…` (12 arms × 15 keys = 180 rows/family)
 
-## B3 gate (live)
+## B4 gate (Joseph-aligned acquisition)
 
 | Field | Value |
 |-------|-------|
-| Digest | `2ef1875c66a4427c8eef70bb83763da4c071144e388859867eda94c8faa0faec` |
-| Commit | `cc43b09` |
+| Digest | `967eb6544e1f438aaca3a3ea3bb9a7f4115d05cb014623bab0d1bdf8b8f4bfb6` |
+| Change from B3 | `certificate_rho` **0.95** + R=3 schedule **(32,8,8)** + per-round candidate menu |
 | Monitor | `cat /tmp/spade-durable.status` |
-| Log | `/tmp/spade-durable.log` |
-| Supervisor | `~/spade-ops/spade_gate_then_full_watchdog.sh` |
 
-**Stack:** meanmarg + LOO-tail + floor 1.5 + smallest + Vmax 0.001 + **bagged5** + α **0.95** + **cert_targeted o32**.
+**Stack:** meanmarg + LOO-tail + floor 1.5 + bagged5 + α 0.95 + **Joseph cert contour (ρ=0.95, R=3)**.
+
+## B3 superseded (wrong acquisition defaults)
+
+| Digest | Issue |
+|--------|-------|
+| `2ef1875c…` | `certificate_targeted` used ρ=0.5 (median) + four×4 batches — not Joseph's winner |
 
 ## Failed gates (archived — do not resume)
 
@@ -33,9 +37,9 @@ Shard archives under `results/historical-mfg-cert-*/` (gitignored; JSON summarie
 
 **Wrong:** floor 2.0; α 0.98; map_iou abstention; detector knobs (k_eff, selection-blind).  
 **Helped but insufficient:** meanmarg, LOO-tail, floor 1.5, o32 + validity_gated.  
-**Testing now:** bootstrap bagged cert + cert_targeted acquisition.
+**Testing now:** Joseph-aligned cert_targeted (ρ=0.95, schedule 32+8+8 per LB R=3 winner).
 
-## Next on B3 outcome
+## Next on B4 outcome
 
 - **PASS** → watchdog advances to full 5×50 → LOFO → power → lockbox  
 - **FAIL** → archive shards, update diagnosis ledger, run `replay_certificate_scoring.py` sweeps before B4

@@ -9,12 +9,13 @@ from boec.lse import straddle_score
 from boec.spade import SpadeConfig, _reliability_contour
 
 
-def test_policy_is_registered_and_rho_defaults_to_the_bryan_case():
-    config = SpadeConfig(policy="certificate_targeted")
+def test_policy_is_registered_and_rho_defaults_to_joseph_certificate_contour():
+    config = SpadeConfig(policy="certificate_targeted", opening=32)
     assert config.policy == "certificate_targeted"
-    # 0.5 is Bryan's published latent straddle, so adopting the policy cannot
-    # silently move any committed number selected at the median contour.
-    assert config.certificate_rho == 0.5
+    # Joseph LA/LB winner: rho=0.95 high-exceedance contour (not median 0.5).
+    assert config.certificate_rho == 0.95
+    assert config.adaptive_batch_sizes == (8, 8)
+    assert config.batch_schedule == (32, 8, 8)
 
 
 @pytest.mark.parametrize("rho", [0.0, 1.0, -0.1, 1.5, float("nan")])
@@ -109,11 +110,12 @@ def test_certificate_rho_is_absent_from_registered_arm_identity():
 
 def test_certificate_rho_is_present_for_the_policy_that_reads_it():
     import json
-    payload = json.loads(SpadeConfig(policy="certificate_targeted").canonical_json)
-    assert payload["certificate_rho"] == 0.5
+    payload = json.loads(SpadeConfig(policy="certificate_targeted", opening=32).canonical_json)
+    assert payload["certificate_rho"] == 0.95
+    assert payload["adaptive_batch_sizes"] == [8, 8]
 
 
 def test_rho_changes_identity_only_for_the_targeted_policy():
-    a = SpadeConfig(policy="certificate_targeted", certificate_rho=0.5).protocol_digest
-    b = SpadeConfig(policy="certificate_targeted", certificate_rho=0.9).protocol_digest
+    a = SpadeConfig(policy="certificate_targeted", opening=32, certificate_rho=0.95).protocol_digest
+    b = SpadeConfig(policy="certificate_targeted", opening=32, certificate_rho=0.9).protocol_digest
     assert a != b

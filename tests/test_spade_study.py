@@ -859,7 +859,7 @@ def test_yaml_freezes_every_registered_design_value_and_its_payload_digest():
     canonical = json.dumps(p, sort_keys=True, separators=(",", ":"), allow_nan=False).encode()
     assert cfg["digests"]["protocol_payload_sha256"] == hashlib.sha256(canonical).hexdigest()
     assert cfg["digests"]["protocol_payload_sha256"] == (
-        "2ef1875c66a4427c8eef70bb83763da4c071144e388859867eda94c8faa0faec"
+        "967eb6544e1f438aaca3a3ea3bb9a7f4115d05cb014623bab0d1bdf8b8f4bfb6"
     )
     assert p["spade_candidates"]["count"] == 10
     assert p["certificate_volume_rule"] == "smallest"
@@ -869,6 +869,8 @@ def test_yaml_freezes_every_registered_design_value_and_its_payload_digest():
     assert p["mean_marginalisation"] is True
     assert p["certificate_bootstrap_bags"] == 5
     assert p["certificate_max_volume"] == 0.001
+    assert p["spade_candidates"]["certificate_rho"] == 0.95
+    assert p["spade_candidates"]["certificate_targeted_batch_schedule"] == [32, 8, 8]
     assert p["development"]["arms_per_family"] == 12
     execution = cfg["execution"]
     assert execution == {
