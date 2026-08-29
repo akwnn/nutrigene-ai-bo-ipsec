@@ -376,6 +376,23 @@ COMMIT_MSG.txt
 !results/k1-noise-ceiling.json
 !results/k2-design-lottery.json
 
+# Joseph round-sweep adjudication (2026-08-29, origin/kr-effective-resolution @ 07ae40e).
+# Small derived verdict JSONs backing SPADE-ROUND-SWEEP-SPEC.md — not bulk campaign shards.
+!results/probe-sur-vs-straddle.json
+!results/la-rosenbrock.json
+!results/la-levy.json
+!results/la-hartmann6.json
+!results/la-ackley.json
+!results/lb-rosenbrock.json
+!results/lb-levy.json
+!results/lb-hartmann6.json
+!results/lb-ackley.json
+!results/lc-hill.json
+!results/lc-ackley.json
+!results/lc-hartmann6.json
+!results/lc-levy.json
+!results/lc-rosenbrock.json
+
 # SPADE joint development execution audit trail (2026-08-26)
 !results/spade-joint-development-run-ledger.json
 !results/spade-joint-development-execution.log

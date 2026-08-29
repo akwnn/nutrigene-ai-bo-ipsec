@@ -1,7 +1,7 @@
 # SPADE Joseph Integration Manifest
 
 **Status:** living integration ledger  
-**Joseph reference:** `joseph/kr-effective-resolution-2026-08-28` → `10970c3bb64f0dc842387fdd680febba37a4d69c`  
+**Joseph reference:** `origin/kr-effective-resolution` → `07ae40e` (was `10970c3` at prior port)  
 **Remote:** `origin/kr-effective-resolution`  
 **Manufacturing trunk:** `main` (REGISTERED gate pipeline)
 
@@ -28,6 +28,24 @@ ported into manufacturing `main` without rewriting his history.
 | Real assay LOO probe | `scripts/probe_loo_real_assay.py` | Joseph branch |
 | LC confirmatory (hill) | `scripts/run_lc_confirmatory.py` | Joseph branch |
 | B3 offline replay | `scripts/replay_certificate_scoring.py` | manufacturing |
+| LA round-matched results | `results/la-*.json` | `origin/kr-effective-resolution` @ `07ae40e` |
+| LB round-sweep results | `results/lb-*.json` | `origin/kr-effective-resolution` @ `07ae40e` |
+| Round sweep spec + headline | `docs/SPADE-ROUND-SWEEP-SPEC.md` | `2cad89f` / `aafa65c` |
+| SUR vs straddle probe | `results/probe-sur-vs-straddle.json` | `2cad89f` |
+| Joseph handoff (adapted) | `docs/HANDOFF-2026-08-29.md` | `07ae40e` (paths adapted) |
+| LC confirmatory runner | `scripts/run_lc_confirmatory.py` | `3bab48f` (already on main) |
+
+## Joseph commits integrated 2026-08-29 (since `10970c3`)
+
+| Commit | Content |
+|--------|---------|
+| `2cad89f` | LB-1 PASS — `results/lb-*.json`, `probe-sur-vs-straddle.json`, round-sweep spec §LB |
+| `aafa65c` | Headline: SPADE R=5 parity with qLogNEI R=10 — spec §headline |
+| `3bab48f` | `run_lc_confirmatory.py` (already ported) |
+| `07ae40e` | Joseph handoff doc (adapted for manufacturing worktree) |
+
+**Not ported:** Joseph `.gitignore` rewrite (drops manufacturing evidence allowlists). LC
+`results/lc-*.json` not yet on his branch — run locally when compute free.
 
 ## Promoted to registered (B3 digest `2ef1875c…`)
 
@@ -42,9 +60,10 @@ ported into manufacturing `main` without rewriting his history.
 | Item | Blocker |
 |------|---------|
 | `certificate_targeted` as 12th policy arm | New digest + hill+levy gate after B2/B3 |
-| SUR acquisition in registered policy | Prereg + digest |
-| Bagged certificate default | B3 spike + calibration |
-| LB round sweep R≥3 | Preregistered LB study; may change round budget claim |
+| SUR acquisition in registered policy | Prereg + digest; probe shows no improvement vs straddle |
+| Bagged certificate default | B3 spike running on manufacturing gate |
+| LB round sweep R≥3 | **PASS** (`2cad89f`); results on main — separate from scalar gate |
+| LC confirmatory (hill + 25 seeds) | Runner on main; **results pending** |
 
 ## Do not port (measured FAIL or wrong layer)
 
