@@ -55,6 +55,28 @@ def round_schedule(budget: int, rounds: int, n_init: int) -> tuple[int, list[int
     return n_init, batches
 
 
+def resolve_theta(mu_max, Y, tau_frac: float) -> float:
+    """The design threshold for one round.
+
+    ``mu_max`` explicit -> ``tau_frac * mu_max``, the committed behaviour, unchanged.
+
+    ``mu_max=None`` -> ``tau_frac`` of the **observed incumbent**, recomputed each round.
+
+    **Why this option exists.** Every runner passed
+    ``mu_max = float(getattr(orc, "mu_max", 1.0))`` and **no evaluator defines
+    ``mu_max``**, so the fallback made ``theta = 0.80`` on every family. ackley's true
+    maximum is 0.4102, so SPADE was straddling a contour **above the global maximum** --
+    a level set with no points in it. hartmann6, hill, levy and rosenbrock all top out
+    near 1.0, so they never exposed it. ackley is SPADE's only regret loss
+    (+0.0652, CI [+0.0203, +0.1104], p=0.004).
+
+    Uses observations only -- it is the EI incumbent, not oracle knowledge.
+    """
+    if mu_max is not None:
+        return float(tau_frac) * float(mu_max)
+    return float(tau_frac) * float(Y.max())
+
+
 def multiround_design(orc, dim: int, seed: int, mu_max: float, n_init: int,
                       batches: list[int], rho: float = 0.95,
                       tau_frac: float = 0.80):
@@ -64,7 +86,8 @@ def multiround_design(orc, dim: int, seed: int, mu_max: float, n_init: int,
         orc: oracle exposing ``evaluate(X) -> (Y, Yvar)``.
         dim: design dimension.
         seed: seeds the opening design and every candidate grid.
-        mu_max: scale used to place the design threshold.
+        mu_max: scale used to place the design threshold. ``None`` selects it from the
+            observed incumbent each round -- see :func:`resolve_theta`.
         n_init: opening LHS size.
         batches: adaptive batch sizes, one per subsequent round.
         rho: certificate contour targeted. 0.95 matches `run_versionb.CERT_RHO`.
@@ -85,9 +108,11 @@ def multiround_design(orc, dim: int, seed: int, mu_max: float, n_init: int,
     bounds = unit_bounds(dim)
     X = static_design(bounds, "lhs", int(n_init), seed)
     Y, Yvar = orc.evaluate(X)
-    theta = float(tau_frac) * float(mu_max)
 
     for k, q in enumerate(batches):
+        # Recomputed per round. With an explicit mu_max this is loop-invariant and
+        # identical to the committed behaviour; with mu_max=None it tracks the incumbent.
+        theta = resolve_theta(mu_max, Y, tau_frac)
         model = build_gp(X, Y, Yvar, bounds)
         ad = gp_adapter(model)
         # Re-seed per round: a fixed grid would offer the same candidates every time and
