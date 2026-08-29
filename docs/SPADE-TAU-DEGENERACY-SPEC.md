@@ -3,7 +3,10 @@
 **Frozen before the run exists.** No TAU data has been generated at the time of writing.
 
 Runner: `scripts/run_tau_sweep.py` · Analyser: `scripts/analyse_tau_sweep.py` ·
-Data: `results/tau-*.json`
+Data: `results/tau-{ackley,hartmann6,hill,levy,rosenbrock}.json` — named explicitly. A bare
+`results/tau-*.json` also matches `results/tau-quantile-followup.json`, an unrelated Aug-25
+experiment with a different schema; it crashed the analyser once and the default glob was
+narrowed as a result.
 
 ## 1. The claim under test
 

@@ -110,6 +110,14 @@ choosing the same `c`** — selection is stable, so the pooled number was not an
 4. **The R=4 tie is still untested** — no R=4 in LC's `CONFIGS`, declared before that run.
 5. **Sign the 12 CD31 gates in CytExpert** — still the only step between the in-house result
    and a wet-lab claim, and still needs a person.
+6. **Reconcile `SPADE_paper_draft.md` before submission.** The draft predates this line of
+   work: it describes the **two-plate** SPADE and the KF ledger, and states *"practical
+   regret parity with qLogNEI (KF-8 PASS), using 2 rounds against qLogNEI's 10."* LC
+   measured SPADE at **3** rounds as *worse* than qLogNEI at 10 (+0.0263, CI [+0.0054,
+   +0.0472]), reaching parity only at **5**. The conditions differ (KF: hill, sigma=0.10;
+   LC: five families, sigma=0.25), so this is a tension to resolve, not a flat
+   contradiction — **but the draft must not go out carrying the 2-round parity claim
+   unreconciled.** The two-plate results in the draft are not otherwise affected.
 
 ---
 

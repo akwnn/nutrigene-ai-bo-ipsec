@@ -1,5 +1,34 @@
 # What we fixed in SPADE, and what's still broken
 
+> **SUPERSEDED IN PART, 2026-08-29/30.** Everything below describes the **two-plate**
+> SPADE (40 space-filling + 8 reactive, 2 rounds). The **multi-round** line of work
+> (`boec.multiround`, SPADE at R = 3/5) came after it and **withdrew several claims that
+> this document still states as current.**
+>
+> **Read `docs/SPADE-CONCLUSIONS-2026-08-29.md` FIRST.** It carries the six claims that
+> stand, the five that were withdrawn, and how each was obtained. In particular:
+>
+> | this document says | now |
+> |---|---|
+> | SPADE certifies where BO cannot | **qLogNEI certifies at R=3 and R=5** once n is adequate (LC §8.1) |
+> | the certificate is validated on hill only in the 2-plate study | **hill certifies at prevalence 0.70**, LB 0.9278, containment 1.0000 (TAU §8.1) |
+> | (not stated) | certifiability obeys `margin/sd`, Spearman rho = 0.9801 (TAU §8.3) |
+> | (not stated) | SPADE's acquisition is **theta-independent**; it is a UCB with weight `1.96 - z_rho` (ACK §8) |
+>
+> The index below remains correct for the two-plate results it names.
+>
+> **Multi-round index (2026-08-28/30):**
+>
+> | topic | spec | data | script |
+> |---|---|---|---|
+> | conclusions, read first | `SPADE-CONCLUSIONS-2026-08-29.md` | -- | -- |
+> | round sweep | `SPADE-ROUND-SWEEP-SPEC.md` | `results/lb-*.json` | `run_lb_round_sweep.py` |
+> | round-matched | `SPADE-ROUND-MATCHED-SPEC.md` | `results/la-*.json` | `run_la_round_matched.py` |
+> | confirmatory, 32 seeds | `SPADE-LC-CONFIRMATORY-SPEC.md` | `results/lc-*.json` | `run_lc_confirmatory.py`, `analyse_lc_confirmatory.py` |
+> | tau degeneracy, 64 seeds | `SPADE-TAU-DEGENERACY-SPEC.md` | `results/tau-{family}.json` | `run_tau_sweep.py`, `analyse_tau_sweep.py` |
+> | the ackley loss | `SPADE-ACKLEY-THETA-SPEC.md` | -- (ACK-1 failed before a full run) | `run_ack_theta.py` |
+> | LB non-monotonicity | `SPADE-ROUND-SWEEP-SPEC.md` §7.5 | `results/lb-*.json` | `analyse_lb_monotonicity.py` |
+
 Written 2026-08-27. Every number here comes from a result file in `results/`, with the
 script that made it in `scripts/`. Nothing is quoted from memory.
 

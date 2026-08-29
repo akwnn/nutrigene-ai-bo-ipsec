@@ -1,0 +1,62 @@
+{
+ "spec": "docs/SPADE-EFFECTIVE-RESOLUTION-SPEC.md",
+ "gamma": "0.95",
+ "n_rows": 7877,
+ "KR_1": {
+  "conditioning_variable": "k_eff",
+  "cap": 3.615847449400098,
+  "uncalibrated_containment": 0.83399209486166,
+  "calibrated_containment": 0.83399209486166,
+  "lower_bound_95": 0.817477599039744,
+  "n_retained": 1518,
+  "n_total": 1518,
+  "answer_rate": 1.0,
+  "verdict": "FAIL"
+ },
+ "KR_2": {
+  "k_eff_spread": 1138.2917411591163,
+  "vol_spread": 370.2500000000001,
+  "verdict": "FAIL",
+  "caps": {
+   "hill": {
+    "k_eff": 10.614232495456484,
+    "vol": 0.37025000000000013
+   },
+   "levy": {
+    "k_eff": 0.8987226694615289,
+    "vol": 0.06910000000000002
+   },
+   "rosenbrock": {
+    "k_eff": 2.53680398119508,
+    "vol": 0.33075
+   },
+   "ackley": {
+    "k_eff": 0.07509787851276904,
+    "vol": 0.001
+   },
+   "hartmann6": {
+    "k_eff": 0.009324703071857544,
+    "vol": 0.003
+   }
+  }
+ },
+ "KR_3": {
+  "answer_rate": 1.0,
+  "verdict": "PASS"
+ },
+ "KR_4": {
+  "same_verdict_as_box_volume": true,
+  "verdict": "DROP k_eff",
+  "box_volume_result": {
+   "conditioning_variable": "vol",
+   "cap": 0.2485,
+   "uncalibrated_containment": 0.83399209486166,
+   "calibrated_containment": 0.83399209486166,
+   "lower_bound_95": 0.817477599039744,
+   "n_retained": 1518,
+   "n_total": 1518,
+   "answer_rate": 1.0,
+   "verdict": "FAIL"
+  }
+ }
+}

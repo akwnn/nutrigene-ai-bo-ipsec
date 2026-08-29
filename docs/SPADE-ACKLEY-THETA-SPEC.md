@@ -2,8 +2,11 @@
 
 **Frozen before any ACK data exists.**
 
-Runner: `scripts/run_ack_theta.py` · Analyser: `scripts/analyse_ack_theta.py` ·
-Data: `results/ack-*.json`
+Runner: `scripts/run_ack_theta.py` ·
+**Data: none.** ACK-1 failed at the 2-seed smoke test (§8) — `spade_adaptive` reproduced
+`spade` bit-identically — so no full run was launched and no `results/ack-*.json` exists.
+The analyser was never written, because there was nothing to adjudicate that §8's
+instrumentation did not already settle.
 
 ## 1. The defect, measured
 

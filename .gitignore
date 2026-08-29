@@ -373,3 +373,13 @@ COMMIT_MSG.txt
 !results/tau-hill.json
 !results/tau-levy.json
 !results/tau-rosenbrock.json
+
+# Small analysis outputs that docs cite by path. The large raw sweeps they derive from
+# (final-spade-*, p6-families, ku-prevalence-matched, kv-plate2-certificate,
+# ktb-inflation, tau-quantile-followup) total 849 MB and stay out of git -- they are
+# regenerable from the scripts named in each doc's file map.
+!results/kr-analysis.json
+!results/ku-analysis.json
+!results/kv-analysis.json
+!results/confound-ninit.json
+!results/kr-effective-resolution.json

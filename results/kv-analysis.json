@@ -1,0 +1,65 @@
+{
+ "spec": "docs/SPADE-PLATE2-CERTIFICATE-SPEC.md",
+ "gamma": "0.95",
+ "sesoi": 0.02,
+ "arm_collisions": 2,
+ "contrasts": {
+  "KV-1": {
+   "label": "KV-1 targeted vs RANDOM plate 2 (containment)",
+   "n": 21,
+   "mean_a": 0.7857142857142857,
+   "mean_b": 1.0,
+   "effect": -0.21428571428571427,
+   "ci95": [
+    -0.38095238095238093,
+    -0.07142857142857142
+   ],
+   "p_raw": 0.02435791571803699,
+   "p_holm": 0.07307374715411097,
+   "verdict": "FAIL (not significant)"
+  },
+  "KV-2": {
+   "label": "KV-2 cert-rho95 vs targeted (containment)",
+   "n": 66,
+   "mean_a": 0.7878787878787878,
+   "mean_b": 0.7651515151515151,
+   "effect": 0.022727272727272728,
+   "ci95": [
+    -0.08333333333333333,
+    0.12878787878787878
+   ],
+   "p_raw": 0.7017806775264319,
+   "p_holm": 1.0,
+   "verdict": "FAIL (not significant)"
+  },
+  "KV-3": {
+   "label": "KV-3 random 2-plate vs 1-plate (containment; predicts NO effect)",
+   "n": 8,
+   "insufficient": true
+  },
+  "KV-4": {
+   "label": "KV-4 cert-rho95 vs targeted (MAP error, lower better)",
+   "n": 198,
+   "mean_a": 0.10303093434343434,
+   "mean_b": 0.10347979797979798,
+   "effect": 0.0004488636363636355,
+   "ci95": [
+    -0.0004370422979797968,
+    0.0013661931818181813
+   ],
+   "p_raw": 0.7285860075601294,
+   "p_holm": 1.0,
+   "verdict": "PASS (map not degraded)"
+  }
+ },
+ "answer_rate": {
+  "spade_cert_rho95": 0.12878787878787878,
+  "versionb": 0.12125,
+  "versionb_random": 0.0325,
+  "plate1_only": 0.04
+ },
+ "KV_5": {
+  "gap": 0.007537878787878788,
+  "verdict": "PASS"
+ }
+}

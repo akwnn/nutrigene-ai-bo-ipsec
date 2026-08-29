@@ -1,0 +1,54 @@
+{
+ "spec": "docs/SPADE-PREVALENCE-MATCHED-SPEC.md",
+ "gamma": "0.95",
+ "families": [
+  "ackley",
+  "hartmann6",
+  "levy"
+ ],
+ "per_family": {
+  "ackley": {
+   "cap": 0.003,
+   "uncalibrated": 0.8888888888888888,
+   "calibrated": 0.9066666666666666,
+   "lower_bound_95": 0.880955795739846,
+   "answer_rate": 0.9259259259259259,
+   "n_retained": 450,
+   "verdict": "FAIL"
+  },
+  "hartmann6": {
+   "cap": 0.001,
+   "uncalibrated": 0.8081395348837209,
+   "calibrated": 0.975609756097561,
+   "lower_bound_95": 0.9524304118225659,
+   "answer_rate": 0.23837209302325582,
+   "n_retained": 246,
+   "verdict": "PASS"
+  },
+  "levy": {
+   "cap": 0.001,
+   "uncalibrated": 1.0,
+   "calibrated": 1.0,
+   "lower_bound_95": 0.7790778080544442,
+   "answer_rate": 1.0,
+   "n_retained": 12,
+   "verdict": "FAIL"
+  }
+ },
+ "KU_1": {
+  "pooled_contained": 660,
+  "pooled_n": 708,
+  "lower_bound_95": 0.9145689204253851,
+  "verdict": "PASS"
+ },
+ "KU_2": {
+  "n_pass": 1,
+  "n_families": 3,
+  "verdict": "FAIL"
+ },
+ "KU_3": {
+  "answer_rate": 0.4627450980392157,
+  "verdict": "PASS"
+ },
+ "KU_4_fires": false
+}
