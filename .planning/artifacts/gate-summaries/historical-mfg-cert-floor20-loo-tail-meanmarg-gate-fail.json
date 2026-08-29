@@ -1,0 +1,217 @@
+{
+  "families": {
+    "hill": {
+      "qlognei48": {
+        "abstentions": {
+          "issued": 10,
+          "no_feasible_ce": 5
+        },
+        "ans": 0.6666666666666666,
+        "emp": 1.0,
+        "n": 15
+      },
+      "sobol48": {
+        "abstentions": {
+          "issued": 8,
+          "no_feasible_ce": 3,
+          "volume_cap": 4
+        },
+        "ans": 0.5333333333333333,
+        "emp": 1.0,
+        "n": 15
+      },
+      "spade-o32-fixed_hybrid": {
+        "abstentions": {
+          "issued": 10,
+          "no_feasible_ce": 2,
+          "volume_cap": 3
+        },
+        "ans": 0.6666666666666666,
+        "emp": 1.0,
+        "n": 15
+      },
+      "spade-o32-staged": {
+        "abstentions": {
+          "issued": 8,
+          "no_feasible_ce": 6,
+          "volume_cap": 1
+        },
+        "ans": 0.5333333333333333,
+        "emp": 1.0,
+        "n": 15
+      },
+      "spade-o32-validity_gated": {
+        "abstentions": {
+          "issued": 10,
+          "no_feasible_ce": 4,
+          "volume_cap": 1
+        },
+        "ans": 0.6666666666666666,
+        "emp": 0.9,
+        "n": 15
+      },
+      "spade-o40-fixed_hybrid": {
+        "abstentions": {
+          "issued": 11,
+          "no_feasible_ce": 1,
+          "volume_cap": 3
+        },
+        "ans": 0.7333333333333333,
+        "emp": 0.9090909090909091,
+        "n": 15
+      },
+      "spade-o40-staged": {
+        "abstentions": {
+          "issued": 10,
+          "no_feasible_ce": 4,
+          "volume_cap": 1
+        },
+        "ans": 0.6666666666666666,
+        "emp": 1.0,
+        "n": 15
+      },
+      "spade-o40-validity_gated": {
+        "abstentions": {
+          "issued": 10,
+          "volume_cap": 5
+        },
+        "ans": 0.6666666666666666,
+        "emp": 0.9,
+        "n": 15
+      },
+      "spade-o44-fixed_hybrid": {
+        "abstentions": {
+          "issued": 11,
+          "no_feasible_ce": 4
+        },
+        "ans": 0.7333333333333333,
+        "emp": 0.9090909090909091,
+        "n": 15
+      },
+      "spade-o44-staged": {
+        "abstentions": {
+          "issued": 11,
+          "no_feasible_ce": 4
+        },
+        "ans": 0.7333333333333333,
+        "emp": 0.9090909090909091,
+        "n": 15
+      },
+      "spade-o44-validity_gated": {
+        "abstentions": {
+          "issued": 11,
+          "no_feasible_ce": 3,
+          "volume_cap": 1
+        },
+        "ans": 0.7333333333333333,
+        "emp": 0.9090909090909091,
+        "n": 15
+      }
+    },
+    "levy": {
+      "qlognei48": {
+        "abstentions": {
+          "issued": 2,
+          "no_feasible_ce": 13
+        },
+        "ans": 0.13333333333333333,
+        "emp": 0.5,
+        "n": 15
+      },
+      "sobol48": {
+        "abstentions": {
+          "issued": 6,
+          "no_feasible_ce": 8,
+          "volume_cap": 1
+        },
+        "ans": 0.4,
+        "emp": 0.3333333333333333,
+        "n": 15
+      },
+      "spade-o32-fixed_hybrid": {
+        "abstentions": {
+          "issued": 4,
+          "no_feasible_ce": 11
+        },
+        "ans": 0.26666666666666666,
+        "emp": 0.75,
+        "n": 15
+      },
+      "spade-o32-staged": {
+        "abstentions": {
+          "issued": 2,
+          "no_feasible_ce": 13
+        },
+        "ans": 0.13333333333333333,
+        "emp": 0.5,
+        "n": 15
+      },
+      "spade-o32-validity_gated": {
+        "abstentions": {
+          "issued": 8,
+          "no_feasible_ce": 7
+        },
+        "ans": 0.5333333333333333,
+        "emp": 0.875,
+        "n": 15
+      },
+      "spade-o40-fixed_hybrid": {
+        "abstentions": {
+          "issued": 5,
+          "no_feasible_ce": 9,
+          "volume_cap": 1
+        },
+        "ans": 0.3333333333333333,
+        "emp": 0.6,
+        "n": 15
+      },
+      "spade-o40-staged": {
+        "abstentions": {
+          "issued": 2,
+          "no_feasible_ce": 13
+        },
+        "ans": 0.13333333333333333,
+        "emp": 1.0,
+        "n": 15
+      },
+      "spade-o40-validity_gated": {
+        "abstentions": {
+          "issued": 4,
+          "no_feasible_ce": 10,
+          "volume_cap": 1
+        },
+        "ans": 0.26666666666666666,
+        "emp": 0.5,
+        "n": 15
+      },
+      "spade-o44-fixed_hybrid": {
+        "abstentions": {
+          "issued": 3,
+          "no_feasible_ce": 12
+        },
+        "ans": 0.2,
+        "emp": 0.6666666666666666,
+        "n": 15
+      },
+      "spade-o44-staged": {
+        "abstentions": {
+          "issued": 3,
+          "no_feasible_ce": 12
+        },
+        "ans": 0.2,
+        "emp": 0.6666666666666666,
+        "n": 15
+      },
+      "spade-o44-validity_gated": {
+        "abstentions": {
+          "issued": 3,
+          "no_feasible_ce": 12
+        },
+        "ans": 0.2,
+        "emp": 0.6666666666666666,
+        "n": 15
+      }
+    }
+  },
+  "survivors": []
+}

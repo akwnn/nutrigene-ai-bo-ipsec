@@ -378,7 +378,7 @@ def scorer_contract_digest(score: Mapping[str, object]) -> str:
 
 def _ignored_worktree_change(path: str, status_code: str) -> bool:
     normalized = path.replace("\\", "/")
-    if normalized == ".planning/STATE.md":
+    if normalized.startswith(".planning/"):
         return True
     if status_code != "??":
         return False

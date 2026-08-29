@@ -1,39 +1,41 @@
 # State
 
 **Milestone:** SPADE joint protocol  
-**Status:** active — **B3 gate ready** (bagged5 + cert_targeted o32 + α=0.95)  
-**Current phase:** Launch hill+levy 0–15 gate on digest `2ef1875c…`
+**Status:** active — **B3 gate RUNNING**  
+**Diagnosis ledger:** [.planning/SPADE-SCALAR-RECOVERY-DIAGNOSIS.md](SPADE-SCALAR-RECOVERY-DIAGNOSIS.md)  
+**Current phase:** hill+levy 0–15 on digest `2ef1875c…` (12 arms × 15 keys = 180 rows/family)
 
-## Decisions frozen
+## B3 gate (live)
 
-- Exactly 48 evaluations per arm per campaign.
-- Recovery stack: `smallest` + assay + `loo_calibration_tail` + meanmarg + floor **1.5** + `Vmax=0.001` + **bagged5**.
-- **α reverted to 0.95** (B2 α=0.98 FAIL — collapsed levy answer rates).
-- **10 SPADE arms** (o32 adds `certificate_targeted`; o40/o44 unchanged) + 2 comparators = **12 arms/family**.
-- Joseph real-data scripts ported (`calibrate_real_assay_loo`, `certify_hall_ogle`, `final_real_data_answer`, `probe_loo_real_assay`, `run_lc_confirmatory`).
-- Safeguard harness + watchdog pre-spawn checks active.
+| Field | Value |
+|-------|-------|
+| Digest | `2ef1875c66a4427c8eef70bb83763da4c071144e388859867eda94c8faa0faec` |
+| Commit | `cc43b09` |
+| Monitor | `cat /tmp/spade-durable.status` |
+| Log | `/tmp/spade-durable.log` |
+| Supervisor | `~/spade-ops/spade_gate_then_full_watchdog.sh` |
 
-## Protocol digests
+**Stack:** meanmarg + LOO-tail + floor 1.5 + smallest + Vmax 0.001 + **bagged5** + α **0.95** + **cert_targeted o32**.
 
-| study | digest | outcome |
-|---|---|---|
-| meanmarg floor15 | `1c5c3b7e…` | **gate FAIL** |
-| floor20 | `b846fe2d…` | **gate FAIL** |
-| B2 alpha0.98 | `7ba21e73…` | **gate FAIL** |
-| **B3 bagged5+cert_targeted** | `2ef1875c…` | **gate pending** |
+## Failed gates (archived — do not resume)
 
-## Diagnosis → fix
+| Study | Digest | Survivors | Analysis |
+|-------|--------|-----------|----------|
+| meanmarg floor15 | `1c5c3b7e…` | 0 | [gate-summaries/…meanmarg-gate-fail.json](artifacts/gate-summaries/historical-mfg-cert-floor15-loo-tail-meanmarg-gate-fail.json) |
+| floor20 (B1) | `b846fe2d…` | 0 | [gate-summaries/…floor20….json](artifacts/gate-summaries/historical-mfg-cert-floor20-loo-tail-meanmarg-gate-fail.json) |
+| alpha0.98 (B2) | `7ba21e73…` | 0 | [gate-summaries/…alpha098….json](artifacts/gate-summaries/historical-mfg-cert-floor15-loo-tail-meanmarg-alpha098-gate-fail.json) |
 
-| Failure | Root cause | B3 response |
-|---|---|---|
-| Complementary hill/levy winners | Single GP + inflation still overconfident on lengthscales/noise | **Bootstrap bagged** certificate (intersect 5 refits) |
-| α=0.98 hurt levy ans | Too conservative globally | **Revert α=0.95** |
-| o32-validity_gated near-miss | Acquisition not targeting cert contour on levy | **certificate_targeted** policy on o32 |
+Shard archives under `results/historical-mfg-cert-*/` (gitignored; JSON summaries in `.planning/artifacts/gate-summaries/`).
 
-Offline replay: `scripts/replay_certificate_scoring.py` on archived shards.
+**Persist to git:** commit `.planning/SPADE-SCALAR-RECOVERY-DIAGNOSIS.md`, `.planning/STATE.md`, `.planning/artifacts/gate-summaries/*.json`, and decisions spec updates so diagnosis survives worktree resets.
 
-## Next action
+## What went wrong vs right (short)
 
-1. Run `./scripts/run_spade_safeguard_tests.sh`
-2. Launch B3 hill+levy 0–15 gate (`~/spade-ops/spade_gate_then_full_watchdog.sh`)
-3. If PASS → full 5×50 → LOFO → power → lockbox
+**Wrong:** floor 2.0; α 0.98; map_iou abstention; detector knobs (k_eff, selection-blind).  
+**Helped but insufficient:** meanmarg, LOO-tail, floor 1.5, o32 + validity_gated.  
+**Testing now:** bootstrap bagged cert + cert_targeted acquisition.
+
+## Next on B3 outcome
+
+- **PASS** → watchdog advances to full 5×50 → LOFO → power → lockbox  
+- **FAIL** → archive shards, update diagnosis ledger, run `replay_certificate_scoring.py` sweeps before B4

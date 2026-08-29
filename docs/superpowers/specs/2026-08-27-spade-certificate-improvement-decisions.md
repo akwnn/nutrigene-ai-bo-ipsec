@@ -50,23 +50,22 @@ It is **not**:
 
 ### 3.1 Completed gates (archived — do not resume)
 
-| Digest | Study suffix | Outcome | Archive |
-|---|---|---|---|
-| `681947bc…` | floor15-loo-tail | **FAIL** 0 survivors | `historical-mfg-cert-floor15-loo-tail-gate-fail/` |
-| `1c5c3b7e…` | floor15-loo-tail-meanmarg | **FAIL** 0 survivors | `historical-mfg-cert-floor15-loo-tail-meanmarg-gate-fail/` |
+| Digest | Study suffix | Outcome | Archive | Analysis |
+|---|---|---|---|---|
+| `681947bc…` | floor15-loo-tail | **FAIL** 0 survivors | `historical-mfg-cert-floor15-loo-tail-gate-fail/` | — |
+| `1c5c3b7e…` | floor15-loo-tail-meanmarg | **FAIL** 0 survivors | `historical-mfg-cert-floor15-loo-tail-meanmarg-gate-fail/` | `.planning/artifacts/gate-summaries/historical-mfg-cert-floor15-loo-tail-meanmarg-gate-fail.json` |
+| `b846fe2d…` | floor20-loo-tail-meanmarg (B1) | **FAIL** 0 survivors | `historical-mfg-cert-floor20-loo-tail-meanmarg-gate-fail/` | `.planning/artifacts/gate-summaries/historical-mfg-cert-floor20-loo-tail-meanmarg-gate-fail.json` |
+| `7ba21e73…` | alpha098-loo-tail-meanmarg (B2) | **FAIL** 0 survivors | `historical-mfg-cert-floor15-loo-tail-meanmarg-alpha098-gate-fail/` | `.planning/artifacts/gate-summaries/historical-mfg-cert-floor15-loo-tail-meanmarg-alpha098-gate-fail.json` |
 
-**Diagnosis (evidence, 2026-08-28):**
+**Diagnosis (evidence, 2026-08-29):** see `.planning/SPADE-SCALAR-RECOVERY-DIAGNOSIS.md`.
 
 1. **Model-internal containment is blind to truth.** Failed levy runs still show
    `certificate_selection_containment` ≈ 0.97–0.99 while `certificate_empirical_containment`
-   is False (E3 latent coverage 0.76–0.82 vs nominal 0.95; KR §1(a)).
-2. **Levy is the binding family.** Hill emp 1.0 on `spade-o32-staged`; levy best
-   `spade-o32-validity_gated` emp **0.90** but hill emp **0.875** on that arm;
-   complementary pairing — no single arm clears both.
-3. **Meanmarg helped but did not break the plateau.** Levy emp 0.75 → 0.875
-   (floor15 → meanmarg on o32-staged); validity_gated levy 0.889 → **0.90**.
-4. **Answer-rate floor binds some arms.** `spade-o40-staged` levy emp 1.0 but
-   ans 0.33 — fails ans≥0.5.
+   is False (E3 latent coverage 0.76–0.82 vs nominal 0.95).
+2. **Levy is the binding family.** Complementary pairing — no single arm clears both hill and levy.
+3. **Meanmarg helped but did not break the plateau.** Levy emp 0.75 → 0.875 (o32-staged).
+4. **Floor 2.0 falsified.** Hurts levy; do not increase floor further without new prereg.
+5. **α=0.98 falsified.** Collapsed levy answer rates (o32-staged ans 0.07); reverted to 0.95.
 
 Do **not** start full 5×50 on failed digests.
 
@@ -77,8 +76,9 @@ Do **not** start full 5×50 on failed digests.
 | `certificate_volume_rule` | `smallest` | Alana |
 | `predictive_observation_noise` | `assay_relative_additive` | Alana |
 | `latent_draw_inflation` | `loo_calibration_tail` | Alana (+ Joseph selfcalib) |
-| `latent_inflation_floor` | `1.5` | Alana (KT-5; **next: 2.0 trial**) |
+| `latent_inflation_floor` | `1.5` | Alana (floor 2.0 **falsified** B1) |
 | `certificate_max_volume` | `0.001` | Alana |
+| `certificate_bootstrap_bags` | `5` | Joseph bagged.py (B3 registered) |
 | `mean_marginalisation` | `true` | Joseph |
 
 **Joseph modules in tree:**
@@ -88,8 +88,8 @@ Do **not** start full 5×50 on failed digests.
 | `selfcalib.py` | LOO residuals / inflation / tail | **Yes** |
 | `meanmarg.py` | Ordinary-kriging covariance | **Yes** |
 | `topk.py` | Finite-set certification | Research only |
-| `bagged.py` | Intersect bootstrap certs | Research only |
-| `certstraddle.py` | Cert-frontier acquisition | Research only (see §3.8) |
+| `bagged.py` | Intersect bootstrap certs | **Yes** (B3, n=5) |
+| `certstraddle.py` | Cert-frontier acquisition | **Yes** via `certificate_targeted` o32 |
 | `selectionblind.py` | Selection-blind covariance | **No** (KW fail) |
 | `resolution.py` | `k_eff` | **No** (KR fail) |
 
@@ -98,73 +98,35 @@ Do **not** start full 5×50 on failed digests.
 Merged into `main`: hardened `select_spade_protocol.py`, `run_spade_lockbox.py`,
 `analyse_spade_lockbox.py` + tests. Required before any LOFO/lockbox claim.
 
-### 3.4 Phase A — Instrumentation (next code change)
+### 3.4 Phase A — Instrumentation — **DONE**
 
-1. Persist `latent_inflation_factor` and `certificate_abstention_reason` in scores
-   (`volume_cap`, `no_feasible_ce`, `map_disagreement`, `issued`).
-2. Add `scripts/analyze_gate_failures.py` for archived shard replay.
+1. `latent_inflation_factor` + `certificate_abstention_reason` in scores.
+2. `scripts/analyze_gate_failures.py` for archived shard replay.
 3. Tests in `tests/test_spade_study.py`.
 
-**Gate:** git-clean REGISTERED runs; no protocol digest change in this phase alone.
+### 3.5 Phase B1 — `latent_inflation_floor: 2.0` — **FAIL** (`b846fe2d…`)
 
-### 3.5 Phase B1 — Scalar recovery: `latent_inflation_floor: 2.0` (**NEXT GATE**)
+Raising floor hurt levy; archived. Do not retry without new prereg.
 
-**Hypothesis:** KT-5 grid shows c=2.0 truth 1.0 (lower answer rate). Levy failures
-are 1-in-8–1-in-10 marginal leaks at floor 1.5; raising floor widens draws
-monotonically.
+### 3.6 Phase B2 — `reliability.alpha: 0.98` — **FAIL** (`7ba21e73…`)
 
-| Field | B1 value |
+Collapsed levy answer rates without co-pass; archived. **α reverted to 0.95** in B3.
+
+### 3.7 Phase B3 — Bagged certificate + cert_targeted — **RUNNING** (`2ef1875c…`)
+
+| Field | B3 value |
 |---|---|
-| `latent_inflation_floor` | **2.0** (only change from `1c5c3b7e`) |
-| study_id | `…-floor20-loo-tail-meanmarg-2026-08-28` |
-| All else | unchanged (meanmarg, LOO-tail, smallest, Vmax, α=0.95) |
+| `certificate_bootstrap_bags` | **5** |
+| `certificate_targeted` policy | **o32 only** (10 SPADE + 2 comparator = 12 arms) |
+| `reliability.alpha` | **0.95** |
+| study_id | `…-bagged5-2026-08-29` |
 
-**Pre-gate:** hill+levy keys 0–15; ans≥0.5 & emp≥0.9 both; ≥1 SPADE survivor.
+Offline replay: `scripts/replay_certificate_scoring.py` on archived shards.
 
-**Falsification:** emp unchanged on levy o32-staged/validity_gated while ans drops
-below 0.5 → proceed to B2 without further floor increases.
+### 3.8 Research track — certificate-targeted bench (historical)
 
-### 3.6 Phase B2 — Scalar recovery: raise assurance `alpha` (if B1 fails)
-
-Preregister `reliability.alpha` ∈ {0.98, 0.99} per KT Lever A
-(`SPADE-ASSURANCE-CALIBRATION-SPEC.md`). Requires **KT-2 paired monotonicity** and
-**KT-3 answer rate ≥ 0.30** at full scale.
-
-New digest per α value; never append to B1 shards.
-
-### 3.7 Phase B3 — Abstention policy (if B1+B2 improve emp but ans blocks)
-
-Offline replay on archived meanmarg rows first:
-
-- Abstain `map_disagreement` when `map_iou < τ_map` (preregister τ_map on gate grid).
-- Abstain when selection passes but map symmetric difference > 0.30.
-- Goal: convert would-be false positives to honest abstentions; improve emp among answered.
-
-| **B2 alpha0.98+meanmarg** | `7ba21e73…` | **gate FAIL** (archived) |
-
-B2 diagnosis: α=0.98 collapsed levy answer rates (e.g. o32-staged ans 0.07) without
-producing any arm with ans≥0.5 & emp≥0.9 on **both** hill and levy. Archive:
-`results/historical-mfg-cert-floor15-loo-tail-meanmarg-alpha098-gate-fail/`.
-Analysis: `results/b2-alpha098-gate-analysis.json`.
-
-### 3.8 Phase B3 — Bagged certificate spike (**NEXT**, research)
-
-Offline replay on archived B2 shards using `bagged.py` intersection certs.
-Goal: address lengthscale/noise uncertainty LOO cannot see. Not registered until
-calibrated and preregistered.
-
-### 3.9 Research track — certificate-targeted acquisition (NOT registered)
-
-Branch `claude/spade-certificate-targeted-policy` (commit `9c51799`):
-
-- Fourth policy using Joseph `certstraddle` (contour-straddling batches).
-- **NOT** in registered 9-arm set (would change arm digests).
-- Bench (`bench_certificate.py`, keys 18–29): straddle ρ=0.9 + κ=1.5 → containment
-  **0.898**, LB95 **0.797** vs sobol48+κ=1.5 → 0.769 — directionally positive but
-  **does not clear LB95 ≥ 0.90**; McNemar p=0.146 vs κ alone.
-
-**Decision:** Keep as Phase H research spike; adopt into registered arms only after
-a frozen spec amendment and new 12-arm digest — not before scalar B1 gate.
+Bench (`bench_certificate.py`): directionally positive; McNemar p=0.146. Now **registered**
+as o32 arm under B3 digest — not research-only.
 
 ### 3.9 Parallel winning narrative — multi-CQA synthetic (**PASS**)
 
@@ -214,9 +176,11 @@ joint v1.
 - [x] Meanmarg gate hill+levy 0–15 (`1c5c3b7e…`) — **FAIL**, archived
 - [x] Multi-CQA benchmark PASS
 - [x] Merge `origin/codex/spade-gate-fix` (LOFO/lockbox hardening)
-- [ ] Phase A instrumentation (abstention reasons + inflation in scores)
-- [ ] Phase B1 gate: `latent_inflation_floor: 2.0` new digest
-- [ ] Phase B2 if needed: α=0.98/0.99 new digest
+- [x] Phase A instrumentation
+- [x] Phase B1 gate floor20 — **FAIL**, archived
+- [x] Phase B2 gate alpha0.98 — **FAIL**, archived
+- [x] Joseph full integration + B3 protocol (`2ef1875c…`)
+- [ ] Phase B3 gate hill+levy 0–15 — **RUNNING**
 - [ ] Full 5×50 only after gate PASS
 - [ ] LOFO → power → lockbox on passing digest
 
@@ -228,9 +192,10 @@ joint v1.
 |---|---|---|
 | joint v1 | `00ce6971…` | `NO_SELECTION` |
 | mfg floor15+loo-tail+meanmarg | `1c5c3b7e…` | **gate FAIL** (archived) |
-| mfg floor15+loo-tail | `681947bc…` | **gate FAIL** (archived) |
+| mfg floor20+meanmarg (B1) | `b846fe2d…` | **gate FAIL** (archived) |
+| mfg alpha098+meanmarg (B2) | `7ba21e73…` | **gate FAIL** (archived) |
 | multi-CQA benchmark | `b29bb57e…` | **PASS** |
-| **next (B1)** | TBD | `floor20-loo-tail-meanmarg-2026-08-28` |
+| **B3 bagged5+cert_targeted** | `2ef1875c…` | **gate RUNNING** |
 
 ---
 
@@ -377,26 +342,27 @@ Meanmarg gate, keys 0–15:
 SPADE already beats comparators on **levy certificate honesty** — the gap is internal
 consistency (one arm must pass **both** families), not raw superiority.
 
-### 10.6 Second-wave options if B1 fails
+### 10.6 Second-wave options (status 2026-08-29)
 
-| Priority | Lever | Rationale | Risk |
+| Priority | Lever | Status | Outcome |
 |---|---|---|---|
-| B2 | `alpha` → 0.98/0.99 | KT headroom above 0.95 unmeasured | ans collapse (o40-staged levy: emp 1.0, ans 0.33) |
-| B3 | `bagged_certificate` | Intersect bootstrap refits; addresses lengthscale/noise uncertainty LOO cannot see (`bagged.py`) | Needs truth calibration; not yet run on dev gate |
-| B4 | Cert-straddle **acquisition** policy | Bench containment 0.898 (LB 0.797); targets ρ-contour not p=0.5 (`certstraddle.py`) | Requires **new 12-arm digest**; McNemar p=0.146 vs κ alone |
-| Parallel | Multi-CQA joint overlay | **PASS** on aligned/moderate_conflict | Different claim; does not rescue scalar gate |
+| B1 | `latent_inflation_floor: 2.0` | **DONE** | **FAIL** — hurt levy (`b846fe2d…`) |
+| B2 | `alpha` → 0.98 | **DONE** | **FAIL** — levy ans collapsed (`7ba21e73…`) |
+| **B3** | bagged5 + cert_targeted o32 | **RUNNING** | Digest `2ef1875c…` |
+| B4 | Further bag-count / acquisition sweeps | **Next if B3 fails** | Offline via `replay_certificate_scoring.py` |
+| Parallel | Multi-CQA joint overlay | **PASS** | `b29bb57e…` — separate EC claim |
 
-### 10.7 Revised execution order (research-backed)
+### 10.7 Revised execution order (as of B3)
 
 ```text
-A   Instrumentation (inflation factor + abstention reason in scores)
-B1  latent_inflation_floor: 2.0  ← highest-confidence fix
-    Gate hill+levy 0–15; expect o32-validity_gated or o32-staged to survive
-B1b (optional) Re-register 3 o32-only arms if 9-arm gate noisy
-B2  alpha 0.98 only if B1 converts leaks but ans/emp still short
-B3  Bagged cert spike with truth containment calibration (research)
-B4  Cert-straddle acquisition in new 12-arm study (research)
+A   Instrumentation — DONE
+B1  floor 2.0 — FAIL (archived)
+B2  alpha 0.98 — FAIL (archived)
+B3  bagged5 + cert_targeted + α=0.95 — RUNNING (hill+levy 0–15)
+    Diagnosis ledger: .planning/SPADE-SCALAR-RECOVERY-DIAGNOSIS.md
 →   PASS → 5×50 → LOFO → power → lockbox
+→   FAIL → archive, analyze_gate_failures, replay sweeps, B4 design
+```
 ```
 
 **Do not pursue** map-based abstention or detector filters — the data rejects them.
