@@ -28,7 +28,7 @@ artifacts live. Update when any gate completes (PASS or FAIL).
 | floor15+meanmarg | `1c5c3b7e` | Joseph meanmarg wired | **FAIL** 0 survivors | `results/historical-mfg-cert-floor15-loo-tail-meanmarg-gate-fail/` → [JSON](artifacts/gate-summaries/historical-mfg-cert-floor15-loo-tail-meanmarg-gate-fail.json) |
 | floor20 (B1) | `b846fe2d` | inflation floor 1.5→2.0 | **FAIL** — hurt levy | `results/historical-mfg-cert-floor20-loo-tail-meanmarg-gate-fail/` → [JSON](artifacts/gate-summaries/historical-mfg-cert-floor20-loo-tail-meanmarg-gate-fail.json) |
 | alpha0.98 (B2) | `7ba21e73` | reliability α 0.95→0.98 | **FAIL** — levy ans collapsed | `results/historical-mfg-cert-floor15-loo-tail-meanmarg-alpha098-gate-fail/` → [JSON](artifacts/gate-summaries/historical-mfg-cert-floor15-loo-tail-meanmarg-alpha098-gate-fail.json) |
-| **B5 unified product** | `404b4884` | 5-arm: ρ=0.95+(32,8,8)+bagged5; PRODUCT=cert_targeted | **RUNNING** | live |
+| **B5 unified product** | `404b4884` | 5-arm: ρ=0.95+(32,8,8)+bagged5; PRODUCT=cert_targeted | **levy RUNNING** (hill DONE — ans collapse) | hill interim: `.planning/artifacts/gate-summaries/unified-product-b5-hill-interim.json` |
 | bagged5+rho95 12-arm (B4) | `967eb654` | empty-bag crash + superseded by B5 shrink | **SUPERSEDED** | do not resume |
 | bagged5+cert_targeted (B3) | `2ef1875c` | ρ=0.5 + four×4 batches (wrong defaults) | **SUPERSEDED** | do not resume |
 
@@ -59,15 +59,23 @@ artifacts live. Update when any gate completes (PASS or FAIL).
 | o32 opening | Best mean emp hill/levy vs o40/o44 | Still no co-pass |
 | validity_gated policy | Best levy emp (0.90) | Hill emp 0.875 on same arm |
 
-### B4 hypothesis (Joseph-aligned acquisition)
+### B5 hill interim (2026-08-29) — answer-rate collapse under bagged5
 
-| Lever | Mechanism | Source |
-|-------|-----------|--------|
-| **certificate_rho=0.95** | High-exceedance contour, not median 0.5 | Joseph LA `spade_cert_rho95` |
-| **Schedule (32,8,8)** | LB R=3 matched-round winner | `multiround` / LB-1 PASS |
-| **Per-round candidate menu** | Fresh Sobol menu each adaptive batch | `multiround.py` |
+Keys 0–15 hill complete on digest `404b4884…`:
 
-B3 used ρ=0.5 (Bryan's median straddle) — Joseph measured that as wrong layer.
+| Arm | ans | emp | Dominant abstention |
+|-----|-----|-----|---------------------|
+| o32-staged | **0.00** | — | `no_feasible_ce` 15/15 |
+| o32-validity_gated | **0.00** | — | `no_feasible_ce` 15/15 |
+| **o32-certificate_targeted** (PRODUCT) | **0.067** | 1.0 (1 issued) | `no_feasible_ce` 14/15 |
+| sobol48 | 0.00 | — | `no_feasible_ce` |
+| qlognei48 | 0.20 | 1.0 | mostly `no_feasible_ce` |
+
+**Interpretation:** bootstrap bag intersection (n=5) + smallest + Vmax is binding abstentions, not fixing leaks. Manufacturing ans≥0.5 is already impossible on hill for every SPADE arm. Levy still runs for a complete archive.
+
+**Next if full B5 FAIL (expected):** offline `replay_certificate_scoring.py` on B5 shards with `--bootstrap-bags 1` and `3` before any new acquisition digest. Do **not** raise floor or α again.
+
+### B4 hypothesis (Joseph-aligned acquisition) — superseded by B5
 
 ---
 

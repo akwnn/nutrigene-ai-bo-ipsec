@@ -1,0 +1,52 @@
+{
+  "digest": "404b4884260b756a9b4777178ffae8350f6c9d0da0da6e912e3e06432090dbd4",
+  "study": "unified-product-b5",
+  "hill_complete": true,
+  "levy_complete": false,
+  "hill": {
+    "spade-o32-staged": {
+      "n": 15,
+      "ans": 0.0,
+      "emp": null,
+      "abstentions": {
+        "no_feasible_ce": 15
+      }
+    },
+    "spade-o32-validity_gated": {
+      "n": 15,
+      "ans": 0.0,
+      "emp": null,
+      "abstentions": {
+        "no_feasible_ce": 15
+      }
+    },
+    "spade-o32-certificate_targeted": {
+      "n": 15,
+      "ans": 0.06666666666666667,
+      "emp": 1.0,
+      "abstentions": {
+        "issued": 1,
+        "no_feasible_ce": 14
+      }
+    },
+    "sobol48": {
+      "n": 15,
+      "ans": 0.0,
+      "emp": null,
+      "abstentions": {
+        "no_feasible_ce": 15
+      }
+    },
+    "qlognei48": {
+      "n": 15,
+      "ans": 0.2,
+      "emp": 1.0,
+      "abstentions": {
+        "no_feasible_ce": 12,
+        "issued": 3
+      }
+    }
+  },
+  "verdict_so_far": "FAIL_LIKELY \u2014 all SPADE arms hill ans<<0.5; bagged5 \u2229 drives no_feasible_ce",
+  "product_arm": "spade-o32-certificate_targeted"
+}

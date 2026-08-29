@@ -16,6 +16,8 @@
 | Preflight | `scripts/run_spade_unified_preflight.sh` |
 | Gate report | `scripts/report_unified_spade_gate.py` |
 | Monitor | `cat /tmp/spade-durable.status` |
+| Live | **hill COMPLETE 75/75**; levy RUNNING (started ~05:44Z) |
+| Hill interim | All SPADE arms **ans≪0.5** (product 0.067; staged/VG 0.0) — bagged5 ∩ → mass `no_feasible_ce`. Gate will FAIL ans bar regardless of levy emp. |
 
 **Primary claim:** manufacturing ans≥0.5 & emp≥0.9 on hill **and** levy.  
 **Secondary claim:** Joseph LB round-budget (committed `results/lb-*.json`) — not a gate substitute.
