@@ -27,7 +27,7 @@ GENERATOR_MANIFEST = "b" * 64
 POWER_DESIGN = "2" * 64
 POWER_ENGINE = "3" * 64
 POWER_PLANNER = "4" * 64
-SELECTED = "spade-o44-fixed_hybrid"
+SELECTED = "spade-o32-certificate_targeted"
 
 
 def _canonical_bytes(value: object) -> bytes:
@@ -210,7 +210,7 @@ def _analysis() -> dict[str, object]:
 
 def _selected(analysis: dict[str, object], artifacts: list[dict[str, object]]) -> dict[str, object]:
     canonical_config_json = SpadeConfig(
-        opening=44, policy="fixed_hybrid", root_seed=0
+        opening=32, policy="certificate_targeted", root_seed=0
     ).canonical_json
     analysis_bytes = _canonical_bytes(analysis)
     trace_json = json.dumps(
@@ -239,7 +239,7 @@ def _selected(analysis: dict[str, object], artifacts: list[dict[str, object]]) -
         "selected_canonical_config": json.loads(canonical_config_json),
         "selected_canonical_config_json": canonical_config_json,
         "selected_template_protocol_digest": SpadeConfig(
-            opening=44, policy="fixed_hybrid", root_seed=0
+            opening=32, policy="certificate_targeted", root_seed=0
         ).protocol_digest,
         "campaign_root_seed_binding": "sha256_labelled_derived_per_campaign",
     }

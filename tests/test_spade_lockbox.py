@@ -244,7 +244,7 @@ def _power_payload(
         as_dict=lambda: copy.deepcopy(decision),
         decision_sha256=decision_sha256,
     )
-    candidate = "spade-o44-fixed_hybrid"
+    candidate = "spade-o32-certificate_targeted"
     payload: dict[str, object] = {
         "schema": "boec-spade-lockbox-power-v1",
         "status": "POWERED",
@@ -303,7 +303,7 @@ def _built_selection(monkeypatch, tmp_path: Path) -> dict:
         lambda *_args, **_kwargs: {
             "schema": selector.ANALYSIS_SCHEMA,
             "status": "SELECTED",
-            "selected_candidate": "spade-o44-fixed_hybrid",
+            "selected_candidate": "spade-o32-certificate_targeted",
             "selection_trace": {"rule": "unanimous_lofo_consensus"},
             "lofo_folds": [],
         },

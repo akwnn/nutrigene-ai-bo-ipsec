@@ -97,7 +97,7 @@ def _valid_payload(
 ) -> dict[str, object]:
     held_out = copy.deepcopy(held_out if held_out is not None else _held_out())
     decision = plan_lockbox_sample_size(held_out).as_dict()
-    selected = "spade-o44-fixed_hybrid"
+    selected = "spade-o32-certificate_targeted"
     payload: dict[str, object] = {
         "schema": "boec-spade-lockbox-power-v1",
         "status": decision["status"],
