@@ -15,6 +15,10 @@ ROOT = Path(__file__).resolve().parents[1]
 ALPHA, BAR, CONF, MIN_ANSWER = "0.95", 0.90, 0.95, 0.05
 RHO_BAR = 0.80          # TAU-1 gate
 NBOOT = 8000
+#: Named explicitly. A bare `results/tau-*.json` also matches
+#: `results/tau-quantile-followup.json`, an unrelated Aug-25 experiment with a different
+#: schema, which is exactly what a loose glob is for getting wrong.
+FAMILIES = ("ackley", "hartmann6", "hill", "levy", "rosenbrock")
 
 
 def cp_lower(k, n):
@@ -64,9 +68,13 @@ def pooled(cells, sel):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--glob", default=str(ROOT / "results" / "tau-*.json"))
+    ap.add_argument("--glob", default=None,
+                    help="override; defaults to the five named TAU family files")
     a = ap.parse_args()
-    cells, diff = load(sorted(glob.glob(a.glob)))
+    paths = (sorted(glob.glob(a.glob)) if a.glob else
+             [str(ROOT / "results" / f"tau-{f}.json") for f in FAMILIES
+              if (ROOT / "results" / f"tau-{f}.json").exists()])
+    cells, diff = load(paths)
     if not cells:
         print("no TAU rows yet"); return
     fams = sorted({k[1] for k in cells})
