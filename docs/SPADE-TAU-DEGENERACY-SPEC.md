@@ -164,3 +164,75 @@ extend again.**
 - **This stopping rule is binding.** Extending again if 64 fails would be optional stopping
   and would invalidate the result. If 64 fails, TAU-2 is FAILED and `hill` stays out of
   scope.
+
+---
+
+## 8. TAU at 64 seeds — the pre-declared adjudication. TAU-2 PASSES.
+
+Run to the n registered in §7.4, adjudicated ONCE. No further extension (binding).
+
+### 8.1 TAU-2 PASSES — `hill` certifies. The dose-response limitation is DISSOLVED.
+
+| hill, p = 0.70, c = 1.0 | answered | contained | containment | LB |
+|---|---|---|---|---|
+| **SPADE** | **40/64** | 40 | **1.0000** | **0.9278** — CERTIFIES |
+| qLogNEI | 27/64 | 27 | **1.0000** | 0.8950 — 2 short of the n threshold |
+
+`levy` also certifies (SPADE, p = 0.70: LB 0.9079). **`SPADE-LC-CONFIRMATORY-SPEC.md`
+§8.3's scope restriction — "every certification claim is a claim about two synthetic
+functions" — is now LIFTED.** A biphasic dose-response landscape has been certified at 95%
+with perfect empirical containment.
+
+**Reported with its prevalence attached, as §6 requires:** this is certification of the
+region covering the top **70%** of the design space, not the top 10%. `hill` still does not
+certify at p <= 0.50. The claim is "certifies at prevalence 0.70", and the honest reading
+is that the attainable target on a compressed landscape is a broad one.
+
+That is not a weak claim for this application: the real iPSC-EC result asserted
+"CD31+ >= 33.2% across the WHOLE coating box" — a prevalence near 1.0. **A broad,
+high-prevalence guarantee is the shape of claim cell manufacturing actually wants.**
+
+### 8.2 What must NOT be claimed — the same trap, avoided
+
+**Do NOT write "SPADE certifies the dose-response family and BO cannot."** Both arms have
+containment **1.0000**. qLogNEI fails by **two answered cells**, and its answered count
+grows with seeds exactly as SPADE's does — at ~96 seeds qLogNEI would reach ~40 and also
+pass. A binary certifies/does-not statement here is a statement about where n sits relative
+to the CP threshold of 29, which is the precise error behind LB §7.2, LC §8.1, and §7.3.
+
+**The durable, n-independent claim is coverage:**
+
+> On the dose-response family, at identical and perfect empirical containment (1.0000 for
+> both arms), **SPADE answers 40 of 64 cells against qLogNEI's 27 — 48% more** — and so
+> reaches a 95% certificate at a seed count where qLogNEI does not yet.
+
+### 8.3 TAU-1 PASSES again at 64 seeds
+
+Spearman rho(margin/sd, answer rate) = **0.9801** over 25 cells, p < 0.0001.
+
+### 8.4 TAU-3 PASSES — 3 of 4 difficulty bins
+
+| bin | n | mean diff | 95% CI | p |
+|---|---|---|---|---|
+| [0.0,0.5) | 832 | +0.001228 | [+0.000011, +0.003648] | 0.0057 |
+| [0.5,1.0) | 128 | +0.000273 | [+0.000109, +0.000445] | 0.0015 |
+| [1.0,2.0) | 384 | +0.001217 | [+0.000845, +0.001589] | <0.0001 |
+| [2.0,99) | 256 | +0.000021 | [−0.001496, +0.001463] | 0.96 |
+
+Three of four bins separate, all positive. **The easiest bin shows nothing, and that is
+expected rather than damaging:** at margin/sd > 2 both arms answer ~100% (hartmann6 is
+100.0% at every p), so there is no headroom for a coverage advantage. SPADE's edge exists
+where certification is *hard*, which is where it matters.
+
+**LC §9.1's certified-volume win is therefore a method effect, not a difficulty artefact.**
+
+### 8.5 The paper's claims after TAU
+
+- **Certification generalises to a dose-response landscape** — `hill`, prevalence 0.70,
+  LB 0.9278, containment 1.0000. §8.3's scope restriction is lifted.
+- **Certifiability is governed by `margin/sd`**, rho = 0.98. This is a quantitative law,
+  and it converts "levy and rosenbrock saturate" from an embarrassment into a prediction.
+- **SPADE's advantage is COVERAGE at equal containment**, and it survives matched
+  difficulty in every bin that has headroom.
+- **Unchanged ceiling:** `sigma_rel = 0.25` throughout. At the real assay noise of 0.68
+  nothing certifies for any arm.
