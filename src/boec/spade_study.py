@@ -957,6 +957,15 @@ def score_campaign(
         )
     if not bool(certificate.mask.any()):
         abstention_reason = "no_feasible_ce"
+        empty = torch.zeros_like(certificate.mask)
+        certificate = ConservativeSetResult(
+            mask=empty,
+            crossfit_containment=None,
+            selection_containment=None,
+            volume=0.0,
+            selection_draws=certificate.selection_draws,
+            evaluation_draws=certificate.evaluation_draws,
+        )
     elif certificate.volume > effective.certificate_max_volume:
         abstention_reason = "volume_cap"
         empty = torch.zeros_like(certificate.mask)

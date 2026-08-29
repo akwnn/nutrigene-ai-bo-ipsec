@@ -220,6 +220,102 @@ def test_scoring_settings_reject_inflation_floor_below_one():
         )
 
 
+def test_empty_bagged_intersection_nulls_containment_fields(monkeypatch):
+    """Bagged ∩ empty must abstain cleanly (no leftover bag containments)."""
+    from boec.reliable_region import ConservativeSetResult
+
+    settings = ScoringExecutionSettings(
+        calibration_grid_size=256,
+        terminal_grid_size=64,
+        map_grid_size=48,
+        certificate_grid_size=24,
+        certificate_draws=32,
+        certificate_rho_grid_size=8,
+        fit_restarts=1,
+        certificate_bootstrap_bags=3,
+        certificate_max_volume=0.001,
+        latent_draw_inflation="none",
+        mean_marginalisation=False,
+    )
+
+    def _empty_cert(**_kwargs):
+        mask = torch.zeros(24, dtype=torch.bool)
+        return ConservativeSetResult(
+            mask=mask,
+            crossfit_containment=0.99,
+            selection_containment=0.98,
+            volume=0.0,
+            selection_draws=16,
+            evaluation_draws=16,
+        )
+
+    monkeypatch.setattr(study_module, "_certificate_from_campaign_model", _empty_cert)
+    monkeypatch.setattr(
+        study_module,
+        "build_learned_noise_gp",
+        lambda *a, **k: _Model(),
+    )
+    monkeypatch.setattr(
+        study_module,
+        "model_reliability_probability",
+        lambda model, grid, tau, **kw: torch.full(
+            (grid.shape[0],), 0.2, dtype=torch.double
+        ),
+    )
+    monkeypatch.setattr(
+        study_module,
+        "_posterior_mean",
+        lambda model, grid: torch.full((grid.shape[0],), 0.5, dtype=torch.double),
+    )
+
+    harness = SealedOracleHarness(_truth, optimum_value=1.0, oracle_identity="toy")
+    threshold = controlled_tau(
+        harness,
+        sigma_rel=0.10,
+        sigma_add=0.01,
+        gamma=0.95,
+        q_tau=0.75,
+        root_seed=11,
+        execution_mode="TEST_ONLY",
+        settings=settings,
+    )
+    campaign = _campaign(arm="spade", tau=threshold.tau)
+    campaign.execution_mode = "TEST_ONLY"
+    campaign.registered = False
+    score = score_campaign(
+        campaign,
+        threshold.tau,
+        harness.scorer(),
+        sigma_rel=0.10,
+        sigma_add=0.01,
+        gamma=0.95,
+        alpha=0.95,
+        scoring_seed=3,
+        execution_mode="TEST_ONLY",
+        settings=settings,
+    )
+    assert score.certificate_nonempty is False
+    assert score.certificate_volume == 0.0
+    assert score.certificate_selection_containment is None
+    assert score.certificate_crossfit_containment is None
+    assert score.certificate_empirical_containment is None
+    assert score.certificate_abstention_reason == "no_feasible_ce"
+    build_study_row(
+        score,
+        study_protocol_digest="d" * 64,
+        spec_digest="e" * 64,
+        config_digest="f" * 64,
+        source_commit="a" * 40,
+        source_dirty=False,
+        command_args=["test"],
+        parent_artifacts={},
+        family="ackley",
+        instance_seed=0,
+        campaign_seed=0,
+        root_seed=0,
+        derived_seeds={"noise": 1, "threshold": 2, "scoring": 3},
+    )
+
 
 def test_controlled_tau_makes_quarter_grid_reliable_and_releases_numeric_only():
     harness = SealedOracleHarness(_truth, optimum_value=1.0, oracle_identity="toy")
