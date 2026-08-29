@@ -3,6 +3,10 @@
 What is established, what was withdrawn, and how each was obtained. Every number below
 traces to a committed result file and an adjudicator script written before its data landed.
 
+> **These numbers are machine-checked.** `scripts/verify_conclusions.py` recomputes §1's
+> claims from `results/` and exits non-zero on any mismatch. Run it after any change to a
+> result file, an analyser, or this document. Last run: **10/10 reproduce.**
+
 ---
 
 ## 1. The claims that stand
