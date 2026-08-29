@@ -43,11 +43,27 @@ def _load_rows(path: Path) -> list[dict]:
     raise ValueError(f"unsupported shard format: {path}")
 
 
-HISTORICAL_DEVELOPMENT_ARM_IDS = tuple(
-    f"spade-o{opening}-{policy}"
-    for opening in development.OPENINGS
-    for policy in development.BASE_POLICIES
-) + development.CONTROL_ARMS
+# Archived shards may predate the unified 5-arm product grid.
+_HISTORICAL_ARM_LAYOUTS = (
+    # Pre-B3: 9 SPADE + 2 controls
+    tuple(
+        f"spade-o{opening}-{policy}"
+        for opening in (32, 40, 44)
+        for policy in ("staged", "fixed_hybrid", "validity_gated")
+    )
+    + ("sobol48", "qlognei48"),
+    # B3/B4: 10 SPADE (cert_targeted on o32) + 2 controls
+    tuple(
+        f"spade-o{opening}-{policy}"
+        for opening in (32, 40, 44)
+        for policy in (
+            ("staged", "fixed_hybrid", "validity_gated", "certificate_targeted")
+            if opening == 32
+            else ("staged", "fixed_hybrid", "validity_gated")
+        )
+    )
+    + ("sobol48", "qlognei48"),
+)
 
 
 def _resolve_arm_id(row: dict, all_rows: list[dict]) -> str:
@@ -62,17 +78,15 @@ def _resolve_arm_id(row: dict, all_rows: list[dict]) -> str:
         and int(item["campaign_seed"]) == campaign_seed
     ]
     group.sort(key=lambda item: item["run_digest"])
-    if len(group) == len(HISTORICAL_DEVELOPMENT_ARM_IDS):
-        arm_ids = HISTORICAL_DEVELOPMENT_ARM_IDS
-    elif len(group) == len(development.DEVELOPMENT_ARM_IDS):
-        arm_ids = development.DEVELOPMENT_ARM_IDS
-    else:
-        raise ValueError(
-            f"unexpected campaign arm count {len(group)} for "
-            f"{family}/{instance_seed}/{campaign_seed}"
-        )
-    index = group.index(row)
-    return arm_ids[index]
+    layouts = (*_HISTORICAL_ARM_LAYOUTS, development.DEVELOPMENT_ARM_IDS)
+    for arm_ids in layouts:
+        if len(group) == len(arm_ids):
+            index = group.index(row)
+            return arm_ids[index]
+    raise ValueError(
+        f"unexpected campaign arm count {len(group)} for "
+        f"{family}/{instance_seed}/{campaign_seed}"
+    )
 
 
 def _rescore_row(
