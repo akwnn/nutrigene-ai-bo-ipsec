@@ -364,3 +364,12 @@ COMMIT_MSG.txt
 !results/lc-hill.json
 !results/lc-levy.json
 !results/lc-rosenbrock.json
+
+# TAU -- the tau-degeneracy sweep (docs/SPADE-TAU-DEGENERACY-SPEC.md). Tests whether
+# hill's saturation is a property of the family or of the target definition, and carries
+# TAU-3, the adversarial check aimed at our own surviving certified-volume claim.
+!results/tau-ackley.json
+!results/tau-hartmann6.json
+!results/tau-hill.json
+!results/tau-levy.json
+!results/tau-rosenbrock.json
