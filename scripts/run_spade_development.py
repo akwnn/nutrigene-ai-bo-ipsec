@@ -43,19 +43,19 @@ from boec.torch_oracle import BiphasicOracle, TorchEvaluator  # noqa: E402
 
 
 DEVELOPMENT_FAMILIES = ("hill", "ackley", "hartmann6", "levy", "rosenbrock")
-OPENINGS = (32, 40, 44)
-BASE_POLICIES = ("staged", "fixed_hybrid", "validity_gated")
+# Unified product SPADE (2026-08-29 Option A): o32 only — product + two ablations.
+OPENINGS = (32,)
+BASE_POLICIES = ("staged", "validity_gated")
 CERT_TARGETED_OPENING = 32
 POLICIES = BASE_POLICIES + ("certificate_targeted",)
 CANDIDATE_ARM_IDS = tuple(
     f"spade-o{opening}-{policy}"
     for opening in OPENINGS
-    for policy in (
-        POLICIES if opening == CERT_TARGETED_OPENING else BASE_POLICIES
-    )
+    for policy in POLICIES
 )
 CONTROL_ARMS = ("sobol48", "qlognei48")
 DEVELOPMENT_ARM_IDS = CANDIDATE_ARM_IDS + CONTROL_ARMS
+PRODUCT_ARM_ID = "spade-o32-certificate_targeted"
 CAMPAIGNS_PER_FAMILY = 50
 # Exact historical d=6 development subset, frozen in sorted instance-id order. These are
 # the 25 instances in p2-versionb-gamma; hard-coding the identities prevents a later
@@ -252,8 +252,7 @@ def candidate_spec(arm_id: str) -> tuple[int, str]:
         raise ValueError(f"unknown SPADE candidate {arm_id!r}")
     prefix, policy = arm_id.removeprefix("spade-o").split("-", 1)
     opening = int(prefix)
-    allowed = POLICIES if opening == CERT_TARGETED_OPENING else BASE_POLICIES
-    if opening not in OPENINGS or policy not in allowed:
+    if opening not in OPENINGS or policy not in POLICIES:
         raise ValueError(f"unregistered SPADE candidate {arm_id!r}")
     return opening, policy
 
@@ -262,6 +261,14 @@ def rounds_for_opening(opening: int) -> int:
     if opening not in OPENINGS:
         raise ValueError(f"opening must be one of {OPENINGS}")
     return 1 + (48 - opening) // 4
+
+
+def rounds_for_arm(arm_id: str) -> int:
+    """Registered round count for a development arm (product uses R=3)."""
+    opening, policy = candidate_spec(arm_id)
+    if policy == "certificate_targeted":
+        return 3  # Joseph schedule (32, 8, 8)
+    return rounds_for_opening(opening)
 
 
 def comparator_protocol_digest(arm: str, *, root_seed: int) -> str:

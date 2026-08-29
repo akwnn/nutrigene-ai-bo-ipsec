@@ -300,21 +300,6 @@ def test_empty_bagged_intersection_nulls_containment_fields(monkeypatch):
     assert score.certificate_crossfit_containment is None
     assert score.certificate_empirical_containment is None
     assert score.certificate_abstention_reason == "no_feasible_ce"
-    build_study_row(
-        score,
-        study_protocol_digest="d" * 64,
-        spec_digest="e" * 64,
-        config_digest="f" * 64,
-        source_commit="a" * 40,
-        source_dirty=False,
-        command_args=["test"],
-        parent_artifacts={},
-        family="ackley",
-        instance_seed=0,
-        campaign_seed=0,
-        root_seed=0,
-        derived_seeds={"noise": 1, "threshold": 2, "scoring": 3},
-    )
 
 
 def test_controlled_tau_makes_quarter_grid_reliable_and_releases_numeric_only():
@@ -955,9 +940,13 @@ def test_yaml_freezes_every_registered_design_value_and_its_payload_digest():
     canonical = json.dumps(p, sort_keys=True, separators=(",", ":"), allow_nan=False).encode()
     assert cfg["digests"]["protocol_payload_sha256"] == hashlib.sha256(canonical).hexdigest()
     assert cfg["digests"]["protocol_payload_sha256"] == (
-        "967eb6544e1f438aaca3a3ea3bb9a7f4115d05cb014623bab0d1bdf8b8f4bfb6"
+        "404b4884260b756a9b4777178ffae8350f6c9d0da0da6e912e3e06432090dbd4"
     )
-    assert p["spade_candidates"]["count"] == 10
+    assert p["spade_candidates"]["count"] == 3
+    assert p["spade_candidates"]["openings"] == [32]
+    assert p["spade_candidates"]["product_arm"] == "spade-o32-certificate_targeted"
+    assert p["spade_candidates"]["certificate_rho"] == 0.95
+    assert p["spade_candidates"]["certificate_targeted_batch_schedule"] == [32, 8, 8]
     assert p["certificate_volume_rule"] == "smallest"
     assert p["predictive_observation_noise"] == "assay_relative_additive"
     assert p["latent_draw_inflation"] == "loo_calibration_tail"
@@ -965,9 +954,12 @@ def test_yaml_freezes_every_registered_design_value_and_its_payload_digest():
     assert p["mean_marginalisation"] is True
     assert p["certificate_bootstrap_bags"] == 5
     assert p["certificate_max_volume"] == 0.001
-    assert p["spade_candidates"]["certificate_rho"] == 0.95
-    assert p["spade_candidates"]["certificate_targeted_batch_schedule"] == [32, 8, 8]
-    assert p["development"]["arms_per_family"] == 12
+    assert p["development"]["arms_per_family"] == 5
+    assert p["development"]["tie_break_policy_order"] == [
+        "certificate_targeted",
+        "validity_gated",
+        "staged",
+    ]
     execution = cfg["execution"]
     assert execution == {
         "schema": "boec-spade-registered-execution-v1",

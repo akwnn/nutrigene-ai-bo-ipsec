@@ -1,5 +1,5 @@
 schema: boec-spade-joint-protocol-v1
-study_id: spade-joint-48-mfg-cert-floor15-loo-tail-meanmarg-bagged5-rho95-r3-2026-08-29
+study_id: spade-joint-48-unified-product-o32-rho95-r3-bagged5-2026-08-29
 status: FROZEN_BEFORE_DEVELOPMENT_SELECTION
 public_method_name: SPADE
 claim_scope: computational_synthetic_benchmark_only
@@ -43,25 +43,23 @@ protocol:
     unique_without_replacement: true
 
   spade_candidates:
-    openings: [32, 40, 44]
+    openings: [32]
     opening_design: scrambled_sobol
     replicate_reserve: 0
     oa_lhs_included: false
-    policies: [staged, fixed_hybrid, validity_gated, certificate_targeted]
+    policies: [staged, validity_gated, certificate_targeted]
     certificate_targeted_opening: 32
     certificate_rho: 0.95
     certificate_targeted_batch_schedule: [32, 8, 8]
-    count: 10
-    rounds_by_opening: {32: 5, 40: 3, 44: 2}
+    product_arm: spade-o32-certificate_targeted
+    count: 3
+    rounds_by_opening: {32: 5}
     batch_schedules:
       32: [32, 4, 4, 4, 4]
-      40: [40, 4, 4]
-      44: [44, 4]
     boundary_ess_min: 32
     whole_batch_objectives: [qlognei, global_ivr, boundary_ivr, certificate_straddle]
     policy_definitions:
       staged: qlognei_every_adaptive_batch
-      fixed_hybrid: alternate_qlognei_and_global_ivr_starting_qlognei
       validity_gated: alternate_qlognei_and_boundary_or_global_ivr_starting_qlognei
       certificate_targeted: certificate_contour_straddle_batches_rho95_r3
 
@@ -94,8 +92,8 @@ protocol:
     families: [hill, ackley, hartmann6, levy, rosenbrock]
     truth_range_contracts: {hill: strict_unit_interval, external_families: legacy_unit_scaled}
     campaigns_per_family_arm: 50
-    arms_per_family: 12
-    total_noisy_evaluations: 132000
+    arms_per_family: 5
+    total_noisy_evaluations: 60000
     hill_instances: 25
     hill_campaign_seeds_per_instance: 2
     selection: nested_leave_one_family_out
@@ -103,7 +101,7 @@ protocol:
     minimum_empirical_containment_point_estimate: 0.90
     regret_noninferiority_margin: 0.02
     one_sided_confidence: 0.95
-    tie_break_policy_order: [fixed_hybrid, validity_gated, staged]
+    tie_break_policy_order: [certificate_targeted, validity_gated, staged]
 
   lockbox:
     families: [toroidal_rastrigin, gaussian_basin_mixture, curved_ridge, soft_plateau]
@@ -203,7 +201,7 @@ execution:
 
 digests:
   digest_definition: "sha256; protocol and execution payloads each use canonical sorted compact JSON of their parsed mappings"
-  protocol_payload_sha256: 967eb6544e1f438aaca3a3ea3bb9a7f4115d05cb014623bab0d1bdf8b8f4bfb6
+  protocol_payload_sha256: 404b4884260b756a9b4777178ffae8350f6c9d0da0da6e912e3e06432090dbd4
   execution_payload_sha256: 5dae76d1495c009cf2ea0989142fe4563c2f2140d2dbe832249bdcc41fa4f80d
   actions_workflow_sha256: 5240e0a2c302d91afdab7df87abfba83f01983bd7aa9b8550334771c5603722d
   actions_matrix_sha256: 52230fffe9fcc9317de68f6c7f4c1ef5b97debf58332c62b39380cbd185d951d
@@ -212,7 +210,7 @@ digests:
   requirements_sha256: 96a00b1abb366bd48318d7957703608b348393aa280a6808ef91652c28471687
   spec_sha256: 21c07a4107dd39770facabd3f3c9b52c45b65239c0d60b3cc5f7ce7648bdf403
   lockbox_oracles_source_sha256: 1a79abd6e62d503852fe98957e67d4d4f6d7e9f8b52788176f2359ed38d3e0c3
-  spade_study_source_sha256: 4c0497603fb623c9a488fb560879079153ed5a442d39f21a1e1a40cd28f75256
+  spade_study_source_sha256: 236a9b72ba8e617931fab8222d74f55c858d7558df35b13cefc3d1701e150b18
   power_design_sha256: 6fec13c194468fbbab83758760a60b0161314b03d5c97d3146d14c52af226d7b
   power_engine_sha256: bb3fb81c44a41318bf14dbabc399a9aed7e2225dd4dcea27706a081d152ac97b
   power_planner_sha256: 408dcadecbdbf52fff18928eb189ad6963cf8668c8035bb54f2b61e3732ac865

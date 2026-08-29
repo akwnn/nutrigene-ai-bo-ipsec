@@ -291,16 +291,22 @@ def test_frozen_development_grid_is_exact_and_common_keyed():
         "levy",
         "rosenbrock",
     )
-    assert runner.OPENINGS == (32, 40, 44)
+    assert runner.OPENINGS == (32,)
+    assert runner.BASE_POLICIES == ("staged", "validity_gated")
     assert runner.POLICIES == (
         "staged",
-        "fixed_hybrid",
         "validity_gated",
         "certificate_targeted",
     )
-    assert len(runner.CANDIDATE_ARM_IDS) == 10
+    assert runner.CANDIDATE_ARM_IDS == (
+        "spade-o32-staged",
+        "spade-o32-validity_gated",
+        "spade-o32-certificate_targeted",
+    )
+    assert len(runner.CANDIDATE_ARM_IDS) == 3
     assert runner.CONTROL_ARMS == ("sobol48", "qlognei48")
-    assert len(runner.DEVELOPMENT_ARM_IDS) == 12
+    assert len(runner.DEVELOPMENT_ARM_IDS) == 5
+    assert runner.PRODUCT_ARM_ID == "spade-o32-certificate_targeted"
     assert runner.development_campaign_key("hill", 0) == (0, 0)
     assert runner.development_campaign_key("hill", 49) == (24, 1)
     assert runner.development_campaign_key("ackley", 49) == (0, 49)
@@ -521,11 +527,11 @@ def test_real_development_threshold_path_accepts_every_registered_family(family)
     )
 
 
-def test_complete_grid_accepts_exactly_3000_rows(complete_rows):
+def test_complete_grid_accepts_exactly_1250_rows(complete_rows):
     grid = selector.validate_development_grid(complete_rows, protocol_digest=PROTOCOL)
-    assert grid["row_count"] == 5 * 50 * 12 == 3000
+    assert grid["row_count"] == 5 * 50 * 5 == 1250
     assert grid["campaigns_per_family"] == 50
-    assert grid["candidate_count"] == 10
+    assert grid["candidate_count"] == 3
     assert grid["control_count"] == 2
 
 
@@ -554,7 +560,7 @@ def test_grid_rejects_eleventh_candidate_missing_arm_and_heldout_role(complete_r
         family="hill",
         start=0,
         stop=1,
-        row_count=12,
+        row_count=5,
         raw_file="x.jsonl.gz",
         raw_sha256="4" * 64,
         metadata={
@@ -622,7 +628,7 @@ def test_smoke_shard_is_scratch_only_marked_and_resumable(tmp_path, monkeypatch)
     )
     assert manifest["status"] == "SMOKE"
     assert manifest["complete"] is True
-    assert manifest["row_count"] == 24
+    assert manifest["row_count"] == 10
 
     rows = runner.read_shard_rows(output, PROTOCOL)
     rows[0]["scores"]["map_loss"] = 0.123
@@ -655,7 +661,7 @@ def test_smoke_shard_is_scratch_only_marked_and_resumable(tmp_path, monkeypatch)
 def test_nested_lofo_selection_records_every_gate_and_tie(complete_rows):
     analysis = selector.analyse_development(complete_rows, protocol_digest=PROTOCOL)
     assert analysis["status"] == "SELECTED"
-    assert analysis["selected_candidate"] == "spade-o44-fixed_hybrid"
+    assert analysis["selected_candidate"] == "spade-o32-certificate_targeted"
     assert len(analysis["lofo_folds"]) == 5
     assert {fold["held_out_family"] for fold in analysis["lofo_folds"]} == set(
         runner.DEVELOPMENT_FAMILIES
@@ -663,7 +669,7 @@ def test_nested_lofo_selection_records_every_gate_and_tie(complete_rows):
     assert all(len(fold["training_families"]) == 4 for fold in analysis["lofo_folds"])
     trace = analysis["selection_trace"]
     assert trace["all_five_refit_diagnostic"]["trace"]["step4"]["policy_order"] == [
-        "fixed_hybrid",
+        "certificate_targeted",
         "validity_gated",
         "staged",
     ]
@@ -674,8 +680,8 @@ def test_nested_lofo_selection_records_every_gate_and_tie(complete_rows):
 
 def test_lofo_disagreement_returns_no_selection_even_when_full_grid_has_winner(complete_rows):
     rows = copy.deepcopy(complete_rows)
-    candidate_a = "spade-o44-fixed_hybrid"
-    candidate_b = "spade-o44-validity_gated"
+    candidate_a = "spade-o32-certificate_targeted"
+    candidate_b = "spade-o32-validity_gated"
     for row in rows:
         arm_id = selector.development_arm_id(row)
         if arm_id == "sobol48":
@@ -695,7 +701,7 @@ def test_lofo_disagreement_returns_no_selection_even_when_full_grid_has_winner(c
     assert "unanimous" in analysis["selection_trace"]["rationale"]
 
 
-def test_all_eleven_arms_must_share_seed_and_scoring_identity(complete_rows):
+def test_all_five_arms_must_share_seed_and_scoring_identity(complete_rows):
     for field, value in (
         ("root_seed", 999_999),
         ("noise", 999_998),
@@ -759,7 +765,7 @@ def test_all_eleven_arms_must_share_seed_and_scoring_identity(complete_rows):
         row for row in rows
         if row["family"] == "rosenbrock" and row["campaign_seed"] == 4
     ]
-    assert len(group) == 12
+    assert len(group) == 5
     for row in group:
         row["derived_seeds"]["noise"] = 999_995
         row["parent_artifacts"]["seed_contract"] = runner.seed_contract_digest(
@@ -952,8 +958,8 @@ def test_selected_artifact_is_hash_bound_and_fail_closed(tmp_path, complete_rows
     assert selected["generator_digest"] == GENERATOR
     assert selected["generator_manifest_sha256"] == GENERATOR_MANIFEST
     assert len(selected["development_artifacts"]) == 5
-    assert selected["selected_canonical_config"]["opening"] == 44
-    assert selected["selected_canonical_config"]["policy"] == "fixed_hybrid"
+    assert selected["selected_canonical_config"]["opening"] == 32
+    assert selected["selected_canonical_config"]["policy"] == "certificate_targeted"
     assert selected["selection_trace"]["rule"] == "unanimous_lofo_consensus"
     assert len(selected["lofo_folds"]) == 5
     assert hashlib.sha256(analysis_path.read_bytes()).hexdigest() == selected["analysis_sha256"]

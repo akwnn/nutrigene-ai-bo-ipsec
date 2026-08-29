@@ -33,7 +33,7 @@ ANSWER_RATE_MINIMUM = 0.50
 EMPIRICAL_CONTAINMENT_MINIMUM = 0.90
 REGRET_NONINFERIORITY_MARGIN = 0.02
 ONE_SIDED_CONFIDENCE = 0.95
-TIE_POLICY_ORDER = ("fixed_hybrid", "validity_gated", "staged")
+TIE_POLICY_ORDER = ("certificate_targeted", "validity_gated", "staged")
 PAIRED_BOUND_METHOD = "one_sided_student_t_mean_difference_df_n_minus_1"
 
 

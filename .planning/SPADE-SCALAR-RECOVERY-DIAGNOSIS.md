@@ -12,11 +12,12 @@ artifacts live. Update when any gate completes (PASS or FAIL).
 
 | Verdict | Detail |
 |---------|--------|
-| **Binding failure mode** | Complementary near-misses — no single 9-arm config passes hill **and** levy together |
+| **Binding failure mode** | Complementary near-misses — no single arm passes hill **and** levy together |
 | **Levy is harder** | Best levy emp ~0.90 (`o32-validity_gated`); hill often 1.0 on different arms |
 | **Model-internal containment lies** | Failed runs still show selection containment ~0.97–0.99; truth emp False |
-| **B3 in flight** | Digest `2ef1875c…` — bagged5 + cert_targeted o32 + α=0.95 + 12 arms/family |
+| **B5 in flight** | Digest `404b4884…` — unified 5-arm product (ρ=0.95, R=3, bagged5) |
 | **Parallel win** | Multi-CQA benchmark PASS (`b29bb57e…`) — separate EC claim |
+| **Design** | Option A: mfg gate primary; Joseph round-budget secondary |
 
 ---
 
@@ -27,7 +28,8 @@ artifacts live. Update when any gate completes (PASS or FAIL).
 | floor15+meanmarg | `1c5c3b7e` | Joseph meanmarg wired | **FAIL** 0 survivors | `results/historical-mfg-cert-floor15-loo-tail-meanmarg-gate-fail/` → [JSON](artifacts/gate-summaries/historical-mfg-cert-floor15-loo-tail-meanmarg-gate-fail.json) |
 | floor20 (B1) | `b846fe2d` | inflation floor 1.5→2.0 | **FAIL** — hurt levy | `results/historical-mfg-cert-floor20-loo-tail-meanmarg-gate-fail/` → [JSON](artifacts/gate-summaries/historical-mfg-cert-floor20-loo-tail-meanmarg-gate-fail.json) |
 | alpha0.98 (B2) | `7ba21e73` | reliability α 0.95→0.98 | **FAIL** — levy ans collapsed | `results/historical-mfg-cert-floor15-loo-tail-meanmarg-alpha098-gate-fail/` → [JSON](artifacts/gate-summaries/historical-mfg-cert-floor15-loo-tail-meanmarg-alpha098-gate-fail.json) |
-| **B4 Joseph-aligned (B3 fix)** | `967eb654` | ρ=0.95 + schedule (32,8,8) + per-round menu | **RUNNING** | live shards |
+| **B5 unified product** | `404b4884` | 5-arm: ρ=0.95+(32,8,8)+bagged5; PRODUCT=cert_targeted | **RUNNING** | live |
+| bagged5+rho95 12-arm (B4) | `967eb654` | empty-bag crash + superseded by B5 shrink | **SUPERSEDED** | do not resume |
 | bagged5+cert_targeted (B3) | `2ef1875c` | ρ=0.5 + four×4 batches (wrong defaults) | **SUPERSEDED** | do not resume |
 
 **Commits (implementation):** `ddddfb8` (B3 protocol), `cc43b09` (manifest hash fix).

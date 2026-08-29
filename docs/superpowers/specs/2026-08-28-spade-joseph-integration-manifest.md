@@ -47,13 +47,18 @@ ported into manufacturing `main` without rewriting his history.
 **Not ported:** Joseph `.gitignore` rewrite (drops manufacturing evidence allowlists). LC
 `results/lc-*.json` not yet on his branch — run locally when compute free.
 
-## Promoted to registered (B3 digest `2ef1875c…`)
+## Promoted to registered (B5 digest `404b4884…` — Unified Product Option A)
 
 | Item | Setting |
 |------|---------|
-| `certificate_bootstrap_bags` | **5** (intersect bootstrap refits) |
-| `certificate_targeted` policy | **o32 only** (10th SPADE arm) |
-| `reliability.alpha` | **0.95** (reverted from failed B2) |
+| Arm grid | **5 arms**: PRODUCT `o32-certificate_targeted` + `o32-validity_gated` + `o32-staged` + sobol48 + qlognei48 |
+| `certificate_bootstrap_bags` | **5** |
+| `certificate_rho` | **0.95** |
+| schedule (product) | **(32, 8, 8)** |
+| `reliability.alpha` | **0.95** |
+| Primary claim | manufacturing hill+levy ans/emp gate |
+| Secondary claim | Joseph LB round-budget (`results/lb-*.json`) — not a gate substitute |
+| Design | `docs/superpowers/specs/2026-08-29-spade-unified-product-design.md` |
 
 ## Pending promotion (research → registered)
 
