@@ -353,3 +353,14 @@ COMMIT_MSG.txt
 !results/lb-hartmann6.json
 !results/la-ackley.json
 !results/lb-ackley.json
+
+# LC -- the confirmatory run (docs/SPADE-LC-CONFIRMATORY-SPEC.md). It WITHDREW the
+# "SPADE certifies at 5 rounds, qLogNEI needs 10" headline and showed `hill` saturates,
+# so these five files are the evidence for a retraction, not just another sweep. They were
+# untracked and one `git push` from existing only on one laptop -- the same defect this
+# file already documents three times above.
+!results/lc-ackley.json
+!results/lc-hartmann6.json
+!results/lc-hill.json
+!results/lc-levy.json
+!results/lc-rosenbrock.json

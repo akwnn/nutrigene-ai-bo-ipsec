@@ -87,6 +87,14 @@ effect is NOT monotone in rounds** -- that is recorded as measured and is not ex
 
 ### 7.2 LB-2: the number a lab needs
 
+> **WITHDRAWN by LC (`docs/SPADE-LC-CONFIRMATORY-SPEC.md` §8.1).** At 25 seeds in one
+> process, **qLogNEI certifies at R = 3 and R = 5.** The claim below that it "needs 10"
+> was a sample-size artefact of the Clopper-Pearson bound, not a containment deficit:
+> at 10 seeds qLogNEI R=5 had 31 answered with 1 miss (LB 0.8559); at 25 seeds, 62
+> answered with 1 miss (LB 0.9258). Same miss, same containment, double the n.
+> The text is kept as measured; the conclusion is retracted.
+
+
 Smallest round count at which each arm reaches LB >= 0.90 at answer rate >= 0.05:
 
 | arm | certifies from | at R = 5 |
@@ -203,6 +211,18 @@ changes the per-seed row count and so cannot be merged into the run already in f
 it is a separate companion run.
 
 ## 8. The headline comparison: SPADE at 5 rounds vs qLogNEI at 10
+
+> **WITHDRAWN by LC (`docs/SPADE-LC-CONFIRMATORY-SPEC.md` §8).** Both halves failed the
+> confirmatory run. The certification half is dead (qLogNEI certifies at R = 3 and R = 5,
+> §8.1). The regret half is **INCONCLUSIVE**, not a pass: n = 125, mean +0.0015,
+> CI [-0.0219, +0.0239] against the SESOI of +/-0.02 (§8.2).
+>
+> **What survives is LB-1, and it replicates strongly:** at MATCHED rounds SPADE certifies
+> more volume than qLogNEI (R=3 +0.000242, R=5 +0.001326, both p < 0.0001, §8.4).
+> That is the defensible claim. "Half the differentiation cycles" is not.
+>
+> §8.2's own caveat -- "a larger confirmatory run is owed" -- was right, and this is it.
+
 
 Paired on the same 40 `(family, seed)` landscapes, same 48 wells, same `sigma = 0.25`
 (SPADE R=5 from `results/lb-*.json`, qLogNEI R=10 from `results/la-*.json`; the oracle is
