@@ -105,11 +105,15 @@ choosing the same `c`** — selection is stable, so the pooled number was not an
 ## 5. The open items, in priority order
 
 1. **`ackley` is SPADE's one real weakness** — +0.0652, CI [+0.0203, +0.1104], **p=0.004**,
-   and it *strengthened* from p=0.029 at 25 seeds. The only effect today that grew with n.
-   The live hypothesis is **ρ**, not θ: SPADE's acquisition is really
+   and it *strengthened* from p=0.029 at 25 seeds. The only effect that grew with n.
+   The live hypothesis is **ρ**: SPADE's acquisition is really
    `argmax (1.96 − z_ρ)·sd + mean`, so ρ=0.95 gives an exploration weight of just **0.315**,
-   which is little for a needle-in-a-haystack landscape. **Moving ρ changes the certificate's
-   Vorob'ev level, i.e. the estimand — so the trade must be registered before it is run.**
+   which is little for a needle-in-a-haystack landscape.
+   **CORRECTED 2026-08-30:** an earlier version of this line said moving ρ changes the
+   estimand. **That was wrong** — ρ feeds only `batch_lse_rho`; the certificate is computed
+   independently from `p2.ALPHAS`. ρ is a plain design knob.
+   **θ is ruled out:** aiming at τ was tested at 5 families × 32 seeds and made ackley
+   *worse* (`SPADE-THETA-TAU-SPEC.md` §8.3).
 2. **qLogNEI on `hill` at ~96 seeds** — it currently misses by two answered cells (27 vs the
    29 needed) at containment 1.0000. State the coverage gap as a margin (40 vs 27), not as a
    threshold crossing, and pre-empt the reviewer who notices.
