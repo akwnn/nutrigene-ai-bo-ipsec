@@ -128,6 +128,7 @@ class AcqConfig:
         num_restarts: how many places the search starts from. More is safer.
         raw_samples: how many points are screened before the search begins.
         mc_samples: how many draws are used to estimate the expected gain.
+        sampler_seed: explicit QMC stream seed; never read from ambient RNG.
         inequality_constraints: combinations that must satisfy a linear rule.
         equality_constraints: combinations pinned to a linear relationship.
         nonlinear_inequality_constraints: anything more complicated.
@@ -147,6 +148,7 @@ class AcqConfig:
     equality_constraints: list | None = None
     nonlinear_inequality_constraints: list | None = None
     fixed_features_list: list[dict[int, float]] | None = field(default=None)
+    sampler_seed: int = 0
 
     def __post_init__(self) -> None:
         if self.kind not in ACQUISITION_CHOICES:
@@ -159,6 +161,10 @@ class AcqConfig:
                 f"unknown best_f policy {self.best_f_policy!r}; "
                 f"choose from {sorted(BEST_F_POLICIES)}"
             )
+        if isinstance(self.sampler_seed, bool) or not isinstance(self.sampler_seed, int):
+            raise ValueError("sampler_seed must be an integer")
+        if self.sampler_seed < 0:
+            raise ValueError("sampler_seed must be nonnegative")
 
 
 # ---------------------------------------------------------------------------
@@ -275,7 +281,10 @@ def make_acquisition(
     cfg = config or AcqConfig()
     from botorch.sampling.normal import SobolQMCNormalSampler
 
-    sampler = SobolQMCNormalSampler(sample_shape=torch.Size([cfg.mc_samples]))
+    sampler = SobolQMCNormalSampler(
+        sample_shape=torch.Size([cfg.mc_samples]),
+        seed=cfg.sampler_seed,
+    )
 
     if cfg.kind == "qlognei":
         return qLogNoisyExpectedImprovement(

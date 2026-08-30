@@ -1,0 +1,1 @@
+Figure 1 | Benchmark decisions and estimands. (a) Each method operates within one 48-well campaign. (b) The same sampled campaign supports point and region decisions. (c) The estimand ledger distinguishes the reported object, observability, score, additional wells and experimental rounds for every deliverable. This figure defines the benchmark and contains no performance result.

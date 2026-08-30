@@ -22,6 +22,12 @@ draw-count correction), Version C (regret parity, hard-stop, regime detector), t
 community performance profile, the prospective confirmatory study `spade-final-2026-08-23`
 (KF-1–KF-10), and its follow-up `spade-kf3-followup-2026-08-24` (KF-3b/KF-3c/KF-3d).
 
+These completed studies provide historical and development evidence for a newly frozen
+48-evaluation joint SPADE protocol. Its implementation, deterministic release machinery,
+development selector and unopened lockbox generators are complete. Its development outcomes,
+selected policy and lockbox outcomes have not been generated; no result below is an outcome
+of that new protocol.
+
 ---
 
 ## Background — the prior deliverable this study builds on
@@ -90,7 +96,7 @@ govern how later rows must be read.
 | **F3** (draw-count sweep) | Was the original certificate "failure" (§14) real, or a 512-draw estimator artefact? | 3,000 rows, 250 campaigns | All 4 originally sub-nominal hill cells reach/exceed nominal by 1,024 draws (worst: 0.860→0.980); no cell fails at 4,096 draws with power | §14's hill-level claim withdrawn — it was the estimator, not SPADE, *at that cell*; P8 later showed the underlying phenomenon is real elsewhere | §3 |
 | **Version C / K-C1–K-C8** | Does a posterior-mean terminal rule change SPADE's regret standing? Does a trust-region/detector improve anything? | 28,800 rows | K-C1 PASS (parity, not a win, vs. 4 arms); K-C2/K-C3 PASS structurally (re-score of already-gated columns); **K-C7 FIRED** (regime detector 0/50 on held-out families); K-C4/5/8 MOOT | Regret parity confirmed a second way; no working automatic scope detector exists | §3, §6 |
 | **Performance profile** (BO convention) | What *kind* of "middling" is SPADE's regret? | same 28,800 rows, τ-sweep | SPADE wins outright 2% of problems, within 3× of best on 70%; `doe` matches the 2% but is within 3× on only 22% | SPADE is rarely best and rarely catastrophic; `doe` shares the rare win but carries a long, heavy tail | §6 |
-| **`spade-final-2026-08-23`** (prospective confirmatory study, KF-1–KF-10) | Run fresh (not re-scored) campaigns and formally adjudicate 10 pre-registered kill conditions | 92,400+ rows, 7 conditions, 11 arms | KF-3/4/5 **FAIL** (targeting doesn't earn its cost); KF-6/7/8 **PASS** (map/regret parity with Sobol/qLogNEI); KF-1 PASS, KF-2 **FAIL** (cert. doesn't generalize to hartmann6); KF-9 **FAIL** (ceiling), KF-10 **FAIL** | The first prospective (not re-scored) test of SPADE as a method — narrows, not broadens, every earlier re-score-based claim | §2 |
+| **`spade-final-2026-08-23`** (prospective confirmatory study, KF-1–KF-10) | Run fresh (not re-scored) campaigns and formally adjudicate 10 pre-registered kill conditions | 99,601 rows, 7 conditions | KF-3/4/5 **FAIL** (targeting does not earn its cost); KF-6/7/8 **PASS** (map/regret competitiveness); KF-1 PASS, KF-2 **FAIL** (certificate does not generalize cleanly); clean regeneration corrects KF-9 to **PASS** (0/23,600 above ceiling); KF-10 **FAIL** (18/64 empty-set downgrades) | The first prospective test of SPADE as a method narrows every broad claim; the complete release now passes 9/9 clean-checkout checks | §2 |
 | **`spade-kf3-followup-2026-08-24`** (KF-3b/c/d) | Do two principled fixes (error-aware acquisition, diversity-aware batching) rescue KF-3's failure? | 400 campaigns, 2 new arms | Both FAIL at the registered 0.02 SESOI; both show a real but small effect only on the harder cross-family cell (hartmann6), not at the target condition; KF-3d MOOT | Not a fixable acquisition/clustering defect — most consistent with a budget/power limit at 8 wells in 6D | §2 |
 
 ---
@@ -108,11 +114,11 @@ SPADE is two things that are easy to conflate:
 The registered kill programme (KF-3, KF-4, KF-5, and the KF-3 follow-up) tested the
 **mechanism**, not the architecture, and it did not survive:
 
-> We keep the two-round architecture — one global round plus one follow-up round — because
-> one plate is not enough to harden the operating region and certificate (§2, §6 below). The
-> specific boundary-targeting mechanism tested does not materially outperform random
-> placement of the same 8 wells at the registered budget, and this document does not claim
-> that it does.
+> We retain the two-round architecture as the object evaluated, not as a demonstrated
+> improvement over one plate. In the registered target cell, the 40-well first plate had
+> slightly lower map error than the full 48-well workflow, and the targeted second plate did
+> not materially outperform random placement of the same eight wells. This document claims
+> neither a marginal benefit of Plate 2 nor a benefit of its targeting rule.
 
 Everything that follows is organized around that split.
 
@@ -120,50 +126,39 @@ Everything that follows is organized around that split.
 
 ## 1b. What was actually tested, versus what SPADE specifies
 
-Everything in §2–§6 is about **the SPADE that was built**, not necessarily everything SPADE's
-own founding specs (`docs/SPADE-SPEC.md`, `docs/ODIN-VERDICT.md`) call for. Two of the
-specified design decisions were never implemented, and the evidence base inherits both gaps
-silently unless stated here.
+Everything in §2–§6 is about **the SPADE that was built**, not every stage in the founding
+specifications. The three highest-priority specification gaps have now been tested under
+registered gates, so they are decisions rather than open assumptions.
 
-- **Plate 1's specified design was never built; every result below uses plain LHS instead.**
-  `SPADE-SPEC.md` Stage 1 specifies a 49-point strength-2 orthogonal-array LHS ("OA-LHS"),
-  justified by stratifying every 1D marginal *and* every 2D projection (Stein 1987) — plain
-  LHS only stratifies 1D marginals. No `strength=2`/`oa_lhs` code exists anywhere in
-  `src/boec/`; every SPADE arm's Plate 1 is plain LHS. `ODIN-VERDICT.md` §3 calls this "the
-  largest untested target in the repo," and a companion measurement (`Q53`) found plain-LHS
-  design variance alone accounts for **over half** of the entire `spread_gp`-vs-`qLogEI` gap
-  on Hartmann6. The kill test that would bound this (K2, design-lottery) was **demoted to a
-  sensitivity check, not run at headline strength** (`FINDINGS-SPADE.md`, K2 status).
-  **Consequence: §2's "74–85% of SPADE's margin comes from Plate 1" finding is a property of
-  one realized plain-LHS draw per campaign, not of SPADE's actually-specified Stage-1
-  design** — the mechanism that would reduce that draw-to-draw lottery was never built or
-  measured as a headline result.
-- **The diagnosed fix for SPADE's calibration shortfall was never built either.**
-  `ODIN-VERDICT.md` §7.3 diagnoses GP under-smoothing as caused by `_plug_in_yvar` computing
-  observation variance from the *noisy reading itself* rather than the truth, which inflates
-  apparent structure. `SPADE-SPEC.md` Stage 2 prescribes the fix — a replicate-pooled noise
-  estimate, "plugged in and held fixed, not fitted" — and pre-registers it as the leading
-  candidate cause: *"better σ̂ from replicates fixes calibration measurably."* Every SPADE
-  variant in this evidence base (Version B, Version C, KF-3/3b/3c, P6, P7, P8, F3) still
-  calls the un-fixed `_plug_in_yvar`; `FINDINGS-SPADE.md` confirms the test that would check
-  this (K1, "what does replicate-identified noise buy?") is **not started**. **Consequence:
-  §4's "SPADE ranks 5–7/9 on calibration" is reported as if it were a property of the
-  architecture; it may equally be a property of one specific, already-diagnosed, unfixed
-  noise-estimation bug.**
-- **The rest of the go/no-go kill ladder (K0, K3, K4) was never run.** K3 (confirm-and-average
-  vs. confirm-and-replace) is called by `ODIN-VERDICT.md` §2 "the single highest-value unrun
-  experiment in the repository." (K4 here is a cheap, Plate-1-only deception detector from
-  `ODIN-VERDICT.md` §3 — a different, earlier, unrun idea from Version C's K-C7 regime
-  detector in §3 below, which *was* built and *did* fail; don't conflate the two.)
+- **The controlled-prevalence threshold correction was retained.** Replacing a fixed
+  fraction of peak height with a per-family prevalence quantile increased non-empty
+  certification on Ackley from 0% to 13.3% overall (41.9% at the loosest target) and on
+  Hartmann6 from 8.3% to 24.7% overall (81.2% at the loosest target) across 400 campaigns.
+  It did not make the top-3% and top-1% regions answerable. The newer joint protocol applies
+  the same principle to the γ-adjusted future-response reliability margin.
+- **Strength-2 OA-LHS was tested and rejected.** The generator was implemented for the K2
+  experiment, but exact strength 2 requires 49 rather than 48 wells. Across 125 matched
+  Hartmann6 campaigns, its design-lottery SD was 0.1628 versus 0.1496 for plain LHS; the
+  difference was +0.013 with a confidence interval spanning zero. The current 48-evaluation
+  protocol therefore uses a scrambled-Sobol opening rather than adopting OA-LHS.
+- **Replicate-pooled noise estimation was gated and rejected before implementation.** K0
+  was ambiguous. K1 then granted the GP oracle knowledge of the true noise variance as an
+  unattainable upper bound; mean regret improved by 0.00816 (95% CI +0.00202 to +0.01417,
+  p=0.017), below the registered 0.01 build bar. Since a real replicate estimator cannot
+  exceed that oracle ceiling, the 48-evaluation protocol retains learned noise and spends
+  no wells on replication.
+- **K3/K4 remain outside the evaluated method.** Confirmation-rule sensitivity is reported
+  in the main BO-versus-RSM programme, but the older go/no-go ladder's confirm-and-average
+  and Plate-1 deception-detector proposals were not added to SPADE.
 - **Stage 0 (a day-0 covariate adjustment) was scoped out for a stated, legitimate reason** —
   not recoverable from the data this project has, would need a fresh real plate
   (`FINDINGS-SPADE.md`) — so SPADE as tested is missing one of its four specified stages, by
   a documented decision rather than an oversight.
 
-None of this reverses any verdict below. It means every claim in §2–§8 should be read as
-being about **the implementation that exists**, which is demonstrably a partial one, and two
-of the omissions (Plate 1's design, the noise estimator) are specifically the two most
-plausible mechanisms that could have moved the results this document reports.
+None of this reverses any verdict below. It means every claim in §2–§8 concerns the tested
+implementation. The threshold correction moves forward; OA-LHS and pooled-replicate noise
+do not remain speculative rescue mechanisms because their registered gates did not support
+building them into the 48-evaluation method.
 
 ---
 
@@ -313,7 +308,7 @@ elsewhere. Per-cell, never pooled, across 64 scored `(family, γ, τ_frac)` cell
 | `rosenbrock` | 0.99 | 0.60 | 37/50 | **0.740** | **4.74e-05** |
 | `levy` | 0.99 | 0.75 | 37/48 | **0.771** | **1.22e-03** |
 
-**All three failing cells are at γ=0.99; `hill` has zero cells below nominal (18 of 18 scored
+**Historical fixed-fraction analysis.** All three failing cells are at γ=0.99; `hill` has zero cells below nominal (18 of 18 scored
 cells clear 0.95, worst 0.980).** One correction to how to read "γ=0.99": it is *not*
 straightforwardly the hardest corner. The absolute threshold `tau` is `tau_frac × tau_max(γ,
 σ)`, and `tau_max` **decreases** as γ increases (a mechanical fact — confirmed independently
@@ -341,6 +336,11 @@ what P8 and F3 later found, which is evidence the emptiness is an understood mec
 unexplained artefact. **The families that certify most readily (`levy`, `rosenbrock`, 22/24
 cells each) are the ones whose certificate is least trustworthy at high assurance; hill is
 the only family that is both willing to certify and calibrated where it does.**
+
+A later registered τ-quantile follow-up replaces this incommensurate scoring convention
+going forward. It substantially improves Ackley and Hartmann6 answerability at the loosest
+target but does not make the top-3% and top-1% regions answerable. P8 remains evidence about
+the historical fixed-fraction estimand, not the active threshold policy of the joint protocol.
 
 **Registered constraint arising from this: no containment claim may be stated
 family-agnostically.** Any statement about SPADE's certificate must name the family and the
@@ -450,12 +450,11 @@ entire spread of the metric.
 **Reframed statement.** SPADE's certificate is an empirically tested conservative excursion
 statement at its validated (hill) setting (§3 above); its underlying probability surface is
 sharp but only moderately calibrated relative to `sobol`. "SPADE is calibrated" is not a
-defensible unqualified claim — "SPADE buys sharpness and does not buy reliability" is. **This
-is reported as an architecture property, but see §1b: the one specific, pre-diagnosed,
-pre-registered fix for exactly this kind of GP under-smoothing (a replicate-pooled noise
-estimate, rather than the noisy-reading-derived estimate every SPADE variant here still uses)
-was never built or tested.** Whether the calibration gap is inherent to the architecture or
-attributable to that one unfixed estimator is currently unanswered.
+defensible unqualified claim — "SPADE buys sharpness and does not buy reliability" is. The
+registered oracle-noise ceiling in §1b showed a statistically non-zero but sub-threshold
+0.00816 regret benefit, so replicate-pooled noise estimation was rejected for the fixed
+48-evaluation protocol. That bounded result does not prove that calibration is immutable
+under every alternative model or replication budget.
 
 **A metric that must not be substituted for calibration: `alpha_star`.** An earlier
 model-internal statistic (`alpha_star`, a functional of the fitted posterior only) was
@@ -663,13 +662,13 @@ it.
 
 ## 7. What we can now claim about SPADE
 
-- **The SPADE architecture that was actually built and tested** — a two-round protocol with
+- **The historical SPADE architecture that was actually built and tested** — a two-round protocol with
   a plain-LHS Plate 1, a straddle-with-diversity-targeted Plate 2, and a conservative
   excursion certificate — matches or nears BO's regret in 2 rounds against BO's 10, and
   produces a certified operating region that `sobol`/`lhs`/plain BO do not (§6). This is
-  *not* a claim about SPADE as specified (§1b): the specified strength-2 OA-LHS Plate-1
-  design and the specified replicate-pooled noise estimator were never built, so this claim
-  is about the implementation that exists, not the full method on paper.
+  a claim about that implementation. OA-LHS and pooled-replicate noise were subsequently
+  rejected at their registered build gates; the new joint protocol instead uses a scrambled-
+  Sobol opening and a learned-noise GP (§1b).
 - SPADE's map is sharp: it wins refinement ranks 1–3 of 9 in the Murphy decomposition (§4)
   and is competitive with `sobol` on symmetric-difference map error across most cross-family
   conditions tested, within SESOI at the study's own target condition (§2, KF-6/KF-7 PASS) —
@@ -741,10 +740,9 @@ it.
 - Any certificate claim at τ_frac ≥ 0.85. SPADE's own certified set is empty in the large
   majority to all of the campaigns tested at those thresholds — there is no evidence in
   either direction (§3).
-- That "SPADE" as specified was tested at all. Two of its own founding design decisions — a
-  strength-2 OA-LHS Plate 1, and a replicate-pooled noise estimator meant to fix a
-  pre-diagnosed calibration defect — were never built. Every claim in this document is about
-  the partial implementation that exists (§1b).
+- That every component in the founding SPADE specification was tested as one workflow.
+  OA-LHS and pooled-replicate noise were evaluated at registered build gates and rejected;
+  the reported campaigns use the retained implementation (§1b).
 - That KF-3's "targeting doesn't earn its cost" verdict is a fully general property of the
   mechanism. It rests on hill alone; on at least one other family (ackley), regret cannot
   even distinguish targeted from random Plate 2, so the null result there is untestable by
@@ -759,10 +757,9 @@ it.
   active/inert ratio against hill's assumed 4.5–9×; the σ=0.25 used throughout every
   certificate/calibration number is also optimistic relative to that same real dataset by
   roughly 2.7× (§3).
-- That SPADE's calibration shortfall (§4) or its Plate-2-value shortfall (§2) are settled,
-  inherent architecture properties rather than possibly artefacts of two specific, already-
-  diagnosed, unbuilt fixes (a better noise estimator; the specified OA-LHS design) — neither
-  has been tested (§1b, §4).
+- That SPADE's calibration or Plate-2 shortfalls are universal architecture properties.
+  Oracle-noise and OA-LHS follow-ups failed their build gates, but each was tested on a
+  bounded benchmark and does not exclude every alternative design or noise model (§1b, §4).
 - That DoE's rule-A "advantage" this document's rule-P story reverses is itself a robust,
   hard-to-erase effect. It collapses to a dead tie with 3 confirmation wells out of 48, and
   the round-count comparator used throughout §6 is a non-relocating classical design flagged
@@ -785,9 +782,10 @@ not run, no scripts executed.
 
 | section here | evidence |
 |---|---|
-| §1b unbuilt OA-LHS / K2 demoted | `docs/SPADE-SPEC.md` Stage 1; `docs/ODIN-VERDICT.md` §3; FINDINGS-SPADE.md (K2 status) |
-| §1b unbuilt noise-estimator fix / K1 not started | `docs/ODIN-VERDICT.md` §7.3; `docs/SPADE-SPEC.md` Stage 2; FINDINGS-SPADE.md (K1 status) |
-| §1b K0/K3/K4 never run | `docs/ODIN-VERDICT.md` §2, §3 |
+| §1b retained τ-quantile correction | `docs/SPADE-TAU-QUANTILE-SPEC.md`; `results/tau-quantile-followup.json` |
+| §1b OA-LHS / K2 rejected | `docs/SPADE-CALIBRATION-FIX-SPEC.md`; `results/k2-design-lottery.json` |
+| §1b pooled-noise / K0–K1 rejected | `docs/SPADE-CALIBRATION-FIX-SPEC.md`; `results/k0-calibration-gate.json`; `results/k1-noise-ceiling.json` |
+| §1b K3/K4 not added | `docs/ODIN-VERDICT.md` §2, §3 |
 | §2 KF-3 | `results/final-spade-kill-ledger.json`; FINDINGS-SPADE-FINAL.md §12 |
 | §2 KF-3b/c/d | `results/kf3-followup-analysis.json`; FINDINGS-SPADE-FINAL.md §19; `docs/SPADE-KF3-FOLLOWUP-SPEC.md` |
 | §2 landscape-dependent distinguishability (ackley bit-identical regret) | `docs/OPEN-QUESTIONS.md` |

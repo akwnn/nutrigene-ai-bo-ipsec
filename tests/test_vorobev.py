@@ -10,8 +10,8 @@ import torch
 
 from boec.vorobev import (alpha_star, conservative_estimate,
                           conservative_estimate_split, containment_probability,
-                          excursion_probability, vorobev_deviation, vorobev_expectation,
-                          vorobev_quantile)
+                          excursion_probability, set_containment_probability,
+                          vorobev_deviation, vorobev_expectation, vorobev_quantile)
 
 
 def _draws(n_pts=200, n_draws=400, seed=0):
@@ -64,6 +64,26 @@ def test_containment_of_the_empty_set_is_one_and_is_excluded_elsewhere():
     d = _draws()
     empty = torch.zeros(d.shape[1], dtype=torch.bool)
     assert containment_probability(d, empty, theta=0.5) == 1.0
+
+
+def test_boolean_set_containment_probability_is_joint_not_pointwise():
+    draws = torch.tensor(
+        [[True, True], [True, False], [False, True], [True, True]]
+    )
+    mask = torch.tensor([True, True])
+    assert set_containment_probability(draws, mask) == 0.5
+
+
+def test_boolean_set_containment_probability_validates_contract():
+    with torch.no_grad():
+        draws = torch.ones(4, 2, dtype=torch.bool)
+        assert set_containment_probability(draws, torch.zeros(2, dtype=torch.bool)) == 1.0
+    try:
+        set_containment_probability(draws.double(), torch.ones(2, dtype=torch.bool))
+    except ValueError as exc:
+        assert "boolean" in str(exc).lower()
+    else:
+        raise AssertionError("numeric random-set draws must not be silently coerced")
 
 
 def test_alpha_star_is_always_defined_and_in_the_unit_interval():

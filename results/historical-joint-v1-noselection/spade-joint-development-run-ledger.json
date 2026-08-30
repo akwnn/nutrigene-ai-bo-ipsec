@@ -1,0 +1,574 @@
+{
+  "execution": {
+    "host_policy": "homogeneous_local",
+    "mode": "REGISTERED",
+    "notes": [
+      "Ackley/Hartmann6 runner stdout was not redirected to a .log file; provenance is in manifests/resumes.",
+      "Hill 000-001 with mismatched executable path was isolated under /tmp then re-run with canonical .venv path before merge.",
+      "LOFO selection status is NO_SELECTION; lockbox must not run."
+    ],
+    "threads": {
+      "MKL_NUM_THREADS": "1",
+      "NUMEXPR_NUM_THREADS": "1",
+      "OMP_NUM_THREADS": "1",
+      "OPENBLAS_NUM_THREADS": "1",
+      "VECLIB_MAXIMUM_THREADS": "1"
+    }
+  },
+  "git": {
+    "branch": "main",
+    "campaign_source_commit": "c9199a3bafb0e4ea7b2d7026d84657501f12d893",
+    "evidence_commit": "502ea3948976b15f849aecf680e24a0487eed742"
+  },
+  "operational_logs": [
+    {
+      "bytes": 1655,
+      "mtime_utc": "2026-08-26T05:47:40.416368+00:00",
+      "path": "results/spade-joint-pipeline.log",
+      "sha256": "9d12ccfc97ece0d45b666cf8c338703ab7f4d9a37d6bade0aa8fa4e35e448f4d"
+    },
+    {
+      "bytes": 25878,
+      "mtime_utc": "2026-08-26T05:47:40.419111+00:00",
+      "path": "results/spade-joint-select.log",
+      "sha256": "d21b8864e781996f7a6c96281228dbd955ec04b889090640571200965eb51f95"
+    },
+    {
+      "bytes": 1058,
+      "mtime_utc": "2026-08-26T05:47:40.421810+00:00",
+      "path": "results/spade-joint-focused-tests.log",
+      "sha256": "8067b1a052ab8786753eb9e76d3ac5c80638cf4e0a1bcb1c606d46301ab8de54"
+    },
+    {
+      "bytes": 7930,
+      "mtime_utc": "2026-08-26T05:47:40.426098+00:00",
+      "path": "results/spade-joint-hill-merge.log",
+      "sha256": "aced2d68fe3b79c6f51648dda6de1601069e1426784b3e079ed8cadda88d1e32"
+    },
+    {
+      "bytes": 117,
+      "mtime_utc": "2026-08-26T05:47:40.428969+00:00",
+      "path": "results/spade-joint-levy-wrap.log",
+      "sha256": "07b08b745c2595c7c49aeb435d1a4abaf1c2acf9335f275d673857a344659998"
+    },
+    {
+      "bytes": 53,
+      "mtime_utc": "2026-08-26T05:47:40.432654+00:00",
+      "path": "results/spade-joint-hill-isolate-path.txt",
+      "sha256": "af11a6585bb1c23575058160f9a7970874f3e659b7ce5771202ce57d3c3ac23a"
+    },
+    {
+      "bytes": 3653,
+      "mtime_utc": "2026-08-26T05:47:40.435320+00:00",
+      "path": "results/spade-joint-continue-dev.sh",
+      "sha256": "21fc065af0bc076505f2ef1a72adcd29514bddc45d37cca607f28fed6c7aa8c0"
+    },
+    {
+      "bytes": 1213,
+      "mtime_utc": "2026-08-26T04:12:30.942034+00:00",
+      "path": "results/spade-development-hill-000-001.log",
+      "sha256": "537bc08409ecc75a7c1e725f6f91ff5ee2a2fbb564c46744b9d75bfd85e66a64"
+    },
+    {
+      "bytes": 2962,
+      "mtime_utc": "2026-08-26T04:07:18.279291+00:00",
+      "path": "results/spade-development-levy-000-050.log",
+      "sha256": "1e5d38c2cf6b6c7095bcbd9322c0c092314ab498e23d877c81d6dc020c53e178"
+    },
+    {
+      "bytes": 1247,
+      "mtime_utc": "2026-08-26T05:44:21.526407+00:00",
+      "path": "results/spade-development-rosenbrock-000-050.log",
+      "sha256": "9d26e3f6c19f29d44e877872086344e57fd4657638fbca86b4fee86da3b69509"
+    }
+  ],
+  "recorded_at_utc": "2026-08-26T05:47:40.528524+00:00",
+  "schema": "boec-spade-joint-development-run-ledger-v1",
+  "selection": {
+    "analysis_path": "results/spade-development-analysis.json",
+    "analysis_sha256": "88bb079a6e438a233090b7fd96cef567fdee0980403e1673592904a5272f46c3",
+    "path": "results/spade-selected-protocol.json",
+    "rationale": "unanimous five-fold LOFO consensus was not achieved; no all-five refit may override fold disagreement or a fold-level NO_SELECTION",
+    "sha256": "d21b8864e781996f7a6c96281228dbd955ec04b889090640571200965eb51f95",
+    "status": "NO_SELECTION"
+  },
+  "shards": [
+    {
+      "command_args": [
+        "--family",
+        "ackley",
+        "--start",
+        "0",
+        "--stop",
+        "50",
+        "--out",
+        "results/spade-development-ackley-000-050.jsonl.gz"
+      ],
+      "complete": true,
+      "execution_mode": "REGISTERED",
+      "expected_rows": 550,
+      "family": "ackley",
+      "manifest": {
+        "bytes": 1227,
+        "mtime_utc": "2026-08-25T20:39:35.268196+00:00",
+        "path": "results/spade-development-ackley-000-050.jsonl.gz.manifest.json",
+        "sha256": "dd96f580649daa2a6156901ab24a2570d9d7f3d12d4490dc478d6cb165a88ea4"
+      },
+      "raw": {
+        "bytes": 187217,
+        "mtime_utc": "2026-08-25T20:39:35.187396+00:00",
+        "path": "results/spade-development-ackley-000-050.jsonl.gz",
+        "sha256": "d7e810aa56e6ac99b137ee7f7f7b3d2af4bd775b1324258833c2377e22f610d2"
+      },
+      "raw_sha256": "d7e810aa56e6ac99b137ee7f7f7b3d2af4bd775b1324258833c2377e22f610d2",
+      "resume": {
+        "bytes": 2339573,
+        "mtime_utc": "2026-08-25T20:39:35.263036+00:00",
+        "path": "results/spade-development-ackley-000-050.jsonl.gz.resume.json",
+        "sha256": "d662dc937c534f4eb4531f2eeddf428402ec2e18f6d32d376353cfe58284e192"
+      },
+      "resume_sha256": "d662dc937c534f4eb4531f2eeddf428402ec2e18f6d32d376353cfe58284e192",
+      "row_chain_head": "229a7b9bf4f19c7fb535076f006fa2567e980f95c8eae1f2c1fb9c878754361d",
+      "row_count": 550,
+      "runner_logs": [],
+      "sidecar": {
+        "bytes": 108,
+        "mtime_utc": "2026-08-25T20:39:35.267657+00:00",
+        "path": "results/spade-development-ackley-000-050.jsonl.gz.sha256",
+        "sha256": "638b0f92d1656043973b42a240011181ea564380d3eea6306ad5746c79f4d089"
+      },
+      "source_commit": "c9199a3bafb0e4ea7b2d7026d84657501f12d893",
+      "source_dirty": false,
+      "start": 0,
+      "status": "COMPLETE",
+      "stop": 50,
+      "study_protocol_digest": "00ce6971a990749645052273215897f57562106610777d0d8ce417e8e9afdd1a"
+    },
+    {
+      "command_args": [
+        "--family",
+        "hartmann6",
+        "--start",
+        "0",
+        "--stop",
+        "50",
+        "--out",
+        "results/spade-development-hartmann6-000-050.jsonl.gz"
+      ],
+      "complete": true,
+      "execution_mode": "REGISTERED",
+      "expected_rows": 550,
+      "family": "hartmann6",
+      "manifest": {
+        "bytes": 1242,
+        "mtime_utc": "2026-08-26T01:50:45.883068+00:00",
+        "path": "results/spade-development-hartmann6-000-050.jsonl.gz.manifest.json",
+        "sha256": "d38b4d331bda6e89869c9a3928bf35a4ccbe217b7f396453dd7eb59d43d863b1"
+      },
+      "raw": {
+        "bytes": 185313,
+        "mtime_utc": "2026-08-26T01:50:45.817566+00:00",
+        "path": "results/spade-development-hartmann6-000-050.jsonl.gz",
+        "sha256": "c7395a921a793660ccafca261176ef7d4f7a8626a5db15fe605f6f0445474784"
+      },
+      "raw_sha256": "c7395a921a793660ccafca261176ef7d4f7a8626a5db15fe605f6f0445474784",
+      "resume": {
+        "bytes": 2344216,
+        "mtime_utc": "2026-08-26T01:50:45.878043+00:00",
+        "path": "results/spade-development-hartmann6-000-050.jsonl.gz.resume.json",
+        "sha256": "234d751b49ef38db3303a77a7ec8ea3678a18931da6d706f6205a803ad2c6609"
+      },
+      "resume_sha256": "234d751b49ef38db3303a77a7ec8ea3678a18931da6d706f6205a803ad2c6609",
+      "row_chain_head": "c27ec55662d2e6811d16faf9103be011cf05e4449c38dad51f4ca8e22206beca",
+      "row_count": 550,
+      "runner_logs": [],
+      "sidecar": {
+        "bytes": 111,
+        "mtime_utc": "2026-08-26T01:50:45.882323+00:00",
+        "path": "results/spade-development-hartmann6-000-050.jsonl.gz.sha256",
+        "sha256": "32e5f287c102b1f0e3e36dfdb0f0d5ae52638129b560b33506b8807acf9ced5b"
+      },
+      "source_commit": "c9199a3bafb0e4ea7b2d7026d84657501f12d893",
+      "source_dirty": false,
+      "start": 0,
+      "status": "COMPLETE",
+      "stop": 50,
+      "study_protocol_digest": "00ce6971a990749645052273215897f57562106610777d0d8ce417e8e9afdd1a"
+    },
+    {
+      "command_args": [
+        "--family",
+        "hill",
+        "--start",
+        "0",
+        "--stop",
+        "1",
+        "--out",
+        "results/spade-development-hill-000-001.jsonl.gz"
+      ],
+      "complete": true,
+      "execution_mode": "REGISTERED",
+      "expected_rows": 11,
+      "family": "hill",
+      "manifest": {
+        "bytes": 1213,
+        "mtime_utc": "2026-08-26T04:12:30.941762+00:00",
+        "path": "results/spade-development-hill-000-001.jsonl.gz.manifest.json",
+        "sha256": "537bc08409ecc75a7c1e725f6f91ff5ee2a2fbb564c46744b9d75bfd85e66a64"
+      },
+      "raw": {
+        "bytes": 5056,
+        "mtime_utc": "2026-08-26T04:12:30.938190+00:00",
+        "path": "results/spade-development-hill-000-001.jsonl.gz",
+        "sha256": "6c17a3b8d9d4656c1fa379a28bde2706dbea34ea6504845c2e359fe6ba51fe8a"
+      },
+      "raw_sha256": "6c17a3b8d9d4656c1fa379a28bde2706dbea34ea6504845c2e359fe6ba51fe8a",
+      "resume": {
+        "bytes": 47589,
+        "mtime_utc": "2026-08-26T04:12:30.940063+00:00",
+        "path": "results/spade-development-hill-000-001.jsonl.gz.resume.json",
+        "sha256": "ae76420c9ae83400cd8fe3cf31f502e84f32af3381c827f686061c2404ca4872"
+      },
+      "resume_sha256": "ae76420c9ae83400cd8fe3cf31f502e84f32af3381c827f686061c2404ca4872",
+      "row_chain_head": "b6b85d456bd64767c7218744615a590b53dae609104b6bb9a0b5189d2264af49",
+      "row_count": 11,
+      "runner_logs": [
+        {
+          "bytes": 1213,
+          "mtime_utc": "2026-08-26T04:12:30.942034+00:00",
+          "path": "results/spade-development-hill-000-001.log",
+          "sha256": "537bc08409ecc75a7c1e725f6f91ff5ee2a2fbb564c46744b9d75bfd85e66a64"
+        }
+      ],
+      "sidecar": {
+        "bytes": 106,
+        "mtime_utc": "2026-08-26T04:12:30.941425+00:00",
+        "path": "results/spade-development-hill-000-001.jsonl.gz.sha256",
+        "sha256": "627ed74847e6963edf9efb46f046558bed4fbca50daa1d431859436f45fff153"
+      },
+      "source_commit": "c9199a3bafb0e4ea7b2d7026d84657501f12d893",
+      "source_dirty": false,
+      "start": 0,
+      "status": "COMPLETE",
+      "stop": 1,
+      "study_protocol_digest": "00ce6971a990749645052273215897f57562106610777d0d8ce417e8e9afdd1a"
+    },
+    {
+      "command_args": [
+        "--family",
+        "hill",
+        "--parent-shard-ledger-json",
+        "{\"family\":\"hill\",\"parents\":[{\"command_args\":[\"--family\",\"hill\",\"--start\",\"0\",\"--stop\",\"1\",\"--out\",\"results/spade-development-hill-000-001.jsonl.gz\"],\"expected_rows\":11,\"manifest_file\":\"spade-development-hill-000-001.jsonl.gz.manifest.json\",\"manifest_sha256\":\"537bc08409ecc75a7c1e725f6f91ff5ee2a2fbb564c46744b9d75bfd85e66a64\",\"provenance\":{\"config_digest\":\"fb3a4d79861036dae2c4ac584069701a12112df2081f8e23a0528596d4ff68b4\",\"generator_digest\":\"1a79abd6e62d503852fe98957e67d4d4f6d7e9f8b52788176f2359ed38d3e0c3\",\"generator_manifest_sha256\":\"850f7dc8e5bfc1e7c74ebbdc4c04cb65da31c0bc8535ea8fde7af621dadbb159\",\"source_commit\":\"c9199a3bafb0e4ea7b2d7026d84657501f12d893\",\"source_dirty\":false,\"spec_digest\":\"000f75bd5b89a58ba9aef4d30907b0a561c4da68333e58c5e8f9e334d697f712\",\"study_protocol_digest\":\"00ce6971a990749645052273215897f57562106610777d0d8ce417e8e9afdd1a\"},\"raw_file\":\"spade-development-hill-000-001.jsonl.gz\",\"raw_sha256\":\"6c17a3b8d9d4656c1fa379a28bde2706dbea34ea6504845c2e359fe6ba51fe8a\",\"resume_file\":\"spade-development-hill-000-001.jsonl.gz.resume.json\",\"resume_sha256\":\"ae76420c9ae83400cd8fe3cf31f502e84f32af3381c827f686061c2404ca4872\",\"row_chain_head\":\"b6b85d456bd64767c7218744615a590b53dae609104b6bb9a0b5189d2264af49\",\"row_count\":11,\"sidecar_file\":\"spade-development-hill-000-001.jsonl.gz.sha256\",\"sidecar_sha256\":\"627ed74847e6963edf9efb46f046558bed4fbca50daa1d431859436f45fff153\",\"start\":0,\"stop\":1},{\"command_args\":[\"--family\",\"hill\",\"--start\",\"1\",\"--stop\",\"15\",\"--out\",\"results/spade-development-hill-001-015.jsonl.gz\"],\"expected_rows\":154,\"manifest_file\":\"spade-development-hill-001-015.jsonl.gz.manifest.json\",\"manifest_sha256\":\"03c50cf9990928a44a594a01a133c64714ed45f6bd6bae00d7a88babe63be585\",\"provenance\":{\"config_digest\":\"fb3a4d79861036dae2c4ac584069701a12112df2081f8e23a0528596d4ff68b4\",\"generator_digest\":\"1a79abd6e62d503852fe98957e67d4d4f6d7e9f8b52788176f2359ed38d3e0c3\",\"generator_manifest_sha256\":\"850f7dc8e5bfc1e7c74ebbdc4c04cb65da31c0bc8535ea8fde7af621dadbb159\",\"source_commit\":\"c9199a3bafb0e4ea7b2d7026d84657501f12d893\",\"source_dirty\":false,\"spec_digest\":\"000f75bd5b89a58ba9aef4d30907b0a561c4da68333e58c5e8f9e334d697f712\",\"study_protocol_digest\":\"00ce6971a990749645052273215897f57562106610777d0d8ce417e8e9afdd1a\"},\"raw_file\":\"spade-development-hill-001-015.jsonl.gz\",\"raw_sha256\":\"19b257a95454d8bd2072a65e166c8700bc14b52364144e1a3ab1680913d5b133\",\"resume_file\":\"spade-development-hill-001-015.jsonl.gz.resume.json\",\"resume_sha256\":\"4eb634d031417aba2a7f525d218bb08262e88e60437d0ff376bc54f62d794365\",\"row_chain_head\":\"1267475e94f4aded340da54c5b8865cd0222105581f3cb3964322c931d42a496\",\"row_count\":154,\"sidecar_file\":\"spade-development-hill-001-015.jsonl.gz.sha256\",\"sidecar_sha256\":\"d7517e017c925ea713bd9539ef5c073f91d1b8feb6790d271b65a9a35bd52508\",\"start\":1,\"stop\":15},{\"command_args\":[\"--family\",\"hill\",\"--start\",\"15\",\"--stop\",\"30\",\"--out\",\"results/spade-development-hill-015-030.jsonl.gz\"],\"expected_rows\":165,\"manifest_file\":\"spade-development-hill-015-030.jsonl.gz.manifest.json\",\"manifest_sha256\":\"b6423b20065721e4f2f81f6a38cbed7ce744db12f19d1d0edfb1631142ddd5d7\",\"provenance\":{\"config_digest\":\"fb3a4d79861036dae2c4ac584069701a12112df2081f8e23a0528596d4ff68b4\",\"generator_digest\":\"1a79abd6e62d503852fe98957e67d4d4f6d7e9f8b52788176f2359ed38d3e0c3\",\"generator_manifest_sha256\":\"850f7dc8e5bfc1e7c74ebbdc4c04cb65da31c0bc8535ea8fde7af621dadbb159\",\"source_commit\":\"c9199a3bafb0e4ea7b2d7026d84657501f12d893\",\"source_dirty\":false,\"spec_digest\":\"000f75bd5b89a58ba9aef4d30907b0a561c4da68333e58c5e8f9e334d697f712\",\"study_protocol_digest\":\"00ce6971a990749645052273215897f57562106610777d0d8ce417e8e9afdd1a\"},\"raw_file\":\"spade-development-hill-015-030.jsonl.gz\",\"raw_sha256\":\"f3a00fc679e3dbb9cf86b8048cb1342295dd03827ef2675a9fb7d9ede24b3d7a\",\"resume_file\":\"spade-development-hill-015-030.jsonl.gz.resume.json\",\"resume_sha256\":\"5ed95f7c17c214402e94cacd5ad12acf2f121d7f75b76bc173665b4fbe314ac7\",\"row_chain_head\":\"d1eee036abea13e09a177507bf359f8c18745c8d10ae7fc3b805fab19482689f\",\"row_count\":165,\"sidecar_file\":\"spade-development-hill-015-030.jsonl.gz.sha256\",\"sidecar_sha256\":\"b420bda7b513c047e6025ffee90e5ed8ba7b11263773d2b802a1e4d5f6893d65\",\"start\":15,\"stop\":30},{\"command_args\":[\"--family\",\"hill\",\"--start\",\"30\",\"--stop\",\"50\",\"--out\",\"results/spade-development-hill-030-050.jsonl.gz\"],\"expected_rows\":220,\"manifest_file\":\"spade-development-hill-030-050.jsonl.gz.manifest.json\",\"manifest_sha256\":\"8382b453ae26161c26fd9c741c0e7b2e8707570c091beabdd22f45cbec838782\",\"provenance\":{\"config_digest\":\"fb3a4d79861036dae2c4ac584069701a12112df2081f8e23a0528596d4ff68b4\",\"generator_digest\":\"1a79abd6e62d503852fe98957e67d4d4f6d7e9f8b52788176f2359ed38d3e0c3\",\"generator_manifest_sha256\":\"850f7dc8e5bfc1e7c74ebbdc4c04cb65da31c0bc8535ea8fde7af621dadbb159\",\"source_commit\":\"c9199a3bafb0e4ea7b2d7026d84657501f12d893\",\"source_dirty\":false,\"spec_digest\":\"000f75bd5b89a58ba9aef4d30907b0a561c4da68333e58c5e8f9e334d697f712\",\"study_protocol_digest\":\"00ce6971a990749645052273215897f57562106610777d0d8ce417e8e9afdd1a\"},\"raw_file\":\"spade-development-hill-030-050.jsonl.gz\",\"raw_sha256\":\"e82e9d70327d46c1be3f27ee78cfa3761921f5365953d9c1ff98dcb1d50f365d\",\"resume_file\":\"spade-development-hill-030-050.jsonl.gz.resume.json\",\"resume_sha256\":\"c9d593dedb2a6d1b1d54d47a492a2a964b26d776ab33e2744faab27032d10373\",\"row_chain_head\":\"06592950c6f71d4bc9438213a538679f2d2749581c7100c160ad0c54af3ff402\",\"row_count\":220,\"sidecar_file\":\"spade-development-hill-030-050.jsonl.gz.sha256\",\"sidecar_sha256\":\"b297d8c827e7d62c0a5686643a0fd83124288846323b91cbf7b77faf7e5b3959\",\"start\":30,\"stop\":50}],\"schema\":\"boec-spade-development-parent-ledger-v1\"}"
+      ],
+      "complete": true,
+      "execution_mode": "REGISTERED",
+      "expected_rows": 550,
+      "family": "hill",
+      "manifest": {
+        "bytes": 7145,
+        "mtime_utc": "2026-08-26T04:12:34.156218+00:00",
+        "path": "results/spade-development-hill-000-050.jsonl.gz.manifest.json",
+        "sha256": "5f19894ac827960a39c5b15f74af6b76425180bcd1e328c6bfe61596417c8fe6"
+      },
+      "raw": {
+        "bytes": 225343,
+        "mtime_utc": "2026-08-26T04:12:34.152472+00:00",
+        "path": "results/spade-development-hill-000-050.jsonl.gz",
+        "sha256": "0fdcdf9613fc85f5d8968eec649da1d371535c6575ef4fdb0de4a3b50be13c84"
+      },
+      "raw_sha256": "0fdcdf9613fc85f5d8968eec649da1d371535c6575ef4fdb0de4a3b50be13c84",
+      "resume": {
+        "bytes": 5598918,
+        "mtime_utc": "2026-08-26T04:12:34.153714+00:00",
+        "path": "results/spade-development-hill-000-050.jsonl.gz.resume.json",
+        "sha256": "ff66ed860af402cb34c9892d2c5c214202b922ab35788651738b8189fb109144"
+      },
+      "resume_sha256": "ff66ed860af402cb34c9892d2c5c214202b922ab35788651738b8189fb109144",
+      "row_chain_head": "19d3cc9b88f3c389e3d8fb4b0432fa8179460b7b980d19d3f05a6e020dfde744",
+      "row_count": 550,
+      "runner_logs": [],
+      "sidecar": {
+        "bytes": 106,
+        "mtime_utc": "2026-08-26T04:12:34.153036+00:00",
+        "path": "results/spade-development-hill-000-050.jsonl.gz.sha256",
+        "sha256": "acfe8ad03bb88e2bfa5fd0f8ff7a425df8cfca271725a6a3909ca5d43b55e0b2"
+      },
+      "source_commit": "c9199a3bafb0e4ea7b2d7026d84657501f12d893",
+      "source_dirty": false,
+      "start": 0,
+      "status": "COMPLETE",
+      "stop": 50,
+      "study_protocol_digest": "00ce6971a990749645052273215897f57562106610777d0d8ce417e8e9afdd1a"
+    },
+    {
+      "command_args": [
+        "--family",
+        "hill",
+        "--start",
+        "1",
+        "--stop",
+        "15",
+        "--out",
+        "results/spade-development-hill-001-015.jsonl.gz"
+      ],
+      "complete": true,
+      "execution_mode": "REGISTERED",
+      "expected_rows": 154,
+      "family": "hill",
+      "manifest": {
+        "bytes": 1217,
+        "mtime_utc": "2026-08-25T17:54:33.980675+00:00",
+        "path": "results/spade-development-hill-001-015.jsonl.gz.manifest.json",
+        "sha256": "03c50cf9990928a44a594a01a133c64714ed45f6bd6bae00d7a88babe63be585"
+      },
+      "raw": {
+        "bytes": 54443,
+        "mtime_utc": "2026-08-25T17:54:33.959045+00:00",
+        "path": "results/spade-development-hill-001-015.jsonl.gz",
+        "sha256": "19b257a95454d8bd2072a65e166c8700bc14b52364144e1a3ab1680913d5b133"
+      },
+      "raw_sha256": "19b257a95454d8bd2072a65e166c8700bc14b52364144e1a3ab1680913d5b133",
+      "resume": {
+        "bytes": 653658,
+        "mtime_utc": "2026-08-25T17:54:33.978136+00:00",
+        "path": "results/spade-development-hill-001-015.jsonl.gz.resume.json",
+        "sha256": "4eb634d031417aba2a7f525d218bb08262e88e60437d0ff376bc54f62d794365"
+      },
+      "resume_sha256": "4eb634d031417aba2a7f525d218bb08262e88e60437d0ff376bc54f62d794365",
+      "row_chain_head": "1267475e94f4aded340da54c5b8865cd0222105581f3cb3964322c931d42a496",
+      "row_count": 154,
+      "runner_logs": [],
+      "sidecar": {
+        "bytes": 106,
+        "mtime_utc": "2026-08-25T17:54:33.980306+00:00",
+        "path": "results/spade-development-hill-001-015.jsonl.gz.sha256",
+        "sha256": "d7517e017c925ea713bd9539ef5c073f91d1b8feb6790d271b65a9a35bd52508"
+      },
+      "source_commit": "c9199a3bafb0e4ea7b2d7026d84657501f12d893",
+      "source_dirty": false,
+      "start": 1,
+      "status": "COMPLETE",
+      "stop": 15,
+      "study_protocol_digest": "00ce6971a990749645052273215897f57562106610777d0d8ce417e8e9afdd1a"
+    },
+    {
+      "command_args": [
+        "--family",
+        "hill",
+        "--start",
+        "15",
+        "--stop",
+        "30",
+        "--out",
+        "results/spade-development-hill-015-030.jsonl.gz"
+      ],
+      "complete": true,
+      "execution_mode": "REGISTERED",
+      "expected_rows": 165,
+      "family": "hill",
+      "manifest": {
+        "bytes": 1219,
+        "mtime_utc": "2026-08-25T18:20:59.685714+00:00",
+        "path": "results/spade-development-hill-015-030.jsonl.gz.manifest.json",
+        "sha256": "b6423b20065721e4f2f81f6a38cbed7ce744db12f19d1d0edfb1631142ddd5d7"
+      },
+      "raw": {
+        "bytes": 59509,
+        "mtime_utc": "2026-08-25T18:20:59.660918+00:00",
+        "path": "results/spade-development-hill-015-030.jsonl.gz",
+        "sha256": "f3a00fc679e3dbb9cf86b8048cb1342295dd03827ef2675a9fb7d9ede24b3d7a"
+      },
+      "raw_sha256": "f3a00fc679e3dbb9cf86b8048cb1342295dd03827ef2675a9fb7d9ede24b3d7a",
+      "resume": {
+        "bytes": 700746,
+        "mtime_utc": "2026-08-25T18:20:59.682800+00:00",
+        "path": "results/spade-development-hill-015-030.jsonl.gz.resume.json",
+        "sha256": "5ed95f7c17c214402e94cacd5ad12acf2f121d7f75b76bc173665b4fbe314ac7"
+      },
+      "resume_sha256": "5ed95f7c17c214402e94cacd5ad12acf2f121d7f75b76bc173665b4fbe314ac7",
+      "row_chain_head": "d1eee036abea13e09a177507bf359f8c18745c8d10ae7fc3b805fab19482689f",
+      "row_count": 165,
+      "runner_logs": [],
+      "sidecar": {
+        "bytes": 106,
+        "mtime_utc": "2026-08-25T18:20:59.685308+00:00",
+        "path": "results/spade-development-hill-015-030.jsonl.gz.sha256",
+        "sha256": "b420bda7b513c047e6025ffee90e5ed8ba7b11263773d2b802a1e4d5f6893d65"
+      },
+      "source_commit": "c9199a3bafb0e4ea7b2d7026d84657501f12d893",
+      "source_dirty": false,
+      "start": 15,
+      "status": "COMPLETE",
+      "stop": 30,
+      "study_protocol_digest": "00ce6971a990749645052273215897f57562106610777d0d8ce417e8e9afdd1a"
+    },
+    {
+      "command_args": [
+        "--family",
+        "hill",
+        "--start",
+        "30",
+        "--stop",
+        "50",
+        "--out",
+        "results/spade-development-hill-030-050.jsonl.gz"
+      ],
+      "complete": true,
+      "execution_mode": "REGISTERED",
+      "expected_rows": 220,
+      "family": "hill",
+      "manifest": {
+        "bytes": 1219,
+        "mtime_utc": "2026-08-25T19:01:52.736519+00:00",
+        "path": "results/spade-development-hill-030-050.jsonl.gz.manifest.json",
+        "sha256": "8382b453ae26161c26fd9c741c0e7b2e8707570c091beabdd22f45cbec838782"
+      },
+      "raw": {
+        "bytes": 78779,
+        "mtime_utc": "2026-08-25T19:01:52.703985+00:00",
+        "path": "results/spade-development-hill-030-050.jsonl.gz",
+        "sha256": "e82e9d70327d46c1be3f27ee78cfa3761921f5365953d9c1ff98dcb1d50f365d"
+      },
+      "raw_sha256": "e82e9d70327d46c1be3f27ee78cfa3761921f5365953d9c1ff98dcb1d50f365d",
+      "resume": {
+        "bytes": 933972,
+        "mtime_utc": "2026-08-25T19:01:52.733697+00:00",
+        "path": "results/spade-development-hill-030-050.jsonl.gz.resume.json",
+        "sha256": "c9d593dedb2a6d1b1d54d47a492a2a964b26d776ab33e2744faab27032d10373"
+      },
+      "resume_sha256": "c9d593dedb2a6d1b1d54d47a492a2a964b26d776ab33e2744faab27032d10373",
+      "row_chain_head": "06592950c6f71d4bc9438213a538679f2d2749581c7100c160ad0c54af3ff402",
+      "row_count": 220,
+      "runner_logs": [],
+      "sidecar": {
+        "bytes": 106,
+        "mtime_utc": "2026-08-25T19:01:52.736129+00:00",
+        "path": "results/spade-development-hill-030-050.jsonl.gz.sha256",
+        "sha256": "b297d8c827e7d62c0a5686643a0fd83124288846323b91cbf7b77faf7e5b3959"
+      },
+      "source_commit": "c9199a3bafb0e4ea7b2d7026d84657501f12d893",
+      "source_dirty": false,
+      "start": 30,
+      "status": "COMPLETE",
+      "stop": 50,
+      "study_protocol_digest": "00ce6971a990749645052273215897f57562106610777d0d8ce417e8e9afdd1a"
+    },
+    {
+      "command_args": [
+        "--family",
+        "levy",
+        "--start",
+        "0",
+        "--stop",
+        "50",
+        "--out",
+        "results/spade-development-levy-000-050.jsonl.gz"
+      ],
+      "complete": true,
+      "execution_mode": "REGISTERED",
+      "expected_rows": 550,
+      "family": "levy",
+      "manifest": {
+        "bytes": 1217,
+        "mtime_utc": "2026-08-26T04:07:17.560203+00:00",
+        "path": "results/spade-development-levy-000-050.jsonl.gz.manifest.json",
+        "sha256": "f5277e4aa4abe6f8659e58f312e3a8d1dac7918037ea7b1b086a688dd17d806e"
+      },
+      "raw": {
+        "bytes": 190288,
+        "mtime_utc": "2026-08-26T04:07:17.493833+00:00",
+        "path": "results/spade-development-levy-000-050.jsonl.gz",
+        "sha256": "f3725c97ef07fb2640fb97b19b72eea9e6c56d4888e29c1c59f65a2cf3c28373"
+      },
+      "raw_sha256": "f3725c97ef07fb2640fb97b19b72eea9e6c56d4888e29c1c59f65a2cf3c28373",
+      "resume": {
+        "bytes": 2332508,
+        "mtime_utc": "2026-08-26T04:07:17.555112+00:00",
+        "path": "results/spade-development-levy-000-050.jsonl.gz.resume.json",
+        "sha256": "cc7f67b29a6cece7a54a903406f123f3fa14175ebfa7f13fe7c3c65760c03334"
+      },
+      "resume_sha256": "cc7f67b29a6cece7a54a903406f123f3fa14175ebfa7f13fe7c3c65760c03334",
+      "row_chain_head": "7408e151a4c48c4b32e1fd5239192062437cc70627a934078ec8e32dc3872dcc",
+      "row_count": 550,
+      "runner_logs": [
+        {
+          "bytes": 2962,
+          "mtime_utc": "2026-08-26T04:07:18.279291+00:00",
+          "path": "results/spade-development-levy-000-050.log",
+          "sha256": "1e5d38c2cf6b6c7095bcbd9322c0c092314ab498e23d877c81d6dc020c53e178"
+        }
+      ],
+      "sidecar": {
+        "bytes": 106,
+        "mtime_utc": "2026-08-26T04:07:17.559870+00:00",
+        "path": "results/spade-development-levy-000-050.jsonl.gz.sha256",
+        "sha256": "436b25640a80fcd9badbf538affbfaf107b6fec5c8352d0b4a30d966dea557bf"
+      },
+      "source_commit": "c9199a3bafb0e4ea7b2d7026d84657501f12d893",
+      "source_dirty": false,
+      "start": 0,
+      "status": "COMPLETE",
+      "stop": 50,
+      "study_protocol_digest": "00ce6971a990749645052273215897f57562106610777d0d8ce417e8e9afdd1a"
+    },
+    {
+      "command_args": [
+        "--family",
+        "rosenbrock",
+        "--start",
+        "0",
+        "--stop",
+        "50",
+        "--out",
+        "results/spade-development-rosenbrock-000-050.jsonl.gz"
+      ],
+      "complete": true,
+      "execution_mode": "REGISTERED",
+      "expected_rows": 550,
+      "family": "rosenbrock",
+      "manifest": {
+        "bytes": 1247,
+        "mtime_utc": "2026-08-26T05:44:21.524526+00:00",
+        "path": "results/spade-development-rosenbrock-000-050.jsonl.gz.manifest.json",
+        "sha256": "9d26e3f6c19f29d44e877872086344e57fd4657638fbca86b4fee86da3b69509"
+      },
+      "raw": {
+        "bytes": 192080,
+        "mtime_utc": "2026-08-26T05:44:21.453595+00:00",
+        "path": "results/spade-development-rosenbrock-000-050.jsonl.gz",
+        "sha256": "4d0b90e9abb5a2ec306ab9f1e0a209f9949df97d66ab5181e08f8d839013c312"
+      },
+      "raw_sha256": "4d0b90e9abb5a2ec306ab9f1e0a209f9949df97d66ab5181e08f8d839013c312",
+      "resume": {
+        "bytes": 2345799,
+        "mtime_utc": "2026-08-26T05:44:21.516278+00:00",
+        "path": "results/spade-development-rosenbrock-000-050.jsonl.gz.resume.json",
+        "sha256": "55f1a5bb9d8a5d3a39c2be7e55d780df0e033ab9af61ea574d4112e274351e96"
+      },
+      "resume_sha256": "55f1a5bb9d8a5d3a39c2be7e55d780df0e033ab9af61ea574d4112e274351e96",
+      "row_chain_head": "6429af461b1c45eb70db8ff6ba5fd7006f397271880b1fae7436e95c0249efa2",
+      "row_count": 550,
+      "runner_logs": [
+        {
+          "bytes": 1247,
+          "mtime_utc": "2026-08-26T05:44:21.526407+00:00",
+          "path": "results/spade-development-rosenbrock-000-050.log",
+          "sha256": "9d26e3f6c19f29d44e877872086344e57fd4657638fbca86b4fee86da3b69509"
+        }
+      ],
+      "sidecar": {
+        "bytes": 112,
+        "mtime_utc": "2026-08-26T05:44:21.524109+00:00",
+        "path": "results/spade-development-rosenbrock-000-050.jsonl.gz.sha256",
+        "sha256": "82c4f1bf44d0fc2d7ce620bb8d2e292c108f99572ec27b65ddbe7b8dc6dd806b"
+      },
+      "source_commit": "c9199a3bafb0e4ea7b2d7026d84657501f12d893",
+      "source_dirty": false,
+      "start": 0,
+      "status": "COMPLETE",
+      "stop": 50,
+      "study_protocol_digest": "00ce6971a990749645052273215897f57562106610777d0d8ce417e8e9afdd1a"
+    }
+  ],
+  "study_id": "spade-joint-48-2026-08-25"
+}

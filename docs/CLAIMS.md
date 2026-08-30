@@ -1,5 +1,9 @@
 # CLAIMS — what the evidence supports, and what it does not
 
+> **Historical claims ledger.** It predates the corrected final-SPADE release and frozen
+> joint protocol. Current manuscript claims are governed by `docs/RESEARCH-SUMMARY.md`,
+> `docs/FINDINGS-SPADE-FINAL.md` §17.5, and the committed result artifacts.
+
 **STATUS: DRAFT PROPOSAL by B, for A and Alan to cut. Nothing here is settled.**
 
 > ## 🔵 TRIAGED — every claim below now traces to a labelled item in `docs/TRIAGE.md`

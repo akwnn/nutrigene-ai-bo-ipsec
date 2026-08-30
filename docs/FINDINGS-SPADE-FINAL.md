@@ -7,6 +7,13 @@
 > yet supported by a committed result file is labelled **`NOT RUN`** and **must not be
 > cited**. This project has retracted its own headline three times (§4.4, §9.5, §14/§29);
 > the labelling is the defence against a fourth.
+>
+> **Drafting rule (2026-08-25).** §§5–16 record the study as it stood after C1+C2 and before
+> `doe_unscreened`. Section 17.4 records the seven-condition analysis, and §17.5 records the
+> clean-regeneration correction and current release ledger: KF-1 and KF-9 PASS; KF-2 and
+> KF-10 FAIL. `docs/RESEARCH-SUMMARY.md` matches §17.5. Do not quote §12's KF-1
+> INCONCLUSIVE / KF-2 NOT_RUN rows, §15's “unscreened missing,” or §17.4's superseded KF-9
+> count as current.
 
 ---
 
@@ -140,8 +147,8 @@ not an improvement**, on the one TARGET cell measured so far.
 |---|---|---|---|---|---|---|
 | doe | 3 | 48 | 0.0924 | 0.3072 | 0.2580 | NOT_ASSESSED |
 | lhs | 1 | 48 | 0.1041 | 0.0747 | 0.1867 | NOT_ASSESSED |
-| qlogei | 10 | 48 | 0.1000 | 0.0791 | 0.2079 | NOT_ASSESSED |
-| qlognei | 10 | 48 | 0.0874 | **0.0691** | 0.2135 | NOT_ASSESSED |
+| qlogei | 10 | 48 | 0.0964 | 0.0798 | 0.2067 | NOT_ASSESSED |
+| qlognei | 10 | 48 | 0.0899 | **0.0750** | 0.2131 | NOT_ASSESSED |
 | random | 1 | 48 | 0.1370 | 0.0905 | 0.2050 | NOT_ASSESSED |
 | sobol | 1 | 48 | 0.1297 | 0.0855 | 0.1913 | NOT_ASSESSED |
 | **spade_cf_m0** | 2 | 48 | 0.1426 | 0.0844 | **0.1804** | INCONCLUSIVE |
@@ -150,10 +157,12 @@ not an improvement**, on the one TARGET cell measured so far.
 | spade_plate1_only | 1 | 40 | 0.1426 | 0.0863 | 0.1921 | INCONCLUSIVE |
 | spade_random_plate2 | 2 | 48 | 0.1401 | 0.0822 | 0.1785 | INCONCLUSIVE |
 
-`spade_cf_m0` posts the **lowest symmetric difference of all 11 arms** (0.1804) — including
-every BO and space-filling comparator — while sitting mid-pack on rule-P regret (`qlognei`
-posts the lowest, 0.0691). **This is exactly the split FINDINGS §13 predicted**: SPADE
-leads the map, is unremarkable on regret, at equal wells and a fifth of `qlognei`'s rounds.
+`spade_cf_m0` posts lower symmetric difference than every named BO, classical and one-shot
+space-filling comparator (0.1804), but it is **not** lowest across all 11 arms: `m4` is
+0.1770 and the matched random-second-plate control is 0.1785. It sits mid-pack on Rule-P
+regret while `qlognei` posts the strongest BO value, 0.0750 (`lhs` is fractionally lower at
+0.0747). This is the point-versus-map split
+FINDINGS §13 predicted, but it does not establish a benefit for boundary targeting.
 
 **C1 (hill, σ=0.25, ROBUSTNESS — not TARGET, context only):**
 
@@ -213,8 +222,8 @@ the suppression spec §9.5 forbids.
 |---|---|---|---|---|---|
 | doe | 3 | 48 | 0.5521 | 0.5682 | 0.2244 |
 | lhs | 1 | 48 | 0.5155 | 0.5405 | 0.2043 |
-| **qlogei** | 10 | 48 | 0.2988 | 0.2832 | 0.2283 |
-| **qlognei** | 10 | 48 | 0.2685 | **0.2443** | 0.2163 |
+| **qlogei** | 10 | 48 | 0.3057 | 0.2997 | 0.2259 |
+| **qlognei** | 10 | 48 | 0.2429 | **0.2305** | 0.2243 |
 | random | 1 | 48 | 0.4999 | 0.4489 | 0.1993 |
 | sobol | 1 | 48 | 0.4935 | 0.4608 | 0.1899 |
 | spade_cf_m0 | 2 | 48 | 0.4863 | 0.4221 | **0.1848** |
@@ -224,7 +233,7 @@ the suppression spec §9.5 forbids.
 | spade_random_plate2 | 2 | 48 | 0.5021 | 0.4687 | 0.1994 |
 
 **A genuine surprise, reported precisely rather than rounded to the predicted answer.** On
-regret, `qlognei`/`qlogei` dominate as expected (1st/2nd, 0.2443/0.2832 — a wide margin
+regret, `qlognei`/`qlogei` dominate as expected (1st/2nd, 0.2305/0.2997 — a wide margin
 over everything else, consistent with §37's mechanism: BO commits to one basin and resolves
 it, the correct strategy when 48 wells cannot resolve hartmann6's several basins). **But on
 symmetric difference — the primary map scalar — the three SPADE arms take 1st, 2nd and 3rd
@@ -244,8 +253,8 @@ objects — point or region — is being asked about.
 
 | arm | rounds | wells | regret (Rule P, primary) | sym. diff |
 |---|---|---|---|---|
-| **qlognei** | 10 | 48 | **0.2738** | 0.2198 |
-| qlogei | 10 | 48 | 0.3002 | 0.2306 |
+| **qlognei** | 10 | 48 | **0.2620** | 0.2196 |
+| qlogei | 10 | 48 | 0.2945 | 0.2348 |
 | spade_cf_m8 | 2 | 48 | 0.4054 | 0.1950 |
 | spade_cf_m4 | 2 | 48 | 0.4300 | **0.1883** |
 | spade_cf_m0 | 2 | 48 | 0.4454 | 0.1908 |
@@ -359,8 +368,9 @@ secondary conditions are now complete.**
 
 **C2 (§8's table) is the load-bearing comparison — it is the TARGET condition.** `sobol`
 posts symmetric difference 0.1913 there — competitive with but not better than
-`spade_cf_m0`'s 0.1804 (KF-6 PASS: SPADE is within SESOI). `qlognei` posts the lowest regret
-(0.0691, KF-8: SPADE within SESOI = practical parity, never phrased as a win). `doe` is
+`spade_cf_m0`'s 0.1804 (KF-6 PASS: SPADE is within SESOI). `qlognei` posts the strongest BO regret
+(0.0750, KF-8: SPADE gap +0.00937, 95% interval +0.00258 to +0.01615, within SESOI =
+practical parity, never phrased as a win). `doe` is
 markedly worse on the map (0.2580, worst of all 11) and dramatically worse under rule P
 (0.3072) than rule A (0.0924) — consistent with FINDINGS §9.1's registered mechanism (a
 posterior-mean terminal rule punishes `doe`'s prior-driven screened axes). The same `doe`
@@ -369,6 +379,8 @@ rule-A/rule-P asymmetry reproduces at C1 (0.1141 → 0.1684), so it is not a σ=
 classical comparison remains incomplete across the study.
 
 ## 12. Kill ledger
+
+> **Historical snapshot.** This table is C1+C2 only. Current adjudication is **§17.4**.
 
 **C1 + C2 combined via `merge_condition_rows`, adjudicated at map cell
 (τ_q p=0.25, γ=0.95, α=0.95).** Source: `results/final-spade-kill-ledger.json`. Every
@@ -422,6 +434,9 @@ Fixed in advance and **independent of any result**:
 
 ## 15. Limitations and exceptions
 
+> **Historical snapshot.** The missing-`doe_unscreened` limitation below was resolved in
+> §17.4. It is preserved to document the state before that comparator was implemented.
+
 * **Only one TARGET cell exists** in the registered matrix. The central claim, if supported,
   rests on a narrow base and must say so.
 * Plug-in hyperparameters: their uncertainty sits **outside** the guarantee, exactly as for
@@ -437,7 +452,8 @@ Fixed in advance and **independent of any result**:
 
 ## 16. Reproducibility manifest
 
-**`NOT RUN`** — pending `results/final-spade-manifest.json`.
+**Historical status: `NOT RUN`.** The manifest was subsequently generated, audited and
+corrected during the clean regeneration documented in §17.5.
 
 ---
 
@@ -544,12 +560,13 @@ regenerated with content-hashes of all seven current source files. `scripts/
 validate_final_spade_release.py` passes all nine checks, zero violations (§17.3).
 Full test suite green throughout (last confirmed: 1,629 passed, 0 failed).
 
-**Remaining:**
-1. `scripts/make_final_spade_figures.py` against the real combined certificate/Pareto
-   artefacts.
-2. `docs/SPADE-FOR-RESEARCHERS.md` (the practitioner guidebook) was written before this
+**Remaining at this historical checkpoint:**
+1. `docs/SPADE-FOR-RESEARCHERS.md` (the practitioner guidebook) was written before this
    confirmatory study ran and needs a pass to fold in the real results, most importantly
    the KF-2/KF-3 narrowing (§17.4) rather than describing SPADE only in re-scored terms.
+
+Figure generation is now complete: all eight prospective figures are reproducible from
+the restored artifacts (§17.5).
 
 **No design decisions are outstanding.**
 
@@ -642,24 +659,45 @@ declines to certify in the re-scored programme), this is a second, independent l
 evidence that hill is the one family where this study's certificate both answers and has
 not been shown to fail.
 
-**Side effect on two already-adjudicated kills.** `doe_unscreened`'s rows join the primary-
-gamma population every all-arm, all-condition kill scans over. KF-9's denominator grew from
-13,200 (the C1+C2-only figure quoted in §17.2) to **23,600** across the full seven
-conditions (still FAIL: 4,400 primary-gamma rows sit at or above the certifiability ceiling
-— a property of the registered thresholds, per §4.5, not of any method). KF-10's count is
-unchanged at 44 — `doe_unscreened` is not a SPADE cell and does not enter that count.
+**Superseded side effect on two already-adjudicated kills.** At the time of this merge,
+`doe_unscreened`'s rows increased KF-9's denominator from 13,200 to 23,600 and the then-stored
+checkpoints reported 4,400 rows above the ceiling. Clean regeneration later showed that
+those flags came from checkpoints created before `dd75c91` corrected per-row
+`above_ceiling` classification. Section 17.5 supersedes this paragraph with KF-9 PASS at
+0/23,600 and the corrected KF-10 denominator.
 
 **One observational note, not a registered comparison.** The ten kill conditions test SPADE
 mechanisms; none of them puts `doe` (screened) against `doe_unscreened` (unscreened) head to
 head, so nothing below is a kill verdict. Descriptively, at the TARGET condition
 (hill, d=6, sigma=0.10): `doe_unscreened` needs **1 round** against `doe`'s 3 (no
-screen-then-replan step), regret A 0.1470 vs. 0.0924 (worse), regret P 0.2862 vs. 0.3072
-(better), symmetric difference 0.2496 vs. 0.2580 (better). At the ROBUSTNESS condition
+screen-then-replan step), regret A 0.1470 vs. 0.0924 (worse), regret P 0.2866 vs. 0.3072
+(better), symmetric difference 0.2502 vs. 0.2580 (better). At the ROBUSTNESS condition
 (hill, d=6, sigma=0.25) the screened arm leads on both regret rules, 0.1141/0.1684 vs.
 0.1589/0.2107. Mixed by rule and by condition — offered as raw numbers, not a finding.
 
-**Validator: 9 of 9 checks pass, 0 violations (§17.3).** `scripts/
-make_final_spade_figures.py` and `docs/SPADE-FOR-RESEARCHERS.md` remain (§18).
+**Validator at this stage: 9 of 9 checks pass, 0 violations (§17.3).** The clean-checkout
+release and figure status is updated in §17.5.
+
+## 17.5 Clean regeneration restores the release and corrects KF-9
+
+The original raw condition JSON files were ignored and had never entered Git. They could
+not be recovered from GitHub, session storage, or backups, so every registered campaign was
+regenerated from the pinned code, environment, and stateless seed policy. The repository
+now tracks all seven condition files and seven byte-identical per-condition aliases: 99,601
+rows in total, including the structured C4 `doe_unscreened` unavailability declaration.
+The manifest preserves the superseded source hashes and the reason for regeneration.
+
+Regeneration exposed one material stale-checkpoint error. Rows written before `dd75c91`
+carried a condition-level `above_ceiling` flag instead of the corrected row-level flag.
+With the fixed implementation, **KF-9 changes from FAIL to PASS: 0 of 23,600 primary-γ
+rows are at or above the certifiability ceiling.** The empty-set guard is recomputed over
+the complete current cell set: **KF-10 remains FAIL, now 18 of 64 cells.** The current
+ledger is therefore five PASS (KF-1, KF-6–KF-9) and five FAIL (KF-2–KF-5, KF-10). No other
+principal SPADE conclusion changes status.
+
+From a clean checkout, `validate_final_spade_release.py` passes all 9 checks, the focused
+final-SPADE suite passes 214 tests, and `make_final_spade_figures.py` generates all eight
+registered prospective figures under `results/figures/final-spade/`.
 
 ## 19. The KF-3 follow-up (`spade-kf3-followup-2026-08-24`) — both mechanisms FAIL
 

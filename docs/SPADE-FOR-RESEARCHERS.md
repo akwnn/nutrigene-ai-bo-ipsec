@@ -16,6 +16,14 @@ built to resemble ECM-titration biology, plus hartmann6, ackley, levy and rosenb
 result here has been reproduced on a real plate. Read it as a planning tool and a source
 of hypotheses, not as a warranty.
 
+> **Current status (2026-08-25).** This guide documents the historical `versionb`/final-SPADE
+> workflow and its completed evidence. It is not an operating manual for the newly frozen
+> joint protocol. The joint protocol uses a scrambled-Sobol opening, a common learned-noise
+> GP and a controlled-prevalence quantile of the γ-adjusted reliability margin; its
+> development selection and lockbox outcomes have not been run. The historical raw release
+> is now restored and passes 9/9 clean-checkout checks. Clean regeneration corrects KF-9 to
+> PASS (0/23,600 above-ceiling rows) while KF-10 remains FAIL (18/64 empty-set downgrades).
+
 ---
 
 ## Table of contents
@@ -120,14 +128,15 @@ and a *joint* certificate. It does not add reliability: SPADE's calibration rank
 
 ## 2. What SPADE is
 
-SPADE (Single-Plate Assured Design Envelope) as **actually run and measured** in this
+Historical SPADE (Single-Plate Assured Design Envelope) as **actually run and measured** in this
 repository is the arm called `versionb`. Its budget is **48 wells across two rounds.**
 
 > **Read this before anything else.** `docs/SPADE-SPEC.md` describes a 49-point
 > orthogonal-array LHS with triplicate anchors totalling **55 wells**, a day-0 covariate
-> adjustment (Stage 0), and a frozen regime detector (Stage 3). **None of those three was
-> built or measured.** The 55-well budget cannot be gated against any committed column and
-> was explicitly dropped (§7). The day-0 covariate `R²` is not recoverable from existing
+> adjustment (Stage 0), and a frozen regime detector (Stage 3). The 55-well workflow was
+> not run as one method. OA-LHS was subsequently implemented for a 125-campaign gate and
+> rejected because it did not reduce design-lottery variation; oracle-noise analysis also
+> rejected spending the 48-well budget on replicate-pooled estimation. The day-0 covariate `R²` is not recoverable from existing
 > lab data and needs a prospective measurement (§4.7). The regime detector was built,
 > frozen, tested once, and **failed** (§37). What follows is the method that has numbers
 > attached to it.
@@ -141,7 +150,8 @@ Fit a Matérn-5/2 ARD Gaussian process to the 40 readings. The observation varia
 **handed to the model as known, not fitted** — `train_Yvar` is the plug-in
 `ŷ² σ_rel² + σ_add²` (`src/boec/torch_oracle.py:73`). This is the one part of SPADE-SPEC
 Stage 2 that the code genuinely does; what it does *not* do is derive that σ̂ from
-replicates, because the replicate study (K1) has never been run (§7).
+replicates. K1 has now been run: even oracle knowledge of true variance improved regret by
+0.00816, below the registered 0.01 build bar, so a real pooled-replicate estimator was not built.
 
 ### Plate 2 — 8 wells, on the boundary of the certified region
 
@@ -380,7 +390,7 @@ tau_max = mu_max * (1 - z_gamma * sigma_rel) = 1.0 * (1 - 1.645 * 0.25) = 0.589
 (`designspace.tau_max`, §4.5.) **No method, no design and no number of wells can certify a
 spec above 0.589 at this noise level, ever.**
 
-**Step 3. Choose your spec τ.** Say you want τ = 0.353 — 60% of the ceiling (`τ_frac = 0.60`,
+**Historical fixed-fraction scoring step.** Say you want τ = 0.353 — 60% of the ceiling (`τ_frac = 0.60`,
 the threshold this study is best powered at). That is below the ceiling, so the question is
 answerable.
 
@@ -393,7 +403,7 @@ theta = tau + z_gamma * sigma = tau_frac * mu_max = 0.60
 The `(1 − z·σ_rel)` factors cancel exactly, verified to machine precision at 12
 combinations (§4.5, Amendment C2). So `τ_frac` **is** the latent threshold as a fraction of
 the achievable maximum, for every γ. This has a consequence that trips people up: in this
-parameterisation, **raising γ *lowers* the absolute τ**, so the "high-γ" cells have *larger*
+historical parameterisation, **raising γ *lowers* the absolute τ**, so the "high-γ" cells have *larger*
 true target sets, not smaller. At γ=0.99, τ_frac=0.60 the true set covers **0.99916 of the
 box** (§14). If you fix τ in physical units instead — which is what a real spec does — the
 usual intuition returns: higher γ means a smaller region.
@@ -405,6 +415,12 @@ inscribed in it. The claim is:
 
 > *With 95% confidence, every recipe inside this box has at least a 95% probability of
 > producing a batch at or above 0.353.*
+
+The retained synthetic scoring correction no longer compares families using this fixed
+fraction of peak height. It chooses a controlled-prevalence quantile; the joint protocol
+takes that quantile from the γ-adjusted future-response reliability margin. This makes the
+benchmark question comparable across synthetic families. It is not a method for choosing a
+real manufacturing specification, which must come from process and quality requirements.
 
 **Step 7. Check it was earned.** Across 50 independent campaigns at this cell, SPADE's
 certified set was wholly inside the true region:
@@ -594,6 +610,10 @@ If `τ_frac ≤ 0.75` and your landscape is smooth: this is where SPADE's eviden
 
 ## 6. How to actually run SPADE
 
+> **Historical reproduction only.** The commands below reproduce `versionb`; they are not
+> the frozen joint protocol and are not validated for GMP decisions. The joint protocol's
+> implementation is complete, but no development-selected policy or lockbox result exists.
+
 Named against the repository's own functions. The reference implementations are
 `scripts/run_versionb.py` (the original two-plate arm) and `scripts/run_p2_versionb_gamma.py`
 (the γ ladder). `scripts/run_p8_certificate_families.py` is the cross-family certificate run
@@ -630,8 +650,9 @@ model = build_gp(X1, Y1, Yvar1, bounds)          # Matern-5/2 ARD, sigma HELD FI
 
 The variance is handed in as known (`_plug_in_yvar`, `src/boec/torch_oracle.py:73`). This is
 deliberate: fitting lengthscale and noise jointly at n≈40 in 6D leaves them barely separable
-and the optimiser trades one against the other (SPADE-SPEC Stage 2). Whether replicate-derived
-σ̂ measurably improves calibration is **K1, and K1 has never been run** (§7).
+and the optimiser trades one against the other (SPADE-SPEC Stage 2). K1 bounded the value
+of replicate-derived σ̂ with oracle variance: the 0.00816 regret improvement missed the
+0.01 build bar, so the joint protocol uses learned noise without a replicate reserve.
 
 ### Step 3 — choose plate 2's 8 wells on the boundary
 
@@ -1057,20 +1078,21 @@ Conservative-**given-the-model**. Plug-in hyperparameters sit outside the guaran
   replicate** — the sign structure reverses between K6 and P6 (§24.2). The supersede decision
   for error volumes survives **on mechanism**, not on that correlation (§24.3).
 
-### 9.7 Things in SPADE-SPEC that were never built or tested
+### 9.7 Founding-spec components and their current disposition
 
 | spec item | status |
 |---|---|
 | Stage 0 — day-0 covariate adjustment | **untested.** No paired day-0/endpoint series exists; needs a prospective measurement (§4.7) |
-| Stage 1 — 49-point OA-LHS + triplicate anchors, 55 wells | **not built.** Cannot be gated against any committed column; dropped (§7). What ran is 40 LHS + 8 LSE = 48 |
-| Stage 2 — σ̂ from replicates | **partially.** The GP does take σ as fixed and known, but deriving it from replicates is K1, unrun (§7) |
+| Stage 1 — 49-point OA-LHS + triplicate anchors, 55 wells | **rejected for the 48-well method.** K2 implemented and tested OA-LHS at its required 49 wells; design SD was 0.1628 versus 0.1496 for plain LHS, with a wrong-signed difference whose interval spans zero |
+| Stage 2 — σ̂ from replicates | **rejected for the 48-well method.** Oracle true variance improved regret by 0.00816, below the registered 0.01 build bar; the pooled estimator was therefore not built |
 | Stage 3 — the frozen regime detector | **built, frozen, tested once, FAILED** — 0/50 on both held-out families (§37) |
 | Stage 5 — confirm-and-average | **unrun.** K3 (confirm-and-average vs confirm-and-replace) is registered and never executed (§7) |
 
 ### 9.8 Genuinely open questions
 
-* Whether the LSE second plate improves any *deliverable*. No arm was run with the exclusion
-  disabled, and the 44+4 separation arm was never run (K6-TR §10, R1/R3).
+* Whether a larger second-round budget can make boundary targeting useful. At the registered
+  eight-well budget, m0 did not beat equal-well random placement, and two repair mechanisms
+  also missed the 0.02 bar. The break-even budget remains unmeasured.
 * Whether Amendment B3's subspace restriction helps or hurts `doe`'s calibration. **No
   committed evidence exists either way**; the comparison cannot be made from committed files
   at all (§4.8, §9.5).

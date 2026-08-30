@@ -1,0 +1,43 @@
+SPADE joint-protocol development execution log
+========================================================================
+recorded_at_utc: 2026-08-26T05:47:40.528524+00:00
+evidence_commit: 502ea3948976b15f849aecf680e24a0487eed742
+campaign_source_commit: c9199a3bafb0e4ea7b2d7026d84657501f12d893
+branch: main
+selection_status: NO_SELECTION
+
+Chronology / shard inventory
+------------------------------------------------------------------------
+ackley       [000,050)  COMPLETE rows=550/550  raw_sha256=d7e810aa56e6…  mtime=2026-08-25T20:39:35.268196+00:00
+hartmann6    [000,050)  COMPLETE rows=550/550  raw_sha256=c7395a921a79…  mtime=2026-08-26T01:50:45.883068+00:00
+hill         [000,001)  COMPLETE rows=11/11  raw_sha256=6c17a3b8d9d4…  mtime=2026-08-26T04:12:30.941762+00:00
+hill         [000,050)  COMPLETE rows=550/550  raw_sha256=0fdcdf9613fc…  mtime=2026-08-26T04:12:34.156218+00:00
+hill         [001,015)  COMPLETE rows=154/154  raw_sha256=19b257a95454…  mtime=2026-08-25T17:54:33.980675+00:00
+hill         [015,030)  COMPLETE rows=165/165  raw_sha256=f3a00fc679e3…  mtime=2026-08-25T18:20:59.685714+00:00
+hill         [030,050)  COMPLETE rows=220/220  raw_sha256=e82e9d70327d…  mtime=2026-08-25T19:01:52.736519+00:00
+levy         [000,050)  COMPLETE rows=550/550  raw_sha256=f3725c97ef07…  mtime=2026-08-26T04:07:17.560203+00:00
+rosenbrock   [000,050)  COMPLETE rows=550/550  raw_sha256=4d0b90e9abb5…  mtime=2026-08-26T05:44:21.524526+00:00
+
+Operational logs retained in results/
+------------------------------------------------------------------------
+results/spade-joint-pipeline.log  (1655 bytes, sha256=9d12ccfc97ec…)
+results/spade-joint-select.log  (25878 bytes, sha256=d21b8864e781…)
+results/spade-joint-focused-tests.log  (1058 bytes, sha256=8067b1a052ab…)
+results/spade-joint-hill-merge.log  (7930 bytes, sha256=aced2d68fe3b…)
+results/spade-joint-levy-wrap.log  (117 bytes, sha256=07b08b745c25…)
+results/spade-joint-hill-isolate-path.txt  (53 bytes, sha256=af11a6585bb1…)
+results/spade-joint-continue-dev.sh  (3653 bytes, sha256=21fc065af0bc…)
+results/spade-development-hill-000-001.log  (1213 bytes, sha256=537bc08409ec…)
+results/spade-development-levy-000-050.log  (2962 bytes, sha256=1e5d38c2cf6b…)
+results/spade-development-rosenbrock-000-050.log  (1247 bytes, sha256=9d26e3f6c19f…)
+
+Notes
+------------------------------------------------------------------------
+- Ackley/Hartmann6 runner stdout was not redirected to a .log file; provenance is in manifests/resumes.
+- Hill 000-001 with mismatched executable path was isolated under /tmp then re-run with canonical .venv path before merge.
+- LOFO selection status is NO_SELECTION; lockbox must not run.
+
+Selection rationale
+------------------------------------------------------------------------
+unanimous five-fold LOFO consensus was not achieved; no all-five refit may override fold disagreement or a fold-level NO_SELECTION
+

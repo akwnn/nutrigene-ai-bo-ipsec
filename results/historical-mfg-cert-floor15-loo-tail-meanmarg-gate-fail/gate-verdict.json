@@ -1,0 +1,97 @@
+{
+  "hill": {
+    "spade-o32-fixed_hybrid": {
+      "n": 15,
+      "ans": 0.6,
+      "emp": 1.0
+    },
+    "spade-o32-staged": {
+      "n": 15,
+      "ans": 0.6,
+      "emp": 1.0
+    },
+    "spade-o32-validity_gated": {
+      "n": 15,
+      "ans": 0.5333333333333333,
+      "emp": 0.875
+    },
+    "spade-o40-fixed_hybrid": {
+      "n": 15,
+      "ans": 0.6666666666666666,
+      "emp": 0.8
+    },
+    "spade-o40-staged": {
+      "n": 15,
+      "ans": 0.6,
+      "emp": 1.0
+    },
+    "spade-o40-validity_gated": {
+      "n": 15,
+      "ans": 0.7333333333333333,
+      "emp": 0.8181818181818182
+    },
+    "spade-o44-fixed_hybrid": {
+      "n": 15,
+      "ans": 0.6,
+      "emp": 0.8888888888888888
+    },
+    "spade-o44-staged": {
+      "n": 15,
+      "ans": 0.5333333333333333,
+      "emp": 0.875
+    },
+    "spade-o44-validity_gated": {
+      "n": 15,
+      "ans": 0.6,
+      "emp": 0.8888888888888888
+    }
+  },
+  "levy": {
+    "spade-o32-fixed_hybrid": {
+      "n": 15,
+      "ans": 0.4666666666666667,
+      "emp": 0.5714285714285714
+    },
+    "spade-o32-staged": {
+      "n": 15,
+      "ans": 0.5333333333333333,
+      "emp": 0.875
+    },
+    "spade-o32-validity_gated": {
+      "n": 15,
+      "ans": 0.6666666666666666,
+      "emp": 0.9
+    },
+    "spade-o40-fixed_hybrid": {
+      "n": 15,
+      "ans": 0.5333333333333333,
+      "emp": 0.75
+    },
+    "spade-o40-staged": {
+      "n": 15,
+      "ans": 0.3333333333333333,
+      "emp": 1.0
+    },
+    "spade-o40-validity_gated": {
+      "n": 15,
+      "ans": 0.6,
+      "emp": 0.6666666666666666
+    },
+    "spade-o44-fixed_hybrid": {
+      "n": 15,
+      "ans": 0.6,
+      "emp": 0.6666666666666666
+    },
+    "spade-o44-staged": {
+      "n": 15,
+      "ans": 0.6,
+      "emp": 0.7777777777777778
+    },
+    "spade-o44-validity_gated": {
+      "n": 15,
+      "ans": 0.5333333333333333,
+      "emp": 0.75
+    }
+  },
+  "survivors": []
+}

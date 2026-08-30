@@ -1,0 +1,149 @@
+{
+  "digests": {
+    "config_file_sha256": "e4901ce8d5dddea78a355e264a9b03aca3a30a5ba2bdf9c5fb30c5bce2cb7b5f",
+    "lockbox_oracles_source_sha256": "1a79abd6e62d503852fe98957e67d4d4f6d7e9f8b52788176f2359ed38d3e0c3",
+    "protocol_payload_sha256": "1c5c3b7ef5e067774c1f4b198a3b1a36e26b8f162e9f3f4a7d09657c0cf3a250",
+    "spade_study_source_sha256": "6b9d034677e8e54bfc827c779be172c4fffe6cd25c195e6ff412c9ff1a1406ef",
+    "spec_sha256": "21c07a4107dd39770facabd3f3c9b52c45b65239c0d60b3cc5f7ce7648bdf403"
+  },
+  "dimension": 6,
+  "domain": [
+    0.0,
+    1.0
+  ],
+  "families": [
+    "toroidal_rastrigin",
+    "gaussian_basin_mixture",
+    "curved_ridge",
+    "soft_plateau"
+  ],
+  "freeze_parent_commit": "d1fab2c2099926945e399f741ccc79123a539066",
+  "frozen_date": "2026-08-25",
+  "generator_definitions": {
+    "curved_ridge": {
+      "along_scale": [
+        0.25,
+        0.42
+      ],
+      "background_scale": [
+        0.48,
+        0.68
+      ],
+      "background_weight": [
+        0.15,
+        0.22
+      ],
+      "curvature": [
+        -0.9,
+        0.9
+      ],
+      "form": "weighted_exponential_curved_ridge_plus_broad_anisotropic_background",
+      "optimum_audit": "analytic_unique_plus_4096_point_scrambled_sobol_challenge",
+      "ridge_width": [
+        0.06,
+        0.13
+      ],
+      "rotation": "seeded_qr_fixed_sign_positive_determinant",
+      "shift": [
+        0.2,
+        0.8
+      ]
+    },
+    "gaussian_basin_mixture": {
+      "axis_width": [
+        0.045,
+        0.13
+      ],
+      "centers": [
+        0.2,
+        0.8
+      ],
+      "component_count_integer": [
+        3,
+        5
+      ],
+      "component_weight": [
+        0.35,
+        1.0
+      ],
+      "form": "log_sum_exp_anisotropic_gaussian_mixture",
+      "minimum_center_distance": 0.38,
+      "optimum_audit": "component_centers_plus_4096_sobol_top12_multistart_with_independent_slsqp_repolish",
+      "rotation": "independent_seeded_qr_fixed_sign_positive_determinant"
+    },
+    "soft_plateau": {
+      "axis_scale": [
+        0.16,
+        0.34
+      ],
+      "edge_width": [
+        0.055,
+        0.12
+      ],
+      "form": "normalized_radial_logistic_soft_plateau",
+      "optimum_audit": "analytic_unique_plus_4096_point_scrambled_sobol_challenge",
+      "plateau_radius": [
+        0.72,
+        1.18
+      ],
+      "rotation": "seeded_qr_fixed_sign_positive_determinant",
+      "shift": [
+        0.2,
+        0.8
+      ]
+    },
+    "toroidal_rastrigin": {
+      "anisotropy": [
+        2.0,
+        7.0
+      ],
+      "form": "wrapped_shifted_rotated_rastrigin_exponential",
+      "frequency_integer": [
+        2,
+        5
+      ],
+      "optimum_audit": "analytic_unique_plus_4096_point_scrambled_sobol_challenge",
+      "oscillation": [
+        0.15,
+        0.45
+      ],
+      "rotation": "seeded_qr_fixed_sign_positive_determinant",
+      "shift": [
+        0.2,
+        0.8
+      ],
+      "temperature": [
+        1.2,
+        2.4
+      ]
+    }
+  },
+  "instance_keys": {
+    "reserved": {
+      "count": 2000,
+      "first": 0,
+      "last": 1999
+    },
+    "selected_prefix": {
+      "count": 350,
+      "first": 0,
+      "last": 349
+    }
+  },
+  "normalization": {
+    "audit_tolerance": 1e-06,
+    "optimum_location": "interior_0.2_through_0.8_on_every_axis",
+    "optimum_value": 1.0,
+    "range": [
+      0.0,
+      1.0
+    ]
+  },
+  "schema": "boec-spade-lockbox-generator-manifest-v1",
+  "seed_derivation": {
+    "algorithm": "sha256_labelled_stateless",
+    "identity": "family_and_instance_seed",
+    "label": "lockbox_generator_parameters"
+  },
+  "status": "FROZEN_UNOPENED"
+}

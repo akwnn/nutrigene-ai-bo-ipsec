@@ -1,0 +1,86 @@
+{
+  "A": {
+    "stages": [
+      "formulation",
+      "wells",
+      "assay",
+      "model"
+    ]
+  },
+  "B": {
+    "branches": {
+      "point decision": 4,
+      "region decision": 2
+    },
+    "point deliverables": [
+      "tested-best",
+      "noisy selection",
+      "model recommendation",
+      "confirmation"
+    ],
+    "region deliverables": [
+      "acceptable-region map",
+      "conservative certificate"
+    ]
+  },
+  "C": {
+    "columns": [
+      "Deliverable",
+      "Reported object",
+      "Observable?",
+      "Score",
+      "Extra wells",
+      "Rounds"
+    ],
+    "rows": [
+      [
+        "Tested-best",
+        "latent best visited",
+        "no",
+        "simple regret",
+        "0",
+        "campaign"
+      ],
+      [
+        "Measured selection",
+        "one tested well",
+        "yes",
+        "Rule-A regret",
+        "0",
+        "campaign"
+      ],
+      [
+        "Model recommendation",
+        "predicted optimum",
+        "yes",
+        "Rule-P regret",
+        "0",
+        "campaign"
+      ],
+      [
+        "Confirmation protocol",
+        "confirmed tested well",
+        "yes",
+        "confirmed regret",
+        "protocol",
+        "campaign + confirmation"
+      ],
+      [
+        "Acceptable-region map",
+        "set of acceptable inputs",
+        "yes",
+        "symmetric difference",
+        "0",
+        "campaign"
+      ],
+      [
+        "Certificate",
+        "conservative subset",
+        "yes",
+        "joint containment",
+        "0",
+        "campaign"
+      ]
+    ]
+  }
+}

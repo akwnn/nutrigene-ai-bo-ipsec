@@ -1,5 +1,5 @@
 # Environments — .venv is ~950 MB. Never commit it.
-.venv/
+.venv
 venv/
 env/
 .python-version
@@ -219,6 +219,39 @@ COMMIT_MSG.txt
 !results/f2-error-volumes.json
 !results/f3-draw-sweep.json
 
+# Frozen SPADE joint-protocol development evidence. Raw shards remain split and hashed;
+# the small analysis/selection artifacts bind their exact inputs before lockbox access.
+!results/spade-development-*.jsonl.gz
+!results/spade-development-*.jsonl.gz.sha256
+!results/spade-development-*.jsonl.gz.manifest.json
+!results/spade-development-*.jsonl.gz.resume.json
+!results/spade-development-analysis.json
+!results/spade-selected-protocol.json
+!results/spade-lockbox-power.json
+!results/spade-multi-cqa-benchmark.json
+
+# Archived joint-v1 NO_SELECTION development (do not reopen for lockbox).
+!results/historical-joint-v1-noselection/
+!results/historical-joint-v1-noselection/**
+# Archived mfg-cert assay-only shortfall / incomplete shards.
+!results/historical-mfg-cert-assay-shortfall/
+!results/historical-mfg-cert-assay-shortfall/**
+!results/historical-mfg-cert-assay-incomplete/
+!results/historical-mfg-cert-assay-incomplete/**
+!results/historical-mfg-cert-floor15-loo-tail-gate-fail/
+!results/historical-mfg-cert-floor15-loo-tail-gate-fail/**
+!results/historical-mfg-cert-floor15-loo-tail-meanmarg-gate-fail/
+!results/historical-mfg-cert-floor15-loo-tail-meanmarg-gate-fail/**
+
+# Frozen lockbox evidence: raw shards are compressed and hash-bound; the final manifest,
+# confirmatory analysis, and release report are the only allowlisted lockbox artifacts.
+!results/spade-lockbox-*.jsonl.gz
+!results/spade-lockbox-*.jsonl.gz.sha256
+!results/spade-lockbox-*.jsonl.gz.manifest.json
+!results/spade-lockbox-manifest.json
+!results/spade-lockbox-analysis.json
+!results/spade-lockbox-release.json
+
 # Requested by the workers that produced them; results/* ignores by default.
 # f2-ce-error-volumes: error volumes for the CONSERVATIVE-ESTIMATE sets, zero new
 # campaigns, derived from k6b's ce_false_in_*/ce_vol_*/true_frac_above. It was
@@ -231,6 +264,10 @@ COMMIT_MSG.txt
 
 # Q59 map re-score. Registered in OPEN-QUESTIONS before the runner existed.
 !results/q59-map-rescore.json
+
+# Phase 1 historical replay classification. Unlike transient campaign output, this is
+# provenance for why exact historical gates remain failing or receive a registered bound.
+!results/historical-replay-audit.json
 
 # ---------------------------------------------------------------------------
 # VERSION C. `results/*` above ignores .json by default, and this repository has
@@ -310,18 +347,27 @@ COMMIT_MSG.txt
 # are the adjudication, they are small, and a pre-registered study whose verdicts live only
 # in untracked files cannot be audited against its own registration.
 #
-# The RAW row files (`final-spade-c*.json`, ~10^4 rows each) stay ignored — they are bulk
-# run output and regenerable from the committed runner plus the manifest's seeds.
+# The seven raw condition files and their per-condition aliases are intentionally tracked.
+# Their original ignored copies could not be recovered, and clean regeneration changed KF-9
+# by correcting stale checkpoint flags; release auditability therefore requires the rows.
 !results/final-spade-feasibility.json
 !results/final-spade-certificate.json
 !results/final-spade-regret-pareto.json
 !results/final-spade-kill-ledger.json
 !results/final-spade-manifest.json
+!results/final-spade-c[1-4].json
+!results/final-spade-s[1-3].json
+!results/final-spade-primary-C[1-4].json
+!results/final-spade-primary-S[1-3].json
 
 # spade-kf3-followup-2026-08-24: same convention -- the small derived verdict, not the raw
 # per-arm-per-condition campaign files (kf3-followup-c*-spade_cf_*.json/.ckpt.jsonl, bulk,
 # regenerable).
 !results/kf3-followup-analysis.json
+
+# Local isolated feature worktrees.
+.worktrees/
+.superpowers/
 
 # tau-quantile / calibration-fix follow-ups: same convention -- small derived verdicts.
 # tau-quantile-followup.json is NOT included -- 9,600 rows of bulk raw campaign data
@@ -374,12 +420,28 @@ COMMIT_MSG.txt
 !results/tau-levy.json
 !results/tau-rosenbrock.json
 
-# Small analysis outputs that docs cite by path. The large raw sweeps they derive from
-# (final-spade-*, p6-families, ku-prevalence-matched, kv-plate2-certificate,
-# ktb-inflation, tau-quantile-followup) total 849 MB and stay out of git -- they are
-# regenerable from the scripts named in each doc's file map.
+# Small analysis outputs that docs cite by path.
+#
+# CORRECTED 2026-08-30 on merging origin/main: an earlier version of this comment said the
+# large raw sweeps (final-spade-*, p6-families, ...) "stay out of git". That was true of
+# this branch and FALSE of main, which tracks them by path below. Merging main brought
+# them in. The entries here remain necessary for the small files main does not pin.
 !results/kr-analysis.json
 !results/ku-analysis.json
 !results/kv-analysis.json
 !results/confound-ninit.json
 !results/kr-effective-resolution.json
+# SPADE joint development execution audit trail (2026-08-26)
+!results/spade-joint-development-run-ledger.json
+!results/spade-joint-development-execution.log
+!results/spade-joint-pipeline.log
+!results/spade-joint-select.log
+!results/spade-joint-focused-tests.log
+!results/spade-joint-hill-merge.log
+!results/spade-joint-levy-wrap.log
+!results/spade-joint-hill-isolate-path.txt
+!results/spade-joint-continue-dev.sh
+!results/spade-development-*.log
+
+# Watchdog-quarantined shards from wrong protocol digests
+results/stale-wrong-digest/

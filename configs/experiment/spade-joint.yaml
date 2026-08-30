@@ -1,0 +1,213 @@
+schema: boec-spade-joint-protocol-v1
+study_id: spade-joint-48-mfg-cert-floor15-loo-tail-meanmarg-2026-08-27
+status: FROZEN_BEFORE_DEVELOPMENT_SELECTION
+public_method_name: SPADE
+claim_scope: computational_synthetic_benchmark_only
+manufacturing_claim_hierarchy: docs/superpowers/specs/2026-08-26-spade-manufacturing-certificate-recovery-design.md
+
+protocol:
+  dimension: 6
+  budget: 48
+  batch_size: 4
+  bounds: [[0.0, 0.0, 0.0, 0.0, 0.0, 0.0], [1.0, 1.0, 1.0, 1.0, 1.0, 1.0]]
+  noise: {sigma_rel: 0.10, sigma_add: 0.01}
+  reliability: {gamma: 0.95, alpha: 0.95, q_tau: 0.75}
+
+  threshold:
+    target: future_response_reliability_margin
+    formula: "quantile(f - z_gamma * sqrt(sigma_rel^2*f^2 + sigma_add^2), q_tau)"
+    per_landscape_instance: true
+    sealed_oracle_only: true
+    achieved_reliable_prevalence: 0.25
+    registered_tolerance_grid_cells: 1
+    adjacent_float_tie_check: true
+    unachievable_tie_policy: fail_closed
+
+  surrogate:
+    type: SingleTaskGP
+    kernel: matern_5_2_ard
+    input_transform: unit_cube_normalize
+    outcome_transform: standardize
+    observation_noise: learned_homoskedastic
+    likelihood_noise_interval: [0.000001, 1.0]
+    fit_restarts: 4
+    terminal_scoring_refit_on_all_observations: true
+    terminal_scoring_fit_seed_identity: [scoring_seed, arm_run_digest, scoring_settings_digest]
+    supplied_campaign_terminal_model: ignored
+
+  adaptive_pool:
+    design: scrambled_sobol
+    candidate_menu_size: 16384
+    ivr_reference_grid_size: 2048
+    qlognei_mc_samples: 256
+    unique_without_replacement: true
+
+  spade_candidates:
+    openings: [32, 40, 44]
+    opening_design: scrambled_sobol
+    replicate_reserve: 0
+    oa_lhs_included: false
+    policies: [staged, fixed_hybrid, validity_gated]
+    count: 9
+    rounds_by_opening: {32: 5, 40: 3, 44: 2}
+    batch_schedules:
+      32: [32, 4, 4, 4, 4]
+      40: [40, 4, 4]
+      44: [44, 4]
+    boundary_ess_min: 32
+    whole_batch_objectives: [qlognei, global_ivr, boundary_ivr]
+    policy_definitions:
+      staged: qlognei_every_adaptive_batch
+      fixed_hybrid: alternate_qlognei_and_global_ivr_starting_qlognei
+      validity_gated: alternate_qlognei_and_boundary_or_global_ivr_starting_qlognei
+
+  comparator_arms:
+    sobol48:
+      opening: 48
+      batch_schedule: [48]
+      rounds: 1
+    qlognei48:
+      opening: 14
+      batch_schedule: [14, 4, 4, 4, 4, 4, 4, 4, 4, 2]
+      rounds: 10
+
+  grids: {calibration: 65536, terminal: 16384, map: 8192, certificate: 2048}
+  certificate_draws: {total: 4096, selection: 2048, evaluation: 2048, rho_grid: 64}
+  certificate_volume_rule: smallest
+  predictive_observation_noise: assay_relative_additive
+  latent_draw_inflation: loo_calibration_tail
+  latent_inflation_floor: 1.5
+  mean_marginalisation: true
+  certificate_max_volume: 0.001
+  terminal_rule: P
+  map_primary: integrated_squared_probability_error
+  certificate_primary: [answer_rate, empirical_truth_containment_conditional_on_nonempty]
+  certificate_diagnostic: model_conditional_crossfit_containment
+  empty_certificate_policy: answer_failure_and_excluded_from_conditional_containment
+
+  development:
+    families: [hill, ackley, hartmann6, levy, rosenbrock]
+    truth_range_contracts: {hill: strict_unit_interval, external_families: legacy_unit_scaled}
+    campaigns_per_family_arm: 50
+    arms_per_family: 11
+    total_noisy_evaluations: 132000
+    hill_instances: 25
+    hill_campaign_seeds_per_instance: 2
+    selection: nested_leave_one_family_out
+    minimum_answer_rate_point_estimate: 0.50
+    minimum_empirical_containment_point_estimate: 0.90
+    regret_noninferiority_margin: 0.02
+    one_sided_confidence: 0.95
+    tie_break_policy_order: [fixed_hybrid, validity_gated, staged]
+
+  lockbox:
+    families: [toroidal_rastrigin, gaussian_basin_mixture, curved_ridge, soft_plateau]
+    truth_range_contract: strict_unit_interval
+    minimum_campaigns_per_family_arm: 350
+    reserved_instance_keys: {first: 0, last: 1999, count: 2000}
+    sample_size_rule:
+      minimum: 350
+      maximum: 2000
+      target_power: 0.80
+      paired_margin: 0.02
+      one_sided_alpha: 0.05
+      sensitivity_replicates: 2000
+      sensitivity_lower_confidence: 0.95
+      decision: first_integer_passing_all_families_and_both_endpoints
+    arms: [SPADE, Sobol48, qLogNEI48]
+    evaluations_at_minimum_sample_size: 201600
+    target_joint_power: 0.80
+    planning_answer_rate: 0.60
+    planning_conditional_containment: 0.95
+    estimated_certificate_joint_power_at_350: 0.825
+    paired_bootstrap_replicates: 10000
+    one_sided_confidence: 0.95
+    secondary_multiplicity: Holm
+
+  total_noisy_evaluations_at_minimum_sample_size: 333600
+
+  success_by_each_lockbox_family:
+    map_noninferiority_margin_vs_sobol48: 0.02
+    regret_noninferiority_margin_vs_qlognei48: 0.02
+    minimum_answer_rate_exact_lower_bound: 0.50
+    minimum_empirical_containment_exact_lower_bound: 0.90
+    certificate_nominal_alpha: 0.95
+    no_family_pooling: true
+
+  reproducibility:
+    seed_derivation: sha256_labelled_stateless
+    indexed_observation_noise: true
+    gzip_jsonl_mtime: 0
+    raw_row_schema: boec-spade-study-row-v1
+    source_must_be_clean: true
+    lockbox_outcomes_before_selected_protocol_commit: forbidden
+
+execution:
+  schema: boec-spade-registered-execution-v1
+  dispatch:
+    trigger: workflow_dispatch
+    dispatches_per_phase: 1
+    source_sha_input: exact_40_character_lowercase_commit
+    event_sha_equals_source_sha: true
+    workflow_sha_equals_source_sha: true
+    checkout_ref: source_sha
+    checked_out_head_equals_source_sha: true
+    clean_checkout_required: true
+    permissions: {contents: read}
+  runtime:
+    runner: ubuntu-24.04
+    platform: linux/amd64
+    python: 3.11.15
+    container: python@sha256:eaeffb6e8511935426934aac863940fbd004ef31dab0d7fc27a129bb7c19d9a8
+    actions:
+      checkout: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      upload_artifact: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+    environment:
+      OMP_NUM_THREADS: "1"
+      MKL_NUM_THREADS: "1"
+      OPENBLAS_NUM_THREADS: "1"
+      NUMEXPR_NUM_THREADS: "1"
+      PYTHONHASHSEED: "0"
+      CUDA_VISIBLE_DEVICES: ""
+    torch_threads: 1
+    torch_interop_threads: 1
+  parallelism:
+    matrix_max_parallel: 40
+    processes_per_job_maximum: 2
+  development_sharding:
+    family_count: 5
+    keys_per_family: 50
+    key_width: 4
+    logical_shards: 65
+    jobs: 33
+    enabled_slots_per_job_maximum: 2
+  lockbox_sharding:
+    family_count: 4
+    key_width: 10
+    jobs_at_minimum_n_350: 35
+    jobs_at_maximum_n_2000: 200
+    family_pairs:
+      - [toroidal_rastrigin, gaussian_basin_mixture]
+      - [curved_ridge, soft_plateau]
+  artifacts:
+    one_upload_per_enabled_slot: true
+    files_per_slot: [raw_jsonl_gzip, sha256_sidecar, resume_json, manifest_json]
+    compression_level: 0
+    overwrite: false
+    retention_days: 90
+
+digests:
+  digest_definition: "sha256; protocol and execution payloads each use canonical sorted compact JSON of their parsed mappings"
+  protocol_payload_sha256: 1c5c3b7ef5e067774c1f4b198a3b1a36e26b8f162e9f3f4a7d09657c0cf3a250
+  execution_payload_sha256: 5dae76d1495c009cf2ea0989142fe4563c2f2140d2dbe832249bdcc41fa4f80d
+  actions_workflow_sha256: 5240e0a2c302d91afdab7df87abfba83f01983bd7aa9b8550334771c5603722d
+  actions_matrix_sha256: 52230fffe9fcc9317de68f6c7f4c1ef5b97debf58332c62b39380cbd185d951d
+  actions_worker_sha256: caadff076e8654c45dd6c9efb94ab9e96bd0ec8db14017896d98fe1a22fada26
+  development_merger_sha256: 4dd56d59cd06cbd56a10d65e6b4f72fc2fe17e475d5b6db114e80b7b6b72a74d
+  requirements_sha256: 96a00b1abb366bd48318d7957703608b348393aa280a6808ef91652c28471687
+  spec_sha256: 21c07a4107dd39770facabd3f3c9b52c45b65239c0d60b3cc5f7ce7648bdf403
+  lockbox_oracles_source_sha256: 1a79abd6e62d503852fe98957e67d4d4f6d7e9f8b52788176f2359ed38d3e0c3
+  spade_study_source_sha256: 6b9d034677e8e54bfc827c779be172c4fffe6cd25c195e6ff412c9ff1a1406ef
+  power_design_sha256: 6fec13c194468fbbab83758760a60b0161314b03d5c97d3146d14c52af226d7b
+  power_engine_sha256: bb3fb81c44a41318bf14dbabc399a9aed7e2225dd4dcea27706a081d152ac97b
+  power_planner_sha256: 408dcadecbdbf52fff18928eb189ad6963cf8668c8035bb54f2b61e3732ac865

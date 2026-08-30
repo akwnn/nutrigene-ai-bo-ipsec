@@ -1,5 +1,9 @@
 # TRIAGE — every experiment, diagnostic and analysis, labelled
 
+> **Historical point-study triage.** Its labels remain provenance for the early BO/RSM
+> programme but do not cover the later SPADE evidence. Use the current research summary and
+> `.planning/STATE.md` for active conclusions and work.
+
 **One label per item.** The result this triages against is three sentences:
 
 > **1.** Under the registered scoring rule — best value observed (rule A) — the classical DoE

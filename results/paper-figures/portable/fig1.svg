@@ -1,0 +1,729 @@
+<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
+  "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg xmlns:xlink="http://www.w3.org/1999/xlink" width="504.566929pt" height="419.04pt" viewBox="0 0 504.566929 419.04" xmlns="http://www.w3.org/2000/svg" version="1.1">
+ <metadata>
+  <rdf:RDF xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:cc="http://creativecommons.org/ns#" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+   <cc:Work>
+    <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
+    <dc:date>2000-01-01T00:00:00+00:00</dc:date>
+    <dc:format>image/svg+xml</dc:format>
+    <dc:creator>
+     <cc:Agent>
+      <dc:title>boec.paper_figures</dc:title>
+     </cc:Agent>
+    </dc:creator>
+   </cc:Work>
+  </rdf:RDF>
+ </metadata>
+ <defs>
+  <style type="text/css">*{stroke-linejoin: round; stroke-linecap: butt}</style>
+ </defs>
+ <g id="figure_1">
+  <g id="patch_1">
+   <path d="M 0 419.04
+L 504.566929 419.04
+L 504.566929 0
+L 0 0
+z
+" style="fill: #ffffff"/>
+  </g>
+  <g id="axes_1">
+   <g id="patch_2">
+    <path d="M 91.927963 93.436083
+Q 94.919284 93.436083 97.016178 93.436083
+" clip-path="url(#p895977a0fd)" style="fill: none; stroke: #243746; stroke-width: 0.8; stroke-linecap: round"/>
+    <path d="M 94.216178 92.036083
+L 97.016178 93.436083
+L 94.216178 94.836083
+z
+" clip-path="url(#p895977a0fd)" style="fill: #243746; stroke: #243746; stroke-width: 0.8; stroke-linecap: round"/>
+   </g>
+   <g id="patch_3">
+    <path d="M 145.863901 93.436083
+Q 148.855223 93.436083 150.952117 93.436083
+" clip-path="url(#p895977a0fd)" style="fill: none; stroke: #243746; stroke-width: 0.8; stroke-linecap: round"/>
+    <path d="M 148.152117 92.036083
+L 150.952117 93.436083
+L 148.152117 94.836083
+z
+" clip-path="url(#p895977a0fd)" style="fill: #243746; stroke: #243746; stroke-width: 0.8; stroke-linecap: round"/>
+   </g>
+   <g id="patch_4">
+    <path d="M 199.79984 93.436083
+Q 202.791161 93.436083 204.888055 93.436083
+" clip-path="url(#p895977a0fd)" style="fill: none; stroke: #243746; stroke-width: 0.8; stroke-linecap: round"/>
+    <path d="M 202.088055 92.036083
+L 204.888055 93.436083
+L 202.088055 94.836083
+z
+" clip-path="url(#p895977a0fd)" style="fill: #243746; stroke: #243746; stroke-width: 0.8; stroke-linecap: round"/>
+   </g>
+   <g id="text_1">
+    <text style="font-weight: 700; font-size: 8px; font-family: 'Arial'; text-anchor: start; fill: #243746" x="28.00145" y="8.824459" transform="rotate(-0 28.00145 8.824459)">a</text>
+   </g>
+   <g id="text_2">
+    <text style="font-weight: 700; font-size: 7.5px; font-family: 'Arial'; text-anchor: start; fill: #243746" x="51.972978" y="43.10834" transform="rotate(-0 51.972978 43.10834)">ONE CAMPAIGN</text>
+   </g>
+   <g id="AnnotationBbox_1">
+    <g id="patch_5">
+     <path d="M 46.15634 104.330443
+L 89.751653 104.330443
+Q 90.551653 104.330443 90.551653 103.530443
+L 90.551653 83.341722
+Q 90.551653 82.541722 89.751653 82.541722
+L 46.15634 82.541722
+Q 45.35634 82.541722 45.35634 83.341722
+L 45.35634 103.530443
+Q 45.35634 104.330443 46.15634 104.330443
+z
+" style="fill: #e8f1f8; stroke: #243746; stroke-width: 0.8; stroke-linejoin: miter"/>
+    </g>
+    <g id="text_3">
+     <text style="font-size: 7.5px; font-family: 'Arial'; fill: #243746" transform="translate(48.15634 92.029137)">Formulation</text>
+     <text style="font-size: 7.5px; font-family: 'Arial'; fill: #243746" transform="translate(52.947551 100.123497)">variables</text>
+    </g>
+   </g>
+   <g id="AnnotationBbox_2">
+    <g id="patch_6">
+     <path d="M 103.631341 104.330443
+L 140.148529 104.330443
+Q 140.948529 104.330443 140.948529 103.530443
+L 140.948529 83.341722
+Q 140.948529 82.541722 140.148529 82.541722
+L 103.631341 82.541722
+Q 102.831341 82.541722 102.831341 83.341722
+L 102.831341 103.530443
+Q 102.831341 104.330443 103.631341 104.330443
+z
+" style="fill: #e8f1f8; stroke: #243746; stroke-width: 0.8; stroke-linejoin: miter"/>
+    </g>
+    <g id="text_4">
+     <text style="font-size: 7.5px; font-family: 'Arial'; fill: #243746" transform="translate(110.010638 92.038512)">48-well</text>
+     <text style="font-size: 7.5px; font-family: 'Arial'; fill: #243746" transform="translate(105.631341 99.378185)">campaign</text>
+    </g>
+   </g>
+   <g id="AnnotationBbox_3">
+    <g id="patch_7">
+     <path d="M 153.611615 104.330443
+L 198.040131 104.330443
+Q 198.840131 104.330443 198.840131 103.530443
+L 198.840131 83.341722
+Q 198.840131 82.541722 198.040131 82.541722
+L 153.611615 82.541722
+Q 152.811615 82.541722 152.811615 83.341722
+L 152.811615 103.530443
+Q 152.811615 104.330443 153.611615 104.330443
+z
+" style="fill: #fde9dd; stroke: #243746; stroke-width: 0.8; stroke-linejoin: miter"/>
+    </g>
+    <g id="text_5">
+     <text style="font-size: 7.5px; font-family: 'Arial'; fill: #243746" transform="translate(155.611615 91.283824)">Noisy assay</text>
+     <text style="font-size: 7.5px; font-family: 'Arial'; fill: #243746" transform="translate(158.525483 98.726622)">responses</text>
+    </g>
+   </g>
+   <g id="AnnotationBbox_4">
+    <g id="patch_8">
+     <path d="M 208.879223 104.330443
+L 246.649145 104.330443
+Q 247.449145 104.330443 247.449145 103.530443
+L 247.449145 83.341722
+Q 247.449145 82.541722 246.649145 82.541722
+L 208.879223 82.541722
+Q 208.079223 82.541722 208.079223 83.341722
+L 208.079223 103.530443
+Q 208.079223 104.330443 208.879223 104.330443
+z
+" style="fill: #ddf3e8; stroke: #243746; stroke-width: 0.8; stroke-linejoin: miter"/>
+    </g>
+    <g id="text_6">
+     <text style="font-size: 7.5px; font-family: 'Arial'; fill: #243746" transform="translate(210.879223 91.32777)">Response</text>
+     <text style="font-size: 7.5px; font-family: 'Arial'; fill: #243746" transform="translate(217.551293 100.123497)">model</text>
+    </g>
+   </g>
+  </g>
+  <g id="axes_2">
+   <g id="patch_9">
+    <path d="M 357.239341 86.673977
+Q 372.902769 76.09591 387.824968 66.018421
+" clip-path="url(#pc752479e17)" style="fill: none; stroke: #243746; stroke-width: 0.8; stroke-linecap: round"/>
+    <path d="M 384.721023 66.425272
+L 387.824968 66.018421
+L 386.288082 68.745687
+z
+" clip-path="url(#pc752479e17)" style="fill: #243746; stroke: #243746; stroke-width: 0.8; stroke-linecap: round"/>
+   </g>
+   <g id="patch_10">
+    <path d="M 357.118879 97.355084
+Q 372.902547 109.268385 387.972317 120.642846
+" clip-path="url(#pc752479e17)" style="fill: none; stroke: #243746; stroke-width: 0.8; stroke-linecap: round"/>
+    <path d="M 386.580882 117.83858
+L 387.972317 120.642846
+L 384.894043 120.073435
+z
+" clip-path="url(#pc752479e17)" style="fill: #243746; stroke: #243746; stroke-width: 0.8; stroke-linecap: round"/>
+   </g>
+   <g id="text_7">
+    <text style="font-weight: 700; font-size: 8px; font-family: 'Arial'; text-anchor: start; fill: #243746" x="278.01447" y="8.824459" transform="rotate(-0 278.01447 8.824459)">b</text>
+   </g>
+   <g id="AnnotationBbox_5">
+    <g id="patch_11">
+     <path d="M 299.693435 102.822661
+L 356.216872 102.822661
+Q 357.016872 102.822661 357.016872 102.022661
+L 357.016872 81.83394
+Q 357.016872 81.03394 356.216872 81.03394
+L 299.693435 81.03394
+Q 298.893435 81.03394 298.893435 81.83394
+L 298.893435 102.022661
+Q 298.893435 102.822661 299.693435 102.822661
+z
+" style="fill: #e8f1f8; stroke: #243746; stroke-width: 0.8; stroke-linejoin: miter"/>
+    </g>
+    <g id="text_8">
+     <text style="font-weight: 700; font-size: 7.5px; font-family: 'Arial'; fill: #243746" transform="translate(301.693435 89.870964)">Same sampled</text>
+     <text style="font-weight: 700; font-size: 7.5px; font-family: 'Arial'; fill: #243746" transform="translate(310.451442 97.870402)">campaign</text>
+    </g>
+   </g>
+   <g id="AnnotationBbox_6">
+    <g id="patch_12">
+     <path d="M 370.887381 76.714194
+L 500.766678 76.714194
+Q 501.566678 76.714194 501.566678 75.914194
+L 501.566678 47.631112
+Q 501.566678 46.831112 500.766678 46.831112
+L 370.887381 46.831112
+Q 370.087381 46.831112 370.087381 47.631112
+L 370.087381 75.914194
+Q 370.087381 76.714194 370.887381 76.714194
+z
+" style="fill: #e8f1f8; stroke-dasharray: 2.96,1.28; stroke-dashoffset: 0; stroke: #243746; stroke-width: 0.8; stroke-linejoin: miter"/>
+    </g>
+    <g id="text_9">
+     <text style="font-size: 7.5px; font-family: 'Arial'; fill: #243746" transform="translate(405.266874 56.364816)">POINT DECISION</text>
+     <text style="font-size: 7.5px; font-family: 'Arial'; fill: #243746" transform="translate(388.515506 63.667575)">Tested-best · noisy selection</text>
+     <text style="font-size: 7.5px; font-family: 'Arial'; fill: #243746" transform="translate(372.887381 72.552951)">Model recommendation · confirmation</text>
+    </g>
+   </g>
+   <g id="AnnotationBbox_7">
+    <g id="patch_13">
+     <path d="M 394.855155 141.548835
+L 476.798905 141.548835
+Q 477.598905 141.548835 477.598905 140.748835
+L 477.598905 112.465754
+Q 477.598905 111.665754 476.798905 111.665754
+L 394.855155 111.665754
+Q 394.055155 111.665754 394.055155 112.465754
+L 394.055155 140.748835
+Q 394.055155 141.548835 394.855155 141.548835
+z
+" style="fill: #ddf3e8; stroke-dasharray: 2.96,1.28; stroke-dashoffset: 0; stroke: #243746; stroke-width: 0.8; stroke-linejoin: miter"/>
+    </g>
+    <g id="text_10">
+     <text style="font-size: 7.5px; font-family: 'Arial'; fill: #243746" transform="translate(401.864335 121.199458)">REGION DECISION</text>
+     <text style="font-size: 7.5px; font-family: 'Arial'; fill: #243746" transform="translate(397.265897 128.502217)">Acceptable-region map</text>
+     <text style="font-size: 7.5px; font-family: 'Arial'; fill: #243746" transform="translate(396.855155 137.385835)">Conservative certificate</text>
+    </g>
+   </g>
+  </g>
+  <g id="axes_3">
+   <g id="table_1">
+    <g id="patch_14">
+     <path d="M 52.475481 248.675918
+L 136.223726 248.675918
+L 136.223726 221.535835
+L 52.475481 221.535835
+z
+" style="fill: #f3f6f8; stroke: #cbd2d9; stroke-width: 0.5; stroke-linejoin: miter"/>
+    </g>
+    <g id="text_11">
+     <text style="font-weight: 700; font-size: 7.5px; font-family: 'Arial'; text-anchor: start; fill: #243746" x="57.500375" y="237.046794" transform="rotate(-0 57.500375 237.046794)">Deliverable</text>
+    </g>
+    <g id="patch_15">
+     <path d="M 136.223726 248.675918
+L 215.564169 248.675918
+L 215.564169 221.535835
+L 136.223726 221.535835
+z
+" style="fill: #f3f6f8; stroke: #cbd2d9; stroke-width: 0.5; stroke-linejoin: miter"/>
+    </g>
+    <g id="text_12">
+     <text style="font-weight: 700; font-size: 7.5px; font-family: 'Arial'; fill: #243746" transform="translate(140.984153 232.9653)">Reported</text>
+     <text style="font-weight: 700; font-size: 7.5px; font-family: 'Arial'; fill: #243746" transform="translate(140.984153 241.128142)">object</text>
+    </g>
+    <g id="patch_16">
+     <path d="M 215.564169 248.675918
+L 281.681205 248.675918
+L 281.681205 221.535835
+L 215.564169 221.535835
+z
+" style="fill: #f3f6f8; stroke: #cbd2d9; stroke-width: 0.5; stroke-linejoin: miter"/>
+    </g>
+    <g id="text_13">
+     <text style="font-weight: 700; font-size: 7.5px; font-family: 'Arial'; text-anchor: start; fill: #243746" x="219.531191" y="237.046794" transform="rotate(-0 219.531191 237.046794)">Observable?</text>
+    </g>
+    <g id="patch_17">
+     <path d="M 281.681205 248.675918
+L 352.206043 248.675918
+L 352.206043 221.535835
+L 281.681205 221.535835
+z
+" style="fill: #f3f6f8; stroke: #cbd2d9; stroke-width: 0.5; stroke-linejoin: miter"/>
+    </g>
+    <g id="text_14">
+     <text style="font-weight: 700; font-size: 7.5px; font-family: 'Arial'; text-anchor: start; fill: #243746" x="285.912695" y="237.046794" transform="rotate(-0 285.912695 237.046794)">Score</text>
+    </g>
+    <g id="patch_18">
+     <path d="M 352.206043 248.675918
+L 409.507475 248.675918
+L 409.507475 221.535835
+L 352.206043 221.535835
+z
+" style="fill: #f3f6f8; stroke: #cbd2d9; stroke-width: 0.5; stroke-linejoin: miter"/>
+    </g>
+    <g id="text_15">
+     <text style="font-weight: 700; font-size: 7.5px; font-family: 'Arial'; fill: #243746" transform="translate(355.644129 232.965373)">Extra</text>
+     <text style="font-weight: 700; font-size: 7.5px; font-family: 'Arial'; fill: #243746" transform="translate(355.644129 241.128215)">wells</text>
+    </g>
+    <g id="patch_19">
+     <path d="M 409.507475 248.675918
+L 493.25572 248.675918
+L 493.25572 221.535835
+L 409.507475 221.535835
+z
+" style="fill: #f3f6f8; stroke: #cbd2d9; stroke-width: 0.5; stroke-linejoin: miter"/>
+    </g>
+    <g id="text_16">
+     <text style="font-weight: 700; font-size: 7.5px; font-family: 'Arial'; text-anchor: start; fill: #243746" x="414.532369" y="237.046794" transform="rotate(-0 414.532369 237.046794)">Rounds</text>
+    </g>
+    <g id="patch_20">
+     <path d="M 52.475481 275.816
+L 136.223726 275.816
+L 136.223726 248.675918
+L 52.475481 248.675918
+z
+" style="fill: #e8f1f8; stroke: #cbd2d9; stroke-width: 0.5; stroke-linejoin: miter"/>
+    </g>
+    <g id="text_17">
+     <text style="font-size: 7.5px; font-family: 'Arial'; text-anchor: start; fill: #243746" x="57.500375" y="264.186877" transform="rotate(-0 57.500375 264.186877)">Tested-best</text>
+    </g>
+    <g id="patch_21">
+     <path d="M 136.223726 275.816
+L 215.564169 275.816
+L 215.564169 248.675918
+L 136.223726 248.675918
+z
+" style="fill: #ffffff; stroke: #cbd2d9; stroke-width: 0.5; stroke-linejoin: miter"/>
+    </g>
+    <g id="text_18">
+     <text style="font-size: 7.5px; font-family: 'Arial'; fill: #243746" transform="translate(140.984153 260.105456)">latent best</text>
+     <text style="font-size: 7.5px; font-family: 'Arial'; fill: #243746" transform="translate(140.984153 268.268298)">visited</text>
+    </g>
+    <g id="patch_22">
+     <path d="M 215.564169 275.816
+L 281.681205 275.816
+L 281.681205 248.675918
+L 215.564169 248.675918
+z
+" style="fill: #ffffff; stroke: #cbd2d9; stroke-width: 0.5; stroke-linejoin: miter"/>
+    </g>
+    <g id="text_19">
+     <text style="font-size: 7.5px; font-family: 'Arial'; text-anchor: start; fill: #243746" x="219.531191" y="264.186877" transform="rotate(-0 219.531191 264.186877)">no</text>
+    </g>
+    <g id="patch_23">
+     <path d="M 281.681205 275.816
+L 352.206043 275.816
+L 352.206043 248.675918
+L 281.681205 248.675918
+z
+" style="fill: #ffffff; stroke: #cbd2d9; stroke-width: 0.5; stroke-linejoin: miter"/>
+    </g>
+    <g id="text_20">
+     <text style="font-size: 7.5px; font-family: 'Arial'; fill: #243746" transform="translate(285.912695 260.105383)">simple</text>
+     <text style="font-size: 7.5px; font-family: 'Arial'; fill: #243746" transform="translate(285.912695 268.268224)">regret</text>
+    </g>
+    <g id="patch_24">
+     <path d="M 352.206043 275.816
+L 409.507475 275.816
+L 409.507475 248.675918
+L 352.206043 248.675918
+z
+" style="fill: #ffffff; stroke: #cbd2d9; stroke-width: 0.5; stroke-linejoin: miter"/>
+    </g>
+    <g id="text_21">
+     <text style="font-size: 7.5px; font-family: 'Arial'; text-anchor: start; fill: #243746" x="355.644129" y="264.186877" transform="rotate(-0 355.644129 264.186877)">0</text>
+    </g>
+    <g id="patch_25">
+     <path d="M 409.507475 275.816
+L 493.25572 275.816
+L 493.25572 248.675918
+L 409.507475 248.675918
+z
+" style="fill: #ffffff; stroke: #cbd2d9; stroke-width: 0.5; stroke-linejoin: miter"/>
+    </g>
+    <g id="text_22">
+     <text style="font-size: 7.5px; font-family: 'Arial'; text-anchor: start; fill: #243746" x="414.532369" y="264.186804" transform="rotate(-0 414.532369 264.186804)">campaign</text>
+    </g>
+    <g id="patch_26">
+     <path d="M 52.475481 302.956083
+L 136.223726 302.956083
+L 136.223726 275.816
+L 52.475481 275.816
+z
+" style="fill: #e8f1f8; stroke: #cbd2d9; stroke-width: 0.5; stroke-linejoin: miter"/>
+    </g>
+    <g id="text_23">
+     <text style="font-size: 7.5px; font-family: 'Arial'; fill: #243746" transform="translate(57.500375 287.245538)">Measured</text>
+     <text style="font-size: 7.5px; font-family: 'Arial'; fill: #243746" transform="translate(57.500375 295.40838)">selection</text>
+    </g>
+    <g id="patch_27">
+     <path d="M 136.223726 302.956083
+L 215.564169 302.956083
+L 215.564169 275.816
+L 136.223726 275.816
+z
+" style="fill: #ffffff; stroke: #cbd2d9; stroke-width: 0.5; stroke-linejoin: miter"/>
+    </g>
+    <g id="text_24">
+     <text style="font-size: 7.5px; font-family: 'Arial'; fill: #243746" transform="translate(140.984153 287.245538)">one tested</text>
+     <text style="font-size: 7.5px; font-family: 'Arial'; fill: #243746" transform="translate(140.984153 295.40838)">well</text>
+    </g>
+    <g id="patch_28">
+     <path d="M 215.564169 302.956083
+L 281.681205 302.956083
+L 281.681205 275.816
+L 215.564169 275.816
+z
+" style="fill: #ffffff; stroke: #cbd2d9; stroke-width: 0.5; stroke-linejoin: miter"/>
+    </g>
+    <g id="text_25">
+     <text style="font-size: 7.5px; font-family: 'Arial'; text-anchor: start; fill: #243746" x="219.531191" y="291.326886" transform="rotate(-0 219.531191 291.326886)">yes</text>
+    </g>
+    <g id="patch_29">
+     <path d="M 281.681205 302.956083
+L 352.206043 302.956083
+L 352.206043 275.816
+L 281.681205 275.816
+z
+" style="fill: #ffffff; stroke: #cbd2d9; stroke-width: 0.5; stroke-linejoin: miter"/>
+    </g>
+    <g id="text_26">
+     <text style="font-size: 7.5px; font-family: 'Arial'; fill: #243746" transform="translate(285.912695 287.245465)">Rule-A</text>
+     <text style="font-size: 7.5px; font-family: 'Arial'; fill: #243746" transform="translate(285.912695 295.408307)">regret</text>
+    </g>
+    <g id="patch_30">
+     <path d="M 352.206043 302.956083
+L 409.507475 302.956083
+L 409.507475 275.816
+L 352.206043 275.816
+z
+" style="fill: #ffffff; stroke: #cbd2d9; stroke-width: 0.5; stroke-linejoin: miter"/>
+    </g>
+    <g id="text_27">
+     <text style="font-size: 7.5px; font-family: 'Arial'; text-anchor: start; fill: #243746" x="355.644129" y="291.326959" transform="rotate(-0 355.644129 291.326959)">0</text>
+    </g>
+    <g id="patch_31">
+     <path d="M 409.507475 302.956083
+L 493.25572 302.956083
+L 493.25572 275.816
+L 409.507475 275.816
+z
+" style="fill: #ffffff; stroke: #cbd2d9; stroke-width: 0.5; stroke-linejoin: miter"/>
+    </g>
+    <g id="text_28">
+     <text style="font-size: 7.5px; font-family: 'Arial'; text-anchor: start; fill: #243746" x="414.532369" y="291.326886" transform="rotate(-0 414.532369 291.326886)">campaign</text>
+    </g>
+    <g id="patch_32">
+     <path d="M 52.475481 330.096165
+L 136.223726 330.096165
+L 136.223726 302.956083
+L 52.475481 302.956083
+z
+" style="fill: #e8f1f8; stroke: #cbd2d9; stroke-width: 0.5; stroke-linejoin: miter"/>
+    </g>
+    <g id="text_29">
+     <text style="font-size: 7.5px; font-family: 'Arial'; fill: #243746" transform="translate(57.500375 314.385621)">Model</text>
+     <text style="font-size: 7.5px; font-family: 'Arial'; fill: #243746" transform="translate(57.500375 322.548463)">recommendation</text>
+    </g>
+    <g id="patch_33">
+     <path d="M 136.223726 330.096165
+L 215.564169 330.096165
+L 215.564169 302.956083
+L 136.223726 302.956083
+z
+" style="fill: #ffffff; stroke: #cbd2d9; stroke-width: 0.5; stroke-linejoin: miter"/>
+    </g>
+    <g id="text_30">
+     <text style="font-size: 7.5px; font-family: 'Arial'; fill: #243746" transform="translate(140.984153 314.385621)">predicted</text>
+     <text style="font-size: 7.5px; font-family: 'Arial'; fill: #243746" transform="translate(140.984153 322.548463)">optimum</text>
+    </g>
+    <g id="patch_34">
+     <path d="M 215.564169 330.096165
+L 281.681205 330.096165
+L 281.681205 302.956083
+L 215.564169 302.956083
+z
+" style="fill: #ffffff; stroke: #cbd2d9; stroke-width: 0.5; stroke-linejoin: miter"/>
+    </g>
+    <g id="text_31">
+     <text style="font-size: 7.5px; font-family: 'Arial'; text-anchor: start; fill: #243746" x="219.531191" y="318.466969" transform="rotate(-0 219.531191 318.466969)">yes</text>
+    </g>
+    <g id="patch_35">
+     <path d="M 281.681205 330.096165
+L 352.206043 330.096165
+L 352.206043 302.956083
+L 281.681205 302.956083
+z
+" style="fill: #ffffff; stroke: #cbd2d9; stroke-width: 0.5; stroke-linejoin: miter"/>
+    </g>
+    <g id="text_32">
+     <text style="font-size: 7.5px; font-family: 'Arial'; fill: #243746" transform="translate(285.912695 314.385548)">Rule-P</text>
+     <text style="font-size: 7.5px; font-family: 'Arial'; fill: #243746" transform="translate(285.912695 322.54839)">regret</text>
+    </g>
+    <g id="patch_36">
+     <path d="M 352.206043 330.096165
+L 409.507475 330.096165
+L 409.507475 302.956083
+L 352.206043 302.956083
+z
+" style="fill: #ffffff; stroke: #cbd2d9; stroke-width: 0.5; stroke-linejoin: miter"/>
+    </g>
+    <g id="text_33">
+     <text style="font-size: 7.5px; font-family: 'Arial'; text-anchor: start; fill: #243746" x="355.644129" y="318.467042" transform="rotate(-0 355.644129 318.467042)">0</text>
+    </g>
+    <g id="patch_37">
+     <path d="M 409.507475 330.096165
+L 493.25572 330.096165
+L 493.25572 302.956083
+L 409.507475 302.956083
+z
+" style="fill: #ffffff; stroke: #cbd2d9; stroke-width: 0.5; stroke-linejoin: miter"/>
+    </g>
+    <g id="text_34">
+     <text style="font-size: 7.5px; font-family: 'Arial'; text-anchor: start; fill: #243746" x="414.532369" y="318.466969" transform="rotate(-0 414.532369 318.466969)">campaign</text>
+    </g>
+    <g id="patch_38">
+     <path d="M 52.475481 357.236248
+L 136.223726 357.236248
+L 136.223726 330.096165
+L 52.475481 330.096165
+z
+" style="fill: #e8f1f8; stroke: #cbd2d9; stroke-width: 0.5; stroke-linejoin: miter"/>
+    </g>
+    <g id="text_35">
+     <text style="font-size: 7.5px; font-family: 'Arial'; fill: #243746" transform="translate(57.500375 341.525704)">Confirmation</text>
+     <text style="font-size: 7.5px; font-family: 'Arial'; fill: #243746" transform="translate(57.500375 349.688545)">protocol</text>
+    </g>
+    <g id="patch_39">
+     <path d="M 136.223726 357.236248
+L 215.564169 357.236248
+L 215.564169 330.096165
+L 136.223726 330.096165
+z
+" style="fill: #ffffff; stroke: #cbd2d9; stroke-width: 0.5; stroke-linejoin: miter"/>
+    </g>
+    <g id="text_36">
+     <text style="font-size: 7.5px; font-family: 'Arial'; fill: #243746" transform="translate(140.984153 341.525704)">confirmed</text>
+     <text style="font-size: 7.5px; font-family: 'Arial'; fill: #243746" transform="translate(140.984153 349.688545)">tested well</text>
+    </g>
+    <g id="patch_40">
+     <path d="M 215.564169 357.236248
+L 281.681205 357.236248
+L 281.681205 330.096165
+L 215.564169 330.096165
+z
+" style="fill: #ffffff; stroke: #cbd2d9; stroke-width: 0.5; stroke-linejoin: miter"/>
+    </g>
+    <g id="text_37">
+     <text style="font-size: 7.5px; font-family: 'Arial'; text-anchor: start; fill: #243746" x="219.531191" y="345.607051" transform="rotate(-0 219.531191 345.607051)">yes</text>
+    </g>
+    <g id="patch_41">
+     <path d="M 281.681205 357.236248
+L 352.206043 357.236248
+L 352.206043 330.096165
+L 281.681205 330.096165
+z
+" style="fill: #ffffff; stroke: #cbd2d9; stroke-width: 0.5; stroke-linejoin: miter"/>
+    </g>
+    <g id="text_38">
+     <text style="font-size: 7.5px; font-family: 'Arial'; fill: #243746" transform="translate(285.912695 341.52563)">confirmed</text>
+     <text style="font-size: 7.5px; font-family: 'Arial'; fill: #243746" transform="translate(285.912695 349.688472)">regret</text>
+    </g>
+    <g id="patch_42">
+     <path d="M 352.206043 357.236248
+L 409.507475 357.236248
+L 409.507475 330.096165
+L 352.206043 330.096165
+z
+" style="fill: #ffffff; stroke: #cbd2d9; stroke-width: 0.5; stroke-linejoin: miter"/>
+    </g>
+    <g id="text_39">
+     <text style="font-size: 7.5px; font-family: 'Arial'; text-anchor: start; fill: #243746" x="355.644129" y="345.607124" transform="rotate(-0 355.644129 345.607124)">protocol</text>
+    </g>
+    <g id="patch_43">
+     <path d="M 409.507475 357.236248
+L 493.25572 357.236248
+L 493.25572 330.096165
+L 409.507475 330.096165
+z
+" style="fill: #ffffff; stroke: #cbd2d9; stroke-width: 0.5; stroke-linejoin: miter"/>
+    </g>
+    <g id="text_40">
+     <text style="font-size: 7.5px; font-family: 'Arial'; fill: #243746" transform="translate(414.532369 341.52563)">campaign +</text>
+     <text style="font-size: 7.5px; font-family: 'Arial'; fill: #243746" transform="translate(414.532369 349.688619)">confirmation</text>
+    </g>
+    <g id="patch_44">
+     <path d="M 52.475481 384.37633
+L 136.223726 384.37633
+L 136.223726 357.236248
+L 52.475481 357.236248
+z
+" style="fill: #ddf3e8; stroke: #cbd2d9; stroke-width: 0.9; stroke-linejoin: miter"/>
+    </g>
+    <g id="text_41">
+     <text style="font-size: 7.5px; font-family: 'Arial'; fill: #243746" transform="translate(57.500375 368.665713)">Acceptable-region</text>
+     <text style="font-size: 7.5px; font-family: 'Arial'; fill: #243746" transform="translate(57.500375 376.828701)">map</text>
+    </g>
+    <g id="patch_45">
+     <path d="M 136.223726 384.37633
+L 215.564169 384.37633
+L 215.564169 357.236248
+L 136.223726 357.236248
+z
+" style="fill: #ffffff; stroke: #cbd2d9; stroke-width: 0.9; stroke-linejoin: miter"/>
+    </g>
+    <g id="text_42">
+     <text style="font-size: 7.5px; font-family: 'Arial'; fill: #243746" transform="translate(140.984153 368.665786)">acceptable</text>
+     <text style="font-size: 7.5px; font-family: 'Arial'; fill: #243746" transform="translate(140.984153 376.828628)">input set</text>
+    </g>
+    <g id="patch_46">
+     <path d="M 215.564169 384.37633
+L 281.681205 384.37633
+L 281.681205 357.236248
+L 215.564169 357.236248
+z
+" style="fill: #ffffff; stroke: #cbd2d9; stroke-width: 0.9; stroke-linejoin: miter"/>
+    </g>
+    <g id="text_43">
+     <text style="font-size: 7.5px; font-family: 'Arial'; text-anchor: start; fill: #243746" x="219.531191" y="372.747134" transform="rotate(-0 219.531191 372.747134)">yes</text>
+    </g>
+    <g id="patch_47">
+     <path d="M 281.681205 384.37633
+L 352.206043 384.37633
+L 352.206043 357.236248
+L 281.681205 357.236248
+z
+" style="fill: #ffffff; stroke: #cbd2d9; stroke-width: 0.9; stroke-linejoin: miter"/>
+    </g>
+    <g id="text_44">
+     <text style="font-size: 7.5px; font-family: 'Arial'; fill: #243746" transform="translate(285.912695 368.665713)">symmetric</text>
+     <text style="font-size: 7.5px; font-family: 'Arial'; fill: #243746" transform="translate(285.912695 376.828701)">difference</text>
+    </g>
+    <g id="patch_48">
+     <path d="M 352.206043 384.37633
+L 409.507475 384.37633
+L 409.507475 357.236248
+L 352.206043 357.236248
+z
+" style="fill: #ffffff; stroke: #cbd2d9; stroke-width: 0.9; stroke-linejoin: miter"/>
+    </g>
+    <g id="text_45">
+     <text style="font-size: 7.5px; font-family: 'Arial'; text-anchor: start; fill: #243746" x="355.644129" y="372.747207" transform="rotate(-0 355.644129 372.747207)">0</text>
+    </g>
+    <g id="patch_49">
+     <path d="M 409.507475 384.37633
+L 493.25572 384.37633
+L 493.25572 357.236248
+L 409.507475 357.236248
+z
+" style="fill: #ffffff; stroke: #cbd2d9; stroke-width: 0.9; stroke-linejoin: miter"/>
+    </g>
+    <g id="text_46">
+     <text style="font-size: 7.5px; font-family: 'Arial'; text-anchor: start; fill: #243746" x="414.532369" y="372.747134" transform="rotate(-0 414.532369 372.747134)">campaign</text>
+    </g>
+    <g id="patch_50">
+     <path d="M 52.475481 411.516413
+L 136.223726 411.516413
+L 136.223726 384.37633
+L 52.475481 384.37633
+z
+" style="fill: #ddf3e8; stroke: #cbd2d9; stroke-width: 0.5; stroke-linejoin: miter"/>
+    </g>
+    <g id="text_47">
+     <text style="font-size: 7.5px; font-family: 'Arial'; text-anchor: start; fill: #243746" x="57.500375" y="399.88729" transform="rotate(-0 57.500375 399.88729)">Certificate</text>
+    </g>
+    <g id="patch_51">
+     <path d="M 136.223726 411.516413
+L 215.564169 411.516413
+L 215.564169 384.37633
+L 136.223726 384.37633
+z
+" style="fill: #ffffff; stroke: #cbd2d9; stroke-width: 0.5; stroke-linejoin: miter"/>
+    </g>
+    <g id="text_48">
+     <text style="font-size: 7.5px; font-family: 'Arial'; fill: #243746" transform="translate(140.984153 395.805869)">conservative</text>
+     <text style="font-size: 7.5px; font-family: 'Arial'; fill: #243746" transform="translate(140.984153 403.96871)">subset</text>
+    </g>
+    <g id="patch_52">
+     <path d="M 215.564169 411.516413
+L 281.681205 411.516413
+L 281.681205 384.37633
+L 215.564169 384.37633
+z
+" style="fill: #ffffff; stroke: #cbd2d9; stroke-width: 0.5; stroke-linejoin: miter"/>
+    </g>
+    <g id="text_49">
+     <text style="font-size: 7.5px; font-family: 'Arial'; text-anchor: start; fill: #243746" x="219.531191" y="399.887216" transform="rotate(-0 219.531191 399.887216)">yes</text>
+    </g>
+    <g id="patch_53">
+     <path d="M 281.681205 411.516413
+L 352.206043 411.516413
+L 352.206043 384.37633
+L 281.681205 384.37633
+z
+" style="fill: #ffffff; stroke: #cbd2d9; stroke-width: 0.5; stroke-linejoin: miter"/>
+    </g>
+    <g id="text_50">
+     <text style="font-size: 7.5px; font-family: 'Arial'; fill: #243746" transform="translate(285.912695 395.805795)">joint</text>
+     <text style="font-size: 7.5px; font-family: 'Arial'; fill: #243746" transform="translate(285.912695 403.968784)">containment</text>
+    </g>
+    <g id="patch_54">
+     <path d="M 352.206043 411.516413
+L 409.507475 411.516413
+L 409.507475 384.37633
+L 352.206043 384.37633
+z
+" style="fill: #ffffff; stroke: #cbd2d9; stroke-width: 0.5; stroke-linejoin: miter"/>
+    </g>
+    <g id="text_51">
+     <text style="font-size: 7.5px; font-family: 'Arial'; text-anchor: start; fill: #243746" x="355.644129" y="399.88729" transform="rotate(-0 355.644129 399.88729)">0</text>
+    </g>
+    <g id="patch_55">
+     <path d="M 409.507475 411.516413
+L 493.25572 411.516413
+L 493.25572 384.37633
+L 409.507475 384.37633
+z
+" style="fill: #ffffff; stroke: #cbd2d9; stroke-width: 0.5; stroke-linejoin: miter"/>
+    </g>
+    <g id="text_52">
+     <text style="font-size: 7.5px; font-family: 'Arial'; text-anchor: start; fill: #243746" x="414.532369" y="399.887216" transform="rotate(-0 414.532369 399.887216)">campaign</text>
+    </g>
+   </g>
+   <g id="text_53">
+    <text style="font-weight: 700; font-size: 8px; font-family: 'Arial'; text-anchor: start; fill: #243746" x="3.000148" y="179.142117" transform="rotate(-0 3.000148 179.142117)">c</text>
+   </g>
+   <g id="text_54">
+    <text style="font-weight: 700; font-size: 7.5px; font-family: 'Arial'; text-anchor: start; fill: #243746" x="52.475481" y="204.379305" transform="rotate(-0 52.475481 204.379305)">ESTIMAND LEDGER   •   point decisions (blue)   •   region decisions (green)</text>
+   </g>
+  </g>
+ </g>
+ <defs>
+  <clipPath id="p895977a0fd">
+   <rect x="47.977723" y="16.539182" width="199.762734" height="150.778236"/>
+  </clipPath>
+  <clipPath id="pc752479e17">
+   <rect x="297.990743" y="16.539182" width="199.762734" height="150.778236"/>
+  </clipPath>
+ </defs>
+</svg>

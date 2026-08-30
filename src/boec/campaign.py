@@ -412,12 +412,33 @@ class Campaign:
 
     # -- saving and resuming -----------------------------------------------
 
+    @staticmethod
+    def _validate_evaluator_progress(evaluator_state: dict, n_observed: int) -> None:
+        if "next_index" not in evaluator_state:
+            return
+        value = evaluator_state["next_index"]
+        if (
+            isinstance(value, (bool, np.bool_))
+            or not isinstance(value, (int, np.integer))
+            or value < 0
+        ):
+            raise ValueError(
+                "evaluator checkpoint next_index must be a nonnegative integer, "
+                f"got {value!r}"
+            )
+        next_index = int(value)
+        if next_index != n_observed:
+            raise ValueError(
+                f"evaluator checkpoint next_index {next_index} does not match "
+                f"{n_observed} observed campaign rows"
+            )
+
     def state_dict(self) -> dict:
         """Everything needed to resume. **Measurements and settings, not model
         internals** — the model is rebuilt on resume.
         """
         import botorch
-        return {
+        state = {
             "format_version": 1,
             "config": asdict(self.config),
             "bounds": self.bounds,
@@ -437,6 +458,12 @@ class Campaign:
                 "python": platform.python_version(),
             },
         }
+        evaluator_state = getattr(self.evaluator, "state_dict", None)
+        if callable(evaluator_state):
+            saved_evaluator_state = evaluator_state()
+            self._validate_evaluator_progress(saved_evaluator_state, self.n_observed)
+            state["evaluator_state"] = saved_evaluator_state
+        return state
 
     def save(self, path: str | Path) -> None:
         torch.save(self.state_dict(), Path(path))
@@ -462,6 +489,17 @@ class Campaign:
         c.holdout_X = state["holdout_X"]
         c.logs = [RoundLog(**log) for log in state["logs"]]
         c._round = state["round"]
+        if "evaluator_state" in state:
+            cls._validate_evaluator_progress(
+                state["evaluator_state"], int(state["train_X"].shape[0])
+            )
+            restore_evaluator = getattr(evaluator, "load_state_dict", None)
+            if not callable(restore_evaluator):
+                raise TypeError(
+                    "saved campaign contains evaluator state, but the supplied "
+                    "evaluator cannot restore evaluator state"
+                )
+            restore_evaluator(state["evaluator_state"])
         # Restored last: constructing the campaign above re-seeded, which would
         # otherwise overwrite the state we are trying to restore.
         cls._set_rng_state(state["rng_state"])

@@ -1,5 +1,10 @@
 # ODIN — feasibility verdict and go/no-go plan
 
+> **Historical feasibility review.** Its OA-LHS and replicate-noise recommendations were
+> subsequently tested. K2 found no OA-LHS design-lottery reduction; K1's oracle-noise
+> improvement was 0.00816, below the 0.01 build bar. Both were rejected for the frozen
+> 48-evaluation joint protocol, which uses scrambled Sobol and learned noise.
+
 **Reviewing:** `docs/ODIN-SPEC.md` v1.0
 **Date:** 2026-08-20 · **Repo state:** `c0fffff`, 808 tests passing
 **Every number below is read from a committed JSON in `results/`. Sources named inline.**

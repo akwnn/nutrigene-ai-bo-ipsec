@@ -1,0 +1,175 @@
+...................................................................F.... [  2%]
+.............................................................F.......... [  5%]
+........................................................................ [  8%]
+........................................................................ [ 11%]
+........................................................................ [ 14%]
+........................................................................ [ 17%]
+........................................................................ [ 20%]
+........................................................................ [ 23%]
+........................................................................ [ 26%]
+........................................................................ [ 29%]
+........................................................................ [ 32%]
+........................................................................ [ 35%]
+........................................................................ [ 38%]
+........................................................................ [ 41%]
+........................................................................ [ 44%]
+........................................................................ [ 47%]
+.................................F...................................... [ 50%]
+........................................................................ [ 53%]
+........................................................................ [ 56%]
+........................................................................ [ 59%]
+.................................................F...................... [ 62%]
+........................................................FF..F........... [ 65%]
+........................................................................ [ 68%]
+........................................................................ [ 71%]
+........................................................................ [ 74%]
+........................................................................ [ 77%]
+........................................................................ [ 80%]
+........................................................................ [ 83%]
+........................................................................ [ 86%]
+......................................F................................. [ 89%]
+........................................................................ [ 92%]
+........................................................................ [ 95%]
+........................................................................ [ 98%]
+............................................                             [100%]
+=================================== FAILURES ===================================
+E   AssertionError: runner exited 1
+      P7 · Murphy decomposition · HEAD=1b884ba5 · python=3.11.15
+      cell hill d=6 sigma_rel=0.25 · arms=('doe',)
+      gamma=(0.5, 0.7, 0.8, 0.9, 0.95, 0.99)
+      tau_frac=(0.6, 0.75, 0.85, 0.95) · 10 equal-count bins
+      grid: 20000 Sobol at seed 0
+      
+      1 (instance, seed) pairs x 1 arms = 1 campaigns
+      
+      [  1/1] doe      033466197eba3ddb seed=0 regret=0.0440 rows=24 (1.9s)
+      
+      24 scored rows in 2s
+      regret gate failures: 0
+      map gate: 24 rows x 11 committed columns, worst |delta| 9.082e-13, 48 failures
+        (ERRATUM 2) recomputed at torch_threads=1 against columns produced at the default
+      identity: max residual 2.220e-16 against bar 1e-10, 0 rows withheld
+      
+       gamma  tauf    n drop     prev   pred  rank_by_brier -> rank_by_refinement
+        0.50  0.60    1    0  0.70695  SAME   doe  ->  doe
+        0.50  0.75    1    0  0.27920  SAME   doe  ->  doe
+        0.50  0.85    1    0  0.06880  SAME   doe  ->  doe
+        0.50  0.95    1    0  0.00305  SAME   doe  ->  doe
+        0.70  0.60    1    0  0.86435  SAME   doe  ->  doe
+        0.70  0.75    1    0  0.57035  SAME   doe  ->  doe
+        0.70  0.85    1    0  0.31060  SAME   doe  ->  doe
+        0.70  0.95    1    0  0.10520  SAME   doe  ->  doe
+        0.80  0.60    1    0  0.92370  SAME   doe  ->  doe
+        0.80  0.75    1    0  0.72620  SAME   doe  ->  doe
+        0.80  0.85    1    0  0.51335  SAME   doe  ->  doe
+        0.80  0.95    1    0  0.27885  SAME   doe  ->  doe
+        0.90  0.60    1    0  0.96920  SAME   doe  ->  doe
+        0.90  0.75    1    0  0.88050  SAME   doe  ->  doe
+        0.90  0.85    1    0  0.75915  SAME   doe  ->  doe
+        0.90  0.95    1    0  0.58740  SAME   doe  ->  doe
+        0.95  0.60    1    0  0.98785  SAME   doe  ->  doe
+        0.95  0.75    1    0  0.95095  SAME   doe  ->  doe
+        0.95  0.85    1    0  0.89325  SAME   doe  ->  doe
+        0.95  0.95    1    0  0.79655  SAME   doe  ->  doe
+        0.99  0.60    1    0  0.99810  SAME   doe  ->  doe
+        0.99  0.75    1    0  0.99425  SAME   doe  ->  doe
+        0.99  0.85    1    0  0.98730  SAME   doe  ->  doe
+        0.99  0.95    1    0  0.97270  SAME   doe  ->  doe
+      
+      predictive map, refinement vs Brier across the 24 cells: Spearman rho min +nan median +nan max +nan; pair inversions 0 of 0
+      latent-map cells differing: 0 of 24
+      binned Brier ranks the arms as the raw Brier does at 24 of 24 cells
+      F2 rule — error-volume ranking agrees with AUC at 24 of 24 cells; AUPRC(minority) agrees with AUC at 24
+      F1 — inverted pairs surviving Holm: n=50 0, n=25 0, of 0
+      degenerate flags fired: {'single_class': 0, 'few_bins': 0, 'singleton_bin': 0}
+      worst across-arm uncertainty spread (must be 0.0): 0.000e+00
+      
+      *** A5 IS A NULL — refinement ranks the arms exactly as Brier does at every scored cell ***
+      
+      *** A gate failed. Halt and report, do not repair (stop condition 1). ***
+      
+      
+    assert 1 == 0
+     +  where 1 = CompletedProcess(args=['/Users/alanakwan/Personal Projects/nutrigene-ai-bo-ipsec/.worktrees/spade-campaign/.venv/bin/p...es at every scored cell ***\n\n*** A gate failed. Halt and report, do not repair (stop condition 1). ***\n", stderr='').returncode
+/Users/alanakwan/Personal Projects/nutrigene-ai-bo-ipsec/.worktrees/spade-campaign/tests/test_calibration.py:662: AssertionError: runner exited 1
+E   AssertionError: ('033466197eba3ddb', 0): recomputed 0.25251124591423746 != committed 0.2525116337195932 (|delta| = 3.878e-07)
+    assert 0.25251124591423746 == 0.2525116337195932
+/Users/alanakwan/Personal Projects/nutrigene-ai-bo-ipsec/.worktrees/spade-campaign/tests/test_d23_doe_subspace.py:183: AssertionError: ('033466197eba3ddb', 0): recomputed 0.25251124591423746 != committed 0.2525116337195932 (|delta| = 3.878e-07)
+E   AssertionError: (0.5, 0.6) sup_err: 0.4670338076864847 != 0.4670338076864849
+    assert 0.4670338076864847 == 0.4670338076864849
+/Users/alanakwan/Personal Projects/nutrigene-ai-bo-ipsec/.worktrees/spade-campaign/tests/test_p4_coord.py:157: AssertionError: (0.5, 0.6) sup_err: 0.4670338076864847 != 0.4670338076864849
+E   AssertionError: rule_c moved by 3.173e-08 against the committed column; the edit to run_unscreened_ccd was NOT additive
+    assert 3.1730922445127874e-08 == 0.0
+/Users/alanakwan/Personal Projects/nutrigene-ai-bo-ipsec/.worktrees/spade-campaign/tests/test_q59_map_rescore.py:69: AssertionError: rule_c moved by 3.173e-08 against the committed column; the edit to run_unscreened_ccd was NOT additive
+E   AssertionError: hartmann6 seed=0: 0.3038381093602984 != committed 0.22786852462983065
+    assert 0.3038381093602984 == 0.22786852462983065
+     +  where 0.3038381093602984 = CampaignRecord(X=tensor([[4.7511e-01, 5.9252e-01, 4.9448e-01, 3.1385e-01, 9.5609e-01, 8.3302e-02],\n        [6.2970e-01...rm='qlogei', regret=0.3038381093602984, optimum_value=1.0, kept_factors=None, dropped_held_at=None, family='hartmann6').regret
+/Users/alanakwan/Personal Projects/nutrigene-ai-bo-ipsec/.worktrees/spade-campaign/tests/test_replay.py:190: AssertionError: hartmann6 seed=0: 0.3038381093602984 != committed 0.22786852462983065
+E   AssertionError: ackley d=6 seed=0: 0.9140845131035267 != committed 0.5928006956256192
+    assert 0.9140845131035267 == 0.5928006956256192
+     +  where 0.9140845131035267 = CampaignRecord(X=tensor([[4.7511e-01, 5.9252e-01, 4.9448e-01, 3.1385e-01, 9.5609e-01, 8.3302e-02],\n        [6.2970e-01..., arm='qlogei', regret=0.9140845131035267, optimum_value=1.0, kept_factors=None, dropped_held_at=None, family='ackley').regret
+/Users/alanakwan/Personal Projects/nutrigene-ai-bo-ipsec/.worktrees/spade-campaign/tests/test_replay.py:208: AssertionError: ackley d=6 seed=0: 0.9140845131035267 != committed 0.5928006956256192
+E   AssertionError: seed=0: 0.11127587899761282 != committed 0.1699699208688239
+    assert 0.11127587899761282 == 0.1699699208688239
+     +  where 0.11127587899761282 = CampaignRecord(X=tensor([[4.7511e-01, 5.9252e-01, 4.9448e-01, 3.1385e-01, 9.5609e-01, 8.3302e-02],\n        [6.2970e-01...='qlognei', regret=0.11127587899761282, optimum_value=1.0, kept_factors=None, dropped_held_at=None, family='hartmann6').regret
+/Users/alanakwan/Personal Projects/nutrigene-ai-bo-ipsec/.worktrees/spade-campaign/tests/test_replay.py:262: AssertionError: seed=0: 0.11127587899761282 != committed 0.1699699208688239
+E   AssertionError: extracted spread_gp does not reproduce the committed Q52 grid: worst |delta| = 3.123e-07
+    assert 3.122972902502852e-07 == 0.0
+/Users/alanakwan/Personal Projects/nutrigene-ai-bo-ipsec/.worktrees/spade-campaign/tests/test_spread_gp.py:78: AssertionError: extracted spread_gp does not reproduce the committed Q52 grid: worst |delta| = 3.123e-07
+=============================== warnings summary ===============================
+../../.venv/lib/python3.11/site-packages/torch/jit/_script.py:1488
+../../.venv/lib/python3.11/site-packages/torch/jit/_script.py:1488
+  /Users/alanakwan/Personal Projects/nutrigene-ai-bo-ipsec/.venv/lib/python3.11/site-packages/torch/jit/_script.py:1488: DeprecationWarning: `torch.jit.script` is deprecated. Please switch to `torch.compile` or `torch.export`.
+    warnings.warn(
+
+tests/test_d23_doe_subspace.py::test_the_decision_is_reported_at_both_units
+  /Users/alanakwan/Personal Projects/nutrigene-ai-bo-ipsec/.worktrees/spade-campaign/scripts/run_d23_doe_subspace.py:503: ConstantInputWarning: An input array is constant; the correlation coefficient is not defined.
+    rho, rho_p = spearmanr(ps, a)
+
+tests/test_lab_fcs.py::test_reading_events_of_an_aborted_file_raises_rather_than_returning_empty
+  /Users/alanakwan/Personal Projects/nutrigene-ai-bo-ipsec/.venv/lib/python3.11/site-packages/flowio/flowdata.py:451: UserWarning: FCS file well 1.fcs reported incorrect data offset. Attempting to parse data section, but event data should be reviewed before trusting this file.
+    warn(warn_msg)
+
+tests/test_meanmarg.py::test_high_snr_data_is_barely_affected
+  /Users/alanakwan/Personal Projects/nutrigene-ai-bo-ipsec/.venv/lib/python3.11/site-packages/gpytorch/likelihoods/noise_models.py:150: NumericalWarning: Very small noise values detected. This will likely lead to numerical instabilities. Rounding small noise values up to 1e-06.
+    warnings.warn(
+
+tests/test_p1_kernel_gate.py::test_a1_contrasts_cover_the_four_registered_cells_and_are_holm_adjusted
+  /Users/alanakwan/Personal Projects/nutrigene-ai-bo-ipsec/.worktrees/spade-campaign/scripts/analyse_f1_dual_n.py:270: RuntimeWarning: Degrees of freedom <= 0 for slice
+    spread[tag] = (float(d.var()), len(d))
+
+tests/test_p1_kernel_gate.py::test_a1_contrasts_cover_the_four_registered_cells_and_are_holm_adjusted
+  /Users/alanakwan/Personal Projects/nutrigene-ai-bo-ipsec/.venv/lib/python3.11/site-packages/numpy/_core/_methods.py:178: RuntimeWarning: invalid value encountered in divide
+    arrmean = um.true_divide(arrmean, div, out=arrmean,
+
+tests/test_p1_kernel_gate.py::test_a1_contrasts_cover_the_four_registered_cells_and_are_holm_adjusted
+  /Users/alanakwan/Personal Projects/nutrigene-ai-bo-ipsec/.venv/lib/python3.11/site-packages/numpy/_core/_methods.py:211: RuntimeWarning: invalid value encountered in scalar divide
+    ret = ret.dtype.type(ret / rcount)
+
+tests/test_p4b_alpha_anomaly.py::test_a_degenerate_correlation_reports_nan_not_significance
+  /Users/alanakwan/Personal Projects/nutrigene-ai-bo-ipsec/.worktrees/spade-campaign/scripts/run_p4b_alpha_anomaly.py:516: ConstantInputWarning: An input array is constant; the correlation coefficient is not defined.
+    rho = float(spearmanr(alpha.mean(axis=1), regret.mean(axis=1)).statistic)
+
+tests/test_p4b_alpha_anomaly.py::test_a_degenerate_correlation_reports_nan_not_significance
+  /Users/alanakwan/Personal Projects/nutrigene-ai-bo-ipsec/.worktrees/spade-campaign/scripts/run_p4b_alpha_anomaly.py:523: ConstantInputWarning: An input array is constant; the correlation coefficient is not defined.
+    boots[b] = spearmanr(alpha[:, take].mean(axis=1),
+
+tests/test_p4b_alpha_anomaly.py::test_a_degenerate_correlation_reports_nan_not_significance
+  /Users/alanakwan/Personal Projects/nutrigene-ai-bo-ipsec/.worktrees/spade-campaign/scripts/run_p4b_alpha_anomaly.py:531: ConstantInputWarning: An input array is constant; the correlation coefficient is not defined.
+    loo[arm] = float(spearmanr(alpha[keep].mean(axis=1),
+
+tests/test_p4b_alpha_anomaly.py::test_a_degenerate_correlation_reports_nan_not_significance
+  /Users/alanakwan/Personal Projects/nutrigene-ai-bo-ipsec/.worktrees/spade-campaign/scripts/run_p4b_alpha_anomaly.py:534: ConstantInputWarning: An input array is constant; the correlation coefficient is not defined.
+    spread_rho = (float(spearmanr(alpha[spread].mean(axis=1),
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED tests/test_calibration.py::test_the_checkpoint_write_path_actually_runs
+FAILED tests/test_d23_doe_subspace.py::test_full_space_rule_p_reproduces_fix1
+FAILED tests/test_p4_coord.py::test_k6_scorer_reproduces_a_committed_lhs_row_bitwise
+FAILED tests/test_q59_map_rescore.py::test_the_edit_is_additive_and_reproduces_the_committed_columns
+FAILED tests/test_replay.py::test_family_qlogei_reproduces_the_committed_q42_column_exactly
+FAILED tests/test_replay.py::test_family_qlogei_reproduces_on_every_family_and_at_d8
+FAILED tests/test_replay.py::test_family_qlognei_reproduces_the_q59_hartmann_column
+FAILED tests/test_spread_gp.py::test_the_extracted_arm_reproduces_the_committed_q52_rows_exactly
+8 failed, 2412 passed, 12 warnings in 938.51s (0:15:38)

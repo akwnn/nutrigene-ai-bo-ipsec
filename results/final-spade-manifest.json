@@ -2,15 +2,29 @@
   "study_id": "spade-final-2026-08-23",
   "registration_commit": "c4f58d3",
   "code_commit": "1bf51f11695ae348ffa8993ad42992141558fb80",
-  "generated": "2026-08-24",
+  "generated": "2026-08-25",
   "source_hashes": {
-    "results/final-spade-c1.json": "efa2f8c77cedf5447f64a2dc714b97bf55dad537b0286345a47984b89b626ecb",
-    "results/final-spade-c2.json": "c5a94fbf3ed8525d77c7c8694b694fbe4c872528d47516906a06e7693761da97",
-    "results/final-spade-c3.json": "94b3290bad53a4e52a7af669a9916eb7ef5e60ea0d8c7b5fc1c0d2b18732173a",
-    "results/final-spade-c4.json": "dfd4bb369e3dc620ee0ac2d76450bc3222411063452f60e88d6a36d86350ffe5",
-    "results/final-spade-s1.json": "6f5a03e5c2b3c72eff01b2ae8a65a5ab219a2de60bed3714466bc824c9e759f4",
-    "results/final-spade-s2.json": "724072e1e5d2316f9acac4f9c849f1803079b4ecb6926b8cb19d3cd1a19f21cc",
-    "results/final-spade-s3.json": "0b30efbda9b1893fd17fb86bec4097945aedf1964d5c91d31e6037a5fe47fcf6"
+    "results/final-spade-c1.json": "06f2d01aff3c25218ca7dcf08621fa21a8366b7886ea0b71d264dd1239230c28",
+    "results/final-spade-c2.json": "7629d7027be40010105abcd6bdeb4af20bdb0d415cd896c937ab0fe5ddae4c65",
+    "results/final-spade-c3.json": "2a487a38e33113f0966b6e0eaec8d93a239d4f26fee97e3891688ad75ae4c70c",
+    "results/final-spade-c4.json": "176b6f94a5101415e31192d97f0eeb90bb2bab770676b6ab2897e95199a7ba1b",
+    "results/final-spade-s1.json": "2ee3f0db7492d3fe38fcf1a8144c34fd94e58d36cf7f0ddf394445a8681c58c4",
+    "results/final-spade-s2.json": "28b4ca6f4f655be4a31795eea2338a7fb0b2240a544cebfe51f81e110f81f511",
+    "results/final-spade-s3.json": "18248941f044dd45e9ae88de302bd282faaf3f97188b0e789ab317f496fba3bc"
+  },
+  "regeneration": {
+    "performed": "2026-08-25",
+    "reason": "The original raw JSON files were ignored by results/* and were never committed. They could not be recovered from Git, GitHub, local session storage, or backups, so all registered campaigns were regenerated from the pinned code, environment, and seed policy.",
+    "superseded_source_hashes": {
+      "results/final-spade-c1.json": "efa2f8c77cedf5447f64a2dc714b97bf55dad537b0286345a47984b89b626ecb",
+      "results/final-spade-c2.json": "c5a94fbf3ed8525d77c7c8694b694fbe4c872528d47516906a06e7693761da97",
+      "results/final-spade-c3.json": "94b3290bad53a4e52a7af669a9916eb7ef5e60ea0d8c7b5fc1c0d2b18732173a",
+      "results/final-spade-c4.json": "dfd4bb369e3dc620ee0ac2d76450bc3222411063452f60e88d6a36d86350ffe5",
+      "results/final-spade-s1.json": "6f5a03e5c2b3c72eff01b2ae8a65a5ab219a2de60bed3714466bc824c9e759f4",
+      "results/final-spade-s2.json": "724072e1e5d2316f9acac4f9c849f1803079b4ecb6926b8cb19d3cd1a19f21cc",
+      "results/final-spade-s3.json": "0b30efbda9b1893fd17fb86bec4097945aedf1964d5c91d31e6037a5fe47fcf6"
+    },
+    "adjudication_note": "Clean regeneration corrected stale checkpoint rows created before commit dd75c91 fixed per-row above_ceiling classification. KF-9 changes from FAIL to PASS; other principal SPADE conclusions retain their status. A one-campaign full 12-arm replay matched the arm-sharded recovery field-for-field except for timestamps."
   },
   "config": {
     "conditions": [

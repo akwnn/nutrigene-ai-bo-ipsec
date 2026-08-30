@@ -1,0 +1,105 @@
+{
+  "A": {
+    "pairing": "same campaigns",
+    "rows": [
+      {
+        "arm": "doe",
+        "n": 50,
+        "rounds": 3,
+        "rule_a": 0.09580089411672021,
+        "rule_p": 0.19928715325626434
+      },
+      {
+        "arm": "qlogei",
+        "n": 50,
+        "rounds": 10,
+        "rule_a": 0.15525130489063754,
+        "rule_p": 0.12321454808918345
+      },
+      {
+        "arm": "qlognei",
+        "n": 50,
+        "rounds": 10,
+        "rule_a": 0.15321199940788324,
+        "rule_p": 0.12859374980899857
+      },
+      {
+        "arm": "versionb",
+        "n": 50,
+        "rounds": 2,
+        "rule_a": 0.15464098856453284,
+        "rule_p": 0.10031719217905226
+      }
+    ]
+  },
+  "B": {
+    "direction": "negative means Rule P has lower regret",
+    "dominant_panel": true,
+    "interval": "paired bootstrap 95%",
+    "reference": 0.0,
+    "rows": [
+      {
+        "arm": "doe",
+        "hi": 0.13667376335054549,
+        "lo": 0.07225003121385253,
+        "mean": 0.10348625913954412,
+        "n": 50
+      },
+      {
+        "arm": "qlogei",
+        "hi": -0.015074944183211461,
+        "lo": -0.04892103581591358,
+        "mean": -0.03203675680145408,
+        "n": 50
+      },
+      {
+        "arm": "qlognei",
+        "hi": -0.007641877264361989,
+        "lo": -0.04168010918755903,
+        "mean": -0.02461824959888463,
+        "n": 50
+      },
+      {
+        "arm": "versionb",
+        "hi": -0.03984640664834545,
+        "lo": -0.06928781070598541,
+        "mean": -0.054323796385480565,
+        "n": 50
+      }
+    ]
+  },
+  "C": {
+    "identity": "Rule A = search loss + identification loss",
+    "redundant_encoding": "luminance and hatch",
+    "rows": [
+      {
+        "arm": "doe",
+        "identification_gap": 0.03613417319646509,
+        "n": 50,
+        "oracle_best": 0.059666720920255135,
+        "rule_a": 0.09580089411672021
+      },
+      {
+        "arm": "qlognei",
+        "identification_gap": 0.06981027611173182,
+        "n": 50,
+        "oracle_best": 0.08340172329615139,
+        "rule_a": 0.15321199940788324
+      },
+      {
+        "arm": "lhs",
+        "identification_gap": 0.04749959230902029,
+        "n": 50,
+        "oracle_best": 0.07951998084532072,
+        "rule_a": 0.12701957315434098
+      },
+      {
+        "arm": "sobol",
+        "identification_gap": 0.0730215905552549,
+        "n": 50,
+        "oracle_best": 0.09933441983958823,
+        "rule_a": 0.1723560103948431
+      }
+    ]
+  }
+}

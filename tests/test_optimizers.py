@@ -208,6 +208,37 @@ def test_discrete_proposals_are_distinct(fitted):
     assert torch.unique(out, dim=0).shape[0] == 4
 
 
+def test_qlognei_sampler_seed_reproduces_discrete_batch(fitted):
+    model, X, Y = fitted
+    menu = sobol_design(UNIT, 40, seed=71)
+    cfg = AcqConfig(kind="qlognei", mc_samples=64, sampler_seed=19)
+
+    torch.manual_seed(1)
+    first = propose(model, UNIT, 4, X, Y, config=cfg, candidates=menu)
+    torch.manual_seed(999)
+    second = propose(model, UNIT, 4, X, Y, config=cfg, candidates=menu)
+
+    assert torch.equal(first, second)
+    assert torch.unique(first, dim=0).shape[0] == 4
+
+
+def test_qlognei_sampler_seed_is_explicit_and_changes_qmc_stream(fitted):
+    model, X, Y = fitted
+    first = make_acquisition(
+        model, X, Y, config=AcqConfig(kind="qlognei", mc_samples=64, sampler_seed=19)
+    )
+    second = make_acquisition(
+        model, X, Y, config=AcqConfig(kind="qlognei", mc_samples=64, sampler_seed=23)
+    )
+
+    probe = sobol_design(UNIT, 3, seed=11).unsqueeze(-2)
+    first(probe)
+    second(probe)
+    assert first.sampler.seed == 19
+    assert second.sampler.seed == 23
+    assert not torch.equal(first.sampler.base_samples, second.sampler.base_samples)
+
+
 def test_discrete_picks_the_promising_end_of_the_menu(fitted):
     """Sanity: given a menu split between good and bad regions, it should
     prefer the good one."""

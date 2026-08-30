@@ -227,7 +227,7 @@
  "holm": {
   "family": "F-CERT",
   "definition": "all primary SPADE cross-fit certificate cells",
-  "n_members": 60,
+  "n_members": 80,
   "members": [
    "spade_cf_m0|hartmann6-d6-s0.25|tf0.1|g0.5|a0.8",
    "spade_cf_m0|hartmann6-d6-s0.25|tf0.1|g0.5|a0.95",
@@ -237,6 +237,10 @@
    "spade_cf_m0|hartmann6-d8-s0.25|tf0.1|g0.5|a0.95",
    "spade_cf_m0|hartmann6-d8-s0.25|tf0.25|g0.5|a0.8",
    "spade_cf_m0|hartmann6-d8-s0.25|tf0.25|g0.5|a0.95",
+   "spade_cf_m0|hill-d6-s0.1|tf0.1|g0.5|a0.8",
+   "spade_cf_m0|hill-d6-s0.1|tf0.1|g0.5|a0.95",
+   "spade_cf_m0|hill-d6-s0.1|tf0.1|g0.95|a0.8",
+   "spade_cf_m0|hill-d6-s0.1|tf0.1|g0.95|a0.95",
    "spade_cf_m0|hill-d6-s0.1|tf0.25|g0.5|a0.8",
    "spade_cf_m0|hill-d6-s0.1|tf0.25|g0.5|a0.95",
    "spade_cf_m0|hill-d6-s0.1|tf0.25|g0.95|a0.8",
@@ -249,6 +253,10 @@
    "spade_cf_m4|hartmann6-d8-s0.25|tf0.1|g0.5|a0.8",
    "spade_cf_m4|hartmann6-d8-s0.25|tf0.25|g0.5|a0.8",
    "spade_cf_m4|hartmann6-d8-s0.25|tf0.25|g0.5|a0.95",
+   "spade_cf_m4|hill-d6-s0.1|tf0.1|g0.5|a0.8",
+   "spade_cf_m4|hill-d6-s0.1|tf0.1|g0.5|a0.95",
+   "spade_cf_m4|hill-d6-s0.1|tf0.1|g0.95|a0.8",
+   "spade_cf_m4|hill-d6-s0.1|tf0.1|g0.95|a0.95",
    "spade_cf_m4|hill-d6-s0.1|tf0.25|g0.5|a0.8",
    "spade_cf_m4|hill-d6-s0.1|tf0.25|g0.5|a0.95",
    "spade_cf_m4|hill-d6-s0.1|tf0.25|g0.95|a0.8",
@@ -263,6 +271,10 @@
    "spade_cf_m8|hartmann6-d8-s0.25|tf0.1|g0.5|a0.95",
    "spade_cf_m8|hartmann6-d8-s0.25|tf0.25|g0.5|a0.8",
    "spade_cf_m8|hartmann6-d8-s0.25|tf0.25|g0.5|a0.95",
+   "spade_cf_m8|hill-d6-s0.1|tf0.1|g0.5|a0.8",
+   "spade_cf_m8|hill-d6-s0.1|tf0.1|g0.5|a0.95",
+   "spade_cf_m8|hill-d6-s0.1|tf0.1|g0.95|a0.8",
+   "spade_cf_m8|hill-d6-s0.1|tf0.1|g0.95|a0.95",
    "spade_cf_m8|hill-d6-s0.1|tf0.25|g0.5|a0.8",
    "spade_cf_m8|hill-d6-s0.1|tf0.25|g0.5|a0.95",
    "spade_cf_m8|hill-d6-s0.1|tf0.25|g0.95|a0.8",
@@ -274,6 +286,10 @@
    "spade_plate1_only|hartmann6-d8-s0.25|tf0.1|g0.5|a0.8",
    "spade_plate1_only|hartmann6-d8-s0.25|tf0.25|g0.5|a0.8",
    "spade_plate1_only|hartmann6-d8-s0.25|tf0.25|g0.5|a0.95",
+   "spade_plate1_only|hill-d6-s0.1|tf0.1|g0.5|a0.8",
+   "spade_plate1_only|hill-d6-s0.1|tf0.1|g0.5|a0.95",
+   "spade_plate1_only|hill-d6-s0.1|tf0.1|g0.95|a0.8",
+   "spade_plate1_only|hill-d6-s0.1|tf0.1|g0.95|a0.95",
    "spade_plate1_only|hill-d6-s0.1|tf0.25|g0.5|a0.8",
    "spade_plate1_only|hill-d6-s0.1|tf0.25|g0.5|a0.95",
    "spade_plate1_only|hill-d6-s0.1|tf0.25|g0.95|a0.8",
@@ -284,6 +300,10 @@
    "spade_random_plate2|hartmann6-d8-s0.25|tf0.1|g0.5|a0.8",
    "spade_random_plate2|hartmann6-d8-s0.25|tf0.25|g0.5|a0.8",
    "spade_random_plate2|hartmann6-d8-s0.25|tf0.25|g0.5|a0.95",
+   "spade_random_plate2|hill-d6-s0.1|tf0.1|g0.5|a0.8",
+   "spade_random_plate2|hill-d6-s0.1|tf0.1|g0.5|a0.95",
+   "spade_random_plate2|hill-d6-s0.1|tf0.1|g0.95|a0.8",
+   "spade_random_plate2|hill-d6-s0.1|tf0.1|g0.95|a0.95",
    "spade_random_plate2|hill-d6-s0.1|tf0.25|g0.5|a0.8",
    "spade_random_plate2|hill-d6-s0.1|tf0.25|g0.5|a0.95",
    "spade_random_plate2|hill-d6-s0.1|tf0.25|g0.95|a0.8",
@@ -2068,7 +2088,7 @@
     "ROBUSTNESS"
    ],
    "primary_condition": true,
-   "infeasible": true,
+   "infeasible": false,
    "primary_estimator": "crossfit",
    "crossfit": {
     "role": "primary",
@@ -2082,7 +2102,7 @@
     "ci_method": "Clopper-Pearson, exact (scipy.stats.beta.ppf)",
     "exact_p": 0.9498708604799152,
     "tail": "scipy.stats.binom.cdf, one-sided lower, EXACT",
-    "p_holm": null
+    "p_holm": 1.0
    },
    "same_draw": {
     "role": "diagnostic",
@@ -2100,10 +2120,10 @@
    "nonempty_floor": 10,
    "meets_nonempty_floor": true,
    "empty_policy": "exclude_from_numerator_and_denominator",
-   "confirmatory": false,
+   "confirmatory": true,
    "downgraded_by": null,
-   "verdict_reason": "the cell is above the certifiability ceiling or degenerate; spec \u00a74.5 makes that a property of the threshold, never a method failure",
-   "verdict": "INCONCLUSIVE"
+   "verdict_reason": "not demonstrably below nominal: 65/75 = 0.8667 against alpha=0.8, exact one-sided p=0.9499, Holm-adjusted 1.0000. This is a failure to reject, not a proof of validity (\u00a77.1)",
+   "verdict": "PASS"
   },
   {
    "cell_id": "spade_cf_m0|hill-d6-s0.1|tf0.1|g0.5|a0.95",
@@ -2117,7 +2137,7 @@
     "ROBUSTNESS"
    ],
    "primary_condition": true,
-   "infeasible": true,
+   "infeasible": false,
    "primary_estimator": "crossfit",
    "crossfit": {
     "role": "primary",
@@ -2131,7 +2151,7 @@
     "ci_method": "Clopper-Pearson, exact (scipy.stats.beta.ppf)",
     "exact_p": 0.6926431322749764,
     "tail": "scipy.stats.binom.cdf, one-sided lower, EXACT",
-    "p_holm": null
+    "p_holm": 1.0
    },
    "same_draw": {
     "role": "diagnostic",
@@ -2149,9 +2169,9 @@
    "nonempty_floor": 10,
    "meets_nonempty_floor": true,
    "empty_policy": "exclude_from_numerator_and_denominator",
-   "confirmatory": false,
-   "downgraded_by": null,
-   "verdict_reason": "the cell is above the certifiability ceiling or degenerate; spec \u00a74.5 makes that a property of the threshold, never a method failure",
+   "confirmatory": true,
+   "downgraded_by": "KF-10",
+   "verdict_reason": "reached PASS on containment but 77.0% of campaigns certified nothing, above the KF-10 ceiling of 50%. A method that declines to answer two campaigns in three has not shown a valid certificate; it has shown that its non-answers are safe",
    "verdict": "INCONCLUSIVE"
   },
   {
@@ -2166,7 +2186,7 @@
     "ROBUSTNESS"
    ],
    "primary_condition": true,
-   "infeasible": true,
+   "infeasible": false,
    "primary_estimator": "crossfit",
    "crossfit": {
     "role": "primary",
@@ -2180,7 +2200,7 @@
     "ci_method": "Clopper-Pearson, exact (scipy.stats.beta.ppf)",
     "exact_p": 0.9498708604799152,
     "tail": "scipy.stats.binom.cdf, one-sided lower, EXACT",
-    "p_holm": null
+    "p_holm": 1.0
    },
    "same_draw": {
     "role": "diagnostic",
@@ -2198,10 +2218,10 @@
    "nonempty_floor": 10,
    "meets_nonempty_floor": true,
    "empty_policy": "exclude_from_numerator_and_denominator",
-   "confirmatory": false,
+   "confirmatory": true,
    "downgraded_by": null,
-   "verdict_reason": "the cell is above the certifiability ceiling or degenerate; spec \u00a74.5 makes that a property of the threshold, never a method failure",
-   "verdict": "INCONCLUSIVE"
+   "verdict_reason": "not demonstrably below nominal: 65/75 = 0.8667 against alpha=0.8, exact one-sided p=0.9499, Holm-adjusted 1.0000. This is a failure to reject, not a proof of validity (\u00a77.1)",
+   "verdict": "PASS"
   },
   {
    "cell_id": "spade_cf_m0|hill-d6-s0.1|tf0.1|g0.95|a0.95",
@@ -2215,7 +2235,7 @@
     "ROBUSTNESS"
    ],
    "primary_condition": true,
-   "infeasible": true,
+   "infeasible": false,
    "primary_estimator": "crossfit",
    "crossfit": {
     "role": "primary",
@@ -2229,7 +2249,7 @@
     "ci_method": "Clopper-Pearson, exact (scipy.stats.beta.ppf)",
     "exact_p": 0.6926431322749764,
     "tail": "scipy.stats.binom.cdf, one-sided lower, EXACT",
-    "p_holm": null
+    "p_holm": 1.0
    },
    "same_draw": {
     "role": "diagnostic",
@@ -2247,9 +2267,9 @@
    "nonempty_floor": 10,
    "meets_nonempty_floor": true,
    "empty_policy": "exclude_from_numerator_and_denominator",
-   "confirmatory": false,
-   "downgraded_by": null,
-   "verdict_reason": "the cell is above the certifiability ceiling or degenerate; spec \u00a74.5 makes that a property of the threshold, never a method failure",
+   "confirmatory": true,
+   "downgraded_by": "KF-10",
+   "verdict_reason": "reached PASS on containment but 77.0% of campaigns certified nothing, above the KF-10 ceiling of 50%. A method that declines to answer two campaigns in three has not shown a valid certificate; it has shown that its non-answers are safe",
    "verdict": "INCONCLUSIVE"
   },
   {
@@ -2425,7 +2445,7 @@
     "ci_method": "Clopper-Pearson, exact (scipy.stats.beta.ppf)",
     "exact_p": 0.011786447797264338,
     "tail": "scipy.stats.binom.cdf, one-sided lower, EXACT",
-    "p_holm": 0.6954004200385959
+    "p_holm": 0.907556480389354
    },
    "same_draw": {
     "role": "diagnostic",
@@ -2445,7 +2465,7 @@
    "empty_policy": "exclude_from_numerator_and_denominator",
    "confirmatory": true,
    "downgraded_by": null,
-   "verdict_reason": "not demonstrably below nominal: 43/50 = 0.8600 against alpha=0.95, exact one-sided p=0.0118, Holm-adjusted 0.6954. This is a failure to reject, not a proof of validity (\u00a77.1)",
+   "verdict_reason": "not demonstrably below nominal: 43/50 = 0.8600 against alpha=0.95, exact one-sided p=0.0118, Holm-adjusted 0.9076. This is a failure to reject, not a proof of validity (\u00a77.1)",
    "verdict": "PASS"
   },
   {
@@ -2523,7 +2543,7 @@
     "ci_method": "Clopper-Pearson, exact (scipy.stats.beta.ppf)",
     "exact_p": 0.011786447797264338,
     "tail": "scipy.stats.binom.cdf, one-sided lower, EXACT",
-    "p_holm": 0.6954004200385959
+    "p_holm": 0.907556480389354
    },
    "same_draw": {
     "role": "diagnostic",
@@ -2543,7 +2563,7 @@
    "empty_policy": "exclude_from_numerator_and_denominator",
    "confirmatory": true,
    "downgraded_by": null,
-   "verdict_reason": "not demonstrably below nominal: 43/50 = 0.8600 against alpha=0.95, exact one-sided p=0.0118, Holm-adjusted 0.6954. This is a failure to reject, not a proof of validity (\u00a77.1)",
+   "verdict_reason": "not demonstrably below nominal: 43/50 = 0.8600 against alpha=0.95, exact one-sided p=0.0118, Holm-adjusted 0.9076. This is a failure to reject, not a proof of validity (\u00a77.1)",
    "verdict": "PASS"
   },
   {
@@ -6184,7 +6204,7 @@
     "ROBUSTNESS"
    ],
    "primary_condition": true,
-   "infeasible": true,
+   "infeasible": false,
    "primary_estimator": "crossfit",
    "crossfit": {
     "role": "primary",
@@ -6198,7 +6218,7 @@
     "ci_method": "Clopper-Pearson, exact (scipy.stats.beta.ppf)",
     "exact_p": 0.9966473134779944,
     "tail": "scipy.stats.binom.cdf, one-sided lower, EXACT",
-    "p_holm": null
+    "p_holm": 1.0
    },
    "same_draw": {
     "role": "diagnostic",
@@ -6216,10 +6236,10 @@
    "nonempty_floor": 10,
    "meets_nonempty_floor": true,
    "empty_policy": "exclude_from_numerator_and_denominator",
-   "confirmatory": false,
+   "confirmatory": true,
    "downgraded_by": null,
-   "verdict_reason": "the cell is above the certifiability ceiling or degenerate; spec \u00a74.5 makes that a property of the threshold, never a method failure",
-   "verdict": "INCONCLUSIVE"
+   "verdict_reason": "not demonstrably below nominal: 69/76 = 0.9079 against alpha=0.8, exact one-sided p=0.9966, Holm-adjusted 1.0000. This is a failure to reject, not a proof of validity (\u00a77.1)",
+   "verdict": "PASS"
   },
   {
    "cell_id": "spade_cf_m4|hill-d6-s0.1|tf0.1|g0.5|a0.95",
@@ -6233,7 +6253,7 @@
     "ROBUSTNESS"
    ],
    "primary_condition": true,
-   "infeasible": true,
+   "infeasible": false,
    "primary_estimator": "crossfit",
    "crossfit": {
     "role": "primary",
@@ -6247,7 +6267,7 @@
     "ci_method": "Clopper-Pearson, exact (scipy.stats.beta.ppf)",
     "exact_p": 0.3576241464547004,
     "tail": "scipy.stats.binom.cdf, one-sided lower, EXACT",
-    "p_holm": null
+    "p_holm": 1.0
    },
    "same_draw": {
     "role": "diagnostic",
@@ -6265,9 +6285,9 @@
    "nonempty_floor": 10,
    "meets_nonempty_floor": true,
    "empty_policy": "exclude_from_numerator_and_denominator",
-   "confirmatory": false,
-   "downgraded_by": null,
-   "verdict_reason": "the cell is above the certifiability ceiling or degenerate; spec \u00a74.5 makes that a property of the threshold, never a method failure",
+   "confirmatory": true,
+   "downgraded_by": "KF-10",
+   "verdict_reason": "reached PASS on containment but 75.0% of campaigns certified nothing, above the KF-10 ceiling of 50%. A method that declines to answer two campaigns in three has not shown a valid certificate; it has shown that its non-answers are safe",
    "verdict": "INCONCLUSIVE"
   },
   {
@@ -6282,7 +6302,7 @@
     "ROBUSTNESS"
    ],
    "primary_condition": true,
-   "infeasible": true,
+   "infeasible": false,
    "primary_estimator": "crossfit",
    "crossfit": {
     "role": "primary",
@@ -6296,7 +6316,7 @@
     "ci_method": "Clopper-Pearson, exact (scipy.stats.beta.ppf)",
     "exact_p": 0.9966473134779944,
     "tail": "scipy.stats.binom.cdf, one-sided lower, EXACT",
-    "p_holm": null
+    "p_holm": 1.0
    },
    "same_draw": {
     "role": "diagnostic",
@@ -6314,10 +6334,10 @@
    "nonempty_floor": 10,
    "meets_nonempty_floor": true,
    "empty_policy": "exclude_from_numerator_and_denominator",
-   "confirmatory": false,
+   "confirmatory": true,
    "downgraded_by": null,
-   "verdict_reason": "the cell is above the certifiability ceiling or degenerate; spec \u00a74.5 makes that a property of the threshold, never a method failure",
-   "verdict": "INCONCLUSIVE"
+   "verdict_reason": "not demonstrably below nominal: 69/76 = 0.9079 against alpha=0.8, exact one-sided p=0.9966, Holm-adjusted 1.0000. This is a failure to reject, not a proof of validity (\u00a77.1)",
+   "verdict": "PASS"
   },
   {
    "cell_id": "spade_cf_m4|hill-d6-s0.1|tf0.1|g0.95|a0.95",
@@ -6331,7 +6351,7 @@
     "ROBUSTNESS"
    ],
    "primary_condition": true,
-   "infeasible": true,
+   "infeasible": false,
    "primary_estimator": "crossfit",
    "crossfit": {
     "role": "primary",
@@ -6345,7 +6365,7 @@
     "ci_method": "Clopper-Pearson, exact (scipy.stats.beta.ppf)",
     "exact_p": 0.3576241464547004,
     "tail": "scipy.stats.binom.cdf, one-sided lower, EXACT",
-    "p_holm": null
+    "p_holm": 1.0
    },
    "same_draw": {
     "role": "diagnostic",
@@ -6363,9 +6383,9 @@
    "nonempty_floor": 10,
    "meets_nonempty_floor": true,
    "empty_policy": "exclude_from_numerator_and_denominator",
-   "confirmatory": false,
-   "downgraded_by": null,
-   "verdict_reason": "the cell is above the certifiability ceiling or degenerate; spec \u00a74.5 makes that a property of the threshold, never a method failure",
+   "confirmatory": true,
+   "downgraded_by": "KF-10",
+   "verdict_reason": "reached PASS on containment but 75.0% of campaigns certified nothing, above the KF-10 ceiling of 50%. A method that declines to answer two campaigns in three has not shown a valid certificate; it has shown that its non-answers are safe",
    "verdict": "INCONCLUSIVE"
   },
   {
@@ -9187,7 +9207,7 @@
     "ci_method": "Clopper-Pearson, exact (scipy.stats.beta.ppf)",
     "exact_p": 0.0025000000000000044,
     "tail": "scipy.stats.binom.cdf, one-sided lower, EXACT",
-    "p_holm": 0.15000000000000027
+    "p_holm": 0.20000000000000034
    },
    "same_draw": {
     "role": "diagnostic",
@@ -10300,7 +10320,7 @@
     "ROBUSTNESS"
    ],
    "primary_condition": true,
-   "infeasible": true,
+   "infeasible": false,
    "primary_estimator": "crossfit",
    "crossfit": {
     "role": "primary",
@@ -10314,7 +10334,7 @@
     "ci_method": "Clopper-Pearson, exact (scipy.stats.beta.ppf)",
     "exact_p": 0.9999952888679436,
     "tail": "scipy.stats.binom.cdf, one-sided lower, EXACT",
-    "p_holm": null
+    "p_holm": 1.0
    },
    "same_draw": {
     "role": "diagnostic",
@@ -10332,10 +10352,10 @@
    "nonempty_floor": 10,
    "meets_nonempty_floor": true,
    "empty_policy": "exclude_from_numerator_and_denominator",
-   "confirmatory": false,
+   "confirmatory": true,
    "downgraded_by": null,
-   "verdict_reason": "the cell is above the certifiability ceiling or degenerate; spec \u00a74.5 makes that a property of the threshold, never a method failure",
-   "verdict": "INCONCLUSIVE"
+   "verdict_reason": "not demonstrably below nominal: 76/79 = 0.9620 against alpha=0.8, exact one-sided p=1.0000, Holm-adjusted 1.0000. This is a failure to reject, not a proof of validity (\u00a77.1)",
+   "verdict": "PASS"
   },
   {
    "cell_id": "spade_cf_m8|hill-d6-s0.1|tf0.1|g0.5|a0.95",
@@ -10349,7 +10369,7 @@
     "ROBUSTNESS"
    ],
    "primary_condition": true,
-   "infeasible": true,
+   "infeasible": false,
    "primary_estimator": "crossfit",
    "crossfit": {
     "role": "primary",
@@ -10363,7 +10383,7 @@
     "ci_method": "Clopper-Pearson, exact (scipy.stats.beta.ppf)",
     "exact_p": 0.16266489983510396,
     "tail": "scipy.stats.binom.cdf, one-sided lower, EXACT",
-    "p_holm": null
+    "p_holm": 1.0
    },
    "same_draw": {
     "role": "diagnostic",
@@ -10381,9 +10401,9 @@
    "nonempty_floor": 10,
    "meets_nonempty_floor": true,
    "empty_policy": "exclude_from_numerator_and_denominator",
-   "confirmatory": false,
-   "downgraded_by": null,
-   "verdict_reason": "the cell is above the certifiability ceiling or degenerate; spec \u00a74.5 makes that a property of the threshold, never a method failure",
+   "confirmatory": true,
+   "downgraded_by": "KF-10",
+   "verdict_reason": "reached PASS on containment but 72.0% of campaigns certified nothing, above the KF-10 ceiling of 50%. A method that declines to answer two campaigns in three has not shown a valid certificate; it has shown that its non-answers are safe",
    "verdict": "INCONCLUSIVE"
   },
   {
@@ -10398,7 +10418,7 @@
     "ROBUSTNESS"
    ],
    "primary_condition": true,
-   "infeasible": true,
+   "infeasible": false,
    "primary_estimator": "crossfit",
    "crossfit": {
     "role": "primary",
@@ -10412,7 +10432,7 @@
     "ci_method": "Clopper-Pearson, exact (scipy.stats.beta.ppf)",
     "exact_p": 0.9999952888679436,
     "tail": "scipy.stats.binom.cdf, one-sided lower, EXACT",
-    "p_holm": null
+    "p_holm": 1.0
    },
    "same_draw": {
     "role": "diagnostic",
@@ -10430,10 +10450,10 @@
    "nonempty_floor": 10,
    "meets_nonempty_floor": true,
    "empty_policy": "exclude_from_numerator_and_denominator",
-   "confirmatory": false,
+   "confirmatory": true,
    "downgraded_by": null,
-   "verdict_reason": "the cell is above the certifiability ceiling or degenerate; spec \u00a74.5 makes that a property of the threshold, never a method failure",
-   "verdict": "INCONCLUSIVE"
+   "verdict_reason": "not demonstrably below nominal: 76/79 = 0.9620 against alpha=0.8, exact one-sided p=1.0000, Holm-adjusted 1.0000. This is a failure to reject, not a proof of validity (\u00a77.1)",
+   "verdict": "PASS"
   },
   {
    "cell_id": "spade_cf_m8|hill-d6-s0.1|tf0.1|g0.95|a0.95",
@@ -10447,7 +10467,7 @@
     "ROBUSTNESS"
    ],
    "primary_condition": true,
-   "infeasible": true,
+   "infeasible": false,
    "primary_estimator": "crossfit",
    "crossfit": {
     "role": "primary",
@@ -10461,7 +10481,7 @@
     "ci_method": "Clopper-Pearson, exact (scipy.stats.beta.ppf)",
     "exact_p": 0.16266489983510396,
     "tail": "scipy.stats.binom.cdf, one-sided lower, EXACT",
-    "p_holm": null
+    "p_holm": 1.0
    },
    "same_draw": {
     "role": "diagnostic",
@@ -10479,9 +10499,9 @@
    "nonempty_floor": 10,
    "meets_nonempty_floor": true,
    "empty_policy": "exclude_from_numerator_and_denominator",
-   "confirmatory": false,
-   "downgraded_by": null,
-   "verdict_reason": "the cell is above the certifiability ceiling or degenerate; spec \u00a74.5 makes that a property of the threshold, never a method failure",
+   "confirmatory": true,
+   "downgraded_by": "KF-10",
+   "verdict_reason": "reached PASS on containment but 72.0% of campaigns certified nothing, above the KF-10 ceiling of 50%. A method that declines to answer two campaigns in three has not shown a valid certificate; it has shown that its non-answers are safe",
    "verdict": "INCONCLUSIVE"
   },
   {
@@ -14416,7 +14436,7 @@
     "ROBUSTNESS"
    ],
    "primary_condition": true,
-   "infeasible": true,
+   "infeasible": false,
    "primary_estimator": "crossfit",
    "crossfit": {
     "role": "primary",
@@ -14430,7 +14450,7 @@
     "ci_method": "Clopper-Pearson, exact (scipy.stats.beta.ppf)",
     "exact_p": 0.9998643009000978,
     "tail": "scipy.stats.binom.cdf, one-sided lower, EXACT",
-    "p_holm": null
+    "p_holm": 1.0
    },
    "same_draw": {
     "role": "diagnostic",
@@ -14448,10 +14468,10 @@
    "nonempty_floor": 10,
    "meets_nonempty_floor": true,
    "empty_policy": "exclude_from_numerator_and_denominator",
-   "confirmatory": false,
+   "confirmatory": true,
    "downgraded_by": null,
-   "verdict_reason": "the cell is above the certifiability ceiling or degenerate; spec \u00a74.5 makes that a property of the threshold, never a method failure",
-   "verdict": "INCONCLUSIVE"
+   "verdict_reason": "not demonstrably below nominal: 75/80 = 0.9375 against alpha=0.8, exact one-sided p=0.9999, Holm-adjusted 1.0000. This is a failure to reject, not a proof of validity (\u00a77.1)",
+   "verdict": "PASS"
   },
   {
    "cell_id": "spade_plate1_only|hill-d6-s0.1|tf0.1|g0.5|a0.95",
@@ -14465,7 +14485,7 @@
     "ROBUSTNESS"
    ],
    "primary_condition": true,
-   "infeasible": true,
+   "infeasible": false,
    "primary_estimator": "crossfit",
    "crossfit": {
     "role": "primary",
@@ -14479,7 +14499,7 @@
     "ci_method": "Clopper-Pearson, exact (scipy.stats.beta.ppf)",
     "exact_p": 0.06654635162318658,
     "tail": "scipy.stats.binom.cdf, one-sided lower, EXACT",
-    "p_holm": null
+    "p_holm": 1.0
    },
    "same_draw": {
     "role": "diagnostic",
@@ -14497,9 +14517,9 @@
    "nonempty_floor": 10,
    "meets_nonempty_floor": true,
    "empty_policy": "exclude_from_numerator_and_denominator",
-   "confirmatory": false,
-   "downgraded_by": null,
-   "verdict_reason": "the cell is above the certifiability ceiling or degenerate; spec \u00a74.5 makes that a property of the threshold, never a method failure",
+   "confirmatory": true,
+   "downgraded_by": "KF-10",
+   "verdict_reason": "reached PASS on containment but 81.0% of campaigns certified nothing, above the KF-10 ceiling of 50%. A method that declines to answer two campaigns in three has not shown a valid certificate; it has shown that its non-answers are safe",
    "verdict": "INCONCLUSIVE"
   },
   {
@@ -14514,7 +14534,7 @@
     "ROBUSTNESS"
    ],
    "primary_condition": true,
-   "infeasible": true,
+   "infeasible": false,
    "primary_estimator": "crossfit",
    "crossfit": {
     "role": "primary",
@@ -14528,7 +14548,7 @@
     "ci_method": "Clopper-Pearson, exact (scipy.stats.beta.ppf)",
     "exact_p": 0.9998643009000978,
     "tail": "scipy.stats.binom.cdf, one-sided lower, EXACT",
-    "p_holm": null
+    "p_holm": 1.0
    },
    "same_draw": {
     "role": "diagnostic",
@@ -14546,10 +14566,10 @@
    "nonempty_floor": 10,
    "meets_nonempty_floor": true,
    "empty_policy": "exclude_from_numerator_and_denominator",
-   "confirmatory": false,
+   "confirmatory": true,
    "downgraded_by": null,
-   "verdict_reason": "the cell is above the certifiability ceiling or degenerate; spec \u00a74.5 makes that a property of the threshold, never a method failure",
-   "verdict": "INCONCLUSIVE"
+   "verdict_reason": "not demonstrably below nominal: 75/80 = 0.9375 against alpha=0.8, exact one-sided p=0.9999, Holm-adjusted 1.0000. This is a failure to reject, not a proof of validity (\u00a77.1)",
+   "verdict": "PASS"
   },
   {
    "cell_id": "spade_plate1_only|hill-d6-s0.1|tf0.1|g0.95|a0.95",
@@ -14563,7 +14583,7 @@
     "ROBUSTNESS"
    ],
    "primary_condition": true,
-   "infeasible": true,
+   "infeasible": false,
    "primary_estimator": "crossfit",
    "crossfit": {
     "role": "primary",
@@ -14577,7 +14597,7 @@
     "ci_method": "Clopper-Pearson, exact (scipy.stats.beta.ppf)",
     "exact_p": 0.06654635162318658,
     "tail": "scipy.stats.binom.cdf, one-sided lower, EXACT",
-    "p_holm": null
+    "p_holm": 1.0
    },
    "same_draw": {
     "role": "diagnostic",
@@ -14595,9 +14615,9 @@
    "nonempty_floor": 10,
    "meets_nonempty_floor": true,
    "empty_policy": "exclude_from_numerator_and_denominator",
-   "confirmatory": false,
-   "downgraded_by": null,
-   "verdict_reason": "the cell is above the certifiability ceiling or degenerate; spec \u00a74.5 makes that a property of the threshold, never a method failure",
+   "confirmatory": true,
+   "downgraded_by": "KF-10",
+   "verdict_reason": "reached PASS on containment but 81.0% of campaigns certified nothing, above the KF-10 ceiling of 50%. A method that declines to answer two campaigns in three has not shown a valid certificate; it has shown that its non-answers are safe",
    "verdict": "INCONCLUSIVE"
   },
   {
@@ -14773,7 +14793,7 @@
     "ci_method": "Clopper-Pearson, exact (scipy.stats.beta.ppf)",
     "exact_p": 0.011786447797264338,
     "tail": "scipy.stats.binom.cdf, one-sided lower, EXACT",
-    "p_holm": 0.6954004200385959
+    "p_holm": 0.907556480389354
    },
    "same_draw": {
     "role": "diagnostic",
@@ -14793,7 +14813,7 @@
    "empty_policy": "exclude_from_numerator_and_denominator",
    "confirmatory": true,
    "downgraded_by": null,
-   "verdict_reason": "not demonstrably below nominal: 43/50 = 0.8600 against alpha=0.95, exact one-sided p=0.0118, Holm-adjusted 0.6954. This is a failure to reject, not a proof of validity (\u00a77.1)",
+   "verdict_reason": "not demonstrably below nominal: 43/50 = 0.8600 against alpha=0.95, exact one-sided p=0.0118, Holm-adjusted 0.9076. This is a failure to reject, not a proof of validity (\u00a77.1)",
    "verdict": "PASS"
   },
   {
@@ -14871,7 +14891,7 @@
     "ci_method": "Clopper-Pearson, exact (scipy.stats.beta.ppf)",
     "exact_p": 0.011786447797264338,
     "tail": "scipy.stats.binom.cdf, one-sided lower, EXACT",
-    "p_holm": 0.6954004200385959
+    "p_holm": 0.907556480389354
    },
    "same_draw": {
     "role": "diagnostic",
@@ -14891,7 +14911,7 @@
    "empty_policy": "exclude_from_numerator_and_denominator",
    "confirmatory": true,
    "downgraded_by": null,
-   "verdict_reason": "not demonstrably below nominal: 43/50 = 0.8600 against alpha=0.95, exact one-sided p=0.0118, Holm-adjusted 0.6954. This is a failure to reject, not a proof of validity (\u00a77.1)",
+   "verdict_reason": "not demonstrably below nominal: 43/50 = 0.8600 against alpha=0.95, exact one-sided p=0.0118, Holm-adjusted 0.9076. This is a failure to reject, not a proof of validity (\u00a77.1)",
    "verdict": "PASS"
   },
   {
@@ -18532,7 +18552,7 @@
     "ROBUSTNESS"
    ],
    "primary_condition": true,
-   "infeasible": true,
+   "infeasible": false,
    "primary_estimator": "crossfit",
    "crossfit": {
     "role": "primary",
@@ -18546,7 +18566,7 @@
     "ci_method": "Clopper-Pearson, exact (scipy.stats.beta.ppf)",
     "exact_p": 0.9996161024703734,
     "tail": "scipy.stats.binom.cdf, one-sided lower, EXACT",
-    "p_holm": null
+    "p_holm": 1.0
    },
    "same_draw": {
     "role": "diagnostic",
@@ -18564,10 +18584,10 @@
    "nonempty_floor": 10,
    "meets_nonempty_floor": true,
    "empty_policy": "exclude_from_numerator_and_denominator",
-   "confirmatory": false,
+   "confirmatory": true,
    "downgraded_by": null,
-   "verdict_reason": "the cell is above the certifiability ceiling or degenerate; spec \u00a74.5 makes that a property of the threshold, never a method failure",
-   "verdict": "INCONCLUSIVE"
+   "verdict_reason": "not demonstrably below nominal: 69/74 = 0.9324 against alpha=0.8, exact one-sided p=0.9996, Holm-adjusted 1.0000. This is a failure to reject, not a proof of validity (\u00a77.1)",
+   "verdict": "PASS"
   },
   {
    "cell_id": "spade_random_plate2|hill-d6-s0.1|tf0.1|g0.5|a0.95",
@@ -18581,7 +18601,7 @@
     "ROBUSTNESS"
    ],
    "primary_condition": true,
-   "infeasible": true,
+   "infeasible": false,
    "primary_estimator": "crossfit",
    "crossfit": {
     "role": "primary",
@@ -18595,7 +18615,7 @@
     "ci_method": "Clopper-Pearson, exact (scipy.stats.beta.ppf)",
     "exact_p": 0.004930342414473064,
     "tail": "scipy.stats.binom.cdf, one-sided lower, EXACT",
-    "p_holm": null
+    "p_holm": 0.3894970507433721
    },
    "same_draw": {
     "role": "diagnostic",
@@ -18613,9 +18633,9 @@
    "nonempty_floor": 10,
    "meets_nonempty_floor": true,
    "empty_policy": "exclude_from_numerator_and_denominator",
-   "confirmatory": false,
-   "downgraded_by": null,
-   "verdict_reason": "the cell is above the certifiability ceiling or degenerate; spec \u00a74.5 makes that a property of the threshold, never a method failure",
+   "confirmatory": true,
+   "downgraded_by": "KF-10",
+   "verdict_reason": "reached PASS on containment but 77.0% of campaigns certified nothing, above the KF-10 ceiling of 50%. A method that declines to answer two campaigns in three has not shown a valid certificate; it has shown that its non-answers are safe",
    "verdict": "INCONCLUSIVE"
   },
   {
@@ -18630,7 +18650,7 @@
     "ROBUSTNESS"
    ],
    "primary_condition": true,
-   "infeasible": true,
+   "infeasible": false,
    "primary_estimator": "crossfit",
    "crossfit": {
     "role": "primary",
@@ -18644,7 +18664,7 @@
     "ci_method": "Clopper-Pearson, exact (scipy.stats.beta.ppf)",
     "exact_p": 0.9996161024703734,
     "tail": "scipy.stats.binom.cdf, one-sided lower, EXACT",
-    "p_holm": null
+    "p_holm": 1.0
    },
    "same_draw": {
     "role": "diagnostic",
@@ -18662,10 +18682,10 @@
    "nonempty_floor": 10,
    "meets_nonempty_floor": true,
    "empty_policy": "exclude_from_numerator_and_denominator",
-   "confirmatory": false,
+   "confirmatory": true,
    "downgraded_by": null,
-   "verdict_reason": "the cell is above the certifiability ceiling or degenerate; spec \u00a74.5 makes that a property of the threshold, never a method failure",
-   "verdict": "INCONCLUSIVE"
+   "verdict_reason": "not demonstrably below nominal: 69/74 = 0.9324 against alpha=0.8, exact one-sided p=0.9996, Holm-adjusted 1.0000. This is a failure to reject, not a proof of validity (\u00a77.1)",
+   "verdict": "PASS"
   },
   {
    "cell_id": "spade_random_plate2|hill-d6-s0.1|tf0.1|g0.95|a0.95",
@@ -18679,7 +18699,7 @@
     "ROBUSTNESS"
    ],
    "primary_condition": true,
-   "infeasible": true,
+   "infeasible": false,
    "primary_estimator": "crossfit",
    "crossfit": {
     "role": "primary",
@@ -18693,7 +18713,7 @@
     "ci_method": "Clopper-Pearson, exact (scipy.stats.beta.ppf)",
     "exact_p": 0.004930342414473064,
     "tail": "scipy.stats.binom.cdf, one-sided lower, EXACT",
-    "p_holm": null
+    "p_holm": 0.3894970507433721
    },
    "same_draw": {
     "role": "diagnostic",
@@ -18711,9 +18731,9 @@
    "nonempty_floor": 10,
    "meets_nonempty_floor": true,
    "empty_policy": "exclude_from_numerator_and_denominator",
-   "confirmatory": false,
-   "downgraded_by": null,
-   "verdict_reason": "the cell is above the certifiability ceiling or degenerate; spec \u00a74.5 makes that a property of the threshold, never a method failure",
+   "confirmatory": true,
+   "downgraded_by": "KF-10",
+   "verdict_reason": "reached PASS on containment but 77.0% of campaigns certified nothing, above the KF-10 ceiling of 50%. A method that declines to answer two campaigns in three has not shown a valid certificate; it has shown that its non-answers are safe",
    "verdict": "INCONCLUSIVE"
   },
   {

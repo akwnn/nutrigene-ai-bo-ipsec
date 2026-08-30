@@ -1,5 +1,9 @@
 # MAIN LINE — the paper's skeleton
 
+> **Historical point-optimization skeleton.** It remains source material for the terminal-
+> rule result but predates the prospective design-space evidence and joint protocol. The
+> current paper-level synthesis is `docs/RESEARCH-SUMMARY.md`.
+
 **CORE and DEFENCE only.** Everything else is in `docs/TRIAGE.md` and `docs/archive/`.
 Labels and reasons: `TRIAGE.md`. Full entries with limits: `RESULTS.md`.
 
