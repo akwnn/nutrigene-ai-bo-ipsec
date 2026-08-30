@@ -9,6 +9,30 @@ Every number here is machine-checked by `scripts/verify_conclusions.py`.
 
 ---
 
+## The scoreboard, at a glance
+
+All at 48 wells, `sigma_rel = 0.25`, 32 seeds x 5 families, adjudicated against gates frozen
+before each run.
+
+| | **finds the recipe** | **returns a trustworthy region** | rounds |
+|---|---|---|---|
+| **SPADE** | ties BO · loses to DoE | **only arm with containment 1.0000** | **5** |
+| BO (qLogNEI) | ties SPADE | certifies, containment 0.9831 | 10 |
+| classical DoE | **wins** (+0.1026, p=0.0003) | **cannot** — containment 0.6967, **wrong ~30% of the time** | 3 |
+| one-shot design | loses badly (−0.0783 vs SPADE) | answers 3.4% of cells — effectively never | 1 |
+
+**One sentence:** *SPADE matches BO's recipe quality in half the rounds, and is the only
+method that returns an operating region you can trust.*
+
+**Never write "SPADE beats BO on regret."** It does not. Four comparisons, SPADE ahead on
+the point estimate in three, **none separating from zero**. The word is *matches*.
+
+**The losses are load-bearing.** DoE finds a better recipe than SPADE and cannot certify;
+that is precisely the paper's point — the recipe is not the deliverable. A method that won
+everything would read as tuned.
+
+---
+
 ## The claim
 
 > For expensive cell-manufacturing assays the deliverable should be a **certified design
