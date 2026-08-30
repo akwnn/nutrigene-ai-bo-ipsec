@@ -136,3 +136,78 @@ answered with **66 contained** (containment **1.0000**, LB **0.9556**) against q
    (`HANDOFF-2026-08-30.md` §6b) — they assert that current code reproduces committed
    q42/q59 **BO** columns, and the BO path has changed. Not bisected; stated as the leading
    hypothesis with direct supporting evidence.
+
+---
+
+## 8. DC RESULT — DC-1 PASSES. DoE cannot certify, and its failure mode is over-confidence.
+
+5 families x 32 seeds x 4 arms, one process, `results/dc-*.json`, adjudicated by
+`scripts/analyse_dc_doe_certificate.py`, written before the data landed.
+
+### 8.1 DC-1 PASSES — but not for the reason expected
+
+At p = 0.30, reporting `answered` **and** `contained` per the standing rule:
+
+| arm | rounds | c* | answered | contained | containment | LB | certifies? |
+|---|---|---|---|---|---|---|---|
+| `doe` | 3 | none | **122/160** | 85 | **0.6967** | 0.6210 | **no** |
+| `doe_unscreened` | 3 | none | **134/160** | 77 | **0.5746** | 0.4999 | **no** |
+| **`spade`** | **5** | 1.0 | 66/160 | **66** | **1.0000** | **0.9556** | **YES** |
+| `qlognei` | 10 | 1.0 | 59/160 | 58 | 0.9831 | 0.9221 | YES |
+
+**DoE does not fail by abstaining. It fails by being confidently wrong.** It answers
+**more often than any other arm** — 76% of cells against SPADE's 41% — and roughly **30% of
+its certified regions do not contain the truth.** A method that hands a cell-manufacturing
+team a confident operating window that is wrong three times in ten is worse than one that
+says "I don't know".
+
+**SPADE is the only arm with perfect containment.** This is the measured version of the
+claim that was previously asserted: **the extra two rounds over DoE buy a guarantee DoE
+cannot supply at any inflation level tested.**
+
+### 8.2 DC-2 — DoE beats SPADE on regret, and that is reported here as registered
+
+| comparison | n | diff | 95% CI | p | |
+|---|---|---|---|---|---|
+| spade (R5) vs **`doe`** (R3) | 160 | **+0.1026** | [+0.0486, +0.1578] | 0.0003 | **SPADE WORSE** |
+| spade (R5) vs `doe_unscreened` (R3) | 160 | +0.0443 | [−0.0185, +0.1054] | 0.167 | no difference |
+| spade (R5) vs `qlognei` (R10) | 160 | **−0.0005** | [−0.0221, +0.0207] | 0.960 | no difference |
+
+**Classical DoE finds a better recipe than SPADE, in fewer rounds, and the margin is large
+and significant.** §4 registered that this outcome would be the section's headline rather
+than a footnote, and it is.
+
+**The paper's claim against DoE is therefore narrow and must be written narrowly:**
+DoE wins the recipe; **only SPADE returns a region you can trust.**
+
+### 8.3 The parity claim, confirmed in one process
+
+`spade` R=5 versus `qlognei` R=10: **−0.0005, CI [−0.0221, +0.0207], p = 0.96.** Both arms
+measured **in the same process under current code**, which removes the cross-experiment
+pairing and the code-drift concern of §7 entirely.
+
+**`SPADE-LC-CONFIRMATORY-SPEC.md` §9.1 is superseded by this and is no longer provisional.**
+The point estimate is now essentially exactly zero (−0.0005 against LC's +0.0016). The CI
+half-width is 0.0214, marginally wider than the 0.02 SESOI, so the honest statement remains
+**"no detectable difference"**, not proven equality.
+
+### 8.4 DC-3 — screening is NOT the cause
+
+| arm | answered | contained | containment | LB |
+|---|---|---|---|---|
+| `doe` (screened 6->4) | 122/160 | 85 | 0.6967 | 0.6210 |
+| `doe_unscreened` | 134/160 | 77 | **0.5746** | 0.4999 |
+
+Removing the screen makes containment **worse**, not better. **DoE's inability to certify is
+a property of the method — a low-order polynomial fit extrapolated over the box — not of the
+6->4 screening decision.** That closes the obvious reviewer escape ("you crippled DoE with
+the screen").
+
+### 8.5 What the paper may now say about DoE
+
+- **Measured, not asserted:** DoE cannot return a trustworthy certified region. Containment
+  0.6967 screened, 0.5746 unscreened, against SPADE's 1.0000.
+- **Its failure is over-confidence, not abstention** — it answers most often of any arm.
+- **DoE wins the recipe** (+0.1026, p = 0.0003, in fewer rounds). Say so plainly.
+- **Not the screen's fault** — unscreened is worse.
+- **SPADE's extra 2 rounds over DoE buy correctness of the region, not a better recipe.**
