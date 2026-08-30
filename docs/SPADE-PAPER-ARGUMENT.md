@@ -100,14 +100,51 @@ operator time.
 
 | comparison | result | n |
 |---|---|---|
-| **SPADE @ 5 rounds vs BO @ 10 rounds, regret** | **+0.0016, CI [-0.0184, +0.0208]** — parity within the registered SESOI of 0.02 | 160 |
+| **SPADE @ 5 rounds vs BO @ 10 rounds, regret** | **−0.0005, CI [−0.0221, +0.0207], p = 0.96** — no detectable difference, **both arms measured in one process** | 160 |
 | **Certified volume at matched 5 rounds** | **+0.001353, p < 0.0001**, independently in ackley and hartmann6 | 320 |
 | …and it is not a difficulty artefact | survives matched-`margin/sd` binning, 3 of 4 bins, all positive | 1600 |
-| SPADE @ 3 rounds vs a one-shot design | **-0.0783, CI [-0.1104, -0.0490]** | 80 |
+| SPADE @ 3 rounds vs a one-shot design | **−0.0783, CI [−0.1104, −0.0490]** | 80 |
 | SPADE @ 3 rounds vs BO @ 10 | +0.0263, CI [+0.0054, +0.0472] — **3 rounds is not enough** | 160 |
 
-**Parity sits on the SESOI edge** (half-width 0.0196 against 0.0200) and is stated as
-parity-within-SESOI, never as equality.
+**"No detectable difference", never proven equality:** the CI half-width is 0.0214 against
+the 0.02 SESOI. The point estimate is −0.0005 — essentially exactly zero.
+
+### 4.1 Against classical DoE the claim is narrow, and must be written narrowly
+
+**DoE spends 3 rounds; SPADE spends 5. SPADE costs MORE rounds than DoE**, so the round
+argument does not apply here and no table may hide it.
+
+| comparison | rounds | diff | 95% CI | p |
+|---|---|---|---|---|
+| SPADE vs **`doe`** on regret | 5 vs 3 | **+0.1026** | [+0.0486, +0.1578] | 0.0003 |
+
+**Classical DoE finds a better recipe than SPADE, in fewer rounds, and says so plainly.**
+What DoE cannot do is return a region you can trust — see §5.
+
+## 4.2 DoE cannot certify — measured, and its failure is over-confidence
+
+At p = 0.30, 5 families x 32 seeds, one process, identical certification path for all arms:
+
+| arm | rounds | answered | contained | containment | LB | certifies? |
+|---|---|---|---|---|---|---|
+| `doe` | 3 | **122/160** | 85 | **0.6967** | 0.6210 | **no** |
+| `doe_unscreened` | 3 | **134/160** | 77 | **0.5746** | 0.4999 | **no** |
+| **SPADE** | **5** | 66/160 | **66** | **1.0000** | **0.9556** | **YES** |
+| qLogNEI | 10 | 59/160 | 58 | 0.9831 | 0.9221 | YES |
+
+**DoE does not fail by abstaining — it fails by being confidently wrong.** It answers more
+often than any other arm (76% of cells against SPADE's 41%) and roughly **30% of its
+certified regions do not contain the truth**. For a cell-manufacturing team, a confident
+operating window that is wrong three times in ten is worse than a method that says
+"I don't know".
+
+**SPADE is the only arm with perfect containment.** And **the screen is not the culprit**:
+removing the 6->4 screen makes containment *worse* (0.5746), so this is a property of the
+low-order polynomial fit, not of the screening decision — which closes the obvious objection
+that DoE was crippled by its screen.
+
+**This is what the extra two rounds over DoE buy: not a better recipe, but a region you can
+operate in.**
 
 ## 5. What the real data changed
 

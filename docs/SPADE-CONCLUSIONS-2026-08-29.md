@@ -17,12 +17,13 @@ traces to a committed result file and an adjudicator script written before its d
 
 | # | claim | evidence | where |
 |---|---|---|---|
-| 1 | **SPADE at 5 rounds matches qLogNEI at 10 on regret** | +0.0016, CI [−0.0184, +0.0208], half-width 0.0196 < SESOI 0.0200, n=160 | LC §9.1 |
+| 1 | **SPADE at 5 rounds matches qLogNEI at 10 on regret** | **−0.0005, CI [−0.0221, +0.0207], p=0.96, n=160, both arms in ONE process** | **DC §8.3** (supersedes LC §9.1) |
 | 2 | **SPADE certifies more volume at matched 5 rounds** | +0.001353, p<0.0001; independently in ackley and hartmann6 | LC §9.1 |
 | 3 | **…and that win is not a difficulty artefact** | survives matched-`margin/sd` binning in 3 of 4 bins, all positive | TAU §8.4 |
 | 4 | **Certification generalises to a dose-response landscape** | `hill`, prevalence 0.70: 40/64 answered, **40 contained**, LB 0.9278 | TAU §8.1 |
 | 5 | **Certifiability obeys a measured law** | Spearman ρ(`margin/sd`, answer rate) = **0.9801**, 25 cells, p<0.0001 | TAU §8.3 |
 | 6 | **SPADE beats a one-shot space-filling design at 3 rounds** | −0.0783, CI [−0.1104, −0.0490] | parity analysis |
+| 7 | **Classical DoE cannot certify — it is confidently wrong** | containment **0.6967** screened / **0.5746** unscreened vs SPADE's **1.0000**; DoE answers *most* (122/160) | DC §8.1 |
 
 **The thesis these support:** SPADE does not optimise better than BO — it *matches* it.
 What it does better is **certify**: more of the design space, at comparable containment,
@@ -117,8 +118,11 @@ choosing the same `c`** — selection is stable, so the pooled number was not an
 2. **qLogNEI on `hill` at ~96 seeds** — it currently misses by two answered cells (27 vs the
    29 needed) at containment 1.0000. State the coverage gap as a margin (40 vs 27), not as a
    threshold crossing, and pre-empt the reviewer who notices.
-3. **The DoE arm is a space-filling `lhs`**, not the fractional-factorial/CCD a reviewer will
-   demand. Claim 6 is real but the baseline is not the one the field expects.
+3. ~~**The DoE arm is a space-filling `lhs`**~~ — **CLOSED by DC.** Real screened DoE
+   (`doe`) and unscreened DoE were both scored by the certificate at 32 seeds. They cannot
+   certify (containment 0.6967 / 0.5746). **But DoE beats SPADE on regret** (+0.1026,
+   p = 0.0003, in fewer rounds), so the claim against DoE is narrow: DoE wins the recipe,
+   only SPADE returns a trustworthy region.
 4. **The R=4 tie is still untested** — no R=4 in LC's `CONFIGS`, declared before that run.
 5. **Sign the 12 CD31 gates in CytExpert** — still the only step between the in-house result
    and a wet-lab claim, and still needs a person.
