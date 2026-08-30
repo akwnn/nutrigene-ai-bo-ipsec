@@ -100,6 +100,29 @@ Measured before launching:
 answer, and pinning the global torch seed changes nothing, so this is a **code change**, not
 RNG order. The only source change since LC is the merge of `origin/main` (136 commits).
 
+### 7.1 CORRECTION, same day — the drift is NOT significant
+
+The table above is **4 cells**. Measured properly on **all 160** shared cells
+(qLogNEI R=5, TT under current code minus LC under old code):
+
+**mean +0.0084, 95% CI [−0.0092, +0.0265].** **The interval contains zero.** The point
+estimate says the new BO is slightly *worse*, not better. Per family, every interval
+contains zero.
+
+**The 4-cell alarm was a small-sample artefact** — the same error this project has now made
+five times, and the reason for the standing rule that effects at small n are unreliable.
+It is recorded rather than deleted.
+
+**Revised consequence:** `SPADE-LC-CONFIRMATORY-SPEC.md` §9.1's parity claim is **not
+materially at risk**. It remains *provisional* only because it paired arms across a code
+change, which DC removes by measuring both in one process.
+
+**Also measured, both arms under current code (TT):** SPADE minus qLogNEI at matched R=5 is
+**−0.0139, CI [−0.0328, +0.0045]** — SPADE better on the point estimate, interval containing
+zero. And SPADE's certification win **is already confirmed under the new BO**: 66/160
+answered with **66 contained** (containment **1.0000**, LB **0.9556**) against qLogNEI's
+52/160, 47 contained (0.9038, 0.8084).
+
 **Consequences, recorded before any DC number exists:**
 
 1. **The reproduction gate is amended:** `spade` must still reproduce LC exactly. `qlognei`
