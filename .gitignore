@@ -453,3 +453,11 @@ results/stale-wrong-digest/
 !results/tt-hill.json
 !results/tt-levy.json
 !results/tt-rosenbrock.json
+
+# DC -- can classical DoE certify? (docs/SPADE-DOE-CERTIFICATE-SPEC.md). Also re-measures
+# SPADE vs BO under current code after the BO arm was found to have drifted (spec 7).
+!results/dc-ackley.json
+!results/dc-hartmann6.json
+!results/dc-hill.json
+!results/dc-levy.json
+!results/dc-rosenbrock.json

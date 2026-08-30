@@ -76,3 +76,40 @@ two of six factors, so a certificate over the full box may be undefined in those
   may omit that.
 - `sigma_rel = 0.25`. The real-noise ceiling (0.68, nothing certifies) is untouched.
 - At n <= 25 seeds an effect here is not reliable; 32 seeds minimum.
+
+---
+
+## 7. AMENDMENT, before the run — the BO arm has drifted
+
+The §2 reproduction gate was written expecting `spade` **and** `qlognei` to reproduce LC.
+Measured before launching:
+
+| arm | R | family | seed | committed (LC) | current code | |
+|---|---|---|---|---|---|---|
+| spade | 5 | hartmann6 | 0 | 0.371536 | 0.371536 | exact |
+| spade | 5 | hartmann6 | 1 | 0.075667 | 0.075667 | exact |
+| spade | 5 | ackley | 0 | 0.678465 | 0.678465 | exact |
+| spade | 5 | ackley | 1 | 0.755496 | 0.755496 | exact |
+| **qlognei** | 10 | hartmann6 | 0 | 0.169970 | **0.091732** | **drifted** |
+| **qlognei** | 10 | hartmann6 | 1 | 0.244261 | **0.290664** | **drifted** |
+| **qlognei** | 10 | ackley | 0 | 0.799783 | **0.759596** | **drifted** |
+| **qlognei** | 10 | ackley | 1 | 0.705043 | **0.681228** | **drifted** |
+
+**SPADE reproduces exactly; the BO arm does not.** Mean change **−0.023959** — BO is
+**stronger** under current code. Verified deterministic: the same call twice gives the same
+answer, and pinning the global torch seed changes nothing, so this is a **code change**, not
+RNG order. The only source change since LC is the merge of `origin/main` (136 commits).
+
+**Consequences, recorded before any DC number exists:**
+
+1. **The reproduction gate is amended:** `spade` must still reproduce LC exactly. `qlognei`
+   **cannot** and is no longer gated on it. This is a measurement fact, not a relaxed
+   standard — and it is recorded here rather than quietly dropped.
+2. **`SPADE-LC-CONFIRMATORY-SPEC.md` §9.1's parity claim is now PROVISIONAL.** It compared
+   SPADE R=5 against the *old* BO. A ~0.024 improvement in BO would move that comparison
+   (+0.0016, half-width 0.0196) **outside the registered SESOI of 0.02**. **DC re-measures
+   both arms in one process under current code and supersedes it.**
+3. **This is the likely root cause of the three failing `test_replay.py` tests on main**
+   (`HANDOFF-2026-08-30.md` §6b) — they assert that current code reproduces committed
+   q42/q59 **BO** columns, and the BO path has changed. Not bisected; stated as the leading
+   hypothesis with direct supporting evidence.
