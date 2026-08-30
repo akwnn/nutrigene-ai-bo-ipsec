@@ -38,13 +38,33 @@ says "I don't know" when the data cannot support one.
 GP is refit and the next batch is chosen; at the end a conservative excursion certificate is
 computed from the joint posterior, and reported only if it clears the bar.
 
-> **Stated correctly, which the source code does not yet do.** `multiround.py`'s docstring
-> claims the acquisition targets "the certificate contour". **That is false and measured
-> false:** the threshold `theta` cancels out of the ranking whenever the contour lies
-> outside the posterior's range — which is every family at the opening round. Rank
-> correlation between scores at two very different thetas is **exactly 1.000000**, with
-> identical argmax. **SPADE's acquisition is a UCB with exploration weight `1.96 - z_rho`**
-> (0.315 at rho = 0.95). See §6. The docstring must be corrected before submission.
+**SPADE's acquisition is a UCB with exploration weight `1.96 - z_rho`** — 0.315 at
+rho = 0.95. It is *not* a certificate-contour straddle, despite what this module's own
+docstring claimed until 2026-08-30: the threshold `theta` **cancels out of the ranking**
+whenever the contour lies outside the posterior's range, which is every family at the
+opening round (rank correlation between scores at two very different thetas: **exactly
+1.000000**, identical argmax). The docstring is now corrected in source.
+
+**And the sophistication was never what worked.** We repaired the mechanism — pointed it at
+`tau`, the region actually being certified, which a practitioner knows because it is their
+own spec — and tested it at 5 families x 32 seeds. **It did not help** (TT-1: +0.000425,
+CI [−0.000022, +0.000875]) and it **significantly damaged** optimisation (TT-2: regret
++0.0301, CI [+0.0169, +0.0450], p < 0.0001, outside the 0.02 SESOI).
+
+**The committed SPADE remains the best arm on every certification column:**
+
+| arm | answered | contained | containment | LB |
+|---|---|---|---|---|
+| **SPADE** | **66/160** | **66** | **1.0000** | **0.9556** |
+| SPADE aimed at tau | 63/160 | 61 | 0.9683 | 0.9034 |
+| qLogNEI | 52/160 | 47 | 0.9038 | 0.8084 |
+
+**So the method's value is architectural, not algorithmic:** a space-filling opening,
+low-exploration adaptive batches that concentrate wells where the response is high, and a
+conservative certificate that abstains when the data cannot support one. **The simple part
+works; the sophisticated part never did, and repairing it makes things worse.** That is the
+paper's honest claim about the method, and it is stronger than a targeting result would have
+been because it was tested in both the broken and the repaired state.
 
 ## 3. It generalises: certifiability obeys one number
 
@@ -103,14 +123,20 @@ is invisible on benchmarks.** n = 2 datasets; no prospective wet-lab test of a c
 
 ## 6. What does not work — a section, not an appendix
 
-- **The targeting mechanism is a no-op.** A registered 99,601-row prospective study found
-  targeted second-plate placement does **not** beat placing the same wells at random
-  (-0.0019, p = 0.41; KF-3), the second plate loses to one plate (KF-4), and two independent
-  repairs both failed. **This paper supplies the cause:** `theta` cancels from the
-  acquisition ranking, so the targeting was never active. **KF-3 tested a disabled
-  mechanism.** Whether a *working* targeting rule beats random is untested (§7).
+- **The targeting mechanism does not earn its complexity — tested twice, both ways.**
+  A registered 99,601-row prospective study found targeted second-plate placement does not
+  beat random placement of the same wells (-0.0019, p = 0.41; KF-3), the second plate loses
+  to one plate (KF-4), and two independent repairs failed. **This paper supplies the cause**
+  — `theta` cancels from the ranking, so the mechanism was never active — **and then tests
+  the repaired mechanism.** Aimed at `tau`, at 5 families x 32 seeds: no benefit
+  (+0.000425, CI [−0.000022, +0.000875]) and a large regret cost (+0.0301, p < 0.0001).
+  The per-family pattern is a cancellation, not an absence: it helps hartmann6 (+0.002766,
+  p = 0.012) and hurts ackley (−0.000641, p = 0.015). **KF-3's conclusion therefore stands
+  on its merits, and the two-plate and multi-round lines agree.**
 - **ackley is a genuine loss** for SPADE on regret: +0.0652, CI [+0.0203, +0.1104],
-  **p = 0.004** — and it *strengthened* with more data.
+  **p = 0.004** — and it *strengthened* with more data. **Not explained by the theta/tau
+  mismatch**, which was the leading hypothesis: ackley has the largest mismatch (13.6x), and
+  correct targeting made it *worse* (0.7375 -> 0.7520). Cause still open.
 - **rosenbrock never certifies**, at any prevalence tested. The law predicts this.
 - **The ceiling.** At the measured real assay noise (`sigma_rel = 0.68`) **nothing certifies
   for any arm.** Roughly 27 replicates would be needed. Every result above is at 0.25.
@@ -119,8 +145,12 @@ is invisible on benchmarks.** n = 2 datasets; no prospective wet-lab test of a c
 
 1. **sigma sweep at 0.10 and 0.68** — everything rests on 0.25. Cheapest, highest value.
 2. **An estimable `margin/sd` proxy** — turns §3 from description into a usable decision rule.
-3. **rho sweep** — the only route from "we found the bug" to "we fixed it". **rho is the
-   certificate's Vorob'ev level, so it moves the estimand: register the trade first.**
+3. **rho sweep** — rho sets the exploration weight (`1.96 - z_rho`) and is the remaining
+   untested knob. **Correction: rho does NOT move the estimand** — it feeds only the
+   acquisition; the certificate is computed independently from `p2.ALPHAS`. An earlier
+   version of this list said otherwise and was wrong.
+   *Targeting is no longer on this list: it was repaired and tested, and it failed
+   (`SPADE-THETA-TAU-SPEC.md` §8).*
 4. R = 4 untested; the DoE arm is a space-filling `lhs`, not the fractional-factorial/CCD an
    RSM reviewer will demand; all new work is d = 6.
 

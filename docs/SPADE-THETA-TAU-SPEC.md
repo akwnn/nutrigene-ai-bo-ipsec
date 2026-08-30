@@ -88,3 +88,79 @@ mismatch (13.6x). If the mismatch is the cause, `spade_tau` should narrow it.
 - No "X cannot certify" without `answered` and `contained`
   (`SPADE-TAU-DEGENERACY-SPEC.md` §7.3).
 - At n <= 25 seeds an effect here is not reliable; 32 seeds minimum.
+
+---
+
+## 8. TT RESULT — both gates FAIL. Correct targeting does not help.
+
+5 families x 32 seeds x 3 arms, `results/tt-*.json`, adjudicated by
+`scripts/analyse_tt_theta_tau.py`, written before the data landed. Reproduction gate
+passed: `spade` reproduced LC's regret to 1e-12.
+
+### 8.1 TT-1 (PRIMARY) FAILS — and that vindicates KF-3
+
+`spade_tau` minus `spade` on certified volume at p=0.30, paired, n=160:
+**+0.000425, CI [−0.000022, +0.000875], p = 0.0645.** The interval contains zero.
+
+Per family, the aggregate null is a **cancellation**, not an absence of effect:
+
+| family | theta/tau mismatch | diff | 95% CI | p |
+|---|---|---|---|---|
+| hartmann6 | 10.3x | **+0.002766** | [+0.000687, +0.004687] | 0.012 |
+| ackley | 13.6x | **−0.000641** | [−0.001187, −0.000141] | 0.015 |
+| hill | 1.1x | +0.000000 | [−0.000063, +0.000063] | 1.000 |
+| levy | 1.0x | −0.000016 | [−0.000047, +0.000000] | 0.722 |
+| rosenbrock | 0.9x | +0.000016 | [+0.000000, +0.000047] | 0.722 |
+
+Correct targeting **helps hartmann6 and hurts ackley by similar magnitudes**, and does
+nothing on the three families where theta and tau already nearly coincided. There is no
+consistent benefit.
+
+**Per §4 this is the registered FAIL branch: KF-3's conclusion stands on its merits.** The
+99,601-row prospective study found targeted second-plate placement does not beat random.
+We have now shown that result is **not** an artefact of the disabled implementation —
+pointing the acquisition at the region actually being certified does not rescue it either.
+**The two-plate and multi-round lines agree.**
+
+### 8.2 TT-2 (GUARDRAIL) FAILS — it buys volume by abandoning the optimum
+
+Regret, `spade_tau` minus `spade`, n=160: **+0.0301, CI [+0.0169, +0.0450], p < 0.0001** —
+far outside the registered SESOI of 0.02. **`spade_tau` is decisively worse at finding the
+optimum.** Mechanically unsurprising: tau at p=0.30 is a 30th-percentile threshold, so
+aiming there samples a low contour, away from the peak.
+
+**Even had TT-1 passed, this gate alone would forbid adopting the change.**
+
+### 8.3 TT-3 — it does not fix ackley either
+
+| arm | ackley mean regret |
+|---|---|
+| qlognei | 0.7140 |
+| **spade** | **0.7375** |
+| spade_tau | 0.7520 |
+
+ackley has the largest theta/tau mismatch (13.6x), so it was the best candidate for the
+mismatch being the cause. Correct targeting made it **slightly worse**. **The ackley loss
+is not explained by the theta/tau mismatch.**
+
+### 8.4 The finding that matters more than either gate
+
+Certification at p=0.30, c=1.0 — reported with `answered` and `contained` per the standing
+rule:
+
+| arm | answered | contained | containment | LB |
+|---|---|---|---|---|
+| **spade** (committed) | **66/160** | **66** | **1.0000** | **0.9556** |
+| spade_tau | 63/160 | 61 | 0.9683 | 0.9034 |
+| qlognei | 52/160 | 47 | 0.9038 | 0.8084 |
+
+**The committed SPADE is the best arm on every column** — it answers most, contains
+perfectly, and has the highest lower bound. And it does so while its targeting mechanism is
+provably inert.
+
+**This is the paper's real result about the method.** SPADE's advantage does not come from
+its acquisition being clever — the clever part is a no-op, and repairing it makes things
+worse. It comes from the **architecture**: a space-filling opening, low-exploration adaptive
+batches (`1.96 − z_rho` = 0.315 at rho = 0.95) that concentrate wells where the response is
+high, and a conservative certificate that abstains when the data cannot support one. The
+simple part works; the sophisticated part never did.
