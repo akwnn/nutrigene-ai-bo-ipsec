@@ -1,5 +1,9 @@
 # SPADE — conclusions as of 2026-08-29
 
+> **THE PAPER'S ARGUMENT IS `docs/SPADE-PAPER-ARGUMENT.md`.** Read it first. The
+> terminal-rule study is the companion, not the paper.
+
+
 What is established, what was withdrawn, and how each was obtained. Every number below
 traces to a committed result file and an adjudicator script written before its data landed.
 

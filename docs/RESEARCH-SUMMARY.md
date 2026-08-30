@@ -1,5 +1,20 @@
 # Matched-budget benchmarking of Bayesian optimization and response-surface methodology depends on the terminal decision rule
 
+> # COMPANION STUDY — this is NOT the current paper.
+>
+> The paper's argument is **SPADE**: see **`docs/SPADE-PAPER-ARGUMENT.md`**.
+>
+> The terminal-rule / BO-versus-DoE material below is **background**, cited in one
+> paragraph of the SPADE paper's introduction. It is kept in full and nothing is deleted —
+> its results remain citable, and the KF-1..KF-10 ledger inside it supplies SPADE's own
+> registered negative results (see SPADE-PAPER-ARGUMENT.md §6).
+>
+> **Known issue, now the companion's to resolve:** this document's certificate sentence is
+> computed under `tau_frac`, which `boec.designspace` records as defective ("ackley's true
+> prevalence at `tau_frac=0.60` is 0.0000"). Under the registered `tau_quantile` fix the
+> per-family result inverts — ackley and hartmann6 are the families that DO certify. Do not
+> carry the `tau_frac` sentence into any new text.
+
 **Running title.** Terminal decision rules reverse BO-versus-RSM rankings on a synthetic recipe benchmark.
 
 **Keywords.** Bayesian optimization; response-surface methodology; terminal decision rule; matched budget; Gaussian process; simple regret; sequential design; experimental rounds.

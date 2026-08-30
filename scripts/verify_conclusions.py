@@ -1,4 +1,7 @@
-"""Guard: every number in docs/SPADE-CONCLUSIONS-2026-08-29.md §1 must reproduce.
+"""Guard: the paper's numbers must reproduce from committed data.
+
+Covers docs/SPADE-PAPER-ARGUMENT.md (the paper's argument) and
+docs/SPADE-CONCLUSIONS-2026-08-29.md §1, which quote the same figures.
 
 Run after ANY change to results/, to an analyser, or to the conclusions document. A
 MISMATCH means the docs and the data have drifted apart -- which is exactly how a paper
@@ -81,6 +84,8 @@ print("\nCLAIM 6 -- SPADE R=3 vs one-shot lhs")
 check("mean", m6, -0.0783, 0.004)
 
 print(f"\n===== {sum(ok)}/{len(ok)} doc numbers reproduce from committed data =====")
+print("checked against: docs/SPADE-PAPER-ARGUMENT.md  and")
+print("                 docs/SPADE-CONCLUSIONS-2026-08-29.md §1")
 
 import sys
 sys.exit(0 if all(ok) else 1)
