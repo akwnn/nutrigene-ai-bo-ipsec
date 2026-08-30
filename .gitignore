@@ -445,3 +445,11 @@ COMMIT_MSG.txt
 
 # Watchdog-quarantined shards from wrong protocol digests
 results/stale-wrong-digest/
+
+# TT -- does SPADE's mechanism work when aimed at tau, the region actually certified?
+# (docs/SPADE-THETA-TAU-SPEC.md). TT-1 is registered so that FAIL vindicates KF-3.
+!results/tt-ackley.json
+!results/tt-hartmann6.json
+!results/tt-hill.json
+!results/tt-levy.json
+!results/tt-rosenbrock.json
