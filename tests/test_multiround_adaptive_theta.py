@@ -53,3 +53,36 @@ def test_ackley_fixed_theta_was_unreachable_but_adaptive_is_not():
     Y = torch.tensor([[0.0], [0.31]], dtype=torch.double)   # best ackley typically finds
     assert 0.80 * 1.0 > ACKLEY_TRUE_MAX          # the bug: 0.80 > 0.4102
     assert resolve_theta(mu_max=None, Y=Y, tau_frac=0.80) <= ACKLEY_TRUE_MAX
+
+
+# ---------------------------------------------------------------------------
+# theta must be able to BE the certification threshold.
+#
+# The acquisition targeted `tau_frac * mu_max` = 0.80 while the certificate was computed
+# for {f >= tau}. Measured mismatch at p=0.30: ackley tau=0.0587 (theta 13.6x too high),
+# hartmann6 tau=0.0774 (10.3x). SPADE was aiming at a contour unrelated to the region it
+# certifies. tau is known to a practitioner -- it is their spec ("CD31+ >= 33.2%").
+# ---------------------------------------------------------------------------
+
+
+def test_explicit_theta_overrides_everything():
+    Y = torch.tensor([[0.1], [0.9]], dtype=torch.double)
+    assert resolve_theta(mu_max=1.0, Y=Y, tau_frac=0.80, theta=0.0587) == 0.0587
+    assert resolve_theta(mu_max=None, Y=Y, tau_frac=0.80, theta=0.0587) == 0.0587
+
+
+def test_theta_none_preserves_both_committed_paths():
+    """Passing no theta must leave the two existing behaviours bit-identical."""
+    Y = torch.tensor([[0.1], [0.4102]], dtype=torch.double)
+    assert resolve_theta(mu_max=1.0, Y=Y, tau_frac=0.80, theta=None) == 0.80
+    assert abs(resolve_theta(mu_max=None, Y=Y, tau_frac=0.80, theta=None)
+               - 0.80 * 0.4102) < 1e-12
+
+
+def test_targeting_the_certification_threshold_is_reachable_on_ackley():
+    """The repair, pinned: theta=tau is far below the 0.80 the code used."""
+    ACKLEY_TAU_P30 = 0.0587
+    Y = torch.tensor([[0.0], [0.31]], dtype=torch.double)
+    assert resolve_theta(mu_max=1.0, Y=Y, tau_frac=0.80) == 0.80   # the old target
+    assert resolve_theta(mu_max=1.0, Y=Y, tau_frac=0.80,
+                         theta=ACKLEY_TAU_P30) == ACKLEY_TAU_P30   # the repair

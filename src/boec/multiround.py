@@ -10,11 +10,29 @@ Adaptivity, not acquisition, is what buys a certificate. This module is the cons
 it generalises the fixed 40+8 two-plate design to an arbitrary schedule, so the same 48
 wells can be spent across 3, 4 or 6 rounds.
 
-**The acquisition is the certificate contour, not Bryan's straddle.** The certificate
-certifies points where `P(f > tau)` is HIGH; the classical straddle targets `mean = tau`,
-where `P(f > tau) = 0.5` -- points that can never enter a certified region. LA measured
-the difference: median regret 0.4008 for the true-contour straddle against **0.2996** for
-the certificate contour, at matched rounds. See `boec.certstraddle`.
+**CORRECTED 2026-08-30 — the previous description of this module was false.** It claimed
+"the acquisition is the certificate contour, not Bryan's straddle". **Measured false.**
+
+`certificate_straddle` is `1.96*sd - |mean - z_rho*sd - theta|`. Whenever `theta` exceeds
+`mean - z_rho*sd` for **every** candidate -- which held for every family at the opening
+round, 0.0% of candidates above -- the absolute value resolves and the score collapses to
+
+    (1.96 - z_rho) * sd + mean - theta
+
+so **`theta` is a constant offset and drops out of the ranking entirely.** Rank correlation
+between scores at two very different thetas: **exactly 1.000000**, identical argmax
+(`docs/SPADE-ACKLEY-THETA-SPEC.md` sec 8).
+
+**What this module actually does, in that regime: a UCB with exploration weight
+`1.96 - z_rho`** -- 0.315 at rho=0.95, 1.96 at rho=0.50. `rho` sets exploration; `theta`
+does nothing. That also reinterprets LA's measured gap (median regret 0.2996 vs 0.4008)
+as an **rho** effect, not evidence that the target contour was moved.
+
+**Two consequences.** The registered KF-3 result -- targeted plate-2 does not beat random
+placement -- tested a mechanism that was **never active**. And `theta` was pointed at the
+wrong number regardless: the certificate is about `{f >= tau}`, but `theta` was
+`tau_frac * mu_max` = 0.80, against tau = 0.0587 on ackley and 0.0774 on hartmann6 at
+p=0.30. Pass `theta=tau` to target the region actually being certified.
 
 **Honest limit.** More rounds is not free in a cell-manufacturing lab: a round is a full
 differentiation cycle, days to weeks with a fresh cell lot. This module makes the
@@ -55,8 +73,14 @@ def round_schedule(budget: int, rounds: int, n_init: int) -> tuple[int, list[int
     return n_init, batches
 
 
-def resolve_theta(mu_max, Y, tau_frac: float) -> float:
+def resolve_theta(mu_max, Y, tau_frac: float, theta=None) -> float:
     """The design threshold for one round.
+
+    ``theta`` explicit -> used verbatim. **This is how you target the certification
+    threshold**: pass ``theta=tau``. The acquisition targeted ``tau_frac * mu_max`` = 0.80
+    while the certificate was computed for ``{f >= tau}``; at p=0.30 that is 0.0587 on
+    ackley (13.6x too high) and 0.0774 on hartmann6 (10.3x). ``tau`` is not oracle
+    knowledge -- it is the practitioner's own specification ("CD31+ >= 33.2%").
 
     ``mu_max`` explicit -> ``tau_frac * mu_max``, the committed behaviour, unchanged.
 
@@ -72,6 +96,8 @@ def resolve_theta(mu_max, Y, tau_frac: float) -> float:
 
     Uses observations only -- it is the EI incumbent, not oracle knowledge.
     """
+    if theta is not None:
+        return float(theta)
     if mu_max is not None:
         return float(tau_frac) * float(mu_max)
     return float(tau_frac) * float(Y.max())
@@ -79,7 +105,7 @@ def resolve_theta(mu_max, Y, tau_frac: float) -> float:
 
 def multiround_design(orc, dim: int, seed: int, mu_max: float, n_init: int,
                       batches: list[int], rho: float = 0.95,
-                      tau_frac: float = 0.80):
+                      tau_frac: float = 0.80, theta=None):
     """Run one multi-round SPADE campaign and return ``(X, Y, Yvar)``.
 
     Args:
@@ -112,13 +138,13 @@ def multiround_design(orc, dim: int, seed: int, mu_max: float, n_init: int,
     for k, q in enumerate(batches):
         # Recomputed per round. With an explicit mu_max this is loop-invariant and
         # identical to the committed behaviour; with mu_max=None it tracks the incumbent.
-        theta = resolve_theta(mu_max, Y, tau_frac)
+        theta_k = resolve_theta(mu_max, Y, tau_frac, theta)
         model = build_gp(X, Y, Yvar, bounds)
         ad = gp_adapter(model)
         # Re-seed per round: a fixed grid would offer the same candidates every time and
         # the exclusion radius alone would then drive the batch, not the data.
         cand = sobol_grid(dim, 2000, seed=seed * 131 + k)
-        Xq = batch_lse_rho(ad, cand, theta, int(q),
+        Xq = batch_lse_rho(ad, cand, theta_k, int(q),
                            exclude=exclusion_radius(model), rho=float(rho))
         Yq, Vq = orc.evaluate(Xq)
         X = torch.cat([X, Xq])
