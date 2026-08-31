@@ -165,6 +165,15 @@ def _run_bo_arm(adapter: _JointCQAEvaluator, *, seed: int, arm: str, test_only: 
             boundary = boundary_candidates(
                 bounds, n=n_boundary, seed=derive_seed(root, "boundary", batch_index)
             ) if n_boundary else menu[:0]
+            # Boundary corners can coincide with the Sobol opening (especially
+            # on narrow families).  Drop those collisions and deterministically
+            # back-fill from the scored candidate menu so the registered batch
+            # size and unique-well invariant remain true.
+            boundary = _remove_rows(boundary, torch.cat((X, adaptive), dim=0))
+            if boundary.shape[0] < n_boundary:
+                refill = _remove_rows(menu, torch.cat((X, adaptive, boundary), dim=0))
+                boundary = torch.cat((boundary, refill[: n_boundary - boundary.shape[0]])
+                                     , dim=0)
             selected = torch.cat((adaptive, boundary), dim=0)
             selected = _remove_rows(selected, X)
             if selected.shape[0] != _BO_BATCH:
