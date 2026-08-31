@@ -153,7 +153,7 @@ def main() -> int:
     payload = {
         "status": "COMPLETE",
         "source_commit": _git("rev-parse", "HEAD"),
-        "source_dirty": bool(_git("status", "--porcelain", "--untracked-files=no")),
+        "source_dirty": bool(_git("status", "--porcelain")),
         "joseph_source_commit": JOSEPH_SOURCE_COMMIT,
         "spec_sha256": _sha256(SPEC),
         "script_sha256": _sha256(Path(__file__)),

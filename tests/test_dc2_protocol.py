@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import math
 from pathlib import Path
 
 import pytest
@@ -11,6 +12,7 @@ from scripts.run_dc2_doe_certificate import (
     complete_job_keys,
     new_artifact,
     validate_artifact,
+    assert_source_identity,
 )
 from scripts import analyse_dc2_doe_certificate as analyse_dc2
 
@@ -33,6 +35,7 @@ def _rows(protocol: DC2Protocol) -> list[dict]:
             "seed": seed,
             "arm": arm,
             "rounds": rounds,
+            "n_wells": 48,
             "p_value": p_value,
             "inflation_c": inflation_c,
             "regret": 0.1,
@@ -117,6 +120,39 @@ def test_provenance_digest_mismatch_is_rejected():
             require_complete=True,
             expected_spec_sha256="d" * 64,
         )
+
+
+def test_nonfinite_nonempty_certificate_volume_is_rejected():
+    protocol = _tiny_protocol()
+    artifact = _complete_artifact(protocol)
+    artifact["rows"][0]["ce_vol_0.95"] = math.inf
+    with pytest.raises(ValueError, match="non-finite ce_vol_0.95"):
+        validate_artifact(artifact, protocol, require_complete=True)
+
+
+def test_wrong_well_count_is_rejected():
+    protocol = _tiny_protocol()
+    artifact = _complete_artifact(protocol)
+    artifact["rows"][0]["n_wells"] = 47
+    with pytest.raises(ValueError, match="n_wells"):
+        validate_artifact(artifact, protocol, require_complete=True)
+
+
+def test_source_identity_rejects_head_or_dirty_state_drift(monkeypatch):
+    payload = {"source_commit": "a" * 40}
+    monkeypatch.setattr(
+        "scripts.run_dc2_doe_certificate._git",
+        lambda *args: "b" * 40 if args == ("rev-parse", "HEAD") else "",
+    )
+    with pytest.raises(RuntimeError, match="source_commit changed"):
+        assert_source_identity(payload)
+
+    monkeypatch.setattr(
+        "scripts.run_dc2_doe_certificate._git",
+        lambda *args: "a" * 40 if args == ("rev-parse", "HEAD") else " M source.py",
+    )
+    with pytest.raises(RuntimeError, match="dirty"):
+        assert_source_identity(payload)
 
 
 def test_resume_skips_only_a_job_with_its_complete_cell_grid():

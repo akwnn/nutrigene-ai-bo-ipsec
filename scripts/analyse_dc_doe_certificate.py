@@ -117,13 +117,14 @@ def main():
     spade_ok, doe_ok = verdict.get("spade"), verdict.get("doe")
     print()
     if spade_ok and not doe_ok:
-        print("  DC-1 PASS -- SPADE certifies where DoE cannot. The extra rounds buy a")
-        print("  guarantee DoE does not supply, and this is now MEASURED, not asserted.")
+        print("  HISTORICAL CALCULATION -- SPADE passed and DoE did not under the")
+        print("  invalid constant-variance path. This is not confirmatory evidence.")
     elif doe_ok:
-        print("  DC-1 FAIL -- DoE also certifies. The design-space argument against DoE")
-        print("  COLLAPSES: SPADE costs more rounds for a deliverable DoE also provides.")
+        print("  HISTORICAL CALCULATION -- DoE also passed under the invalid")
+        print("  constant-variance path. This is not confirmatory evidence.")
     else:
-        print("  DC-1 FAIL -- SPADE does not certify here either. No claim available.")
+        print("  HISTORICAL CALCULATION -- SPADE did not pass under this path.")
+        print("  This is not confirmatory evidence.")
 
     # ---- DC-2 -------------------------------------------------------------
     print("\n=== DC-2 (ADVERSARIAL): regret. Does DoE beat SPADE? ===")

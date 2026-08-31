@@ -63,6 +63,18 @@ def _git(*args: str) -> str:
     return subprocess.check_output(("git", *args), cwd=ROOT, text=True).strip()
 
 
+def assert_source_identity(payload: dict) -> None:
+    current_commit = _git("rev-parse", "HEAD")
+    if current_commit != payload.get("source_commit"):
+        raise RuntimeError(
+            f"source_commit changed during DC2: {payload.get('source_commit')} -> "
+            f"{current_commit}"
+        )
+    dirty = _git("status", "--porcelain")
+    if dirty:
+        raise RuntimeError("DC2 source tree became dirty during execution")
+
+
 def new_artifact(protocol: DC2Protocol, *, source_commit: str, source_dirty: bool,
                  spec_sha256: str, runner_sha256: str) -> dict:
     return {
@@ -162,6 +174,7 @@ def validate_artifact(payload: dict, protocol: DC2Protocol, *, require_complete:
     if not isinstance(rows, list):
         raise ValueError("rows must be a list")
     seen: set[tuple[str, int, str, float, float]] = set()
+    registered_rounds = dict(protocol.arms)
     for row in rows:
         key = _cell_key(row)
         if key in seen:
@@ -173,6 +186,21 @@ def validate_artifact(payload: dict, protocol: DC2Protocol, *, require_complete:
         for field, value in row.items():
             if isinstance(value, float) and not math.isfinite(value):
                 raise ValueError(f"non-finite {field} in {key}")
+        if int(row.get("rounds", -1)) != registered_rounds[key[2]]:
+            raise ValueError(f"rounds mismatch in {key}")
+        if int(row.get("n_wells", -1)) != 48:
+            raise ValueError(f"n_wells must be 48 in {key}")
+        empty = row.get("ce_empty_0.95")
+        empirical = row.get("ce_empirical_0.95")
+        volume = row.get("ce_vol_0.95")
+        if not isinstance(empty, bool):
+            raise ValueError(f"ce_empty_0.95 must be boolean in {key}")
+        if not empty and not isinstance(empirical, bool):
+            raise ValueError(f"nonempty ce_empirical_0.95 must be boolean in {key}")
+        if not empty and (not isinstance(volume, (int, float))
+                          or isinstance(volume, bool)
+                          or not math.isfinite(float(volume))):
+            raise ValueError(f"non-finite ce_vol_0.95 in {key}")
     expected_cells = _expected_cells(protocol)
     extra = seen - expected_cells
     if extra:
@@ -320,6 +348,8 @@ def main() -> int:
         )
         atomic_write(args.out, payload)
 
+    assert_source_identity(payload)
+
     from boec.norms import sobol_grid
 
     legacy = dc.lc()
@@ -335,6 +365,7 @@ def main() -> int:
         for seed in range(protocol.seed_start, protocol.seed_stop):
             if (family, seed) in completed:
                 continue
+            assert_source_identity(payload)
             job_rows = _run_job(
                 protocol,
                 family,
@@ -343,6 +374,7 @@ def main() -> int:
                 X_sub=X_sub,
                 tau_cache=tau_cache,
             )
+            assert_source_identity(payload)
             payload["rows"].extend(job_rows)
             completed.add((family, seed))
             payload["completed_jobs"] = [list(job) for job in sorted(completed)]
@@ -361,6 +393,7 @@ def main() -> int:
                 flush=True,
             )
 
+    assert_source_identity(payload)
     payload["status"] = "COMPLETE"
     validate_artifact(
         payload,
