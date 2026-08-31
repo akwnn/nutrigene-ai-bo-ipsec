@@ -85,14 +85,18 @@ def validate_artifact(path: Path) -> None:
         raise ValueError("runner digest mismatch")
     if artifact.get("training_seed_start") != TRAIN_SEEDS[0] or artifact.get("training_seed_stop") != TRAIN_SEEDS[-1] + 1:
         raise ValueError("training seed bounds mismatch")
-    if artifact.get("evaluation_seed_start") != EVAL_SEEDS[0] or artifact.get("evaluation_seed_stop") != EVAL_SEEDS[-1] + 1:
+    eval_start = artifact.get("evaluation_seed_start")
+    eval_stop = artifact.get("evaluation_seed_stop")
+    if not isinstance(eval_start, int) or not isinstance(eval_stop, int) or eval_stop <= eval_start:
         raise ValueError("evaluation seed bounds mismatch")
+    evaluation_seeds = tuple(range(eval_start, eval_stop))
     if artifact.get("source_commit") != source_commit():
         raise ValueError("source commit mismatch")
-    if set(TRAIN_SEEDS) & set(EVAL_SEEDS):
+    if set(TRAIN_SEEDS) & set(evaluation_seeds):
         raise ValueError("training and evaluation seeds overlap")
     rows = artifact.get("rows")
-    if not isinstance(rows, list) or len(rows) != len(expected_cells()):
+    expected = expected_cells(seeds=evaluation_seeds)
+    if not isinstance(rows, list) or len(rows) != len(expected):
         raise ValueError("partial or wrong-size grid")
     seen = set()
     for row in rows:
@@ -100,13 +104,13 @@ def validate_artifact(path: Path) -> None:
         if missing: raise ValueError(f"missing columns: {sorted(missing)}")
         key = (row["family"], int(row["seed"]), row["arm"])
         if key in seen: raise ValueError(f"duplicate cell {key}")
-        if key not in expected_cells(): raise ValueError(f"unexpected cell {key}")
+        if key not in expected: raise ValueError(f"unexpected cell {key}")
         seen.add(key)
         for name in ("answer_rate", "containment", "containment_wilson_lower", "false_certificate_count", "joint_volume", "point_regret", "adaptive_rounds"):
             if not math.isfinite(float(row[name])): raise ValueError(f"non-finite {name}")
         for name in ("spec_sha256", "runner_sha256", "source_commit"):
             if row[name] != artifact[name]: raise ValueError(f"row provenance mismatch: {name}")
-    if seen != expected_cells(): raise ValueError("missing grid cells")
+    if seen != expected: raise ValueError("missing grid cells")
 
 
 def analyse(path: Path) -> dict[str, Any]:
