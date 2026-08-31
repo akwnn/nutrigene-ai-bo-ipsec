@@ -55,7 +55,9 @@ class ECLandscape:
 
     def evaluate(self, X: Tensor) -> tuple[Tensor, Tensor]:
         y = self.truth(X)
-        return y, 0.0025 + 0.01 * y.square()
+        # Heteroscedastic per-well noise remains non-degenerate away from a peak.
+        x_component = X.double().mean(dim=1, keepdim=True).expand_as(y)
+        return y, 0.0025 + 0.01 * y.square() + 0.001 * x_component
 
 def registered_ec_families(config: ECConfig | None = None) -> tuple[str, ...]:
     return ("ec_broad", "ec_narrow", "ec_multimodal")
