@@ -81,3 +81,15 @@ def test_training_seed_narrow_campaign_keeps_budget_and_boundary_exploration():
     on_boundary = ((campaign.X == 0.0) | (campaign.X == 1.0)).any(dim=1)
     assert campaign.X.shape == (runner.WELLS, 6)
     assert int(on_boundary.sum()) >= 4
+
+
+def test_training_calibration_menu_includes_predeclared_heterogeneous_tails():
+    import sys
+
+    sys.path.insert(0, "scripts")
+    import calibrate_ec_training as calibration  # noqa: E402
+
+    inflations = {candidate.inflation_by_cqa for candidate in calibration.CANDIDATES}
+    assert (2.0, 1.5, 2.0) in inflations
+    assert (3.0, 2.0, 3.0) in inflations
+    assert len(calibration.CANDIDATES) == 12

@@ -15,9 +15,24 @@ from boec.seedbook import derive_seed
 
 ROOT = Path(__file__).resolve().parents[1]
 TRAIN = tuple(range(64))
-CANDIDATES = tuple(ECTrainingCandidate(inflation, density)
-                    for inflation in ((1.0, 1.0, 1.0), (1.2, 1.2, 1.2), (1.5, 1.5, 1.5))
-                    for density in (4096, 8192))
+# The first sweep used only uniform inflation and could not identify which CQA
+# was driving empty joint certificates.  Keep those baselines, then test a
+# small predeclared menu that expands the limiting identity/yield tails more
+# aggressively.  This remains training-only: no evaluation result can select
+# or alter these settings.
+_INFLATION_MENU = (
+    (1.0, 1.0, 1.0),
+    (1.2, 1.2, 1.2),
+    (1.5, 1.5, 1.5),
+    (2.0, 1.5, 2.0),
+    (3.0, 2.0, 3.0),
+    (4.0, 3.0, 4.0),
+)
+CANDIDATES = tuple(
+    ECTrainingCandidate(inflation, density)
+    for inflation in _INFLATION_MENU
+    for density in (4096, 8192)
+)
 
 
 def atomic_write(path: Path, value: dict) -> None:
