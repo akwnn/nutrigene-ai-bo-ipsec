@@ -16,6 +16,7 @@ def test_build_uses_exact_per_well_variance(monkeypatch):
         pass
 
     evaluator = Evaluator()
+    evaluator.truth = lambda x: torch.ones(x.shape[0], 1)
     expected = torch.tensor([[0.01], [0.04], [0.09]])
     result = SimpleNamespace(
         X_visited=torch.zeros(3, 2), Y_visited=torch.ones(3, 1), Yvar_visited=expected
