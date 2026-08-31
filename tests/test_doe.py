@@ -39,6 +39,7 @@ class CountingOracle:
         self._o = BiphasicOracle(load_ensemble(dim=D)[0], sigma_rel=0.10, seed=seed)
         self.n_evaluated = 0
         self.batches: list[int] = []
+        self.yvars: list[torch.Tensor] = []
 
     @property
     def x_star(self):
@@ -50,7 +51,9 @@ class CountingOracle:
     def evaluate(self, X):
         self.n_evaluated += X.shape[0]
         self.batches.append(X.shape[0])
-        return self._o.evaluate(X)
+        y, yvar = self._o.evaluate(X)
+        self.yvars.append(yvar)
+        return y, yvar
 
 
 @pytest.fixture
@@ -76,6 +79,13 @@ def test_the_arm_spends_exactly_the_shared_budget(result):
     """Identical total budget for every method, or E2 compares nothing."""
     o, res = result
     assert o.n_evaluated == BUDGET
+
+
+def test_result_preserves_exact_per_well_evaluator_variances(result):
+    o, res = result
+    expected = torch.cat(o.yvars)
+    torch.testing.assert_close(res.Yvar_visited, expected)
+    assert res.Yvar_visited.shape == res.Y_visited.shape == (BUDGET, 1)
 
 
 def test_the_budget_splits_47_design_runs_plus_one_confirmation(result):
@@ -311,6 +321,7 @@ class CountingOracle8(CountingOracle):
         self._o = BiphasicOracle(load_ensemble(dim=D8)[0], sigma_rel=0.10, seed=seed)
         self.n_evaluated = 0
         self.batches: list[int] = []
+        self.yvars: list[torch.Tensor] = []
 
 
 def test_d8_spends_exactly_the_same_shared_budget(result_d8):

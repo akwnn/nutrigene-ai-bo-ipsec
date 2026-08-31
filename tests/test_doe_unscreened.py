@@ -34,13 +34,16 @@ class _CountingOracle:
     def __init__(self, seed: int = 0, dim: int = D):
         self._o = BiphasicOracle(load_ensemble(dim=dim)[0], sigma_rel=0.10, seed=seed)
         self.n_evaluated = 0
+        self.yvars: list[torch.Tensor] = []
 
     def truth(self, X):
         return self._o.truth(X)
 
     def evaluate(self, X):
         self.n_evaluated += X.shape[0]
-        return self._o.evaluate(X)
+        y, yvar = self._o.evaluate(X)
+        self.yvars.append(yvar)
+        return y, yvar
 
 
 @pytest.fixture
@@ -62,6 +65,12 @@ def test_spends_exactly_the_budget_no_screening_stage(result):
     o, res = result
     assert o.n_evaluated == BUDGET
     assert res.X_visited.shape == (BUDGET, D)
+
+
+def test_result_preserves_exact_per_well_evaluator_variances(result):
+    o, res = result
+    torch.testing.assert_close(res.Yvar_visited, torch.cat(o.yvars))
+    assert res.Yvar_visited.shape == res.Y_visited.shape == (BUDGET, 1)
 
 
 def test_no_factor_is_screened_out(result):
