@@ -57,7 +57,12 @@ from torch import Tensor
 
 from boec.lse import STRADDLE_Z
 
-__all__ = ["batch_lse_rho", "certificate_straddle", "rho_contour_offset"]
+__all__ = [
+    "batch_lse_rho",
+    "certificate_straddle",
+    "contour_target_is_active",
+    "rho_contour_offset",
+]
 
 
 def rho_contour_offset(rho: float) -> float:
@@ -108,8 +113,24 @@ def certificate_straddle(mean: Tensor, sd: Tensor, theta: float, rho: float) -> 
     return STRADDLE_Z * sd - (mean - z * sd - theta).abs()
 
 
+def contour_target_is_active(adjusted_margin: Tensor, theta: float) -> bool:
+    """Whether ``theta`` lies strictly inside the candidate contour-margin range.
+
+    When it does not, ``abs(adjusted_margin - theta)`` has one sign everywhere and
+    ``theta`` is a constant offset that cannot affect the acquisition ranking. Strict
+    bounds are deliberate: touching only the minimum or maximum supplies no candidate
+    on both sides of the target and therefore does not activate contour straddling.
+    """
+    if adjusted_margin.numel() == 0:
+        return False
+    lo = float(adjusted_margin.min())
+    hi = float(adjusted_margin.max())
+    return lo < float(theta) < hi
+
+
 def batch_lse_rho(model, X_cand: Tensor, theta: float, q: int,
-                  exclude: float = 0.1, rho: float = 0.5) -> Tensor:
+                  exclude: float = 0.1, rho: float = 0.5,
+                  activation_recorder=None) -> Tensor:
     """`boec.lse.batch_lse` with the target contour moved to the Vorob'ev level ``rho``.
 
     ``rho = 0.5`` is **bit-identical** to :func:`boec.lse.batch_lse` with ``sigma=None`` --
@@ -129,6 +150,10 @@ def batch_lse_rho(model, X_cand: Tensor, theta: float, q: int,
             published latent straddle.
     """
     mean, sd = model.posterior_mean_and_sd(X_cand)
+    adjusted_margin = mean - rho_contour_offset(rho) * sd
+    active = contour_target_is_active(adjusted_margin, theta)
+    if activation_recorder is not None:
+        activation_recorder(active)
     score = certificate_straddle(mean, sd, theta, rho)
     available = torch.ones(X_cand.shape[0], dtype=torch.bool)
     picks: list[Tensor] = []

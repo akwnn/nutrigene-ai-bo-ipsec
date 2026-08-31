@@ -26,7 +26,18 @@ import pytest
 import torch
 
 from boec.lse import straddle_score
-from boec.certstraddle import certificate_straddle, rho_contour_offset
+from boec.certstraddle import (
+    certificate_straddle,
+    contour_target_is_active,
+    rho_contour_offset,
+)
+
+
+def test_target_is_active_only_inside_adjusted_margin_range():
+    adjusted = torch.tensor([-0.4, 0.1, 0.7], dtype=torch.double)
+    assert contour_target_is_active(adjusted, theta=0.0)
+    assert not contour_target_is_active(adjusted, theta=-0.4)
+    assert not contour_target_is_active(adjusted, theta=0.7)
 
 
 def test_at_rho_one_half_it_is_exactly_bryans_straddle():
@@ -152,6 +163,17 @@ def test_batch_lse_rho_at_high_rho_picks_deeper_inside_the_region():
     assert lo == pytest.approx(0.5, abs=0.01)
     assert hi == pytest.approx(0.706, abs=0.01)
     assert hi > lo
+
+
+def test_batch_lse_rho_reports_the_production_activation_predicate():
+    from boec.certstraddle import batch_lse_rho
+
+    X, m = _grid_model()
+    seen: list[bool] = []
+    batch_lse_rho(m, X, theta=1.0, q=1, exclude=0.05, rho=0.95,
+                  activation_recorder=seen.append)
+    adjusted = m._m - rho_contour_offset(0.95) * m._s
+    assert seen == [contour_target_is_active(adjusted, theta=1.0)]
 
 
 def test_batch_lse_rho_never_duplicates_a_point():

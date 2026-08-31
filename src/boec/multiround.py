@@ -105,7 +105,8 @@ def resolve_theta(mu_max, Y, tau_frac: float, theta=None) -> float:
 
 def multiround_design(orc, dim: int, seed: int, mu_max: float, n_init: int,
                       batches: list[int], rho: float = 0.95,
-                      tau_frac: float = 0.80, theta=None):
+                      tau_frac: float = 0.80, theta=None,
+                      activation_log: list[bool] | None = None):
     """Run one multi-round SPADE campaign and return ``(X, Y, Yvar)``.
 
     Args:
@@ -145,7 +146,9 @@ def multiround_design(orc, dim: int, seed: int, mu_max: float, n_init: int,
         # the exclusion radius alone would then drive the batch, not the data.
         cand = sobol_grid(dim, 2000, seed=seed * 131 + k)
         Xq = batch_lse_rho(ad, cand, theta_k, int(q),
-                           exclude=exclusion_radius(model), rho=float(rho))
+                           exclude=exclusion_radius(model), rho=float(rho),
+                           activation_recorder=(None if activation_log is None
+                                                else activation_log.append))
         Yq, Vq = orc.evaluate(Xq)
         X = torch.cat([X, Xq])
         Y = torch.cat([Y, Yq])

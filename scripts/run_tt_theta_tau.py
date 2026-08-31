@@ -38,7 +38,7 @@ def lc():
     return _LC
 
 
-def build(family, arm, seed, rounds, tau_target):
+def build(family, arm, seed, rounds, tau_target, activation_log=None):
     L = lc()
     if arm != "spade_tau":
         return L.build(family, arm, seed, rounds)
@@ -47,7 +47,7 @@ def build(family, arm, seed, rounds, tau_target):
     orc = P.evaluator_for(family, L.instance_for(family, seed), seed)
     ni, batches = round_schedule(BUDGET, rounds, BUDGET - QBATCH * (rounds - 1))
     return (multiround_design(orc, P.DIM, seed, 1.0, ni, batches, rho=0.95,
-                              theta=tau_target), orc)
+                              theta=tau_target, activation_log=activation_log), orc)
 
 
 def main():

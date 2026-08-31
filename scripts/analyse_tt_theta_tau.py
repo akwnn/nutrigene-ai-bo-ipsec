@@ -16,6 +16,18 @@ SESOI, TARGET_P, NBOOT = 0.02, 0.30, 8000
 FAMILIES = ("ackley", "hartmann6", "hill", "levy", "rosenbrock")
 
 
+def holm_adjust(p_values: dict[str, float]) -> dict[str, float]:
+    """Holm-adjust p-values while preserving their labels."""
+    ordered = sorted(p_values.items(), key=lambda item: item[1])
+    adjusted: dict[str, float] = {}
+    running = 0.0
+    total = len(ordered)
+    for index, (label, value) in enumerate(ordered):
+        running = max(running, (total - index) * float(value))
+        adjusted[label] = min(1.0, running)
+    return adjusted
+
+
 def cp_lower(k, n):
     return 0.0 if n == 0 or k == 0 else float(beta.ppf(1 - CONF, k, n - k + 1))
 
@@ -89,20 +101,26 @@ def main():
     keys = sorted(set(sv) & set(tv))
     if keys:
         mean, lo, hi, p = boot([tv[k] - sv[k] for k in keys], seed=1)
-        verdict = ("PASS -- correct targeting BEATS the disabled mechanism; KF-3's "
-                   "negative result is confined to the disabled implementation"
+        verdict = ("PASS -- configured targeting increases certified volume"
                    if lo > 0 else
-                   ("targeting is WORSE when correctly aimed" if hi < 0 else
-                    "FAIL -- no difference; KF-3's conclusion stands on its merits"))
+                   ("configured targeting decreases certified volume" if hi < 0 else
+                    "INCONCLUSIVE -- interval includes zero"))
         print(f"  n={len(keys):3d} mean={mean:+.6f} CI[{lo:+.6f},{hi:+.6f}] p={p:.4f}")
         print(f"  -> {verdict}")
-        print("\n  per family:")
+        family_results = {}
         for f in fams:
             kk = [k for k in keys if k[0] == f]
-            if not kk:
+            if kk:
+                family_results[f] = boot([tv[k] - sv[k] for k in kk], seed=2)
+        adjusted = holm_adjust({f: result[3] for f, result in family_results.items()})
+        print("\n  per family (descriptive; Holm-adjusted across five families):")
+        for f in fams:
+            if f not in family_results:
                 continue
-            m2, l2, h2, p2_ = boot([tv[k] - sv[k] for k in kk], seed=2)
-            print(f"    {f:<11} n={len(kk):3d} {m2:+.6f} [{l2:+.6f},{h2:+.6f}] p={p2_:.3f}")
+            kk = [k for k in keys if k[0] == f]
+            m2, l2, h2, p2_ = family_results[f]
+            print(f"    {f:<11} n={len(kk):3d} {m2:+.6f} [{l2:+.6f},{h2:+.6f}] "
+                  f"raw_p={p2_:.3f} holm_p={adjusted[f]:.3f}")
 
     # ---- TT-2 -------------------------------------------------------------
     print(f"\n=== TT-2 (GUARDRAIL): regret, spade_tau - spade (positive = worse) ===")
@@ -115,7 +133,7 @@ def main():
         print(f"  n={len(keys):3d} mean={mean:+.4f} CI[{lo:+.4f},{hi:+.4f}] p={p:.4f}")
         print(f"  non-inferior within SESOI {SESOI}: {'PASS' if ok else 'FAIL'}")
         if not ok:
-            print("  *** buys volume by abandoning the optimum -- NOT an improvement")
+            print("  *** configured arm is not adoptable: regret noninferiority failed")
 
     # ---- TT-3 -------------------------------------------------------------
     print("\n=== TT-3 (descriptive): ackley, the largest theta/tau mismatch (13.6x) ===")

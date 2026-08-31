@@ -69,11 +69,12 @@ whenever the contour lies outside the posterior's range, which is every family a
 opening round (rank correlation between scores at two very different thetas: **exactly
 1.000000**, identical argmax). The docstring is now corrected in source.
 
-**And the sophistication was never what worked.** We repaired the mechanism — pointed it at
-`tau`, the region actually being certified, which a practitioner knows because it is their
-own spec — and tested it at 5 families x 32 seeds. **It did not help** (TT-1: +0.000425,
-CI [−0.000022, +0.000875]) and it **significantly damaged** optimisation (TT-2: regret
-+0.0301, CI [+0.0169, +0.0450], p < 0.0001, outside the 0.02 SESOI).
+The configured `spade_tau` arm pointed `theta` at the region's `tau`, but the target was
+inside the candidate adjusted-margin range in only **206/640 adaptive rounds** and in all
+four rounds for only **20/160 campaigns**. Its certified-volume estimate was +0.000425,
+CI [−0.000022, +0.000875], so a consistent benefit is inconclusive. Its regret estimate was
++0.0301, CI [+0.0169, +0.0450], and failed the 0.02 noninferiority guard. This configuration
+is not adopted; it is not a clean test of a fully activated targeting mechanism.
 
 **The committed SPADE remains the best arm on every certification column:**
 
@@ -83,12 +84,10 @@ CI [−0.000022, +0.000875]) and it **significantly damaged** optimisation (TT-2
 | SPADE aimed at tau | 63/160 | 61 | 0.9683 | 0.9034 |
 | qLogNEI | 52/160 | 47 | 0.9038 | 0.8084 |
 
-**So the method's value is architectural, not algorithmic:** a space-filling opening,
+The evidence supports retaining the committed architecture: a space-filling opening,
 low-exploration adaptive batches that concentrate wells where the response is high, and a
-conservative certificate that abstains when the data cannot support one. **The simple part
-works; the sophisticated part never did, and repairing it makes things worse.** That is the
-paper's honest claim about the method, and it is stronger than a targeting result would have
-been because it was tested in both the broken and the repaired state.
+conservative certificate that abstains when the data cannot support one. It does not support
+claiming that every fully activated target-aware alternative has been ruled out.
 
 ## 3. It generalises: certifiability obeys one number
 
@@ -184,16 +183,16 @@ is invisible on benchmarks.** n = 2 datasets; no prospective wet-lab test of a c
 
 ## 6. What does not work — a section, not an appendix
 
-- **The targeting mechanism does not earn its complexity — tested twice, both ways.**
+- **The configured target-aware arm is not adoptable; the mechanism question remains
+  bounded by mixed activation.**
   A registered 99,601-row prospective study found targeted second-plate placement does not
   beat random placement of the same wells (-0.0019, p = 0.41; KF-3), the second plate loses
   to one plate (KF-4), and two independent repairs failed. **This paper supplies the cause**
-  — `theta` cancels from the ranking, so the mechanism was never active — **and then tests
-  the repaired mechanism.** Aimed at `tau`, at 5 families x 32 seeds: no benefit
-  (+0.000425, CI [−0.000022, +0.000875]) and a large regret cost (+0.0301, p < 0.0001).
-  The per-family pattern is a cancellation, not an absence: it helps hartmann6 (+0.002766,
-  p = 0.012) and hurts ackley (−0.000641, p = 0.015). **KF-3's conclusion therefore stands
-  on its merits, and the two-plate and multi-round lines agree.**
+  — `theta` cancels from the ranking when it lies outside the adjusted-margin range. The
+  `spade_tau` configuration was target-active in only 206/640 adaptive rounds. Its aggregate
+  volume CI includes zero and regret noninferiority fails. The two smallest family raw
+  p-values both become approximately 0.06 (0.061 at displayed precision) after Holm
+  correction, so family estimates are descriptive.
 - **ackley is a genuine loss** for SPADE on regret: +0.0652, CI [+0.0203, +0.1104],
   **p = 0.004** — and it *strengthened* with more data. **Not explained by the theta/tau
   mismatch**, which was the leading hypothesis: ackley has the largest mismatch (13.6x), and
@@ -210,8 +209,8 @@ is invisible on benchmarks.** n = 2 datasets; no prospective wet-lab test of a c
    untested knob. **Correction: rho does NOT move the estimand** — it feeds only the
    acquisition; the certificate is computed independently from `p2.ALPHAS`. An earlier
    version of this list said otherwise and was wrong.
-   *Targeting is no longer on this list: it was repaired and tested, and it failed
-   (`SPADE-THETA-TAU-SPEC.md` §8).*
+   A fully activated targeting design remains untested; the current `spade_tau` arm is not
+   adoptable (`SPADE-THETA-TAU-SPEC.md` §8).
 4. R = 4 untested; the DoE arm is a space-filling `lhs`, not the fractional-factorial/CCD an
    RSM reviewer will demand; all new work is d = 6.
 

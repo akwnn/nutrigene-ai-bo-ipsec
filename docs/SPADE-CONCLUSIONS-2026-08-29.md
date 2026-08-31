@@ -113,8 +113,9 @@ choosing the same `c`** — selection is stable, so the pooled number was not an
    **CORRECTED 2026-08-30:** an earlier version of this line said moving ρ changes the
    estimand. **That was wrong** — ρ feeds only `batch_lse_rho`; the certificate is computed
    independently from `p2.ALPHAS`. ρ is a plain design knob.
-   **θ is ruled out:** aiming at τ was tested at 5 families × 32 seeds and made ackley
-   *worse* (`SPADE-THETA-TAU-SPEC.md` §8.3).
+   The configured `spade_tau` arm is not adoptable: regret noninferiority failed, while its
+   target was active in only 206/640 adaptive rounds. This mixed-activation experiment does
+   not rule out every fully activated targeting design (`SPADE-THETA-TAU-SPEC.md` §8).
 2. **qLogNEI on `hill` at ~96 seeds** — it currently misses by two answered cells (27 vs the
    29 needed) at containment 1.0000. State the coverage gap as a margin (40 vs 27), not as a
    threshold crossing, and pre-empt the reviewer who notices.
