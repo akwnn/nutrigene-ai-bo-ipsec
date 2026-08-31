@@ -1,6 +1,7 @@
-"""DC adjudicator. Implements docs/SPADE-DOE-CERTIFICATE-SPEC.md verbatim.
+"""Historical DC adjudicator for the constant-variance result files.
 
-WRITTEN WHILE THE RUN WAS IN FLIGHT, before any DC outcome was inspected.
+The numerical calculation is retained for reproducibility, not confirmatory inference.
+Git history shows this analyser was committed after partial DC files already existed.
 
 Reads `ce_empirical_*`, NEVER `ce_contain_*`. Reports `answered` AND `contained` beside
 every certification verdict, per SPADE-TAU-DEGENERACY-SPEC sec 7.3. States rounds per arm
@@ -8,7 +9,7 @@ in every table -- SPADE uses MORE rounds than DoE and no table may hide that.
 """
 from __future__ import annotations
 
-import argparse, glob, json, math, random, statistics as st
+import argparse, json, math, random, statistics as st
 from pathlib import Path
 
 from scipy.stats import beta
@@ -74,18 +75,21 @@ def best_c(cells, arm, p, grid, fam=None):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--glob", default=None)
+    ap.add_argument("--historical", type=Path, required=True,
+                    help="directory containing the preserved historical dc-{family}.json files")
     a = ap.parse_args()
-    paths = (sorted(glob.glob(a.glob)) if a.glob else
-             [str(ROOT / "results" / f"dc-{f}.json") for f in FAMILIES
-              if (ROOT / "results" / f"dc-{f}.json").exists()])
+    paths = [str(a.historical / f"dc-{family}.json") for family in FAMILIES]
+    missing = [path for path in paths if not Path(path).is_file()]
+    if missing:
+        ap.error(f"missing historical DC files: {missing}")
     cells, regret = load(paths)
     if not cells:
         print("no DC rows yet"); return
     seeds = sorted({k[2] for k in cells})
     grid = sorted({k[4] for k in cells})
     arms = [x for x in ARMS if any(k[0] == x for k in cells)]
-    print("=== DC adjudication — docs/SPADE-DOE-CERTIFICATE-SPEC.md ===")
+    print("=== HISTORICAL DC adjudication — constant reconstructed Yvar ===")
+    print("NOT CONFIRMATORY: retained only to reproduce the original calculation")
     print(f"SEEDS USED: {len(seeds)} (max {max(seeds)})   c grid={grid}")
     if len(seeds) < 32:
         print("*** PARTIAL DATA")

@@ -1,5 +1,12 @@
 # DC — can classical DoE certify a design space at all? Pre-registration.
 
+> **HISTORICAL / INVALIDATED FOR CONFIRMATORY INFERENCE.** The original DoE runner replaced
+> evaluator-returned per-well observation variances with one constant reconstructed value.
+> The result files are preserved byte-for-byte under
+> `results/historical-dc-constant-yvar/`. Their numerical conclusions must not be used as
+> paper evidence pending the fresh-seed, variance-corrected DC2 protocol in
+> `SPADE-DOE-CERTIFICATE-CORRECTION-SPEC.md`.
+
 **Frozen before any DC data exists.**
 
 Runner: `scripts/run_dc_doe_certificate.py` · Analyser: `scripts/analyse_dc_doe_certificate.py`
