@@ -16,16 +16,17 @@ before each run.
 
 | | **finds the recipe** | **returns a trustworthy region** | rounds |
 |---|---|---|---|
-| **SPADE** | ties BO · loses to DoE | **only arm with containment 1.0000** | **5** |
-| BO (qLogNEI) | ties SPADE | certifies, containment 0.9831 | 10 |
-| classical DoE | **wins** (+0.1026, p=0.0003) | **cannot** — containment 0.6967, **wrong ~30% of the time** | 3 |
+| **SPADE** | no detectable difference from BO · loses to DoE | 66/66 contained among answered cases | **5** |
+| BO (qLogNEI) | no detectable difference from SPADE | 58/59 contained among answered cases | 10 |
+| classical DoE | **wins** (+0.1026, p=0.0003; historical) | historical result — variance-corrected replication pending | 3 |
 | one-shot design | loses badly (−0.0783 vs SPADE) | answers 3.4% of cells — effectively never | 1 |
 
-**One sentence:** *SPADE matches BO's recipe quality in half the rounds, and is the only
-method that returns an operating region you can trust.*
+**One sentence:** *SPADE shows no detectable regret difference from BO in this benchmark,
+using five rounds versus ten; both arms passed the registered containment gate.*
 
-**Never write "SPADE beats BO on regret."** It does not. Four comparisons, SPADE ahead on
-the point estimate in three, **none separating from zero**. The word is *matches*.
+**Never overstate the BO comparison as superiority, equivalence, or a tie.** The interval
+is compatible with both a small advantage and a small disadvantage, so the bounded wording
+is *no detectable difference*.
 
 **The losses are load-bearing.** DoE finds a better recipe than SPADE and cannot certify;
 that is precisely the paper's point — the recipe is not the deliverable. A method that won
@@ -36,8 +37,8 @@ everything would read as tuned.
 ## The claim
 
 > For expensive cell-manufacturing assays the deliverable should be a **certified design
-> space**, not a recipe. SPADE returns one from 48 wells, at optimisation quality equal to
-> Bayesian optimisation in **half the experimental rounds** — and *when* a certificate can
+> space**, not a recipe. SPADE returns one from 48 wells; in this benchmark it showed no
+> detectable regret difference from Bayesian optimisation while using **half the experimental rounds** — and *when* a certificate can
 > be trusted is governed by a **single measurable quantity** that holds across every
 > benchmark family tested.
 
@@ -75,7 +76,7 @@ own spec — and tested it at 5 families x 32 seeds. **TT-1 was inconclusive** (
 CI [−0.000022, +0.000875]); it **significantly damaged** optimisation (TT-2: regret
 +0.0301, CI [+0.0169, +0.0450], p < 0.0001, outside the 0.02 SESOI).
 
-**The committed SPADE remains the best arm on every certification column:**
+**Both SPADE and qLogNEI pass the registered containment gate in the committed comparison:**
 
 | arm | answered | contained | containment | LB |
 |---|---|---|---|---|
@@ -83,7 +84,7 @@ CI [−0.000022, +0.000875]); it **significantly damaged** optimisation (TT-2: r
 | SPADE aimed at tau | 63/160 | 61 | 0.9683 | 0.9034 |
 | qLogNEI | 52/160 | 47 | 0.9038 | 0.8084 |
 
-**So the method's value is architectural, not algorithmic:** a space-filling opening,
+**So the method's value is architectural, not a claim of universal dominance:** a space-filling opening,
 low-exploration adaptive batches that concentrate wells where the response is high, and a
 conservative certificate that abstains when the data cannot support one. **The simple part
 works; the sophisticated part never did, and repairing it makes things worse.** That is the
@@ -143,11 +144,13 @@ argument does not apply here and no table may hide it.
 | SPADE vs **`doe`** on regret | 5 vs 3 | **+0.1026** | [+0.0486, +0.1578] | 0.0003 |
 
 **Classical DoE finds a better recipe than SPADE, in fewer rounds, and says so plainly.**
-What DoE cannot do is return a region you can trust — see §5.
+The DoE certification figures below are historical constant-variance outputs and await
+variance-corrected replication — see §5.
 
 ## 4.2 DoE cannot certify — measured, and its failure is over-confidence
 
-At p = 0.30, 5 families x 32 seeds, one process, identical certification path for all arms:
+At p = 0.30, 5 families x 32 seeds, one process, identical certification path for all arms;
+the DoE rows are historical and non-confirmatory pending variance-corrected replication:
 
 | arm | rounds | answered | contained | containment | LB | certifies? |
 |---|---|---|---|---|---|---|
@@ -162,7 +165,8 @@ certified regions do not contain the truth**. For a cell-manufacturing team, a c
 operating window that is wrong three times in ten is worse than a method that says
 "I don't know".
 
-**SPADE is the only arm with perfect containment.** And **the screen is not the culprit**:
+**SPADE had perfect containment among its answered cases in this historical comparison, as
+did qLogNEI at 58/59.** And **the screen is not the culprit in that historical analysis**:
 removing the 6->4 screen makes containment *worse* (0.5746), so this is a property of the
 low-order polynomial fit, not of the screening decision — which closes the obvious objection
 that DoE was crippled by its screen.

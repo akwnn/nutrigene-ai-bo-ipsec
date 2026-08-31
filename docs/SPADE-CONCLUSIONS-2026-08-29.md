@@ -7,7 +7,7 @@
 What is established, what was withdrawn, and how each was obtained. Every number below
 traces to a committed result file and an adjudicator script written before its data landed.
 
-> **These numbers are machine-checked.** `scripts/verify_conclusions.py` recomputes §1's
+> **These numbers are machine-checked.** `scripts/verify_conclusions.py` validates §1's
 > claims from `results/` and exits non-zero on any mismatch. Run it after any change to a
 > result file, an analyser, or this document. Last run: **10/10 reproduce.**
 
@@ -17,17 +17,18 @@ traces to a committed result file and an adjudicator script written before its d
 
 | # | claim | evidence | where |
 |---|---|---|---|
-| 1 | **SPADE at 5 rounds matches qLogNEI at 10 on regret** | **−0.0005, CI [−0.0221, +0.0207], p=0.96, n=160, both arms in ONE process** | **DC §8.3** (supersedes LC §9.1) |
+| 1 | **SPADE at 5 rounds shows no detectable regret difference from qLogNEI at 10** | **−0.0005, CI [−0.0221, +0.0207], p=0.96, n=160, both arms in ONE process** | **LC §9.1** |
 | 2 | **SPADE certifies more volume at matched 5 rounds** | +0.001353, p<0.0001; independently in ackley and hartmann6 | LC §9.1 |
 | 3 | **…and that win is not a difficulty artefact** | survives matched-`margin/sd` binning in 3 of 4 bins, all positive | TAU §8.4 |
 | 4 | **Certification generalises to a dose-response landscape** | `hill`, prevalence 0.70: 40/64 answered, **40 contained**, LB 0.9278 | TAU §8.1 |
 | 5 | **Certifiability obeys a measured law** | Spearman ρ(`margin/sd`, answer rate) = **0.9801**, 25 cells, p<0.0001 | TAU §8.3 |
 | 6 | **SPADE beats a one-shot space-filling design at 3 rounds** | −0.0783, CI [−0.1104, −0.0490] | parity analysis |
-| 7 | **Classical DoE cannot certify — it is confidently wrong** | containment **0.6967** screened / **0.5746** unscreened vs SPADE's **1.0000**; DoE answers *most* (122/160) | DC §8.1 |
+| 7 | **Historical classical DoE outputs are non-confirmatory** | containment **0.6967** screened / **0.5746** unscreened; variance-corrected replication is pending | historical DC §8.1 |
 
-**The thesis these support:** SPADE does not optimise better than BO — it *matches* it.
-What it does better is **certify**: more of the design space, at comparable containment,
-including on the biphasic dose-response landscape BO could not reach at this sample size.
+**The thesis these support:** SPADE does not optimise better than BO; this comparison found
+no detectable regret difference. Both arms passed the registered containment gate among
+their answered cases. Any DoE certification comparison remains historical pending
+variance-corrected replication.
 
 **Unchanged ceiling:** every result is at `sigma_rel = 0.25`. At the measured real assay
 noise of 0.68, **nothing certifies for any arm** (`SPADE-REALISTIC-NOISE-SPEC.md` §6).
@@ -109,8 +110,13 @@ The configured `spade_tau` arm is not adopted. Its aggregate certified-volume es
 **+0.000425** with CI **[−0.000022, +0.000875]**, while regret noninferiority failed
 (+0.0301, CI [+0.0169, +0.0450]). The target-aware acquisition was active in only
 **206 of 640 adaptive rounds**, so this is not a clean test of a fully activated mechanism.
-The family estimates remain descriptive: the two smallest raw p-values, 0.012 and 0.015,
-are both 0.06 after Holm correction.
+Only **20 of 160 campaigns were active in all four rounds**, so this is a mixed-activation
+test. The family estimates remain descriptive: the two smallest raw p-values, 0.012 and
+0.015, are both 0.06 after Holm correction.
+
+The classical DoE certification numbers above are **historical constant-variance outputs**,
+retained for auditability but non-confirmatory; a **variance-corrected replication** using
+fresh seeds is required before any current DoE certification conclusion.
 
 ## 6. The open items, in priority order
 
