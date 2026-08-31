@@ -240,6 +240,11 @@ def main(argv: list[str] | None = None) -> int:
     )
     parser.add_argument("--smoke", action="store_true", help="use reduced grids")
     parser.add_argument("--max-rows", type=int, help="limit rows per shard (debug)")
+    parser.add_argument(
+        "--arms",
+        nargs="+",
+        help="optional registered arm IDs to rescore; arm resolution still uses all rows",
+    )
     parser.add_argument("--out", type=Path)
     parser.add_argument("--checkpoint", type=Path, help="durable per-row checkpoint")
     parser.add_argument("--conformal-lower-calibration", action="store_true",
@@ -259,10 +264,19 @@ def main(argv: list[str] | None = None) -> int:
     rows: list[dict] = []
     for shard in args.shards:
         rows.extend(_load_rows(shard))
-    if args.max_rows is not None:
-        subset = rows[: args.max_rows]
+    if args.arms:
+        requested_arms = set(args.arms)
+        unknown = requested_arms.difference(development.DEVELOPMENT_ARM_IDS)
+        if unknown:
+            raise ValueError(f"unknown development arm(s): {sorted(unknown)}")
+        subset = [
+            row for row in rows
+            if _resolve_arm_id(row, rows) in requested_arms
+        ]
     else:
         subset = rows
+    if args.max_rows is not None:
+        subset = subset[: args.max_rows]
 
     checkpoint = args.checkpoint or (Path(str(args.out) + ".checkpoint.json") if args.out else None)
     rescored: list[dict] = []

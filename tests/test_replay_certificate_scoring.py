@@ -48,6 +48,30 @@ def test_registered_scoring_settings_include_bootstrap_bags():
     assert REGISTERED_SCORING_SETTINGS.certificate_bootstrap_bags == 5
 
 
+@pytest.mark.skipif(not ARCHIVE.is_file(), reason="archived meanmarg gate shard missing")
+def test_replay_arm_filter_resolves_against_complete_campaign_group():
+    proc = subprocess.run(
+        [
+            sys.executable,
+            str(ROOT / "scripts/replay_certificate_scoring.py"),
+            str(ARCHIVE),
+            "--smoke",
+            "--arms",
+            "spade-o32-validity_gated",
+            "--max-rows",
+            "1",
+        ],
+        cwd=ROOT,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert proc.returncode in {0, 2}, proc.stderr
+    report = json.loads(proc.stdout)
+    assert report["row_count"] == 1
+    assert set(report["families"]["hill"]) == {"spade-o32-validity_gated"}
+
+
 def test_conformal_bag1_sensitivity_is_explicitly_test_only_and_has_candidate():
     artifact = ROOT / "results/unified-product-b5-sensitivity-bags1-conformal.json"
     assert artifact.is_file()
