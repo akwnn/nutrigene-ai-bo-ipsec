@@ -1,0 +1,246 @@
+{
+  "execution_mode": "TRAINING_ONLY_PROBE",
+  "family": "ec_narrow",
+  "rows": [
+    {
+      "inflation_by_cqa": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "candidate_density": 4096,
+      "seed": 0,
+      "joint_contained": false
+    },
+    {
+      "inflation_by_cqa": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "candidate_density": 4096,
+      "seed": 1,
+      "joint_contained": false
+    },
+    {
+      "inflation_by_cqa": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "candidate_density": 8192,
+      "seed": 0,
+      "joint_contained": false
+    },
+    {
+      "inflation_by_cqa": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "candidate_density": 8192,
+      "seed": 1,
+      "joint_contained": false
+    },
+    {
+      "inflation_by_cqa": [
+        1.2,
+        1.2,
+        1.2
+      ],
+      "candidate_density": 4096,
+      "seed": 0,
+      "joint_contained": false
+    },
+    {
+      "inflation_by_cqa": [
+        1.2,
+        1.2,
+        1.2
+      ],
+      "candidate_density": 4096,
+      "seed": 1,
+      "joint_contained": false
+    },
+    {
+      "inflation_by_cqa": [
+        1.2,
+        1.2,
+        1.2
+      ],
+      "candidate_density": 8192,
+      "seed": 0,
+      "joint_contained": false
+    },
+    {
+      "inflation_by_cqa": [
+        1.2,
+        1.2,
+        1.2
+      ],
+      "candidate_density": 8192,
+      "seed": 1,
+      "joint_contained": false
+    },
+    {
+      "inflation_by_cqa": [
+        1.5,
+        1.5,
+        1.5
+      ],
+      "candidate_density": 4096,
+      "seed": 0,
+      "joint_contained": false
+    },
+    {
+      "inflation_by_cqa": [
+        1.5,
+        1.5,
+        1.5
+      ],
+      "candidate_density": 4096,
+      "seed": 1,
+      "joint_contained": false
+    },
+    {
+      "inflation_by_cqa": [
+        1.5,
+        1.5,
+        1.5
+      ],
+      "candidate_density": 8192,
+      "seed": 0,
+      "joint_contained": false
+    },
+    {
+      "inflation_by_cqa": [
+        1.5,
+        1.5,
+        1.5
+      ],
+      "candidate_density": 8192,
+      "seed": 1,
+      "joint_contained": false
+    },
+    {
+      "inflation_by_cqa": [
+        2.0,
+        1.5,
+        2.0
+      ],
+      "candidate_density": 4096,
+      "seed": 0,
+      "joint_contained": false
+    },
+    {
+      "inflation_by_cqa": [
+        2.0,
+        1.5,
+        2.0
+      ],
+      "candidate_density": 4096,
+      "seed": 1,
+      "joint_contained": false
+    },
+    {
+      "inflation_by_cqa": [
+        2.0,
+        1.5,
+        2.0
+      ],
+      "candidate_density": 8192,
+      "seed": 0,
+      "joint_contained": false
+    },
+    {
+      "inflation_by_cqa": [
+        2.0,
+        1.5,
+        2.0
+      ],
+      "candidate_density": 8192,
+      "seed": 1,
+      "joint_contained": false
+    },
+    {
+      "inflation_by_cqa": [
+        3.0,
+        2.0,
+        3.0
+      ],
+      "candidate_density": 4096,
+      "seed": 0,
+      "joint_contained": false
+    },
+    {
+      "inflation_by_cqa": [
+        3.0,
+        2.0,
+        3.0
+      ],
+      "candidate_density": 4096,
+      "seed": 1,
+      "joint_contained": false
+    },
+    {
+      "inflation_by_cqa": [
+        3.0,
+        2.0,
+        3.0
+      ],
+      "candidate_density": 8192,
+      "seed": 0,
+      "joint_contained": false
+    },
+    {
+      "inflation_by_cqa": [
+        3.0,
+        2.0,
+        3.0
+      ],
+      "candidate_density": 8192,
+      "seed": 1,
+      "joint_contained": false
+    },
+    {
+      "inflation_by_cqa": [
+        4.0,
+        3.0,
+        4.0
+      ],
+      "candidate_density": 4096,
+      "seed": 0,
+      "joint_contained": false
+    },
+    {
+      "inflation_by_cqa": [
+        4.0,
+        3.0,
+        4.0
+      ],
+      "candidate_density": 4096,
+      "seed": 1,
+      "joint_contained": false
+    },
+    {
+      "inflation_by_cqa": [
+        4.0,
+        3.0,
+        4.0
+      ],
+      "candidate_density": 8192,
+      "seed": 0,
+      "joint_contained": false
+    },
+    {
+      "inflation_by_cqa": [
+        4.0,
+        3.0,
+        4.0
+      ],
+      "candidate_density": 8192,
+      "seed": 1,
+      "joint_contained": false
+    }
+  ]
+}
