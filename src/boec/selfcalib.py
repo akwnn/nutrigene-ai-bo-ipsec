@@ -58,7 +58,10 @@ from numpy.typing import ArrayLike
 #: covariance on 48 wells sits many orders below it; a noise-free kernel does not.
 COND_MAX = 1e10
 
-__all__ = ["calibration_inflation", "calibration_tail", "loo_residuals", "COND_MAX"]
+__all__ = [
+    "calibration_inflation", "calibration_tail", "conformal_lower_quantile",
+    "conformal_lower_bound", "loo_residuals", "COND_MAX",
+]
 
 
 def loo_residuals(K: ArrayLike, y: ArrayLike) -> tuple[np.ndarray, np.ndarray]:
@@ -172,3 +175,35 @@ def calibration_tail(y: ArrayLike, mu: ArrayLike, sd: ArrayLike, q: float = 1.0)
     if np.any(sv <= 0.0):
         raise ValueError("every predictive sd must be positive")
     return float(np.quantile(np.abs((yv - mv) / sv), float(q)))
+
+
+def conformal_lower_quantile(y: ArrayLike, mu: ArrayLike, alpha: float = 0.10) -> float:
+    """Finite-sample split-conformal radius for a lower prediction bound.
+
+    ``y`` and ``mu`` must be predictions on a held-out calibration set.  The
+    nonconformity score is ``mu - y``; the returned radius ``q`` yields the
+    lower bound ``mu_new - q``.  The order-statistic definition (rather than
+    an interpolated quantile) gives the standard ``1-alpha`` marginal
+    coverage guarantee under exchangeability and is deterministic.
+    """
+    a = float(alpha)
+    if not 0.0 < a < 1.0:
+        raise ValueError(f"alpha must lie strictly between 0 and 1, got {alpha}")
+    yv = np.asarray(y, dtype=float).reshape(-1)
+    mv = np.asarray(mu, dtype=float).reshape(-1)
+    if yv.size == 0 or yv.size != mv.size:
+        raise ValueError("y and mu must be non-empty arrays of equal length")
+    if not (np.isfinite(yv).all() and np.isfinite(mv).all()):
+        raise ValueError("y and mu must contain only finite values")
+    scores = np.sort(mv - yv)
+    rank = int(np.ceil((scores.size + 1) * (1.0 - a))) - 1
+    return float(scores[min(max(rank, 0), scores.size - 1)])
+
+
+def conformal_lower_bound(mu: ArrayLike, radius: float) -> np.ndarray:
+    """Apply a held-out conformal radius to new predictive means."""
+    muv = np.asarray(mu, dtype=float)
+    r = float(radius)
+    if not np.isfinite(r) or not np.isfinite(muv).all():
+        raise ValueError("mu and radius must be finite")
+    return muv - r

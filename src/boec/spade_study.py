@@ -33,7 +33,12 @@ from boec.reliable_region import (
     true_reliability_probability,
 )
 from boec.seedbook import derive_seed
-from boec.selfcalib import calibration_inflation, calibration_tail, loo_residuals
+from boec.selfcalib import (
+    calibration_inflation,
+    calibration_tail,
+    conformal_lower_quantile,
+    loo_residuals,
+)
 from boec.surrogate import build_learned_noise_gp
 
 __all__ = [
@@ -144,6 +149,7 @@ class ScoringExecutionSettings:
     latent_inflation_floor: float = 1.5
     mean_marginalisation: bool = True
     certificate_bootstrap_bags: int = 1
+    conformal_lower_calibration: bool = False
 
     def __post_init__(self) -> None:
         for field in (
@@ -203,10 +209,19 @@ class ScoringExecutionSettings:
             )
         bags = _integer(self.certificate_bootstrap_bags, "certificate_bootstrap_bags", minimum=1)
         object.__setattr__(self, "certificate_bootstrap_bags", bags)
+        if not isinstance(self.conformal_lower_calibration, bool):
+            raise ValueError("conformal_lower_calibration must be bool")
 
     @property
     def digest(self) -> str:
-        return _sha256_json({"schema": "boec-scoring-settings-v1", **asdict(self)})
+        payload = asdict(self)
+        # Preserve the registered digest for the opt-in development switch;
+        # archived rows must remain replayable byte-for-byte.
+        if not payload.pop("conformal_lower_calibration", False):
+            pass
+        else:
+            payload["conformal_lower_calibration"] = True
+        return _sha256_json({"schema": "boec-scoring-settings-v1", **payload})
 
 
 REGISTERED_SCORING_SETTINGS = ScoringExecutionSettings(
@@ -633,7 +648,8 @@ def _posterior_mean(model: object, X: Tensor) -> Tensor:
 
 
 def _latent_inflation_from_loo_residuals(
-    y: np.ndarray, mu: np.ndarray, sd: np.ndarray, *, mode: str, floor: float = 1.0
+    y: np.ndarray, mu: np.ndarray, sd: np.ndarray, *, mode: str, floor: float = 1.0,
+    conformal_lower: bool = False,
 ) -> float:
     """Map LOO predictive residuals to a latent draw inflation ≥ ``floor``.
 
@@ -646,7 +662,10 @@ def _latent_inflation_from_loo_residuals(
     ``floor`` implements the registered KT-5-style fixed inflation
     ``c_eff = max(c_floor, loo_factor)`` (never a family detector).
     """
-    if mode == "loo_calibration":
+    if conformal_lower:
+        radius = conformal_lower_quantile(y, mu, alpha=0.10)
+        kappa = max(1.0, radius / float(np.median(sd)))
+    elif mode == "loo_calibration":
         kappa = float(calibration_inflation(y, mu, sd))
     elif mode == "loo_calibration_tail":
         rms = float(calibration_inflation(y, mu, sd))
@@ -663,7 +682,8 @@ def _latent_inflation_from_loo_residuals(
 
 
 def _loo_latent_inflation(
-    model: object, *, mode: str = "loo_calibration_tail", floor: float = 1.5
+    model: object, *, mode: str = "loo_calibration_tail", floor: float = 1.5,
+    conformal_lower: bool = False,
 ) -> float:
     """Widen latent certificate draws using the campaign's own LOO residuals.
 
@@ -684,7 +704,8 @@ def _loo_latent_inflation(
     y = train_y.detach().cpu().numpy()
     mu, var = loo_residuals(cov.detach().cpu().numpy(), y)
     return _latent_inflation_from_loo_residuals(
-        y, mu, np.sqrt(var), mode=mode, floor=floor
+        y, mu, np.sqrt(var), mode=mode, floor=floor,
+        conformal_lower=conformal_lower,
     )
 
 
@@ -781,6 +802,7 @@ def _bootstrap_bagged_certificate(
                 bag_model,
                 mode=effective.latent_draw_inflation,
                 floor=effective.latent_inflation_floor,
+                conformal_lower=effective.conformal_lower_calibration,
             )
         else:
             bag_inflation = 1.0
@@ -922,6 +944,7 @@ def score_campaign(
             model,
             mode=effective.latent_draw_inflation,
             floor=effective.latent_inflation_floor,
+            conformal_lower=effective.conformal_lower_calibration,
         )
     else:
         latent_inflation = 1.0

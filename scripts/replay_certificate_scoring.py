@@ -11,6 +11,7 @@ from __future__ import annotations
 import argparse
 import copy
 import json
+import os
 import sys
 from dataclasses import asdict
 from pathlib import Path
@@ -34,7 +35,16 @@ def _load_rows(path: Path) -> list[dict]:
     if path.suffix == ".gz":
         from boec.spade_study import read_jsonl_gzip
 
-        return list(read_jsonl_gzip(path))
+        manifest_path = Path(str(path) + ".manifest.json")
+        if not manifest_path.is_file():
+            raise ValueError(f"gzip shard missing manifest sidecar: {manifest_path}")
+        manifest = json.loads(manifest_path.read_text())
+        protocol_digest = manifest.get("study_protocol_digest")
+        if not isinstance(protocol_digest, str) or not protocol_digest:
+            raise ValueError(
+                f"manifest missing study_protocol_digest: {manifest_path}"
+            )
+        return list(read_jsonl_gzip(path, protocol_digest=protocol_digest))
     payload = json.loads(path.read_text())
     if isinstance(payload, dict) and "rows" in payload:
         return payload["rows"]
@@ -139,6 +149,14 @@ def _rescore_row(
         )
     else:
         raise ValueError(f"unsupported arm {arm_id!r}")
+    # Replay regenerates the campaign with the sealed campaign settings, then
+    # rescoring deliberately uses alternate TEST_ONLY certificate settings.
+    # The scorer requires both sides to carry the same execution-mode label;
+    # relabel only this in-memory replay object (archived rows are untouched).
+    if execution_mode == "TEST_ONLY" and getattr(campaign, "execution_mode", None) != execution_mode:
+        campaign = copy.copy(campaign)
+        object.__setattr__(campaign, "execution_mode", execution_mode)
+        object.__setattr__(campaign, "registered", False)
     score = score_campaign(
         campaign,
         threshold.tau,
@@ -223,6 +241,9 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--smoke", action="store_true", help="use reduced grids")
     parser.add_argument("--max-rows", type=int, help="limit rows per shard (debug)")
     parser.add_argument("--out", type=Path)
+    parser.add_argument("--checkpoint", type=Path, help="durable per-row checkpoint")
+    parser.add_argument("--conformal-lower-calibration", action="store_true",
+                        help="enable held-out conformal lower-bound calibration")
     args = parser.parse_args(argv)
 
     base = development._SMOKE_SCORING_SETTINGS if args.smoke else REGISTERED_SCORING_SETTINGS
@@ -230,6 +251,7 @@ def main(argv: list[str] | None = None) -> int:
         **{
             **asdict(base),
             "certificate_bootstrap_bags": int(args.bootstrap_bags),
+            "conformal_lower_calibration": bool(args.conformal_lower_calibration),
         }
     )
     execution_mode = "TEST_ONLY"
@@ -242,17 +264,29 @@ def main(argv: list[str] | None = None) -> int:
     else:
         subset = rows
 
-    rescored = [
-        _rescore_row(
-            row,
-            all_rows=rows,
-            settings=settings,
-            alpha=float(args.alpha),
-            execution_mode=execution_mode,
-            fast=bool(args.smoke),
-        )
-        for row in subset
-    ]
+    checkpoint = args.checkpoint or (Path(str(args.out) + ".checkpoint.json") if args.out else None)
+    rescored: list[dict] = []
+    if checkpoint and checkpoint.is_file():
+        try:
+            saved = json.loads(checkpoint.read_text())
+            if (saved.get("input_rows") == len(subset)
+                    and saved.get("bootstrap_bags") == int(args.bootstrap_bags)
+                    and saved.get("conformal_lower_calibration") == bool(args.conformal_lower_calibration)):
+                rescored = list(saved.get("rows", []))
+        except (OSError, ValueError, TypeError):
+            rescored = []
+    for index, row in enumerate(subset[len(rescored):], start=len(rescored)):
+        rescored.append(_rescore_row(row, all_rows=rows, settings=settings,
+                                     alpha=float(args.alpha), execution_mode=execution_mode,
+                                     fast=bool(args.smoke)))
+        if checkpoint:
+            payload = {"schema": "boec-replay-checkpoint-v1", "input_rows": len(subset),
+                       "completed_rows": index + 1, "bootstrap_bags": int(args.bootstrap_bags),
+                       "conformal_lower_calibration": bool(args.conformal_lower_calibration),
+                       "rows": rescored}
+            tmp = checkpoint.with_suffix(checkpoint.suffix + ".tmp")
+            tmp.write_text(json.dumps(payload, sort_keys=True, separators=(",", ":")))
+            os.replace(tmp, checkpoint)
     report = summarize(rescored, families=tuple(args.families))
     report["settings"] = asdict(settings)
     report["alpha"] = float(args.alpha)
