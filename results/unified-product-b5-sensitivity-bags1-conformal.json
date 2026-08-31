@@ -1,0 +1,80 @@
+{
+  "alpha": 0.95,
+  "families": {
+    "hill": {
+      "qlognei48": {
+        "ans": 0.3333333333333333,
+        "emp": 1.0,
+        "n": 15
+      },
+      "sobol48": {
+        "ans": 0.6666666666666666,
+        "emp": 0.9,
+        "n": 15
+      },
+      "spade-o32-certificate_targeted": {
+        "ans": 0.5333333333333333,
+        "emp": 0.75,
+        "n": 15
+      },
+      "spade-o32-staged": {
+        "ans": 0.6,
+        "emp": 1.0,
+        "n": 15
+      },
+      "spade-o32-validity_gated": {
+        "ans": 0.6666666666666666,
+        "emp": 0.9,
+        "n": 15
+      }
+    },
+    "levy": {
+      "qlognei48": {
+        "ans": 0.0,
+        "emp": NaN,
+        "n": 15
+      },
+      "sobol48": {
+        "ans": 0.5333333333333333,
+        "emp": 0.5,
+        "n": 15
+      },
+      "spade-o32-certificate_targeted": {
+        "ans": 0.5333333333333333,
+        "emp": 0.75,
+        "n": 15
+      },
+      "spade-o32-staged": {
+        "ans": 0.26666666666666666,
+        "emp": 0.75,
+        "n": 15
+      },
+      "spade-o32-validity_gated": {
+        "ans": 0.7333333333333333,
+        "emp": 0.9090909090909091,
+        "n": 15
+      }
+    }
+  },
+  "row_count": 150,
+  "settings": {
+    "calibration_grid_size": 65536,
+    "certificate_bootstrap_bags": 1,
+    "certificate_draws": 4096,
+    "certificate_grid_size": 2048,
+    "certificate_max_volume": 0.001,
+    "certificate_rho_grid_size": 64,
+    "certificate_volume_rule": "smallest",
+    "conformal_lower_calibration": true,
+    "fit_restarts": 4,
+    "latent_draw_inflation": "loo_calibration_tail",
+    "latent_inflation_floor": 1.5,
+    "map_grid_size": 8192,
+    "mean_marginalisation": true,
+    "predictive_observation_noise": "assay_relative_additive",
+    "terminal_grid_size": 16384
+  },
+  "survivors": [
+    "spade-o32-validity_gated"
+  ]
+}

@@ -73,6 +73,24 @@ Keys 0–15 hill complete on digest `404b4884…`:
 
 **Interpretation:** bootstrap bag intersection (n=5) + smallest + Vmax is binding abstentions, not fixing leaks. Manufacturing ans≥0.5 is already impossible on hill for every SPADE arm. Levy still runs for a complete archive.
 
+### Offline sensitivity replay (2026-09-01) — conformal lower calibration + one bag
+
+The archived B5 Hill/Levy shards were replayed at registered production grid sizes with
+`certificate_bootstrap_bags=1` and held-out conformal lower calibration enabled. This is
+**TEST_ONLY** evidence; it does not alter the frozen B5 digest or selection decision.
+
+| Arm | Hill answer / containment | Levy answer / containment | Joint survivor? |
+|---|---:|---:|---|
+| `o32-certificate_targeted` | 0.533 / 0.750 | 0.533 / 0.750 | no |
+| `o32-staged` | 0.600 / 1.000 | 0.267 / 0.750 | no |
+| **`o32-validity_gated`** | **0.667 / 0.900** | **0.733 / 0.909** | **yes (point estimates)** |
+
+The replay covers 15 campaign keys per family, so the apparent survivor is a candidate for
+a new training-only protocol, not a registered gate pass. Its result is saved in
+`results/unified-product-b5-sensitivity-bags1-conformal.json`. A full 50-key-per-family
+training run with a new protocol digest is required before any lockbox or publication
+claim can use it.
+
 **Next if full B5 FAIL (expected):** offline `replay_certificate_scoring.py` on B5 shards with `--bootstrap-bags 1` and `3` before any new acquisition digest. Do **not** raise floor or α again.
 
 ### B4 hypothesis (Joseph-aligned acquisition) — superseded by B5

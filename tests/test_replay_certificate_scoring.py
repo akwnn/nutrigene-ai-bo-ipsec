@@ -46,3 +46,15 @@ def test_replay_smoke_rescores_archived_row_with_bootstrap_bags():
 
 def test_registered_scoring_settings_include_bootstrap_bags():
     assert REGISTERED_SCORING_SETTINGS.certificate_bootstrap_bags == 5
+
+
+def test_conformal_bag1_sensitivity_is_explicitly_test_only_and_has_candidate():
+    artifact = ROOT / "results/unified-product-b5-sensitivity-bags1-conformal.json"
+    assert artifact.is_file()
+    report = json.loads(artifact.read_text())
+    assert report["row_count"] == 150
+    assert report["settings"]["certificate_bootstrap_bags"] == 1
+    assert report["settings"]["conformal_lower_calibration"] is True
+    assert report["survivors"] == ["spade-o32-validity_gated"]
+    assert report["families"]["hill"]["spade-o32-validity_gated"]["ans"] >= 0.5
+    assert report["families"]["levy"]["spade-o32-validity_gated"]["ans"] >= 0.5
