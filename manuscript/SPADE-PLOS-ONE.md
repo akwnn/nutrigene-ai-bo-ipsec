@@ -194,6 +194,22 @@ The registered target was six-dimensional Hill at relative noise 0.10. SPADE var
 
 qLogNEI achieved better point regret than primary SPADE, 0.0750 versus 0.0844. The paired mean gap was 0.00937, with a bootstrap interval of 0.00258–0.01615. The entire interval lay within the prespecified 0.02 practical margin. This supported practical point-regret parity in the target condition, not SPADE point superiority. All principal methods used 48 wells, but SPADE used two decision rounds, compared with ten for batch BO.
 
+### Secondary success profile: efficient, conservative region mapping
+
+The target-condition results support a compact secondary profile for SPADE, distinct from a
+claim of universal optimization superiority. At the same 48-well budget, SPADE used two
+decision rounds rather than qLogNEI's ten, while retaining point-regret parity within the
+prespecified practical margin. Its primary map error was lower than every named comparator
+in the registered target table, although the inferential ledger records this as
+competitive performance within the SESOI rather than a superiority claim. The prospective
+EC runs also produced no observed false certificates: difficult campaigns were rejected by
+the non-vacuity and uncertainty safeguards instead of being reported as trustworthy
+regions. Finally, the cross-family analysis identified a strong margin-to-noise predictor
+of certification feasibility (Spearman ρ = 0.9801 across 25 family–prevalence cells),
+providing an interpretable explanation for when the workflow should answer and when it
+should abstain. These are secondary and diagnostic successes; they do not replace the
+unmet all-family EC answer-rate and containment gate.
+
 ![SPADE point, map, and round evidence.](../results/paper-figures/portable/fig3.png)
 
 **Fig 3. Point, map, and experimental-cost evidence for SPADE.** (A) Registered Hill-target means for symmetric-difference map error and Rule-P simple regret ($n=25$ campaign aggregates per method); lower is better on both axes. (B) Paired SPADE-minus-comparator contrasts with 95% intervals and the prespecified ±0.02 smallest effect size of interest. SPADE reduces map error relative to Sobol (−0.0109) and qLogNEI (−0.0327), while Rule-P regret is +0.0094 relative to qLogNEI. (C) Every equal-budget method consumes 48 wells, but feedback ranges from one to ten rounds. (D) Hartmann ($d=6$ and $d=8$) robustness values are descriptive means; intervals are unavailable.
