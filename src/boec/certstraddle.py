@@ -57,8 +57,8 @@ from torch import Tensor
 
 from boec.lse import STRADDLE_Z
 
-__all__ = ["batch_lse_rho", "certificate_straddle", "contour_target_is_active",
-           "rho_contour_offset"]
+__all__ = ["batch_lse_rho", "batch_lse_rho_with_diagnostics", "certificate_straddle",
+           "contour_target_is_active", "rho_contour_offset"]
 
 
 def contour_target_is_active(adjusted_margin: torch.Tensor, theta: float) -> bool:
@@ -165,3 +165,17 @@ def batch_lse_rho(model, X_cand: Tensor, theta: float, q: int,
         available = available & far
 
     return torch.stack(picks) if picks else X_cand[:0]
+
+
+def batch_lse_rho_with_diagnostics(model, X_cand: Tensor, theta: float, q: int,
+                                   exclude: float = 0.1, rho: float = 0.5):
+    """Select a batch and return auditable contour activation metadata.
+
+    The selection is exactly :func:`batch_lse_rho`; diagnostics are additive and do
+    not alter any historical arm or its serialized output.
+    """
+    mean, sd = model.posterior_mean_and_sd(X_cand)
+    active = contour_target_is_active(mean - rho_contour_offset(rho) * sd, theta)
+    picks = batch_lse_rho(model, X_cand, theta, q, exclude=exclude, rho=rho)
+    return picks, {"boundary_active": bool(active), "target_rho": float(rho),
+                   "selected_count": int(picks.shape[0])}
