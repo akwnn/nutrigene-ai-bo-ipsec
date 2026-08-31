@@ -49,8 +49,12 @@ _BO_OPENING, _BO_BATCH, _BO_GRID = 32, 8, 2_048
 # threaded explicitly so the prospective runner never inspects an evaluation
 # result to alter surrogate uncertainty or the candidate menu.
 EC_TRAINING_DEFAULT = ECTrainingCandidate((1.5, 1.5, 1.5), candidate_density=4_096)
-_BOUNDARY_RECIPES = {"ec_narrow": 2, "ec_multimodal": 2}
-_LOCAL_RECIPES = {"ec_narrow": 2, "ec_multimodal": 2}
+# The narrow family has a sharply interior optimum; spending wells on literal
+# hypercube corners cannot discover it.  Reserve the full adaptive batch for
+# local trust-region refinement there.  Multimodal retains a mixed boundary /
+# local allocation to hedge against separated peaks.
+_BOUNDARY_RECIPES = {"ec_narrow": 0, "ec_multimodal": 2}
+_LOCAL_RECIPES = {"ec_narrow": 4, "ec_multimodal": 2}
 
 
 def sha256(path: Path) -> str:

@@ -78,9 +78,12 @@ def test_training_seed_narrow_campaign_keeps_budget_and_boundary_exploration():
     import run_ec_benchmark as runner  # noqa: E402
 
     campaign = runner._run_arm("ec_narrow", 0, "spade", test_only=True)
-    on_boundary = ((campaign.X == 0.0) | (campaign.X == 1.0)).any(dim=1)
     assert campaign.X.shape == (runner.WELLS, 6)
-    assert int(on_boundary.sum()) >= 4
+    assert torch.unique(campaign.X, dim=0).shape[0] == runner.WELLS
+    # Narrow's adaptive batch is now interior local refinement rather than
+    # literal hypercube-corner exploration (the optimum is interior).
+    assert runner._BOUNDARY_RECIPES["ec_narrow"] == 0
+    assert runner._LOCAL_RECIPES["ec_narrow"] == 4
 
 
 def test_training_calibration_menu_includes_predeclared_heterogeneous_tails():
