@@ -50,10 +50,7 @@ def build(family, arm, seed, rounds):
     bounds = unit_bounds(P.DIM)
     fn = run_doe_arm if arm == "doe" else run_doe_unscreened_arm
     res = fn(orc, bounds, truth=orc.truth, budget=BUDGET, seed=seed)
-    X, Y = res.X_visited, res.Y_visited
-    # The DoE arms do not report per-well variance; use the same plug-in the oracle uses.
-    Yvar = torch.full_like(Y, float(getattr(orc, "sigma_rel", 0.25)) ** 2
-                           * float(Y.abs().mean()) ** 2)
+    X, Y, Yvar = res.X_visited, res.Y_visited, res.Yvar_visited
     return (X, Y, Yvar), orc
 
 

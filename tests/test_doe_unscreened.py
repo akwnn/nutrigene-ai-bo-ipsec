@@ -34,13 +34,16 @@ class _CountingOracle:
     def __init__(self, seed: int = 0, dim: int = D):
         self._o = BiphasicOracle(load_ensemble(dim=dim)[0], sigma_rel=0.10, seed=seed)
         self.n_evaluated = 0
+        self.returned_variances: list[torch.Tensor] = []
 
     def truth(self, X):
         return self._o.truth(X)
 
     def evaluate(self, X):
         self.n_evaluated += X.shape[0]
-        return self._o.evaluate(X)
+        Y, Yvar = self._o.evaluate(X)
+        self.returned_variances.append(Yvar.clone())
+        return Y, Yvar
 
 
 @pytest.fixture
@@ -85,6 +88,14 @@ def test_the_confirmation_point_is_actually_measured(result):
     _, res = result
     assert res.confirmation_y == pytest.approx(
         float(res.Y_visited[-1]), rel=0, abs=1e-12)
+
+
+def test_preserves_exact_per_well_variance_in_measurement_order(result):
+    o, res = result
+    expected = torch.cat(o.returned_variances)
+    assert res.Yvar_visited.shape == res.Y_visited.shape
+    torch.testing.assert_close(res.Yvar_visited, expected, rtol=0, atol=0)
+    assert torch.unique(res.Yvar_visited).numel() > 1
 
 
 def test_is_deterministic_given_a_seed(bounds):

@@ -39,6 +39,7 @@ class CountingOracle:
         self._o = BiphasicOracle(load_ensemble(dim=D)[0], sigma_rel=0.10, seed=seed)
         self.n_evaluated = 0
         self.batches: list[int] = []
+        self.returned_variances: list[torch.Tensor] = []
 
     @property
     def x_star(self):
@@ -50,7 +51,9 @@ class CountingOracle:
     def evaluate(self, X):
         self.n_evaluated += X.shape[0]
         self.batches.append(X.shape[0])
-        return self._o.evaluate(X)
+        Y, Yvar = self._o.evaluate(X)
+        self.returned_variances.append(Yvar.clone())
+        return Y, Yvar
 
 
 @pytest.fixture
@@ -99,6 +102,14 @@ def test_the_curve_is_best_so_far_and_never_decreases(result):
     _, res = result
     assert res.curve.shape == (BUDGET,)
     assert np.all(np.diff(res.curve) >= -1e-12)
+
+
+def test_preserves_exact_per_well_variance_in_measurement_order(result):
+    o, res = result
+    expected = torch.cat(o.returned_variances)
+    assert res.Yvar_visited.shape == res.Y_visited.shape
+    torch.testing.assert_close(res.Yvar_visited, expected, rtol=0, atol=0)
+    assert torch.unique(res.Yvar_visited).numel() > 1
 
 
 def test_stage_four_actually_enters_the_regret_curve(result):
@@ -311,6 +322,7 @@ class CountingOracle8(CountingOracle):
         self._o = BiphasicOracle(load_ensemble(dim=D8)[0], sigma_rel=0.10, seed=seed)
         self.n_evaluated = 0
         self.batches: list[int] = []
+        self.returned_variances: list[torch.Tensor] = []
 
 
 def test_d8_spends_exactly_the_same_shared_budget(result_d8):
