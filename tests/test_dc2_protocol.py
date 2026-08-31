@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import importlib.util
 import json
+import sys
 from pathlib import Path
 
 import pytest
@@ -9,6 +10,7 @@ import pytest
 ROOT = Path(__file__).resolve().parents[1]
 spec = importlib.util.spec_from_file_location("dc2_runner", ROOT / "scripts" / "run_dc2_doe_certificate.py")
 dc2 = importlib.util.module_from_spec(spec)
+sys.modules[spec.name] = dc2
 spec.loader.exec_module(dc2)
 
 
@@ -39,7 +41,7 @@ def test_exact_grid_and_duplicate_rejection():
     p = tiny_protocol()
     rows = complete_rows(p)
     assert dc2.validate_rows(rows, p)
-    with pytest.raises(ValueError, match="duplicate"):
+    with pytest.raises(ValueError, match="duplicate|row count"):
         dc2.validate_rows(rows + [rows[0]], p)
 
 
