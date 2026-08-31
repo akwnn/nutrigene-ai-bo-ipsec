@@ -33,9 +33,29 @@ def test_dry_run_is_atomic_and_resumable(tmp_path):
     assert json.loads(path.read_text())["rows"] == resumed["rows"]
 
 
+def test_dry_run_executes_a_real_test_only_campaign(tmp_path):
+    artifact = runner.run(out=tmp_path / "artifact.json", dry_run=True)
+
+    assert {row["arm"] for row in artifact["rows"]} == set(runner.ARMS)
+    assert all("scaffold" not in row for row in artifact["rows"])
+    assert all(row["budget"] == runner.WELLS for row in artifact["rows"])
+    assert all(row["execution_mode"] == "TEST_ONLY" for row in artifact["rows"])
+    assert {row["adaptive_rounds"] for row in artifact["rows"]} <= {2, 3}
+
+
 def _complete_artifact():
     artifact = runner.empty_artifact()
-    artifact["rows"] = [runner._mock_row(f, s, a) for f in runner.FAMILIES for s in runner.EVAL_SEEDS for a in runner.ARMS]
+    artifact["rows"] = [
+        {
+            "family": f, "seed": s, "arm": a,
+            "answer_rate": 1.0, "containment": 1.0,
+            "containment_wilson_lower": 0.2, "false_certificate_count": 0,
+            "joint_volume": 0.1, "point_regret": 0.0,
+            "adaptive_rounds": 3,
+            **runner._provenance(),
+        }
+        for f in runner.FAMILIES for s in runner.EVAL_SEEDS for a in runner.ARMS
+    ]
     artifact["status"] = "COMPLETE"
     return artifact
 
@@ -64,9 +84,19 @@ def test_validator_rejects_training_evaluation_overlap(tmp_path):
     with pytest.raises(ValueError): analyser.validate_artifact(path)
 
 
-def test_full_evaluation_is_not_launchable(tmp_path):
-    with pytest.raises(RuntimeError, match="disabled"):
-        runner.run(out=tmp_path / "x.json", dry_run=False)
+def test_full_evaluation_is_launchable_for_a_single_cell(tmp_path, monkeypatch):
+    monkeypatch.setattr(runner, "expected_cells", lambda **_: {(runner.FAMILIES[0], runner.EVAL_SEEDS[0], "spade")})
+    monkeypatch.setattr(runner, "ARMS", ("spade",))
+    monkeypatch.setattr(runner, "_campaign_row", lambda f, s, a, test_only: {
+        "family": f, "seed": s, "arm": a,
+        "answer_rate": 0.0, "containment": 0.0, "containment_wilson_lower": 0.0,
+        "false_certificate_count": 0, "joint_volume": 0.0, "point_regret": 0.0,
+        "adaptive_rounds": 3, "execution_mode": "REGISTERED", "budget": runner.WELLS,
+        **runner._provenance(),
+    })
+    artifact = runner.run(out=tmp_path / "x.json", dry_run=False)
+    assert artifact["status"] == "COMPLETE"
+    assert artifact["rows"][0]["execution_mode"] == "REGISTERED"
 
 
 def test_training_template_is_explicitly_not_evaluation_evidence():

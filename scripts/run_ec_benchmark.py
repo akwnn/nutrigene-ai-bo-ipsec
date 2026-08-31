@@ -1,9 +1,9 @@
 """Fail-closed, resumable runner for the prospective synthetic EC benchmark.
 
-The production SPADE integration is deliberately a scaffold until the EC campaign
-adapter is reviewed.  ``--dry-run`` executes one deterministic mocked campaign and
-is the only execution mode exposed by this module; it never launches the full
-evaluation.  Truth is used only by the scoring boundary, never to choose points.
+Campaign decisions see only scalarized joint-CQA observations. The six-factor,
+three-CQA oracle is consulted only after a campaign finishes, when the selected
+point and a locked Sobol grid are scored. ``--dry-run`` runs one reduced-settings
+campaign per arm and is explicitly TEST_ONLY, never prospective evidence.
 """
 from __future__ import annotations
 
@@ -13,27 +13,36 @@ import json
 import os
 import subprocess
 import tempfile
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
 import torch
 
+from boec.doe import run_doe_arm, run_doe_unscreened_arm
 from boec.ec_benchmark import ECConfig, joint_success, make_ec_landscape, registered_ec_families
+from boec.optimizers import AcqConfig, propose, sobol_design
+from boec.seedbook import derive_seed
+from boec.surrogate import build_learned_noise_gp
+from boec.variance_reduction import greedy_ivr
 
 ROOT = Path(__file__).resolve().parents[1]
 SPEC = ROOT / "docs" / "SPADE-EC-BENCHMARK.md"
 ARMS = ("spade", "doe", "doe_unscreened", "qlognei")
-TRAIN_SEEDS = tuple(range(0, 64))
+TRAIN_SEEDS = tuple(range(64))
 EVAL_SEEDS = tuple(range(64, 96))
 FAMILIES = registered_ec_families()
 WELLS = 48
-ROUNDS = {"spade": 5, "doe": 3, "doe_unscreened": 3, "qlognei": 5}
+# BO is an opening plus two adaptive batches. Screened DoE has three stages;
+# full-dimensional CCD has a design and confirmation stage.
+ROUNDS = {"spade": 3, "doe": 3, "doe_unscreened": 2, "qlognei": 3}
 REQUIRED_COLUMNS = {
     "family", "seed", "arm", "answer_rate", "containment", "containment_wilson_lower",
     "false_certificate_count", "joint_volume", "point_regret", "adaptive_rounds",
     "training_seed_start", "training_seed_stop", "evaluation_seed_start", "evaluation_seed_stop",
     "spec_sha256", "runner_sha256", "source_commit",
 }
+_BO_OPENING, _BO_BATCH, _BO_GRID = 32, 8, 2_048
 
 
 def sha256(path: Path) -> str:
@@ -70,32 +79,126 @@ def _provenance() -> dict[str, Any]:
     }
 
 
-def _mock_row(family: str, seed: int, arm: str) -> dict[str, Any]:
-    """One cheap deterministic scaffold row; replace only after adapter review."""
-    landscape = make_ec_landscape(family, seed)
-    grid = torch.linspace(0.05, 0.95, 8).repeat(6, 1).T
-    truth = landscape.truth(grid)
-    success = joint_success(truth, torch.tensor(landscape.config.cqa_thresholds))
-    # Arms differ only in their deterministic candidate ordering in this scaffold.
-    offset = ARMS.index(arm)
-    selected = truth[offset::4]
-    answered = bool(selected.shape[0] and bool(success[offset::4].any()))
-    containment = float(success[offset::4].double().mean()) if answered else 0.0
-    optimum = float(truth.max(dim=0).values.mean())
-    observed = float(selected.mean()) if selected.numel() else 0.0
-    row = {
+@dataclass(frozen=True)
+class _Campaign:
+    X: torch.Tensor
+    Y: torch.Tensor
+    rounds: int
+
+
+class _JointCQAEvaluator:
+    """Adapt three CQA outcomes to the scalar SPADE evaluator contract.
+
+    The minimum threshold-normalized endpoint reaches one exactly when every
+    CQA reaches its registered threshold, so averaging cannot sacrifice a CQA.
+    """
+
+    def __init__(self, family: str, seed: int) -> None:
+        self.landscape = make_ec_landscape(family, seed, ECConfig())
+        self.thresholds = torch.tensor(self.landscape.config.cqa_thresholds, dtype=torch.double)
+
+    def utility(self, Y: torch.Tensor) -> torch.Tensor:
+        return (Y.double() / self.thresholds.to(Y)).amin(dim=1, keepdim=True)
+
+    def evaluate(self, X: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
+        Y, Yvar = self.landscape.evaluate(X)
+        return self.utility(Y), (Yvar.double() / self.thresholds.square().to(Yvar)).amax(dim=1, keepdim=True)
+
+    def truth(self, X: torch.Tensor) -> torch.Tensor:
+        return self.utility(self.landscape.truth(X))
+
+
+def _remove_rows(menu: torch.Tensor, rows: torch.Tensor) -> torch.Tensor:
+    keep = torch.ones(menu.shape[0], dtype=torch.bool)
+    for row in rows:
+        keep &= ~torch.all(menu == row.to(menu), dim=1)
+    return menu[keep]
+
+
+def _bounds() -> torch.Tensor:
+    return torch.stack([torch.zeros(6, dtype=torch.double), torch.ones(6, dtype=torch.double)])
+
+
+def _run_bo_arm(adapter: _JointCQAEvaluator, *, seed: int, arm: str, test_only: bool) -> _Campaign:
+    """Run the registered 32 + 8 + 8 schedule with repository SPADE APIs."""
+    if arm not in {"spade", "qlognei"}:
+        raise ValueError(f"not a BO arm: {arm}")
+    bounds = _bounds()
+    root = derive_seed(seed, "ec-campaign", arm)
+    X = sobol_design(bounds, _BO_OPENING, seed=derive_seed(root, "opening"))
+    Y, _ = adapter.evaluate(X)
+    menu_size, reference_size = (64, 64) if test_only else (16_384, _BO_GRID)
+    fit_restarts, mc_samples = (1, 16) if test_only else (4, 256)
+    menu = _remove_rows(sobol_design(bounds, menu_size, seed=derive_seed(root, "candidate-menu")), X)
+    reference = sobol_design(bounds, reference_size, seed=derive_seed(root, "ivr-reference"))
+    for batch_index in range(2):
+        model = build_learned_noise_gp(
+            X, Y, bounds, fit_restarts=fit_restarts,
+            seed=derive_seed(root, "gp-fit", X.shape[0]),
+        )
+        if arm == "qlognei" or batch_index == 0:
+            selected = propose(
+                model, bounds, _BO_BATCH, X, Y,
+                config=AcqConfig(kind="qlognei", mc_samples=mc_samples,
+                                 sampler_seed=derive_seed(root, "qmc", X.shape[0])),
+                candidates=menu,
+            ).detach().double()
+        else:
+            selected = greedy_ivr(model, menu, reference, _BO_BATCH).detach().double()
+        menu = _remove_rows(menu, selected)
+        next_y, _ = adapter.evaluate(selected)
+        X, Y = torch.cat([X, selected]), torch.cat([Y, next_y])
+    if X.shape != (WELLS, 6) or torch.unique(X, dim=0).shape[0] != WELLS:
+        raise RuntimeError("EC BO campaign did not preserve the exact unique 48-well budget")
+    return _Campaign(X=X, Y=Y, rounds=ROUNDS[arm])
+
+
+def _run_arm(family: str, seed: int, arm: str, *, test_only: bool) -> _Campaign:
+    adapter = _JointCQAEvaluator(family, seed)
+    if arm in {"spade", "qlognei"}:
+        return _run_bo_arm(adapter, seed=seed, arm=arm, test_only=test_only)
+    campaign_seed = derive_seed(seed, "ec-campaign", arm)
+    if arm == "doe":
+        result = run_doe_arm(adapter, _bounds(), truth=adapter.truth, budget=WELLS, seed=campaign_seed)
+    elif arm == "doe_unscreened":
+        result = run_doe_unscreened_arm(adapter, _bounds(), truth=adapter.truth, budget=WELLS, seed=campaign_seed)
+    else:
+        raise ValueError(f"unknown EC arm: {arm}")
+    # Classical CCDs deliberately include centre replicates; matched *budget*,
+    # not uniqueness, is the fairness condition for those comparator arms.
+    if result.X_visited.shape != (WELLS, 6):
+        raise RuntimeError(f"{arm} did not preserve the exact 48-well budget")
+    return _Campaign(X=result.X_visited.double(), Y=result.Y_visited.double(), rounds=ROUNDS[arm])
+
+
+def _campaign_row(family: str, seed: int, arm: str, *, test_only: bool) -> dict[str, Any]:
+    campaign = _run_arm(family, seed, arm, test_only=test_only)
+    # All experimental choices are finished before the truth-only scoring boundary.
+    selected = int(torch.argmax(campaign.Y.reshape(-1)))
+    adapter = _JointCQAEvaluator(family, seed)
+    selected_truth = adapter.landscape.truth(campaign.X[selected:selected + 1])
+    answered = bool(float(campaign.Y[selected]) >= 1.0)
+    contained = bool(joint_success(selected_truth, adapter.thresholds)[0])
+    grid = sobol_design(_bounds(), 256 if test_only else _BO_GRID,
+                        seed=derive_seed(seed, "ec-score-grid", family))
+    grid_truth = adapter.landscape.truth(grid)
+    grid_utility = adapter.utility(grid_truth)
+    regret = max(0.0, float(grid_utility.max() - adapter.truth(campaign.X[selected:selected + 1]).max()))
+    return {
         "family": family, "seed": seed, "arm": arm,
         "answer_rate": 1.0 if answered else 0.0,
-        "containment": containment,
-        "containment_wilson_lower": _wilson_lower(int(round(containment * max(1, selected.shape[0]))), max(1, selected.shape[0])),
-        "false_certificate_count": 0,
-        "joint_volume": containment,
-        "point_regret": max(0.0, optimum - observed),
-        "adaptive_rounds": ROUNDS[arm],
+        "containment": 1.0 if answered and contained else 0.0,
+        "contained": answered and contained,
+        "containment_wilson_lower": _wilson_lower(int(answered and contained), int(answered)),
+        "false_certificate_count": int(answered and not contained),
+        "joint_volume": float(joint_success(grid_truth, adapter.thresholds).double().mean()),
+        "point_regret": regret,
+        "adaptive_rounds": campaign.rounds,
+        "budget": WELLS,
+        "execution_mode": "TEST_ONLY" if test_only else "REGISTERED",
+        "endpoint": "min_threshold_normalized_cqa",
         **_provenance(),
-        "scaffold": True,
     }
-    return row
 
 
 def atomic_write(path: Path, artifact: dict[str, Any]) -> None:
@@ -113,37 +216,34 @@ def atomic_write(path: Path, artifact: dict[str, Any]) -> None:
 
 
 def empty_artifact() -> dict[str, Any]:
-    return {"status": "PARTIAL", "config": {"wells": WELLS, "spade_rounds": 5, "doe_rounds": 3},
+    return {"status": "PARTIAL", "config": {"wells": WELLS, "spade_rounds": 3, "doe_rounds": 3},
             **_provenance(), "rows": []}
 
 
 def run(*, out: Path, resume: bool = False, dry_run: bool = False) -> dict[str, Any]:
-    if not dry_run:
-        raise RuntimeError("full EC evaluation is intentionally disabled; use --dry-run")
     artifact = empty_artifact()
     if resume and out.exists():
         artifact = json.loads(out.read_text(encoding="utf-8"))
-        # Refuse to resume an artifact from another protocol before appending rows.
         for key, value in _provenance().items():
             if artifact.get(key) != value:
                 raise ValueError(f"cannot resume: provenance mismatch for {key}")
     rows = list(artifact.get("rows", []))
     seen = {(r.get("family"), int(r.get("seed", -1)), r.get("arm")) for r in rows}
-    # Exactly one job in dry-run: one family, one evaluation seed, all arms.
-    family, seed = FAMILIES[0], EVAL_SEEDS[0]
-    for arm in ARMS:
+    cells = {(FAMILIES[0], EVAL_SEEDS[0], arm) for arm in ARMS} if dry_run else expected_cells()
+    for family, seed, arm in sorted(cells):
         if (family, seed, arm) not in seen:
-            rows.append(_mock_row(family, seed, arm))
+            rows.append(_campaign_row(family, seed, arm, test_only=dry_run))
             artifact["rows"] = rows
             atomic_write(out, artifact)
     artifact["rows"] = rows
+    artifact["status"] = "PARTIAL" if dry_run or len(rows) != len(expected_cells()) else "COMPLETE"
     atomic_write(out, artifact)
     return artifact
 
 
 def main() -> int:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--out", type=Path, default=ROOT / "results" / "ec-dry-run.json")
+    parser.add_argument("--out", type=Path, default=ROOT / "results" / "ec-evaluation.json")
     parser.add_argument("--resume", action="store_true")
     parser.add_argument("--dry-run", action="store_true")
     args = parser.parse_args()
