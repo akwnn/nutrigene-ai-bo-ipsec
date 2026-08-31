@@ -1,12 +1,22 @@
-# SPADE EC prospective evaluation
+# Prospective EC benchmark evaluation
 
-**Verdict: `REFUSED_INCOMPLETE`**
+This report records the frozen unseen-seed evaluation (`64..95`) on the synthetic
+three-CQA EC benchmark. It is computational evidence only, not biological validation.
 
-No success or failure claim is made. The registered runner currently disables the
-full EC evaluation and only permits a one-family, one-seed dry run. That dry run is
-not an unseen-seed evaluation and cannot establish the required 32-seed grid.
-Consequently the adjudicator refuses the result until a complete, provenance-valid
-artifact covering every required family, seed 64–95, and arm is available.
+| Family | SPADE answer rate | SPADE containment | 95% lower bound | False certificates | Mean regret | Verdict |
+|---|---:|---:|---:|---:|---:|---|
+| ec_broad | 10/32 (0.3125) | 10/10 (1.0000) | 0.7225 | 0 | 0.2309 | fail answer rate |
+| ec_narrow | 0/32 (0.0000) | 0/0 | 0.0000 | 0 | 0.4407 | fail answer rate |
+| ec_multimodal | 3/32 (0.0938) | 3/3 (1.0000) | 0.4385 | 0 | 0.3746 | fail answer rate |
 
-The original registered `NO_SELECTION` result remains separate and unchanged. The
-landscapes are synthetic computational proxies, not biological measurements.
+## Final adjudication
+
+`FAIL_ANSWER_RATE`.
+
+SPADE produced no false certificates in this run, but it did not meet the required
+minimum of 16 answered campaigns and answer rate 0.50 in any family. Containment is
+therefore not interpretable as a success claim; perfect containment on very few answered
+campaigns is explicitly non-vacuous only when the minimum-answer rule is met.
+
+The original registered benchmark conclusion remains unchanged. These results identify
+abstention/answer rate—not false certification—as the current limiting failure mode.
