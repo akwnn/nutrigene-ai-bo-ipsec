@@ -67,3 +67,19 @@ def test_validator_rejects_training_evaluation_overlap(tmp_path):
 def test_full_evaluation_is_not_launchable(tmp_path):
     with pytest.raises(RuntimeError, match="disabled"):
         runner.run(out=tmp_path / "x.json", dry_run=False)
+
+
+def test_training_template_is_explicitly_not_evaluation_evidence():
+    path = ROOT / "results" / "ec-training-calibration-template.json"
+    report = analyser.validate_training_report(path)
+    assert report["evaluation_status"] == "NOT_RUN"
+    assert report["claims"] == []
+
+
+def test_training_report_rejects_evaluation_seeds(tmp_path):
+    report = json.loads((ROOT / "results" / "ec-training-calibration-template.json").read_text())
+    report["evaluation_seeds"] = [64]
+    path = tmp_path / "training.json"
+    path.write_text(json.dumps(report))
+    with pytest.raises(ValueError, match="evaluation seeds"):
+        analyser.validate_training_report(path)

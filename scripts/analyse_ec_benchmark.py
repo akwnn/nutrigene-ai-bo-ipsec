@@ -10,6 +10,8 @@ from typing import Any
 
 from run_ec_benchmark import ARMS, EVAL_SEEDS, FAMILIES, REQUIRED_COLUMNS, TRAIN_SEEDS, expected_cells, sha256, SPEC, source_commit
 
+TRAINING_REPORT_SCHEMA = "spade-ec-training-calibration-v1"
+
 
 def validate_artifact(path: Path) -> None:
     """Refuse incomplete, duplicated, non-finite, or provenance-drifted artifacts."""
@@ -51,6 +53,29 @@ def analyse(path: Path) -> dict[str, Any]:
     validate_artifact(path)
     artifact = json.loads(Path(path).read_text(encoding="utf-8"))
     return artifact
+
+
+def validate_training_report(path: Path) -> dict[str, Any]:
+    """Validate a calibration template without treating it as evaluation evidence.
+
+    Training calibration is allowed to contain proposed/fitted values, but it must
+    never contain evaluation seeds or claim a completed benchmark result.
+    """
+    report: dict[str, Any] = json.loads(Path(path).read_text(encoding="utf-8"))
+    if report.get("schema") != TRAINING_REPORT_SCHEMA:
+        raise ValueError("training calibration schema mismatch")
+    if report.get("status") != "TRAINING_ONLY_TEMPLATE":
+        raise ValueError("training report must remain a template until populated")
+    if report.get("evaluation_status") != "NOT_RUN":
+        raise ValueError("evaluation status must be NOT_RUN")
+    if report.get("evaluation_seeds") not in ([], None):
+        raise ValueError("training report must not contain evaluation seeds")
+    seeds = report.get("training_seeds")
+    if seeds != list(TRAIN_SEEDS):
+        raise ValueError("training seed list mismatch")
+    if report.get("claims") != []:
+        raise ValueError("training report cannot contain outcome claims")
+    return report
 
 
 def main() -> int:

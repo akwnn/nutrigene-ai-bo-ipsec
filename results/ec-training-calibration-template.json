@@ -1,0 +1,15 @@
+{
+  "schema": "spade-ec-training-calibration-v1",
+  "status": "TRAINING_ONLY_TEMPLATE",
+  "evaluation_status": "NOT_RUN",
+  "training_seeds": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63],
+  "evaluation_seeds": [],
+  "families": ["ec_broad", "ec_narrow", "ec_multimodal"],
+  "calibration_parameters": {
+    "answer_control": {"method": "fit_on_training_only", "value": null},
+    "certificate_inflation": {"method": "fit_on_training_only", "value": null}
+  },
+  "training_summary": null,
+  "claims": [],
+  "notes": "Template only. No evaluation seeds were run and no evaluation result exists. Populate only from training data; freeze before opening evaluation seeds."
+}
