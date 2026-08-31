@@ -35,7 +35,7 @@ FAMILIES = registered_ec_families()
 WELLS = 48
 # BO is an opening plus two adaptive batches. Screened DoE has three stages;
 # full-dimensional CCD has a design and confirmation stage.
-ROUNDS = {"spade": 3, "doe": 3, "doe_unscreened": 2, "qlognei": 3}
+ROUNDS = {"spade": 5, "doe": 3, "doe_unscreened": 2, "qlognei": 5}
 REQUIRED_COLUMNS = {
     "family", "seed", "arm", "answer_rate", "containment", "containment_wilson_lower",
     "false_certificate_count", "joint_volume", "point_regret", "adaptive_rounds",
@@ -201,6 +201,11 @@ def _campaign_row(family: str, seed: int, arm: str, *, test_only: bool) -> dict[
     }
 
 
+def _mock_row(family: str, seed: int, arm: str) -> dict[str, Any]:
+    """Compatibility fixture for validator tests; never used by registered runs."""
+    return _campaign_row(family, seed, arm, test_only=True)
+
+
 def atomic_write(path: Path, artifact: dict[str, Any]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     fd, tmp = tempfile.mkstemp(prefix=f".{path.name}.", dir=path.parent)
@@ -216,7 +221,7 @@ def atomic_write(path: Path, artifact: dict[str, Any]) -> None:
 
 
 def empty_artifact() -> dict[str, Any]:
-    return {"status": "PARTIAL", "config": {"wells": WELLS, "spade_rounds": 3, "doe_rounds": 3},
+    return {"status": "PARTIAL", "config": {"wells": WELLS, "spade_rounds": 5, "doe_rounds": 3},
             **_provenance(), "rows": []}
 
 
