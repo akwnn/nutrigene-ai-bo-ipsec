@@ -57,7 +57,24 @@ from torch import Tensor
 
 from boec.lse import STRADDLE_Z
 
-__all__ = ["batch_lse_rho", "certificate_straddle", "rho_contour_offset"]
+__all__ = ["batch_lse_rho", "certificate_straddle", "contour_target_is_active",
+           "rho_contour_offset"]
+
+
+def contour_target_is_active(adjusted_margin: torch.Tensor, theta: float) -> bool:
+    """Return whether ``theta`` lies strictly inside the adjusted-margin range.
+
+    The strict boundaries are intentional: a target exactly at either endpoint does
+    not activate the contour-targeting branch.
+    """
+    lo = float(adjusted_margin.min())
+    hi = float(adjusted_margin.max())
+    target = float(theta)
+    # A float32 endpoint can differ from a Python float literal by a few ulps;
+    # treat that representation noise as the explicit boundary case.
+    scale = max(1.0, abs(lo), abs(hi), abs(target))
+    tol = 8.0 * torch.finfo(adjusted_margin.dtype).eps * scale
+    return lo + tol < target < hi - tol
 
 
 def rho_contour_offset(rho: float) -> float:
@@ -129,6 +146,10 @@ def batch_lse_rho(model, X_cand: Tensor, theta: float, q: int,
             published latent straddle.
     """
     mean, sd = model.posterior_mean_and_sd(X_cand)
+    adjusted_margin = mean - rho_contour_offset(rho) * sd
+    # Keep activation observable through the same production predicate used by the
+    # TT audit.  The score formula is unchanged in either branch.
+    active = contour_target_is_active(adjusted_margin, theta)
     score = certificate_straddle(mean, sd, theta, rho)
     available = torch.ones(X_cand.shape[0], dtype=torch.bool)
     picks: list[Tensor] = []

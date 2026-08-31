@@ -1,0 +1,5175 @@
+{
+  "active_by_family_round": {
+    "ackley": [
+      2,
+      20,
+      29,
+      30
+    ],
+    "hartmann6": [
+      19,
+      30,
+      32,
+      32
+    ],
+    "hill": [
+      0,
+      0,
+      4,
+      3
+    ],
+    "levy": [
+      0,
+      1,
+      1,
+      2
+    ],
+    "rosenbrock": [
+      0,
+      0,
+      1,
+      0
+    ]
+  },
+  "active_rounds": 206,
+  "adaptive_rounds": 4,
+  "campaigns_active_all_rounds": 20,
+  "families": [
+    "ackley",
+    "hartmann6",
+    "hill",
+    "levy",
+    "rosenbrock"
+  ],
+  "records": [
+    {
+      "active": false,
+      "family": "ackley",
+      "rho": 0.95,
+      "round": 1,
+      "seed": 0,
+      "theta": 0.05871548181936026
+    },
+    {
+      "active": true,
+      "family": "ackley",
+      "rho": 0.95,
+      "round": 2,
+      "seed": 0,
+      "theta": 0.05871548181936026
+    },
+    {
+      "active": true,
+      "family": "ackley",
+      "rho": 0.95,
+      "round": 3,
+      "seed": 0,
+      "theta": 0.05871548181936026
+    },
+    {
+      "active": true,
+      "family": "ackley",
+      "rho": 0.95,
+      "round": 4,
+      "seed": 0,
+      "theta": 0.05871548181936026
+    },
+    {
+      "active": false,
+      "family": "ackley",
+      "rho": 0.95,
+      "round": 1,
+      "seed": 1,
+      "theta": 0.05871548181936026
+    },
+    {
+      "active": true,
+      "family": "ackley",
+      "rho": 0.95,
+      "round": 2,
+      "seed": 1,
+      "theta": 0.05871548181936026
+    },
+    {
+      "active": true,
+      "family": "ackley",
+      "rho": 0.95,
+      "round": 3,
+      "seed": 1,
+      "theta": 0.05871548181936026
+    },
+    {
+      "active": true,
+      "family": "ackley",
+      "rho": 0.95,
+      "round": 4,
+      "seed": 1,
+      "theta": 0.05871548181936026
+    },
+    {
+      "active": false,
+      "family": "ackley",
+      "rho": 0.95,
+      "round": 1,
+      "seed": 2,
+      "theta": 0.05871548181936026
+    },
+    {
+      "active": true,
+      "family": "ackley",
+      "rho": 0.95,
+      "round": 2,
+      "seed": 2,
+      "theta": 0.05871548181936026
+    },
+    {
+      "active": true,
+      "family": "ackley",
+      "rho": 0.95,
+      "round": 3,
+      "seed": 2,
+      "theta": 0.05871548181936026
+    },
+    {
+      "active": true,
+      "family": "ackley",
+      "rho": 0.95,
+      "round": 4,
+      "seed": 2,
+      "theta": 0.05871548181936026
+    },
+    {
+      "active": false,
+      "family": "ackley",
+      "rho": 0.95,
+      "round": 1,
+      "seed": 3,
+      "theta": 0.05871548181936026
+    },
+    {
+      "active": false,
+      "family": "ackley",
+      "rho": 0.95,
+      "round": 2,
+      "seed": 3,
+      "theta": 0.05871548181936026
+    },
+    {
+      "active": true,
+      "family": "ackley",
+      "rho": 0.95,
+      "round": 3,
+      "seed": 3,
+      "theta": 0.05871548181936026
+    },
+    {
+      "active": true,
+      "family": "ackley",
+      "rho": 0.95,
+      "round": 4,
+      "seed": 3,
+      "theta": 0.05871548181936026
+    },
+    {
+      "active": false,
+      "family": "ackley",
+      "rho": 0.95,
+      "round": 1,
+      "seed": 4,
+      "theta": 0.05871548181936026
+    },
+    {
+      "active": true,
+      "family": "ackley",
+      "rho": 0.95,
+      "round": 2,
+      "seed": 4,
+      "theta": 0.05871548181936026
+    },
+    {
+      "active": true,
+      "family": "ackley",
+      "rho": 0.95,
+      "round": 3,
+      "seed": 4,
+      "theta": 0.05871548181936026
+    },
+    {
+      "active": true,
+      "family": "ackley",
+      "rho": 0.95,
+      "round": 4,
+      "seed": 4,
+      "theta": 0.05871548181936026
+    },
+    {
+      "active": false,
+      "family": "ackley",
+      "rho": 0.95,
+      "round": 1,
+      "seed": 5,
+      "theta": 0.05871548181936026
+    },
+    {
+      "active": true,
+      "family": "ackley",
+      "rho": 0.95,
+      "round": 2,
+      "seed": 5,
+      "theta": 0.05871548181936026
+    },
+    {
+      "active": true,
+      "family": "ackley",
+      "rho": 0.95,
+      "round": 3,
+      "seed": 5,
+      "theta": 0.05871548181936026
+    },
+    {
+      "active": true,
+      "family": "ackley",
+      "rho": 0.95,
+      "round": 4,
+      "seed": 5,
+      "theta": 0.05871548181936026
+    },
+    {
+      "active": true,
+      "family": "ackley",
+      "rho": 0.95,
+      "round": 1,
+      "seed": 6,
+      "theta": 0.05871548181936026
+    },
+    {
+      "active": true,
+      "family": "ackley",
+      "rho": 0.95,
+      "round": 2,
+      "seed": 6,
+      "theta": 0.05871548181936026
+    },
+    {
+      "active": true,
+      "family": "ackley",
+      "rho": 0.95,
+      "round": 3,
+      "seed": 6,
+      "theta": 0.05871548181936026
+    },
+    {
+      "active": true,
+      "family": "ackley",
+      "rho": 0.95,
+      "round": 4,
+      "seed": 6,
+      "theta": 0.05871548181936026
+    },
+    {
+      "active": false,
+      "family": "ackley",
+      "rho": 0.95,
+      "round": 1,
+      "seed": 7,
+      "theta": 0.05871548181936026
+    },
+    {
+      "active": true,
+      "family": "ackley",
+      "rho": 0.95,
+      "round": 2,
+      "seed": 7,
+      "theta": 0.05871548181936026
+    },
+    {
+      "active": true,
+      "family": "ackley",
+      "rho": 0.95,
+      "round": 3,
+      "seed": 7,
+      "theta": 0.05871548181936026
+    },
+    {
+      "active": true,
+      "family": "ackley",
+      "rho": 0.95,
+      "round": 4,
+      "seed": 7,
+      "theta": 0.05871548181936026
+    },
+    {
+      "active": false,
+      "family": "ackley",
+      "rho": 0.95,
+      "round": 1,
+      "seed": 8,
+      "theta": 0.05871548181936026
+    },
+    {
+      "active": true,
+      "family": "ackley",
+      "rho": 0.95,
+      "round": 2,
+      "seed": 8,
+      "theta": 0.05871548181936026
+    },
+    {
+      "active": false,
+      "family": "ackley",
+      "rho": 0.95,
+      "round": 3,
+      "seed": 8,
+      "theta": 0.05871548181936026
+    },
+    {
+      "active": false,
+      "family": "ackley",
+      "rho": 0.95,
+      "round": 4,
+      "seed": 8,
+      "theta": 0.05871548181936026
+    },
+    {
+      "active": false,
+      "family": "ackley",
+      "rho": 0.95,
+      "round": 1,
+      "seed": 9,
+      "theta": 0.05871548181936026
+    },
+    {
+      "active": true,
+      "family": "ackley",
+      "rho": 0.95,
+      "round": 2,
+      "seed": 9,
+      "theta": 0.05871548181936026
+    },
+    {
+      "active": true,
+      "family": "ackley",
+      "rho": 0.95,
+      "round": 3,
+      "seed": 9,
+      "theta": 0.05871548181936026
+    },
+    {
+      "active": true,
+      "family": "ackley",
+      "rho": 0.95,
+      "round": 4,
+      "seed": 9,
+      "theta": 0.05871548181936026
+    },
+    {
+      "active": false,
+      "family": "ackley",
+      "rho": 0.95,
+      "round": 1,
+      "seed": 10,
+      "theta": 0.05871548181936026
+    },
+    {
+      "active": false,
+      "family": "ackley",
+      "rho": 0.95,
+      "round": 2,
+      "seed": 10,
+      "theta": 0.05871548181936026
+    },
+    {
+      "active": true,
+      "family": "ackley",
+      "rho": 0.95,
+      "round": 3,
+      "seed": 10,
+      "theta": 0.05871548181936026
+    },
+    {
+      "active": true,
+      "family": "ackley",
+      "rho": 0.95,
+      "round": 4,
+      "seed": 10,
+      "theta": 0.05871548181936026
+    },
+    {
+      "active": false,
+      "family": "ackley",
+      "rho": 0.95,
+      "round": 1,
+      "seed": 11,
+      "theta": 0.05871548181936026
+    },
+    {
+      "active": false,
+      "family": "ackley",
+      "rho": 0.95,
+      "round": 2,
+      "seed": 11,
+      "theta": 0.05871548181936026
+    },
+    {
+      "active": false,
+      "family": "ackley",
+      "rho": 0.95,
+      "round": 3,
+      "seed": 11,
+      "theta": 0.05871548181936026
+    },
+    {
+      "active": true,
+      "family": "ackley",
+      "rho": 0.95,
+      "round": 4,
+      "seed": 11,
+      "theta": 0.05871548181936026
+    },
+    {
+      "active": false,
+      "family": "ackley",
+      "rho": 0.95,
+      "round": 1,
+      "seed": 12,
+      "theta": 0.05871548181936026
+    },
+    {
+      "active": true,
+      "family": "ackley",
+      "rho": 0.95,
+      "round": 2,
+      "seed": 12,
+      "theta": 0.05871548181936026
+    },
+    {
+      "active": true,
+      "family": "ackley",
+      "rho": 0.95,
+      "round": 3,
+      "seed": 12,
+      "theta": 0.05871548181936026
+    },
+    {
+      "active": true,
+      "family": "ackley",
+      "rho": 0.95,
+      "round": 4,
+      "seed": 12,
+      "theta": 0.05871548181936026
+    },
+    {
+      "active": false,
+      "family": "ackley",
+      "rho": 0.95,
+      "round": 1,
+      "seed": 13,
+      "theta": 0.05871548181936026
+    },
+    {
+      "active": true,
+      "family": "ackley",
+      "rho": 0.95,
+      "round": 2,
+      "seed": 13,
+      "theta": 0.05871548181936026
+    },
+    {
+      "active": true,
+      "family": "ackley",
+      "rho": 0.95,
+      "round": 3,
+      "seed": 13,
+      "theta": 0.05871548181936026
+    },
+    {
+      "active": true,
+      "family": "ackley",
+      "rho": 0.95,
+      "round": 4,
+      "seed": 13,
+      "theta": 0.05871548181936026
+    },
+    {
+      "active": true,
+      "family": "ackley",
+      "rho": 0.95,
+      "round": 1,
+      "seed": 14,
+      "theta": 0.05871548181936026
+    },
+    {
+      "active": true,
+      "family": "ackley",
+      "rho": 0.95,
+      "round": 2,
+      "seed": 14,
+      "theta": 0.05871548181936026
+    },
+    {
+      "active": true,
+      "family": "ackley",
+      "rho": 0.95,
+      "round": 3,
+      "seed": 14,
+      "theta": 0.05871548181936026
+    },
+    {
+      "active": true,
+      "family": "ackley",
+      "rho": 0.95,
+      "round": 4,
+      "seed": 14,
+      "theta": 0.05871548181936026
+    },
+    {
+      "active": false,
+      "family": "ackley",
+      "rho": 0.95,
+      "round": 1,
+      "seed": 15,
+      "theta": 0.05871548181936026
+    },
+    {
+      "active": true,
+      "family": "ackley",
+      "rho": 0.95,
+      "round": 2,
+      "seed": 15,
+      "theta": 0.05871548181936026
+    },
+    {
+      "active": true,
+      "family": "ackley",
+      "rho": 0.95,
+      "round": 3,
+      "seed": 15,
+      "theta": 0.05871548181936026
+    },
+    {
+      "active": true,
+      "family": "ackley",
+      "rho": 0.95,
+      "round": 4,
+      "seed": 15,
+      "theta": 0.05871548181936026
+    },
+    {
+      "active": false,
+      "family": "ackley",
+      "rho": 0.95,
+      "round": 1,
+      "seed": 16,
+      "theta": 0.05871548181936026
+    },
+    {
+      "active": true,
+      "family": "ackley",
+      "rho": 0.95,
+      "round": 2,
+      "seed": 16,
+      "theta": 0.05871548181936026
+    },
+    {
+      "active": true,
+      "family": "ackley",
+      "rho": 0.95,
+      "round": 3,
+      "seed": 16,
+      "theta": 0.05871548181936026
+    },
+    {
+      "active": true,
+      "family": "ackley",
+      "rho": 0.95,
+      "round": 4,
+      "seed": 16,
+      "theta": 0.05871548181936026
+    },
+    {
+      "active": false,
+      "family": "ackley",
+      "rho": 0.95,
+      "round": 1,
+      "seed": 17,
+      "theta": 0.05871548181936026
+    },
+    {
+      "active": true,
+      "family": "ackley",
+      "rho": 0.95,
+      "round": 2,
+      "seed": 17,
+      "theta": 0.05871548181936026
+    },
+    {
+      "active": true,
+      "family": "ackley",
+      "rho": 0.95,
+      "round": 3,
+      "seed": 17,
+      "theta": 0.05871548181936026
+    },
+    {
+      "active": true,
+      "family": "ackley",
+      "rho": 0.95,
+      "round": 4,
+      "seed": 17,
+      "theta": 0.05871548181936026
+    },
+    {
+      "active": false,
+      "family": "ackley",
+      "rho": 0.95,
+      "round": 1,
+      "seed": 18,
+      "theta": 0.05871548181936026
+    },
+    {
+      "active": true,
+      "family": "ackley",
+      "rho": 0.95,
+      "round": 2,
+      "seed": 18,
+      "theta": 0.05871548181936026
+    },
+    {
+      "active": true,
+      "family": "ackley",
+      "rho": 0.95,
+      "round": 3,
+      "seed": 18,
+      "theta": 0.05871548181936026
+    },
+    {
+      "active": true,
+      "family": "ackley",
+      "rho": 0.95,
+      "round": 4,
+      "seed": 18,
+      "theta": 0.05871548181936026
+    },
+    {
+      "active": false,
+      "family": "ackley",
+      "rho": 0.95,
+      "round": 1,
+      "seed": 19,
+      "theta": 0.05871548181936026
+    },
+    {
+      "active": false,
+      "family": "ackley",
+      "rho": 0.95,
+      "round": 2,
+      "seed": 19,
+      "theta": 0.05871548181936026
+    },
+    {
+      "active": true,
+      "family": "ackley",
+      "rho": 0.95,
+      "round": 3,
+      "seed": 19,
+      "theta": 0.05871548181936026
+    },
+    {
+      "active": true,
+      "family": "ackley",
+      "rho": 0.95,
+      "round": 4,
+      "seed": 19,
+      "theta": 0.05871548181936026
+    },
+    {
+      "active": false,
+      "family": "ackley",
+      "rho": 0.95,
+      "round": 1,
+      "seed": 20,
+      "theta": 0.05871548181936026
+    },
+    {
+      "active": false,
+      "family": "ackley",
+      "rho": 0.95,
+      "round": 2,
+      "seed": 20,
+      "theta": 0.05871548181936026
+    },
+    {
+      "active": true,
+      "family": "ackley",
+      "rho": 0.95,
+      "round": 3,
+      "seed": 20,
+      "theta": 0.05871548181936026
+    },
+    {
+      "active": true,
+      "family": "ackley",
+      "rho": 0.95,
+      "round": 4,
+      "seed": 20,
+      "theta": 0.05871548181936026
+    },
+    {
+      "active": false,
+      "family": "ackley",
+      "rho": 0.95,
+      "round": 1,
+      "seed": 21,
+      "theta": 0.05871548181936026
+    },
+    {
+      "active": false,
+      "family": "ackley",
+      "rho": 0.95,
+      "round": 2,
+      "seed": 21,
+      "theta": 0.05871548181936026
+    },
+    {
+      "active": true,
+      "family": "ackley",
+      "rho": 0.95,
+      "round": 3,
+      "seed": 21,
+      "theta": 0.05871548181936026
+    },
+    {
+      "active": true,
+      "family": "ackley",
+      "rho": 0.95,
+      "round": 4,
+      "seed": 21,
+      "theta": 0.05871548181936026
+    },
+    {
+      "active": false,
+      "family": "ackley",
+      "rho": 0.95,
+      "round": 1,
+      "seed": 22,
+      "theta": 0.05871548181936026
+    },
+    {
+      "active": false,
+      "family": "ackley",
+      "rho": 0.95,
+      "round": 2,
+      "seed": 22,
+      "theta": 0.05871548181936026
+    },
+    {
+      "active": false,
+      "family": "ackley",
+      "rho": 0.95,
+      "round": 3,
+      "seed": 22,
+      "theta": 0.05871548181936026
+    },
+    {
+      "active": false,
+      "family": "ackley",
+      "rho": 0.95,
+      "round": 4,
+      "seed": 22,
+      "theta": 0.05871548181936026
+    },
+    {
+      "active": false,
+      "family": "ackley",
+      "rho": 0.95,
+      "round": 1,
+      "seed": 23,
+      "theta": 0.05871548181936026
+    },
+    {
+      "active": true,
+      "family": "ackley",
+      "rho": 0.95,
+      "round": 2,
+      "seed": 23,
+      "theta": 0.05871548181936026
+    },
+    {
+      "active": true,
+      "family": "ackley",
+      "rho": 0.95,
+      "round": 3,
+      "seed": 23,
+      "theta": 0.05871548181936026
+    },
+    {
+      "active": true,
+      "family": "ackley",
+      "rho": 0.95,
+      "round": 4,
+      "seed": 23,
+      "theta": 0.05871548181936026
+    },
+    {
+      "active": false,
+      "family": "ackley",
+      "rho": 0.95,
+      "round": 1,
+      "seed": 24,
+      "theta": 0.05871548181936026
+    },
+    {
+      "active": false,
+      "family": "ackley",
+      "rho": 0.95,
+      "round": 2,
+      "seed": 24,
+      "theta": 0.05871548181936026
+    },
+    {
+      "active": true,
+      "family": "ackley",
+      "rho": 0.95,
+      "round": 3,
+      "seed": 24,
+      "theta": 0.05871548181936026
+    },
+    {
+      "active": true,
+      "family": "ackley",
+      "rho": 0.95,
+      "round": 4,
+      "seed": 24,
+      "theta": 0.05871548181936026
+    },
+    {
+      "active": false,
+      "family": "ackley",
+      "rho": 0.95,
+      "round": 1,
+      "seed": 25,
+      "theta": 0.05871548181936026
+    },
+    {
+      "active": false,
+      "family": "ackley",
+      "rho": 0.95,
+      "round": 2,
+      "seed": 25,
+      "theta": 0.05871548181936026
+    },
+    {
+      "active": true,
+      "family": "ackley",
+      "rho": 0.95,
+      "round": 3,
+      "seed": 25,
+      "theta": 0.05871548181936026
+    },
+    {
+      "active": true,
+      "family": "ackley",
+      "rho": 0.95,
+      "round": 4,
+      "seed": 25,
+      "theta": 0.05871548181936026
+    },
+    {
+      "active": false,
+      "family": "ackley",
+      "rho": 0.95,
+      "round": 1,
+      "seed": 26,
+      "theta": 0.05871548181936026
+    },
+    {
+      "active": true,
+      "family": "ackley",
+      "rho": 0.95,
+      "round": 2,
+      "seed": 26,
+      "theta": 0.05871548181936026
+    },
+    {
+      "active": true,
+      "family": "ackley",
+      "rho": 0.95,
+      "round": 3,
+      "seed": 26,
+      "theta": 0.05871548181936026
+    },
+    {
+      "active": true,
+      "family": "ackley",
+      "rho": 0.95,
+      "round": 4,
+      "seed": 26,
+      "theta": 0.05871548181936026
+    },
+    {
+      "active": false,
+      "family": "ackley",
+      "rho": 0.95,
+      "round": 1,
+      "seed": 27,
+      "theta": 0.05871548181936026
+    },
+    {
+      "active": true,
+      "family": "ackley",
+      "rho": 0.95,
+      "round": 2,
+      "seed": 27,
+      "theta": 0.05871548181936026
+    },
+    {
+      "active": true,
+      "family": "ackley",
+      "rho": 0.95,
+      "round": 3,
+      "seed": 27,
+      "theta": 0.05871548181936026
+    },
+    {
+      "active": true,
+      "family": "ackley",
+      "rho": 0.95,
+      "round": 4,
+      "seed": 27,
+      "theta": 0.05871548181936026
+    },
+    {
+      "active": false,
+      "family": "ackley",
+      "rho": 0.95,
+      "round": 1,
+      "seed": 28,
+      "theta": 0.05871548181936026
+    },
+    {
+      "active": true,
+      "family": "ackley",
+      "rho": 0.95,
+      "round": 2,
+      "seed": 28,
+      "theta": 0.05871548181936026
+    },
+    {
+      "active": true,
+      "family": "ackley",
+      "rho": 0.95,
+      "round": 3,
+      "seed": 28,
+      "theta": 0.05871548181936026
+    },
+    {
+      "active": true,
+      "family": "ackley",
+      "rho": 0.95,
+      "round": 4,
+      "seed": 28,
+      "theta": 0.05871548181936026
+    },
+    {
+      "active": false,
+      "family": "ackley",
+      "rho": 0.95,
+      "round": 1,
+      "seed": 29,
+      "theta": 0.05871548181936026
+    },
+    {
+      "active": false,
+      "family": "ackley",
+      "rho": 0.95,
+      "round": 2,
+      "seed": 29,
+      "theta": 0.05871548181936026
+    },
+    {
+      "active": true,
+      "family": "ackley",
+      "rho": 0.95,
+      "round": 3,
+      "seed": 29,
+      "theta": 0.05871548181936026
+    },
+    {
+      "active": true,
+      "family": "ackley",
+      "rho": 0.95,
+      "round": 4,
+      "seed": 29,
+      "theta": 0.05871548181936026
+    },
+    {
+      "active": false,
+      "family": "ackley",
+      "rho": 0.95,
+      "round": 1,
+      "seed": 30,
+      "theta": 0.05871548181936026
+    },
+    {
+      "active": false,
+      "family": "ackley",
+      "rho": 0.95,
+      "round": 2,
+      "seed": 30,
+      "theta": 0.05871548181936026
+    },
+    {
+      "active": true,
+      "family": "ackley",
+      "rho": 0.95,
+      "round": 3,
+      "seed": 30,
+      "theta": 0.05871548181936026
+    },
+    {
+      "active": true,
+      "family": "ackley",
+      "rho": 0.95,
+      "round": 4,
+      "seed": 30,
+      "theta": 0.05871548181936026
+    },
+    {
+      "active": false,
+      "family": "ackley",
+      "rho": 0.95,
+      "round": 1,
+      "seed": 31,
+      "theta": 0.05871548181936026
+    },
+    {
+      "active": false,
+      "family": "ackley",
+      "rho": 0.95,
+      "round": 2,
+      "seed": 31,
+      "theta": 0.05871548181936026
+    },
+    {
+      "active": true,
+      "family": "ackley",
+      "rho": 0.95,
+      "round": 3,
+      "seed": 31,
+      "theta": 0.05871548181936026
+    },
+    {
+      "active": true,
+      "family": "ackley",
+      "rho": 0.95,
+      "round": 4,
+      "seed": 31,
+      "theta": 0.05871548181936026
+    },
+    {
+      "active": true,
+      "family": "hartmann6",
+      "rho": 0.95,
+      "round": 1,
+      "seed": 0,
+      "theta": 0.0774274956365466
+    },
+    {
+      "active": true,
+      "family": "hartmann6",
+      "rho": 0.95,
+      "round": 2,
+      "seed": 0,
+      "theta": 0.0774274956365466
+    },
+    {
+      "active": true,
+      "family": "hartmann6",
+      "rho": 0.95,
+      "round": 3,
+      "seed": 0,
+      "theta": 0.0774274956365466
+    },
+    {
+      "active": true,
+      "family": "hartmann6",
+      "rho": 0.95,
+      "round": 4,
+      "seed": 0,
+      "theta": 0.0774274956365466
+    },
+    {
+      "active": true,
+      "family": "hartmann6",
+      "rho": 0.95,
+      "round": 1,
+      "seed": 1,
+      "theta": 0.0774274956365466
+    },
+    {
+      "active": true,
+      "family": "hartmann6",
+      "rho": 0.95,
+      "round": 2,
+      "seed": 1,
+      "theta": 0.0774274956365466
+    },
+    {
+      "active": true,
+      "family": "hartmann6",
+      "rho": 0.95,
+      "round": 3,
+      "seed": 1,
+      "theta": 0.0774274956365466
+    },
+    {
+      "active": true,
+      "family": "hartmann6",
+      "rho": 0.95,
+      "round": 4,
+      "seed": 1,
+      "theta": 0.0774274956365466
+    },
+    {
+      "active": false,
+      "family": "hartmann6",
+      "rho": 0.95,
+      "round": 1,
+      "seed": 2,
+      "theta": 0.0774274956365466
+    },
+    {
+      "active": true,
+      "family": "hartmann6",
+      "rho": 0.95,
+      "round": 2,
+      "seed": 2,
+      "theta": 0.0774274956365466
+    },
+    {
+      "active": true,
+      "family": "hartmann6",
+      "rho": 0.95,
+      "round": 3,
+      "seed": 2,
+      "theta": 0.0774274956365466
+    },
+    {
+      "active": true,
+      "family": "hartmann6",
+      "rho": 0.95,
+      "round": 4,
+      "seed": 2,
+      "theta": 0.0774274956365466
+    },
+    {
+      "active": true,
+      "family": "hartmann6",
+      "rho": 0.95,
+      "round": 1,
+      "seed": 3,
+      "theta": 0.0774274956365466
+    },
+    {
+      "active": true,
+      "family": "hartmann6",
+      "rho": 0.95,
+      "round": 2,
+      "seed": 3,
+      "theta": 0.0774274956365466
+    },
+    {
+      "active": true,
+      "family": "hartmann6",
+      "rho": 0.95,
+      "round": 3,
+      "seed": 3,
+      "theta": 0.0774274956365466
+    },
+    {
+      "active": true,
+      "family": "hartmann6",
+      "rho": 0.95,
+      "round": 4,
+      "seed": 3,
+      "theta": 0.0774274956365466
+    },
+    {
+      "active": false,
+      "family": "hartmann6",
+      "rho": 0.95,
+      "round": 1,
+      "seed": 4,
+      "theta": 0.0774274956365466
+    },
+    {
+      "active": true,
+      "family": "hartmann6",
+      "rho": 0.95,
+      "round": 2,
+      "seed": 4,
+      "theta": 0.0774274956365466
+    },
+    {
+      "active": true,
+      "family": "hartmann6",
+      "rho": 0.95,
+      "round": 3,
+      "seed": 4,
+      "theta": 0.0774274956365466
+    },
+    {
+      "active": true,
+      "family": "hartmann6",
+      "rho": 0.95,
+      "round": 4,
+      "seed": 4,
+      "theta": 0.0774274956365466
+    },
+    {
+      "active": true,
+      "family": "hartmann6",
+      "rho": 0.95,
+      "round": 1,
+      "seed": 5,
+      "theta": 0.0774274956365466
+    },
+    {
+      "active": true,
+      "family": "hartmann6",
+      "rho": 0.95,
+      "round": 2,
+      "seed": 5,
+      "theta": 0.0774274956365466
+    },
+    {
+      "active": true,
+      "family": "hartmann6",
+      "rho": 0.95,
+      "round": 3,
+      "seed": 5,
+      "theta": 0.0774274956365466
+    },
+    {
+      "active": true,
+      "family": "hartmann6",
+      "rho": 0.95,
+      "round": 4,
+      "seed": 5,
+      "theta": 0.0774274956365466
+    },
+    {
+      "active": true,
+      "family": "hartmann6",
+      "rho": 0.95,
+      "round": 1,
+      "seed": 6,
+      "theta": 0.0774274956365466
+    },
+    {
+      "active": true,
+      "family": "hartmann6",
+      "rho": 0.95,
+      "round": 2,
+      "seed": 6,
+      "theta": 0.0774274956365466
+    },
+    {
+      "active": true,
+      "family": "hartmann6",
+      "rho": 0.95,
+      "round": 3,
+      "seed": 6,
+      "theta": 0.0774274956365466
+    },
+    {
+      "active": true,
+      "family": "hartmann6",
+      "rho": 0.95,
+      "round": 4,
+      "seed": 6,
+      "theta": 0.0774274956365466
+    },
+    {
+      "active": false,
+      "family": "hartmann6",
+      "rho": 0.95,
+      "round": 1,
+      "seed": 7,
+      "theta": 0.0774274956365466
+    },
+    {
+      "active": true,
+      "family": "hartmann6",
+      "rho": 0.95,
+      "round": 2,
+      "seed": 7,
+      "theta": 0.0774274956365466
+    },
+    {
+      "active": true,
+      "family": "hartmann6",
+      "rho": 0.95,
+      "round": 3,
+      "seed": 7,
+      "theta": 0.0774274956365466
+    },
+    {
+      "active": true,
+      "family": "hartmann6",
+      "rho": 0.95,
+      "round": 4,
+      "seed": 7,
+      "theta": 0.0774274956365466
+    },
+    {
+      "active": true,
+      "family": "hartmann6",
+      "rho": 0.95,
+      "round": 1,
+      "seed": 8,
+      "theta": 0.0774274956365466
+    },
+    {
+      "active": false,
+      "family": "hartmann6",
+      "rho": 0.95,
+      "round": 2,
+      "seed": 8,
+      "theta": 0.0774274956365466
+    },
+    {
+      "active": true,
+      "family": "hartmann6",
+      "rho": 0.95,
+      "round": 3,
+      "seed": 8,
+      "theta": 0.0774274956365466
+    },
+    {
+      "active": true,
+      "family": "hartmann6",
+      "rho": 0.95,
+      "round": 4,
+      "seed": 8,
+      "theta": 0.0774274956365466
+    },
+    {
+      "active": true,
+      "family": "hartmann6",
+      "rho": 0.95,
+      "round": 1,
+      "seed": 9,
+      "theta": 0.0774274956365466
+    },
+    {
+      "active": true,
+      "family": "hartmann6",
+      "rho": 0.95,
+      "round": 2,
+      "seed": 9,
+      "theta": 0.0774274956365466
+    },
+    {
+      "active": true,
+      "family": "hartmann6",
+      "rho": 0.95,
+      "round": 3,
+      "seed": 9,
+      "theta": 0.0774274956365466
+    },
+    {
+      "active": true,
+      "family": "hartmann6",
+      "rho": 0.95,
+      "round": 4,
+      "seed": 9,
+      "theta": 0.0774274956365466
+    },
+    {
+      "active": true,
+      "family": "hartmann6",
+      "rho": 0.95,
+      "round": 1,
+      "seed": 10,
+      "theta": 0.0774274956365466
+    },
+    {
+      "active": true,
+      "family": "hartmann6",
+      "rho": 0.95,
+      "round": 2,
+      "seed": 10,
+      "theta": 0.0774274956365466
+    },
+    {
+      "active": true,
+      "family": "hartmann6",
+      "rho": 0.95,
+      "round": 3,
+      "seed": 10,
+      "theta": 0.0774274956365466
+    },
+    {
+      "active": true,
+      "family": "hartmann6",
+      "rho": 0.95,
+      "round": 4,
+      "seed": 10,
+      "theta": 0.0774274956365466
+    },
+    {
+      "active": false,
+      "family": "hartmann6",
+      "rho": 0.95,
+      "round": 1,
+      "seed": 11,
+      "theta": 0.0774274956365466
+    },
+    {
+      "active": true,
+      "family": "hartmann6",
+      "rho": 0.95,
+      "round": 2,
+      "seed": 11,
+      "theta": 0.0774274956365466
+    },
+    {
+      "active": true,
+      "family": "hartmann6",
+      "rho": 0.95,
+      "round": 3,
+      "seed": 11,
+      "theta": 0.0774274956365466
+    },
+    {
+      "active": true,
+      "family": "hartmann6",
+      "rho": 0.95,
+      "round": 4,
+      "seed": 11,
+      "theta": 0.0774274956365466
+    },
+    {
+      "active": true,
+      "family": "hartmann6",
+      "rho": 0.95,
+      "round": 1,
+      "seed": 12,
+      "theta": 0.0774274956365466
+    },
+    {
+      "active": true,
+      "family": "hartmann6",
+      "rho": 0.95,
+      "round": 2,
+      "seed": 12,
+      "theta": 0.0774274956365466
+    },
+    {
+      "active": true,
+      "family": "hartmann6",
+      "rho": 0.95,
+      "round": 3,
+      "seed": 12,
+      "theta": 0.0774274956365466
+    },
+    {
+      "active": true,
+      "family": "hartmann6",
+      "rho": 0.95,
+      "round": 4,
+      "seed": 12,
+      "theta": 0.0774274956365466
+    },
+    {
+      "active": false,
+      "family": "hartmann6",
+      "rho": 0.95,
+      "round": 1,
+      "seed": 13,
+      "theta": 0.0774274956365466
+    },
+    {
+      "active": true,
+      "family": "hartmann6",
+      "rho": 0.95,
+      "round": 2,
+      "seed": 13,
+      "theta": 0.0774274956365466
+    },
+    {
+      "active": true,
+      "family": "hartmann6",
+      "rho": 0.95,
+      "round": 3,
+      "seed": 13,
+      "theta": 0.0774274956365466
+    },
+    {
+      "active": true,
+      "family": "hartmann6",
+      "rho": 0.95,
+      "round": 4,
+      "seed": 13,
+      "theta": 0.0774274956365466
+    },
+    {
+      "active": false,
+      "family": "hartmann6",
+      "rho": 0.95,
+      "round": 1,
+      "seed": 14,
+      "theta": 0.0774274956365466
+    },
+    {
+      "active": true,
+      "family": "hartmann6",
+      "rho": 0.95,
+      "round": 2,
+      "seed": 14,
+      "theta": 0.0774274956365466
+    },
+    {
+      "active": true,
+      "family": "hartmann6",
+      "rho": 0.95,
+      "round": 3,
+      "seed": 14,
+      "theta": 0.0774274956365466
+    },
+    {
+      "active": true,
+      "family": "hartmann6",
+      "rho": 0.95,
+      "round": 4,
+      "seed": 14,
+      "theta": 0.0774274956365466
+    },
+    {
+      "active": false,
+      "family": "hartmann6",
+      "rho": 0.95,
+      "round": 1,
+      "seed": 15,
+      "theta": 0.0774274956365466
+    },
+    {
+      "active": true,
+      "family": "hartmann6",
+      "rho": 0.95,
+      "round": 2,
+      "seed": 15,
+      "theta": 0.0774274956365466
+    },
+    {
+      "active": true,
+      "family": "hartmann6",
+      "rho": 0.95,
+      "round": 3,
+      "seed": 15,
+      "theta": 0.0774274956365466
+    },
+    {
+      "active": true,
+      "family": "hartmann6",
+      "rho": 0.95,
+      "round": 4,
+      "seed": 15,
+      "theta": 0.0774274956365466
+    },
+    {
+      "active": false,
+      "family": "hartmann6",
+      "rho": 0.95,
+      "round": 1,
+      "seed": 16,
+      "theta": 0.0774274956365466
+    },
+    {
+      "active": false,
+      "family": "hartmann6",
+      "rho": 0.95,
+      "round": 2,
+      "seed": 16,
+      "theta": 0.0774274956365466
+    },
+    {
+      "active": true,
+      "family": "hartmann6",
+      "rho": 0.95,
+      "round": 3,
+      "seed": 16,
+      "theta": 0.0774274956365466
+    },
+    {
+      "active": true,
+      "family": "hartmann6",
+      "rho": 0.95,
+      "round": 4,
+      "seed": 16,
+      "theta": 0.0774274956365466
+    },
+    {
+      "active": true,
+      "family": "hartmann6",
+      "rho": 0.95,
+      "round": 1,
+      "seed": 17,
+      "theta": 0.0774274956365466
+    },
+    {
+      "active": true,
+      "family": "hartmann6",
+      "rho": 0.95,
+      "round": 2,
+      "seed": 17,
+      "theta": 0.0774274956365466
+    },
+    {
+      "active": true,
+      "family": "hartmann6",
+      "rho": 0.95,
+      "round": 3,
+      "seed": 17,
+      "theta": 0.0774274956365466
+    },
+    {
+      "active": true,
+      "family": "hartmann6",
+      "rho": 0.95,
+      "round": 4,
+      "seed": 17,
+      "theta": 0.0774274956365466
+    },
+    {
+      "active": true,
+      "family": "hartmann6",
+      "rho": 0.95,
+      "round": 1,
+      "seed": 18,
+      "theta": 0.0774274956365466
+    },
+    {
+      "active": true,
+      "family": "hartmann6",
+      "rho": 0.95,
+      "round": 2,
+      "seed": 18,
+      "theta": 0.0774274956365466
+    },
+    {
+      "active": true,
+      "family": "hartmann6",
+      "rho": 0.95,
+      "round": 3,
+      "seed": 18,
+      "theta": 0.0774274956365466
+    },
+    {
+      "active": true,
+      "family": "hartmann6",
+      "rho": 0.95,
+      "round": 4,
+      "seed": 18,
+      "theta": 0.0774274956365466
+    },
+    {
+      "active": false,
+      "family": "hartmann6",
+      "rho": 0.95,
+      "round": 1,
+      "seed": 19,
+      "theta": 0.0774274956365466
+    },
+    {
+      "active": true,
+      "family": "hartmann6",
+      "rho": 0.95,
+      "round": 2,
+      "seed": 19,
+      "theta": 0.0774274956365466
+    },
+    {
+      "active": true,
+      "family": "hartmann6",
+      "rho": 0.95,
+      "round": 3,
+      "seed": 19,
+      "theta": 0.0774274956365466
+    },
+    {
+      "active": true,
+      "family": "hartmann6",
+      "rho": 0.95,
+      "round": 4,
+      "seed": 19,
+      "theta": 0.0774274956365466
+    },
+    {
+      "active": true,
+      "family": "hartmann6",
+      "rho": 0.95,
+      "round": 1,
+      "seed": 20,
+      "theta": 0.0774274956365466
+    },
+    {
+      "active": true,
+      "family": "hartmann6",
+      "rho": 0.95,
+      "round": 2,
+      "seed": 20,
+      "theta": 0.0774274956365466
+    },
+    {
+      "active": true,
+      "family": "hartmann6",
+      "rho": 0.95,
+      "round": 3,
+      "seed": 20,
+      "theta": 0.0774274956365466
+    },
+    {
+      "active": true,
+      "family": "hartmann6",
+      "rho": 0.95,
+      "round": 4,
+      "seed": 20,
+      "theta": 0.0774274956365466
+    },
+    {
+      "active": false,
+      "family": "hartmann6",
+      "rho": 0.95,
+      "round": 1,
+      "seed": 21,
+      "theta": 0.0774274956365466
+    },
+    {
+      "active": true,
+      "family": "hartmann6",
+      "rho": 0.95,
+      "round": 2,
+      "seed": 21,
+      "theta": 0.0774274956365466
+    },
+    {
+      "active": true,
+      "family": "hartmann6",
+      "rho": 0.95,
+      "round": 3,
+      "seed": 21,
+      "theta": 0.0774274956365466
+    },
+    {
+      "active": true,
+      "family": "hartmann6",
+      "rho": 0.95,
+      "round": 4,
+      "seed": 21,
+      "theta": 0.0774274956365466
+    },
+    {
+      "active": false,
+      "family": "hartmann6",
+      "rho": 0.95,
+      "round": 1,
+      "seed": 22,
+      "theta": 0.0774274956365466
+    },
+    {
+      "active": true,
+      "family": "hartmann6",
+      "rho": 0.95,
+      "round": 2,
+      "seed": 22,
+      "theta": 0.0774274956365466
+    },
+    {
+      "active": true,
+      "family": "hartmann6",
+      "rho": 0.95,
+      "round": 3,
+      "seed": 22,
+      "theta": 0.0774274956365466
+    },
+    {
+      "active": true,
+      "family": "hartmann6",
+      "rho": 0.95,
+      "round": 4,
+      "seed": 22,
+      "theta": 0.0774274956365466
+    },
+    {
+      "active": true,
+      "family": "hartmann6",
+      "rho": 0.95,
+      "round": 1,
+      "seed": 23,
+      "theta": 0.0774274956365466
+    },
+    {
+      "active": true,
+      "family": "hartmann6",
+      "rho": 0.95,
+      "round": 2,
+      "seed": 23,
+      "theta": 0.0774274956365466
+    },
+    {
+      "active": true,
+      "family": "hartmann6",
+      "rho": 0.95,
+      "round": 3,
+      "seed": 23,
+      "theta": 0.0774274956365466
+    },
+    {
+      "active": true,
+      "family": "hartmann6",
+      "rho": 0.95,
+      "round": 4,
+      "seed": 23,
+      "theta": 0.0774274956365466
+    },
+    {
+      "active": true,
+      "family": "hartmann6",
+      "rho": 0.95,
+      "round": 1,
+      "seed": 24,
+      "theta": 0.0774274956365466
+    },
+    {
+      "active": true,
+      "family": "hartmann6",
+      "rho": 0.95,
+      "round": 2,
+      "seed": 24,
+      "theta": 0.0774274956365466
+    },
+    {
+      "active": true,
+      "family": "hartmann6",
+      "rho": 0.95,
+      "round": 3,
+      "seed": 24,
+      "theta": 0.0774274956365466
+    },
+    {
+      "active": true,
+      "family": "hartmann6",
+      "rho": 0.95,
+      "round": 4,
+      "seed": 24,
+      "theta": 0.0774274956365466
+    },
+    {
+      "active": true,
+      "family": "hartmann6",
+      "rho": 0.95,
+      "round": 1,
+      "seed": 25,
+      "theta": 0.0774274956365466
+    },
+    {
+      "active": true,
+      "family": "hartmann6",
+      "rho": 0.95,
+      "round": 2,
+      "seed": 25,
+      "theta": 0.0774274956365466
+    },
+    {
+      "active": true,
+      "family": "hartmann6",
+      "rho": 0.95,
+      "round": 3,
+      "seed": 25,
+      "theta": 0.0774274956365466
+    },
+    {
+      "active": true,
+      "family": "hartmann6",
+      "rho": 0.95,
+      "round": 4,
+      "seed": 25,
+      "theta": 0.0774274956365466
+    },
+    {
+      "active": true,
+      "family": "hartmann6",
+      "rho": 0.95,
+      "round": 1,
+      "seed": 26,
+      "theta": 0.0774274956365466
+    },
+    {
+      "active": true,
+      "family": "hartmann6",
+      "rho": 0.95,
+      "round": 2,
+      "seed": 26,
+      "theta": 0.0774274956365466
+    },
+    {
+      "active": true,
+      "family": "hartmann6",
+      "rho": 0.95,
+      "round": 3,
+      "seed": 26,
+      "theta": 0.0774274956365466
+    },
+    {
+      "active": true,
+      "family": "hartmann6",
+      "rho": 0.95,
+      "round": 4,
+      "seed": 26,
+      "theta": 0.0774274956365466
+    },
+    {
+      "active": true,
+      "family": "hartmann6",
+      "rho": 0.95,
+      "round": 1,
+      "seed": 27,
+      "theta": 0.0774274956365466
+    },
+    {
+      "active": true,
+      "family": "hartmann6",
+      "rho": 0.95,
+      "round": 2,
+      "seed": 27,
+      "theta": 0.0774274956365466
+    },
+    {
+      "active": true,
+      "family": "hartmann6",
+      "rho": 0.95,
+      "round": 3,
+      "seed": 27,
+      "theta": 0.0774274956365466
+    },
+    {
+      "active": true,
+      "family": "hartmann6",
+      "rho": 0.95,
+      "round": 4,
+      "seed": 27,
+      "theta": 0.0774274956365466
+    },
+    {
+      "active": false,
+      "family": "hartmann6",
+      "rho": 0.95,
+      "round": 1,
+      "seed": 28,
+      "theta": 0.0774274956365466
+    },
+    {
+      "active": true,
+      "family": "hartmann6",
+      "rho": 0.95,
+      "round": 2,
+      "seed": 28,
+      "theta": 0.0774274956365466
+    },
+    {
+      "active": true,
+      "family": "hartmann6",
+      "rho": 0.95,
+      "round": 3,
+      "seed": 28,
+      "theta": 0.0774274956365466
+    },
+    {
+      "active": true,
+      "family": "hartmann6",
+      "rho": 0.95,
+      "round": 4,
+      "seed": 28,
+      "theta": 0.0774274956365466
+    },
+    {
+      "active": false,
+      "family": "hartmann6",
+      "rho": 0.95,
+      "round": 1,
+      "seed": 29,
+      "theta": 0.0774274956365466
+    },
+    {
+      "active": true,
+      "family": "hartmann6",
+      "rho": 0.95,
+      "round": 2,
+      "seed": 29,
+      "theta": 0.0774274956365466
+    },
+    {
+      "active": true,
+      "family": "hartmann6",
+      "rho": 0.95,
+      "round": 3,
+      "seed": 29,
+      "theta": 0.0774274956365466
+    },
+    {
+      "active": true,
+      "family": "hartmann6",
+      "rho": 0.95,
+      "round": 4,
+      "seed": 29,
+      "theta": 0.0774274956365466
+    },
+    {
+      "active": true,
+      "family": "hartmann6",
+      "rho": 0.95,
+      "round": 1,
+      "seed": 30,
+      "theta": 0.0774274956365466
+    },
+    {
+      "active": true,
+      "family": "hartmann6",
+      "rho": 0.95,
+      "round": 2,
+      "seed": 30,
+      "theta": 0.0774274956365466
+    },
+    {
+      "active": true,
+      "family": "hartmann6",
+      "rho": 0.95,
+      "round": 3,
+      "seed": 30,
+      "theta": 0.0774274956365466
+    },
+    {
+      "active": true,
+      "family": "hartmann6",
+      "rho": 0.95,
+      "round": 4,
+      "seed": 30,
+      "theta": 0.0774274956365466
+    },
+    {
+      "active": true,
+      "family": "hartmann6",
+      "rho": 0.95,
+      "round": 1,
+      "seed": 31,
+      "theta": 0.0774274956365466
+    },
+    {
+      "active": true,
+      "family": "hartmann6",
+      "rho": 0.95,
+      "round": 2,
+      "seed": 31,
+      "theta": 0.0774274956365466
+    },
+    {
+      "active": true,
+      "family": "hartmann6",
+      "rho": 0.95,
+      "round": 3,
+      "seed": 31,
+      "theta": 0.0774274956365466
+    },
+    {
+      "active": true,
+      "family": "hartmann6",
+      "rho": 0.95,
+      "round": 4,
+      "seed": 31,
+      "theta": 0.0774274956365466
+    },
+    {
+      "active": false,
+      "family": "hill",
+      "rho": 0.95,
+      "round": 1,
+      "seed": 0,
+      "theta": 0.7596935218881214
+    },
+    {
+      "active": false,
+      "family": "hill",
+      "rho": 0.95,
+      "round": 2,
+      "seed": 0,
+      "theta": 0.7596935218881214
+    },
+    {
+      "active": true,
+      "family": "hill",
+      "rho": 0.95,
+      "round": 3,
+      "seed": 0,
+      "theta": 0.7596935218881214
+    },
+    {
+      "active": false,
+      "family": "hill",
+      "rho": 0.95,
+      "round": 4,
+      "seed": 0,
+      "theta": 0.7596935218881214
+    },
+    {
+      "active": false,
+      "family": "hill",
+      "rho": 0.95,
+      "round": 1,
+      "seed": 1,
+      "theta": 0.7509319172364075
+    },
+    {
+      "active": false,
+      "family": "hill",
+      "rho": 0.95,
+      "round": 2,
+      "seed": 1,
+      "theta": 0.7509319172364075
+    },
+    {
+      "active": false,
+      "family": "hill",
+      "rho": 0.95,
+      "round": 3,
+      "seed": 1,
+      "theta": 0.7509319172364075
+    },
+    {
+      "active": false,
+      "family": "hill",
+      "rho": 0.95,
+      "round": 4,
+      "seed": 1,
+      "theta": 0.7509319172364075
+    },
+    {
+      "active": false,
+      "family": "hill",
+      "rho": 0.95,
+      "round": 1,
+      "seed": 2,
+      "theta": 0.7326474478331538
+    },
+    {
+      "active": false,
+      "family": "hill",
+      "rho": 0.95,
+      "round": 2,
+      "seed": 2,
+      "theta": 0.7326474478331538
+    },
+    {
+      "active": false,
+      "family": "hill",
+      "rho": 0.95,
+      "round": 3,
+      "seed": 2,
+      "theta": 0.7326474478331538
+    },
+    {
+      "active": false,
+      "family": "hill",
+      "rho": 0.95,
+      "round": 4,
+      "seed": 2,
+      "theta": 0.7326474478331538
+    },
+    {
+      "active": false,
+      "family": "hill",
+      "rho": 0.95,
+      "round": 1,
+      "seed": 3,
+      "theta": 0.7491040462088874
+    },
+    {
+      "active": false,
+      "family": "hill",
+      "rho": 0.95,
+      "round": 2,
+      "seed": 3,
+      "theta": 0.7491040462088874
+    },
+    {
+      "active": false,
+      "family": "hill",
+      "rho": 0.95,
+      "round": 3,
+      "seed": 3,
+      "theta": 0.7491040462088874
+    },
+    {
+      "active": false,
+      "family": "hill",
+      "rho": 0.95,
+      "round": 4,
+      "seed": 3,
+      "theta": 0.7491040462088874
+    },
+    {
+      "active": false,
+      "family": "hill",
+      "rho": 0.95,
+      "round": 1,
+      "seed": 4,
+      "theta": 0.7671064105696146
+    },
+    {
+      "active": false,
+      "family": "hill",
+      "rho": 0.95,
+      "round": 2,
+      "seed": 4,
+      "theta": 0.7671064105696146
+    },
+    {
+      "active": false,
+      "family": "hill",
+      "rho": 0.95,
+      "round": 3,
+      "seed": 4,
+      "theta": 0.7671064105696146
+    },
+    {
+      "active": false,
+      "family": "hill",
+      "rho": 0.95,
+      "round": 4,
+      "seed": 4,
+      "theta": 0.7671064105696146
+    },
+    {
+      "active": false,
+      "family": "hill",
+      "rho": 0.95,
+      "round": 1,
+      "seed": 5,
+      "theta": 0.7586731312856477
+    },
+    {
+      "active": false,
+      "family": "hill",
+      "rho": 0.95,
+      "round": 2,
+      "seed": 5,
+      "theta": 0.7586731312856477
+    },
+    {
+      "active": false,
+      "family": "hill",
+      "rho": 0.95,
+      "round": 3,
+      "seed": 5,
+      "theta": 0.7586731312856477
+    },
+    {
+      "active": false,
+      "family": "hill",
+      "rho": 0.95,
+      "round": 4,
+      "seed": 5,
+      "theta": 0.7586731312856477
+    },
+    {
+      "active": false,
+      "family": "hill",
+      "rho": 0.95,
+      "round": 1,
+      "seed": 6,
+      "theta": 0.739707990576758
+    },
+    {
+      "active": false,
+      "family": "hill",
+      "rho": 0.95,
+      "round": 2,
+      "seed": 6,
+      "theta": 0.739707990576758
+    },
+    {
+      "active": false,
+      "family": "hill",
+      "rho": 0.95,
+      "round": 3,
+      "seed": 6,
+      "theta": 0.739707990576758
+    },
+    {
+      "active": false,
+      "family": "hill",
+      "rho": 0.95,
+      "round": 4,
+      "seed": 6,
+      "theta": 0.739707990576758
+    },
+    {
+      "active": false,
+      "family": "hill",
+      "rho": 0.95,
+      "round": 1,
+      "seed": 7,
+      "theta": 0.756209412637239
+    },
+    {
+      "active": false,
+      "family": "hill",
+      "rho": 0.95,
+      "round": 2,
+      "seed": 7,
+      "theta": 0.756209412637239
+    },
+    {
+      "active": false,
+      "family": "hill",
+      "rho": 0.95,
+      "round": 3,
+      "seed": 7,
+      "theta": 0.756209412637239
+    },
+    {
+      "active": false,
+      "family": "hill",
+      "rho": 0.95,
+      "round": 4,
+      "seed": 7,
+      "theta": 0.756209412637239
+    },
+    {
+      "active": false,
+      "family": "hill",
+      "rho": 0.95,
+      "round": 1,
+      "seed": 8,
+      "theta": 0.7556968252335625
+    },
+    {
+      "active": false,
+      "family": "hill",
+      "rho": 0.95,
+      "round": 2,
+      "seed": 8,
+      "theta": 0.7556968252335625
+    },
+    {
+      "active": false,
+      "family": "hill",
+      "rho": 0.95,
+      "round": 3,
+      "seed": 8,
+      "theta": 0.7556968252335625
+    },
+    {
+      "active": false,
+      "family": "hill",
+      "rho": 0.95,
+      "round": 4,
+      "seed": 8,
+      "theta": 0.7556968252335625
+    },
+    {
+      "active": false,
+      "family": "hill",
+      "rho": 0.95,
+      "round": 1,
+      "seed": 9,
+      "theta": 0.7171344454601752
+    },
+    {
+      "active": false,
+      "family": "hill",
+      "rho": 0.95,
+      "round": 2,
+      "seed": 9,
+      "theta": 0.7171344454601752
+    },
+    {
+      "active": false,
+      "family": "hill",
+      "rho": 0.95,
+      "round": 3,
+      "seed": 9,
+      "theta": 0.7171344454601752
+    },
+    {
+      "active": false,
+      "family": "hill",
+      "rho": 0.95,
+      "round": 4,
+      "seed": 9,
+      "theta": 0.7171344454601752
+    },
+    {
+      "active": false,
+      "family": "hill",
+      "rho": 0.95,
+      "round": 1,
+      "seed": 10,
+      "theta": 0.7489117855811436
+    },
+    {
+      "active": false,
+      "family": "hill",
+      "rho": 0.95,
+      "round": 2,
+      "seed": 10,
+      "theta": 0.7489117855811436
+    },
+    {
+      "active": false,
+      "family": "hill",
+      "rho": 0.95,
+      "round": 3,
+      "seed": 10,
+      "theta": 0.7489117855811436
+    },
+    {
+      "active": false,
+      "family": "hill",
+      "rho": 0.95,
+      "round": 4,
+      "seed": 10,
+      "theta": 0.7489117855811436
+    },
+    {
+      "active": false,
+      "family": "hill",
+      "rho": 0.95,
+      "round": 1,
+      "seed": 11,
+      "theta": 0.718227185859119
+    },
+    {
+      "active": false,
+      "family": "hill",
+      "rho": 0.95,
+      "round": 2,
+      "seed": 11,
+      "theta": 0.718227185859119
+    },
+    {
+      "active": false,
+      "family": "hill",
+      "rho": 0.95,
+      "round": 3,
+      "seed": 11,
+      "theta": 0.718227185859119
+    },
+    {
+      "active": true,
+      "family": "hill",
+      "rho": 0.95,
+      "round": 4,
+      "seed": 11,
+      "theta": 0.718227185859119
+    },
+    {
+      "active": false,
+      "family": "hill",
+      "rho": 0.95,
+      "round": 1,
+      "seed": 12,
+      "theta": 0.7601845964888995
+    },
+    {
+      "active": false,
+      "family": "hill",
+      "rho": 0.95,
+      "round": 2,
+      "seed": 12,
+      "theta": 0.7601845964888995
+    },
+    {
+      "active": false,
+      "family": "hill",
+      "rho": 0.95,
+      "round": 3,
+      "seed": 12,
+      "theta": 0.7601845964888995
+    },
+    {
+      "active": false,
+      "family": "hill",
+      "rho": 0.95,
+      "round": 4,
+      "seed": 12,
+      "theta": 0.7601845964888995
+    },
+    {
+      "active": false,
+      "family": "hill",
+      "rho": 0.95,
+      "round": 1,
+      "seed": 13,
+      "theta": 0.7562876373990287
+    },
+    {
+      "active": false,
+      "family": "hill",
+      "rho": 0.95,
+      "round": 2,
+      "seed": 13,
+      "theta": 0.7562876373990287
+    },
+    {
+      "active": false,
+      "family": "hill",
+      "rho": 0.95,
+      "round": 3,
+      "seed": 13,
+      "theta": 0.7562876373990287
+    },
+    {
+      "active": false,
+      "family": "hill",
+      "rho": 0.95,
+      "round": 4,
+      "seed": 13,
+      "theta": 0.7562876373990287
+    },
+    {
+      "active": false,
+      "family": "hill",
+      "rho": 0.95,
+      "round": 1,
+      "seed": 14,
+      "theta": 0.7246630959033876
+    },
+    {
+      "active": false,
+      "family": "hill",
+      "rho": 0.95,
+      "round": 2,
+      "seed": 14,
+      "theta": 0.7246630959033876
+    },
+    {
+      "active": false,
+      "family": "hill",
+      "rho": 0.95,
+      "round": 3,
+      "seed": 14,
+      "theta": 0.7246630959033876
+    },
+    {
+      "active": false,
+      "family": "hill",
+      "rho": 0.95,
+      "round": 4,
+      "seed": 14,
+      "theta": 0.7246630959033876
+    },
+    {
+      "active": false,
+      "family": "hill",
+      "rho": 0.95,
+      "round": 1,
+      "seed": 15,
+      "theta": 0.7503292075824749
+    },
+    {
+      "active": false,
+      "family": "hill",
+      "rho": 0.95,
+      "round": 2,
+      "seed": 15,
+      "theta": 0.7503292075824749
+    },
+    {
+      "active": false,
+      "family": "hill",
+      "rho": 0.95,
+      "round": 3,
+      "seed": 15,
+      "theta": 0.7503292075824749
+    },
+    {
+      "active": false,
+      "family": "hill",
+      "rho": 0.95,
+      "round": 4,
+      "seed": 15,
+      "theta": 0.7503292075824749
+    },
+    {
+      "active": false,
+      "family": "hill",
+      "rho": 0.95,
+      "round": 1,
+      "seed": 16,
+      "theta": 0.7367844663146975
+    },
+    {
+      "active": false,
+      "family": "hill",
+      "rho": 0.95,
+      "round": 2,
+      "seed": 16,
+      "theta": 0.7367844663146975
+    },
+    {
+      "active": false,
+      "family": "hill",
+      "rho": 0.95,
+      "round": 3,
+      "seed": 16,
+      "theta": 0.7367844663146975
+    },
+    {
+      "active": false,
+      "family": "hill",
+      "rho": 0.95,
+      "round": 4,
+      "seed": 16,
+      "theta": 0.7367844663146975
+    },
+    {
+      "active": false,
+      "family": "hill",
+      "rho": 0.95,
+      "round": 1,
+      "seed": 17,
+      "theta": 0.7424197643845919
+    },
+    {
+      "active": false,
+      "family": "hill",
+      "rho": 0.95,
+      "round": 2,
+      "seed": 17,
+      "theta": 0.7424197643845919
+    },
+    {
+      "active": false,
+      "family": "hill",
+      "rho": 0.95,
+      "round": 3,
+      "seed": 17,
+      "theta": 0.7424197643845919
+    },
+    {
+      "active": false,
+      "family": "hill",
+      "rho": 0.95,
+      "round": 4,
+      "seed": 17,
+      "theta": 0.7424197643845919
+    },
+    {
+      "active": false,
+      "family": "hill",
+      "rho": 0.95,
+      "round": 1,
+      "seed": 18,
+      "theta": 0.7492658879644402
+    },
+    {
+      "active": false,
+      "family": "hill",
+      "rho": 0.95,
+      "round": 2,
+      "seed": 18,
+      "theta": 0.7492658879644402
+    },
+    {
+      "active": true,
+      "family": "hill",
+      "rho": 0.95,
+      "round": 3,
+      "seed": 18,
+      "theta": 0.7492658879644402
+    },
+    {
+      "active": false,
+      "family": "hill",
+      "rho": 0.95,
+      "round": 4,
+      "seed": 18,
+      "theta": 0.7492658879644402
+    },
+    {
+      "active": false,
+      "family": "hill",
+      "rho": 0.95,
+      "round": 1,
+      "seed": 19,
+      "theta": 0.7422149111956894
+    },
+    {
+      "active": false,
+      "family": "hill",
+      "rho": 0.95,
+      "round": 2,
+      "seed": 19,
+      "theta": 0.7422149111956894
+    },
+    {
+      "active": false,
+      "family": "hill",
+      "rho": 0.95,
+      "round": 3,
+      "seed": 19,
+      "theta": 0.7422149111956894
+    },
+    {
+      "active": false,
+      "family": "hill",
+      "rho": 0.95,
+      "round": 4,
+      "seed": 19,
+      "theta": 0.7422149111956894
+    },
+    {
+      "active": false,
+      "family": "hill",
+      "rho": 0.95,
+      "round": 1,
+      "seed": 20,
+      "theta": 0.7379229364836002
+    },
+    {
+      "active": false,
+      "family": "hill",
+      "rho": 0.95,
+      "round": 2,
+      "seed": 20,
+      "theta": 0.7379229364836002
+    },
+    {
+      "active": false,
+      "family": "hill",
+      "rho": 0.95,
+      "round": 3,
+      "seed": 20,
+      "theta": 0.7379229364836002
+    },
+    {
+      "active": false,
+      "family": "hill",
+      "rho": 0.95,
+      "round": 4,
+      "seed": 20,
+      "theta": 0.7379229364836002
+    },
+    {
+      "active": false,
+      "family": "hill",
+      "rho": 0.95,
+      "round": 1,
+      "seed": 21,
+      "theta": 0.751481086159118
+    },
+    {
+      "active": false,
+      "family": "hill",
+      "rho": 0.95,
+      "round": 2,
+      "seed": 21,
+      "theta": 0.751481086159118
+    },
+    {
+      "active": false,
+      "family": "hill",
+      "rho": 0.95,
+      "round": 3,
+      "seed": 21,
+      "theta": 0.751481086159118
+    },
+    {
+      "active": false,
+      "family": "hill",
+      "rho": 0.95,
+      "round": 4,
+      "seed": 21,
+      "theta": 0.751481086159118
+    },
+    {
+      "active": false,
+      "family": "hill",
+      "rho": 0.95,
+      "round": 1,
+      "seed": 22,
+      "theta": 0.753417216549762
+    },
+    {
+      "active": false,
+      "family": "hill",
+      "rho": 0.95,
+      "round": 2,
+      "seed": 22,
+      "theta": 0.753417216549762
+    },
+    {
+      "active": false,
+      "family": "hill",
+      "rho": 0.95,
+      "round": 3,
+      "seed": 22,
+      "theta": 0.753417216549762
+    },
+    {
+      "active": false,
+      "family": "hill",
+      "rho": 0.95,
+      "round": 4,
+      "seed": 22,
+      "theta": 0.753417216549762
+    },
+    {
+      "active": false,
+      "family": "hill",
+      "rho": 0.95,
+      "round": 1,
+      "seed": 23,
+      "theta": 0.7324221643242179
+    },
+    {
+      "active": false,
+      "family": "hill",
+      "rho": 0.95,
+      "round": 2,
+      "seed": 23,
+      "theta": 0.7324221643242179
+    },
+    {
+      "active": false,
+      "family": "hill",
+      "rho": 0.95,
+      "round": 3,
+      "seed": 23,
+      "theta": 0.7324221643242179
+    },
+    {
+      "active": false,
+      "family": "hill",
+      "rho": 0.95,
+      "round": 4,
+      "seed": 23,
+      "theta": 0.7324221643242179
+    },
+    {
+      "active": false,
+      "family": "hill",
+      "rho": 0.95,
+      "round": 1,
+      "seed": 24,
+      "theta": 0.7541491500291617
+    },
+    {
+      "active": false,
+      "family": "hill",
+      "rho": 0.95,
+      "round": 2,
+      "seed": 24,
+      "theta": 0.7541491500291617
+    },
+    {
+      "active": false,
+      "family": "hill",
+      "rho": 0.95,
+      "round": 3,
+      "seed": 24,
+      "theta": 0.7541491500291617
+    },
+    {
+      "active": false,
+      "family": "hill",
+      "rho": 0.95,
+      "round": 4,
+      "seed": 24,
+      "theta": 0.7541491500291617
+    },
+    {
+      "active": false,
+      "family": "hill",
+      "rho": 0.95,
+      "round": 1,
+      "seed": 25,
+      "theta": 0.7405167170889386
+    },
+    {
+      "active": false,
+      "family": "hill",
+      "rho": 0.95,
+      "round": 2,
+      "seed": 25,
+      "theta": 0.7405167170889386
+    },
+    {
+      "active": true,
+      "family": "hill",
+      "rho": 0.95,
+      "round": 3,
+      "seed": 25,
+      "theta": 0.7405167170889386
+    },
+    {
+      "active": true,
+      "family": "hill",
+      "rho": 0.95,
+      "round": 4,
+      "seed": 25,
+      "theta": 0.7405167170889386
+    },
+    {
+      "active": false,
+      "family": "hill",
+      "rho": 0.95,
+      "round": 1,
+      "seed": 26,
+      "theta": 0.6982751432454544
+    },
+    {
+      "active": false,
+      "family": "hill",
+      "rho": 0.95,
+      "round": 2,
+      "seed": 26,
+      "theta": 0.6982751432454544
+    },
+    {
+      "active": false,
+      "family": "hill",
+      "rho": 0.95,
+      "round": 3,
+      "seed": 26,
+      "theta": 0.6982751432454544
+    },
+    {
+      "active": false,
+      "family": "hill",
+      "rho": 0.95,
+      "round": 4,
+      "seed": 26,
+      "theta": 0.6982751432454544
+    },
+    {
+      "active": false,
+      "family": "hill",
+      "rho": 0.95,
+      "round": 1,
+      "seed": 27,
+      "theta": 0.7380769575917194
+    },
+    {
+      "active": false,
+      "family": "hill",
+      "rho": 0.95,
+      "round": 2,
+      "seed": 27,
+      "theta": 0.7380769575917194
+    },
+    {
+      "active": true,
+      "family": "hill",
+      "rho": 0.95,
+      "round": 3,
+      "seed": 27,
+      "theta": 0.7380769575917194
+    },
+    {
+      "active": false,
+      "family": "hill",
+      "rho": 0.95,
+      "round": 4,
+      "seed": 27,
+      "theta": 0.7380769575917194
+    },
+    {
+      "active": false,
+      "family": "hill",
+      "rho": 0.95,
+      "round": 1,
+      "seed": 28,
+      "theta": 0.7215032302902027
+    },
+    {
+      "active": false,
+      "family": "hill",
+      "rho": 0.95,
+      "round": 2,
+      "seed": 28,
+      "theta": 0.7215032302902027
+    },
+    {
+      "active": false,
+      "family": "hill",
+      "rho": 0.95,
+      "round": 3,
+      "seed": 28,
+      "theta": 0.7215032302902027
+    },
+    {
+      "active": false,
+      "family": "hill",
+      "rho": 0.95,
+      "round": 4,
+      "seed": 28,
+      "theta": 0.7215032302902027
+    },
+    {
+      "active": false,
+      "family": "hill",
+      "rho": 0.95,
+      "round": 1,
+      "seed": 29,
+      "theta": 0.7378641125531274
+    },
+    {
+      "active": false,
+      "family": "hill",
+      "rho": 0.95,
+      "round": 2,
+      "seed": 29,
+      "theta": 0.7378641125531274
+    },
+    {
+      "active": false,
+      "family": "hill",
+      "rho": 0.95,
+      "round": 3,
+      "seed": 29,
+      "theta": 0.7378641125531274
+    },
+    {
+      "active": false,
+      "family": "hill",
+      "rho": 0.95,
+      "round": 4,
+      "seed": 29,
+      "theta": 0.7378641125531274
+    },
+    {
+      "active": false,
+      "family": "hill",
+      "rho": 0.95,
+      "round": 1,
+      "seed": 30,
+      "theta": 0.7751000059579142
+    },
+    {
+      "active": false,
+      "family": "hill",
+      "rho": 0.95,
+      "round": 2,
+      "seed": 30,
+      "theta": 0.7751000059579142
+    },
+    {
+      "active": false,
+      "family": "hill",
+      "rho": 0.95,
+      "round": 3,
+      "seed": 30,
+      "theta": 0.7751000059579142
+    },
+    {
+      "active": false,
+      "family": "hill",
+      "rho": 0.95,
+      "round": 4,
+      "seed": 30,
+      "theta": 0.7751000059579142
+    },
+    {
+      "active": false,
+      "family": "hill",
+      "rho": 0.95,
+      "round": 1,
+      "seed": 31,
+      "theta": 0.7379271283128023
+    },
+    {
+      "active": false,
+      "family": "hill",
+      "rho": 0.95,
+      "round": 2,
+      "seed": 31,
+      "theta": 0.7379271283128023
+    },
+    {
+      "active": false,
+      "family": "hill",
+      "rho": 0.95,
+      "round": 3,
+      "seed": 31,
+      "theta": 0.7379271283128023
+    },
+    {
+      "active": true,
+      "family": "hill",
+      "rho": 0.95,
+      "round": 4,
+      "seed": 31,
+      "theta": 0.7379271283128023
+    },
+    {
+      "active": false,
+      "family": "levy",
+      "rho": 0.95,
+      "round": 1,
+      "seed": 0,
+      "theta": 0.8309807139414986
+    },
+    {
+      "active": false,
+      "family": "levy",
+      "rho": 0.95,
+      "round": 2,
+      "seed": 0,
+      "theta": 0.8309807139414986
+    },
+    {
+      "active": false,
+      "family": "levy",
+      "rho": 0.95,
+      "round": 3,
+      "seed": 0,
+      "theta": 0.8309807139414986
+    },
+    {
+      "active": true,
+      "family": "levy",
+      "rho": 0.95,
+      "round": 4,
+      "seed": 0,
+      "theta": 0.8309807139414986
+    },
+    {
+      "active": false,
+      "family": "levy",
+      "rho": 0.95,
+      "round": 1,
+      "seed": 1,
+      "theta": 0.8309807139414986
+    },
+    {
+      "active": false,
+      "family": "levy",
+      "rho": 0.95,
+      "round": 2,
+      "seed": 1,
+      "theta": 0.8309807139414986
+    },
+    {
+      "active": false,
+      "family": "levy",
+      "rho": 0.95,
+      "round": 3,
+      "seed": 1,
+      "theta": 0.8309807139414986
+    },
+    {
+      "active": false,
+      "family": "levy",
+      "rho": 0.95,
+      "round": 4,
+      "seed": 1,
+      "theta": 0.8309807139414986
+    },
+    {
+      "active": false,
+      "family": "levy",
+      "rho": 0.95,
+      "round": 1,
+      "seed": 2,
+      "theta": 0.8309807139414986
+    },
+    {
+      "active": false,
+      "family": "levy",
+      "rho": 0.95,
+      "round": 2,
+      "seed": 2,
+      "theta": 0.8309807139414986
+    },
+    {
+      "active": false,
+      "family": "levy",
+      "rho": 0.95,
+      "round": 3,
+      "seed": 2,
+      "theta": 0.8309807139414986
+    },
+    {
+      "active": false,
+      "family": "levy",
+      "rho": 0.95,
+      "round": 4,
+      "seed": 2,
+      "theta": 0.8309807139414986
+    },
+    {
+      "active": false,
+      "family": "levy",
+      "rho": 0.95,
+      "round": 1,
+      "seed": 3,
+      "theta": 0.8309807139414986
+    },
+    {
+      "active": false,
+      "family": "levy",
+      "rho": 0.95,
+      "round": 2,
+      "seed": 3,
+      "theta": 0.8309807139414986
+    },
+    {
+      "active": false,
+      "family": "levy",
+      "rho": 0.95,
+      "round": 3,
+      "seed": 3,
+      "theta": 0.8309807139414986
+    },
+    {
+      "active": false,
+      "family": "levy",
+      "rho": 0.95,
+      "round": 4,
+      "seed": 3,
+      "theta": 0.8309807139414986
+    },
+    {
+      "active": false,
+      "family": "levy",
+      "rho": 0.95,
+      "round": 1,
+      "seed": 4,
+      "theta": 0.8309807139414986
+    },
+    {
+      "active": false,
+      "family": "levy",
+      "rho": 0.95,
+      "round": 2,
+      "seed": 4,
+      "theta": 0.8309807139414986
+    },
+    {
+      "active": false,
+      "family": "levy",
+      "rho": 0.95,
+      "round": 3,
+      "seed": 4,
+      "theta": 0.8309807139414986
+    },
+    {
+      "active": false,
+      "family": "levy",
+      "rho": 0.95,
+      "round": 4,
+      "seed": 4,
+      "theta": 0.8309807139414986
+    },
+    {
+      "active": false,
+      "family": "levy",
+      "rho": 0.95,
+      "round": 1,
+      "seed": 5,
+      "theta": 0.8309807139414986
+    },
+    {
+      "active": false,
+      "family": "levy",
+      "rho": 0.95,
+      "round": 2,
+      "seed": 5,
+      "theta": 0.8309807139414986
+    },
+    {
+      "active": false,
+      "family": "levy",
+      "rho": 0.95,
+      "round": 3,
+      "seed": 5,
+      "theta": 0.8309807139414986
+    },
+    {
+      "active": false,
+      "family": "levy",
+      "rho": 0.95,
+      "round": 4,
+      "seed": 5,
+      "theta": 0.8309807139414986
+    },
+    {
+      "active": false,
+      "family": "levy",
+      "rho": 0.95,
+      "round": 1,
+      "seed": 6,
+      "theta": 0.8309807139414986
+    },
+    {
+      "active": true,
+      "family": "levy",
+      "rho": 0.95,
+      "round": 2,
+      "seed": 6,
+      "theta": 0.8309807139414986
+    },
+    {
+      "active": false,
+      "family": "levy",
+      "rho": 0.95,
+      "round": 3,
+      "seed": 6,
+      "theta": 0.8309807139414986
+    },
+    {
+      "active": false,
+      "family": "levy",
+      "rho": 0.95,
+      "round": 4,
+      "seed": 6,
+      "theta": 0.8309807139414986
+    },
+    {
+      "active": false,
+      "family": "levy",
+      "rho": 0.95,
+      "round": 1,
+      "seed": 7,
+      "theta": 0.8309807139414986
+    },
+    {
+      "active": false,
+      "family": "levy",
+      "rho": 0.95,
+      "round": 2,
+      "seed": 7,
+      "theta": 0.8309807139414986
+    },
+    {
+      "active": false,
+      "family": "levy",
+      "rho": 0.95,
+      "round": 3,
+      "seed": 7,
+      "theta": 0.8309807139414986
+    },
+    {
+      "active": false,
+      "family": "levy",
+      "rho": 0.95,
+      "round": 4,
+      "seed": 7,
+      "theta": 0.8309807139414986
+    },
+    {
+      "active": false,
+      "family": "levy",
+      "rho": 0.95,
+      "round": 1,
+      "seed": 8,
+      "theta": 0.8309807139414986
+    },
+    {
+      "active": false,
+      "family": "levy",
+      "rho": 0.95,
+      "round": 2,
+      "seed": 8,
+      "theta": 0.8309807139414986
+    },
+    {
+      "active": false,
+      "family": "levy",
+      "rho": 0.95,
+      "round": 3,
+      "seed": 8,
+      "theta": 0.8309807139414986
+    },
+    {
+      "active": false,
+      "family": "levy",
+      "rho": 0.95,
+      "round": 4,
+      "seed": 8,
+      "theta": 0.8309807139414986
+    },
+    {
+      "active": false,
+      "family": "levy",
+      "rho": 0.95,
+      "round": 1,
+      "seed": 9,
+      "theta": 0.8309807139414986
+    },
+    {
+      "active": false,
+      "family": "levy",
+      "rho": 0.95,
+      "round": 2,
+      "seed": 9,
+      "theta": 0.8309807139414986
+    },
+    {
+      "active": false,
+      "family": "levy",
+      "rho": 0.95,
+      "round": 3,
+      "seed": 9,
+      "theta": 0.8309807139414986
+    },
+    {
+      "active": false,
+      "family": "levy",
+      "rho": 0.95,
+      "round": 4,
+      "seed": 9,
+      "theta": 0.8309807139414986
+    },
+    {
+      "active": false,
+      "family": "levy",
+      "rho": 0.95,
+      "round": 1,
+      "seed": 10,
+      "theta": 0.8309807139414986
+    },
+    {
+      "active": false,
+      "family": "levy",
+      "rho": 0.95,
+      "round": 2,
+      "seed": 10,
+      "theta": 0.8309807139414986
+    },
+    {
+      "active": false,
+      "family": "levy",
+      "rho": 0.95,
+      "round": 3,
+      "seed": 10,
+      "theta": 0.8309807139414986
+    },
+    {
+      "active": false,
+      "family": "levy",
+      "rho": 0.95,
+      "round": 4,
+      "seed": 10,
+      "theta": 0.8309807139414986
+    },
+    {
+      "active": false,
+      "family": "levy",
+      "rho": 0.95,
+      "round": 1,
+      "seed": 11,
+      "theta": 0.8309807139414986
+    },
+    {
+      "active": false,
+      "family": "levy",
+      "rho": 0.95,
+      "round": 2,
+      "seed": 11,
+      "theta": 0.8309807139414986
+    },
+    {
+      "active": false,
+      "family": "levy",
+      "rho": 0.95,
+      "round": 3,
+      "seed": 11,
+      "theta": 0.8309807139414986
+    },
+    {
+      "active": false,
+      "family": "levy",
+      "rho": 0.95,
+      "round": 4,
+      "seed": 11,
+      "theta": 0.8309807139414986
+    },
+    {
+      "active": false,
+      "family": "levy",
+      "rho": 0.95,
+      "round": 1,
+      "seed": 12,
+      "theta": 0.8309807139414986
+    },
+    {
+      "active": false,
+      "family": "levy",
+      "rho": 0.95,
+      "round": 2,
+      "seed": 12,
+      "theta": 0.8309807139414986
+    },
+    {
+      "active": false,
+      "family": "levy",
+      "rho": 0.95,
+      "round": 3,
+      "seed": 12,
+      "theta": 0.8309807139414986
+    },
+    {
+      "active": false,
+      "family": "levy",
+      "rho": 0.95,
+      "round": 4,
+      "seed": 12,
+      "theta": 0.8309807139414986
+    },
+    {
+      "active": false,
+      "family": "levy",
+      "rho": 0.95,
+      "round": 1,
+      "seed": 13,
+      "theta": 0.8309807139414986
+    },
+    {
+      "active": false,
+      "family": "levy",
+      "rho": 0.95,
+      "round": 2,
+      "seed": 13,
+      "theta": 0.8309807139414986
+    },
+    {
+      "active": false,
+      "family": "levy",
+      "rho": 0.95,
+      "round": 3,
+      "seed": 13,
+      "theta": 0.8309807139414986
+    },
+    {
+      "active": false,
+      "family": "levy",
+      "rho": 0.95,
+      "round": 4,
+      "seed": 13,
+      "theta": 0.8309807139414986
+    },
+    {
+      "active": false,
+      "family": "levy",
+      "rho": 0.95,
+      "round": 1,
+      "seed": 14,
+      "theta": 0.8309807139414986
+    },
+    {
+      "active": false,
+      "family": "levy",
+      "rho": 0.95,
+      "round": 2,
+      "seed": 14,
+      "theta": 0.8309807139414986
+    },
+    {
+      "active": false,
+      "family": "levy",
+      "rho": 0.95,
+      "round": 3,
+      "seed": 14,
+      "theta": 0.8309807139414986
+    },
+    {
+      "active": false,
+      "family": "levy",
+      "rho": 0.95,
+      "round": 4,
+      "seed": 14,
+      "theta": 0.8309807139414986
+    },
+    {
+      "active": false,
+      "family": "levy",
+      "rho": 0.95,
+      "round": 1,
+      "seed": 15,
+      "theta": 0.8309807139414986
+    },
+    {
+      "active": false,
+      "family": "levy",
+      "rho": 0.95,
+      "round": 2,
+      "seed": 15,
+      "theta": 0.8309807139414986
+    },
+    {
+      "active": false,
+      "family": "levy",
+      "rho": 0.95,
+      "round": 3,
+      "seed": 15,
+      "theta": 0.8309807139414986
+    },
+    {
+      "active": false,
+      "family": "levy",
+      "rho": 0.95,
+      "round": 4,
+      "seed": 15,
+      "theta": 0.8309807139414986
+    },
+    {
+      "active": false,
+      "family": "levy",
+      "rho": 0.95,
+      "round": 1,
+      "seed": 16,
+      "theta": 0.8309807139414986
+    },
+    {
+      "active": false,
+      "family": "levy",
+      "rho": 0.95,
+      "round": 2,
+      "seed": 16,
+      "theta": 0.8309807139414986
+    },
+    {
+      "active": false,
+      "family": "levy",
+      "rho": 0.95,
+      "round": 3,
+      "seed": 16,
+      "theta": 0.8309807139414986
+    },
+    {
+      "active": false,
+      "family": "levy",
+      "rho": 0.95,
+      "round": 4,
+      "seed": 16,
+      "theta": 0.8309807139414986
+    },
+    {
+      "active": false,
+      "family": "levy",
+      "rho": 0.95,
+      "round": 1,
+      "seed": 17,
+      "theta": 0.8309807139414986
+    },
+    {
+      "active": false,
+      "family": "levy",
+      "rho": 0.95,
+      "round": 2,
+      "seed": 17,
+      "theta": 0.8309807139414986
+    },
+    {
+      "active": false,
+      "family": "levy",
+      "rho": 0.95,
+      "round": 3,
+      "seed": 17,
+      "theta": 0.8309807139414986
+    },
+    {
+      "active": false,
+      "family": "levy",
+      "rho": 0.95,
+      "round": 4,
+      "seed": 17,
+      "theta": 0.8309807139414986
+    },
+    {
+      "active": false,
+      "family": "levy",
+      "rho": 0.95,
+      "round": 1,
+      "seed": 18,
+      "theta": 0.8309807139414986
+    },
+    {
+      "active": false,
+      "family": "levy",
+      "rho": 0.95,
+      "round": 2,
+      "seed": 18,
+      "theta": 0.8309807139414986
+    },
+    {
+      "active": false,
+      "family": "levy",
+      "rho": 0.95,
+      "round": 3,
+      "seed": 18,
+      "theta": 0.8309807139414986
+    },
+    {
+      "active": false,
+      "family": "levy",
+      "rho": 0.95,
+      "round": 4,
+      "seed": 18,
+      "theta": 0.8309807139414986
+    },
+    {
+      "active": false,
+      "family": "levy",
+      "rho": 0.95,
+      "round": 1,
+      "seed": 19,
+      "theta": 0.8309807139414986
+    },
+    {
+      "active": false,
+      "family": "levy",
+      "rho": 0.95,
+      "round": 2,
+      "seed": 19,
+      "theta": 0.8309807139414986
+    },
+    {
+      "active": false,
+      "family": "levy",
+      "rho": 0.95,
+      "round": 3,
+      "seed": 19,
+      "theta": 0.8309807139414986
+    },
+    {
+      "active": false,
+      "family": "levy",
+      "rho": 0.95,
+      "round": 4,
+      "seed": 19,
+      "theta": 0.8309807139414986
+    },
+    {
+      "active": false,
+      "family": "levy",
+      "rho": 0.95,
+      "round": 1,
+      "seed": 20,
+      "theta": 0.8309807139414986
+    },
+    {
+      "active": false,
+      "family": "levy",
+      "rho": 0.95,
+      "round": 2,
+      "seed": 20,
+      "theta": 0.8309807139414986
+    },
+    {
+      "active": false,
+      "family": "levy",
+      "rho": 0.95,
+      "round": 3,
+      "seed": 20,
+      "theta": 0.8309807139414986
+    },
+    {
+      "active": false,
+      "family": "levy",
+      "rho": 0.95,
+      "round": 4,
+      "seed": 20,
+      "theta": 0.8309807139414986
+    },
+    {
+      "active": false,
+      "family": "levy",
+      "rho": 0.95,
+      "round": 1,
+      "seed": 21,
+      "theta": 0.8309807139414986
+    },
+    {
+      "active": false,
+      "family": "levy",
+      "rho": 0.95,
+      "round": 2,
+      "seed": 21,
+      "theta": 0.8309807139414986
+    },
+    {
+      "active": false,
+      "family": "levy",
+      "rho": 0.95,
+      "round": 3,
+      "seed": 21,
+      "theta": 0.8309807139414986
+    },
+    {
+      "active": false,
+      "family": "levy",
+      "rho": 0.95,
+      "round": 4,
+      "seed": 21,
+      "theta": 0.8309807139414986
+    },
+    {
+      "active": false,
+      "family": "levy",
+      "rho": 0.95,
+      "round": 1,
+      "seed": 22,
+      "theta": 0.8309807139414986
+    },
+    {
+      "active": false,
+      "family": "levy",
+      "rho": 0.95,
+      "round": 2,
+      "seed": 22,
+      "theta": 0.8309807139414986
+    },
+    {
+      "active": false,
+      "family": "levy",
+      "rho": 0.95,
+      "round": 3,
+      "seed": 22,
+      "theta": 0.8309807139414986
+    },
+    {
+      "active": false,
+      "family": "levy",
+      "rho": 0.95,
+      "round": 4,
+      "seed": 22,
+      "theta": 0.8309807139414986
+    },
+    {
+      "active": false,
+      "family": "levy",
+      "rho": 0.95,
+      "round": 1,
+      "seed": 23,
+      "theta": 0.8309807139414986
+    },
+    {
+      "active": false,
+      "family": "levy",
+      "rho": 0.95,
+      "round": 2,
+      "seed": 23,
+      "theta": 0.8309807139414986
+    },
+    {
+      "active": false,
+      "family": "levy",
+      "rho": 0.95,
+      "round": 3,
+      "seed": 23,
+      "theta": 0.8309807139414986
+    },
+    {
+      "active": false,
+      "family": "levy",
+      "rho": 0.95,
+      "round": 4,
+      "seed": 23,
+      "theta": 0.8309807139414986
+    },
+    {
+      "active": false,
+      "family": "levy",
+      "rho": 0.95,
+      "round": 1,
+      "seed": 24,
+      "theta": 0.8309807139414986
+    },
+    {
+      "active": false,
+      "family": "levy",
+      "rho": 0.95,
+      "round": 2,
+      "seed": 24,
+      "theta": 0.8309807139414986
+    },
+    {
+      "active": false,
+      "family": "levy",
+      "rho": 0.95,
+      "round": 3,
+      "seed": 24,
+      "theta": 0.8309807139414986
+    },
+    {
+      "active": false,
+      "family": "levy",
+      "rho": 0.95,
+      "round": 4,
+      "seed": 24,
+      "theta": 0.8309807139414986
+    },
+    {
+      "active": false,
+      "family": "levy",
+      "rho": 0.95,
+      "round": 1,
+      "seed": 25,
+      "theta": 0.8309807139414986
+    },
+    {
+      "active": false,
+      "family": "levy",
+      "rho": 0.95,
+      "round": 2,
+      "seed": 25,
+      "theta": 0.8309807139414986
+    },
+    {
+      "active": true,
+      "family": "levy",
+      "rho": 0.95,
+      "round": 3,
+      "seed": 25,
+      "theta": 0.8309807139414986
+    },
+    {
+      "active": false,
+      "family": "levy",
+      "rho": 0.95,
+      "round": 4,
+      "seed": 25,
+      "theta": 0.8309807139414986
+    },
+    {
+      "active": false,
+      "family": "levy",
+      "rho": 0.95,
+      "round": 1,
+      "seed": 26,
+      "theta": 0.8309807139414986
+    },
+    {
+      "active": false,
+      "family": "levy",
+      "rho": 0.95,
+      "round": 2,
+      "seed": 26,
+      "theta": 0.8309807139414986
+    },
+    {
+      "active": false,
+      "family": "levy",
+      "rho": 0.95,
+      "round": 3,
+      "seed": 26,
+      "theta": 0.8309807139414986
+    },
+    {
+      "active": false,
+      "family": "levy",
+      "rho": 0.95,
+      "round": 4,
+      "seed": 26,
+      "theta": 0.8309807139414986
+    },
+    {
+      "active": false,
+      "family": "levy",
+      "rho": 0.95,
+      "round": 1,
+      "seed": 27,
+      "theta": 0.8309807139414986
+    },
+    {
+      "active": false,
+      "family": "levy",
+      "rho": 0.95,
+      "round": 2,
+      "seed": 27,
+      "theta": 0.8309807139414986
+    },
+    {
+      "active": false,
+      "family": "levy",
+      "rho": 0.95,
+      "round": 3,
+      "seed": 27,
+      "theta": 0.8309807139414986
+    },
+    {
+      "active": false,
+      "family": "levy",
+      "rho": 0.95,
+      "round": 4,
+      "seed": 27,
+      "theta": 0.8309807139414986
+    },
+    {
+      "active": false,
+      "family": "levy",
+      "rho": 0.95,
+      "round": 1,
+      "seed": 28,
+      "theta": 0.8309807139414986
+    },
+    {
+      "active": false,
+      "family": "levy",
+      "rho": 0.95,
+      "round": 2,
+      "seed": 28,
+      "theta": 0.8309807139414986
+    },
+    {
+      "active": false,
+      "family": "levy",
+      "rho": 0.95,
+      "round": 3,
+      "seed": 28,
+      "theta": 0.8309807139414986
+    },
+    {
+      "active": false,
+      "family": "levy",
+      "rho": 0.95,
+      "round": 4,
+      "seed": 28,
+      "theta": 0.8309807139414986
+    },
+    {
+      "active": false,
+      "family": "levy",
+      "rho": 0.95,
+      "round": 1,
+      "seed": 29,
+      "theta": 0.8309807139414986
+    },
+    {
+      "active": false,
+      "family": "levy",
+      "rho": 0.95,
+      "round": 2,
+      "seed": 29,
+      "theta": 0.8309807139414986
+    },
+    {
+      "active": false,
+      "family": "levy",
+      "rho": 0.95,
+      "round": 3,
+      "seed": 29,
+      "theta": 0.8309807139414986
+    },
+    {
+      "active": true,
+      "family": "levy",
+      "rho": 0.95,
+      "round": 4,
+      "seed": 29,
+      "theta": 0.8309807139414986
+    },
+    {
+      "active": false,
+      "family": "levy",
+      "rho": 0.95,
+      "round": 1,
+      "seed": 30,
+      "theta": 0.8309807139414986
+    },
+    {
+      "active": false,
+      "family": "levy",
+      "rho": 0.95,
+      "round": 2,
+      "seed": 30,
+      "theta": 0.8309807139414986
+    },
+    {
+      "active": false,
+      "family": "levy",
+      "rho": 0.95,
+      "round": 3,
+      "seed": 30,
+      "theta": 0.8309807139414986
+    },
+    {
+      "active": false,
+      "family": "levy",
+      "rho": 0.95,
+      "round": 4,
+      "seed": 30,
+      "theta": 0.8309807139414986
+    },
+    {
+      "active": false,
+      "family": "levy",
+      "rho": 0.95,
+      "round": 1,
+      "seed": 31,
+      "theta": 0.8309807139414986
+    },
+    {
+      "active": false,
+      "family": "levy",
+      "rho": 0.95,
+      "round": 2,
+      "seed": 31,
+      "theta": 0.8309807139414986
+    },
+    {
+      "active": false,
+      "family": "levy",
+      "rho": 0.95,
+      "round": 3,
+      "seed": 31,
+      "theta": 0.8309807139414986
+    },
+    {
+      "active": false,
+      "family": "levy",
+      "rho": 0.95,
+      "round": 4,
+      "seed": 31,
+      "theta": 0.8309807139414986
+    },
+    {
+      "active": false,
+      "family": "rosenbrock",
+      "rho": 0.95,
+      "round": 1,
+      "seed": 0,
+      "theta": 0.9006450186990833
+    },
+    {
+      "active": false,
+      "family": "rosenbrock",
+      "rho": 0.95,
+      "round": 2,
+      "seed": 0,
+      "theta": 0.9006450186990833
+    },
+    {
+      "active": false,
+      "family": "rosenbrock",
+      "rho": 0.95,
+      "round": 3,
+      "seed": 0,
+      "theta": 0.9006450186990833
+    },
+    {
+      "active": false,
+      "family": "rosenbrock",
+      "rho": 0.95,
+      "round": 4,
+      "seed": 0,
+      "theta": 0.9006450186990833
+    },
+    {
+      "active": false,
+      "family": "rosenbrock",
+      "rho": 0.95,
+      "round": 1,
+      "seed": 1,
+      "theta": 0.9006450186990833
+    },
+    {
+      "active": false,
+      "family": "rosenbrock",
+      "rho": 0.95,
+      "round": 2,
+      "seed": 1,
+      "theta": 0.9006450186990833
+    },
+    {
+      "active": false,
+      "family": "rosenbrock",
+      "rho": 0.95,
+      "round": 3,
+      "seed": 1,
+      "theta": 0.9006450186990833
+    },
+    {
+      "active": false,
+      "family": "rosenbrock",
+      "rho": 0.95,
+      "round": 4,
+      "seed": 1,
+      "theta": 0.9006450186990833
+    },
+    {
+      "active": false,
+      "family": "rosenbrock",
+      "rho": 0.95,
+      "round": 1,
+      "seed": 2,
+      "theta": 0.9006450186990833
+    },
+    {
+      "active": false,
+      "family": "rosenbrock",
+      "rho": 0.95,
+      "round": 2,
+      "seed": 2,
+      "theta": 0.9006450186990833
+    },
+    {
+      "active": false,
+      "family": "rosenbrock",
+      "rho": 0.95,
+      "round": 3,
+      "seed": 2,
+      "theta": 0.9006450186990833
+    },
+    {
+      "active": false,
+      "family": "rosenbrock",
+      "rho": 0.95,
+      "round": 4,
+      "seed": 2,
+      "theta": 0.9006450186990833
+    },
+    {
+      "active": false,
+      "family": "rosenbrock",
+      "rho": 0.95,
+      "round": 1,
+      "seed": 3,
+      "theta": 0.9006450186990833
+    },
+    {
+      "active": false,
+      "family": "rosenbrock",
+      "rho": 0.95,
+      "round": 2,
+      "seed": 3,
+      "theta": 0.9006450186990833
+    },
+    {
+      "active": false,
+      "family": "rosenbrock",
+      "rho": 0.95,
+      "round": 3,
+      "seed": 3,
+      "theta": 0.9006450186990833
+    },
+    {
+      "active": false,
+      "family": "rosenbrock",
+      "rho": 0.95,
+      "round": 4,
+      "seed": 3,
+      "theta": 0.9006450186990833
+    },
+    {
+      "active": false,
+      "family": "rosenbrock",
+      "rho": 0.95,
+      "round": 1,
+      "seed": 4,
+      "theta": 0.9006450186990833
+    },
+    {
+      "active": false,
+      "family": "rosenbrock",
+      "rho": 0.95,
+      "round": 2,
+      "seed": 4,
+      "theta": 0.9006450186990833
+    },
+    {
+      "active": false,
+      "family": "rosenbrock",
+      "rho": 0.95,
+      "round": 3,
+      "seed": 4,
+      "theta": 0.9006450186990833
+    },
+    {
+      "active": false,
+      "family": "rosenbrock",
+      "rho": 0.95,
+      "round": 4,
+      "seed": 4,
+      "theta": 0.9006450186990833
+    },
+    {
+      "active": false,
+      "family": "rosenbrock",
+      "rho": 0.95,
+      "round": 1,
+      "seed": 5,
+      "theta": 0.9006450186990833
+    },
+    {
+      "active": false,
+      "family": "rosenbrock",
+      "rho": 0.95,
+      "round": 2,
+      "seed": 5,
+      "theta": 0.9006450186990833
+    },
+    {
+      "active": false,
+      "family": "rosenbrock",
+      "rho": 0.95,
+      "round": 3,
+      "seed": 5,
+      "theta": 0.9006450186990833
+    },
+    {
+      "active": false,
+      "family": "rosenbrock",
+      "rho": 0.95,
+      "round": 4,
+      "seed": 5,
+      "theta": 0.9006450186990833
+    },
+    {
+      "active": false,
+      "family": "rosenbrock",
+      "rho": 0.95,
+      "round": 1,
+      "seed": 6,
+      "theta": 0.9006450186990833
+    },
+    {
+      "active": false,
+      "family": "rosenbrock",
+      "rho": 0.95,
+      "round": 2,
+      "seed": 6,
+      "theta": 0.9006450186990833
+    },
+    {
+      "active": false,
+      "family": "rosenbrock",
+      "rho": 0.95,
+      "round": 3,
+      "seed": 6,
+      "theta": 0.9006450186990833
+    },
+    {
+      "active": false,
+      "family": "rosenbrock",
+      "rho": 0.95,
+      "round": 4,
+      "seed": 6,
+      "theta": 0.9006450186990833
+    },
+    {
+      "active": false,
+      "family": "rosenbrock",
+      "rho": 0.95,
+      "round": 1,
+      "seed": 7,
+      "theta": 0.9006450186990833
+    },
+    {
+      "active": false,
+      "family": "rosenbrock",
+      "rho": 0.95,
+      "round": 2,
+      "seed": 7,
+      "theta": 0.9006450186990833
+    },
+    {
+      "active": false,
+      "family": "rosenbrock",
+      "rho": 0.95,
+      "round": 3,
+      "seed": 7,
+      "theta": 0.9006450186990833
+    },
+    {
+      "active": false,
+      "family": "rosenbrock",
+      "rho": 0.95,
+      "round": 4,
+      "seed": 7,
+      "theta": 0.9006450186990833
+    },
+    {
+      "active": false,
+      "family": "rosenbrock",
+      "rho": 0.95,
+      "round": 1,
+      "seed": 8,
+      "theta": 0.9006450186990833
+    },
+    {
+      "active": false,
+      "family": "rosenbrock",
+      "rho": 0.95,
+      "round": 2,
+      "seed": 8,
+      "theta": 0.9006450186990833
+    },
+    {
+      "active": false,
+      "family": "rosenbrock",
+      "rho": 0.95,
+      "round": 3,
+      "seed": 8,
+      "theta": 0.9006450186990833
+    },
+    {
+      "active": false,
+      "family": "rosenbrock",
+      "rho": 0.95,
+      "round": 4,
+      "seed": 8,
+      "theta": 0.9006450186990833
+    },
+    {
+      "active": false,
+      "family": "rosenbrock",
+      "rho": 0.95,
+      "round": 1,
+      "seed": 9,
+      "theta": 0.9006450186990833
+    },
+    {
+      "active": false,
+      "family": "rosenbrock",
+      "rho": 0.95,
+      "round": 2,
+      "seed": 9,
+      "theta": 0.9006450186990833
+    },
+    {
+      "active": false,
+      "family": "rosenbrock",
+      "rho": 0.95,
+      "round": 3,
+      "seed": 9,
+      "theta": 0.9006450186990833
+    },
+    {
+      "active": false,
+      "family": "rosenbrock",
+      "rho": 0.95,
+      "round": 4,
+      "seed": 9,
+      "theta": 0.9006450186990833
+    },
+    {
+      "active": false,
+      "family": "rosenbrock",
+      "rho": 0.95,
+      "round": 1,
+      "seed": 10,
+      "theta": 0.9006450186990833
+    },
+    {
+      "active": false,
+      "family": "rosenbrock",
+      "rho": 0.95,
+      "round": 2,
+      "seed": 10,
+      "theta": 0.9006450186990833
+    },
+    {
+      "active": false,
+      "family": "rosenbrock",
+      "rho": 0.95,
+      "round": 3,
+      "seed": 10,
+      "theta": 0.9006450186990833
+    },
+    {
+      "active": false,
+      "family": "rosenbrock",
+      "rho": 0.95,
+      "round": 4,
+      "seed": 10,
+      "theta": 0.9006450186990833
+    },
+    {
+      "active": false,
+      "family": "rosenbrock",
+      "rho": 0.95,
+      "round": 1,
+      "seed": 11,
+      "theta": 0.9006450186990833
+    },
+    {
+      "active": false,
+      "family": "rosenbrock",
+      "rho": 0.95,
+      "round": 2,
+      "seed": 11,
+      "theta": 0.9006450186990833
+    },
+    {
+      "active": false,
+      "family": "rosenbrock",
+      "rho": 0.95,
+      "round": 3,
+      "seed": 11,
+      "theta": 0.9006450186990833
+    },
+    {
+      "active": false,
+      "family": "rosenbrock",
+      "rho": 0.95,
+      "round": 4,
+      "seed": 11,
+      "theta": 0.9006450186990833
+    },
+    {
+      "active": false,
+      "family": "rosenbrock",
+      "rho": 0.95,
+      "round": 1,
+      "seed": 12,
+      "theta": 0.9006450186990833
+    },
+    {
+      "active": false,
+      "family": "rosenbrock",
+      "rho": 0.95,
+      "round": 2,
+      "seed": 12,
+      "theta": 0.9006450186990833
+    },
+    {
+      "active": false,
+      "family": "rosenbrock",
+      "rho": 0.95,
+      "round": 3,
+      "seed": 12,
+      "theta": 0.9006450186990833
+    },
+    {
+      "active": false,
+      "family": "rosenbrock",
+      "rho": 0.95,
+      "round": 4,
+      "seed": 12,
+      "theta": 0.9006450186990833
+    },
+    {
+      "active": false,
+      "family": "rosenbrock",
+      "rho": 0.95,
+      "round": 1,
+      "seed": 13,
+      "theta": 0.9006450186990833
+    },
+    {
+      "active": false,
+      "family": "rosenbrock",
+      "rho": 0.95,
+      "round": 2,
+      "seed": 13,
+      "theta": 0.9006450186990833
+    },
+    {
+      "active": false,
+      "family": "rosenbrock",
+      "rho": 0.95,
+      "round": 3,
+      "seed": 13,
+      "theta": 0.9006450186990833
+    },
+    {
+      "active": false,
+      "family": "rosenbrock",
+      "rho": 0.95,
+      "round": 4,
+      "seed": 13,
+      "theta": 0.9006450186990833
+    },
+    {
+      "active": false,
+      "family": "rosenbrock",
+      "rho": 0.95,
+      "round": 1,
+      "seed": 14,
+      "theta": 0.9006450186990833
+    },
+    {
+      "active": false,
+      "family": "rosenbrock",
+      "rho": 0.95,
+      "round": 2,
+      "seed": 14,
+      "theta": 0.9006450186990833
+    },
+    {
+      "active": false,
+      "family": "rosenbrock",
+      "rho": 0.95,
+      "round": 3,
+      "seed": 14,
+      "theta": 0.9006450186990833
+    },
+    {
+      "active": false,
+      "family": "rosenbrock",
+      "rho": 0.95,
+      "round": 4,
+      "seed": 14,
+      "theta": 0.9006450186990833
+    },
+    {
+      "active": false,
+      "family": "rosenbrock",
+      "rho": 0.95,
+      "round": 1,
+      "seed": 15,
+      "theta": 0.9006450186990833
+    },
+    {
+      "active": false,
+      "family": "rosenbrock",
+      "rho": 0.95,
+      "round": 2,
+      "seed": 15,
+      "theta": 0.9006450186990833
+    },
+    {
+      "active": false,
+      "family": "rosenbrock",
+      "rho": 0.95,
+      "round": 3,
+      "seed": 15,
+      "theta": 0.9006450186990833
+    },
+    {
+      "active": false,
+      "family": "rosenbrock",
+      "rho": 0.95,
+      "round": 4,
+      "seed": 15,
+      "theta": 0.9006450186990833
+    },
+    {
+      "active": false,
+      "family": "rosenbrock",
+      "rho": 0.95,
+      "round": 1,
+      "seed": 16,
+      "theta": 0.9006450186990833
+    },
+    {
+      "active": false,
+      "family": "rosenbrock",
+      "rho": 0.95,
+      "round": 2,
+      "seed": 16,
+      "theta": 0.9006450186990833
+    },
+    {
+      "active": false,
+      "family": "rosenbrock",
+      "rho": 0.95,
+      "round": 3,
+      "seed": 16,
+      "theta": 0.9006450186990833
+    },
+    {
+      "active": false,
+      "family": "rosenbrock",
+      "rho": 0.95,
+      "round": 4,
+      "seed": 16,
+      "theta": 0.9006450186990833
+    },
+    {
+      "active": false,
+      "family": "rosenbrock",
+      "rho": 0.95,
+      "round": 1,
+      "seed": 17,
+      "theta": 0.9006450186990833
+    },
+    {
+      "active": false,
+      "family": "rosenbrock",
+      "rho": 0.95,
+      "round": 2,
+      "seed": 17,
+      "theta": 0.9006450186990833
+    },
+    {
+      "active": false,
+      "family": "rosenbrock",
+      "rho": 0.95,
+      "round": 3,
+      "seed": 17,
+      "theta": 0.9006450186990833
+    },
+    {
+      "active": false,
+      "family": "rosenbrock",
+      "rho": 0.95,
+      "round": 4,
+      "seed": 17,
+      "theta": 0.9006450186990833
+    },
+    {
+      "active": false,
+      "family": "rosenbrock",
+      "rho": 0.95,
+      "round": 1,
+      "seed": 18,
+      "theta": 0.9006450186990833
+    },
+    {
+      "active": false,
+      "family": "rosenbrock",
+      "rho": 0.95,
+      "round": 2,
+      "seed": 18,
+      "theta": 0.9006450186990833
+    },
+    {
+      "active": false,
+      "family": "rosenbrock",
+      "rho": 0.95,
+      "round": 3,
+      "seed": 18,
+      "theta": 0.9006450186990833
+    },
+    {
+      "active": false,
+      "family": "rosenbrock",
+      "rho": 0.95,
+      "round": 4,
+      "seed": 18,
+      "theta": 0.9006450186990833
+    },
+    {
+      "active": false,
+      "family": "rosenbrock",
+      "rho": 0.95,
+      "round": 1,
+      "seed": 19,
+      "theta": 0.9006450186990833
+    },
+    {
+      "active": false,
+      "family": "rosenbrock",
+      "rho": 0.95,
+      "round": 2,
+      "seed": 19,
+      "theta": 0.9006450186990833
+    },
+    {
+      "active": false,
+      "family": "rosenbrock",
+      "rho": 0.95,
+      "round": 3,
+      "seed": 19,
+      "theta": 0.9006450186990833
+    },
+    {
+      "active": false,
+      "family": "rosenbrock",
+      "rho": 0.95,
+      "round": 4,
+      "seed": 19,
+      "theta": 0.9006450186990833
+    },
+    {
+      "active": false,
+      "family": "rosenbrock",
+      "rho": 0.95,
+      "round": 1,
+      "seed": 20,
+      "theta": 0.9006450186990833
+    },
+    {
+      "active": false,
+      "family": "rosenbrock",
+      "rho": 0.95,
+      "round": 2,
+      "seed": 20,
+      "theta": 0.9006450186990833
+    },
+    {
+      "active": false,
+      "family": "rosenbrock",
+      "rho": 0.95,
+      "round": 3,
+      "seed": 20,
+      "theta": 0.9006450186990833
+    },
+    {
+      "active": false,
+      "family": "rosenbrock",
+      "rho": 0.95,
+      "round": 4,
+      "seed": 20,
+      "theta": 0.9006450186990833
+    },
+    {
+      "active": false,
+      "family": "rosenbrock",
+      "rho": 0.95,
+      "round": 1,
+      "seed": 21,
+      "theta": 0.9006450186990833
+    },
+    {
+      "active": false,
+      "family": "rosenbrock",
+      "rho": 0.95,
+      "round": 2,
+      "seed": 21,
+      "theta": 0.9006450186990833
+    },
+    {
+      "active": false,
+      "family": "rosenbrock",
+      "rho": 0.95,
+      "round": 3,
+      "seed": 21,
+      "theta": 0.9006450186990833
+    },
+    {
+      "active": false,
+      "family": "rosenbrock",
+      "rho": 0.95,
+      "round": 4,
+      "seed": 21,
+      "theta": 0.9006450186990833
+    },
+    {
+      "active": false,
+      "family": "rosenbrock",
+      "rho": 0.95,
+      "round": 1,
+      "seed": 22,
+      "theta": 0.9006450186990833
+    },
+    {
+      "active": false,
+      "family": "rosenbrock",
+      "rho": 0.95,
+      "round": 2,
+      "seed": 22,
+      "theta": 0.9006450186990833
+    },
+    {
+      "active": false,
+      "family": "rosenbrock",
+      "rho": 0.95,
+      "round": 3,
+      "seed": 22,
+      "theta": 0.9006450186990833
+    },
+    {
+      "active": false,
+      "family": "rosenbrock",
+      "rho": 0.95,
+      "round": 4,
+      "seed": 22,
+      "theta": 0.9006450186990833
+    },
+    {
+      "active": false,
+      "family": "rosenbrock",
+      "rho": 0.95,
+      "round": 1,
+      "seed": 23,
+      "theta": 0.9006450186990833
+    },
+    {
+      "active": false,
+      "family": "rosenbrock",
+      "rho": 0.95,
+      "round": 2,
+      "seed": 23,
+      "theta": 0.9006450186990833
+    },
+    {
+      "active": false,
+      "family": "rosenbrock",
+      "rho": 0.95,
+      "round": 3,
+      "seed": 23,
+      "theta": 0.9006450186990833
+    },
+    {
+      "active": false,
+      "family": "rosenbrock",
+      "rho": 0.95,
+      "round": 4,
+      "seed": 23,
+      "theta": 0.9006450186990833
+    },
+    {
+      "active": false,
+      "family": "rosenbrock",
+      "rho": 0.95,
+      "round": 1,
+      "seed": 24,
+      "theta": 0.9006450186990833
+    },
+    {
+      "active": false,
+      "family": "rosenbrock",
+      "rho": 0.95,
+      "round": 2,
+      "seed": 24,
+      "theta": 0.9006450186990833
+    },
+    {
+      "active": false,
+      "family": "rosenbrock",
+      "rho": 0.95,
+      "round": 3,
+      "seed": 24,
+      "theta": 0.9006450186990833
+    },
+    {
+      "active": false,
+      "family": "rosenbrock",
+      "rho": 0.95,
+      "round": 4,
+      "seed": 24,
+      "theta": 0.9006450186990833
+    },
+    {
+      "active": false,
+      "family": "rosenbrock",
+      "rho": 0.95,
+      "round": 1,
+      "seed": 25,
+      "theta": 0.9006450186990833
+    },
+    {
+      "active": false,
+      "family": "rosenbrock",
+      "rho": 0.95,
+      "round": 2,
+      "seed": 25,
+      "theta": 0.9006450186990833
+    },
+    {
+      "active": true,
+      "family": "rosenbrock",
+      "rho": 0.95,
+      "round": 3,
+      "seed": 25,
+      "theta": 0.9006450186990833
+    },
+    {
+      "active": false,
+      "family": "rosenbrock",
+      "rho": 0.95,
+      "round": 4,
+      "seed": 25,
+      "theta": 0.9006450186990833
+    },
+    {
+      "active": false,
+      "family": "rosenbrock",
+      "rho": 0.95,
+      "round": 1,
+      "seed": 26,
+      "theta": 0.9006450186990833
+    },
+    {
+      "active": false,
+      "family": "rosenbrock",
+      "rho": 0.95,
+      "round": 2,
+      "seed": 26,
+      "theta": 0.9006450186990833
+    },
+    {
+      "active": false,
+      "family": "rosenbrock",
+      "rho": 0.95,
+      "round": 3,
+      "seed": 26,
+      "theta": 0.9006450186990833
+    },
+    {
+      "active": false,
+      "family": "rosenbrock",
+      "rho": 0.95,
+      "round": 4,
+      "seed": 26,
+      "theta": 0.9006450186990833
+    },
+    {
+      "active": false,
+      "family": "rosenbrock",
+      "rho": 0.95,
+      "round": 1,
+      "seed": 27,
+      "theta": 0.9006450186990833
+    },
+    {
+      "active": false,
+      "family": "rosenbrock",
+      "rho": 0.95,
+      "round": 2,
+      "seed": 27,
+      "theta": 0.9006450186990833
+    },
+    {
+      "active": false,
+      "family": "rosenbrock",
+      "rho": 0.95,
+      "round": 3,
+      "seed": 27,
+      "theta": 0.9006450186990833
+    },
+    {
+      "active": false,
+      "family": "rosenbrock",
+      "rho": 0.95,
+      "round": 4,
+      "seed": 27,
+      "theta": 0.9006450186990833
+    },
+    {
+      "active": false,
+      "family": "rosenbrock",
+      "rho": 0.95,
+      "round": 1,
+      "seed": 28,
+      "theta": 0.9006450186990833
+    },
+    {
+      "active": false,
+      "family": "rosenbrock",
+      "rho": 0.95,
+      "round": 2,
+      "seed": 28,
+      "theta": 0.9006450186990833
+    },
+    {
+      "active": false,
+      "family": "rosenbrock",
+      "rho": 0.95,
+      "round": 3,
+      "seed": 28,
+      "theta": 0.9006450186990833
+    },
+    {
+      "active": false,
+      "family": "rosenbrock",
+      "rho": 0.95,
+      "round": 4,
+      "seed": 28,
+      "theta": 0.9006450186990833
+    },
+    {
+      "active": false,
+      "family": "rosenbrock",
+      "rho": 0.95,
+      "round": 1,
+      "seed": 29,
+      "theta": 0.9006450186990833
+    },
+    {
+      "active": false,
+      "family": "rosenbrock",
+      "rho": 0.95,
+      "round": 2,
+      "seed": 29,
+      "theta": 0.9006450186990833
+    },
+    {
+      "active": false,
+      "family": "rosenbrock",
+      "rho": 0.95,
+      "round": 3,
+      "seed": 29,
+      "theta": 0.9006450186990833
+    },
+    {
+      "active": false,
+      "family": "rosenbrock",
+      "rho": 0.95,
+      "round": 4,
+      "seed": 29,
+      "theta": 0.9006450186990833
+    },
+    {
+      "active": false,
+      "family": "rosenbrock",
+      "rho": 0.95,
+      "round": 1,
+      "seed": 30,
+      "theta": 0.9006450186990833
+    },
+    {
+      "active": false,
+      "family": "rosenbrock",
+      "rho": 0.95,
+      "round": 2,
+      "seed": 30,
+      "theta": 0.9006450186990833
+    },
+    {
+      "active": false,
+      "family": "rosenbrock",
+      "rho": 0.95,
+      "round": 3,
+      "seed": 30,
+      "theta": 0.9006450186990833
+    },
+    {
+      "active": false,
+      "family": "rosenbrock",
+      "rho": 0.95,
+      "round": 4,
+      "seed": 30,
+      "theta": 0.9006450186990833
+    },
+    {
+      "active": false,
+      "family": "rosenbrock",
+      "rho": 0.95,
+      "round": 1,
+      "seed": 31,
+      "theta": 0.9006450186990833
+    },
+    {
+      "active": false,
+      "family": "rosenbrock",
+      "rho": 0.95,
+      "round": 2,
+      "seed": 31,
+      "theta": 0.9006450186990833
+    },
+    {
+      "active": false,
+      "family": "rosenbrock",
+      "rho": 0.95,
+      "round": 3,
+      "seed": 31,
+      "theta": 0.9006450186990833
+    },
+    {
+      "active": false,
+      "family": "rosenbrock",
+      "rho": 0.95,
+      "round": 4,
+      "seed": 31,
+      "theta": 0.9006450186990833
+    }
+  ],
+  "script_sha256": "5ba7a6bb8f3d876178af6cbe5bbf958419a3e17ff48935baeec956eb62701cf9",
+  "seed_start": 0,
+  "seed_stop": 32,
+  "source_commit": "9d88dc454e85396db64d531a4b044a9ca1ddca18",
+  "source_dirty": true,
+  "status": "COMPLETE",
+  "total_campaigns": 160,
+  "total_rounds": 640,
+  "tt_spec_sha256": "aa06346e76f2ea9423965407c7822f6ca132664f30954ae159153c2f7e62564b"
+}
