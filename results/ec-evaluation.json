@@ -1,0 +1,8 @@
+{
+  "status": "REFUSED_INCOMPLETE",
+  "verdict": "REFUSED_INCOMPLETE",
+  "reason": "Full EC evaluation is disabled in the registered runner; no complete unseen-seed artifact exists for seeds 64-95. A dry run or training template cannot support an EC success claim.",
+  "evaluation_seed_start": 64,
+  "evaluation_seed_stop": 96,
+  "rows": []
+}

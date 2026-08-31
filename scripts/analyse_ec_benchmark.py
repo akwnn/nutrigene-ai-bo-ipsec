@@ -11,6 +11,66 @@ from typing import Any
 from run_ec_benchmark import ARMS, EVAL_SEEDS, FAMILIES, REQUIRED_COLUMNS, TRAIN_SEEDS, expected_cells, sha256, SPEC, source_commit
 
 TRAINING_REPORT_SCHEMA = "spade-ec-training-calibration-v1"
+EC_VERDICTS = {
+    "PASS_EC_PROSPECTIVE", "FAIL_ANSWER_RATE", "FAIL_CONTAINMENT",
+    "FAIL_FALSE_CERTIFICATE", "FAIL_REGRET", "FAIL_ROUNDS", "REFUSED_INCOMPLETE",
+}
+
+
+def _wilson_lower(successes: int, trials: int, z: float = 1.959963984540054) -> float:
+    if trials <= 0:
+        return 0.0
+    p = successes / trials
+    den = 1 + z * z / trials
+    centre = p + z * z / (2 * trials)
+    half = z * math.sqrt(p * (1 - p) / trials + z * z / (4 * trials * trials))
+    return (centre - half) / den
+
+
+def _summary(rows: list[dict[str, Any]], family: str, arm: str) -> dict[str, Any]:
+    selected = [r for r in rows if r.get("family") == family and r.get("arm") == arm]
+    answered = [r for r in selected if float(r.get("answer_rate", 0)) > 0]
+    contained = [r for r in answered if bool(r.get("contained", float(r.get("containment", 0)) >= 1.0 - 1e-12))]
+    return {
+        "family": family, "arm": arm, "campaigns": len(selected),
+        "answered": len(answered), "answer_rate": len(answered) / len(selected) if selected else 0.0,
+        "containment": len(contained) / len(answered) if answered else 0.0,
+        "containment_wilson_lower": _wilson_lower(len(contained), len(answered)),
+        "false_certificate_count": sum(int(r.get("false_certificate_count", 0)) for r in selected),
+        "point_regret": sum(float(r.get("point_regret", 0)) for r in selected) / len(selected) if selected else float("inf"),
+        "adaptive_rounds": sum(float(r.get("adaptive_rounds", 0)) for r in selected) / len(selected) if selected else float("inf"),
+    }
+
+
+def adjudicate(path: Path) -> dict[str, Any]:
+    """Return one immutable EC verdict; incomplete evidence is never scored."""
+    try:
+        validate_artifact(path)
+    except Exception as exc:
+        return {"verdict": "REFUSED_INCOMPLETE", "reason": f"complete unseen-seed artifact required: {exc}"}
+    artifact = json.loads(Path(path).read_text(encoding="utf-8"))
+    rows = artifact["rows"]
+    summaries = {f: {a: _summary(rows, f, a) for a in ARMS} for f in FAMILIES}
+    for family in FAMILIES:
+        s = summaries[family]["spade"]
+        if s["answered"] < 16 or s["answer_rate"] < 0.50:
+            return {"verdict": "FAIL_ANSWER_RATE", "family": family, "summaries": summaries,
+                    "reason": "SPADE answered fewer than 16 campaigns or below 0.50 answer rate"}
+        if s["containment_wilson_lower"] < 0.90:
+            return {"verdict": "FAIL_CONTAINMENT", "family": family, "summaries": summaries,
+                    "reason": "SPADE one-sided 95% containment lower bound is below 0.90"}
+        if s["false_certificate_count"] != 0:
+            return {"verdict": "FAIL_FALSE_CERTIFICATE", "family": family, "summaries": summaries,
+                    "reason": "SPADE produced a false certificate"}
+        d = summaries[family]["doe"]
+        if s["point_regret"] > d["point_regret"] + 0.02:
+            return {"verdict": "FAIL_REGRET", "family": family, "summaries": summaries,
+                    "reason": "SPADE regret exceeds matched-budget DOE by more than 0.02"}
+        if s["adaptive_rounds"] > d["adaptive_rounds"]:
+            return {"verdict": "FAIL_ROUNDS", "family": family, "summaries": summaries,
+                    "reason": "SPADE uses more adaptive rounds than matched-budget DOE"}
+    return {"verdict": "PASS_EC_PROSPECTIVE", "summaries": summaries,
+            "reason": "all prospective EC acceptance criteria passed"}
 
 
 def validate_artifact(path: Path) -> None:
@@ -80,11 +140,9 @@ def validate_training_report(path: Path) -> dict[str, Any]:
 
 def main() -> int:
     parser = argparse.ArgumentParser(); parser.add_argument("artifact", type=Path)
-    try:
-        analyse(parser.parse_args().artifact)
-    except (OSError, ValueError, KeyError, TypeError, json.JSONDecodeError) as exc:
-        print(f"REFUSED: {exc}", file=sys.stderr); return 2
-    return 0
+    result = adjudicate(parser.parse_args().artifact)
+    print(json.dumps(result, sort_keys=True))
+    return 0 if result["verdict"] == "PASS_EC_PROSPECTIVE" else 2
 
 
 if __name__ == "__main__": sys.exit(main())

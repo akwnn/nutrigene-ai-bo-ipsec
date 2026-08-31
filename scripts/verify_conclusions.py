@@ -158,6 +158,23 @@ require("DoE historical caveat", "variance-corrected replication" in paper and
         "historical" in paper)
 require("TT mixed activation caveat", "not adopted" in conclusions and "mixed-activation" in conclusions)
 
+# Prospective EC evidence has its own fail-closed adjudicator.  A disabled or
+# partial campaign must be recorded as a refusal, never silently treated as a pass.
+ec_artifact = ROOT / "results" / "ec-evaluation.json"
+ec_report = ROOT / "docs" / "SPADE-EC-EVALUATION-REPORT.md"
+try:
+    ec_spec = importlib.util.spec_from_file_location("analyse_ec_benchmark", ROOT / "scripts" / "analyse_ec_benchmark.py")
+    ec_module = importlib.util.module_from_spec(ec_spec)
+    ec_spec.loader.exec_module(ec_module)
+    ec_verdict = ec_module.adjudicate(ec_artifact) if ec_artifact.exists() else {"verdict": "REFUSED_INCOMPLETE"}
+    require("EC adjudication is explicit", ec_verdict.get("verdict") in ec_module.EC_VERDICTS)
+    if ec_verdict.get("verdict") == "REFUSED_INCOMPLETE":
+        require("EC refusal has explicit reason", bool(ec_verdict.get("reason")) and ec_report.exists())
+    else:
+        require("EC report matches adjudication", ec_verdict["verdict"] in ec_report.read_text())
+except (OSError, ValueError, TypeError, ImportError) as exc:
+    require("EC adjudication readable", False, str(exc))
+
 print(f"\n===== {sum(ok)}/{len(ok)} checks passed =====")
 print("checked against committed LC, TT, historical DC artifacts, and claim documents")
 
