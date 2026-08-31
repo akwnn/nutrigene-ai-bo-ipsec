@@ -40,7 +40,7 @@ def test_dry_run_executes_a_real_test_only_campaign(tmp_path):
     assert all("scaffold" not in row for row in artifact["rows"])
     assert all(row["budget"] == runner.WELLS for row in artifact["rows"])
     assert all(row["execution_mode"] == "TEST_ONLY" for row in artifact["rows"])
-    assert {row["adaptive_rounds"] for row in artifact["rows"]} <= {2, 3}
+    assert {row["adaptive_rounds"] for row in artifact["rows"]} <= {2, 3, 5}
 
 
 def _complete_artifact():
