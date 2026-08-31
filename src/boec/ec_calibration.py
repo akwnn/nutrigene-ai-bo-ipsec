@@ -162,6 +162,37 @@ def per_cqa_lower_utility(
     return torch.stack(columns, dim=1).amin(dim=1, keepdim=True)
 
 
+def per_cqa_acquisition_utility(
+    models: Sequence[object],
+    X: Tensor,
+    *,
+    thresholds: Sequence[float],
+    beta: float = 1.0,
+) -> Tensor:
+    """Optimistic joint-CQA score used only for experimental placement.
+
+    This is intentionally distinct from the conservative certificate: the
+    acquisition uses ``mean + beta*sigma`` to explore unobserved peaks, while
+    qualification continues to use simultaneous lower bounds.  A minimum over
+    CQAs prevents exploration from sacrificing a required attribute.
+    """
+    if len(models) != len(thresholds) or len(models) < 2:
+        raise ValueError("models and thresholds must have the same length >= 2")
+    if float(beta) < 0.0 or not math.isfinite(float(beta)):
+        raise ValueError("beta must be finite and nonnegative")
+    columns: list[Tensor] = []
+    for model, threshold in zip(models, thresholds):
+        if float(threshold) <= 0.0:
+            raise ValueError("thresholds must be positive")
+        posterior = _prediction(model, X)
+        mean = torch.as_tensor(posterior.mean, dtype=torch.double).reshape(-1)
+        variance = torch.as_tensor(posterior.variance, dtype=torch.double).reshape(-1)
+        if mean.shape[0] != X.shape[0] or variance.shape != mean.shape or bool(torch.any(variance < 0)):
+            raise ValueError("each CQA prediction must match the candidate count with nonnegative variance")
+        columns.append((mean + float(beta) * variance.sqrt()) / float(threshold))
+    return torch.stack(columns, dim=1).amin(dim=1, keepdim=True)
+
+
 def boundary_candidates(bounds: Tensor, *, n: int, seed: int) -> Tensor:
     """Deterministically return unique hypercube-boundary recipes."""
     if bounds.ndim != 2 or bounds.shape[0] != 2 or n < 1:
@@ -182,5 +213,6 @@ def boundary_candidates(bounds: Tensor, *, n: int, seed: int) -> Tensor:
 __all__ = [
     "CONTAINMENT_TARGET", "ECTrainingCandidate", "SelectedTrainingCandidate",
     "TRAIN_SEEDS", "TrainingContainmentRecord", "boundary_candidates",
-    "choose_training_candidate", "per_cqa_lower_utility", "wilson_lower",
+    "choose_training_candidate", "per_cqa_acquisition_utility",
+    "per_cqa_lower_utility", "wilson_lower",
 ]

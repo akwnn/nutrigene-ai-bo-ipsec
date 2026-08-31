@@ -20,7 +20,8 @@ from typing import Any
 import torch
 
 from boec.doe import run_doe_arm, run_doe_unscreened_arm
-from boec.ec_calibration import ECTrainingCandidate, boundary_candidates, per_cqa_lower_utility
+from boec.ec_calibration import (ECTrainingCandidate, boundary_candidates,
+                                 per_cqa_acquisition_utility)
 from boec.ec_benchmark import ECConfig, joint_success, make_ec_landscape, registered_ec_families
 from boec.optimizers import AcqConfig, propose, sobol_design
 from boec.seedbook import derive_seed
@@ -134,9 +135,9 @@ def _bounds() -> torch.Tensor:
 
 def _per_cqa_batch(models, menu: torch.Tensor, adapter: _JointCQAEvaluator,
                    calibration: ECTrainingCandidate, q: int) -> torch.Tensor:
-    scores = per_cqa_lower_utility(
+    scores = per_cqa_acquisition_utility(
         models, menu, thresholds=tuple(adapter.thresholds.tolist()),
-        inflation_by_cqa=calibration.inflation_by_cqa,
+        beta=max(calibration.inflation_by_cqa),
     ).flatten()
     order = torch.argsort(scores, descending=True, stable=True)
     return menu[order[:q]].clone()
