@@ -75,10 +75,14 @@ def expected_cells(*, seeds: tuple[int, ...] = EVAL_SEEDS, families: tuple[str, 
     return {(family, seed, arm) for family in families for seed in seeds for arm in ARMS}
 
 
-def _provenance() -> dict[str, Any]:
+def _provenance(*, evaluation_seeds: tuple[int, ...] = EVAL_SEEDS) -> dict[str, Any]:
+    if not evaluation_seeds:
+        raise ValueError("evaluation_seeds must not be empty")
+    if tuple(sorted(set(evaluation_seeds))) != tuple(evaluation_seeds):
+        raise ValueError("evaluation_seeds must be sorted and unique")
     return {
         "training_seed_start": TRAIN_SEEDS[0], "training_seed_stop": TRAIN_SEEDS[-1] + 1,
-        "evaluation_seed_start": EVAL_SEEDS[0], "evaluation_seed_stop": EVAL_SEEDS[-1] + 1,
+        "evaluation_seed_start": evaluation_seeds[0], "evaluation_seed_stop": evaluation_seeds[-1] + 1,
         "spec_sha256": sha256(SPEC), "runner_sha256": sha256(Path(__file__)),
         "source_commit": source_commit(),
     }
@@ -218,7 +222,8 @@ def _run_arm(family: str, seed: int, arm: str, *, test_only: bool,
     return _Campaign(X=result.X_visited.double(), Y=result.Y_visited.double(), rounds=ROUNDS[arm])
 
 
-def _campaign_row(family: str, seed: int, arm: str, *, test_only: bool) -> dict[str, Any]:
+def _campaign_row(family: str, seed: int, arm: str, *, test_only: bool,
+                  evaluation_seeds: tuple[int, ...] = EVAL_SEEDS) -> dict[str, Any]:
     campaign = _run_arm(family, seed, arm, test_only=test_only)
     # All experimental choices are finished before the truth-only scoring boundary.
     selected = int(torch.argmax(campaign.Y.reshape(-1)))
@@ -244,7 +249,7 @@ def _campaign_row(family: str, seed: int, arm: str, *, test_only: bool) -> dict[
         "budget": WELLS,
         "execution_mode": "TEST_ONLY" if test_only else "REGISTERED",
         "endpoint": "min_threshold_normalized_cqa",
-        **_provenance(),
+        **_provenance(evaluation_seeds=evaluation_seeds),
     }
 
 
@@ -267,28 +272,34 @@ def atomic_write(path: Path, artifact: dict[str, Any]) -> None:
         raise
 
 
-def empty_artifact() -> dict[str, Any]:
+def empty_artifact(*, evaluation_seeds: tuple[int, ...] = EVAL_SEEDS) -> dict[str, Any]:
     return {"status": "PARTIAL", "config": {"wells": WELLS, "spade_rounds": 5, "doe_rounds": 3},
-            **_provenance(), "rows": []}
+            **_provenance(evaluation_seeds=evaluation_seeds), "rows": []}
 
 
-def run(*, out: Path, resume: bool = False, dry_run: bool = False) -> dict[str, Any]:
-    artifact = empty_artifact()
+def run(*, out: Path, resume: bool = False, dry_run: bool = False,
+        evaluation_seeds: tuple[int, ...] = EVAL_SEEDS) -> dict[str, Any]:
+    artifact = empty_artifact(evaluation_seeds=evaluation_seeds)
     if resume and out.exists():
         artifact = json.loads(out.read_text(encoding="utf-8"))
-        for key, value in _provenance().items():
+        for key, value in _provenance(evaluation_seeds=evaluation_seeds).items():
             if artifact.get(key) != value:
                 raise ValueError(f"cannot resume: provenance mismatch for {key}")
     rows = list(artifact.get("rows", []))
     seen = {(r.get("family"), int(r.get("seed", -1)), r.get("arm")) for r in rows}
-    cells = {(FAMILIES[0], EVAL_SEEDS[0], arm) for arm in ARMS} if dry_run else expected_cells()
+    cells = {(FAMILIES[0], evaluation_seeds[0], arm) for arm in ARMS} if dry_run else expected_cells(seeds=evaluation_seeds)
     for family, seed, arm in sorted(cells):
         if (family, seed, arm) not in seen:
-            rows.append(_campaign_row(family, seed, arm, test_only=dry_run))
+            # Keep the row-builder's historical four-argument protocol so
+            # downstream fixtures can replace it; stamp the active seed range
+            # at the runner boundary for fresh prospective evaluations.
+            row = _campaign_row(family, seed, arm, test_only=dry_run)
+            row.update(_provenance(evaluation_seeds=evaluation_seeds))
+            rows.append(row)
             artifact["rows"] = rows
             atomic_write(out, artifact)
     artifact["rows"] = rows
-    artifact["status"] = "PARTIAL" if dry_run or len(rows) != len(expected_cells()) else "COMPLETE"
+    artifact["status"] = "PARTIAL" if dry_run or len(rows) != len(expected_cells(seeds=evaluation_seeds)) else "COMPLETE"
     atomic_write(out, artifact)
     return artifact
 
@@ -298,9 +309,15 @@ def main() -> int:
     parser.add_argument("--out", type=Path, default=ROOT / "results" / "ec-evaluation.json")
     parser.add_argument("--resume", action="store_true")
     parser.add_argument("--dry-run", action="store_true")
+    parser.add_argument("--seed-start", type=int, default=EVAL_SEEDS[0])
+    parser.add_argument("--seed-stop", type=int, default=EVAL_SEEDS[-1] + 1,
+                        help="exclusive stop; use a fresh range for prospective validation")
     args = parser.parse_args()
     try:
-        run(out=args.out, resume=args.resume, dry_run=args.dry_run)
+        if args.seed_start < 0 or args.seed_stop <= args.seed_start:
+            raise ValueError("seed range must satisfy 0 <= start < stop")
+        run(out=args.out, resume=args.resume, dry_run=args.dry_run,
+            evaluation_seeds=tuple(range(args.seed_start, args.seed_stop)))
     except (OSError, ValueError, RuntimeError, json.JSONDecodeError) as exc:
         parser.error(str(exc))
     return 0
