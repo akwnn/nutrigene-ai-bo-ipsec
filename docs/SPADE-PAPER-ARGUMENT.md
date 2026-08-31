@@ -71,8 +71,8 @@ opening round (rank correlation between scores at two very different thetas: **e
 
 **And the sophistication was never what worked.** We repaired the mechanism — pointed it at
 `tau`, the region actually being certified, which a practitioner knows because it is their
-own spec — and tested it at 5 families x 32 seeds. **It did not help** (TT-1: +0.000425,
-CI [−0.000022, +0.000875]) and it **significantly damaged** optimisation (TT-2: regret
+own spec — and tested it at 5 families x 32 seeds. **TT-1 was inconclusive** (+0.000425,
+CI [−0.000022, +0.000875]); it **significantly damaged** optimisation (TT-2: regret
 +0.0301, CI [+0.0169, +0.0450], p < 0.0001, outside the 0.02 SESOI).
 
 **The committed SPADE remains the best arm on every certification column:**

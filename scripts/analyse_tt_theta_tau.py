@@ -104,7 +104,7 @@ def main():
                    "negative result is confined to the disabled implementation"
                    if lo > 0 else
                    ("targeting is WORSE when correctly aimed" if hi < 0 else
-                    "FAIL -- no difference; KF-3's conclusion stands on its merits"))
+                    "INCONCLUSIVE -- the confidence interval includes zero; no clean TT-1 conclusion"))
         print(f"  n={len(keys):3d} mean={mean:+.6f} CI[{lo:+.6f},{hi:+.6f}] p={p:.4f}")
         print(f"  -> {verdict}")
         print("\n  per family (Holm-adjusted across five families):")
