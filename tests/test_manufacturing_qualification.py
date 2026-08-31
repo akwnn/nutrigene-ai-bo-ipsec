@@ -305,6 +305,29 @@ def test_seeded_runs_do_not_mutate_inputs_and_per_cqa_seeds_are_stable(monkeypat
         assert torch.equal(got, original)
 
 
+def test_per_cqa_inflation_is_routed_to_its_matching_certificate(monkeypatch):
+    X, Y, Yvar, bounds = valid_inputs()
+    inflations = []
+    monkeypatch.setattr("boec.manufacturing_qualification.build_gp", lambda *args, **kwargs: 0)
+
+    def fake_draws(*args, **kwargs):
+        inflations.append(kwargs["latent_inflation"])
+        return torch.ones((2, X.shape[0]), dtype=torch.bool)
+
+    monkeypatch.setattr("boec.manufacturing_qualification.reliable_set_draws", fake_draws)
+    monkeypatch.setattr(
+        "boec.manufacturing_qualification.conservative_set_split",
+        lambda draws, *args, **kwargs: SimpleNamespace(
+            mask=draws[0], volume=1.0, selection_containment=1.0, crossfit_containment=1.0
+        ),
+    )
+    qualify_multi_cqa(
+        X, Y, Yvar, bounds, (definition("identity"), definition("viability")),
+        n_draws=2, latent_inflation=(1.25, 1.75),
+    )
+    assert inflations == [1.25, 1.75]
+
+
 def test_registered_synthetic_configuration_is_explicit():
     config_path = ROOT / "configs" / "experiment" / "spade-multi-cqa-qualification.yaml"
     assert config_path.exists()

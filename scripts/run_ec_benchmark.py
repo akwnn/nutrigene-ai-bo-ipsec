@@ -20,11 +20,11 @@ from typing import Any
 import torch
 
 from boec.doe import run_doe_arm, run_doe_unscreened_arm
+from boec.ec_calibration import ECTrainingCandidate, boundary_candidates, per_cqa_lower_utility
 from boec.ec_benchmark import ECConfig, joint_success, make_ec_landscape, registered_ec_families
 from boec.optimizers import AcqConfig, propose, sobol_design
 from boec.seedbook import derive_seed
-from boec.surrogate import build_learned_noise_gp
-from boec.variance_reduction import greedy_ivr
+from boec.surrogate import build_gp, build_learned_noise_gp
 
 ROOT = Path(__file__).resolve().parents[1]
 SPEC = ROOT / "docs" / "SPADE-EC-BENCHMARK.md"
@@ -43,6 +43,11 @@ REQUIRED_COLUMNS = {
     "spec_sha256", "runner_sha256", "source_commit",
 }
 _BO_OPENING, _BO_BATCH, _BO_GRID = 32, 8, 2_048
+# A calibration report chooses this object from training seeds only.  It is
+# threaded explicitly so the prospective runner never inspects an evaluation
+# result to alter surrogate uncertainty or the candidate menu.
+EC_TRAINING_DEFAULT = ECTrainingCandidate((1.5, 1.5, 1.5), candidate_density=4_096)
+_BOUNDARY_RECIPES = {"ec_narrow": 2, "ec_multimodal": 2}
 
 
 def sha256(path: Path) -> str:
@@ -104,6 +109,10 @@ class _JointCQAEvaluator:
         Y, Yvar = self.landscape.evaluate(X)
         return self.utility(Y), (Yvar.double() / self.thresholds.square().to(Yvar)).amax(dim=1, keepdim=True)
 
+    def evaluate_cqas(self, X: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
+        """Return all observed CQAs; SPADE's surrogate must not scalarize them."""
+        return self.landscape.evaluate(X)
+
     def truth(self, X: torch.Tensor) -> torch.Tensor:
         return self.utility(self.landscape.truth(X))
 
@@ -119,7 +128,18 @@ def _bounds() -> torch.Tensor:
     return torch.stack([torch.zeros(6, dtype=torch.double), torch.ones(6, dtype=torch.double)])
 
 
-def _run_bo_arm(adapter: _JointCQAEvaluator, *, seed: int, arm: str, test_only: bool) -> _Campaign:
+def _per_cqa_batch(models, menu: torch.Tensor, adapter: _JointCQAEvaluator,
+                   calibration: ECTrainingCandidate, q: int) -> torch.Tensor:
+    scores = per_cqa_lower_utility(
+        models, menu, thresholds=tuple(adapter.thresholds.tolist()),
+        inflation_by_cqa=calibration.inflation_by_cqa,
+    ).flatten()
+    order = torch.argsort(scores, descending=True, stable=True)
+    return menu[order[:q]].clone()
+
+
+def _run_bo_arm(adapter: _JointCQAEvaluator, *, seed: int, arm: str, test_only: bool,
+                calibration: ECTrainingCandidate = EC_TRAINING_DEFAULT) -> _Campaign:
     """Run the registered 32 + 8 + 8 schedule with repository SPADE APIs."""
     if arm not in {"spade", "qlognei"}:
         raise ValueError(f"not a BO arm: {arm}")
@@ -127,36 +147,54 @@ def _run_bo_arm(adapter: _JointCQAEvaluator, *, seed: int, arm: str, test_only: 
     root = derive_seed(seed, "ec-campaign", arm)
     X = sobol_design(bounds, _BO_OPENING, seed=derive_seed(root, "opening"))
     Y, _ = adapter.evaluate(X)
-    menu_size, reference_size = (64, 64) if test_only else (16_384, _BO_GRID)
+    cqa_Y, cqa_Yvar = adapter.evaluate_cqas(X)
+    menu_size = min(calibration.candidate_density, 128) if test_only else calibration.candidate_density
+    reference_size = 64 if test_only else _BO_GRID
     fit_restarts, mc_samples = (1, 16) if test_only else (4, 256)
     menu = _remove_rows(sobol_design(bounds, menu_size, seed=derive_seed(root, "candidate-menu")), X)
     reference = sobol_design(bounds, reference_size, seed=derive_seed(root, "ivr-reference"))
     for batch_index in range(2):
-        model = build_learned_noise_gp(
-            X, Y, bounds, fit_restarts=fit_restarts,
-            seed=derive_seed(root, "gp-fit", X.shape[0]),
-        )
-        if arm == "qlognei" or batch_index == 0:
+        if arm == "spade":
+            models = tuple(
+                build_gp(X, cqa_Y[:, index:index + 1], cqa_Yvar[:, index:index + 1], bounds,
+                         fit_restarts=fit_restarts)
+                for index in range(cqa_Y.shape[1])
+            )
+            n_boundary = _BOUNDARY_RECIPES.get(adapter.landscape.family, 0)
+            adaptive = _per_cqa_batch(models, menu, adapter, calibration, _BO_BATCH - n_boundary)
+            boundary = boundary_candidates(
+                bounds, n=n_boundary, seed=derive_seed(root, "boundary", batch_index)
+            ) if n_boundary else menu[:0]
+            selected = torch.cat((adaptive, boundary), dim=0)
+            selected = _remove_rows(selected, X)
+            if selected.shape[0] != _BO_BATCH:
+                raise RuntimeError("EC boundary exploration duplicated an observed recipe")
+        else:
+            model = build_learned_noise_gp(
+                X, Y, bounds, fit_restarts=fit_restarts,
+                seed=derive_seed(root, "gp-fit", X.shape[0]),
+            )
             selected = propose(
                 model, bounds, _BO_BATCH, X, Y,
                 config=AcqConfig(kind="qlognei", mc_samples=mc_samples,
                                  sampler_seed=derive_seed(root, "qmc", X.shape[0])),
                 candidates=menu,
             ).detach().double()
-        else:
-            selected = greedy_ivr(model, menu, reference, _BO_BATCH).detach().double()
         menu = _remove_rows(menu, selected)
         next_y, _ = adapter.evaluate(selected)
+        next_cqa_y, next_cqa_yvar = adapter.evaluate_cqas(selected)
         X, Y = torch.cat([X, selected]), torch.cat([Y, next_y])
+        cqa_Y, cqa_Yvar = torch.cat([cqa_Y, next_cqa_y]), torch.cat([cqa_Yvar, next_cqa_yvar])
     if X.shape != (WELLS, 6) or torch.unique(X, dim=0).shape[0] != WELLS:
         raise RuntimeError("EC BO campaign did not preserve the exact unique 48-well budget")
     return _Campaign(X=X, Y=Y, rounds=ROUNDS[arm])
 
 
-def _run_arm(family: str, seed: int, arm: str, *, test_only: bool) -> _Campaign:
+def _run_arm(family: str, seed: int, arm: str, *, test_only: bool,
+             calibration: ECTrainingCandidate = EC_TRAINING_DEFAULT) -> _Campaign:
     adapter = _JointCQAEvaluator(family, seed)
     if arm in {"spade", "qlognei"}:
-        return _run_bo_arm(adapter, seed=seed, arm=arm, test_only=test_only)
+        return _run_bo_arm(adapter, seed=seed, arm=arm, test_only=test_only, calibration=calibration)
     campaign_seed = derive_seed(seed, "ec-campaign", arm)
     if arm == "doe":
         result = run_doe_arm(adapter, _bounds(), truth=adapter.truth, budget=WELLS, seed=campaign_seed)

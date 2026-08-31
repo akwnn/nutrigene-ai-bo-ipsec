@@ -18,6 +18,7 @@ from typing import Any, Mapping
 import torch
 
 import run_ec_benchmark as runner
+from boec.ec_calibration import ECTrainingCandidate
 from boec.ec_benchmark import CQA_NAMES, ECConfig, make_ec_landscape
 from boec.manufacturing_qualification import CqaDefinition, qualify_multi_cqa
 from boec.optimizers import sobol_design
@@ -65,13 +66,14 @@ def classify_abstention(result: Any, *, campaign_joint_hits: int = 0) -> tuple[s
     return "joint_cqa_bottleneck", limiting
 
 
-def diagnose_one(family: str, seed: int, *, arm: str = "spade", test_only: bool = True) -> dict[str, Any] | None:
+def diagnose_one(family: str, seed: int, *, arm: str = "spade", test_only: bool = True,
+                 calibration: ECTrainingCandidate = runner.EC_TRAINING_DEFAULT) -> dict[str, Any] | None:
     """Run one training campaign and return an abstention record, if any."""
     if int(seed) not in TRAIN_SEEDS:
         raise ValueError("diagnostics accept training seeds 0..63 only")
     if arm not in ARMS:
         raise ValueError(f"unknown EC arm {arm!r}")
-    campaign = runner._run_arm(family, int(seed), arm, test_only=test_only)
+    campaign = runner._run_arm(family, int(seed), arm, test_only=test_only, calibration=calibration)
     landscape = make_ec_landscape(family, int(seed), ECConfig())
     Y, Yvar = landscape.evaluate(campaign.X)
     grid = sobol_design(torch.stack((torch.zeros(6), torch.ones(6))),
@@ -83,7 +85,7 @@ def diagnose_one(family: str, seed: int, *, arm: str = "spade", test_only: bool 
         torch.stack((torch.zeros(6), torch.ones(6))), _definitions(), grid=grid,
         alpha=.95, n_draws=32 if test_only else 256, n_rho=8 if test_only else 64,
         base_seed=derive_seed(seed, "ec-abstention-fit", family, arm),
-        latent_inflation=1.0, mean_marginalisation=True, volume_rule="smallest")
+        latent_inflation=calibration.inflation_by_cqa, mean_marginalisation=True, volume_rule="smallest")
     if result.status != "ABSTAIN_EMPTY_JOINT":
         return None
     campaign_truth = landscape.truth(campaign.X) >= torch.tensor((.70, .70, .60))
@@ -95,6 +97,8 @@ def diagnose_one(family: str, seed: int, *, arm: str = "spade", test_only: bool 
             "endpoint_volumes": {e.name: float(e.volume) for e in result.endpoint_results},
             "campaign_joint_hits": hits, "truth_joint_grid_volume": float(truth_joint.double().mean()),
             "alpha": result.alpha, "alpha_endpoint": result.alpha_endpoint,
+            "candidate_density": calibration.candidate_density,
+            "inflation_by_cqa": list(calibration.inflation_by_cqa),
             "base_seed": result.base_seed, "execution_mode": "TRAINING_ONLY",
             "training_seed_start": 0, "training_seed_stop": 64,
             "source_commit": source_commit()}

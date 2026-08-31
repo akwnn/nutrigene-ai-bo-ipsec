@@ -205,7 +205,7 @@ def _protocol_digest(
     n_rho: int,
     base_seed: int,
     volume_rule: str,
-    latent_inflation: float,
+    latent_inflation: Sequence[float],
     mean_marginalisation: bool,
 ) -> str:
     payload = {
@@ -216,7 +216,7 @@ def _protocol_digest(
         "n_rho": n_rho,
         "base_seed": base_seed,
         "volume_rule": volume_rule,
-        "latent_inflation": latent_inflation,
+        "latent_inflation": list(latent_inflation),
         "mean_marginalisation": bool(mean_marginalisation),
         "cqas": [
             {
@@ -249,7 +249,7 @@ def qualify_multi_cqa(
     n_draws: int = 512,
     n_rho: int = 64,
     base_seed: int = 270827,
-    latent_inflation: Real = 1.0,
+    latent_inflation: Real | Sequence[Real] = 1.0,
     mean_marginalisation: bool = True,
     volume_rule: str = "smallest",
     utility=None,
@@ -312,8 +312,19 @@ def qualify_multi_cqa(
     n_rho_i = _validate_integer(n_rho, "n_rho", minimum=2)
     if volume_rule not in {"smallest", "largest"}:
         raise ValueError("volume_rule must be 'smallest' or 'largest'")
-    latent_inflation_f = _finite_scalar(latent_inflation, "latent_inflation")
-    if latent_inflation_f < 1.0:
+    if isinstance(latent_inflation, Real):
+        latent_inflations = ( _finite_scalar(latent_inflation, "latent_inflation"), ) * len(definitions)
+    else:
+        try:
+            latent_inflations = tuple(
+                _finite_scalar(value, f"latent_inflation[{index}]")
+                for index, value in enumerate(latent_inflation)
+            )
+        except TypeError as exc:
+            raise ValueError("latent_inflation must be a scalar or one value per CQA") from exc
+        if len(latent_inflations) != len(definitions):
+            raise ValueError("latent_inflation sequence must contain one value per CQA")
+    if any(value < 1.0 for value in latent_inflations):
         raise ValueError("latent_inflation must be >= 1")
     if not isinstance(mean_marginalisation, bool):
         raise ValueError(
@@ -347,7 +358,7 @@ def qualify_multi_cqa(
         n_rho=n_rho_i,
         base_seed=base_seed_i,
         volume_rule=volume_rule,
-        latent_inflation=latent_inflation_f,
+        latent_inflation=latent_inflations,
         mean_marginalisation=mean_marginalisation,
     )
 
@@ -378,7 +389,7 @@ def qualify_multi_cqa(
             seed,
             sigma_rel=float(definition.sigma_rel),
             sigma_add=float(definition.sigma_add),
-            latent_inflation=latent_inflation_f,
+            latent_inflation=latent_inflations[index],
             mean_marginalisation=mean_marginalisation,
         )
         if draws.ndim != 2 or draws.shape[1] != grid_t.shape[0] or draws.dtype != torch.bool:
