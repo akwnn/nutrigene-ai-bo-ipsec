@@ -5,7 +5,8 @@ argument — see `MAIN-LINE.md`, `RESEARCH-SUMMARY.md`, `CLAIMS.md`, all marked 
 companion study. Nothing there was deleted; the SPADE paper cites it in one paragraph.
 
 Design: `docs/superpowers/specs/2026-08-30-spade-paper-argument-design.md`.
-Every number here is machine-checked by `scripts/verify_conclusions.py`.
+Current TT, activation, historical DC, and standing LC/TAU numbers are checked by
+`scripts/verify_conclusions.py`; historical DC is explicitly excluded from confirmatory use.
 
 ---
 
@@ -16,16 +17,19 @@ before each run.
 
 | | **finds the recipe** | **returns a trustworthy region** | rounds |
 |---|---|---|---|
-| **SPADE** | ties BO · loses to DoE | **only arm with containment 1.0000** | **5** |
-| BO (qLogNEI) | ties SPADE | certifies, containment 0.9831 | 10 |
-| classical DoE | **wins** (+0.1026, p=0.0003) | **cannot** — containment 0.6967, **wrong ~30% of the time** | 3 |
+| **SPADE** | no detectable regret difference vs BO | passes the registered containment gate; observed 66/66 contained | **5** |
+| BO (qLogNEI) | no detectable regret difference vs SPADE | passes the registered containment gate; observed 58/59 contained | 10 |
+| classical DoE | historical run favoured DoE; correction pending | **not adjudicated** — historical variance model invalid | 3 |
 | one-shot design | loses badly (−0.0783 vs SPADE) | answers 3.4% of cells — effectively never | 1 |
 
-**One sentence:** *SPADE matches BO's recipe quality in half the rounds, and is the only
-method that returns an operating region you can trust.*
+**One sentence:** *SPADE and BO showed no detectable regret difference in the historical
+same-process comparison; both passed the registered containment gate, while SPADE used five
+rounds and BO used ten.*
 
-**Never write "SPADE beats BO on regret."** It does not. Four comparisons, SPADE ahead on
-the point estimate in three, **none separating from zero**. The word is *matches*.
+**Never write "SPADE beats BO on regret" or that the methods are equivalent.** Four
+comparisons put SPADE ahead on the point estimate in three, none separating from zero. The
+registered CI `[-0.0221, +0.0207]` extends beyond both `±0.02` equivalence margins. The
+bounded phrase is **no detectable regret difference**.
 
 **The losses are load-bearing.** DoE finds a better recipe than SPADE and cannot certify;
 that is precisely the paper's point — the recipe is not the deliverable. A method that won
@@ -36,8 +40,9 @@ everything would read as tuned.
 ## The claim
 
 > For expensive cell-manufacturing assays the deliverable should be a **certified design
-> space**, not a recipe. SPADE returns one from 48 wells, at optimisation quality equal to
-> Bayesian optimisation in **half the experimental rounds** — and *when* a certificate can
+> space**, not a recipe. SPADE returns one from 48 wells; its historical same-process
+> comparison with Bayesian optimisation found **no detectable regret difference** while
+> using half the experimental rounds — and *when* a certificate can
 > be trusted is governed by a **single measurable quantity** that holds across every
 > benchmark family tested.
 
@@ -141,12 +146,14 @@ argument does not apply here and no table may hide it.
 |---|---|---|---|---|
 | SPADE vs **`doe`** on regret | 5 vs 3 | **+0.1026** | [+0.0486, +0.1578] | 0.0003 |
 
-**Classical DoE finds a better recipe than SPADE, in fewer rounds, and says so plainly.**
-What DoE cannot do is return a region you can trust — see §5.
+The historical run estimated that classical DoE found a better recipe than SPADE in fewer
+rounds. Because the DoE certification fit used the wrong observation variances, the DoE
+comparison is not confirmatory and awaits the variance-corrected replication.
 
-## 4.2 DoE cannot certify — measured, and its failure is over-confidence
+## 4.2 Historical DC suggested DoE over-confidence; variance-corrected replication pending
 
-At p = 0.30, 5 families x 32 seeds, one process, identical certification path for all arms:
+The following table reproduces Joseph's historical constant-variance calculation at p=0.30.
+It is retained for auditability and hypothesis generation, **not confirmatory evidence**:
 
 | arm | rounds | answered | contained | containment | LB | certifies? |
 |---|---|---|---|---|---|---|
@@ -155,19 +162,15 @@ At p = 0.30, 5 families x 32 seeds, one process, identical certification path fo
 | **SPADE** | **5** | 66/160 | **66** | **1.0000** | **0.9556** | **YES** |
 | qLogNEI | 10 | 59/160 | 58 | 0.9831 | 0.9221 | YES |
 
-**DoE does not fail by abstaining — it fails by being confidently wrong.** It answers more
-often than any other arm (76% of cells against SPADE's 41%) and roughly **30% of its
-certified regions do not contain the truth**. For a cell-manufacturing team, a confident
-operating window that is wrong three times in ten is worse than a method that says
-"I don't know".
+The historical result suggested over-confidence rather than abstention, but the runner had
+replaced per-well DoE observation variances with one constant. That changes the GP
+uncertainty entering certification, so neither the DoE containment values nor the screening
+comparison adjudicate the claim. SPADE and qLogNEI both passed the registered containment
+gate in this artifact; SPADE's observed containment happened to be perfect.
 
-**SPADE is the only arm with perfect containment.** And **the screen is not the culprit**:
-removing the 6->4 screen makes containment *worse* (0.5746), so this is a property of the
-low-order polynomial fit, not of the screening decision — which closes the obvious objection
-that DoE was crippled by its screen.
-
-**This is what the extra two rounds over DoE buy: not a better recipe, but a region you can
-operate in.**
+The fresh-seed DC2 variance-corrected replication is frozen at seeds 32–63. It has not been run.
+Until it is complete, the paper makes no confirmatory claim that classical DoE cannot
+certify or that screening is or is not the cause.
 
 ## 5. What the real data changed
 
@@ -203,16 +206,17 @@ is invisible on benchmarks.** n = 2 datasets; no prospective wet-lab test of a c
 
 ## 7. Open, ranked
 
-1. **sigma sweep at 0.10 and 0.68** — everything rests on 0.25. Cheapest, highest value.
-2. **An estimable `margin/sd` proxy** — turns §3 from description into a usable decision rule.
-3. **rho sweep** — rho sets the exploration weight (`1.96 - z_rho`) and is the remaining
+1. **Run the frozen variance-corrected DC2 replication** on fresh seeds 32–63. The
+   historical DoE claim is not confirmatory until this completes.
+2. **sigma sweep at 0.10 and 0.68** — everything rests on 0.25.
+3. **An estimable `margin/sd` proxy** — turns §3 from description into a usable decision rule.
+4. **rho sweep** — rho sets the exploration weight (`1.96 - z_rho`) and is the remaining
    untested knob. **Correction: rho does NOT move the estimand** — it feeds only the
    acquisition; the certificate is computed independently from `p2.ALPHAS`. An earlier
    version of this list said otherwise and was wrong.
    A fully activated targeting design remains untested; the current `spade_tau` arm is not
    adoptable (`SPADE-THETA-TAU-SPEC.md` §8).
-4. R = 4 untested; the DoE arm is a space-filling `lhs`, not the fractional-factorial/CCD an
-   RSM reviewer will demand; all new work is d = 6.
+5. R = 4 remains untested; all new work is d = 6.
 
 ## 8. Rules this paper is written under
 

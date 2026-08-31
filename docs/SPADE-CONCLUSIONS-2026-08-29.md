@@ -4,12 +4,13 @@
 > terminal-rule study is the companion, not the paper.
 
 
-What is established, what was withdrawn, and how each was obtained. Every number below
-traces to a committed result file and an adjudicator script written before its data landed.
+What is established, what was withdrawn, and how each was obtained. Numerical claims trace to
+committed result files. The historical DC analyser was committed after partial DC data
+existed, so that experiment is not represented as prospectively adjudicated.
 
-> **These numbers are machine-checked.** `scripts/verify_conclusions.py` recomputes §1's
-> claims from `results/` and exits non-zero on any mismatch. Run it after any change to a
-> result file, an analyser, or this document. Last run: **10/10 reproduce.**
+> **Current claims are machine-checked.** `scripts/verify_conclusions.py` validates TT's
+> complete grid, statistics, Holm correction and activation audit; reproduces standing
+> LC/TAU values; and verifies that historical DC is labelled not confirmatory.
 
 ---
 
@@ -17,17 +18,23 @@ traces to a committed result file and an adjudicator script written before its d
 
 | # | claim | evidence | where |
 |---|---|---|---|
-| 1 | **SPADE at 5 rounds matches qLogNEI at 10 on regret** | **−0.0005, CI [−0.0221, +0.0207], p=0.96, n=160, both arms in ONE process** | **DC §8.3** (supersedes LC §9.1) |
+| 1 | **SPADE and qLogNEI show no detectable regret difference** | historical same-process estimate **−0.0005, CI [−0.0221, +0.0207], p=0.96, n=160**; CI exceeds the `±0.02` equivalence margins | historical DC §8.3 |
 | 2 | **SPADE certifies more volume at matched 5 rounds** | +0.001353, p<0.0001; independently in ackley and hartmann6 | LC §9.1 |
 | 3 | **…and that win is not a difficulty artefact** | survives matched-`margin/sd` binning in 3 of 4 bins, all positive | TAU §8.4 |
 | 4 | **Certification generalises to a dose-response landscape** | `hill`, prevalence 0.70: 40/64 answered, **40 contained**, LB 0.9278 | TAU §8.1 |
 | 5 | **Certifiability obeys a measured law** | Spearman ρ(`margin/sd`, answer rate) = **0.9801**, 25 cells, p<0.0001 | TAU §8.3 |
 | 6 | **SPADE beats a one-shot space-filling design at 3 rounds** | −0.0783, CI [−0.1104, −0.0490] | parity analysis |
-| 7 | **Classical DoE cannot certify — it is confidently wrong** | containment **0.6967** screened / **0.5746** unscreened vs SPADE's **1.0000**; DoE answers *most* (122/160) | DC §8.1 |
+| 7 | **Historical DC suggested DoE over-confidence; not confirmatory** | constant-variance containment was **0.6967** screened / **0.5746** unscreened; variance-corrected replication is frozen but unrun | historical DC §8.1 / DC2 spec |
 
-**The thesis these support:** SPADE does not optimise better than BO — it *matches* it.
-What it does better is **certify**: more of the design space, at comparable containment,
-including on the biphasic dose-response landscape BO could not reach at this sample size.
+**The bounded thesis these support:** SPADE does not show better optimisation than BO; the
+available comparison found no detectable regret difference and did not establish
+equivalence. Both SPADE and qLogNEI passed the registered containment gate in the historical
+same-process artifact. Claims against classical DoE await DC2.
+
+**Historical DC caveat:** Joseph's original DoE arms were fitted for certification with one
+constant reconstructed observation variance instead of evaluator-returned per-well variance.
+Those files are preserved unchanged, but they are **not confirmatory**. The frozen
+variance-corrected replication uses unseen seeds 32–63 and has not been run.
 
 **Unchanged ceiling:** every result is at `sigma_rel = 0.25`. At the measured real assay
 noise of 0.68, **nothing certifies for any arm** (`SPADE-REALISTIC-NOISE-SPEC.md` §6).
@@ -75,8 +82,9 @@ effects several times their own CI have survived.
 
 ## 4. How each result was obtained
 
-**Method discipline.** Every experiment had its gate frozen and committed *before* its data
-existed, and the commit timestamps precede the result-file mtimes:
+**Method discipline.** LC, TAU and ACK had gates frozen and committed before their completed
+result artifacts. DC is the recorded exception: its specification preceded results, but its
+analyser was committed after partial files existed.
 
 - `SPADE-LC-CONFIRMATORY-SPEC.md` — frozen at seed 13 of 25, mid-run (`19f845a`, `a64e3a4`)
 - `SPADE-TAU-DEGENERACY-SPEC.md` — frozen before any TAU row existed (`f696567`)
@@ -119,11 +127,10 @@ choosing the same `c`** — selection is stable, so the pooled number was not an
 2. **qLogNEI on `hill` at ~96 seeds** — it currently misses by two answered cells (27 vs the
    29 needed) at containment 1.0000. State the coverage gap as a margin (40 vs 27), not as a
    threshold crossing, and pre-empt the reviewer who notices.
-3. ~~**The DoE arm is a space-filling `lhs`**~~ — **CLOSED by DC.** Real screened DoE
-   (`doe`) and unscreened DoE were both scored by the certificate at 32 seeds. They cannot
-   certify (containment 0.6967 / 0.5746). **But DoE beats SPADE on regret** (+0.1026,
-   p = 0.0003, in fewer rounds), so the claim against DoE is narrow: DoE wins the recipe,
-   only SPADE returns a trustworthy region.
+3. **Run the frozen variance-corrected DC2 replication.** Historical screened and
+   unscreened DoE were scored with a constant reconstructed variance, so their containment
+   and regret comparisons are not confirmatory. DC2 uses per-well evaluator variance and
+   unseen seeds 32–63.
 4. **The R=4 tie is still untested** — no R=4 in LC's `CONFIGS`, declared before that run.
 5. **Sign the 12 CD31 gates in CytExpert** — still the only step between the in-house result
    and a wet-lab claim, and still needs a person.
