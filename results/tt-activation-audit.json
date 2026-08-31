@@ -1,0 +1,3911 @@
+{
+  "active_rounds": 206,
+  "adaptive_rounds": 4,
+  "by_family": {
+    "ackley": {
+      "active_by_round": [
+        2,
+        20,
+        29,
+        30
+      ],
+      "campaigns_active_all_rounds": 2
+    },
+    "hartmann6": {
+      "active_by_round": [
+        19,
+        30,
+        32,
+        32
+      ],
+      "campaigns_active_all_rounds": 18
+    },
+    "hill": {
+      "active_by_round": [
+        0,
+        0,
+        4,
+        3
+      ],
+      "campaigns_active_all_rounds": 0
+    },
+    "levy": {
+      "active_by_round": [
+        0,
+        1,
+        1,
+        2
+      ],
+      "campaigns_active_all_rounds": 0
+    },
+    "rosenbrock": {
+      "active_by_round": [
+        0,
+        0,
+        1,
+        0
+      ],
+      "campaigns_active_all_rounds": 0
+    }
+  },
+  "campaigns_active_all_rounds": 20,
+  "families": [
+    "ackley",
+    "hartmann6",
+    "hill",
+    "levy",
+    "rosenbrock"
+  ],
+  "joseph_source_commit": "9d88dc454e85396db64d531a4b044a9ca1ddca18",
+  "rows": [
+    {
+      "active": false,
+      "adaptive_round": 1,
+      "family": "ackley",
+      "seed": 0
+    },
+    {
+      "active": true,
+      "adaptive_round": 2,
+      "family": "ackley",
+      "seed": 0
+    },
+    {
+      "active": true,
+      "adaptive_round": 3,
+      "family": "ackley",
+      "seed": 0
+    },
+    {
+      "active": true,
+      "adaptive_round": 4,
+      "family": "ackley",
+      "seed": 0
+    },
+    {
+      "active": false,
+      "adaptive_round": 1,
+      "family": "ackley",
+      "seed": 1
+    },
+    {
+      "active": true,
+      "adaptive_round": 2,
+      "family": "ackley",
+      "seed": 1
+    },
+    {
+      "active": true,
+      "adaptive_round": 3,
+      "family": "ackley",
+      "seed": 1
+    },
+    {
+      "active": true,
+      "adaptive_round": 4,
+      "family": "ackley",
+      "seed": 1
+    },
+    {
+      "active": false,
+      "adaptive_round": 1,
+      "family": "ackley",
+      "seed": 2
+    },
+    {
+      "active": true,
+      "adaptive_round": 2,
+      "family": "ackley",
+      "seed": 2
+    },
+    {
+      "active": true,
+      "adaptive_round": 3,
+      "family": "ackley",
+      "seed": 2
+    },
+    {
+      "active": true,
+      "adaptive_round": 4,
+      "family": "ackley",
+      "seed": 2
+    },
+    {
+      "active": false,
+      "adaptive_round": 1,
+      "family": "ackley",
+      "seed": 3
+    },
+    {
+      "active": false,
+      "adaptive_round": 2,
+      "family": "ackley",
+      "seed": 3
+    },
+    {
+      "active": true,
+      "adaptive_round": 3,
+      "family": "ackley",
+      "seed": 3
+    },
+    {
+      "active": true,
+      "adaptive_round": 4,
+      "family": "ackley",
+      "seed": 3
+    },
+    {
+      "active": false,
+      "adaptive_round": 1,
+      "family": "ackley",
+      "seed": 4
+    },
+    {
+      "active": true,
+      "adaptive_round": 2,
+      "family": "ackley",
+      "seed": 4
+    },
+    {
+      "active": true,
+      "adaptive_round": 3,
+      "family": "ackley",
+      "seed": 4
+    },
+    {
+      "active": true,
+      "adaptive_round": 4,
+      "family": "ackley",
+      "seed": 4
+    },
+    {
+      "active": false,
+      "adaptive_round": 1,
+      "family": "ackley",
+      "seed": 5
+    },
+    {
+      "active": true,
+      "adaptive_round": 2,
+      "family": "ackley",
+      "seed": 5
+    },
+    {
+      "active": true,
+      "adaptive_round": 3,
+      "family": "ackley",
+      "seed": 5
+    },
+    {
+      "active": true,
+      "adaptive_round": 4,
+      "family": "ackley",
+      "seed": 5
+    },
+    {
+      "active": true,
+      "adaptive_round": 1,
+      "family": "ackley",
+      "seed": 6
+    },
+    {
+      "active": true,
+      "adaptive_round": 2,
+      "family": "ackley",
+      "seed": 6
+    },
+    {
+      "active": true,
+      "adaptive_round": 3,
+      "family": "ackley",
+      "seed": 6
+    },
+    {
+      "active": true,
+      "adaptive_round": 4,
+      "family": "ackley",
+      "seed": 6
+    },
+    {
+      "active": false,
+      "adaptive_round": 1,
+      "family": "ackley",
+      "seed": 7
+    },
+    {
+      "active": true,
+      "adaptive_round": 2,
+      "family": "ackley",
+      "seed": 7
+    },
+    {
+      "active": true,
+      "adaptive_round": 3,
+      "family": "ackley",
+      "seed": 7
+    },
+    {
+      "active": true,
+      "adaptive_round": 4,
+      "family": "ackley",
+      "seed": 7
+    },
+    {
+      "active": false,
+      "adaptive_round": 1,
+      "family": "ackley",
+      "seed": 8
+    },
+    {
+      "active": true,
+      "adaptive_round": 2,
+      "family": "ackley",
+      "seed": 8
+    },
+    {
+      "active": false,
+      "adaptive_round": 3,
+      "family": "ackley",
+      "seed": 8
+    },
+    {
+      "active": false,
+      "adaptive_round": 4,
+      "family": "ackley",
+      "seed": 8
+    },
+    {
+      "active": false,
+      "adaptive_round": 1,
+      "family": "ackley",
+      "seed": 9
+    },
+    {
+      "active": true,
+      "adaptive_round": 2,
+      "family": "ackley",
+      "seed": 9
+    },
+    {
+      "active": true,
+      "adaptive_round": 3,
+      "family": "ackley",
+      "seed": 9
+    },
+    {
+      "active": true,
+      "adaptive_round": 4,
+      "family": "ackley",
+      "seed": 9
+    },
+    {
+      "active": false,
+      "adaptive_round": 1,
+      "family": "ackley",
+      "seed": 10
+    },
+    {
+      "active": false,
+      "adaptive_round": 2,
+      "family": "ackley",
+      "seed": 10
+    },
+    {
+      "active": true,
+      "adaptive_round": 3,
+      "family": "ackley",
+      "seed": 10
+    },
+    {
+      "active": true,
+      "adaptive_round": 4,
+      "family": "ackley",
+      "seed": 10
+    },
+    {
+      "active": false,
+      "adaptive_round": 1,
+      "family": "ackley",
+      "seed": 11
+    },
+    {
+      "active": false,
+      "adaptive_round": 2,
+      "family": "ackley",
+      "seed": 11
+    },
+    {
+      "active": false,
+      "adaptive_round": 3,
+      "family": "ackley",
+      "seed": 11
+    },
+    {
+      "active": true,
+      "adaptive_round": 4,
+      "family": "ackley",
+      "seed": 11
+    },
+    {
+      "active": false,
+      "adaptive_round": 1,
+      "family": "ackley",
+      "seed": 12
+    },
+    {
+      "active": true,
+      "adaptive_round": 2,
+      "family": "ackley",
+      "seed": 12
+    },
+    {
+      "active": true,
+      "adaptive_round": 3,
+      "family": "ackley",
+      "seed": 12
+    },
+    {
+      "active": true,
+      "adaptive_round": 4,
+      "family": "ackley",
+      "seed": 12
+    },
+    {
+      "active": false,
+      "adaptive_round": 1,
+      "family": "ackley",
+      "seed": 13
+    },
+    {
+      "active": true,
+      "adaptive_round": 2,
+      "family": "ackley",
+      "seed": 13
+    },
+    {
+      "active": true,
+      "adaptive_round": 3,
+      "family": "ackley",
+      "seed": 13
+    },
+    {
+      "active": true,
+      "adaptive_round": 4,
+      "family": "ackley",
+      "seed": 13
+    },
+    {
+      "active": true,
+      "adaptive_round": 1,
+      "family": "ackley",
+      "seed": 14
+    },
+    {
+      "active": true,
+      "adaptive_round": 2,
+      "family": "ackley",
+      "seed": 14
+    },
+    {
+      "active": true,
+      "adaptive_round": 3,
+      "family": "ackley",
+      "seed": 14
+    },
+    {
+      "active": true,
+      "adaptive_round": 4,
+      "family": "ackley",
+      "seed": 14
+    },
+    {
+      "active": false,
+      "adaptive_round": 1,
+      "family": "ackley",
+      "seed": 15
+    },
+    {
+      "active": true,
+      "adaptive_round": 2,
+      "family": "ackley",
+      "seed": 15
+    },
+    {
+      "active": true,
+      "adaptive_round": 3,
+      "family": "ackley",
+      "seed": 15
+    },
+    {
+      "active": true,
+      "adaptive_round": 4,
+      "family": "ackley",
+      "seed": 15
+    },
+    {
+      "active": false,
+      "adaptive_round": 1,
+      "family": "ackley",
+      "seed": 16
+    },
+    {
+      "active": true,
+      "adaptive_round": 2,
+      "family": "ackley",
+      "seed": 16
+    },
+    {
+      "active": true,
+      "adaptive_round": 3,
+      "family": "ackley",
+      "seed": 16
+    },
+    {
+      "active": true,
+      "adaptive_round": 4,
+      "family": "ackley",
+      "seed": 16
+    },
+    {
+      "active": false,
+      "adaptive_round": 1,
+      "family": "ackley",
+      "seed": 17
+    },
+    {
+      "active": true,
+      "adaptive_round": 2,
+      "family": "ackley",
+      "seed": 17
+    },
+    {
+      "active": true,
+      "adaptive_round": 3,
+      "family": "ackley",
+      "seed": 17
+    },
+    {
+      "active": true,
+      "adaptive_round": 4,
+      "family": "ackley",
+      "seed": 17
+    },
+    {
+      "active": false,
+      "adaptive_round": 1,
+      "family": "ackley",
+      "seed": 18
+    },
+    {
+      "active": true,
+      "adaptive_round": 2,
+      "family": "ackley",
+      "seed": 18
+    },
+    {
+      "active": true,
+      "adaptive_round": 3,
+      "family": "ackley",
+      "seed": 18
+    },
+    {
+      "active": true,
+      "adaptive_round": 4,
+      "family": "ackley",
+      "seed": 18
+    },
+    {
+      "active": false,
+      "adaptive_round": 1,
+      "family": "ackley",
+      "seed": 19
+    },
+    {
+      "active": false,
+      "adaptive_round": 2,
+      "family": "ackley",
+      "seed": 19
+    },
+    {
+      "active": true,
+      "adaptive_round": 3,
+      "family": "ackley",
+      "seed": 19
+    },
+    {
+      "active": true,
+      "adaptive_round": 4,
+      "family": "ackley",
+      "seed": 19
+    },
+    {
+      "active": false,
+      "adaptive_round": 1,
+      "family": "ackley",
+      "seed": 20
+    },
+    {
+      "active": false,
+      "adaptive_round": 2,
+      "family": "ackley",
+      "seed": 20
+    },
+    {
+      "active": true,
+      "adaptive_round": 3,
+      "family": "ackley",
+      "seed": 20
+    },
+    {
+      "active": true,
+      "adaptive_round": 4,
+      "family": "ackley",
+      "seed": 20
+    },
+    {
+      "active": false,
+      "adaptive_round": 1,
+      "family": "ackley",
+      "seed": 21
+    },
+    {
+      "active": false,
+      "adaptive_round": 2,
+      "family": "ackley",
+      "seed": 21
+    },
+    {
+      "active": true,
+      "adaptive_round": 3,
+      "family": "ackley",
+      "seed": 21
+    },
+    {
+      "active": true,
+      "adaptive_round": 4,
+      "family": "ackley",
+      "seed": 21
+    },
+    {
+      "active": false,
+      "adaptive_round": 1,
+      "family": "ackley",
+      "seed": 22
+    },
+    {
+      "active": false,
+      "adaptive_round": 2,
+      "family": "ackley",
+      "seed": 22
+    },
+    {
+      "active": false,
+      "adaptive_round": 3,
+      "family": "ackley",
+      "seed": 22
+    },
+    {
+      "active": false,
+      "adaptive_round": 4,
+      "family": "ackley",
+      "seed": 22
+    },
+    {
+      "active": false,
+      "adaptive_round": 1,
+      "family": "ackley",
+      "seed": 23
+    },
+    {
+      "active": true,
+      "adaptive_round": 2,
+      "family": "ackley",
+      "seed": 23
+    },
+    {
+      "active": true,
+      "adaptive_round": 3,
+      "family": "ackley",
+      "seed": 23
+    },
+    {
+      "active": true,
+      "adaptive_round": 4,
+      "family": "ackley",
+      "seed": 23
+    },
+    {
+      "active": false,
+      "adaptive_round": 1,
+      "family": "ackley",
+      "seed": 24
+    },
+    {
+      "active": false,
+      "adaptive_round": 2,
+      "family": "ackley",
+      "seed": 24
+    },
+    {
+      "active": true,
+      "adaptive_round": 3,
+      "family": "ackley",
+      "seed": 24
+    },
+    {
+      "active": true,
+      "adaptive_round": 4,
+      "family": "ackley",
+      "seed": 24
+    },
+    {
+      "active": false,
+      "adaptive_round": 1,
+      "family": "ackley",
+      "seed": 25
+    },
+    {
+      "active": false,
+      "adaptive_round": 2,
+      "family": "ackley",
+      "seed": 25
+    },
+    {
+      "active": true,
+      "adaptive_round": 3,
+      "family": "ackley",
+      "seed": 25
+    },
+    {
+      "active": true,
+      "adaptive_round": 4,
+      "family": "ackley",
+      "seed": 25
+    },
+    {
+      "active": false,
+      "adaptive_round": 1,
+      "family": "ackley",
+      "seed": 26
+    },
+    {
+      "active": true,
+      "adaptive_round": 2,
+      "family": "ackley",
+      "seed": 26
+    },
+    {
+      "active": true,
+      "adaptive_round": 3,
+      "family": "ackley",
+      "seed": 26
+    },
+    {
+      "active": true,
+      "adaptive_round": 4,
+      "family": "ackley",
+      "seed": 26
+    },
+    {
+      "active": false,
+      "adaptive_round": 1,
+      "family": "ackley",
+      "seed": 27
+    },
+    {
+      "active": true,
+      "adaptive_round": 2,
+      "family": "ackley",
+      "seed": 27
+    },
+    {
+      "active": true,
+      "adaptive_round": 3,
+      "family": "ackley",
+      "seed": 27
+    },
+    {
+      "active": true,
+      "adaptive_round": 4,
+      "family": "ackley",
+      "seed": 27
+    },
+    {
+      "active": false,
+      "adaptive_round": 1,
+      "family": "ackley",
+      "seed": 28
+    },
+    {
+      "active": true,
+      "adaptive_round": 2,
+      "family": "ackley",
+      "seed": 28
+    },
+    {
+      "active": true,
+      "adaptive_round": 3,
+      "family": "ackley",
+      "seed": 28
+    },
+    {
+      "active": true,
+      "adaptive_round": 4,
+      "family": "ackley",
+      "seed": 28
+    },
+    {
+      "active": false,
+      "adaptive_round": 1,
+      "family": "ackley",
+      "seed": 29
+    },
+    {
+      "active": false,
+      "adaptive_round": 2,
+      "family": "ackley",
+      "seed": 29
+    },
+    {
+      "active": true,
+      "adaptive_round": 3,
+      "family": "ackley",
+      "seed": 29
+    },
+    {
+      "active": true,
+      "adaptive_round": 4,
+      "family": "ackley",
+      "seed": 29
+    },
+    {
+      "active": false,
+      "adaptive_round": 1,
+      "family": "ackley",
+      "seed": 30
+    },
+    {
+      "active": false,
+      "adaptive_round": 2,
+      "family": "ackley",
+      "seed": 30
+    },
+    {
+      "active": true,
+      "adaptive_round": 3,
+      "family": "ackley",
+      "seed": 30
+    },
+    {
+      "active": true,
+      "adaptive_round": 4,
+      "family": "ackley",
+      "seed": 30
+    },
+    {
+      "active": false,
+      "adaptive_round": 1,
+      "family": "ackley",
+      "seed": 31
+    },
+    {
+      "active": false,
+      "adaptive_round": 2,
+      "family": "ackley",
+      "seed": 31
+    },
+    {
+      "active": true,
+      "adaptive_round": 3,
+      "family": "ackley",
+      "seed": 31
+    },
+    {
+      "active": true,
+      "adaptive_round": 4,
+      "family": "ackley",
+      "seed": 31
+    },
+    {
+      "active": true,
+      "adaptive_round": 1,
+      "family": "hartmann6",
+      "seed": 0
+    },
+    {
+      "active": true,
+      "adaptive_round": 2,
+      "family": "hartmann6",
+      "seed": 0
+    },
+    {
+      "active": true,
+      "adaptive_round": 3,
+      "family": "hartmann6",
+      "seed": 0
+    },
+    {
+      "active": true,
+      "adaptive_round": 4,
+      "family": "hartmann6",
+      "seed": 0
+    },
+    {
+      "active": true,
+      "adaptive_round": 1,
+      "family": "hartmann6",
+      "seed": 1
+    },
+    {
+      "active": true,
+      "adaptive_round": 2,
+      "family": "hartmann6",
+      "seed": 1
+    },
+    {
+      "active": true,
+      "adaptive_round": 3,
+      "family": "hartmann6",
+      "seed": 1
+    },
+    {
+      "active": true,
+      "adaptive_round": 4,
+      "family": "hartmann6",
+      "seed": 1
+    },
+    {
+      "active": false,
+      "adaptive_round": 1,
+      "family": "hartmann6",
+      "seed": 2
+    },
+    {
+      "active": true,
+      "adaptive_round": 2,
+      "family": "hartmann6",
+      "seed": 2
+    },
+    {
+      "active": true,
+      "adaptive_round": 3,
+      "family": "hartmann6",
+      "seed": 2
+    },
+    {
+      "active": true,
+      "adaptive_round": 4,
+      "family": "hartmann6",
+      "seed": 2
+    },
+    {
+      "active": true,
+      "adaptive_round": 1,
+      "family": "hartmann6",
+      "seed": 3
+    },
+    {
+      "active": true,
+      "adaptive_round": 2,
+      "family": "hartmann6",
+      "seed": 3
+    },
+    {
+      "active": true,
+      "adaptive_round": 3,
+      "family": "hartmann6",
+      "seed": 3
+    },
+    {
+      "active": true,
+      "adaptive_round": 4,
+      "family": "hartmann6",
+      "seed": 3
+    },
+    {
+      "active": false,
+      "adaptive_round": 1,
+      "family": "hartmann6",
+      "seed": 4
+    },
+    {
+      "active": true,
+      "adaptive_round": 2,
+      "family": "hartmann6",
+      "seed": 4
+    },
+    {
+      "active": true,
+      "adaptive_round": 3,
+      "family": "hartmann6",
+      "seed": 4
+    },
+    {
+      "active": true,
+      "adaptive_round": 4,
+      "family": "hartmann6",
+      "seed": 4
+    },
+    {
+      "active": true,
+      "adaptive_round": 1,
+      "family": "hartmann6",
+      "seed": 5
+    },
+    {
+      "active": true,
+      "adaptive_round": 2,
+      "family": "hartmann6",
+      "seed": 5
+    },
+    {
+      "active": true,
+      "adaptive_round": 3,
+      "family": "hartmann6",
+      "seed": 5
+    },
+    {
+      "active": true,
+      "adaptive_round": 4,
+      "family": "hartmann6",
+      "seed": 5
+    },
+    {
+      "active": true,
+      "adaptive_round": 1,
+      "family": "hartmann6",
+      "seed": 6
+    },
+    {
+      "active": true,
+      "adaptive_round": 2,
+      "family": "hartmann6",
+      "seed": 6
+    },
+    {
+      "active": true,
+      "adaptive_round": 3,
+      "family": "hartmann6",
+      "seed": 6
+    },
+    {
+      "active": true,
+      "adaptive_round": 4,
+      "family": "hartmann6",
+      "seed": 6
+    },
+    {
+      "active": false,
+      "adaptive_round": 1,
+      "family": "hartmann6",
+      "seed": 7
+    },
+    {
+      "active": true,
+      "adaptive_round": 2,
+      "family": "hartmann6",
+      "seed": 7
+    },
+    {
+      "active": true,
+      "adaptive_round": 3,
+      "family": "hartmann6",
+      "seed": 7
+    },
+    {
+      "active": true,
+      "adaptive_round": 4,
+      "family": "hartmann6",
+      "seed": 7
+    },
+    {
+      "active": true,
+      "adaptive_round": 1,
+      "family": "hartmann6",
+      "seed": 8
+    },
+    {
+      "active": false,
+      "adaptive_round": 2,
+      "family": "hartmann6",
+      "seed": 8
+    },
+    {
+      "active": true,
+      "adaptive_round": 3,
+      "family": "hartmann6",
+      "seed": 8
+    },
+    {
+      "active": true,
+      "adaptive_round": 4,
+      "family": "hartmann6",
+      "seed": 8
+    },
+    {
+      "active": true,
+      "adaptive_round": 1,
+      "family": "hartmann6",
+      "seed": 9
+    },
+    {
+      "active": true,
+      "adaptive_round": 2,
+      "family": "hartmann6",
+      "seed": 9
+    },
+    {
+      "active": true,
+      "adaptive_round": 3,
+      "family": "hartmann6",
+      "seed": 9
+    },
+    {
+      "active": true,
+      "adaptive_round": 4,
+      "family": "hartmann6",
+      "seed": 9
+    },
+    {
+      "active": true,
+      "adaptive_round": 1,
+      "family": "hartmann6",
+      "seed": 10
+    },
+    {
+      "active": true,
+      "adaptive_round": 2,
+      "family": "hartmann6",
+      "seed": 10
+    },
+    {
+      "active": true,
+      "adaptive_round": 3,
+      "family": "hartmann6",
+      "seed": 10
+    },
+    {
+      "active": true,
+      "adaptive_round": 4,
+      "family": "hartmann6",
+      "seed": 10
+    },
+    {
+      "active": false,
+      "adaptive_round": 1,
+      "family": "hartmann6",
+      "seed": 11
+    },
+    {
+      "active": true,
+      "adaptive_round": 2,
+      "family": "hartmann6",
+      "seed": 11
+    },
+    {
+      "active": true,
+      "adaptive_round": 3,
+      "family": "hartmann6",
+      "seed": 11
+    },
+    {
+      "active": true,
+      "adaptive_round": 4,
+      "family": "hartmann6",
+      "seed": 11
+    },
+    {
+      "active": true,
+      "adaptive_round": 1,
+      "family": "hartmann6",
+      "seed": 12
+    },
+    {
+      "active": true,
+      "adaptive_round": 2,
+      "family": "hartmann6",
+      "seed": 12
+    },
+    {
+      "active": true,
+      "adaptive_round": 3,
+      "family": "hartmann6",
+      "seed": 12
+    },
+    {
+      "active": true,
+      "adaptive_round": 4,
+      "family": "hartmann6",
+      "seed": 12
+    },
+    {
+      "active": false,
+      "adaptive_round": 1,
+      "family": "hartmann6",
+      "seed": 13
+    },
+    {
+      "active": true,
+      "adaptive_round": 2,
+      "family": "hartmann6",
+      "seed": 13
+    },
+    {
+      "active": true,
+      "adaptive_round": 3,
+      "family": "hartmann6",
+      "seed": 13
+    },
+    {
+      "active": true,
+      "adaptive_round": 4,
+      "family": "hartmann6",
+      "seed": 13
+    },
+    {
+      "active": false,
+      "adaptive_round": 1,
+      "family": "hartmann6",
+      "seed": 14
+    },
+    {
+      "active": true,
+      "adaptive_round": 2,
+      "family": "hartmann6",
+      "seed": 14
+    },
+    {
+      "active": true,
+      "adaptive_round": 3,
+      "family": "hartmann6",
+      "seed": 14
+    },
+    {
+      "active": true,
+      "adaptive_round": 4,
+      "family": "hartmann6",
+      "seed": 14
+    },
+    {
+      "active": false,
+      "adaptive_round": 1,
+      "family": "hartmann6",
+      "seed": 15
+    },
+    {
+      "active": true,
+      "adaptive_round": 2,
+      "family": "hartmann6",
+      "seed": 15
+    },
+    {
+      "active": true,
+      "adaptive_round": 3,
+      "family": "hartmann6",
+      "seed": 15
+    },
+    {
+      "active": true,
+      "adaptive_round": 4,
+      "family": "hartmann6",
+      "seed": 15
+    },
+    {
+      "active": false,
+      "adaptive_round": 1,
+      "family": "hartmann6",
+      "seed": 16
+    },
+    {
+      "active": false,
+      "adaptive_round": 2,
+      "family": "hartmann6",
+      "seed": 16
+    },
+    {
+      "active": true,
+      "adaptive_round": 3,
+      "family": "hartmann6",
+      "seed": 16
+    },
+    {
+      "active": true,
+      "adaptive_round": 4,
+      "family": "hartmann6",
+      "seed": 16
+    },
+    {
+      "active": true,
+      "adaptive_round": 1,
+      "family": "hartmann6",
+      "seed": 17
+    },
+    {
+      "active": true,
+      "adaptive_round": 2,
+      "family": "hartmann6",
+      "seed": 17
+    },
+    {
+      "active": true,
+      "adaptive_round": 3,
+      "family": "hartmann6",
+      "seed": 17
+    },
+    {
+      "active": true,
+      "adaptive_round": 4,
+      "family": "hartmann6",
+      "seed": 17
+    },
+    {
+      "active": true,
+      "adaptive_round": 1,
+      "family": "hartmann6",
+      "seed": 18
+    },
+    {
+      "active": true,
+      "adaptive_round": 2,
+      "family": "hartmann6",
+      "seed": 18
+    },
+    {
+      "active": true,
+      "adaptive_round": 3,
+      "family": "hartmann6",
+      "seed": 18
+    },
+    {
+      "active": true,
+      "adaptive_round": 4,
+      "family": "hartmann6",
+      "seed": 18
+    },
+    {
+      "active": false,
+      "adaptive_round": 1,
+      "family": "hartmann6",
+      "seed": 19
+    },
+    {
+      "active": true,
+      "adaptive_round": 2,
+      "family": "hartmann6",
+      "seed": 19
+    },
+    {
+      "active": true,
+      "adaptive_round": 3,
+      "family": "hartmann6",
+      "seed": 19
+    },
+    {
+      "active": true,
+      "adaptive_round": 4,
+      "family": "hartmann6",
+      "seed": 19
+    },
+    {
+      "active": true,
+      "adaptive_round": 1,
+      "family": "hartmann6",
+      "seed": 20
+    },
+    {
+      "active": true,
+      "adaptive_round": 2,
+      "family": "hartmann6",
+      "seed": 20
+    },
+    {
+      "active": true,
+      "adaptive_round": 3,
+      "family": "hartmann6",
+      "seed": 20
+    },
+    {
+      "active": true,
+      "adaptive_round": 4,
+      "family": "hartmann6",
+      "seed": 20
+    },
+    {
+      "active": false,
+      "adaptive_round": 1,
+      "family": "hartmann6",
+      "seed": 21
+    },
+    {
+      "active": true,
+      "adaptive_round": 2,
+      "family": "hartmann6",
+      "seed": 21
+    },
+    {
+      "active": true,
+      "adaptive_round": 3,
+      "family": "hartmann6",
+      "seed": 21
+    },
+    {
+      "active": true,
+      "adaptive_round": 4,
+      "family": "hartmann6",
+      "seed": 21
+    },
+    {
+      "active": false,
+      "adaptive_round": 1,
+      "family": "hartmann6",
+      "seed": 22
+    },
+    {
+      "active": true,
+      "adaptive_round": 2,
+      "family": "hartmann6",
+      "seed": 22
+    },
+    {
+      "active": true,
+      "adaptive_round": 3,
+      "family": "hartmann6",
+      "seed": 22
+    },
+    {
+      "active": true,
+      "adaptive_round": 4,
+      "family": "hartmann6",
+      "seed": 22
+    },
+    {
+      "active": true,
+      "adaptive_round": 1,
+      "family": "hartmann6",
+      "seed": 23
+    },
+    {
+      "active": true,
+      "adaptive_round": 2,
+      "family": "hartmann6",
+      "seed": 23
+    },
+    {
+      "active": true,
+      "adaptive_round": 3,
+      "family": "hartmann6",
+      "seed": 23
+    },
+    {
+      "active": true,
+      "adaptive_round": 4,
+      "family": "hartmann6",
+      "seed": 23
+    },
+    {
+      "active": true,
+      "adaptive_round": 1,
+      "family": "hartmann6",
+      "seed": 24
+    },
+    {
+      "active": true,
+      "adaptive_round": 2,
+      "family": "hartmann6",
+      "seed": 24
+    },
+    {
+      "active": true,
+      "adaptive_round": 3,
+      "family": "hartmann6",
+      "seed": 24
+    },
+    {
+      "active": true,
+      "adaptive_round": 4,
+      "family": "hartmann6",
+      "seed": 24
+    },
+    {
+      "active": true,
+      "adaptive_round": 1,
+      "family": "hartmann6",
+      "seed": 25
+    },
+    {
+      "active": true,
+      "adaptive_round": 2,
+      "family": "hartmann6",
+      "seed": 25
+    },
+    {
+      "active": true,
+      "adaptive_round": 3,
+      "family": "hartmann6",
+      "seed": 25
+    },
+    {
+      "active": true,
+      "adaptive_round": 4,
+      "family": "hartmann6",
+      "seed": 25
+    },
+    {
+      "active": true,
+      "adaptive_round": 1,
+      "family": "hartmann6",
+      "seed": 26
+    },
+    {
+      "active": true,
+      "adaptive_round": 2,
+      "family": "hartmann6",
+      "seed": 26
+    },
+    {
+      "active": true,
+      "adaptive_round": 3,
+      "family": "hartmann6",
+      "seed": 26
+    },
+    {
+      "active": true,
+      "adaptive_round": 4,
+      "family": "hartmann6",
+      "seed": 26
+    },
+    {
+      "active": true,
+      "adaptive_round": 1,
+      "family": "hartmann6",
+      "seed": 27
+    },
+    {
+      "active": true,
+      "adaptive_round": 2,
+      "family": "hartmann6",
+      "seed": 27
+    },
+    {
+      "active": true,
+      "adaptive_round": 3,
+      "family": "hartmann6",
+      "seed": 27
+    },
+    {
+      "active": true,
+      "adaptive_round": 4,
+      "family": "hartmann6",
+      "seed": 27
+    },
+    {
+      "active": false,
+      "adaptive_round": 1,
+      "family": "hartmann6",
+      "seed": 28
+    },
+    {
+      "active": true,
+      "adaptive_round": 2,
+      "family": "hartmann6",
+      "seed": 28
+    },
+    {
+      "active": true,
+      "adaptive_round": 3,
+      "family": "hartmann6",
+      "seed": 28
+    },
+    {
+      "active": true,
+      "adaptive_round": 4,
+      "family": "hartmann6",
+      "seed": 28
+    },
+    {
+      "active": false,
+      "adaptive_round": 1,
+      "family": "hartmann6",
+      "seed": 29
+    },
+    {
+      "active": true,
+      "adaptive_round": 2,
+      "family": "hartmann6",
+      "seed": 29
+    },
+    {
+      "active": true,
+      "adaptive_round": 3,
+      "family": "hartmann6",
+      "seed": 29
+    },
+    {
+      "active": true,
+      "adaptive_round": 4,
+      "family": "hartmann6",
+      "seed": 29
+    },
+    {
+      "active": true,
+      "adaptive_round": 1,
+      "family": "hartmann6",
+      "seed": 30
+    },
+    {
+      "active": true,
+      "adaptive_round": 2,
+      "family": "hartmann6",
+      "seed": 30
+    },
+    {
+      "active": true,
+      "adaptive_round": 3,
+      "family": "hartmann6",
+      "seed": 30
+    },
+    {
+      "active": true,
+      "adaptive_round": 4,
+      "family": "hartmann6",
+      "seed": 30
+    },
+    {
+      "active": true,
+      "adaptive_round": 1,
+      "family": "hartmann6",
+      "seed": 31
+    },
+    {
+      "active": true,
+      "adaptive_round": 2,
+      "family": "hartmann6",
+      "seed": 31
+    },
+    {
+      "active": true,
+      "adaptive_round": 3,
+      "family": "hartmann6",
+      "seed": 31
+    },
+    {
+      "active": true,
+      "adaptive_round": 4,
+      "family": "hartmann6",
+      "seed": 31
+    },
+    {
+      "active": false,
+      "adaptive_round": 1,
+      "family": "hill",
+      "seed": 0
+    },
+    {
+      "active": false,
+      "adaptive_round": 2,
+      "family": "hill",
+      "seed": 0
+    },
+    {
+      "active": true,
+      "adaptive_round": 3,
+      "family": "hill",
+      "seed": 0
+    },
+    {
+      "active": false,
+      "adaptive_round": 4,
+      "family": "hill",
+      "seed": 0
+    },
+    {
+      "active": false,
+      "adaptive_round": 1,
+      "family": "hill",
+      "seed": 1
+    },
+    {
+      "active": false,
+      "adaptive_round": 2,
+      "family": "hill",
+      "seed": 1
+    },
+    {
+      "active": false,
+      "adaptive_round": 3,
+      "family": "hill",
+      "seed": 1
+    },
+    {
+      "active": false,
+      "adaptive_round": 4,
+      "family": "hill",
+      "seed": 1
+    },
+    {
+      "active": false,
+      "adaptive_round": 1,
+      "family": "hill",
+      "seed": 2
+    },
+    {
+      "active": false,
+      "adaptive_round": 2,
+      "family": "hill",
+      "seed": 2
+    },
+    {
+      "active": false,
+      "adaptive_round": 3,
+      "family": "hill",
+      "seed": 2
+    },
+    {
+      "active": false,
+      "adaptive_round": 4,
+      "family": "hill",
+      "seed": 2
+    },
+    {
+      "active": false,
+      "adaptive_round": 1,
+      "family": "hill",
+      "seed": 3
+    },
+    {
+      "active": false,
+      "adaptive_round": 2,
+      "family": "hill",
+      "seed": 3
+    },
+    {
+      "active": false,
+      "adaptive_round": 3,
+      "family": "hill",
+      "seed": 3
+    },
+    {
+      "active": false,
+      "adaptive_round": 4,
+      "family": "hill",
+      "seed": 3
+    },
+    {
+      "active": false,
+      "adaptive_round": 1,
+      "family": "hill",
+      "seed": 4
+    },
+    {
+      "active": false,
+      "adaptive_round": 2,
+      "family": "hill",
+      "seed": 4
+    },
+    {
+      "active": false,
+      "adaptive_round": 3,
+      "family": "hill",
+      "seed": 4
+    },
+    {
+      "active": false,
+      "adaptive_round": 4,
+      "family": "hill",
+      "seed": 4
+    },
+    {
+      "active": false,
+      "adaptive_round": 1,
+      "family": "hill",
+      "seed": 5
+    },
+    {
+      "active": false,
+      "adaptive_round": 2,
+      "family": "hill",
+      "seed": 5
+    },
+    {
+      "active": false,
+      "adaptive_round": 3,
+      "family": "hill",
+      "seed": 5
+    },
+    {
+      "active": false,
+      "adaptive_round": 4,
+      "family": "hill",
+      "seed": 5
+    },
+    {
+      "active": false,
+      "adaptive_round": 1,
+      "family": "hill",
+      "seed": 6
+    },
+    {
+      "active": false,
+      "adaptive_round": 2,
+      "family": "hill",
+      "seed": 6
+    },
+    {
+      "active": false,
+      "adaptive_round": 3,
+      "family": "hill",
+      "seed": 6
+    },
+    {
+      "active": false,
+      "adaptive_round": 4,
+      "family": "hill",
+      "seed": 6
+    },
+    {
+      "active": false,
+      "adaptive_round": 1,
+      "family": "hill",
+      "seed": 7
+    },
+    {
+      "active": false,
+      "adaptive_round": 2,
+      "family": "hill",
+      "seed": 7
+    },
+    {
+      "active": false,
+      "adaptive_round": 3,
+      "family": "hill",
+      "seed": 7
+    },
+    {
+      "active": false,
+      "adaptive_round": 4,
+      "family": "hill",
+      "seed": 7
+    },
+    {
+      "active": false,
+      "adaptive_round": 1,
+      "family": "hill",
+      "seed": 8
+    },
+    {
+      "active": false,
+      "adaptive_round": 2,
+      "family": "hill",
+      "seed": 8
+    },
+    {
+      "active": false,
+      "adaptive_round": 3,
+      "family": "hill",
+      "seed": 8
+    },
+    {
+      "active": false,
+      "adaptive_round": 4,
+      "family": "hill",
+      "seed": 8
+    },
+    {
+      "active": false,
+      "adaptive_round": 1,
+      "family": "hill",
+      "seed": 9
+    },
+    {
+      "active": false,
+      "adaptive_round": 2,
+      "family": "hill",
+      "seed": 9
+    },
+    {
+      "active": false,
+      "adaptive_round": 3,
+      "family": "hill",
+      "seed": 9
+    },
+    {
+      "active": false,
+      "adaptive_round": 4,
+      "family": "hill",
+      "seed": 9
+    },
+    {
+      "active": false,
+      "adaptive_round": 1,
+      "family": "hill",
+      "seed": 10
+    },
+    {
+      "active": false,
+      "adaptive_round": 2,
+      "family": "hill",
+      "seed": 10
+    },
+    {
+      "active": false,
+      "adaptive_round": 3,
+      "family": "hill",
+      "seed": 10
+    },
+    {
+      "active": false,
+      "adaptive_round": 4,
+      "family": "hill",
+      "seed": 10
+    },
+    {
+      "active": false,
+      "adaptive_round": 1,
+      "family": "hill",
+      "seed": 11
+    },
+    {
+      "active": false,
+      "adaptive_round": 2,
+      "family": "hill",
+      "seed": 11
+    },
+    {
+      "active": false,
+      "adaptive_round": 3,
+      "family": "hill",
+      "seed": 11
+    },
+    {
+      "active": true,
+      "adaptive_round": 4,
+      "family": "hill",
+      "seed": 11
+    },
+    {
+      "active": false,
+      "adaptive_round": 1,
+      "family": "hill",
+      "seed": 12
+    },
+    {
+      "active": false,
+      "adaptive_round": 2,
+      "family": "hill",
+      "seed": 12
+    },
+    {
+      "active": false,
+      "adaptive_round": 3,
+      "family": "hill",
+      "seed": 12
+    },
+    {
+      "active": false,
+      "adaptive_round": 4,
+      "family": "hill",
+      "seed": 12
+    },
+    {
+      "active": false,
+      "adaptive_round": 1,
+      "family": "hill",
+      "seed": 13
+    },
+    {
+      "active": false,
+      "adaptive_round": 2,
+      "family": "hill",
+      "seed": 13
+    },
+    {
+      "active": false,
+      "adaptive_round": 3,
+      "family": "hill",
+      "seed": 13
+    },
+    {
+      "active": false,
+      "adaptive_round": 4,
+      "family": "hill",
+      "seed": 13
+    },
+    {
+      "active": false,
+      "adaptive_round": 1,
+      "family": "hill",
+      "seed": 14
+    },
+    {
+      "active": false,
+      "adaptive_round": 2,
+      "family": "hill",
+      "seed": 14
+    },
+    {
+      "active": false,
+      "adaptive_round": 3,
+      "family": "hill",
+      "seed": 14
+    },
+    {
+      "active": false,
+      "adaptive_round": 4,
+      "family": "hill",
+      "seed": 14
+    },
+    {
+      "active": false,
+      "adaptive_round": 1,
+      "family": "hill",
+      "seed": 15
+    },
+    {
+      "active": false,
+      "adaptive_round": 2,
+      "family": "hill",
+      "seed": 15
+    },
+    {
+      "active": false,
+      "adaptive_round": 3,
+      "family": "hill",
+      "seed": 15
+    },
+    {
+      "active": false,
+      "adaptive_round": 4,
+      "family": "hill",
+      "seed": 15
+    },
+    {
+      "active": false,
+      "adaptive_round": 1,
+      "family": "hill",
+      "seed": 16
+    },
+    {
+      "active": false,
+      "adaptive_round": 2,
+      "family": "hill",
+      "seed": 16
+    },
+    {
+      "active": false,
+      "adaptive_round": 3,
+      "family": "hill",
+      "seed": 16
+    },
+    {
+      "active": false,
+      "adaptive_round": 4,
+      "family": "hill",
+      "seed": 16
+    },
+    {
+      "active": false,
+      "adaptive_round": 1,
+      "family": "hill",
+      "seed": 17
+    },
+    {
+      "active": false,
+      "adaptive_round": 2,
+      "family": "hill",
+      "seed": 17
+    },
+    {
+      "active": false,
+      "adaptive_round": 3,
+      "family": "hill",
+      "seed": 17
+    },
+    {
+      "active": false,
+      "adaptive_round": 4,
+      "family": "hill",
+      "seed": 17
+    },
+    {
+      "active": false,
+      "adaptive_round": 1,
+      "family": "hill",
+      "seed": 18
+    },
+    {
+      "active": false,
+      "adaptive_round": 2,
+      "family": "hill",
+      "seed": 18
+    },
+    {
+      "active": true,
+      "adaptive_round": 3,
+      "family": "hill",
+      "seed": 18
+    },
+    {
+      "active": false,
+      "adaptive_round": 4,
+      "family": "hill",
+      "seed": 18
+    },
+    {
+      "active": false,
+      "adaptive_round": 1,
+      "family": "hill",
+      "seed": 19
+    },
+    {
+      "active": false,
+      "adaptive_round": 2,
+      "family": "hill",
+      "seed": 19
+    },
+    {
+      "active": false,
+      "adaptive_round": 3,
+      "family": "hill",
+      "seed": 19
+    },
+    {
+      "active": false,
+      "adaptive_round": 4,
+      "family": "hill",
+      "seed": 19
+    },
+    {
+      "active": false,
+      "adaptive_round": 1,
+      "family": "hill",
+      "seed": 20
+    },
+    {
+      "active": false,
+      "adaptive_round": 2,
+      "family": "hill",
+      "seed": 20
+    },
+    {
+      "active": false,
+      "adaptive_round": 3,
+      "family": "hill",
+      "seed": 20
+    },
+    {
+      "active": false,
+      "adaptive_round": 4,
+      "family": "hill",
+      "seed": 20
+    },
+    {
+      "active": false,
+      "adaptive_round": 1,
+      "family": "hill",
+      "seed": 21
+    },
+    {
+      "active": false,
+      "adaptive_round": 2,
+      "family": "hill",
+      "seed": 21
+    },
+    {
+      "active": false,
+      "adaptive_round": 3,
+      "family": "hill",
+      "seed": 21
+    },
+    {
+      "active": false,
+      "adaptive_round": 4,
+      "family": "hill",
+      "seed": 21
+    },
+    {
+      "active": false,
+      "adaptive_round": 1,
+      "family": "hill",
+      "seed": 22
+    },
+    {
+      "active": false,
+      "adaptive_round": 2,
+      "family": "hill",
+      "seed": 22
+    },
+    {
+      "active": false,
+      "adaptive_round": 3,
+      "family": "hill",
+      "seed": 22
+    },
+    {
+      "active": false,
+      "adaptive_round": 4,
+      "family": "hill",
+      "seed": 22
+    },
+    {
+      "active": false,
+      "adaptive_round": 1,
+      "family": "hill",
+      "seed": 23
+    },
+    {
+      "active": false,
+      "adaptive_round": 2,
+      "family": "hill",
+      "seed": 23
+    },
+    {
+      "active": false,
+      "adaptive_round": 3,
+      "family": "hill",
+      "seed": 23
+    },
+    {
+      "active": false,
+      "adaptive_round": 4,
+      "family": "hill",
+      "seed": 23
+    },
+    {
+      "active": false,
+      "adaptive_round": 1,
+      "family": "hill",
+      "seed": 24
+    },
+    {
+      "active": false,
+      "adaptive_round": 2,
+      "family": "hill",
+      "seed": 24
+    },
+    {
+      "active": false,
+      "adaptive_round": 3,
+      "family": "hill",
+      "seed": 24
+    },
+    {
+      "active": false,
+      "adaptive_round": 4,
+      "family": "hill",
+      "seed": 24
+    },
+    {
+      "active": false,
+      "adaptive_round": 1,
+      "family": "hill",
+      "seed": 25
+    },
+    {
+      "active": false,
+      "adaptive_round": 2,
+      "family": "hill",
+      "seed": 25
+    },
+    {
+      "active": true,
+      "adaptive_round": 3,
+      "family": "hill",
+      "seed": 25
+    },
+    {
+      "active": true,
+      "adaptive_round": 4,
+      "family": "hill",
+      "seed": 25
+    },
+    {
+      "active": false,
+      "adaptive_round": 1,
+      "family": "hill",
+      "seed": 26
+    },
+    {
+      "active": false,
+      "adaptive_round": 2,
+      "family": "hill",
+      "seed": 26
+    },
+    {
+      "active": false,
+      "adaptive_round": 3,
+      "family": "hill",
+      "seed": 26
+    },
+    {
+      "active": false,
+      "adaptive_round": 4,
+      "family": "hill",
+      "seed": 26
+    },
+    {
+      "active": false,
+      "adaptive_round": 1,
+      "family": "hill",
+      "seed": 27
+    },
+    {
+      "active": false,
+      "adaptive_round": 2,
+      "family": "hill",
+      "seed": 27
+    },
+    {
+      "active": true,
+      "adaptive_round": 3,
+      "family": "hill",
+      "seed": 27
+    },
+    {
+      "active": false,
+      "adaptive_round": 4,
+      "family": "hill",
+      "seed": 27
+    },
+    {
+      "active": false,
+      "adaptive_round": 1,
+      "family": "hill",
+      "seed": 28
+    },
+    {
+      "active": false,
+      "adaptive_round": 2,
+      "family": "hill",
+      "seed": 28
+    },
+    {
+      "active": false,
+      "adaptive_round": 3,
+      "family": "hill",
+      "seed": 28
+    },
+    {
+      "active": false,
+      "adaptive_round": 4,
+      "family": "hill",
+      "seed": 28
+    },
+    {
+      "active": false,
+      "adaptive_round": 1,
+      "family": "hill",
+      "seed": 29
+    },
+    {
+      "active": false,
+      "adaptive_round": 2,
+      "family": "hill",
+      "seed": 29
+    },
+    {
+      "active": false,
+      "adaptive_round": 3,
+      "family": "hill",
+      "seed": 29
+    },
+    {
+      "active": false,
+      "adaptive_round": 4,
+      "family": "hill",
+      "seed": 29
+    },
+    {
+      "active": false,
+      "adaptive_round": 1,
+      "family": "hill",
+      "seed": 30
+    },
+    {
+      "active": false,
+      "adaptive_round": 2,
+      "family": "hill",
+      "seed": 30
+    },
+    {
+      "active": false,
+      "adaptive_round": 3,
+      "family": "hill",
+      "seed": 30
+    },
+    {
+      "active": false,
+      "adaptive_round": 4,
+      "family": "hill",
+      "seed": 30
+    },
+    {
+      "active": false,
+      "adaptive_round": 1,
+      "family": "hill",
+      "seed": 31
+    },
+    {
+      "active": false,
+      "adaptive_round": 2,
+      "family": "hill",
+      "seed": 31
+    },
+    {
+      "active": false,
+      "adaptive_round": 3,
+      "family": "hill",
+      "seed": 31
+    },
+    {
+      "active": true,
+      "adaptive_round": 4,
+      "family": "hill",
+      "seed": 31
+    },
+    {
+      "active": false,
+      "adaptive_round": 1,
+      "family": "levy",
+      "seed": 0
+    },
+    {
+      "active": false,
+      "adaptive_round": 2,
+      "family": "levy",
+      "seed": 0
+    },
+    {
+      "active": false,
+      "adaptive_round": 3,
+      "family": "levy",
+      "seed": 0
+    },
+    {
+      "active": true,
+      "adaptive_round": 4,
+      "family": "levy",
+      "seed": 0
+    },
+    {
+      "active": false,
+      "adaptive_round": 1,
+      "family": "levy",
+      "seed": 1
+    },
+    {
+      "active": false,
+      "adaptive_round": 2,
+      "family": "levy",
+      "seed": 1
+    },
+    {
+      "active": false,
+      "adaptive_round": 3,
+      "family": "levy",
+      "seed": 1
+    },
+    {
+      "active": false,
+      "adaptive_round": 4,
+      "family": "levy",
+      "seed": 1
+    },
+    {
+      "active": false,
+      "adaptive_round": 1,
+      "family": "levy",
+      "seed": 2
+    },
+    {
+      "active": false,
+      "adaptive_round": 2,
+      "family": "levy",
+      "seed": 2
+    },
+    {
+      "active": false,
+      "adaptive_round": 3,
+      "family": "levy",
+      "seed": 2
+    },
+    {
+      "active": false,
+      "adaptive_round": 4,
+      "family": "levy",
+      "seed": 2
+    },
+    {
+      "active": false,
+      "adaptive_round": 1,
+      "family": "levy",
+      "seed": 3
+    },
+    {
+      "active": false,
+      "adaptive_round": 2,
+      "family": "levy",
+      "seed": 3
+    },
+    {
+      "active": false,
+      "adaptive_round": 3,
+      "family": "levy",
+      "seed": 3
+    },
+    {
+      "active": false,
+      "adaptive_round": 4,
+      "family": "levy",
+      "seed": 3
+    },
+    {
+      "active": false,
+      "adaptive_round": 1,
+      "family": "levy",
+      "seed": 4
+    },
+    {
+      "active": false,
+      "adaptive_round": 2,
+      "family": "levy",
+      "seed": 4
+    },
+    {
+      "active": false,
+      "adaptive_round": 3,
+      "family": "levy",
+      "seed": 4
+    },
+    {
+      "active": false,
+      "adaptive_round": 4,
+      "family": "levy",
+      "seed": 4
+    },
+    {
+      "active": false,
+      "adaptive_round": 1,
+      "family": "levy",
+      "seed": 5
+    },
+    {
+      "active": false,
+      "adaptive_round": 2,
+      "family": "levy",
+      "seed": 5
+    },
+    {
+      "active": false,
+      "adaptive_round": 3,
+      "family": "levy",
+      "seed": 5
+    },
+    {
+      "active": false,
+      "adaptive_round": 4,
+      "family": "levy",
+      "seed": 5
+    },
+    {
+      "active": false,
+      "adaptive_round": 1,
+      "family": "levy",
+      "seed": 6
+    },
+    {
+      "active": true,
+      "adaptive_round": 2,
+      "family": "levy",
+      "seed": 6
+    },
+    {
+      "active": false,
+      "adaptive_round": 3,
+      "family": "levy",
+      "seed": 6
+    },
+    {
+      "active": false,
+      "adaptive_round": 4,
+      "family": "levy",
+      "seed": 6
+    },
+    {
+      "active": false,
+      "adaptive_round": 1,
+      "family": "levy",
+      "seed": 7
+    },
+    {
+      "active": false,
+      "adaptive_round": 2,
+      "family": "levy",
+      "seed": 7
+    },
+    {
+      "active": false,
+      "adaptive_round": 3,
+      "family": "levy",
+      "seed": 7
+    },
+    {
+      "active": false,
+      "adaptive_round": 4,
+      "family": "levy",
+      "seed": 7
+    },
+    {
+      "active": false,
+      "adaptive_round": 1,
+      "family": "levy",
+      "seed": 8
+    },
+    {
+      "active": false,
+      "adaptive_round": 2,
+      "family": "levy",
+      "seed": 8
+    },
+    {
+      "active": false,
+      "adaptive_round": 3,
+      "family": "levy",
+      "seed": 8
+    },
+    {
+      "active": false,
+      "adaptive_round": 4,
+      "family": "levy",
+      "seed": 8
+    },
+    {
+      "active": false,
+      "adaptive_round": 1,
+      "family": "levy",
+      "seed": 9
+    },
+    {
+      "active": false,
+      "adaptive_round": 2,
+      "family": "levy",
+      "seed": 9
+    },
+    {
+      "active": false,
+      "adaptive_round": 3,
+      "family": "levy",
+      "seed": 9
+    },
+    {
+      "active": false,
+      "adaptive_round": 4,
+      "family": "levy",
+      "seed": 9
+    },
+    {
+      "active": false,
+      "adaptive_round": 1,
+      "family": "levy",
+      "seed": 10
+    },
+    {
+      "active": false,
+      "adaptive_round": 2,
+      "family": "levy",
+      "seed": 10
+    },
+    {
+      "active": false,
+      "adaptive_round": 3,
+      "family": "levy",
+      "seed": 10
+    },
+    {
+      "active": false,
+      "adaptive_round": 4,
+      "family": "levy",
+      "seed": 10
+    },
+    {
+      "active": false,
+      "adaptive_round": 1,
+      "family": "levy",
+      "seed": 11
+    },
+    {
+      "active": false,
+      "adaptive_round": 2,
+      "family": "levy",
+      "seed": 11
+    },
+    {
+      "active": false,
+      "adaptive_round": 3,
+      "family": "levy",
+      "seed": 11
+    },
+    {
+      "active": false,
+      "adaptive_round": 4,
+      "family": "levy",
+      "seed": 11
+    },
+    {
+      "active": false,
+      "adaptive_round": 1,
+      "family": "levy",
+      "seed": 12
+    },
+    {
+      "active": false,
+      "adaptive_round": 2,
+      "family": "levy",
+      "seed": 12
+    },
+    {
+      "active": false,
+      "adaptive_round": 3,
+      "family": "levy",
+      "seed": 12
+    },
+    {
+      "active": false,
+      "adaptive_round": 4,
+      "family": "levy",
+      "seed": 12
+    },
+    {
+      "active": false,
+      "adaptive_round": 1,
+      "family": "levy",
+      "seed": 13
+    },
+    {
+      "active": false,
+      "adaptive_round": 2,
+      "family": "levy",
+      "seed": 13
+    },
+    {
+      "active": false,
+      "adaptive_round": 3,
+      "family": "levy",
+      "seed": 13
+    },
+    {
+      "active": false,
+      "adaptive_round": 4,
+      "family": "levy",
+      "seed": 13
+    },
+    {
+      "active": false,
+      "adaptive_round": 1,
+      "family": "levy",
+      "seed": 14
+    },
+    {
+      "active": false,
+      "adaptive_round": 2,
+      "family": "levy",
+      "seed": 14
+    },
+    {
+      "active": false,
+      "adaptive_round": 3,
+      "family": "levy",
+      "seed": 14
+    },
+    {
+      "active": false,
+      "adaptive_round": 4,
+      "family": "levy",
+      "seed": 14
+    },
+    {
+      "active": false,
+      "adaptive_round": 1,
+      "family": "levy",
+      "seed": 15
+    },
+    {
+      "active": false,
+      "adaptive_round": 2,
+      "family": "levy",
+      "seed": 15
+    },
+    {
+      "active": false,
+      "adaptive_round": 3,
+      "family": "levy",
+      "seed": 15
+    },
+    {
+      "active": false,
+      "adaptive_round": 4,
+      "family": "levy",
+      "seed": 15
+    },
+    {
+      "active": false,
+      "adaptive_round": 1,
+      "family": "levy",
+      "seed": 16
+    },
+    {
+      "active": false,
+      "adaptive_round": 2,
+      "family": "levy",
+      "seed": 16
+    },
+    {
+      "active": false,
+      "adaptive_round": 3,
+      "family": "levy",
+      "seed": 16
+    },
+    {
+      "active": false,
+      "adaptive_round": 4,
+      "family": "levy",
+      "seed": 16
+    },
+    {
+      "active": false,
+      "adaptive_round": 1,
+      "family": "levy",
+      "seed": 17
+    },
+    {
+      "active": false,
+      "adaptive_round": 2,
+      "family": "levy",
+      "seed": 17
+    },
+    {
+      "active": false,
+      "adaptive_round": 3,
+      "family": "levy",
+      "seed": 17
+    },
+    {
+      "active": false,
+      "adaptive_round": 4,
+      "family": "levy",
+      "seed": 17
+    },
+    {
+      "active": false,
+      "adaptive_round": 1,
+      "family": "levy",
+      "seed": 18
+    },
+    {
+      "active": false,
+      "adaptive_round": 2,
+      "family": "levy",
+      "seed": 18
+    },
+    {
+      "active": false,
+      "adaptive_round": 3,
+      "family": "levy",
+      "seed": 18
+    },
+    {
+      "active": false,
+      "adaptive_round": 4,
+      "family": "levy",
+      "seed": 18
+    },
+    {
+      "active": false,
+      "adaptive_round": 1,
+      "family": "levy",
+      "seed": 19
+    },
+    {
+      "active": false,
+      "adaptive_round": 2,
+      "family": "levy",
+      "seed": 19
+    },
+    {
+      "active": false,
+      "adaptive_round": 3,
+      "family": "levy",
+      "seed": 19
+    },
+    {
+      "active": false,
+      "adaptive_round": 4,
+      "family": "levy",
+      "seed": 19
+    },
+    {
+      "active": false,
+      "adaptive_round": 1,
+      "family": "levy",
+      "seed": 20
+    },
+    {
+      "active": false,
+      "adaptive_round": 2,
+      "family": "levy",
+      "seed": 20
+    },
+    {
+      "active": false,
+      "adaptive_round": 3,
+      "family": "levy",
+      "seed": 20
+    },
+    {
+      "active": false,
+      "adaptive_round": 4,
+      "family": "levy",
+      "seed": 20
+    },
+    {
+      "active": false,
+      "adaptive_round": 1,
+      "family": "levy",
+      "seed": 21
+    },
+    {
+      "active": false,
+      "adaptive_round": 2,
+      "family": "levy",
+      "seed": 21
+    },
+    {
+      "active": false,
+      "adaptive_round": 3,
+      "family": "levy",
+      "seed": 21
+    },
+    {
+      "active": false,
+      "adaptive_round": 4,
+      "family": "levy",
+      "seed": 21
+    },
+    {
+      "active": false,
+      "adaptive_round": 1,
+      "family": "levy",
+      "seed": 22
+    },
+    {
+      "active": false,
+      "adaptive_round": 2,
+      "family": "levy",
+      "seed": 22
+    },
+    {
+      "active": false,
+      "adaptive_round": 3,
+      "family": "levy",
+      "seed": 22
+    },
+    {
+      "active": false,
+      "adaptive_round": 4,
+      "family": "levy",
+      "seed": 22
+    },
+    {
+      "active": false,
+      "adaptive_round": 1,
+      "family": "levy",
+      "seed": 23
+    },
+    {
+      "active": false,
+      "adaptive_round": 2,
+      "family": "levy",
+      "seed": 23
+    },
+    {
+      "active": false,
+      "adaptive_round": 3,
+      "family": "levy",
+      "seed": 23
+    },
+    {
+      "active": false,
+      "adaptive_round": 4,
+      "family": "levy",
+      "seed": 23
+    },
+    {
+      "active": false,
+      "adaptive_round": 1,
+      "family": "levy",
+      "seed": 24
+    },
+    {
+      "active": false,
+      "adaptive_round": 2,
+      "family": "levy",
+      "seed": 24
+    },
+    {
+      "active": false,
+      "adaptive_round": 3,
+      "family": "levy",
+      "seed": 24
+    },
+    {
+      "active": false,
+      "adaptive_round": 4,
+      "family": "levy",
+      "seed": 24
+    },
+    {
+      "active": false,
+      "adaptive_round": 1,
+      "family": "levy",
+      "seed": 25
+    },
+    {
+      "active": false,
+      "adaptive_round": 2,
+      "family": "levy",
+      "seed": 25
+    },
+    {
+      "active": true,
+      "adaptive_round": 3,
+      "family": "levy",
+      "seed": 25
+    },
+    {
+      "active": false,
+      "adaptive_round": 4,
+      "family": "levy",
+      "seed": 25
+    },
+    {
+      "active": false,
+      "adaptive_round": 1,
+      "family": "levy",
+      "seed": 26
+    },
+    {
+      "active": false,
+      "adaptive_round": 2,
+      "family": "levy",
+      "seed": 26
+    },
+    {
+      "active": false,
+      "adaptive_round": 3,
+      "family": "levy",
+      "seed": 26
+    },
+    {
+      "active": false,
+      "adaptive_round": 4,
+      "family": "levy",
+      "seed": 26
+    },
+    {
+      "active": false,
+      "adaptive_round": 1,
+      "family": "levy",
+      "seed": 27
+    },
+    {
+      "active": false,
+      "adaptive_round": 2,
+      "family": "levy",
+      "seed": 27
+    },
+    {
+      "active": false,
+      "adaptive_round": 3,
+      "family": "levy",
+      "seed": 27
+    },
+    {
+      "active": false,
+      "adaptive_round": 4,
+      "family": "levy",
+      "seed": 27
+    },
+    {
+      "active": false,
+      "adaptive_round": 1,
+      "family": "levy",
+      "seed": 28
+    },
+    {
+      "active": false,
+      "adaptive_round": 2,
+      "family": "levy",
+      "seed": 28
+    },
+    {
+      "active": false,
+      "adaptive_round": 3,
+      "family": "levy",
+      "seed": 28
+    },
+    {
+      "active": false,
+      "adaptive_round": 4,
+      "family": "levy",
+      "seed": 28
+    },
+    {
+      "active": false,
+      "adaptive_round": 1,
+      "family": "levy",
+      "seed": 29
+    },
+    {
+      "active": false,
+      "adaptive_round": 2,
+      "family": "levy",
+      "seed": 29
+    },
+    {
+      "active": false,
+      "adaptive_round": 3,
+      "family": "levy",
+      "seed": 29
+    },
+    {
+      "active": true,
+      "adaptive_round": 4,
+      "family": "levy",
+      "seed": 29
+    },
+    {
+      "active": false,
+      "adaptive_round": 1,
+      "family": "levy",
+      "seed": 30
+    },
+    {
+      "active": false,
+      "adaptive_round": 2,
+      "family": "levy",
+      "seed": 30
+    },
+    {
+      "active": false,
+      "adaptive_round": 3,
+      "family": "levy",
+      "seed": 30
+    },
+    {
+      "active": false,
+      "adaptive_round": 4,
+      "family": "levy",
+      "seed": 30
+    },
+    {
+      "active": false,
+      "adaptive_round": 1,
+      "family": "levy",
+      "seed": 31
+    },
+    {
+      "active": false,
+      "adaptive_round": 2,
+      "family": "levy",
+      "seed": 31
+    },
+    {
+      "active": false,
+      "adaptive_round": 3,
+      "family": "levy",
+      "seed": 31
+    },
+    {
+      "active": false,
+      "adaptive_round": 4,
+      "family": "levy",
+      "seed": 31
+    },
+    {
+      "active": false,
+      "adaptive_round": 1,
+      "family": "rosenbrock",
+      "seed": 0
+    },
+    {
+      "active": false,
+      "adaptive_round": 2,
+      "family": "rosenbrock",
+      "seed": 0
+    },
+    {
+      "active": false,
+      "adaptive_round": 3,
+      "family": "rosenbrock",
+      "seed": 0
+    },
+    {
+      "active": false,
+      "adaptive_round": 4,
+      "family": "rosenbrock",
+      "seed": 0
+    },
+    {
+      "active": false,
+      "adaptive_round": 1,
+      "family": "rosenbrock",
+      "seed": 1
+    },
+    {
+      "active": false,
+      "adaptive_round": 2,
+      "family": "rosenbrock",
+      "seed": 1
+    },
+    {
+      "active": false,
+      "adaptive_round": 3,
+      "family": "rosenbrock",
+      "seed": 1
+    },
+    {
+      "active": false,
+      "adaptive_round": 4,
+      "family": "rosenbrock",
+      "seed": 1
+    },
+    {
+      "active": false,
+      "adaptive_round": 1,
+      "family": "rosenbrock",
+      "seed": 2
+    },
+    {
+      "active": false,
+      "adaptive_round": 2,
+      "family": "rosenbrock",
+      "seed": 2
+    },
+    {
+      "active": false,
+      "adaptive_round": 3,
+      "family": "rosenbrock",
+      "seed": 2
+    },
+    {
+      "active": false,
+      "adaptive_round": 4,
+      "family": "rosenbrock",
+      "seed": 2
+    },
+    {
+      "active": false,
+      "adaptive_round": 1,
+      "family": "rosenbrock",
+      "seed": 3
+    },
+    {
+      "active": false,
+      "adaptive_round": 2,
+      "family": "rosenbrock",
+      "seed": 3
+    },
+    {
+      "active": false,
+      "adaptive_round": 3,
+      "family": "rosenbrock",
+      "seed": 3
+    },
+    {
+      "active": false,
+      "adaptive_round": 4,
+      "family": "rosenbrock",
+      "seed": 3
+    },
+    {
+      "active": false,
+      "adaptive_round": 1,
+      "family": "rosenbrock",
+      "seed": 4
+    },
+    {
+      "active": false,
+      "adaptive_round": 2,
+      "family": "rosenbrock",
+      "seed": 4
+    },
+    {
+      "active": false,
+      "adaptive_round": 3,
+      "family": "rosenbrock",
+      "seed": 4
+    },
+    {
+      "active": false,
+      "adaptive_round": 4,
+      "family": "rosenbrock",
+      "seed": 4
+    },
+    {
+      "active": false,
+      "adaptive_round": 1,
+      "family": "rosenbrock",
+      "seed": 5
+    },
+    {
+      "active": false,
+      "adaptive_round": 2,
+      "family": "rosenbrock",
+      "seed": 5
+    },
+    {
+      "active": false,
+      "adaptive_round": 3,
+      "family": "rosenbrock",
+      "seed": 5
+    },
+    {
+      "active": false,
+      "adaptive_round": 4,
+      "family": "rosenbrock",
+      "seed": 5
+    },
+    {
+      "active": false,
+      "adaptive_round": 1,
+      "family": "rosenbrock",
+      "seed": 6
+    },
+    {
+      "active": false,
+      "adaptive_round": 2,
+      "family": "rosenbrock",
+      "seed": 6
+    },
+    {
+      "active": false,
+      "adaptive_round": 3,
+      "family": "rosenbrock",
+      "seed": 6
+    },
+    {
+      "active": false,
+      "adaptive_round": 4,
+      "family": "rosenbrock",
+      "seed": 6
+    },
+    {
+      "active": false,
+      "adaptive_round": 1,
+      "family": "rosenbrock",
+      "seed": 7
+    },
+    {
+      "active": false,
+      "adaptive_round": 2,
+      "family": "rosenbrock",
+      "seed": 7
+    },
+    {
+      "active": false,
+      "adaptive_round": 3,
+      "family": "rosenbrock",
+      "seed": 7
+    },
+    {
+      "active": false,
+      "adaptive_round": 4,
+      "family": "rosenbrock",
+      "seed": 7
+    },
+    {
+      "active": false,
+      "adaptive_round": 1,
+      "family": "rosenbrock",
+      "seed": 8
+    },
+    {
+      "active": false,
+      "adaptive_round": 2,
+      "family": "rosenbrock",
+      "seed": 8
+    },
+    {
+      "active": false,
+      "adaptive_round": 3,
+      "family": "rosenbrock",
+      "seed": 8
+    },
+    {
+      "active": false,
+      "adaptive_round": 4,
+      "family": "rosenbrock",
+      "seed": 8
+    },
+    {
+      "active": false,
+      "adaptive_round": 1,
+      "family": "rosenbrock",
+      "seed": 9
+    },
+    {
+      "active": false,
+      "adaptive_round": 2,
+      "family": "rosenbrock",
+      "seed": 9
+    },
+    {
+      "active": false,
+      "adaptive_round": 3,
+      "family": "rosenbrock",
+      "seed": 9
+    },
+    {
+      "active": false,
+      "adaptive_round": 4,
+      "family": "rosenbrock",
+      "seed": 9
+    },
+    {
+      "active": false,
+      "adaptive_round": 1,
+      "family": "rosenbrock",
+      "seed": 10
+    },
+    {
+      "active": false,
+      "adaptive_round": 2,
+      "family": "rosenbrock",
+      "seed": 10
+    },
+    {
+      "active": false,
+      "adaptive_round": 3,
+      "family": "rosenbrock",
+      "seed": 10
+    },
+    {
+      "active": false,
+      "adaptive_round": 4,
+      "family": "rosenbrock",
+      "seed": 10
+    },
+    {
+      "active": false,
+      "adaptive_round": 1,
+      "family": "rosenbrock",
+      "seed": 11
+    },
+    {
+      "active": false,
+      "adaptive_round": 2,
+      "family": "rosenbrock",
+      "seed": 11
+    },
+    {
+      "active": false,
+      "adaptive_round": 3,
+      "family": "rosenbrock",
+      "seed": 11
+    },
+    {
+      "active": false,
+      "adaptive_round": 4,
+      "family": "rosenbrock",
+      "seed": 11
+    },
+    {
+      "active": false,
+      "adaptive_round": 1,
+      "family": "rosenbrock",
+      "seed": 12
+    },
+    {
+      "active": false,
+      "adaptive_round": 2,
+      "family": "rosenbrock",
+      "seed": 12
+    },
+    {
+      "active": false,
+      "adaptive_round": 3,
+      "family": "rosenbrock",
+      "seed": 12
+    },
+    {
+      "active": false,
+      "adaptive_round": 4,
+      "family": "rosenbrock",
+      "seed": 12
+    },
+    {
+      "active": false,
+      "adaptive_round": 1,
+      "family": "rosenbrock",
+      "seed": 13
+    },
+    {
+      "active": false,
+      "adaptive_round": 2,
+      "family": "rosenbrock",
+      "seed": 13
+    },
+    {
+      "active": false,
+      "adaptive_round": 3,
+      "family": "rosenbrock",
+      "seed": 13
+    },
+    {
+      "active": false,
+      "adaptive_round": 4,
+      "family": "rosenbrock",
+      "seed": 13
+    },
+    {
+      "active": false,
+      "adaptive_round": 1,
+      "family": "rosenbrock",
+      "seed": 14
+    },
+    {
+      "active": false,
+      "adaptive_round": 2,
+      "family": "rosenbrock",
+      "seed": 14
+    },
+    {
+      "active": false,
+      "adaptive_round": 3,
+      "family": "rosenbrock",
+      "seed": 14
+    },
+    {
+      "active": false,
+      "adaptive_round": 4,
+      "family": "rosenbrock",
+      "seed": 14
+    },
+    {
+      "active": false,
+      "adaptive_round": 1,
+      "family": "rosenbrock",
+      "seed": 15
+    },
+    {
+      "active": false,
+      "adaptive_round": 2,
+      "family": "rosenbrock",
+      "seed": 15
+    },
+    {
+      "active": false,
+      "adaptive_round": 3,
+      "family": "rosenbrock",
+      "seed": 15
+    },
+    {
+      "active": false,
+      "adaptive_round": 4,
+      "family": "rosenbrock",
+      "seed": 15
+    },
+    {
+      "active": false,
+      "adaptive_round": 1,
+      "family": "rosenbrock",
+      "seed": 16
+    },
+    {
+      "active": false,
+      "adaptive_round": 2,
+      "family": "rosenbrock",
+      "seed": 16
+    },
+    {
+      "active": false,
+      "adaptive_round": 3,
+      "family": "rosenbrock",
+      "seed": 16
+    },
+    {
+      "active": false,
+      "adaptive_round": 4,
+      "family": "rosenbrock",
+      "seed": 16
+    },
+    {
+      "active": false,
+      "adaptive_round": 1,
+      "family": "rosenbrock",
+      "seed": 17
+    },
+    {
+      "active": false,
+      "adaptive_round": 2,
+      "family": "rosenbrock",
+      "seed": 17
+    },
+    {
+      "active": false,
+      "adaptive_round": 3,
+      "family": "rosenbrock",
+      "seed": 17
+    },
+    {
+      "active": false,
+      "adaptive_round": 4,
+      "family": "rosenbrock",
+      "seed": 17
+    },
+    {
+      "active": false,
+      "adaptive_round": 1,
+      "family": "rosenbrock",
+      "seed": 18
+    },
+    {
+      "active": false,
+      "adaptive_round": 2,
+      "family": "rosenbrock",
+      "seed": 18
+    },
+    {
+      "active": false,
+      "adaptive_round": 3,
+      "family": "rosenbrock",
+      "seed": 18
+    },
+    {
+      "active": false,
+      "adaptive_round": 4,
+      "family": "rosenbrock",
+      "seed": 18
+    },
+    {
+      "active": false,
+      "adaptive_round": 1,
+      "family": "rosenbrock",
+      "seed": 19
+    },
+    {
+      "active": false,
+      "adaptive_round": 2,
+      "family": "rosenbrock",
+      "seed": 19
+    },
+    {
+      "active": false,
+      "adaptive_round": 3,
+      "family": "rosenbrock",
+      "seed": 19
+    },
+    {
+      "active": false,
+      "adaptive_round": 4,
+      "family": "rosenbrock",
+      "seed": 19
+    },
+    {
+      "active": false,
+      "adaptive_round": 1,
+      "family": "rosenbrock",
+      "seed": 20
+    },
+    {
+      "active": false,
+      "adaptive_round": 2,
+      "family": "rosenbrock",
+      "seed": 20
+    },
+    {
+      "active": false,
+      "adaptive_round": 3,
+      "family": "rosenbrock",
+      "seed": 20
+    },
+    {
+      "active": false,
+      "adaptive_round": 4,
+      "family": "rosenbrock",
+      "seed": 20
+    },
+    {
+      "active": false,
+      "adaptive_round": 1,
+      "family": "rosenbrock",
+      "seed": 21
+    },
+    {
+      "active": false,
+      "adaptive_round": 2,
+      "family": "rosenbrock",
+      "seed": 21
+    },
+    {
+      "active": false,
+      "adaptive_round": 3,
+      "family": "rosenbrock",
+      "seed": 21
+    },
+    {
+      "active": false,
+      "adaptive_round": 4,
+      "family": "rosenbrock",
+      "seed": 21
+    },
+    {
+      "active": false,
+      "adaptive_round": 1,
+      "family": "rosenbrock",
+      "seed": 22
+    },
+    {
+      "active": false,
+      "adaptive_round": 2,
+      "family": "rosenbrock",
+      "seed": 22
+    },
+    {
+      "active": false,
+      "adaptive_round": 3,
+      "family": "rosenbrock",
+      "seed": 22
+    },
+    {
+      "active": false,
+      "adaptive_round": 4,
+      "family": "rosenbrock",
+      "seed": 22
+    },
+    {
+      "active": false,
+      "adaptive_round": 1,
+      "family": "rosenbrock",
+      "seed": 23
+    },
+    {
+      "active": false,
+      "adaptive_round": 2,
+      "family": "rosenbrock",
+      "seed": 23
+    },
+    {
+      "active": false,
+      "adaptive_round": 3,
+      "family": "rosenbrock",
+      "seed": 23
+    },
+    {
+      "active": false,
+      "adaptive_round": 4,
+      "family": "rosenbrock",
+      "seed": 23
+    },
+    {
+      "active": false,
+      "adaptive_round": 1,
+      "family": "rosenbrock",
+      "seed": 24
+    },
+    {
+      "active": false,
+      "adaptive_round": 2,
+      "family": "rosenbrock",
+      "seed": 24
+    },
+    {
+      "active": false,
+      "adaptive_round": 3,
+      "family": "rosenbrock",
+      "seed": 24
+    },
+    {
+      "active": false,
+      "adaptive_round": 4,
+      "family": "rosenbrock",
+      "seed": 24
+    },
+    {
+      "active": false,
+      "adaptive_round": 1,
+      "family": "rosenbrock",
+      "seed": 25
+    },
+    {
+      "active": false,
+      "adaptive_round": 2,
+      "family": "rosenbrock",
+      "seed": 25
+    },
+    {
+      "active": true,
+      "adaptive_round": 3,
+      "family": "rosenbrock",
+      "seed": 25
+    },
+    {
+      "active": false,
+      "adaptive_round": 4,
+      "family": "rosenbrock",
+      "seed": 25
+    },
+    {
+      "active": false,
+      "adaptive_round": 1,
+      "family": "rosenbrock",
+      "seed": 26
+    },
+    {
+      "active": false,
+      "adaptive_round": 2,
+      "family": "rosenbrock",
+      "seed": 26
+    },
+    {
+      "active": false,
+      "adaptive_round": 3,
+      "family": "rosenbrock",
+      "seed": 26
+    },
+    {
+      "active": false,
+      "adaptive_round": 4,
+      "family": "rosenbrock",
+      "seed": 26
+    },
+    {
+      "active": false,
+      "adaptive_round": 1,
+      "family": "rosenbrock",
+      "seed": 27
+    },
+    {
+      "active": false,
+      "adaptive_round": 2,
+      "family": "rosenbrock",
+      "seed": 27
+    },
+    {
+      "active": false,
+      "adaptive_round": 3,
+      "family": "rosenbrock",
+      "seed": 27
+    },
+    {
+      "active": false,
+      "adaptive_round": 4,
+      "family": "rosenbrock",
+      "seed": 27
+    },
+    {
+      "active": false,
+      "adaptive_round": 1,
+      "family": "rosenbrock",
+      "seed": 28
+    },
+    {
+      "active": false,
+      "adaptive_round": 2,
+      "family": "rosenbrock",
+      "seed": 28
+    },
+    {
+      "active": false,
+      "adaptive_round": 3,
+      "family": "rosenbrock",
+      "seed": 28
+    },
+    {
+      "active": false,
+      "adaptive_round": 4,
+      "family": "rosenbrock",
+      "seed": 28
+    },
+    {
+      "active": false,
+      "adaptive_round": 1,
+      "family": "rosenbrock",
+      "seed": 29
+    },
+    {
+      "active": false,
+      "adaptive_round": 2,
+      "family": "rosenbrock",
+      "seed": 29
+    },
+    {
+      "active": false,
+      "adaptive_round": 3,
+      "family": "rosenbrock",
+      "seed": 29
+    },
+    {
+      "active": false,
+      "adaptive_round": 4,
+      "family": "rosenbrock",
+      "seed": 29
+    },
+    {
+      "active": false,
+      "adaptive_round": 1,
+      "family": "rosenbrock",
+      "seed": 30
+    },
+    {
+      "active": false,
+      "adaptive_round": 2,
+      "family": "rosenbrock",
+      "seed": 30
+    },
+    {
+      "active": false,
+      "adaptive_round": 3,
+      "family": "rosenbrock",
+      "seed": 30
+    },
+    {
+      "active": false,
+      "adaptive_round": 4,
+      "family": "rosenbrock",
+      "seed": 30
+    },
+    {
+      "active": false,
+      "adaptive_round": 1,
+      "family": "rosenbrock",
+      "seed": 31
+    },
+    {
+      "active": false,
+      "adaptive_round": 2,
+      "family": "rosenbrock",
+      "seed": 31
+    },
+    {
+      "active": false,
+      "adaptive_round": 3,
+      "family": "rosenbrock",
+      "seed": 31
+    },
+    {
+      "active": false,
+      "adaptive_round": 4,
+      "family": "rosenbrock",
+      "seed": 31
+    }
+  ],
+  "script_sha256": "31aaeaf935078f2f99fb48cea7c95c50f8d65411464e06ea72b673bb044e82db",
+  "seed_start": 0,
+  "seed_stop": 32,
+  "source_commit": "a1b692f75e39dc2d113b5338637f138a5646b6ac",
+  "source_dirty": false,
+  "spec_sha256": "6e09142d5d9e88caa14ed2474cd7ecf4ca6978ba1df076a306aea9e1f286a18e",
+  "status": "COMPLETE",
+  "total_campaigns": 160,
+  "total_rounds": 640
+}
