@@ -21,6 +21,7 @@ import torch
 
 from boec.doe import run_doe_arm, run_doe_unscreened_arm
 from boec.ec_calibration import (ECTrainingCandidate, boundary_candidates,
+                                 local_refinement_candidates,
                                  per_cqa_acquisition_utility)
 from boec.ec_benchmark import ECConfig, joint_success, make_ec_landscape, registered_ec_families
 from boec.optimizers import AcqConfig, propose, sobol_design
@@ -49,6 +50,7 @@ _BO_OPENING, _BO_BATCH, _BO_GRID = 32, 8, 2_048
 # result to alter surrogate uncertainty or the candidate menu.
 EC_TRAINING_DEFAULT = ECTrainingCandidate((1.5, 1.5, 1.5), candidate_density=4_096)
 _BOUNDARY_RECIPES = {"ec_narrow": 2, "ec_multimodal": 2}
+_LOCAL_RECIPES = {"ec_narrow": 2, "ec_multimodal": 2}
 
 
 def sha256(path: Path) -> str:
@@ -166,7 +168,9 @@ def _run_bo_arm(adapter: _JointCQAEvaluator, *, seed: int, arm: str, test_only: 
                 for index in range(cqa_Y.shape[1])
             )
             n_boundary = _BOUNDARY_RECIPES.get(adapter.landscape.family, 0)
-            adaptive = _per_cqa_batch(models, menu, adapter, calibration, _BO_BATCH - n_boundary)
+            n_local = _LOCAL_RECIPES.get(adapter.landscape.family, 0)
+            adaptive = _per_cqa_batch(models, menu, adapter, calibration,
+                                      _BO_BATCH - n_boundary - n_local)
             boundary = boundary_candidates(
                 bounds, n=n_boundary, seed=derive_seed(root, "boundary", batch_index)
             ) if n_boundary else menu[:0]
@@ -175,11 +179,19 @@ def _run_bo_arm(adapter: _JointCQAEvaluator, *, seed: int, arm: str, test_only: 
             # back-fill from the scored candidate menu so the registered batch
             # size and unique-well invariant remain true.
             boundary = _remove_rows(boundary, torch.cat((X, adaptive), dim=0))
-            if boundary.shape[0] < n_boundary:
-                refill = _remove_rows(menu, torch.cat((X, adaptive, boundary), dim=0))
-                boundary = torch.cat((boundary, refill[: n_boundary - boundary.shape[0]])
-                                     , dim=0)
-            selected = torch.cat((adaptive, boundary), dim=0)
+            local = local_refinement_candidates(
+                X, cqa_Y.amin(dim=1), bounds, n=n_local,
+                seed=derive_seed(root, "local", batch_index)
+            ) if n_local else menu[:0]
+            local = _remove_rows(local, torch.cat((X, adaptive, boundary), dim=0))
+            if boundary.shape[0] < n_boundary or local.shape[0] < n_local:
+                refill = _remove_rows(menu, torch.cat((X, adaptive, boundary, local), dim=0))
+                boundary_missing = n_boundary - boundary.shape[0]
+                local_missing = n_local - local.shape[0]
+                extra = refill[: boundary_missing + local_missing]
+                boundary = torch.cat((boundary, extra[:boundary_missing]), dim=0)
+                local = torch.cat((local, extra[boundary_missing:boundary_missing + local_missing]), dim=0)
+            selected = torch.cat((adaptive, boundary, local), dim=0)
             selected = _remove_rows(selected, X)
             if selected.shape[0] != _BO_BATCH:
                 raise RuntimeError("EC boundary exploration duplicated an observed recipe")

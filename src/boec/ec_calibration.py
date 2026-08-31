@@ -210,9 +210,25 @@ def boundary_candidates(bounds: Tensor, *, n: int, seed: int) -> Tensor:
     return bounds[0].double() + bits * (bounds[1].double() - bounds[0].double())
 
 
+def local_refinement_candidates(
+    X_observed: Tensor, utility_observed: Tensor, bounds: Tensor, *, n: int, seed: int,
+    radius: float = 0.12,
+) -> Tensor:
+    """Generate unique local perturbations around the best observed recipes."""
+    if X_observed.ndim != 2 or utility_observed.numel() != X_observed.shape[0]:
+        raise ValueError("observations and utility must have compatible shapes")
+    if bounds.shape != (2, X_observed.shape[1]) or n < 1 or radius <= 0:
+        raise ValueError("invalid bounds, n, or radius")
+    order = torch.argsort(utility_observed.reshape(-1), descending=True, stable=True)
+    engine = torch.quasirandom.SobolEngine(X_observed.shape[1], scramble=True, seed=int(seed))
+    offsets = (engine.draw(n).double() * 2.0 - 1.0) * float(radius)
+    anchors = X_observed[order[torch.arange(n) % order.numel()]].double()
+    return torch.minimum(torch.maximum(anchors + offsets, bounds[0].double()), bounds[1].double())
+
+
 __all__ = [
     "CONTAINMENT_TARGET", "ECTrainingCandidate", "SelectedTrainingCandidate",
     "TRAIN_SEEDS", "TrainingContainmentRecord", "boundary_candidates",
-    "choose_training_candidate", "per_cqa_acquisition_utility",
-    "per_cqa_lower_utility", "wilson_lower",
+    "choose_training_candidate", "local_refinement_candidates",
+    "per_cqa_acquisition_utility", "per_cqa_lower_utility", "wilson_lower",
 ]
