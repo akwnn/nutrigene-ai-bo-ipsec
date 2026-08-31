@@ -44,6 +44,12 @@ class ConservativeSetResult:
     volume: float
     selection_draws: int
     evaluation_draws: int
+    # Optional multi-CQA diagnostics.  Defaults keep historical scalar records
+    # and positional construction fully backwards compatible.
+    cqa_names: tuple[str, ...] | None = None
+    cqa_lower_bounds: Tensor | None = None
+    limiting_cqa: str | None = None
+    abstention_reason: str | None = None
 
 
 def _finite_scalar(value: Real, name: str) -> float:
