@@ -1,141 +1,141 @@
 {
-  "built_at_utc": "2026-08-25T22:26:38+08:00",
-  "code_commit": "d343fda6b0015e706f74d3f29c20e6cb5f701a13",
+  "built_at_utc": "2026-09-01T10:48:37+08:00",
+  "code_commit": "614e5b2fbbc148c85beccfd788a164847af6a0a1",
   "figures": {
     "fig1": {
       "alt.txt": {
-        "path": "portable/fig1.alt.txt",
+        "path": "plos/fig1.alt.txt",
         "sha256": "b71295131e051affe462fac4fb9cede14e8a5001572b41f4c245618e759ee166"
       },
       "caption.txt": {
-        "path": "portable/fig1.caption.txt",
+        "path": "plos/fig1.caption.txt",
         "sha256": "53afb8271dfb54f030841587bd4b1ff793ddca0557d58c7cc9bcb1a93bd10ad0"
       },
       "data.json": {
-        "path": "portable/fig1.data.json",
+        "path": "plos/fig1.data.json",
         "sha256": "6bd7364225772f21e5d2b13c4b0a6834d16a1e8bc65eaa3c4e5d0aba4f8f7140"
       },
       "description.txt": {
-        "path": "portable/fig1.description.txt",
+        "path": "plos/fig1.description.txt",
         "sha256": "ba4446d6174d360eaf1e5c4a56f8c359e3abc5b406466e9459048e845878fbf2"
       },
       "pdf": {
-        "path": "portable/fig1.pdf",
-        "sha256": "d59ae3583c8efff863a9a394b260c585b47b1bf196d9bb8ab8e9655c322f0566"
+        "path": "plos/fig1.pdf",
+        "sha256": "857997ac9f3e5c6c8b90f8e7f7b15138329a4af7511ee35cb2a2f45d34e0b133"
       },
       "png": {
-        "path": "portable/fig1.png",
-        "sha256": "b7c8387bb8b5bd43b0949c45567e238a6a6c9f6502f616b7fcbc4452e5977532"
+        "path": "plos/fig1.png",
+        "sha256": "ae5b782e0840af7276f7a0dc1da533d6ff90ab09db8840943b41a221740d0c95"
       },
       "svg": {
-        "path": "portable/fig1.svg",
-        "sha256": "8713d7e0c128ae1876d0e3edd2bb9a7982ab6710a205dc425272fd54e305a5ed"
+        "path": "plos/fig1.svg",
+        "sha256": "7912fd9b43257e1e8253e7e5c2d344a1b0601be726a417cbebbae378645b4603"
       },
       "tiff": {
-        "path": "portable/fig1.tiff",
-        "sha256": "7244ce8ed6cd9b1d547e4b5ad9b5b9e7a053172b676524b1133bade4909d803b"
+        "path": "plos/fig1.tiff",
+        "sha256": "6eafedb617b4c790355d32d1bf462b492574f1773dcdc7c27679064edc75ae8c"
       }
     },
     "fig2": {
       "alt.txt": {
-        "path": "portable/fig2.alt.txt",
+        "path": "plos/fig2.alt.txt",
         "sha256": "d87102e688d113c311a46f655cd8d4091269e39f66466b7d33ec16907fc1b551"
       },
       "caption.txt": {
-        "path": "portable/fig2.caption.txt",
+        "path": "plos/fig2.caption.txt",
         "sha256": "0ea4b2ccf5bb58a1278224261c64e52f20c49c3ad3ecdc4a10c72a3b23980763"
       },
       "data.json": {
-        "path": "portable/fig2.data.json",
+        "path": "plos/fig2.data.json",
         "sha256": "f974a9c2ffaf453737648ca91b8cba57e8ad9e52f51081b39d162824326dc744"
       },
       "description.txt": {
-        "path": "portable/fig2.description.txt",
+        "path": "plos/fig2.description.txt",
         "sha256": "1c5ce205a8ec1282cf4c1d78dcf508754b1277c62fde726a2b932bdec4d2e034"
       },
       "pdf": {
-        "path": "portable/fig2.pdf",
-        "sha256": "93fcf7d3a4f3756f6fc8ff2ccb88070ccf6ef1ff892ad87995ae565061462753"
+        "path": "plos/fig2.pdf",
+        "sha256": "cd19cb2286d58a9d25022f0a6997931a724ac3110ef8503d043d28ea5478039a"
       },
       "png": {
-        "path": "portable/fig2.png",
-        "sha256": "32d3246fdb66db292213c4a6c6b9cccea9cc17cb7b1432d4510ee98cb71d86f2"
+        "path": "plos/fig2.png",
+        "sha256": "d7fe2ea6ec19119b211c804e8b769c973da6bb4d664f8ac996ac5ea80561fe51"
       },
       "svg": {
-        "path": "portable/fig2.svg",
-        "sha256": "51ba46c6d19b58b1808e8bd30f581e4b4d4134d5432e8fdf3588067ba8d5f7ae"
+        "path": "plos/fig2.svg",
+        "sha256": "e057fdcd7331c44f27d6d8ae0338b69409d482cec6a4d21501a826f8987dee19"
       },
       "tiff": {
-        "path": "portable/fig2.tiff",
-        "sha256": "6bc54b0127c5cd379be1a203297fe8d08b3e364a5de375e2a184c3873fda3170"
+        "path": "plos/fig2.tiff",
+        "sha256": "75a984974688d350751b260bca7f046d89cbef3c4bc965b002b8be0f098eadca"
       }
     },
     "fig3": {
       "alt.txt": {
-        "path": "portable/fig3.alt.txt",
+        "path": "plos/fig3.alt.txt",
         "sha256": "a3162ffa85757aaf058e4d292ca613a97da1816842d24c4a3596f27b939fb419"
       },
       "caption.txt": {
-        "path": "portable/fig3.caption.txt",
+        "path": "plos/fig3.caption.txt",
         "sha256": "e233990b446ef60f19bc925f038f849e87cc01b072e3d54d9d4f83e4ea74a62d"
       },
       "data.json": {
-        "path": "portable/fig3.data.json",
+        "path": "plos/fig3.data.json",
         "sha256": "be57d7a1f26f2a020142c8a67f3b4be2a891d15a391eaf4e2656e8f9824b8ec0"
       },
       "description.txt": {
-        "path": "portable/fig3.description.txt",
+        "path": "plos/fig3.description.txt",
         "sha256": "a96a1e55605ef2a564c2547605636e18791b8f0e69bf227b60b6bddb7fe14a76"
       },
       "pdf": {
-        "path": "portable/fig3.pdf",
-        "sha256": "650f4ebd7ccb23d265f5a085270a8653b8f2eeb986748df80db6bb6c95f9972a"
+        "path": "plos/fig3.pdf",
+        "sha256": "c9c810a312e669535d3151c445790b5b498ef72b23234e82c33b06efa689fc99"
       },
       "png": {
-        "path": "portable/fig3.png",
-        "sha256": "7cf3a0a69307c24f84d121c9b793319085cb27fcb7f14ee69a58197a10839270"
+        "path": "plos/fig3.png",
+        "sha256": "ee0ef6b532cc7faaf2b05c8ac69ad6fbdaaf694674b284bd0b8bfc4192e86e02"
       },
       "svg": {
-        "path": "portable/fig3.svg",
-        "sha256": "64c3e60cc1c45296ddb8595ebc03056b535b74da316c1de72652217b7020de83"
+        "path": "plos/fig3.svg",
+        "sha256": "63b8777157a7daef232e2f36dfcf0dc8eaa15dbd40423ead110feef57a08775b"
       },
       "tiff": {
-        "path": "portable/fig3.tiff",
-        "sha256": "82c6604d3ab0c5e2c802b7f9b7e04d02ed9b506a58186024eb0606c6736c1bea"
+        "path": "plos/fig3.tiff",
+        "sha256": "f74da9a2fa6fbf150b76bace86623662d833b50f8bb14811aab4d95c9af377c5"
       }
     },
     "fig4": {
       "alt.txt": {
-        "path": "portable/fig4.alt.txt",
+        "path": "plos/fig4.alt.txt",
         "sha256": "f73e9f17e1981e9a8bcfad7440e531a2c0c8411f12140963f3e559fbd3dc7505"
       },
       "caption.txt": {
-        "path": "portable/fig4.caption.txt",
+        "path": "plos/fig4.caption.txt",
         "sha256": "51bd899caeb4d87f235ed1e2fda73790de66fe0f0ded9d99f809c4ca312f79bb"
       },
       "data.json": {
-        "path": "portable/fig4.data.json",
+        "path": "plos/fig4.data.json",
         "sha256": "72e7e13a57258ab7ff93683373042cd439bd791a56f1c67bf532818ede68b4a0"
       },
       "description.txt": {
-        "path": "portable/fig4.description.txt",
+        "path": "plos/fig4.description.txt",
         "sha256": "c8578b842a9944fd700c9dce80bfb1b02fdc88d03f884e595fdb9e3a98387704"
       },
       "pdf": {
-        "path": "portable/fig4.pdf",
-        "sha256": "7f074938e3422add9f7a1c7c220eb9fd1b1213741b748962ba534cdc96a8b518"
+        "path": "plos/fig4.pdf",
+        "sha256": "afbe7de82517876717c5ff978a621afb1c883ae60da1fb3461831de107760894"
       },
       "png": {
-        "path": "portable/fig4.png",
-        "sha256": "007af04c8a966dd4396b5158271eb9341a82e886ea29bafe129203a35e08100f"
+        "path": "plos/fig4.png",
+        "sha256": "744e73869f73f97341eff31474b5f530a74b65f1ef975683b1c8af9fd9544350"
       },
       "svg": {
-        "path": "portable/fig4.svg",
-        "sha256": "4b3468dae93f9011880c2922556e6122be79117cda4fe26116dc54392b293dd3"
+        "path": "plos/fig4.svg",
+        "sha256": "be4747bae9393f0d899da73ff3a4a361126a5f5f7382e65a2efb0d274f9e1673"
       },
       "tiff": {
-        "path": "portable/fig4.tiff",
-        "sha256": "09f5074d21ef095fe809e2530abe0e7a5c36c6e288e4b3382521c0c55991b074"
+        "path": "plos/fig4.tiff",
+        "sha256": "835a4992b70f0ea1775a8599b637a4b11d01fe204fc9f25266e72a4475f1877a"
       }
     }
   },
@@ -145,9 +145,9 @@
     "sha256": "525979822591a3447cfc49d943d6f7683508e25543407871c0ed8fed05fd2bd9"
   },
   "preset": {
-    "body_pt": 7.5,
-    "name": "portable",
-    "panel_pt": 8.0,
+    "body_pt": 9.0,
+    "name": "plos",
+    "panel_pt": 10.0,
     "png_dpi": 450,
     "tiff_dpi": 600,
     "width_mm": 178.0

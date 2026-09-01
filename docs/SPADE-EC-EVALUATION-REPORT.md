@@ -3,6 +3,25 @@
 This report records the frozen unseen-seed evaluation (`64..95`) on the synthetic
 three-CQA EC benchmark. It is computational evidence only, not biological validation.
 
+## Current-commit rerun (authoritative)
+
+The complete artifact `results/ec-evaluation-current.json` was regenerated under the
+current checkout and contains 384 rows (three families × 32 seeds × four arms). The
+fail-closed analyzer returns `FAIL_CONTAINMENT`.
+
+| Family | SPADE answer rate | SPADE containment | 95% lower bound | False certificates | Mean regret | Verdict |
+|---|---:|---:|---:|---:|---:|---|
+| ec_broad | 17/32 (0.5313) | 17/17 (1.0000) | 0.8157 | 0 | 0.1315 | fail containment bound |
+| ec_narrow | 0/32 (0.0000) | 0/0 | 0.0000 | 0 | 0.2879 | fail answer rate |
+| ec_multimodal | 12/32 (0.3750) | 12/12 (1.0000) | 0.7575 | 0 | 0.2377 | fail answer rate |
+
+The current artifact passes provenance validation. The 48-well gate therefore remains
+negative despite zero observed false certificates. Containment is not treated as a
+success claim when the answer-rate requirement is unmet.
+
+The table below is retained as an earlier evaluation artifact for provenance and is not
+the authoritative current-commit result.
+
 | Family | SPADE answer rate | SPADE containment | 95% lower bound | False certificates | Mean regret | Verdict |
 |---|---:|---:|---:|---:|---:|---|
 | ec_broad | 10/32 (0.3125) | 10/10 (1.0000) | 0.7225 | 0 | 0.2309 | fail answer rate |
