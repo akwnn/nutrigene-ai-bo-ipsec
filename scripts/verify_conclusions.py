@@ -33,19 +33,21 @@ def check(name, got, want, tol):
     ok.append(good)
     print(f"  [{'OK ' if good else 'MISMATCH'}] {name}: doc={want}  recomputed={got:.6f}")
 
-# --- claim 1: SPADE R=5 vs qLogNEI R=10 regret ---
-lc = {}
-for r in rows('results/lc-*.json'):
+# --- claim 1: SPADE R=5 vs qLogNEI R=10 regret --------------------------
+# DC supersedes LC because it measures both arms in one process under the
+# current code (SPADE-DOE-CERTIFICATE-SPEC.md sec 8.3).
+dc = {}
+for r in rows('results/dc-*.json'):
     g = r.get('regret')
     if g is not None and not (isinstance(g, float) and g != g):
-        lc[(r['arm'], r['rounds'], r['family'], r['seed'])] = float(g)
-keys = [(f,s) for (a,rr,f,s) in lc if (a,rr)==("spade",5) and ("qlognei",10,f,s) in lc]
-d = [lc[("spade",5,f,s)] - lc[("qlognei",10,f,s)] for f,s in keys]
-m1, lo1, hi1, _ = boot(d, seed=7)
-print("CLAIM 1 -- SPADE R=5 vs qLogNEI R=10 on regret")
-check("mean", m1, 0.0016, 0.0004); check("CI lo", lo1, -0.0184, 0.002)
-check("CI hi", hi1, 0.0208, 0.002); check("n", len(d), 160, 0)
-print(f"  half-width = {(hi1-lo1)/2:.4f} (doc says 0.0196 < SESOI 0.0200)")
+        dc[(r['arm'], r['family'], r['seed'])] = float(g)
+keys = sorted((f,s) for (a,f,s) in dc if a=="spade" and ("qlognei",f,s) in dc)
+d = [dc[("spade",f,s)] - dc[("qlognei",f,s)] for f,s in keys]
+m1, lo1, hi1, _ = boot(d, seed=1)
+print("CLAIM 1 -- DC one-process SPADE R=5 vs qLogNEI R=10")
+check("mean", m1, -0.0005, 0.0001); check("CI lo", lo1, -0.0221, 0.0002)
+check("CI hi", hi1, 0.0207, 0.0002); check("n", len(d), 160, 0)
+print(f"  half-width = {(hi1-lo1)/2:.4f}; source: results/dc-*.json")
 
 # --- claim 5: TAU-1 rho ---
 spec = importlib.util.spec_from_file_location("t", "scripts/analyse_tau_sweep.py")
@@ -77,7 +79,13 @@ for r in rows('results/la-*.json'):
     g = r.get('regret')
     if g is not None and not (isinstance(g, float) and g != g):
         la[(r['arm'], r['family'], r['seed'])] = float(g)
-keys = [(f,s) for (a,rr,f,s) in lc if (a,rr)==("spade",3) and ("lhs",f,s) in la]
+lc = {}
+for r in rows('results/lc-*.json'):
+    g = r.get('regret')
+    if g is not None and not (isinstance(g, float) and g != g):
+        lc[(r['arm'], r['rounds'], r['family'], r['seed'])] = float(g)
+keys = sorted((f,s) for (a,rr,f,s) in lc
+              if (a,rr)==("spade",3) and ("lhs",f,s) in la)
 d6 = [lc[("spade",3,f,s)] - la[("lhs",f,s)] for f,s in keys]
 m6, lo6, hi6, _ = boot(d6, seed=9)
 print("\nCLAIM 6 -- SPADE R=3 vs one-shot lhs")
