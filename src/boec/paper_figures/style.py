@@ -41,6 +41,9 @@ PRESETS = {
     "rsc": VenuePreset("rsc", 171.0, 7.5, 8.0),
     "nature": VenuePreset("nature", 183.0, 7.0, 8.0),
     "plos": VenuePreset("plos", 178.0, 9.0, 10.0),
+    # Presentation export: same evidence and encodings, with enough physical
+    # area for projected/slideshow viewing. Submission files remain `plos`.
+    "presentation": VenuePreset("presentation", 254.0, 11.0, 13.0),
 }
 
 PresetArg: TypeAlias = VenuePreset | str | None

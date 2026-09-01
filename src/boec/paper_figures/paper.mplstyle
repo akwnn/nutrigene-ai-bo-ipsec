@@ -21,3 +21,6 @@ figure.facecolor: white
 axes.facecolor: white
 savefig.facecolor: white
 savefig.transparent: False
+savefig.bbox: standard
+savefig.dpi: 450
+figure.constrained_layout.use: True
