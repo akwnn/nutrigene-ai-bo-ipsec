@@ -1,0 +1,106 @@
+{
+  "conclusion": "width=18 requires approximately 13.6k-22.1k uniform wells for 50% hit probability; 48 wells cannot reliably discover the region",
+  "dimension": 6,
+  "execution_mode": "TEST_ONLY_ANALYSIS",
+  "family": "ec_narrow",
+  "rows": [
+    {
+      "joint_region_volume_approx": 0.0005341048227672186,
+      "offset": -0.02,
+      "radius_6d": 0.21663137451573486,
+      "registered_wells": 48,
+      "wells_for_50pct_uniform_hit": 1297.4270740742297,
+      "width": 7.0
+    },
+    {
+      "joint_region_volume_approx": 0.000683631479411621,
+      "offset": 0.0,
+      "radius_6d": 0.22572896008226087,
+      "registered_wells": 48,
+      "wells_for_50pct_uniform_hit": 1013.5727300555566,
+      "width": 7.0
+    },
+    {
+      "joint_region_volume_approx": 0.0008642241922408308,
+      "offset": 0.02,
+      "radius_6d": 0.23472247467168078,
+      "registered_wells": 48,
+      "wells_for_50pct_uniform_hit": 801.6989414772452,
+      "width": 7.0
+    },
+    {
+      "joint_region_volume_approx": 0.00018319795420915607,
+      "offset": -0.02,
+      "radius_6d": 0.181246811550448,
+      "registered_wells": 48,
+      "wells_for_50pct_uniform_hit": 3783.25014621707,
+      "width": 10.0
+    },
+    {
+      "joint_region_volume_approx": 0.00023448559743818602,
+      "offset": 0.0,
+      "radius_6d": 0.18885839773193366,
+      "registered_wells": 48,
+      "wells_for_50pct_uniform_hit": 2955.68648326442,
+      "width": 10.0
+    },
+    {
+      "joint_region_volume_approx": 0.0002964288979386049,
+      "offset": 0.02,
+      "radius_6d": 0.1963829118869523,
+      "registered_wells": 48,
+      "wells_for_50pct_uniform_hit": 2337.978671700681,
+      "width": 10.0
+    },
+    {
+      "joint_region_volume_approx": 6.676310284590235e-05,
+      "offset": -0.02,
+      "radius_6d": 0.15318151393783877,
+      "registered_wells": 48,
+      "wells_for_50pct_uniform_hit": 10381.842850744044,
+      "width": 14.0
+    },
+    {
+      "joint_region_volume_approx": 8.545393492645265e-05,
+      "offset": 0.0,
+      "radius_6d": 0.15961447838435416,
+      "registered_wells": 48,
+      "wells_for_50pct_uniform_hit": 8111.008166653037,
+      "width": 14.0
+    },
+    {
+      "joint_region_volume_approx": 0.00010802802403010384,
+      "offset": 0.02,
+      "radius_6d": 0.16597385353723312,
+      "registered_wells": 48,
+      "wells_for_50pct_uniform_hit": 6416.0179402386775,
+      "width": 14.0
+    },
+    {
+      "joint_region_volume_approx": 3.141254358867559e-05,
+      "offset": -0.02,
+      "radius_6d": 0.13509339711063192,
+      "registered_wells": 48,
+      "wells_for_50pct_uniform_hit": 22065.589556231163,
+      "width": 18.0
+    },
+    {
+      "joint_region_volume_approx": 4.020672109708267e-05,
+      "offset": 0.0,
+      "radius_6d": 0.14076673848343194,
+      "registered_wells": 48,
+      "wells_for_50pct_uniform_hit": 17239.23829066416,
+      "width": 18.0
+    },
+    {
+      "joint_region_volume_approx": 5.082800033240823e-05,
+      "offset": 0.02,
+      "radius_6d": 0.1463751801995256,
+      "registered_wells": 48,
+      "wells_for_50pct_uniform_hit": 13636.766353883257,
+      "width": 18.0
+    }
+  ],
+  "schema": "spade-ec-narrow-budget-sensitivity-v1",
+  "threshold": 0.7
+}
