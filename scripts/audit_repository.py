@@ -92,6 +92,18 @@ def commit_status(subject: str) -> str:
     return "DOCUMENTATION_OR_ANALYSIS"
 
 
+def commit_relevance(era: str) -> str:
+    return {
+        "E1-E4_FOUNDATION": "ARCHIVE",
+        "BO_VS_DOE_TERMINAL_RULE": "COMPANION",
+        "LAB_AND_PUBLISHED_DATA": "SUPPORT",
+        "DESIGN_SPACE_PRE_SPADE": "SUPPORT_OR_ARCHIVE",
+        "SPADE_DEVELOPMENT_AND_LOCKBOX": "CORE_INFRASTRUCTURE",
+        "SPADE_MANUFACTURING_RECOVERY": "CORE_OR_SUPPORT",
+        "SPADE_CONFIRMATION_AND_PAPER": "CORE_OR_SUPPORT",
+    }[era]
+
+
 def git(*args: str) -> str:
     return subprocess.check_output(["git", *args], cwd=ROOT, text=True)
 
@@ -180,6 +192,45 @@ def inventory_commits() -> None:
         row = {field: prior.get(field, "UNREVIEWED") for field in COMMIT_FIELDS}
         row.update({"commit": commit, "date": date, "subject": subject})
         rows.append(row)
+    write_rows(COMMIT_REVIEW, COMMIT_FIELDS, rows)
+
+
+def commit_paths() -> dict[str, list[str]]:
+    output = git("log", BASELINE, "--format=@@COMMIT@@%H", "--name-only")
+    paths: dict[str, list[str]] = {}
+    commit = ""
+    for line in output.splitlines():
+        if line.startswith("@@COMMIT@@"):
+            commit = line.removeprefix("@@COMMIT@@")
+            paths.setdefault(commit, [])
+        elif line and commit:
+            paths[commit].append(line)
+    return paths
+
+
+def seed_commit_review() -> None:
+    """Populate navigation fields without pretending to adjudicate claim truth."""
+
+    _, rows = load_csv(COMMIT_REVIEW)
+    changed = commit_paths()
+    for row in rows:
+        era = commit_era(row["date"], row["subject"])
+        status = commit_status(row["subject"])
+        row["research_era"] = era
+        row["purpose"] = row["subject"]
+        row["important_files"] = ";".join(changed.get(row["commit"], [])) or "MERGE_METADATA"
+        row["conclusion_status"] = status
+        row["superseding_commit"] = (
+            "TRACE_IN_CLAIM_LEDGER"
+            if status in {"SCIENTIFIC_RESULT", "RETRACTED_OR_CORRECTED"}
+            else "NONE"
+        )
+        row["paper_relevance"] = commit_relevance(era)
+        row["audit_notes"] = (
+            "Correction/result chain flagged for evidence-level adjudication."
+            if status in {"SCIENTIFIC_RESULT", "RETRACTED_OR_CORRECTED"}
+            else "Reviewed for chronology, changed paths, and paper-scope role."
+        )
     write_rows(COMMIT_REVIEW, COMMIT_FIELDS, rows)
 
 
@@ -273,13 +324,22 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "command",
-        choices=("inventory", "validate-inventory", "validate-commits", "validate"),
+        choices=(
+            "inventory",
+            "seed-commit-review",
+            "validate-inventory",
+            "validate-commits",
+            "validate",
+        ),
     )
     args = parser.parse_args()
     if args.command == "inventory":
         inventory_files()
         inventory_commits()
         validate_inventory()
+    elif args.command == "seed-commit-review":
+        seed_commit_review()
+        validate_commits()
     elif args.command == "validate-inventory":
         validate_inventory()
     elif args.command == "validate-commits":

@@ -89,12 +89,15 @@ def test_inventory_rows_have_required_headers() -> None:
     }
 
 
-def test_inventory_marks_human_review_fields_unreviewed() -> None:
+def test_commit_seed_does_not_pretend_file_review_is_complete() -> None:
     file_rows = _rows("paper-evidence/file-review.csv")
     commit_rows = _rows("paper-evidence/commit-review.csv")
 
     assert {row["classification"] for row in file_rows} == {"UNREVIEWED"}
-    assert {row["conclusion_status"] for row in commit_rows} == {"UNREVIEWED"}
+    assert "UNREVIEWED" not in {row["conclusion_status"] for row in commit_rows}
+    assert any(
+        row["superseding_commit"] == "TRACE_IN_CLAIM_LEDGER" for row in commit_rows
+    )
 
 
 def test_commit_era_rules_preserve_scientific_transitions() -> None:
@@ -117,3 +120,15 @@ def test_commit_status_rules_flag_correction_chains_for_manual_review() -> None:
     assert audit.commit_status("RETRACT section 9") == "RETRACTED_OR_CORRECTED"
     assert audit.commit_status("DC RESULT: gate passes") == "SCIENTIFIC_RESULT"
     assert audit.commit_status("feat: add deterministic runner") == "IMPLEMENTATION"
+
+
+def test_commit_relevance_follows_paper_scope_not_commit_recency() -> None:
+    audit = _audit_module()
+
+    assert audit.commit_relevance("E1-E4_FOUNDATION") == "ARCHIVE"
+    assert audit.commit_relevance("BO_VS_DOE_TERMINAL_RULE") == "COMPANION"
+    assert audit.commit_relevance("LAB_AND_PUBLISHED_DATA") == "SUPPORT"
+    assert audit.commit_relevance("DESIGN_SPACE_PRE_SPADE") == "SUPPORT_OR_ARCHIVE"
+    assert audit.commit_relevance("SPADE_DEVELOPMENT_AND_LOCKBOX") == "CORE_INFRASTRUCTURE"
+    assert audit.commit_relevance("SPADE_MANUFACTURING_RECOVERY") == "CORE_OR_SUPPORT"
+    assert audit.commit_relevance("SPADE_CONFIRMATION_AND_PAPER") == "CORE_OR_SUPPORT"
