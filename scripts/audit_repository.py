@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import csv
+import re
 import subprocess
 from collections.abc import Iterable
 from pathlib import Path
@@ -53,6 +54,42 @@ ALLOWED_CLASSIFICATIONS = {
     "ARCHIVE-FAILED/VOID",
     "GENERATED/DISPOSABLE",
 }
+
+
+def commit_era(date: str, subject: str) -> str:
+    """Assign a review era; this is navigation, not a scientific verdict."""
+
+    lowered = subject.lower()
+    if date <= "2026-08-08":
+        return "E1-E4_FOUNDATION"
+    if date <= "2026-08-17":
+        if any(word in lowered for word in ("lab", "hall/ogle", "digitiz", "fcs", "cd31")):
+            return "LAB_AND_PUBLISHED_DATA"
+        return "BO_VS_DOE_TERMINAL_RULE"
+    if date <= "2026-08-24":
+        return "DESIGN_SPACE_PRE_SPADE"
+    if date <= "2026-08-25":
+        return "SPADE_DEVELOPMENT_AND_LOCKBOX"
+    if date <= "2026-08-28":
+        return "SPADE_MANUFACTURING_RECOVERY"
+    return "SPADE_CONFIRMATION_AND_PAPER"
+
+
+def commit_status(subject: str) -> str:
+    """Flag the kind of patch so scientific result chains receive manual review."""
+
+    lowered = subject.lower()
+    if lowered.startswith("merge"):
+        return "MERGE_ONLY"
+    if re.search(r"\b(retract|withdraw|wrong|void|erratum|correction|corrected)\b", lowered):
+        return "RETRACTED_OR_CORRECTED"
+    if re.search(r"\b(pre-register|preregister|register|freeze|frozen)\b", lowered):
+        return "FROZEN_PROTOCOL"
+    if re.search(r"\b(result|finding|headline|passes|pass|fails|fail|complete)\b", lowered):
+        return "SCIENTIFIC_RESULT"
+    if lowered.startswith(("feat", "fix", "test", "ci", "chore")):
+        return "IMPLEMENTATION"
+    return "DOCUMENTATION_OR_ANALYSIS"
 
 
 def git(*args: str) -> str:
