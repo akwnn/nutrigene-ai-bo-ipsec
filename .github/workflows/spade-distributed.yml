@@ -97,7 +97,7 @@ jobs:
           PHASE: ${{ inputs.phase }}
         run: |
           set -euo pipefail
-          python scripts/make_spade_actions_matrix.py \
+          python software/scripts/make_spade_actions_matrix.py \
             --phase "$PHASE" \
             --batch-index 0 \
             --batch-size 256 \
@@ -153,7 +153,7 @@ jobs:
           python -m pip install --disable-pip-version-check --no-input --no-deps -e .
 
       - name: Verify CPU-only single-thread execution
-        run: python scripts/run_spade_actions_worker.py --preflight
+        run: python software/scripts/run_spade_actions_worker.py --preflight
 
       - name: Execute packed shards with a two-process ceiling
         id: execute
@@ -182,13 +182,13 @@ jobs:
         run: |
           set -euo pipefail
           status=0
-          python scripts/run_spade_actions_worker.py \
+          python software/scripts/run_spade_actions_worker.py \
             --phase "$PHASE" --family "$A_FAMILY" \
             --start "$A_START" --stop "$A_STOP" --out "$A_OUT" &
           pid_a=$!
           pid_b=""
           if [[ "$B_ENABLED" == "true" ]]; then
-            python scripts/run_spade_actions_worker.py \
+            python software/scripts/run_spade_actions_worker.py \
               --phase "$PHASE" --family "$B_FAMILY" \
               --start "$B_START" --stop "$B_STOP" --out "$B_OUT" &
             pid_b=$!
@@ -201,13 +201,13 @@ jobs:
           pid_c=""
           pid_d=""
           if [[ "$C_ENABLED" == "true" ]]; then
-            python scripts/run_spade_actions_worker.py \
+            python software/scripts/run_spade_actions_worker.py \
               --phase "$PHASE" --family "$C_FAMILY" \
               --start "$C_START" --stop "$C_STOP" --out "$C_OUT" &
             pid_c=$!
           fi
           if [[ "$D_ENABLED" == "true" ]]; then
-            python scripts/run_spade_actions_worker.py \
+            python software/scripts/run_spade_actions_worker.py \
               --phase "$PHASE" --family "$D_FAMILY" \
               --start "$D_START" --stop "$D_STOP" --out "$D_OUT" &
             pid_d=$!

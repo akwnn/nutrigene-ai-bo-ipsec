@@ -2,7 +2,7 @@
 
 This directory preserves material that is outside the final paper's active reading and
 reproduction paths. Nothing was deleted during consolidation. The authoritative disposition
-of every baseline file is [`paper-evidence/file-review.csv`](../paper-evidence/file-review.csv),
+of every baseline file is [`publication/evidence/file-review.csv`](../publication/evidence/file-review.csv),
 including its original path, scientific role, replacement status, destination, and rationale.
 
 - `bo-vs-doe/` contains the earlier terminal-rule study retained as a companion history.

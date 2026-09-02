@@ -4,7 +4,7 @@ version = "0.1.0"
 requires-python = ">=3.11"
 
 # Without these, `boec` is importable ONLY under pytest, via the `pythonpath`
-# setting below. Every `python scripts/run_*.py` command named beside a number in
+# setting below. Every `python software/software/scripts/run_*.py` command named beside a number in
 # docs/RESULTS-PERSON-A.md died on `ModuleNotFoundError: No module named 'boec'`
 # from a clean checkout -- 22 of 26 scripts. Reproduction instructions that have
 # never been run from a fresh clone are not reproduction instructions.
@@ -14,14 +14,11 @@ requires = ["setuptools>=61"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]
-where = ["src"]
-
-[tool.setuptools.package-data]
-"boec.paper_figures" = ["*.mplstyle"]
+where = ["software/src"]
 
 [tool.pytest.ini_options]
-pythonpath = ["src"]
-testpaths = ["tests"]
+pythonpath = ["software/src"]
+testpaths = ["software/tests"]
 markers = [
     # Runs a real BO campaign rather than a unit check. Kept IN the default suite on
     # purpose -- it is the E1 kill condition, and a kill condition that only runs when

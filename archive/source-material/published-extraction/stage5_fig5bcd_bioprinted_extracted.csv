@@ -1,0 +1,17 @@
+outcome_chart,condition,mean,sd,n,source
+cd31_area_norm_no_ecm_ctrl,EO,1.85,0.5,6,visual_bar_reading
+cd31_area_norm_no_ecm_ctrl,CO,0.45,0.15,3,visual_bar_reading
+cd31_area_norm_no_ecm_ctrl,CO-2FN,0.25,0.15,3,visual_bar_reading
+cd31_area_norm_no_ecm_ctrl,No_ECM_Ctrl,1.0,0.4,3,visual_bar_reading
+total_vessel_length_um_per_mm2,EO,870,230,6,visual_bar_reading
+total_vessel_length_um_per_mm2,CO,220,100,3,visual_bar_reading
+total_vessel_length_um_per_mm2,CO-2FN,130,80,3,visual_bar_reading
+total_vessel_length_um_per_mm2,No_ECM_Ctrl,470,180,3,visual_bar_reading
+branch_points_per_mm2,EO,6.5,1.8,6,visual_bar_reading
+branch_points_per_mm2,CO,1.0,0.6,3,visual_bar_reading
+branch_points_per_mm2,CO-2FN,0.4,0.3,3,visual_bar_reading
+branch_points_per_mm2,No_ECM_Ctrl,3.2,1.5,3,visual_bar_reading
+civ_area_pct_dual_construct,EO_side,81.29,11.08,4,exact_from_paper_text
+civ_area_pct_dual_construct,Ctrl_side,30.26,12.09,4,exact_from_paper_text
+cd31_area_pct_dual_construct,EO_side,0.63,0.27,4,visual_bar_reading
+cd31_area_pct_dual_construct,Ctrl_CIVneg_side,0.18,0.15,4,visual_bar_reading

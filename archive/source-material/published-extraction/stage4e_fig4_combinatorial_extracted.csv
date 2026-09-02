@@ -1,0 +1,11 @@
+condition_id,base_formulation,SB_inhibitor_added,VEGF_added,ECM_readded_day0,cd31_min,cd31_q1,cd31_median,cd31_q3,cd31_max,extraction_method
+fig4e_TheO_000,TheO,0,0,0,0.5,0.7,0.8,1.0,1.3,visual_5num_summary_coarse
+fig4e_TheO_SB+VEGF,TheO,1,1,0,0.8,1.2,1.5,1.9,2.3,visual_5num_summary_coarse
+fig4e_TheO_SB+ECM,TheO,1,0,1,0.3,0.5,0.7,1.1,1.6,visual_5num_summary_coarse
+fig4e_TheO_VEGF+ECM,TheO,0,1,1,5.8,6.5,8.0,9.5,11.3,visual_5num_summary_coarse
+fig4e_TheO_SB+VEGF+ECM,TheO,1,1,1,0.5,0.7,0.8,1.0,1.3,visual_5num_summary_coarse
+fig4e_EO_000,EO,0,0,0,3.8,4.5,5.5,7.5,8.8,visual_5num_summary_coarse
+fig4e_EO_SB+VEGF,EO,1,1,0,10.5,12.5,15.0,26.0,34.0,visual_5num_summary_coarse
+fig4e_EO_SB+ECM,EO,1,0,1,6.0,10.0,15.5,31.0,35.0,visual_5num_summary_coarse
+fig4e_EO_VEGF+ECM,EO,0,1,1,9.0,12.0,19.0,24.5,27.0,visual_5num_summary_coarse
+fig4e_EO_SB+VEGF+ECM,EO,1,1,1,9.0,13.0,16.0,33.0,41.0,visual_5num_summary_coarse

@@ -1,0 +1,11 @@
+condition_id,base_formulation,SB_inhibitor_added,VEGF_added,ECM_readded_day0,TGFb_added,cd31_area_dapi_norm_fn_mean,cd31_area_dapi_norm_fn_variance,n_detected_replicates,raw_extracted_values,extraction_method
+fig4a_TheO,TheO,0,0,0,0,0.98,0.1083,5,0.6;0.85;0.95;1.0;1.5,visual_dot_reading
+fig4a_EO,EO,0,0,0,0,5.825,2.1758,4,4.5;4.6;7.0;7.2,visual_dot_reading
+fig4a_TheO+VEGF,TheO,0,1,0,0,5.38,7.197,5,3.1;3.3;3.9;8.2;8.4,visual_dot_reading
+fig4a_EO+VEGF,EO,0,1,0,0,9.5,25.772,6,6.4;6.5;7.5;8.4;8.5;19.7,visual_dot_reading
+fig4b_TheO+ECM,TheO,0,0,1,0,3.5,0.575,5,2.3;3.2;3.9;4.0;4.1,visual_dot_reading
+fig4b_EO+ECM,EO,0,0,1,0,5.825,2.1758,4,4.5;4.6;7.0;7.2,visual_dot_reading
+fig4c_TheO+SB,TheO,1,0,0,0,3.04,2.263,5,1.2;2.0;2.9;4.5;4.6,visual_dot_reading
+fig4c_EO+SB,EO,1,0,0,0,5.68,7.807,5,2.3;3.0;7.2;7.9;8.0,visual_dot_reading
+fig4d_TheO+TGFb,TheO,0,0,0,1,0.66,0.113,5,0.3;0.5;0.6;0.7;1.2,visual_dot_reading
+fig4d_EO+TGFb,EO,0,0,0,1,2.7,1.508,6,1.3;1.5;2.0;3.7;3.8;3.9,visual_dot_reading

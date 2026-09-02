@@ -7,12 +7,12 @@ audited archive of the research history.
 
 ## Start here
 
-- [Paper draft](paper/MANUSCRIPT.md)
-- [Methods](paper/METHODS.md)
-- [Frozen protocols](paper/PROTOCOLS.md)
-- [Claims and sources](paper/CLAIMS-AND-SOURCES.md)
-- [Reproduction map](paper-evidence/reproduction-map.md)
-- [Evidence guide](paper-evidence/README.md)
+- [Paper draft](publication/manuscript/MANUSCRIPT.md)
+- [Methods](publication/manuscript/METHODS.md)
+- [Frozen protocols](publication/manuscript/PROTOCOLS.md)
+- [Claims and sources](publication/manuscript/CLAIMS-AND-SOURCES.md)
+- [Reproduction map](publication/evidence/reproduction-map.md)
+- [Evidence guide](publication/evidence/README.md)
 - [Archive guide](archive/README.md)
 
 The claim ledger is authoritative. Historical files containing “final,” “result,” or a newer
@@ -38,36 +38,47 @@ Use Python 3.11:
 python -m venv .venv
 .venv/bin/pip install -r requirements.txt
 .venv/bin/pip install -e .
-.venv/bin/python scripts/verify_conclusions.py
+.venv/bin/python software/scripts/verify_conclusions.py
 .venv/bin/pytest -q
 ```
 
 Individual analysis commands and expected outputs are documented in
-`paper-evidence/reproduction-map.md`. Long campaign runners are not required to verify the
+`publication/evidence/reproduction-map.md`. Long campaign runners are not required to verify the
 committed result calculations.
 
 ## Repository map
 
 ```text
-paper/             publication draft, methods, supplement, claim ledger
-paper-evidence/    evidence indexes, reproduction commands, file/commit audits
-src/boec/          active SPADE and comparator implementation
-scripts/           active runners, analysers, guards, and audit tooling
-tests/             active regression suite
-configs/           frozen active configurations
-data/              active benchmark and supporting real-cell inputs
-results/           canonical compact results used by the manuscript
-archive/           preserved superseded, exploratory, void, and generated material
+publication/
+├── manuscript/       actual paper, methods, supplement, protocols, claim ledger
+└── evidence/         result guide, reproduction map, file and commit audits
+
+research/
+├── data/             benchmark, laboratory, and published-data inputs
+└── results/
+    ├── comparisons/      DC, LC, and LA canonical JSON files
+    ├── generalization/   TAU cross-family canonical JSON files
+    ├── mechanism/        TT mechanism canonical JSON files
+    ├── real-cell/        real-cell outputs
+    └── figures/          all existing research figures, grouped by status
+
+software/
+├── src/              active Python implementation
+├── scripts/          active runners, analysers, and verification tools
+├── tests/            active regression suite
+└── configs/          frozen active configurations
+
+archive/             source material and preserved historical research
 ```
 
 The pre-consolidation baseline (`6e4f22e`) contains 719 commits and 1,402 tracked files. Every
-one has a disposition in `paper-evidence/file-review.csv`; no baseline material was deleted.
+one has a disposition in `publication/evidence/file-review.csv`; no baseline material was deleted.
 
 ## Scope and limitations
 
 Headline benchmarks use 48 wells and relative noise 0.25. At real-assay noise near 0.68, no
 tested arm certifies. The in-house dataset awaits manual CD31 gate signoff. SPADE has not yet
-been validated prospectively in a wet-lab campaign. See `paper/SUPPLEMENT.md` for the complete
+been validated prospectively in a wet-lab campaign. See `publication/manuscript/SUPPLEMENT.md` for the complete
 limitation set.
 
 ## Citation and license
