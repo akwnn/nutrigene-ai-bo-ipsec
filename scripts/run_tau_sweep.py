@@ -1,6 +1,6 @@
 """TAU -- is `hill`'s saturation a property of the family, or of `tau`?
 
-Implements docs/SPADE-TAU-DEGENERACY-SPEC.md, frozen before this file was written.
+Implements paper/PROTOCOLS.md (TAU), frozen before this file was written.
 
 Reuses run_lc_confirmatory.py's `build` verbatim, so p=0.30/0.10 must reproduce LC's
 certification rates. That is the correctness gate (spec 6); if it fails, nothing here

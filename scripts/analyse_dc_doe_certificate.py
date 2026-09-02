@@ -1,4 +1,4 @@
-"""DC adjudicator. Implements docs/SPADE-DOE-CERTIFICATE-SPEC.md verbatim.
+"""DC adjudicator. Implements paper/PROTOCOLS.md (DC) verbatim.
 
 WRITTEN WHILE THE RUN WAS IN FLIGHT, before any DC outcome was inspected.
 
@@ -85,7 +85,7 @@ def main():
     seeds = sorted({k[2] for k in cells})
     grid = sorted({k[4] for k in cells})
     arms = [x for x in ARMS if any(k[0] == x for k in cells)]
-    print("=== DC adjudication — docs/SPADE-DOE-CERTIFICATE-SPEC.md ===")
+    print("=== DC adjudication — paper/PROTOCOLS.md (DC) ===")
     print(f"SEEDS USED: {len(seeds)} (max {max(seeds)})   c grid={grid}")
     if len(seeds) < 32:
         print("*** PARTIAL DATA")

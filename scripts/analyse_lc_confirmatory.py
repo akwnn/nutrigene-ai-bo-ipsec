@@ -1,4 +1,4 @@
-"""LC adjudicator. Implements docs/SPADE-LC-CONFIRMATORY-SPEC.md verbatim.
+"""LC adjudicator. Implements paper/PROTOCOLS.md (LC) verbatim.
 
 WRITTEN BEFORE THE DATA LANDED, while the run was in flight. Gates LC-1..LC-4 are
 transcribed from the frozen spec.
@@ -200,7 +200,7 @@ def main():
     rounds = sorted({k[1] for k in cells})
     seeds = sorted({k[3] for k in cells})
 
-    print("=== LC adjudication — docs/SPADE-LC-CONFIRMATORY-SPEC.md ===")
+    print("=== LC adjudication — paper/PROTOCOLS.md (LC) ===")
     print(f"files={len(paths)} families={fams}")
     print(f"c grid={grid} rounds={rounds}")
     print(f"SEEDS USED: {len(seeds)} (max {max(seeds)}) — spec §7 requires this be stated")

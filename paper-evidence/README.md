@@ -21,11 +21,16 @@ accepted only after tracing them to committed results and their producing or val
 
 - `commit-review.csv` contains one row for every baseline commit.
 - `file-review.csv` contains one row for every baseline tracked file.
-- The chronological pass separates scientific results, corrections and retractions, frozen
-  protocols, implementation work, merges, and documentation or analysis.
-- Result and correction commits remain marked `TRACE_IN_CLAIM_LEDGER` until the next pass names
-  the exact surviving claim, canonical result, and superseding correction.
-- File classifications remain `UNREVIEWED` until the claim-to-evidence map is established.
+- Every file has a reviewed era, scientific role, claim relationship, dependency statement,
+  supersession status, classification, destination, and rationale. No provisional marker
+  remains.
+- Final baseline dispositions are: 66 CORE, 89 SUPPORT, 194 INFRASTRUCTURE,
+  834 ARCHIVE-VALID, 62 ARCHIVE-SUPERSEDED, 1 ARCHIVE-FAILED/VOID, and
+  156 GENERATED/DISPOSABLE.
+- The lab role manifest was applied per file: 81 in-house files remain supporting evidence
+  and 235 assay-development, blocked, unrelated, or irrelevant-sidecar files are archived.
+- `paper/CLAIMS-AND-SOURCES.md` adjudicates the surviving claims and correction chains;
+  `reproduction-map.md` gives the executable commands and expected values.
 
 This ordering is intentional. The project contains long correction chains in which a later
 document can still quote an earlier invalid number. Automatically classifying files from age,
@@ -46,9 +51,9 @@ name, or the latest document would repeat that failure.
 Era is a navigation field, not a truth verdict. A correction can supersede a result within the
 same era, and active SPADE code can depend on modules first introduced for an older study.
 
-## Known correction chains requiring evidence adjudication
+## Adjudicated correction chains
 
-The chronological pass identifies these high-risk chains for explicit resolution in
+The chronological pass identified these high-risk chains, which were resolved or bounded in
 `paper/CLAIMS-AND-SOURCES.md`:
 
 - E2 scoring and pairing defects, followed by Q20/Q27/Q34/Q35 and the D20 rescore.
@@ -63,4 +68,15 @@ The chronological pass identifies these high-risk chains for explicit resolution
 - ACK and TT targeting-mechanism corrections.
 - DC comparison with classical DoE and the corrected BO-drift interpretation.
 
-No file movement begins until the active claims in these chains are tied to canonical evidence.
+The most important corrections are machine-guarded: DC's one-process `-0.0005` replaces stale
+LC parity prose, and the frozen LC LOFO calculation gives C3 `+0.000855`, not the unsupported
+manual `+0.001353`. Archived claims do not become current merely because their files remain.
+
+## Navigation
+
+- `main-results/` groups the evidence for the method, comparisons, cross-family result,
+  rounds/cost interpretation, and real-cell support.
+- `supporting-results/` groups mechanism tests, limitations/failures, and reviewer defenses.
+- `../archive/README.md` explains the preserved inactive tree.
+- `file-review.csv` is the complete file-level archive manifest; the indexes intentionally do
+  not duplicate 1,402 path entries.

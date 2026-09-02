@@ -1,6 +1,6 @@
 """Multi-round SPADE: spend the same wells across more adaptive rounds.
 
-**Why this exists, measured rather than assumed.** `docs/SPADE-ROUND-MATCHED-SPEC.md`
+**Why this exists, measured rather than assumed.** `paper/PROTOCOLS.md` (LA)
 holds the well budget fixed at 48 and varies only the round count. Result: `qlognei` at
 **ten** rounds certifies 29.0% of the time at LB 0.9063; the *same acquisition* at **two**
 rounds certifies **0.0%** -- identical to SPADE, to `lhs`, to everything else at two

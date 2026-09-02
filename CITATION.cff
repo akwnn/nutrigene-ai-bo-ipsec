@@ -1,0 +1,23 @@
+cff-version: 1.2.0
+message: "If you use SPADE, cite the archived software release and accompanying paper."
+title: "SPADE: certifying operating regions for cell-manufacturing experiments under fixed well budgets"
+type: software
+version: 0.1.0
+date-released: 2026-09-02
+authors:
+  - family-names: Yung
+    given-names: Joseph
+  - family-names: Kwan
+    given-names: Alana
+repository-code: "https://github.com/akwnn/nutrigene-ai-bo-ipsec"
+url: "https://github.com/akwnn/nutrigene-ai-bo-ipsec"
+abstract: >-
+  SPADE is a sequential design and conservative-set certification workflow for
+  cell-manufacturing experiments, evaluated against Bayesian optimization,
+  classical design of experiments, and one-shot designs.
+keywords:
+  - Bayesian optimization
+  - design of experiments
+  - cell manufacturing
+  - Gaussian process
+  - operating region

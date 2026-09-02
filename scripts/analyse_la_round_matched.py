@@ -1,4 +1,4 @@
-"""LA adjudicator. Implements docs/SPADE-ROUND-MATCHED-SPEC.md verbatim.
+"""LA adjudicator. Implements paper/PROTOCOLS.md (LA) verbatim.
 
 WRITTEN BEFORE THE DATA LANDED. Gates LA-1/2/3 are transcribed from the frozen spec.
 

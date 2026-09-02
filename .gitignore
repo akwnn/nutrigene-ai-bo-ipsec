@@ -446,6 +446,11 @@ COMMIT_MSG.txt
 # Watchdog-quarantined shards from wrong protocol digests
 results/stale-wrong-digest/
 
+# Consolidation preserves pre-existing ignored bulk outputs outside the active tree.
+# The tracked checksum manifest records every file; the payloads remain local because
+# several exceed standard Git-hosting limits and were never versioned evidence.
+archive/generated/local-untracked/
+
 # TT -- does SPADE's mechanism work when aimed at tau, the region actually certified?
 # (docs/SPADE-THETA-TAU-SPEC.md). TT-1 is registered so that FAIL vindicates KF-3.
 !results/tt-ackley.json

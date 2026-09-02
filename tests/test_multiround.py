@@ -1,6 +1,6 @@
 """Multi-round SPADE. Adaptivity, not acquisition, is what buys certification.
 
-LA measured this directly (`docs/SPADE-ROUND-MATCHED-SPEC.md`): strip `qlognei` from ten
+LA measured this directly (`paper/PROTOCOLS.md (LA)`): strip `qlognei` from ten
 adaptive rounds down to two and its answer rate collapses from 29.0% to 0.0% -- the same
 0.0% every 2-round arm gets, SPADE included. The whole margin KX attributed to BO's
 *design* was its *round count*.

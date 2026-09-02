@@ -1,4 +1,4 @@
-"""TAU adjudicator. Implements docs/SPADE-TAU-DEGENERACY-SPEC.md verbatim.
+"""TAU adjudicator. Implements paper/PROTOCOLS.md (TAU) verbatim.
 
 WRITTEN WHILE THE RUN WAS IN FLIGHT, before any TAU outcome was inspected.
 
@@ -81,7 +81,7 @@ def main():
     ps = sorted({k[3] for k in cells}, reverse=True)
     grid = sorted({k[4] for k in cells})
     seeds = sorted({k[2] for k in cells})
-    print("=== TAU adjudication — docs/SPADE-TAU-DEGENERACY-SPEC.md ===")
+    print("=== TAU adjudication — paper/PROTOCOLS.md (TAU) ===")
     print(f"families={fams}\np grid (prevalence; LARGER = EASIER)={ps}\nc grid={grid}")
     print(f"SEEDS USED: {len(seeds)} (max {max(seeds)})")
     per = {f: len({k[2] for k in cells if k[1] == f}) for f in fams}

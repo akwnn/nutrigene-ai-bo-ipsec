@@ -1,6 +1,6 @@
 """TT -- does SPADE's mechanism work when actually pointed at the certified region?
 
-Implements docs/SPADE-THETA-TAU-SPEC.md, frozen before this file was written.
+Implements paper/PROTOCOLS.md (TT), frozen before this file was written.
 
 `spade` is LC's committed path (theta = 0.80). `spade_tau` passes theta=tau at p=0.30 --
 the threshold the certificate is actually about, and the practitioner's own spec.

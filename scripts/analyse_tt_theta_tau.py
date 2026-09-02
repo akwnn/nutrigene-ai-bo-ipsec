@@ -1,4 +1,4 @@
-"""TT adjudicator. Implements docs/SPADE-THETA-TAU-SPEC.md verbatim.
+"""TT adjudicator. Implements paper/PROTOCOLS.md (TT) verbatim.
 
 WRITTEN WHILE THE RUN WAS IN FLIGHT, before any TT outcome was inspected.
 Reads `ce_empirical_*`, NEVER `ce_contain_*`. Prints the seed count it used.
@@ -76,7 +76,7 @@ def main():
         print("no TT rows yet"); return
     seeds = sorted({k[2] for k in cells})
     fams = sorted({k[1] for k in cells})
-    print("=== TT adjudication — docs/SPADE-THETA-TAU-SPEC.md ===")
+    print("=== TT adjudication — paper/PROTOCOLS.md (TT) ===")
     print(f"families={fams}\nSEEDS USED: {len(seeds)} (max {max(seeds)})")
     if len(seeds) < 32:
         print("*** PARTIAL DATA")

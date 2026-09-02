@@ -1,4 +1,4 @@
-"""LA -- the round-matched benchmark. Registered in docs/SPADE-ROUND-MATCHED-SPEC.md
+"""LA -- the round-matched benchmark. Registered in paper/PROTOCOLS.md (LA)
 frozen at 4cbe17e BEFORE this file existed.
 
 KX compared `qlognei` at TEN adaptive rounds against SPADE at TWO. This holds rounds

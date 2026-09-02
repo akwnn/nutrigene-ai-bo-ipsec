@@ -1,6 +1,6 @@
 """DC -- can classical DoE certify a design space at all?
 
-Implements docs/SPADE-DOE-CERTIFICATE-SPEC.md, frozen before this file was written.
+Implements paper/PROTOCOLS.md (DC), frozen before this file was written.
 
 The certification path is byte-identical across arms: each arm's 48 (X, Y) wells go through
 the same build_gp and the same vorobev_columns. Regret is scored identically for all four
