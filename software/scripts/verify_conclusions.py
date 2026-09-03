@@ -70,16 +70,14 @@ check("n", len(volume_diff), 320, 0)
 spec = importlib.util.spec_from_file_location("t", "software/scripts/analyse_tau_sweep.py")
 T = importlib.util.module_from_spec(spec); spec.loader.exec_module(T)
 cells, diff = T.load([f"research/results/generalization/tau-{f}.json" for f in T.FAMILIES])
-fams = sorted({k[1] for k in cells}); ps = sorted({k[3] for k in cells}, reverse=True)
-xs, ys = [], []
-for f in fams:
-    for p in ps:
-        _lb, _n, ar = T.pooled(cells, lambda k, f=f, p=p: k[1]==f and k[3]==p and k[4]==1.0)
-        ms = diff.get((f,p), float('nan'))
-        if ms == ms: xs.append(ms); ys.append(ar)
+T.validate_canonical(cells, diff)
+points = T.tau1_points(cells, diff, arm="spade", c=1.0)
+xs = [x for x, _y, _f, _p in points]
+ys = [y for _x, y, _f, _p in points]
 rho, _ = spearmanr(xs, ys)
-print("\nCLAIM 5 -- margin/sd governs certification")
-check("Spearman rho", rho, 0.9801, 0.0005); check("cells", len(xs), 25, 0)
+print("\nCLAIM 5 -- mean seed-specific margin vs SPADE answer rate")
+print("  descriptive registered gate over nested family-prevalence cells")
+check("Spearman rho", rho, 0.9880098603391883, 1e-12); check("cells", len(xs), 25, 0)
 
 # --- claim 4: hill certifies ---
 def cp(k, n): return 0.0 if n==0 or k==0 else float(beta.ppf(0.05,k,n-k+1))

@@ -1,296 +1,38 @@
-name: SPADE distributed registered shards
+name: SPADE publication verification
 
-# Container identity resolved from the official Docker Hub library/python API for
-# python:3.11.15-bookworm, linux/amd64.  Use the platform digest, never the tag.
 on:
+  push:
+  pull_request:
   workflow_dispatch:
-    inputs:
-      phase:
-        description: Registered phase to execute
-        required: true
-        type: choice
-        options:
-          - development
-          - lockbox
-      source_sha:
-        description: Exact 40-character commit containing this workflow and frozen study
-        required: true
-        type: string
-      confirmation:
-        description: RUN_REGISTERED_DEVELOPMENT or RUN_REGISTERED_LOCKBOX
-        required: true
-        type: string
 
 permissions:
   contents: read
 
-env:
-  OMP_NUM_THREADS: "1"
-  MKL_NUM_THREADS: "1"
-  OPENBLAS_NUM_THREADS: "1"
-  NUMEXPR_NUM_THREADS: "1"
-  PYTHONHASHSEED: "0"
-  CUDA_VISIBLE_DEVICES: ""
-
-concurrency:
-  group: spade-${{ inputs.phase }}-${{ inputs.source_sha }}
-  cancel-in-progress: false
-
 jobs:
-  plan:
+  verify:
     runs-on: ubuntu-24.04
-    timeout-minutes: 10
-    container: python@sha256:eaeffb6e8511935426934aac863940fbd004ef31dab0d7fc27a129bb7c19d9a8
-    defaults:
-      run:
-        shell: bash
-    outputs:
-      matrix: ${{ steps.matrix.outputs.matrix }}
-      total_batches: ${{ steps.matrix.outputs.total_batches }}
-      total_jobs: ${{ steps.matrix.outputs.total_jobs }}
+    timeout-minutes: 30
     steps:
-      - name: Fail closed on workflow source or confirmation drift
-        env:
-          SOURCE_SHA: ${{ inputs.source_sha }}
-          EVENT_SHA: ${{ github.sha }}
-          WORKFLOW_SHA: ${{ github.workflow_sha }}
-          PHASE: ${{ inputs.phase }}
-          CONFIRMATION: ${{ inputs.confirmation }}
-        run: |
-          set -euo pipefail
-          [[ "$SOURCE_SHA" =~ ^[0-9a-f]{40}$ ]] || { echo "source_sha must be an exact lowercase commit SHA" >&2; exit 2; }
-          [[ "$EVENT_SHA" == "$SOURCE_SHA" ]] || { echo "event source differs from requested source SHA" >&2; exit 2; }
-          [[ "$WORKFLOW_SHA" == "$SOURCE_SHA" ]] || { echo "workflow source differs from requested source SHA" >&2; exit 2; }
-          if [[ "$PHASE" == "development" ]]; then
-            [[ "$CONFIRMATION" == "RUN_REGISTERED_DEVELOPMENT" ]] || { echo "invalid registered confirmation" >&2; exit 2; }
-          elif [[ "$PHASE" == "lockbox" ]]; then
-            [[ "$CONFIRMATION" == "RUN_REGISTERED_LOCKBOX" ]] || { echo "invalid registered confirmation" >&2; exit 2; }
-          else
-            echo "invalid registered phase" >&2
-            exit 2
-          fi
-
-      - name: Check out the exact workflow source
+      - name: Check out source
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
-          ref: ${{ inputs.source_sha }}
-          fetch-depth: 0
           persist-credentials: false
-          clean: true
 
-      - name: Verify immutable source and runtime identity
-        env:
-          SOURCE_SHA: ${{ inputs.source_sha }}
-        run: |
-          set -euo pipefail
-          [[ "$SOURCE_SHA" =~ ^[0-9a-f]{40}$ ]] || { echo "source_sha must be an exact lowercase commit SHA" >&2; exit 2; }
-          [[ "$GITHUB_SHA" == "$SOURCE_SHA" ]] || { echo "workflow source differs from requested source SHA" >&2; exit 2; }
-          [[ "$(git rev-parse HEAD)" == "$SOURCE_SHA" ]] || { echo "checkout differs from requested source SHA" >&2; exit 2; }
-          [[ -z "$(git status --porcelain)" ]] || { echo "checkout is not clean" >&2; exit 2; }
-          [[ "$(python --version 2>&1)" == "Python 3.11.15" ]] || { echo "Python identity drift" >&2; exit 2; }
-          [[ "$(uname -m)" == "x86_64" ]] || { echo "runner architecture drift" >&2; exit 2; }
-
-      - name: Generate exact no-gap matrix slice
-        id: matrix
-        env:
-          SOURCE_SHA: ${{ inputs.source_sha }}
-          PHASE: ${{ inputs.phase }}
-        run: |
-          set -euo pipefail
-          python software/scripts/make_spade_actions_matrix.py \
-            --phase "$PHASE" \
-            --batch-index 0 \
-            --batch-size 256 \
-            --expected-source-sha "$SOURCE_SHA" \
-            --github-output "$GITHUB_OUTPUT"
-
-      - name: Verify one complete registered dispatch
-        env:
-          TOTAL_BATCHES: ${{ steps.matrix.outputs.total_batches }}
-          TOTAL_JOBS: ${{ steps.matrix.outputs.total_jobs }}
-        run: |
-          set -euo pipefail
-          [[ "$TOTAL_BATCHES" == "1" ]] || { echo "registered dispatch must contain exactly one complete matrix" >&2; exit 2; }
-          [[ "$TOTAL_JOBS" =~ ^[0-9]+$ ]] && (( TOTAL_JOBS >= 1 && TOTAL_JOBS <= 256 )) || { echo "registered matrix job count drift" >&2; exit 2; }
-
-  run-shards:
-    needs: plan
-    runs-on: ubuntu-24.04
-    timeout-minutes: 360
-    container: python@sha256:eaeffb6e8511935426934aac863940fbd004ef31dab0d7fc27a129bb7c19d9a8
-    defaults:
-      run:
-        shell: bash
-    strategy:
-      fail-fast: false
-      max-parallel: 40
-      matrix: ${{ fromJSON(needs.plan.outputs.matrix) }}
-    steps:
-      - name: Check out the exact workflow source
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Set up Python 3.11
+        uses: actions/setup-python@82c7e631bb3cdc910f68e0081d67478d79c6982d
         with:
-          ref: ${{ inputs.source_sha }}
-          fetch-depth: 0
-          persist-credentials: false
-          clean: true
+          python-version: "3.11"
+          cache: pip
 
-      - name: Verify exact clean source and container
-        env:
-          SOURCE_SHA: ${{ inputs.source_sha }}
+      - name: Install frozen environment
         run: |
-          set -euo pipefail
-          [[ "$SOURCE_SHA" =~ ^[0-9a-f]{40}$ ]] || { echo "source_sha must be an exact lowercase commit SHA" >&2; exit 2; }
-          [[ "$GITHUB_SHA" == "$SOURCE_SHA" ]] || { echo "workflow source differs from requested source SHA" >&2; exit 2; }
-          [[ "$(git rev-parse HEAD)" == "$SOURCE_SHA" ]] || { echo "checkout differs from requested source SHA" >&2; exit 2; }
-          [[ -z "$(git status --porcelain)" ]] || { echo "checkout is not clean" >&2; exit 2; }
-          [[ "$(python --version 2>&1)" == "Python 3.11.15" ]] || { echo "Python identity drift" >&2; exit 2; }
-          [[ "$(uname -m)" == "x86_64" ]] || { echo "runner architecture drift" >&2; exit 2; }
+          python -m pip install --disable-pip-version-check -r requirements.txt
+          python -m pip install --disable-pip-version-check --no-deps -e .
 
-      - name: Install the frozen Python environment
+      - name: Verify manuscript claims and links
         run: |
-          set -euo pipefail
-          python -m pip install --disable-pip-version-check --no-input -r requirements.txt
-          python -m pip install --disable-pip-version-check --no-input --no-deps -e .
+          python software/scripts/verify_conclusions.py
+          python software/scripts/check_paper_links.py
 
-      - name: Verify CPU-only single-thread execution
-        run: python software/scripts/run_spade_actions_worker.py --preflight
-
-      - name: Execute packed shards with a two-process ceiling
-        id: execute
-        env:
-          PHASE: ${{ inputs.phase }}
-          A_ENABLED: ${{ matrix.a_enabled }}
-          A_FAMILY: ${{ matrix.a_family }}
-          A_START: ${{ matrix.a_start }}
-          A_STOP: ${{ matrix.a_stop }}
-          A_OUT: ${{ matrix.a_out }}
-          B_ENABLED: ${{ matrix.b_enabled }}
-          B_FAMILY: ${{ matrix.b_family }}
-          B_START: ${{ matrix.b_start }}
-          B_STOP: ${{ matrix.b_stop }}
-          B_OUT: ${{ matrix.b_out }}
-          C_ENABLED: ${{ matrix.c_enabled }}
-          C_FAMILY: ${{ matrix.c_family }}
-          C_START: ${{ matrix.c_start }}
-          C_STOP: ${{ matrix.c_stop }}
-          C_OUT: ${{ matrix.c_out }}
-          D_ENABLED: ${{ matrix.d_enabled }}
-          D_FAMILY: ${{ matrix.d_family }}
-          D_START: ${{ matrix.d_start }}
-          D_STOP: ${{ matrix.d_stop }}
-          D_OUT: ${{ matrix.d_out }}
-        run: |
-          set -euo pipefail
-          status=0
-          python software/scripts/run_spade_actions_worker.py \
-            --phase "$PHASE" --family "$A_FAMILY" \
-            --start "$A_START" --stop "$A_STOP" --out "$A_OUT" &
-          pid_a=$!
-          pid_b=""
-          if [[ "$B_ENABLED" == "true" ]]; then
-            python software/scripts/run_spade_actions_worker.py \
-              --phase "$PHASE" --family "$B_FAMILY" \
-              --start "$B_START" --stop "$B_STOP" --out "$B_OUT" &
-            pid_b=$!
-          fi
-          wait "$pid_a" || status=1
-          if [[ -n "$pid_b" ]]; then
-            wait "$pid_b" || status=1
-          fi
-
-          pid_c=""
-          pid_d=""
-          if [[ "$C_ENABLED" == "true" ]]; then
-            python software/scripts/run_spade_actions_worker.py \
-              --phase "$PHASE" --family "$C_FAMILY" \
-              --start "$C_START" --stop "$C_STOP" --out "$C_OUT" &
-            pid_c=$!
-          fi
-          if [[ "$D_ENABLED" == "true" ]]; then
-            python software/scripts/run_spade_actions_worker.py \
-              --phase "$PHASE" --family "$D_FAMILY" \
-              --start "$D_START" --stop "$D_STOP" --out "$D_OUT" &
-            pid_d=$!
-          fi
-          if [[ -n "$pid_c" ]]; then
-            wait "$pid_c" || status=1
-          fi
-          if [[ -n "$pid_d" ]]; then
-            wait "$pid_d" || status=1
-          fi
-
-          record_completion() {
-            local label="$1"
-            local enabled="$2"
-            local output="$3"
-            local complete="false"
-            if [[ "$enabled" == "true" && -f "$output" && -f "$output.sha256" && -f "$output.resume.json" && -f "$output.manifest.json" ]]; then
-              complete="true"
-            fi
-            echo "${label}_complete=${complete}" >> "$GITHUB_OUTPUT"
-          }
-          record_completion a "$A_ENABLED" "$A_OUT"
-          record_completion b "$B_ENABLED" "$B_OUT"
-          record_completion c "$C_ENABLED" "$C_OUT"
-          record_completion d "$D_ENABLED" "$D_OUT"
-          exit "$status"
-
-      - name: Upload immutable shard A contract
-        if: ${{ always() && steps.execute.outputs.a_complete == 'true' }}
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
-        with:
-          name: spade-${{ inputs.phase }}-${{ inputs.source_sha }}-${{ matrix.job_id }}-a-${{ github.run_id }}-${{ github.run_attempt }}
-          path: |
-            ${{ matrix.a_out }}
-            ${{ matrix.a_out }}.sha256
-            ${{ matrix.a_out }}.resume.json
-            ${{ matrix.a_out }}.manifest.json
-          if-no-files-found: error
-          compression-level: 0
-          overwrite: false
-          retention-days: 90
-
-      - name: Upload immutable shard B contract
-        if: ${{ always() && steps.execute.outputs.b_complete == 'true' }}
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
-        with:
-          name: spade-${{ inputs.phase }}-${{ inputs.source_sha }}-${{ matrix.job_id }}-b-${{ github.run_id }}-${{ github.run_attempt }}
-          path: |
-            ${{ matrix.b_out }}
-            ${{ matrix.b_out }}.sha256
-            ${{ matrix.b_out }}.resume.json
-            ${{ matrix.b_out }}.manifest.json
-          if-no-files-found: error
-          compression-level: 0
-          overwrite: false
-          retention-days: 90
-
-      - name: Upload immutable shard C contract
-        if: ${{ always() && steps.execute.outputs.c_complete == 'true' }}
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
-        with:
-          name: spade-${{ inputs.phase }}-${{ inputs.source_sha }}-${{ matrix.job_id }}-c-${{ github.run_id }}-${{ github.run_attempt }}
-          path: |
-            ${{ matrix.c_out }}
-            ${{ matrix.c_out }}.sha256
-            ${{ matrix.c_out }}.resume.json
-            ${{ matrix.c_out }}.manifest.json
-          if-no-files-found: error
-          compression-level: 0
-          overwrite: false
-          retention-days: 90
-
-      - name: Upload immutable shard D contract
-        if: ${{ always() && steps.execute.outputs.d_complete == 'true' }}
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
-        with:
-          name: spade-${{ inputs.phase }}-${{ inputs.source_sha }}-${{ matrix.job_id }}-d-${{ github.run_id }}-${{ github.run_attempt }}
-          path: |
-            ${{ matrix.d_out }}
-            ${{ matrix.d_out }}.sha256
-            ${{ matrix.d_out }}.resume.json
-            ${{ matrix.d_out }}.manifest.json
-          if-no-files-found: error
-          compression-level: 0
-          overwrite: false
-          retention-days: 90
+      - name: Run tests
+        run: pytest -q

@@ -1,95 +1,131 @@
 # Methods
 
-## Study design and benchmark scope
+## Study design and evidence roles
 
-Main experiments used five response families (Ackley, Hartmann6, biphasic Hill, Levy, and
-Rosenbrock), 32 deterministic seeds per family, six normalized factors, 48 measured wells,
-and relative observation noise `sigma_rel=0.25`. The latent response and optimum were known
-only for synthetic scoring. Hill parameters varied by instance; other family labels identify
-their registered evaluator. The benchmark is structural and is not fitted to endothelial
-measurements.
+The confirmatory DC and LC experiments used five response families (Ackley, Hartmann6,
+biphasic Hill, Levy, and Rosenbrock), 32 deterministic seeds per family, six normalized
+factors, 48 measured wells, and relative observation noise `sigma_rel=0.25`. TAU used 64
+seeds per family. LA supplied four families and 20 common seeds for C4. The latent response
+and optimum were known only for synthetic scoring. Hill parameters varied by instance; the
+other registered evaluators used a fixed landscape across seeds. The benchmark is structural
+and was not fitted to endothelial measurements.
 
-The principal arms were SPADE, qLogNEI, screened DoE, unscreened DoE, and Latin-hypercube
-sampling. SPADE used five rounds for C1–C3, qLogNEI ten rounds for C1 and five for C3,
-screened and unscreened DoE three rounds, and one-shot LHS one round. Every comparison states
-both well budget and rounds.
+DC is the one-process comparison supporting C1 and C2. LC is the leave-one-family-out (LOFO)
+matched-round analysis supporting C3 and supplies SPADE rows for C4. LA is a frozen
+development-lineage one-shot comparison used only for C4. TAU is the five-prevalence
+explanatory analysis supporting C5 and C6. TT is the negative mechanism test supporting S1.
+The full experiment grid, producers, analysers, and result paths are in
+`../evidence/benchmark-matrix.md`.
 
-## SPADE campaign
+The principal arms were SPADE, qLogNEI, screened DoE, unscreened DoE, and one-shot Latin
+hypercube sampling (LHS). SPADE used five rounds for C1-C3, qLogNEI ten rounds for C1 and five
+for C3, the DoE arms three rounds, and LHS one round. All arms used 48 wells; comparisons
+therefore distinguish well budget from feedback rounds.
 
-SPADE fits a Gaussian process to observed recipe coordinates `X`, normalized outcomes `Y`,
-and plug-in per-well variances `Yvar`. The registered multi-round schedule partitions the
-48-well budget into a space-filling opening and subsequent eight-well batches. Later batches
-use a conservative-set straddle score implemented by `boec.certstraddle.batch_lse_rho`, with
-campaign state and round allocation in `boec.campaign` and `boec.multiround`.
+## SPADE campaign and operating-region estimator
 
-For a posterior draw `f^(b)` and specification threshold `tau`, define the excursion set
-`Gamma^(b) = {x: f^(b)(x) >= tau}` on the registered Sobol grid. Candidate Vorob'ev quantile
-sets are scanned to find the largest set whose joint posterior containment meets assurance
-`alpha=0.95`. Inflation `c` multiplies posterior uncertainty and is selected from
-`{1.0, 1.5, 2.0, 3.0}`. An empty selected set is an abstention, not successful containment.
+SPADE fits a Gaussian process to normalized recipe coordinates `X`, outcomes `Y`, and plug-in
+per-well observation variances `Yvar`. The registered campaign begins with a space-filling
+batch and allocates later eight-well batches using the conservative-set straddle score in
+`boec.certstraddle.batch_lse_rho`; allocation and state transitions are implemented in
+`boec.campaign` and `boec.multiround`.
 
-## Certification outcomes
+For posterior draw `f^(b)` and threshold `tau`, the excursion set is
+`Gamma^(b)={x:f^(b)(x)>=tau}` on the registered finite Sobol candidate grid. Posterior draws
+generate a coverage function and nested Vorob'ev quantile candidates. The estimator scans
+those candidates and returns the largest candidate whose joint model-posterior containment
+meets `alpha=0.95`. “Largest” means largest in this scanned nested family on the finite grid,
+not a global optimum over all subsets of a continuous domain. Inflation `c` multiplies
+posterior uncertainty and is chosen from `{1.0,1.5,2.0,3.0}` under the experiment-specific
+rule. If no non-empty candidate passes, SPADE abstains.
 
-For each family, seed, prevalence, and arm we record:
+## Outcomes and empirical certification
 
-- `answered`: the conservative estimate is non-empty;
-- `contained`: an answered estimate is a subset of the known true excursion set;
+For each family, seed, prevalence, arm, and inflation, the result schema records:
+
+- `answered`: the returned conservative estimate is non-empty;
+- `contained`: an answered estimate is a subset of the known synthetic true excursion set;
 - answer rate: answered cells divided by eligible cells;
-- empirical containment: contained divided by answered;
-- certified volume: grid fraction in the returned conservative set;
-- simple regret: one minus the truth value at the campaign's recommended recipe.
+- observed conditional containment: contained divided by answered;
+- certified volume: candidate-grid fraction in the returned set; and
+- simple regret: one minus truth at the recommended recipe.
 
-Certification requires empirical containment with a one-sided 95% Clopper–Pearson lower
-bound at least 0.90 and answer rate at least 0.05. Both numerator and denominator are always
-reported. Model-internal containment (`ce_contain_*`) is never used as truth validation;
-analyses read `ce_empirical_*`.
+The registered empirical criterion requires a one-sided 95% Clopper-Pearson lower binomial
+bound of at least 0.90 among answered cells and answer rate of at least 0.05. Both numerator
+and denominator are reported. Empty regions are abstentions, not containment successes.
+Model-internal `ce_contain_*` is not truth validation; analyses use `ce_empirical_*`.
 
-## Calibration and held-out evaluation
+## Calibration and claim-specific estimands
 
-The LC matched-round analysis selects the smallest inflation satisfying the registered rule
-on all families except one and evaluates volume on the held-out family. This
-leave-one-family-out procedure produces C3 over 320 family-seed-prevalence cells. Historical
-prose quoting `+0.001353` is rejected because the frozen executable procedure yields
-`+0.0008546875` on the committed inputs.
+DC does not use held-out-family calibration. For C2, SPADE passes the within-DC selection rule
+at `c=1.0`. Neither DoE arm passes at any tested inflation; their reported `c=1.0` counts are
+baseline diagnostics, not selected certificates.
 
-The TAU analysis evaluates target prevalence `p` in `{0.70, 0.50, 0.30, 0.20, 0.10}`.
-`tau` is the truth quantile giving region prevalence `p`. The true-surface margin divided by
-noise is computed only for explanatory analysis and is unavailable prospectively.
+For C3, LC selects the smallest inflation satisfying the registered rule on all families
+except one, then evaluates certified volume on the held-out family. The R5 contrast pools
+`p=0.30` and `p=0.10`, producing 320 family-seed-prevalence cells (5 families x 32 seeds x 2
+prevalences). The executable result is `+0.0008546875`; the historical `+0.001353` value is
+not reproducible and is rejected.
+
+C4 pairs SPADE R3 rows from LC with one-shot LHS rows from LA for Ackley, Hartmann6, Levy, and
+Rosenbrock and common seeds 0-19. Hill and LC seeds 20-31 are not imputed, giving 80 paired
+campaigns.
+
+TAU evaluates `p` in `{0.70,0.50,0.30,0.20,0.10}`, where `tau` is the truth quantile giving
+that region prevalence. C5 fixes `c=1.0` and `alpha=0.95`. Within each of 25
+family-prevalence cells, `x` is the mean of 64 unique seed-specific true margin/noise values
+and `y` is SPADE answer rate over the same seeds. Median margin and qLogNEI-only answer rate
+are sensitivities. The analyser rejects duplicate keys, non-finite or inconsistent margins,
+incomplete grids, and seed misalignment. This diagnostic uses latent truth and is not
+available prospectively.
 
 ## Comparators
 
-qLogNEI uses the same 48-well budget and Gaussian-process outcome model, with batch noisy
-expected improvement. The screened DoE arm uses a 20-run screen reducing six factors to four,
-a 27-run face-centred response-surface design, and one confirmation well. The unscreened arm
-omits factor screening while retaining the registered budget and low-order surface model.
-Every arm's observed `X`, `Y`, and `Yvar` is passed through the same certification estimator,
-preventing comparator-specific scoring.
+qLogNEI uses the same Gaussian-process outcome model and well budget with batch noisy log
+expected improvement. It is a point-optimization acquisition; all arms' observations are
+passed through the same downstream conservative-set estimator. The screened DoE arm uses a
+20-run screen reducing six factors to four, a 27-run face-centred response-surface design,
+and one confirmation well. The unscreened arm omits factor screening while retaining the
+registered low-order response-surface workflow. LHS is a single 48-point space-filling batch.
+These implementations do not represent BO or classical DoE as entire method classes.
 
 ## Statistical analysis
 
-Paired contrasts use common `(family, seed)` or `(family, seed, prevalence)` keys. Confidence
-intervals and two-sided p-values use the deterministic nonparametric bootstrap implemented in
-the frozen analysers (`NBOOT=8000` unless the protocol states otherwise). C1 uses the
-one-process DC comparison and supersedes the earlier cross-run LC point estimate. C5 uses
-Spearman rank correlation over the 25 family-prevalence cells. Exact binomial lower bounds use
-the Clopper–Pearson construction. The registered smallest effect of interest for regret is
-0.02; an interval crossing its edge is not declared equivalent.
+Contrasts pair common `(family,seed)` or `(family,seed,prevalence)` keys. Frozen analysers use
+deterministic nonparametric resampling (`NBOOT=8000` unless otherwise registered) and report
+percentile intervals plus two-sided bootstrap tail-area proportions relative to zero. The
+flat-cell bootstrap treats rows as exchangeable and is therefore descriptive and conditional
+for this fixed generator suite, not a cluster-aware population analysis. The regret smallest
+effect of interest is 0.02; an interval crossing its edge is not declared equivalent.
 
-## Real-data support
+C5 is a descriptive Spearman rank correlation over 25 nested family-prevalence cells. Their
+dependence and lack of population exchangeability preclude interpreting a naive correlation
+p-value as population inference. Clopper-Pearson bounds likewise summarize observed answered
+cells under a binomial model. Heterogeneous families, repeated prevalences, and conditioning
+on answering limit transportable coverage interpretation.
 
-The in-house supporting input is
-`research/data/lab/derived/candidate_campaign_coating_flow.csv`, linked to raw FCS files, manual-role
-overlays, and checksums. The published support uses the canonical Hall/Ogle stage-1 and
-stage-2 extractions under `research/data/published/`. Mean-marginalized covariance propagates
-uncertainty in the estimated intercept/mean instead of treating it as fixed. Leave-one-out
-inflation is assay-specific. These analyses are retrospective support and are excluded from
-claims of prospective wet-lab validation.
+## Retrospective real-data support
+
+The in-house input is `research/data/lab/derived/candidate_campaign_coating_flow.csv`; its
+role overlays and evidence-linked raw subset are documented under `research/data/lab/`.
+The candidate table and CD31 gates remain `awaiting_human_signoff`. Published support uses
+canonical Hall/Ogle stage-1 and stage-2 extractions under `research/data/published/`.
+
+Mean-marginalized covariance propagates uncertainty in the fitted intercept/mean instead of
+treating it as fixed. The reported width ratio is the ratio of mean posterior marginal
+standard deviation over the candidate grid. Leave-one-out inflation is assay-specific and
+scores held-out observation prediction; it does not independently identify latent-function
+uncertainty. These analyses are retrospective support, not prospective wet-lab validation.
 
 ## Reproducibility and software
 
-Python requirements are pinned by `requirements.txt`; the package is installed from
-`pyproject.toml`. Canonical runners and analysers are listed in
-`publication/evidence/reproduction-map.md`. `software/scripts/verify_conclusions.py` recomputes the guarded
-headlines directly from committed JSON results. The historical baseline at commit `6e4f22e`
-contains 719 commits and 1,402 files, each adjudicated in the audit ledgers. Inactive material
-is retained under `archive/` rather than deleted.
+Python 3.11 dependencies are pinned in `requirements.txt`; the package is installed from
+`pyproject.toml`. Exact producer/analyser commands, canonical inputs, expected outputs, and
+guard status are listed in `../evidence/reproduction-map.md`. Canonical DC/LC/LA/TAU/TT JSON
+files are versioned under `research/results/`. `software/scripts/verify_conclusions.py`
+recomputes 12 selected scalar checks; it is not an exhaustive guard for every interval,
+p-value, supporting real-data number, or limitation.
+
+The historical baseline at commit `6e4f22e` contains 719 commits and 1,402 files, each
+adjudicated in the evidence ledgers. Inactive material is retained under `archive/`. New
+campaign runs are not required to verify calculations from the committed canonical results.

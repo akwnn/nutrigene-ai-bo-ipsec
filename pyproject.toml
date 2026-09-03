@@ -1,14 +1,22 @@
 [project]
 name = "boec"
 version = "0.1.0"
+description = "SPADE: sequential design and conservative operating-region estimation under fixed well budgets"
+readme = "README.md"
 requires-python = ">=3.11"
+authors = [
+  {name = "Joseph Yung"},
+  {name = "Alana Kwan"},
+]
+keywords = ["bayesian-optimization", "design-of-experiments", "gaussian-process", "cell-manufacturing"]
+
+[project.urls]
+Repository = "https://github.com/akwnn/nutrigene-ai-bo-ipsec"
 
 # Without these, `boec` is importable ONLY under pytest, via the `pythonpath`
-# setting below. Every `python software/software/scripts/run_*.py` command named beside a number in
-# docs/RESULTS-PERSON-A.md died on `ModuleNotFoundError: No module named 'boec'`
-# from a clean checkout -- 22 of 26 scripts. Reproduction instructions that have
-# never been run from a fresh clone are not reproduction instructions.
-# Setup is now: pip install -r requirements.txt && pip install -e .
+# setting below. Reproduction setup is `pip install -r requirements.txt` followed by
+# `pip install -e .`. Runtime dependencies remain pinned in `requirements.txt`; this research
+# package is not currently configured for independent package-index distribution.
 [build-system]
 requires = ["setuptools>=61"]
 build-backend = "setuptools.build_meta"

@@ -1,5 +1,6 @@
 # Local Python environment and build products
 .venv/
+.venv
 venv/
 env/
 .python-version
@@ -23,6 +24,17 @@ COMMIT_MSG.txt
 # New run products are ignored by default. Canonical committed results remain tracked.
 research/results/*
 
+# Canonical paper evidence must survive a fresh clone. New files in these directories still
+# require explicit review before they are committed.
+!research/results/comparisons/
+!research/results/comparisons/*.json
+!research/results/generalization/
+!research/results/generalization/*.json
+!research/results/mechanism/
+!research/results/mechanism/*.json
+!research/results/real-cell/
+!research/results/real-cell/replay-hall-ogle.log
+
 # Figures are publication/review artifacts and must remain visible and trackable.
 !research/results/figures/
 !research/results/figures/**
@@ -33,3 +45,4 @@ research/data/oracles/*.pt
 
 # Large local archive payload is indexed by its tracked checksum manifest.
 archive/generated/local-untracked/results/
+.worktrees/

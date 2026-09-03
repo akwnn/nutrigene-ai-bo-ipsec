@@ -160,6 +160,30 @@ def test_file_rules_keep_core_hill_and_cross_family_evidence_active() -> None:
     assert runner["manuscript_claim"] == "C5;C6"
 
 
+def test_canonical_claim_inputs_are_tracked_in_current_tree() -> None:
+    tracked = set(_git("ls-files"))
+    expected = {
+        *(f"research/results/comparisons/dc-{family}.json" for family in (
+            "ackley", "hartmann6", "hill", "levy", "rosenbrock"
+        )),
+        *(f"research/results/comparisons/lc-{family}.json" for family in (
+            "ackley", "hartmann6", "hill", "levy", "rosenbrock"
+        )),
+        *(f"research/results/comparisons/la-{family}.json" for family in (
+            "ackley", "hartmann6", "levy", "rosenbrock"
+        )),
+        *(f"research/results/generalization/tau-{family}.json" for family in (
+            "ackley", "hartmann6", "hill", "levy", "rosenbrock"
+        )),
+        *(f"research/results/mechanism/tt-{family}.json" for family in (
+            "ackley", "hartmann6", "hill", "levy", "rosenbrock"
+        )),
+        "research/results/real-cell/replay-hall-ogle.log",
+    }
+
+    assert expected <= tracked
+
+
 def test_original_protocol_narratives_are_consolidated_without_deletion() -> None:
     audit = _audit_module()
 

@@ -34,3 +34,17 @@ def test_conclusion_guard_rejects_stale_lc_volume_number() -> None:
     assert "doc=0.0008546875  recomputed=0.000855" in completed.stdout
     assert "n: doc=320" in completed.stdout
     assert "0.001353" not in completed.stdout
+
+
+def test_conclusion_guard_uses_registered_spade_only_tau_estimand() -> None:
+    completed = subprocess.run(
+        [str(ROOT / ".venv" / "bin" / "python"), "software/scripts/verify_conclusions.py"],
+        cwd=ROOT,
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+
+    assert "mean seed-specific margin vs SPADE answer rate" in completed.stdout
+    assert "doc=0.9880098603391883  recomputed=0.988010" in completed.stdout
+    assert "nested family-prevalence cells" in completed.stdout

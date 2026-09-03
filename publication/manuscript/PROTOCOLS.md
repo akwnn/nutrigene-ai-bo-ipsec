@@ -46,9 +46,12 @@ DC supersedes LC for C1; LC remains canonical for C3 and the SPADE side of C4.
 
 Five families × 64 seeds × SPADE/qLogNEI at R5; prevalence
 `{0.70,0.50,0.30,0.20,0.10}`; 48 wells; relative noise 0.25; assurance 0.95. Primary gate:
-Spearman association between true margin/noise and answer rate at least 0.80 over 25 cells.
-Hill success must state prevalence and meet the answer/lower-bound rule. The true-margin
-diagnostic is explanatory, not deployable.
+at `c=1.0`, Spearman association of the mean of the 64 unique seed-specific true
+margin/noise values with SPADE-only answer rate is at least 0.80 over 25
+family-prevalence cells. Median seed-specific margin and qLogNEI-only answer rate are
+sensitivities. Hill success must state prevalence and meet the answer/lower-bound rule. The
+true-margin diagnostic is explanatory, not deployable; the 25 nested cells are dependent,
+not exchangeable population samples.
 
 ## TT — acquisition targeting mechanism
 

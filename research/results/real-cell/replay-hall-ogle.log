@@ -1,0 +1,44 @@
+
+====================================================================================
+REPLAY · stage2 · 24 usable of 25 conditions · budget 8 · opening 4 · k=5
+====================================================================================
+  top-5 conditions (run_id): [9, 13, 17, 18, 19]
+
+  arm          median evals to first top-5   never found
+  qLogEI                              3.50             4
+  random                              3.50             5
+
+  paired difference (random − BO) = -0.050 [-0.500, +0.400]  wilcoxon p=0.8746
+  NULL — BO is not faster than random. Claim REFUTED as registered.
+  [rule A — best observed — is the REGISTERED endpoint; the verdict is this one]
+  discrete mode: 160 proposals, every one verified in the menu
+
+  RULE C — evaluations until the model RECOMMENDS a top-5 condition
+  (secondary, NOT the registered endpoint; same GP and same recommendation rule for both arms)
+  qLogEI                              8.50            20
+  random                              8.50            20
+  paired difference (random − BO) = -0.125 [-0.625, +0.325]  wilcoxon p=0.6432
+
+====================================================================================
+REPLAY · stage1 · 23 usable of 23 conditions · budget 8 · opening 4 · k=5
+====================================================================================
+  top-5 conditions (run_id): [3, 6, 9, 17, 20]
+
+  arm          median evals to first top-5   never found
+  qLogEI                              2.50             2
+  random                              2.50             7
+
+  paired difference (random − BO) = +0.450 [+0.025, +0.850]  wilcoxon p=0.0565
+  NULL — BO is not faster than random. Claim REFUTED as registered.
+  [rule A — best observed — is the REGISTERED endpoint; the verdict is this one]
+  discrete mode: 160 proposals, every one verified in the menu
+
+  RULE C — evaluations until the model RECOMMENDS a top-5 condition
+  (secondary, NOT the registered endpoint; same GP and same recommendation rule for both arms)
+  qLogEI                              4.00            12
+  random                              4.00            10
+  paired difference (random − BO) = -0.125 [-0.500, +0.225]  wilcoxon p=0.4982
+
+====================================================================================
+  Registered in Q31 before the dataset existed. Reported as it came out.
+====================================================================================

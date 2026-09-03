@@ -3,6 +3,8 @@ from __future__ import annotations
 import importlib.util
 from pathlib import Path
 
+import pytest
+
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -24,3 +26,22 @@ def test_original_protocols_are_archived_and_single_active_protocol_exists() -> 
     assert (ROOT / "publication" / "manuscript" / "PROTOCOLS.md").is_file()
     assert not list((ROOT / "docs").glob("SPADE-*-SPEC.md"))
     assert (ROOT / "archive" / "superseded-spade" / "docs" / "SPADE-DOE-CERTIFICATE-SPEC.md").is_file()
+
+
+def test_unqualified_stale_document_reference_is_rejected() -> None:
+    checker = _checker()
+    text = "The active protocol is documented at docs/SPADE-LC-CONFIRMATORY-SPEC.md."
+    match = checker.STALE_DOC.search(text)
+
+    assert match is not None
+    assert not checker.stale_doc_reference_is_allowed(text, match)
+
+
+@pytest.mark.parametrize("context", ["archived", "superseded", "stale", "correction", "rejected"])
+def test_stale_document_reference_with_correction_context_is_allowed(context: str) -> None:
+    checker = _checker()
+    text = f"The {context} reference docs/SPADE-LC-CONFIRMATORY-SPEC.md is retained for the audit."
+    match = checker.STALE_DOC.search(text)
+
+    assert match is not None
+    assert checker.stale_doc_reference_is_allowed(text, match)
