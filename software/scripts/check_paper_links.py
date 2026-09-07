@@ -12,10 +12,10 @@ LINK = re.compile(r"\[[^]]+\]\(([^)]+)\)")
 STALE_DOC = re.compile(r"docs/SPADE-(?:DOE-CERTIFICATE|ROUND-MATCHED|LC-CONFIRMATORY|TAU-DEGENERACY|THETA-TAU|PAPER-ARGUMENT|CONCLUSIONS|REAL-IPSC|PUBLISHED-ECM)")
 STALE_CONTEXT = ("archived", "superseded", "stale", "correction", "rejected")
 REQUIRED = {
-    "README.md", "LICENSE", "CITATION.cff", "publication/manuscript/MANUSCRIPT.md", "publication/manuscript/METHODS.md",
+    "README.md", "LICENSE", "CITATION.cff", "publication/manuscript/MANUSCRIPT.md", "publication/manuscript/SPADE-MANUSCRIPT.docx", "publication/manuscript/METHODS.md",
     "publication/manuscript/SUPPLEMENT.md", "publication/manuscript/PROTOCOLS.md", "publication/manuscript/CLAIMS-AND-SOURCES.md",
     "publication/evidence/reproduction-map.md", "publication/evidence/file-review.csv",
-    "publication/evidence/commit-review.csv", "archive/README.md",
+    "publication/evidence/commit-review.csv", "archive/README.md", "software/scripts/build_manuscript_docx.py",
 }
 
 

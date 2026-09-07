@@ -15,6 +15,7 @@ Azzimonti et al. (2021); the paper does not claim that theory as new.
 ## Start here
 
 - [Paper draft](publication/manuscript/MANUSCRIPT.md)
+- [Review-ready Word manuscript](publication/manuscript/SPADE-MANUSCRIPT.docx)
 - [Methods](publication/manuscript/METHODS.md)
 - [Frozen protocols](publication/manuscript/PROTOCOLS.md)
 - [Claims and sources](publication/manuscript/CLAIMS-AND-SOURCES.md)
@@ -62,6 +63,7 @@ python -m venv .venv
 .venv/bin/pip install -r requirements.txt
 .venv/bin/pip install -e .
 .venv/bin/python software/scripts/verify_conclusions.py
+.venv/bin/python software/scripts/build_manuscript_docx.py
 .venv/bin/pytest -q
 ```
 
@@ -89,7 +91,7 @@ research/
 
 software/
 ├── src/              active Python implementation
-├── scripts/          active runners, analysers, and verification tools
+├── scripts/          active runners, analysers, verification, and manuscript build tools
 ├── tests/            active regression suite
 └── configs/          frozen active configurations
 
