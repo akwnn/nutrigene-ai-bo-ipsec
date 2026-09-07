@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import subprocess
+import sys
 from pathlib import Path
 
 
@@ -9,7 +10,7 @@ ROOT = Path(__file__).resolve().parents[2]
 
 def test_conclusion_guard_uses_superseding_dc_parity_result() -> None:
     completed = subprocess.run(
-        [str(ROOT / ".venv" / "bin" / "python"), "software/scripts/verify_conclusions.py"],
+        [sys.executable, "software/scripts/verify_conclusions.py"],
         cwd=ROOT,
         check=True,
         capture_output=True,
@@ -23,7 +24,7 @@ def test_conclusion_guard_uses_superseding_dc_parity_result() -> None:
 
 def test_conclusion_guard_rejects_stale_lc_volume_number() -> None:
     completed = subprocess.run(
-        [str(ROOT / ".venv" / "bin" / "python"), "software/scripts/verify_conclusions.py"],
+        [sys.executable, "software/scripts/verify_conclusions.py"],
         cwd=ROOT,
         check=True,
         capture_output=True,
@@ -38,7 +39,7 @@ def test_conclusion_guard_rejects_stale_lc_volume_number() -> None:
 
 def test_conclusion_guard_uses_registered_spade_only_tau_estimand() -> None:
     completed = subprocess.run(
-        [str(ROOT / ".venv" / "bin" / "python"), "software/scripts/verify_conclusions.py"],
+        [sys.executable, "software/scripts/verify_conclusions.py"],
         cwd=ROOT,
         check=True,
         capture_output=True,
