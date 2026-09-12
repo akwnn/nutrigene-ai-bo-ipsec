@@ -68,6 +68,20 @@ CALIBRATION_METRICS = (
 )
 PAPER_ARMS = ("doe", "sobol", "qlogei", "qlognei", "spade_cf_m0", "spade_random_plate2")
 
+# Publication annotations are separate from the immutable adjudication text.
+CURRENT_LEDGER_INTERPRETATION = {
+    "KF-1": "No rejection under the archived posterior model-check rule; this does not establish empirical validity. Repeated Hill instances were not accounted for in the binomial intervals.",
+    "KF-2": "The posterior model checks do not establish empirical validity in Hill or across families. The archived narrowing-to-Hill interpretation is not supported.",
+    "KF-3": "Boundary targeting did not beat an equal-well random second plate. The negative random-minus-targeted contrast favors random placement.",
+    "KF-4": "The paired map improvement was detectable but smaller than the 0.02 SESOI. The 40-versus-48-well comparison combines sample count with another round.",
+    "KF-5": "The allocation variant did not meet the prespecified joint improvement rule; its lowest map-error mean alone is insufficient.",
+    "KF-6": "SPADE had lower target map error than Sobol, but the difference was smaller than the 0.02 SESOI; practical competitiveness is supported.",
+    "KF-7": "SPADE had lower target map error than qLogNEI; the comparator-minus-SPADE difference exceeds the 0.02 SESOI. The archived within-SESOI wording is incorrect.",
+    "KF-8": "The SPADE-minus-qLogNEI point-regret interval lies inside the prespecified plus-or-minus 0.02 margin, supporting practical parity rather than superiority.",
+    "KF-9": "No analyzed primary-label row exceeded the registered feasibility ceiling. These repeated configuration counts do not validate the latent certificate as a future-response guarantee.",
+    "KF-10": "Eighteen posterior-check cells were downgraded because more than half of campaigns returned empty sets. This is a non-vacuity safeguard, not evidence of oracle containment.",
+}
+
 
 def _sha256(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
@@ -263,7 +277,9 @@ def _spade_comparison(payload: dict[str, Any]) -> dict[str, Any]:
             "rounds": int(_finite_number(row["rounds"], PARETO_SOURCE, "rounds")),
             "certificate_status": str(row["certificate_status"]),
             "pareto_nondominated": bool(row["pareto_nondominated"]),
-            "unit": str(row.get("unit", "n25")),
+            "archived_unit": str(row.get("unit", "n25")),
+            "unit": ("25 Hill instances; four campaigns per instance" if condition.startswith("hill-")
+                     else "100 campaigns on the specified external function"),
         })
     conditions = sorted({row["condition"] for row in selected})
     expected = {(condition, arm) for condition in conditions for arm in PAPER_ARMS}
@@ -306,6 +322,7 @@ def _kill_ledger(payload: dict[str, Any]) -> dict[str, Any]:
         entry["p"] = _finite_or_none(raw["p"], KILL_SOURCE, f"{kill_id}.p")
         entry["p_adjusted"] = _finite_or_none(raw["p_adjusted"], KILL_SOURCE, f"{kill_id}.p_adjusted")
         entry["sesoi"] = _finite_or_none(raw["sesoi"], KILL_SOURCE, f"{kill_id}.sesoi")
+        entry["current_interpretation"] = CURRENT_LEDGER_INTERPRETATION[kill_id]
         entries.append(entry)
     return {"rows": entries, "source": KILL_SOURCE}
 
@@ -334,6 +351,8 @@ def _format(value: object) -> str:
     if isinstance(value, int):
         return str(value)
     if isinstance(value, float):
+        if 0 < abs(value) < 0.000001:
+            return f"{value:.6e}"
         return f"{value:.6f}"
     if isinstance(value, list):
         return "[" + ", ".join(_format(item) for item in value) + "]"
@@ -377,36 +396,45 @@ def _table_bytes(tables: dict[str, object]) -> dict[str, bytes]:
     comparison_headers = [
         "Condition", "Arm", "Rule-P regret (lower is better)",
         "Symmetric-difference error (lower is better)", "Wells (count)", "Rounds (count)",
-        "Certificate status", "Pareto non-dominated",
+        "Archived posterior model-check status (not empirical validity)", "Pareto non-dominated", "Replication unit",
     ]
     comparison_rows = [[
         row["condition"], row["arm"], row["regret_rule_p"], row["symmetric_difference"],
-        row["wells"], row["rounds"], row["certificate_status"], row["pareto_nondominated"],
+        row["wells"], row["rounds"], row["certificate_status"], row["pareto_nondominated"], row["unit"],
     ] for row in comparison["rows"]]
     ledger_headers = [
-        "ID", "Status", "Effect", "Interval", "p-value", "Adjusted p-value", "SESOI",
-        "Denominator (count)", "Interpretation",
+        "ID", "Archived status", "Effect", "Interval", "p-value", "Adjusted p-value", "SESOI",
+        "Denominator (count)", "Archived interpretation", "Current interpretation",
     ]
     ledger_rows = [[
         row["id"], row["status"], row["effect"], row["ci"], row["p"], row["p_adjusted"],
-        row["sesoi"], row["denominator"], row["interpretation"],
+        row["sesoi"], row["denominator"], row["interpretation"], row["current_interpretation"],
     ] for row in ledger["rows"]]
     return {
         "table-spade-prospective-calibration.csv": _csv_bytes(calibration_headers, calibration_rows),
         "table-spade-prospective-calibration.md": _markdown_bytes(
             "Prospective calibration at the registered target cell",
             "Unit: n=25 landscape instances; four campaign seeds are averaged within each instance. "
-            "Brier, Murphy calibration, symmetric-difference error, and Rule-P regret are lower-is-better.",
+            "Brier, Murphy calibration, symmetric-difference error, and Rule-P regret are lower-is-better. "
+            "Calibration uses latent acceptability labels, not future noisy outcomes. "
+            "Maps use a 0.50 cutoff; point recommendations use a common GP.",
             calibration_headers, calibration_rows),
         "table-spade-comparison.csv": _csv_bytes(comparison_headers, comparison_rows),
         "table-spade-comparison.md": _markdown_bytes(
             "SPADE comparison across registered conditions",
-            "Unit: n=25 landscape instances per condition. Rule-P regret and symmetric-difference error are lower-is-better; all listed arms use 48 wells.",
+            "Units: 25 Hill landscape instances with four campaigns per instance; "
+            "100 campaigns on each specified external function, not 100 independent landscapes. "
+            "Rule-P regret and symmetric-difference error are lower-is-better; all listed arms use 48 wells. "
+            "Maps use a 0.50 cutoff and a frozen condition-specific threshold. The archived posterior model check "
+            "does not establish empirical certificate validity. Pareto labels retain the original point/map comparison across all archived arms, not only the six displayed strategies.",
             comparison_headers, comparison_rows),
         "table-spade-kill-ledger.csv": _csv_bytes(ledger_headers, ledger_rows),
         "table-spade-kill-ledger.md": _markdown_bytes(
             "Registered final-SPADE kill ledger",
-            "Denominators are reported as counts; intervals, p-values, and SESOI retain the adjudicated evidence without reinterpretation.",
+            "Archived statuses, effects, intervals, p-values, and interpretations are retained for provenance. "
+            "The separate current-interpretation column corrects their scientific meaning without changing those results. "
+            "Certificate rows concern posterior checks, not empirical oracle validity. "
+            "Denominators are original counts and are not uniformly independent campaigns.",
             ledger_headers, ledger_rows),
     }
 
@@ -446,6 +474,7 @@ def write_tables(results_dir: Path, output_dir: Path) -> tuple[Path, ...]:
     assert isinstance(provenance, dict)
     manifest = {
         "study_id": STUDY_ID,
+        "builder_sha256": _sha256(Path(__file__)),
         "source_hashes": provenance["source_hashes"],
         "output_hashes": output_hashes,
         "tables": {

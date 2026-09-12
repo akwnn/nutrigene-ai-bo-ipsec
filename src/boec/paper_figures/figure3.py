@@ -21,7 +21,7 @@ _CONTRAST_SPECS = {
 _HARTMANN_CONDITIONS = ("hartmann6-d6-s0.25", "hartmann6-d8-s0.25")
 _KEY_LABELS = {"spade_cf_m0", "qlognei", "sobol", "doe"}
 _POINT_LABEL_OFFSETS = {
-    "spade_cf_m0": (-6, 7),
+    "spade_cf_m0": (6, 23),
     "qlognei": (5, -10),
     "sobol": (6, 12),
     "doe": (-5, 5),
@@ -85,7 +85,7 @@ def build_figure3(data: dict, preset: VenuePreset) -> FigureBundle:
         for axis, label in zip((axis_a, axis_b, axis_c, axis_d), "abcd", strict=True):
             apply_axis_style(axis, preset)
             label_text = panel_label(axis, label, preset)
-            label_text.set_position((-0.10, 1.01))
+            label_text.set_position((-0.17, 1.04))
 
         target_points = data["target_points"]
         for row in target_points:
@@ -106,7 +106,7 @@ def build_figure3(data: dict, preset: VenuePreset) -> FigureBundle:
                     (row["map_error"], row["regret_p"]),
                     xytext=_POINT_LABEL_OFFSETS[row["arm"]],
                     textcoords="offset points",
-                    ha="right" if row["arm"] in {"doe", "spade_cf_m0"} else "left",
+                    ha="right" if row["arm"] == "doe" else "left",
                     fontsize=preset.body_pt,
                     color=_INK,
                 )
@@ -141,7 +141,7 @@ def build_figure3(data: dict, preset: VenuePreset) -> FigureBundle:
                 zorder=2,
             )
         axis_c.set_yticks(range(len(costs)), [method_style(row["arm"]).label for row in costs])
-        axis_c.set_ylim(len(costs) - 0.6, -0.6)
+        axis_c.set_ylim(len(costs) + 0.6, -0.6)
         axis_c.set_xlim(0, 10.8)
         axis_c.set_xticks((0, 2, 4, 6, 8, 10))
         axis_c.set_xlabel("Feedback rounds", fontsize=preset.body_pt)
@@ -165,8 +165,8 @@ def build_figure3(data: dict, preset: VenuePreset) -> FigureBundle:
             fontsize=preset.body_pt,
         )
         facet_axes = (
-            axis_d.inset_axes((0.02, 0.20, 0.45, 0.62)),
-            axis_d.inset_axes((0.53, 0.20, 0.45, 0.62)),
+            axis_d.inset_axes((0.02, 0.30, 0.45, 0.52)),
+            axis_d.inset_axes((0.53, 0.30, 0.45, 0.52)),
         )
         all_hartmann = data["hartmann"]
         map_limits = (
@@ -205,7 +205,7 @@ def build_figure3(data: dict, preset: VenuePreset) -> FigureBundle:
         axis_d.legend(
             handles=_legend_handles(arms),
             loc="lower center",
-            bbox_to_anchor=(0.5, -0.16),
+            bbox_to_anchor=(0.5, -0.22),
             ncol=3,
             fontsize=preset.body_pt,
             columnspacing=0.8,
@@ -240,8 +240,8 @@ def build_figure3(data: dict, preset: VenuePreset) -> FigureBundle:
     )
     caption = (
         "Figure 3 | Point, map and experimental-cost evidence for SPADE. (a) Registered Hill-target means "
-        "for symmetric-difference map error and Rule-P simple regret (n=25 campaigns per method); lower is "
-        "better on both axes. (b) Paired SPADE-minus-comparator contrasts with 95% intervals and the prespecified "
+        "for symmetric-difference map error and common-GP Rule-P simple regret; lower is "
+        "better on both axes. Map masks use a 0.50 cutoff. Four campaign seeds are averaged within each of 25 landscape instances. (b) Paired SPADE-minus-comparator contrasts with 95% intervals and the prespecified "
         "±0.02 smallest effect size of interest. SPADE reduces map error relative to Sobol (−0.0109) and qLogNEI "
         "(−0.0327), while Rule-P regret is +0.0094 relative to qLogNEI. (c) Every method consumes 48 wells, but "
         "feedback ranges from one to ten rounds. (d) Hartmann d=6 and d=8 robustness values are descriptive means; "

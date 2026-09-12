@@ -1,0 +1,1 @@
+On the registered target, SPADE has the lowest map error and competitive Rule-P regret. Paired contrasts show lower SPADE map error than Sobol and qLogNEI, while its regret is slightly higher than qLogNEI. All methods use 48 wells but require one to ten feedback rounds. Hartmann d=6 and d=8 panels report descriptive means only.

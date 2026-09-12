@@ -25,18 +25,16 @@ def build_figure2(data: dict, preset: VenuePreset) -> FigureBundle:
     """Build the paired terminal-rule comparison from validated evidence."""
     style_path = files("boec.paper_figures").joinpath("paper.mplstyle")
     with plt.style.context(str(style_path)):
-        height_mm = 96 if preset.name == "plos" else 88
-        figure, axes = plt.subplots(
-            1,
-            3,
-            figsize=preset.figsize(height_mm),
-            gridspec_kw={"width_ratios": (0.90, 1.28, 1.02), "wspace": 0.12},
-            constrained_layout=True,
-        )
-        axis_a, axis_b, axis_c = axes
+        height_mm = 164 if preset.name == "plos" else 150
+        figure = plt.figure(figsize=preset.figsize(height_mm), constrained_layout=True)
+        grid = figure.add_gridspec(2, 2, hspace=0.14, wspace=0.14)
+        axis_a = figure.add_subplot(grid[0, 0])
+        axis_b = figure.add_subplot(grid[0, 1])
+        axis_c = figure.add_subplot(grid[1, :])
+        axes = (axis_a, axis_b, axis_c)
         for axis, label in zip(axes, "abc", strict=True):
             apply_axis_style(axis, preset)
-            panel_label(axis, label, preset)
+            panel_label(axis, label, preset).set_position((-0.16, 1.03))
 
         rule_means = data["rule_means"]
         for row in rule_means:
@@ -60,7 +58,7 @@ def build_figure2(data: dict, preset: VenuePreset) -> FigureBundle:
                 va="center",
                 fontsize=preset.body_pt,
             )
-        axis_a.set_xlim(-0.12, 1.58)
+        axis_a.set_xlim(-0.12, 2.0)
         axis_a.margins(y=0.16)
         axis_a.set_xticks((0, 1), ("Rule A", "Rule P"))
         axis_a.set_ylabel("Mean simple regret", fontsize=preset.body_pt)
@@ -96,6 +94,7 @@ def build_figure2(data: dict, preset: VenuePreset) -> FigureBundle:
             fontsize=preset.body_pt,
         )
         axis_b.set_title("Paired terminal-rule effect\n95% bootstrap interval", loc="left", fontsize=preset.body_pt)
+        axis_b.set_xticks([tick for tick in axis_b.get_xticks() if axis_b.get_xlim()[0] <= tick <= axis_b.get_xlim()[1]])
 
         decomposition = data["decomposition"]
         y_positions = np.arange(len(decomposition))
@@ -127,13 +126,13 @@ def build_figure2(data: dict, preset: VenuePreset) -> FigureBundle:
         axis_c.set_xticks([tick for tick in axis_c.get_xticks() if tick <= axis_c.get_xlim()[1]])
         axis_c.set_xlabel("Rule-A simple regret", fontsize=preset.body_pt)
         axis_c.set_title(
-            "Rule A =\nsearch loss +\nidentification loss",
+            "Rule A = search loss + identification loss",
             loc="left",
             fontsize=preset.body_pt,
         )
         axis_c.legend(
             loc="lower center",
-            bbox_to_anchor=(0.5, -0.31),
+            bbox_to_anchor=(0.5, -0.40),
             ncol=2,
             fontsize=preset.body_pt,
             handlelength=1.1,

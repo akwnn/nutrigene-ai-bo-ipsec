@@ -4,14 +4,18 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
+import json
 import re
 from pathlib import Path
 
+import mathml2omml
+from latex2mathml.converter import convert as latex_to_mathml
 from docx import Document
 from docx.enum.table import WD_CELL_VERTICAL_ALIGNMENT, WD_TABLE_ALIGNMENT
 from docx.enum.text import WD_ALIGN_PARAGRAPH, WD_BREAK, WD_LINE_SPACING
-from docx.oxml import OxmlElement
-from docx.oxml.ns import qn
+from docx.oxml import OxmlElement, parse_xml
+from docx.oxml.ns import nsdecls, qn
 from docx.shared import Inches, Pt, RGBColor
 
 
@@ -72,6 +76,14 @@ def set_table_geometry(table, widths: list[int]) -> None:
     table.alignment = WD_TABLE_ALIGNMENT.LEFT
     table.autofit = False
     tbl_pr = table._tbl.tblPr
+    borders = OxmlElement("w:tblBorders")
+    for edge in ("top", "left", "bottom", "right", "insideH", "insideV"):
+        border = OxmlElement(f"w:{edge}")
+        border.set(qn("w:val"), "single")
+        border.set(qn("w:sz"), "4")
+        border.set(qn("w:color"), "D9D9D9")
+        borders.append(border)
+    tbl_pr.append(borders)
 
     tbl_w = tbl_pr.find(qn("w:tblW"))
     if tbl_w is None:
@@ -133,7 +145,7 @@ def configure_document(document: Document) -> None:
     section.page_height = Inches(11)
     section.top_margin = Inches(1)
     section.right_margin = Inches(1)
-    section.bottom_margin = Inches(1)
+    section.bottom_margin = Inches(1.5)
     section.left_margin = Inches(1)
     section.header_distance = Inches(0.492)
     section.footer_distance = Inches(0.492)
@@ -155,6 +167,10 @@ def configure_document(document: Document) -> None:
     add_field(paragraph, "PAGE")
 
     styles = document.styles
+    title = styles["Title"]
+    title.font.color.rgb = RGBColor(0, 0, 0)
+    for border in list(title._element.iter(qn("w:pBdr"))):
+        border.getparent().remove(border)
     normal = styles["Normal"]
     normal.font.name = BASE_FONT
     normal.font.size = Pt(12)
@@ -192,6 +208,32 @@ INLINE_RE = re.compile(
 )
 
 
+def math_to_omml(latex: str, *, display: bool = False):
+    """Convert a LaTeX fragment into an editable native Word equation."""
+    # latex2mathml expands \mathrm{Var} into three adjacent identifiers. The
+    # downstream OMML converter then gives Word licence to space those letters
+    # like multiplied variables. An operator token preserves the intended
+    # upright label as one editable run (also for EC, IC, rel, and straddle).
+    latex = re.sub(r"\\mathrm\{([^{}]+)\}", r"\\operatorname{\1}", latex)
+    mathml = latex_to_mathml(latex, display="block" if display else "inline")
+    omml = mathml2omml.convert(mathml)
+    omml = omml.replace("<m:oMath>", f"<m:oMath {nsdecls('m')}>", 1)
+    root = parse_xml(omml)
+    # mathml2omml omits the mandatory degree nodes for square roots. Word may
+    # repair that omission, but LibreOffice renders it as empty placeholder
+    # boxes, so complete the native OMML structure deterministically.
+    for radical in root.iter(qn("m:rad")):
+        if radical.find(qn("m:radPr")) is None:
+            properties = OxmlElement("m:radPr")
+            degree_hidden = OxmlElement("m:degHide")
+            degree_hidden.set(qn("m:val"), "on")
+            properties.append(degree_hidden)
+            radical.insert(0, properties)
+        if radical.find(qn("m:deg")) is None:
+            radical.insert(1, OxmlElement("m:deg"))
+    return root
+
+
 def add_inline(paragraph, text: str, size: float = 12) -> None:
     cursor = 0
     for match in INLINE_RE.finditer(text):
@@ -200,13 +242,9 @@ def add_inline(paragraph, text: str, size: float = 12) -> None:
             set_run_font(run, size=size)
         token = match.group(0)
         if token.startswith("$$") and token.endswith("$$"):
-            run = paragraph.add_run(token[2:-2])
-            run.italic = True
-            set_run_font(run, name=MATH_FONT, size=size)
+            paragraph._p.append(math_to_omml(token[2:-2], display=True))
         elif token.startswith("$") and token.endswith("$"):
-            run = paragraph.add_run(token[1:-1])
-            run.italic = True
-            set_run_font(run, name=MATH_FONT, size=size)
+            paragraph._p.append(math_to_omml(token[1:-1]))
         elif token.startswith("**"):
             run = paragraph.add_run(token[2:-2])
             run.bold = True
@@ -228,10 +266,13 @@ def add_paragraph(document: Document, text: str, *, style: str | None = None) ->
     paragraph = document.add_paragraph(style=style)
     add_inline(paragraph, text)
     paragraph.paragraph_format.widow_control = True
+    if re.match(r"^\*\*Table \d+\.", text):
+        paragraph.paragraph_format.keep_with_next = True
+        paragraph.paragraph_format.keep_together = True
 
 
 def add_title(document: Document, text: str) -> None:
-    paragraph = document.add_paragraph()
+    paragraph = document.add_paragraph(style="Title")
     paragraph.alignment = WD_ALIGN_PARAGRAPH.CENTER
     paragraph.paragraph_format.space_after = Pt(12)
     paragraph.paragraph_format.line_spacing_rule = WD_LINE_SPACING.SINGLE
@@ -257,6 +298,8 @@ def column_widths(headers: list[str]) -> list[int]:
     joined = " ".join(headers).lower()
     if count == 5 and "claim gate" in joined:
         return [1600, 1900, 2200, 1860, 1800]
+    if count == 5 and "design" in joined and "primary purpose" in joined:
+        return [2200, 3000, 760, 900, 2500]
     if count == 5:
         return [3000, 1050, 1050, 2100, 2160]
     if count == 4:
@@ -277,6 +320,8 @@ def add_table(document: Document, rows: list[list[str]]) -> None:
     table.style = "Table Grid"
     table.allow_autofit = False
     for row_idx, values in enumerate(rows):
+        tr_pr = table.rows[row_idx]._tr.get_or_add_trPr()
+        tr_pr.append(OxmlElement("w:cantSplit"))
         for col_idx, value in enumerate(values):
             cell = table.cell(row_idx, col_idx)
             paragraph = cell.paragraphs[0]
@@ -299,8 +344,7 @@ def add_equation(document: Document, equation: str) -> None:
     paragraph.paragraph_format.space_before = Pt(4)
     paragraph.paragraph_format.space_after = Pt(4)
     paragraph.paragraph_format.line_spacing_rule = WD_LINE_SPACING.SINGLE
-    run = paragraph.add_run(equation.replace("\\qquad", "    "))
-    set_run_font(run, name=MATH_FONT, size=11)
+    paragraph._p.append(math_to_omml(equation, display=True))
 
 
 def add_figure(document: Document, markdown_path: Path, target: str) -> None:
@@ -324,10 +368,20 @@ def add_caption(document: Document, text: str) -> None:
     add_inline(paragraph, text, size=10)
 
 
-def build(markdown_path: Path, output_path: Path) -> None:
+def build(markdown_path: Path, output_path: Path, *, include_figures: bool = True,
+          cover_letter: bool = False) -> None:
     lines = markdown_path.read_text(encoding="utf-8").splitlines()
     document = Document()
     configure_document(document)
+    if cover_letter:
+        section = document.sections[0]
+        section.bottom_margin = Inches(1)
+        section._sectPr.remove(section._sectPr.find(qn("w:lnNumType")))
+        for paragraph in section.footer.paragraphs:
+            paragraph.clear()
+        normal = document.styles["Normal"].paragraph_format
+        normal.line_spacing_rule = WD_LINE_SPACING.SINGLE
+        normal.space_after = Pt(8)
 
     idx = 0
     in_equation = False
@@ -360,14 +414,15 @@ def build(markdown_path: Path, output_path: Path) -> None:
             continue
         if stripped.startswith("## "):
             heading = stripped[3:].strip()
-            if heading in {"References", "Supporting information captions"}:
+            if heading in {"Abstract", "References", "Supporting information captions"}:
                 document.add_paragraph().add_run().add_break(WD_BREAK.PAGE)
             add_paragraph(document, heading, style="Heading 1")
             idx += 1
             continue
         image_match = re.fullmatch(r"!\[[^]]*\]\(([^)]+)\)", stripped)
         if image_match:
-            add_figure(document, markdown_path, image_match.group(1))
+            if include_figures:
+                add_figure(document, markdown_path, image_match.group(1))
             idx += 1
             continue
         if stripped.startswith("|"):
@@ -392,18 +447,38 @@ def build(markdown_path: Path, output_path: Path) -> None:
 
     core = document.core_properties
     core.title = lines[0].removeprefix("# ")
-    core.subject = "PLOS ONE research article manuscript"
+    core.subject = "PLOS ONE cover letter" if cover_letter else "PLOS ONE research article manuscript"
     core.keywords = "SPADE; Bayesian optimization; response-surface methodology; design space"
     output_path.parent.mkdir(parents=True, exist_ok=True)
     document.save(output_path)
+    image_targets = re.findall(r"!\[[^]]*\]\(([^)]+)\)", "\n".join(lines)) if include_figures else []
+    manifest = {
+        "source_sha256": hashlib.sha256(markdown_path.read_bytes()).hexdigest(),
+        "builder_sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
+        "output_sha256": hashlib.sha256(output_path.read_bytes()).hexdigest(),
+        "include_figures": include_figures,
+        "cover_letter": cover_letter,
+        "image_sha256": {
+            target: hashlib.sha256((markdown_path.parent / target).read_bytes()).hexdigest()
+            for target in image_targets
+        },
+    }
+    output_path.with_suffix(".docx.manifest.json").write_text(
+        json.dumps(manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+    )
 
 
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--input", type=Path, default=Path("manuscript/SPADE-PLOS-ONE.md"))
     parser.add_argument("--output", type=Path, default=Path("manuscript/SPADE-PLOS-ONE.docx"))
+    parser.add_argument("--submission", action="store_true",
+                        help="Keep figure captions but omit images for separate PLOS uploads")
+    parser.add_argument("--cover-letter", action="store_true",
+                        help="Use single-spaced letter layout without manuscript line numbers")
     args = parser.parse_args()
-    build(args.input.resolve(), args.output.resolve())
+    build(args.input.resolve(), args.output.resolve(), include_figures=not args.submission,
+          cover_letter=args.cover_letter)
 
 
 if __name__ == "__main__":

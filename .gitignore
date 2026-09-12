@@ -3,6 +3,9 @@
 venv/
 env/
 .python-version
+.env
+.env.*
+!.env.example
 
 # Python
 __pycache__/
@@ -361,3 +364,17 @@ COMMIT_MSG.txt
 !results/k0-calibration-gate.json
 !results/k1-noise-ceiling.json
 !results/k2-design-lottery.json
+
+# Publication derivatives and source sidecars must travel with the manuscript.
+!results/paper-figures/
+!results/paper-figures/**
+
+# Approved-license publication snapshot and its verification, not older drafts.
+!results/archival-release/
+results/archival-release/*
+!results/archival-release/SPADE-code-data-local-draft-2026-09-11-r3.zip
+!results/archival-release/SPADE-code-data-local-draft-2026-09-11-r3.zip.sha256
+!results/archival-release/SPADE-code-data-local-draft-2026-09-11-r3.verification.json
+
+# Superseded local journal bundle; the dated current draft remains tracked.
+manuscript/SPADE-PLOS-ONE-upload-draft.zip

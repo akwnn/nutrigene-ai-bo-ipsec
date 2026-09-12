@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import hashlib
+import csv
 import json
 import shutil
 from pathlib import Path
@@ -63,6 +64,26 @@ def test_target_calibration_uses_the_registered_cell_and_instance_aggregation():
             "rounds",
         ):
             assert field in row
+
+
+def test_submission_tables_distinguish_archived_decisions_from_current_interpretation(tmp_path):
+    write_tables(RESULTS, tmp_path)
+    comparison = (tmp_path / "table-spade-comparison.md").read_text()
+    assert "100 campaigns on each specified external function" in comparison
+    assert "n=25 landscape instances per condition" not in comparison
+    assert "posterior model check" in comparison
+    assert "0.50 cutoff" in comparison
+    with (tmp_path / "table-spade-kill-ledger.csv").open() as handle:
+        rows = {row["ID"]: row for row in csv.DictReader(handle)}
+    assert "Archived interpretation" in rows["KF-2"]
+    assert "not establish empirical validity" in rows["KF-2"]["Current interpretation"]
+    assert "smaller than" in rows["KF-4"]["Current interpretation"]
+    assert "exceeds" in rows["KF-7"]["Current interpretation"]
+    assert float(rows["KF-7"]["Adjusted p-value"]) > 0
+    assert "posterior" in rows["KF-10"]["Current interpretation"]
+    original = json.loads((RESULTS / "final-spade-kill-ledger.json").read_text())
+    for key, row in rows.items():
+        assert row["Archived interpretation"] == original["kills"][key]["interpretation"].replace("\n", " ")
 
 
 def test_duplicate_identical_campaign_row_does_not_inflate_the_denominator(tmp_path):
@@ -156,6 +177,7 @@ def test_write_tables_is_deterministic_and_hashes_sources_and_outputs(tmp_path):
     assert {path.name: path.read_bytes() for path in written} == first
 
     manifest = json.loads((output_dir / "publication-tables.json").read_text())
+    assert manifest["builder_sha256"] == hashlib.sha256(Path("scripts/make_publication_tables.py").read_bytes()).hexdigest()
     assert set(manifest["source_hashes"]) == {
         "final-spade-c1.json",
         "final-spade-c2.json",

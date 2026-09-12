@@ -468,8 +468,9 @@ def build_figure4_data(results_dir: Path) -> dict[str, Any]:
         selected = selected_by_family.get(family, [])
         x, n = sum(row["ce_empirical_0.8"] == 1.0 for row in selected), len(selected)
         if n:
-            lo, hi = _clopper_pearson(x, n)
-            conditional.append({"family": family, "alpha": 0.8, "x": x, "n": n, "proportion": x / n, "ci_lo": lo, "ci_hi": hi, "definition": "containment conditional on a non-empty certificate cell"})
+            # Multiple gamma-by-tau cells share each sampled campaign. Pooling
+            # them yields a descriptive proportion, not independent Bernoulli trials.
+            conditional.append({"family": family, "alpha": 0.8, "x": x, "n": n, "proportion": x / n, "ci_lo": None, "ci_hi": None, "definition": "descriptive containment across dependent non-empty certificate cells"})
         else:
             conditional.append({"family": family, "alpha": 0.8, "x": 0, "n": 0, "proportion": None, "ci_lo": None, "ci_hi": None, "definition": "no certificate cell returned an answer"})
 

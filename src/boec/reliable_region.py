@@ -142,17 +142,37 @@ def true_reliability_probability(
     return 1.0 - _standard_normal_cdf(standardized)
 
 
-def model_reliability_probability(model, X: Tensor, tau: Real) -> Tensor:
-    """Model ``P(Y_new >= tau | data)`` using common learned homoskedastic noise.
+def model_reliability_probability(
+    model,
+    X: Tensor,
+    tau: Real,
+    *,
+    sigma_rel: Real | None = None,
+    sigma_add: Real | None = None,
+) -> Tensor:
+    """Model ``P(Y_new >= tau | data)``.
 
-    The latent posterior variance and the learned observation-noise variance are added
-    on the original outcome scale.  This is the joint protocol's homoskedastic model
-    approximation; it is intentionally distinct from oracle relative/additive noise.
+    When ``sigma_rel``/``sigma_add`` are provided, the future-observation noise matches
+    the sealed assay law used by oracle truth (manufacturing recovery default).
+    Otherwise the joint protocol's learned homoskedastic likelihood noise is used.
     """
     tau_f = _finite_scalar(tau, "tau")
-    noise_variance = _learned_noise_variance(model)
     _, mean, latent_variance = _latent_posterior(model, X)
-    total_sd = (latent_variance + noise_variance.to(latent_variance)).sqrt()
+    if sigma_rel is None and sigma_add is None:
+        noise_variance = _learned_noise_variance(model).to(latent_variance).expand_as(
+            latent_variance
+        )
+    else:
+        if sigma_rel is None or sigma_add is None:
+            raise ValueError("sigma_rel and sigma_add must be provided together")
+        sigma_rel_f = _finite_scalar(sigma_rel, "sigma_rel")
+        sigma_add_f = _finite_scalar(sigma_add, "sigma_add")
+        if sigma_rel_f < 0.0 or sigma_add_f < 0.0:
+            raise ValueError("noise sigmas must be nonnegative")
+        noise_variance = sigma_rel_f**2 * mean.square() + sigma_add_f**2
+        if bool(torch.any(noise_variance <= 0.0)):
+            raise ValueError("assay noise standard deviation must be positive everywhere")
+    total_sd = (latent_variance + noise_variance).sqrt()
     return 1.0 - _standard_normal_cdf((tau_f - mean) / total_sd)
 
 
@@ -163,16 +183,35 @@ def reliable_set_draws(
     gamma: Real,
     n_draws: int,
     seed: int,
+    *,
+    sigma_rel: Real | None = None,
+    sigma_add: Real | None = None,
+    latent_inflation: Real = 1.0,
+    mean_marginalisation: bool = False,
 ) -> Tensor:
     """Joint posterior draws of the future-response reliable set.
 
     Each row is one jointly sampled latent field converted to conditional
-    future-observation probabilities using the model's learned likelihood noise, then
-    thresholded at ``gamma``.  An even count is mandatory because certification uses
-    equal selection and evaluation halves.
+    future-observation probabilities, then thresholded at ``gamma``.  When assay
+    ``sigma_rel``/``sigma_add`` are supplied, each draw uses the same relative-plus-
+    additive noise law as sealed truth; otherwise learned homoskedastic likelihood
+    noise is used.  ``latent_inflation`` ≥ 1 scales deviations of each joint draw
+    from the posterior mean (LOO self-calibration uses this to widen overconfident
+    surrogates).  ``mean_marginalisation`` integrates out the GP constant mean
+    (ordinary kriging; see :mod:`boec.meanmarg`) before sampling — independent of
+    inflation, and required on noise-dominated assays where simple-kriging width
+    collapses.  An even count is mandatory because certification uses equal
+    selection and evaluation halves.
     """
     tau_f = _finite_scalar(tau, "tau")
     gamma_f = _open_probability(gamma, "gamma")
+    kappa_f = _finite_scalar(latent_inflation, "latent_inflation")
+    if kappa_f < 1.0:
+        raise ValueError(f"latent_inflation must be >= 1, got {kappa_f}")
+    if not isinstance(mean_marginalisation, bool):
+        raise ValueError(
+            f"mean_marginalisation must be bool, got {mean_marginalisation!r}"
+        )
     if isinstance(n_draws, bool) or not isinstance(n_draws, Integral):
         raise ValueError(f"n_draws must be an even integer, got {n_draws!r}")
     n_draws_i = int(n_draws)
@@ -183,42 +222,93 @@ def reliable_set_draws(
     seed_i = int(seed)
     if not 0 <= seed_i < 2**63:
         raise ValueError(f"seed must lie in [0, 2**63), got {seed_i}")
+    use_assay = not (sigma_rel is None and sigma_add is None)
+    if use_assay and (sigma_rel is None or sigma_add is None):
+        raise ValueError("sigma_rel and sigma_add must be provided together")
+    if use_assay:
+        sigma_rel_f = _finite_scalar(sigma_rel, "sigma_rel")
+        sigma_add_f = _finite_scalar(sigma_add, "sigma_add")
+        if sigma_rel_f < 0.0 or sigma_add_f < 0.0:
+            raise ValueError("noise sigmas must be nonnegative")
+        learned_noise_variance = None
+    else:
+        sigma_rel_f = sigma_add_f = None
+        learned_noise_variance = _learned_noise_variance(model)
 
-    noise_variance = _learned_noise_variance(model)
     posterior, posterior_mean, _ = _latent_posterior(model, X)
-    try:
-        base_sample_shape = torch.Size(posterior.base_sample_shape)
-        sample_from_base = posterior.rsample_from_base_samples
-    except (AttributeError, TypeError) as exc:
-        raise ValueError(
-            "posterior must support deterministic joint sampling from base samples"
-        ) from exc
-    if len(base_sample_shape) == 0 or math.prod(base_sample_shape) < 1:
-        raise ValueError(
-            f"posterior base_sample_shape must be non-empty, got {base_sample_shape}"
-        )
-
-    sample_shape = torch.Size([n_draws_i])
     generator = torch.Generator(device="cpu")
     generator.manual_seed(seed_i)
-    base_samples = torch.randn(
-        sample_shape + base_sample_shape,
-        generator=generator,
-        dtype=torch.double,
-        device="cpu",
-    ).to(dtype=posterior_mean.dtype, device=posterior_mean.device)
-    with torch.no_grad():
-        latent = sample_from_base(sample_shape, base_samples)
-    expected = (n_draws_i, X.shape[0], 1)
-    if tuple(latent.shape) != expected:
-        raise ValueError(
-            f"joint posterior draws must have shape {expected}, got {tuple(latent.shape)}"
+
+    if mean_marginalisation:
+        from boec.meanmarg import mean_marginalised_covariance
+
+        mean_vec = posterior_mean.reshape(-1).double()
+        n_grid = int(mean_vec.numel())
+        with torch.no_grad():
+            cov = mean_marginalised_covariance(model, X.detach().double())
+        if tuple(cov.shape) != (n_grid, n_grid):
+            raise ValueError(
+                "mean-marginalised covariance must have shape "
+                f"({n_grid}, {n_grid}), got {tuple(cov.shape)}"
+            )
+        jitter = 1e-8 * torch.eye(n_grid, dtype=torch.double)
+        try:
+            chol = torch.linalg.cholesky(cov + jitter)
+        except RuntimeError as exc:
+            raise ValueError(
+                "mean-marginalised covariance is not positive definite"
+            ) from exc
+        z = torch.randn(
+            n_draws_i,
+            n_grid,
+            generator=generator,
+            dtype=torch.double,
+            device="cpu",
         )
+        latent = mean_vec.unsqueeze(0) + z @ chol.transpose(0, 1)
+    else:
+        try:
+            base_sample_shape = torch.Size(posterior.base_sample_shape)
+            sample_from_base = posterior.rsample_from_base_samples
+        except (AttributeError, TypeError) as exc:
+            raise ValueError(
+                "posterior must support deterministic joint sampling from base samples"
+            ) from exc
+        if len(base_sample_shape) == 0 or math.prod(base_sample_shape) < 1:
+            raise ValueError(
+                f"posterior base_sample_shape must be non-empty, got {base_sample_shape}"
+            )
+
+        sample_shape = torch.Size([n_draws_i])
+        base_samples = torch.randn(
+            sample_shape + base_sample_shape,
+            generator=generator,
+            dtype=torch.double,
+            device="cpu",
+        ).to(dtype=posterior_mean.dtype, device=posterior_mean.device)
+        with torch.no_grad():
+            latent = sample_from_base(sample_shape, base_samples)
+        expected = (n_draws_i, X.shape[0], 1)
+        if tuple(latent.shape) != expected:
+            raise ValueError(
+                f"joint posterior draws must have shape {expected}, got {tuple(latent.shape)}"
+            )
+        if not bool(torch.isfinite(latent).all()):
+            raise ValueError("joint posterior draws must be finite")
+        latent = latent.squeeze(-1).double()
+
     if not bool(torch.isfinite(latent).all()):
         raise ValueError("joint posterior draws must be finite")
-
-    latent = latent.squeeze(-1).double()
-    observation_sd = noise_variance.to(latent).sqrt()
+    if kappa_f != 1.0:
+        mean = posterior_mean.double().reshape(1, -1)
+        latent = mean + kappa_f * (latent - mean)
+    if use_assay:
+        noise_variance = sigma_rel_f**2 * latent.square() + sigma_add_f**2
+        if bool(torch.any(noise_variance <= 0.0)):
+            raise ValueError("assay noise standard deviation must be positive everywhere")
+        observation_sd = noise_variance.sqrt()
+    else:
+        observation_sd = learned_noise_variance.to(latent).sqrt()
     probability = 1.0 - _standard_normal_cdf((tau_f - latent) / observation_sd)
     return probability >= gamma_f
 
@@ -227,9 +317,21 @@ def conservative_set_split(
     set_draws: Tensor,
     alpha: Real,
     n_rho: int = 64,
+    *,
+    volume_rule: str = "largest",
 ) -> ConservativeSetResult:
-    """Select a conservative Vorob'ev set and cross-fit its model containment."""
+    """Select a conservative Vorob'ev set and cross-fit its model containment.
+
+    ``volume_rule="smallest"`` (registered manufacturing default) issues the smallest
+    non-empty quantile whose selection-half model containment is at least ``alpha``.
+    ``volume_rule="largest"`` retains the historical maximal-volume rule, which was
+    over-willing under misspecified plug-in models.
+    """
     alpha_f = _open_probability(alpha, "alpha")
+    if volume_rule not in {"smallest", "largest"}:
+        raise ValueError(
+            f"volume_rule must be 'smallest' or 'largest', got {volume_rule!r}"
+        )
     if not isinstance(set_draws, Tensor) or set_draws.ndim != 2:
         shape = tuple(set_draws.shape) if isinstance(set_draws, Tensor) else type(set_draws).__name__
         raise ValueError(f"set draws must have shape (n_draws, n_grid), got {shape}")
@@ -254,12 +356,20 @@ def conservative_set_split(
     ).tolist():
         mask = vorobev_quantile(inclusion, rho)
         size = int(mask.sum())
-        if size == 0 or size <= int(best.sum()):
+        if size == 0:
             continue
         containment = set_containment_probability(selection, mask)
-        if containment >= alpha_f:
+        if containment < alpha_f:
+            continue
+        if volume_rule == "smallest":
+            # rho decreases from 1→0, so the first admissible mask is the smallest.
             best = mask.clone()
             best_containment = containment
+            break
+        if size <= int(best.sum()):
+            continue
+        best = mask.clone()
+        best_containment = containment
 
     if int(best.sum()) == 0:
         crossfit = None

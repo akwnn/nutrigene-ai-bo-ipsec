@@ -1,0 +1,8 @@
+# Optional publication toolchain. Keep document-only dependencies separate from
+# requirements.txt: that scientific environment is bound by the frozen study digest.
+# Install with: python -m pip install -r requirements-publication.txt
+-r requirements.txt
+
+python-docx==1.2.0
+latex2mathml==3.79.0
+mathml2omml==0.0.2

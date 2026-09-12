@@ -1,0 +1,258 @@
+{
+  "A": {
+    "rows": [
+      {
+        "arm": "doe",
+        "map_error": 0.2579785,
+        "regret_p": 0.30721659159104237,
+        "rounds": 3,
+        "unit": "n25",
+        "wells": 48
+      },
+      {
+        "arm": "lhs",
+        "map_error": 0.1867035,
+        "regret_p": 0.07473925424630386,
+        "rounds": 1,
+        "unit": "n25",
+        "wells": 48
+      },
+      {
+        "arm": "sobol",
+        "map_error": 0.1913060000000001,
+        "regret_p": 0.08547615566822646,
+        "rounds": 1,
+        "unit": "n25",
+        "wells": 48
+      },
+      {
+        "arm": "qlogei",
+        "map_error": 0.20671499999999998,
+        "regret_p": 0.07979852500141008,
+        "rounds": 10,
+        "unit": "n25",
+        "wells": 48
+      },
+      {
+        "arm": "qlognei",
+        "map_error": 0.2130685,
+        "regret_p": 0.07498882256575881,
+        "rounds": 10,
+        "unit": "n25",
+        "wells": 48
+      },
+      {
+        "arm": "spade_cf_m0",
+        "map_error": 0.18041400000000002,
+        "regret_p": 0.08436358328544825,
+        "rounds": 2,
+        "unit": "n25",
+        "wells": 48
+      }
+    ],
+    "terminal_rule": "P"
+  },
+  "B": {
+    "reference": 0.0,
+    "rows": [
+      {
+        "contrast_id": "map_spade_minus_sobol",
+        "hi": -0.005969112499999999,
+        "lo": -0.01566185,
+        "mean": -0.010891999999999999,
+        "n": 25,
+        "sesoi": 0.02
+      },
+      {
+        "contrast_id": "map_spade_minus_qlognei",
+        "hi": -0.028543325,
+        "lo": -0.037231837500000003,
+        "mean": -0.0326545,
+        "n": 25,
+        "sesoi": 0.02
+      },
+      {
+        "contrast_id": "regret_spade_minus_qlognei",
+        "hi": 0.016151187714924787,
+        "lo": 0.0025784576605545994,
+        "mean": 0.009374760719689424,
+        "n": 25,
+        "sesoi": 0.02
+      }
+    ],
+    "sesoi": 0.02
+  },
+  "C": {
+    "constant_wells": 48,
+    "encoding": "rounds lollipop",
+    "rounds_are_not_point_size": true,
+    "rows": [
+      {
+        "arm": "doe",
+        "map_error": 0.2579785,
+        "regret_p": 0.30721659159104237,
+        "rounds": 3,
+        "unit": "n25",
+        "wells": 48
+      },
+      {
+        "arm": "lhs",
+        "map_error": 0.1867035,
+        "regret_p": 0.07473925424630386,
+        "rounds": 1,
+        "unit": "n25",
+        "wells": 48
+      },
+      {
+        "arm": "sobol",
+        "map_error": 0.1913060000000001,
+        "regret_p": 0.08547615566822646,
+        "rounds": 1,
+        "unit": "n25",
+        "wells": 48
+      },
+      {
+        "arm": "qlogei",
+        "map_error": 0.20671499999999998,
+        "regret_p": 0.07979852500141008,
+        "rounds": 10,
+        "unit": "n25",
+        "wells": 48
+      },
+      {
+        "arm": "qlognei",
+        "map_error": 0.2130685,
+        "regret_p": 0.07498882256575881,
+        "rounds": 10,
+        "unit": "n25",
+        "wells": 48
+      },
+      {
+        "arm": "spade_cf_m0",
+        "map_error": 0.18041400000000002,
+        "regret_p": 0.08436358328544825,
+        "rounds": 2,
+        "unit": "n25",
+        "wells": 48
+      }
+    ]
+  },
+  "D": {
+    "facets": [
+      "d=6",
+      "d=8"
+    ],
+    "intervals": "unavailable",
+    "rows": [
+      {
+        "arm": "doe",
+        "condition": "hartmann6-d6-s0.25",
+        "evidence_stage": "descriptive; raw-row intervals unavailable",
+        "map_error": 0.22441749999999988,
+        "regret_p": 0.5681735317682803,
+        "rounds": 3,
+        "wells": 48
+      },
+      {
+        "arm": "lhs",
+        "condition": "hartmann6-d6-s0.25",
+        "evidence_stage": "descriptive; raw-row intervals unavailable",
+        "map_error": 0.20426,
+        "regret_p": 0.5404907826440464,
+        "rounds": 1,
+        "wells": 48
+      },
+      {
+        "arm": "sobol",
+        "condition": "hartmann6-d6-s0.25",
+        "evidence_stage": "descriptive; raw-row intervals unavailable",
+        "map_error": 0.18991149999999998,
+        "regret_p": 0.46080918004896126,
+        "rounds": 1,
+        "wells": 48
+      },
+      {
+        "arm": "qlogei",
+        "condition": "hartmann6-d6-s0.25",
+        "evidence_stage": "descriptive; raw-row intervals unavailable",
+        "map_error": 0.22586500000000004,
+        "regret_p": 0.29965029040703905,
+        "rounds": 10,
+        "wells": 48
+      },
+      {
+        "arm": "qlognei",
+        "condition": "hartmann6-d6-s0.25",
+        "evidence_stage": "descriptive; raw-row intervals unavailable",
+        "map_error": 0.22427399999999997,
+        "regret_p": 0.23048735454156127,
+        "rounds": 10,
+        "wells": 48
+      },
+      {
+        "arm": "spade_cf_m0",
+        "condition": "hartmann6-d6-s0.25",
+        "evidence_stage": "descriptive; raw-row intervals unavailable",
+        "map_error": 0.18482999999999994,
+        "regret_p": 0.42206762215312005,
+        "rounds": 2,
+        "wells": 48
+      },
+      {
+        "arm": "doe",
+        "condition": "hartmann6-d8-s0.25",
+        "evidence_stage": "descriptive; raw-row intervals unavailable",
+        "map_error": 0.25071999999999994,
+        "regret_p": 0.6391421325132647,
+        "rounds": 3,
+        "wells": 48
+      },
+      {
+        "arm": "lhs",
+        "condition": "hartmann6-d8-s0.25",
+        "evidence_stage": "descriptive; raw-row intervals unavailable",
+        "map_error": 0.20493899999999995,
+        "regret_p": 0.46873633567083706,
+        "rounds": 1,
+        "wells": 48
+      },
+      {
+        "arm": "sobol",
+        "condition": "hartmann6-d8-s0.25",
+        "evidence_stage": "descriptive; raw-row intervals unavailable",
+        "map_error": 0.200588,
+        "regret_p": 0.47963376167410693,
+        "rounds": 1,
+        "wells": 48
+      },
+      {
+        "arm": "qlogei",
+        "condition": "hartmann6-d8-s0.25",
+        "evidence_stage": "descriptive; raw-row intervals unavailable",
+        "map_error": 0.23478350000000006,
+        "regret_p": 0.2945007902697073,
+        "rounds": 10,
+        "wells": 48
+      },
+      {
+        "arm": "qlognei",
+        "condition": "hartmann6-d8-s0.25",
+        "evidence_stage": "descriptive; raw-row intervals unavailable",
+        "map_error": 0.21958149999999993,
+        "regret_p": 0.2620287297356133,
+        "rounds": 10,
+        "wells": 48
+      },
+      {
+        "arm": "spade_cf_m0",
+        "condition": "hartmann6-d8-s0.25",
+        "evidence_stage": "descriptive; raw-row intervals unavailable",
+        "map_error": 0.19080850000000005,
+        "regret_p": 0.44540376238518303,
+        "rounds": 2,
+        "wells": 48
+      }
+    ],
+    "summary": "descriptive means"
+  }
+}

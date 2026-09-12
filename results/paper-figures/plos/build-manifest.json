@@ -1,0 +1,192 @@
+{
+  "built_at_utc": "2026-09-07T22:58:28+08:00",
+  "code_commit": "9f2ae64a27bcef04bcfc1bdff4c9d32be2c702e4",
+  "figure_code_sha256": {
+    "src/boec/paper_figures/__init__.py": "2cc39b6f45021a5585ca164e0469fc9606b729df2eeecb89e398f7ce1d806e8f",
+    "src/boec/paper_figures/core.py": "b8b954d571e5186efd695ca43ea7ae26d1d450eed71a711bca21393c6122ad46",
+    "src/boec/paper_figures/evidence.py": "edcd99aa3913cca39dd1cec8c9b795abf23eba92c84747c9d76daed36ebc5c13",
+    "src/boec/paper_figures/export.py": "99397d779183de293fc27b60e86cf9fdceb41e80234a590e5d380f48b1bd5fe4",
+    "src/boec/paper_figures/figure1.py": "0df5e12c155e08b6fcc226c5f93fc52239a69643bd78e2bc2f2ef3a4136d150c",
+    "src/boec/paper_figures/figure2.py": "010f8f9fbc4638ad40a82462bcbce290c88757a9161c16ae7f19ce3311408fb1",
+    "src/boec/paper_figures/figure3.py": "b9ffaa6bfeb0bfd87b3410e5e6e5318fbac7bbff0e5434597ca4bee85be9a7f1",
+    "src/boec/paper_figures/figure4.py": "941e3e1a615319dabd52adee5bcf1ed48f1e146767f4313f6bcbad9236d9df15",
+    "src/boec/paper_figures/layout.py": "fd5ad1f073fc0267ed6c2cfc232e7b7586bc025c5506ec1607b170e588f2044d",
+    "src/boec/paper_figures/qa.py": "0fdd8d3431a1d888a13d01ae7ad77b2b93333f3089506bac4d98a23635770a02",
+    "src/boec/paper_figures/style.py": "486899a2aa75bb28b30e045fab114c8d36245b17dd1dc581c51a582dbb86522b"
+  },
+  "figures": {
+    "fig1": {
+      "alt.txt": {
+        "path": "plos/fig1.alt.txt",
+        "sha256": "b71295131e051affe462fac4fb9cede14e8a5001572b41f4c245618e759ee166"
+      },
+      "caption.txt": {
+        "path": "plos/fig1.caption.txt",
+        "sha256": "53afb8271dfb54f030841587bd4b1ff793ddca0557d58c7cc9bcb1a93bd10ad0"
+      },
+      "data.json": {
+        "path": "plos/fig1.data.json",
+        "sha256": "6bd7364225772f21e5d2b13c4b0a6834d16a1e8bc65eaa3c4e5d0aba4f8f7140"
+      },
+      "description.txt": {
+        "path": "plos/fig1.description.txt",
+        "sha256": "ba4446d6174d360eaf1e5c4a56f8c359e3abc5b406466e9459048e845878fbf2"
+      },
+      "pdf": {
+        "path": "plos/fig1.pdf",
+        "sha256": "0d612aecd4e9bfad6f7135e0077aebc07bf09700cb424bfff627e9a069a3e3b6"
+      },
+      "png": {
+        "path": "plos/fig1.png",
+        "sha256": "444e5628da49c07c5a5f0923e7a6d17c38cc5e6f0e288bb4c1d2bc64875875f3"
+      },
+      "svg": {
+        "path": "plos/fig1.svg",
+        "sha256": "e6ab5154e7de7d3aa91d6be6dbcf930e3ded0b52a268d9d132d4ed79cf26e308"
+      },
+      "tiff": {
+        "path": "plos/fig1.tiff",
+        "sha256": "6a90c0d9d2caae25cd78b2218eebc0c6be5724ab28640ba4dfbb3ce2a17f5741"
+      }
+    },
+    "fig2": {
+      "alt.txt": {
+        "path": "plos/fig2.alt.txt",
+        "sha256": "d87102e688d113c311a46f655cd8d4091269e39f66466b7d33ec16907fc1b551"
+      },
+      "caption.txt": {
+        "path": "plos/fig2.caption.txt",
+        "sha256": "0ea4b2ccf5bb58a1278224261c64e52f20c49c3ad3ecdc4a10c72a3b23980763"
+      },
+      "data.json": {
+        "path": "plos/fig2.data.json",
+        "sha256": "f974a9c2ffaf453737648ca91b8cba57e8ad9e52f51081b39d162824326dc744"
+      },
+      "description.txt": {
+        "path": "plos/fig2.description.txt",
+        "sha256": "1c5ce205a8ec1282cf4c1d78dcf508754b1277c62fde726a2b932bdec4d2e034"
+      },
+      "pdf": {
+        "path": "plos/fig2.pdf",
+        "sha256": "114b1824fb1f02109956b937793eb63598ea745ae65be98ca87510508e61aec9"
+      },
+      "png": {
+        "path": "plos/fig2.png",
+        "sha256": "abbd4e68573b159066b869bf3158c0f71b081dc6bd12888803e11217bc079b82"
+      },
+      "svg": {
+        "path": "plos/fig2.svg",
+        "sha256": "8c87a023d640c5047f53a70eeab21ebaf60ef45adb61ff06ae7f0ac44256364d"
+      },
+      "tiff": {
+        "path": "plos/fig2.tiff",
+        "sha256": "3220a25dd967edd5ae7498acfa89b039e4b992c985e7bee58dcee0be271f1fe8"
+      }
+    },
+    "fig3": {
+      "alt.txt": {
+        "path": "plos/fig3.alt.txt",
+        "sha256": "a3162ffa85757aaf058e4d292ca613a97da1816842d24c4a3596f27b939fb419"
+      },
+      "caption.txt": {
+        "path": "plos/fig3.caption.txt",
+        "sha256": "84d8d18a9574c02330f6667e1aeb87bbb4572be0aaf289462793c25e5f73cfa0"
+      },
+      "data.json": {
+        "path": "plos/fig3.data.json",
+        "sha256": "be57d7a1f26f2a020142c8a67f3b4be2a891d15a391eaf4e2656e8f9824b8ec0"
+      },
+      "description.txt": {
+        "path": "plos/fig3.description.txt",
+        "sha256": "a96a1e55605ef2a564c2547605636e18791b8f0e69bf227b60b6bddb7fe14a76"
+      },
+      "pdf": {
+        "path": "plos/fig3.pdf",
+        "sha256": "dacc8239a2e01ec476c03ed7a88de8a6cb4b7ad2232e76c1f312739e3571c94c"
+      },
+      "png": {
+        "path": "plos/fig3.png",
+        "sha256": "37db710f28b8f43f5fb793704d2943717d418334bb9b4871415dd0a3ff3bc7ae"
+      },
+      "svg": {
+        "path": "plos/fig3.svg",
+        "sha256": "d0edad5f3496022f1ad41c9c8f70cbf27dd57c7ffb6cd6e7a6d7e43d6f577266"
+      },
+      "tiff": {
+        "path": "plos/fig3.tiff",
+        "sha256": "163f4c522bb06dfe4e861308a472c29d357ad85e143437db500c5e5bf97f5a28"
+      }
+    },
+    "fig4": {
+      "alt.txt": {
+        "path": "plos/fig4.alt.txt",
+        "sha256": "87bffff76562538a22c390da349cdb1b97ae0168f2e21735fe153858e38518eb"
+      },
+      "caption.txt": {
+        "path": "plos/fig4.caption.txt",
+        "sha256": "ffe34764cc2179ee7b07ea2022e1ba0bd9d929047f8da74f1576971b0c503c02"
+      },
+      "data.json": {
+        "path": "plos/fig4.data.json",
+        "sha256": "b60311dfcc8149ba3bb09c16fadceede7d1000e8596ea89d786605195c1b175d"
+      },
+      "description.txt": {
+        "path": "plos/fig4.description.txt",
+        "sha256": "0454d978f67d4be9d8e739e55ef600439226d69e1b120954729c08ab2a4440c4"
+      },
+      "pdf": {
+        "path": "plos/fig4.pdf",
+        "sha256": "87457c8b5b72168d4e0632509a9d2c1c3c42c44ceffbcc72da1d4e8f03a9ad2f"
+      },
+      "png": {
+        "path": "plos/fig4.png",
+        "sha256": "f949e5affcdc38e7d08a6c09d916a4d103601ec7f01a9932fbd97221d4edb946"
+      },
+      "svg": {
+        "path": "plos/fig4.svg",
+        "sha256": "382036f703175108956667b3a5d9927d55596f4ef3c63187fec55fa3be388078"
+      },
+      "tiff": {
+        "path": "plos/fig4.tiff",
+        "sha256": "44148e37e7f1234fc83d811b5b6367faa9de4695003b140dfe376a32724c3778"
+      }
+    }
+  },
+  "font": {
+    "family": "Arial",
+    "path": "/System/Library/Fonts/Supplemental/Arial.ttf",
+    "sha256": "525979822591a3447cfc49d943d6f7683508e25543407871c0ed8fed05fd2bd9"
+  },
+  "preset": {
+    "body_pt": 9.0,
+    "name": "plos",
+    "panel_pt": 10.0,
+    "png_dpi": 450,
+    "tiff_dpi": 600,
+    "width_mm": 178.0
+  },
+  "sources": {
+    "results/final-spade-certificate.json": "a38a722b205ac830a3194d2f00615df14d3550b7184ea50ea4922a75121a07f9",
+    "results/final-spade-kill-ledger.json": "eb8830972115b0447b002ef519992879e1fff2297bb80268bb7e9323bf16a87b",
+    "results/final-spade-regret-pareto.json": "ce5ed85819b444dee719c1c4e5f401031e3a975fbeb13bc224441e9a9aa1595d",
+    "results/fix1-analysis.json": "5b4259a43d1cede64affad141546c69a84d83d07ce86b26d8e3cd8694afc8de5",
+    "results/fix1-terminal-rule.json": "7ad652b6e540eefbbadc7adfd297f4531dd8ad165635db69c1e81ec43c3887e3",
+    "results/p7-murphy.json": "95df0851e1059fc7de94c0aa37196964823122fe066ab62364fe5885674613b8",
+    "results/p8-certificate-families.json": "b6e31a4d8289ff827e736645f482b5fcd42f643de020430d680fcbc179ace005",
+    "results/p8-predictions.json": "9638d666255032e136d03e45e29dcafb86a680292468c149563e2125bfdd9030",
+    "results/step0-oracle-best.json": "ec0c38917b68522bedde7a9f7bb0ad795004dac53bf010b955113536b0f63065"
+  },
+  "supplementary_reservations": {
+    "S1": "terminal-rule contrasts across dimensions and noise",
+    "S10": "posterior-draw and Monte Carlo sensitivity",
+    "S11": "classical-design and unscreened-comparator diagnostics",
+    "S2": "per-campaign search and identification distributions",
+    "S3": "confirmation and replication sensitivities after refresh",
+    "S4": "quadratic saddle and in-region recommendation diagnostics",
+    "S5": "regret and arrival curves against wells and rounds",
+    "S6": "point-map small multiples across families",
+    "S7": "type-I and type-II map-error components",
+    "S8": "Murphy decomposition and reliability diagrams",
+    "S9": "certificate matrix, empty rates, and feasibility exclusions"
+  }
+}

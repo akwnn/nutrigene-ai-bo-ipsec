@@ -1,6 +1,6 @@
 # Prospective calibration at the registered target cell
 
-Unit: n=25 landscape instances; four campaign seeds are averaged within each instance. Brier, Murphy calibration, symmetric-difference error, and Rule-P regret are lower-is-better.
+Unit: n=25 landscape instances; four campaign seeds are averaged within each instance. Brier, Murphy calibration, symmetric-difference error, and Rule-P regret are lower-is-better. Calibration uses latent acceptability labels, not future noisy outcomes. Maps use a 0.50 cutoff; point recommendations use a common GP.
 
 | Arm | Brier (lower is better) | Murphy calibration (lower is better) | Murphy refinement | AUC | Symmetric-difference error (lower is better) | Rule-P regret (lower is better) | Wells (count) | Rounds (count) | Landscape instances (n) | Campaigns per instance (n) |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |

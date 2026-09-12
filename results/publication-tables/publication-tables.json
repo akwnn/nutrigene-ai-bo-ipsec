@@ -1,11 +1,12 @@
 {
+  "builder_sha256": "a809e764d312c6404976f447fd24ee55aa89331d1f75d375659be75da08557b2",
   "output_hashes": {
-    "table-spade-comparison.csv": "9dfca4fa8678579469e9a16c48c3b741accb7ec68b1e09fcc20b331148e9d7e0",
-    "table-spade-comparison.md": "fa48653af023b90967ddc4cf21c55f0438fd13c632291b1b27fdb3bfb0c4bbfe",
-    "table-spade-kill-ledger.csv": "bda573b71875fb84c705026578a06855659453f92fbd2de984449f9a19790a63",
-    "table-spade-kill-ledger.md": "5cc4b4b97e1ca039547bc3aaf3a36aeaf6c1bafb4eaf0f0ac4c507dbc731e075",
+    "table-spade-comparison.csv": "d8f69f9f3d69c8b67ed7f6b4217103f14ad72b50846b8afd31c52b652a3431fa",
+    "table-spade-comparison.md": "42c81935b334028349d4676d14870c366dea764cd6117e96d237b329744b92cb",
+    "table-spade-kill-ledger.csv": "0b7d088706a048ad4241a0a78dafbb2c8d3d7fc6519e37628e8e3dc7b18bb5da",
+    "table-spade-kill-ledger.md": "033d6c925d949edb6459a3df353f37700610746e52d7fa2fbf894293e782c980",
     "table-spade-prospective-calibration.csv": "811f87e1a10f1414576d130bc754fa88e9952ee7c40524be2ec3855e4c8134f8",
-    "table-spade-prospective-calibration.md": "6b061dac577d79ef33e29e1f71c63df82661524f3989a9bd112c71f3d52d7935"
+    "table-spade-prospective-calibration.md": "4ac904c7dcc66218a1a7f36f30f34dd95c8136bbe9693f9525475f61003fffe1"
   },
   "source_hashes": {
     "final-spade-c1.json": "06f2d01aff3c25218ca7dcf08621fa21a8366b7886ea0b71d264dd1239230c28",
@@ -28,6 +29,7 @@
             0.9253965923511963
           ],
           "claim": "SPADE's certificate is valid prospectively under cross-fit",
+          "current_interpretation": "No rejection under the archived posterior model-check rule; this does not establish empirical validity. Repeated Hill instances were not accounted for in the binomial intervals.",
           "denominator": 23,
           "effect": -0.167391304347826,
           "fires_when": "any primary F-CERT cell demonstrably below nominal after exact test + Holm",
@@ -49,6 +51,7 @@
             0.9546690502212429
           ],
           "claim": "Certificate validity extends beyond hill d=6 sigma=0.25",
+          "current_interpretation": "The posterior model checks do not establish empirical validity in Hill or across families. The archived narrowing-to-Hill interpretation is not supported.",
           "denominator": 78,
           "effect": 0.09743589743589742,
           "fires_when": "C3/C4 INCONCLUSIVE or FAIL -> the claim narrows to hill",
@@ -70,6 +73,7 @@
             0.0026081874999999964
           ],
           "claim": "Targeted plate 2 earns its complexity",
+          "current_interpretation": "Boundary targeting did not beat an equal-well random second plate. The negative random-minus-targeted contrast favors random placement.",
           "denominator": 25,
           "effect": -0.0018820000000000009,
           "fires_when": "m0 does not beat random_plate2 by >=SESOI on symmetric difference in any TARGET condition",
@@ -103,6 +107,7 @@
             0.015644412500000007
           ],
           "claim": "Plate 2 does anything at all",
+          "current_interpretation": "The paired map improvement was detectable but smaller than the 0.02 SESOI. The 40-versus-48-well comparison combines sample count with another round.",
           "denominator": 25,
           "effect": 0.0117145,
           "fires_when": "m0 does not beat plate1_only on symmetric difference",
@@ -142,6 +147,7 @@
             "map_not_worse_by_more_than_0.02": true,
             "regret_reduced_by_sesoi": false
           },
+          "current_interpretation": "The allocation variant did not meet the prespecified joint improvement rule; its lowest map-error mean alone is insufficient.",
           "denominator": 25,
           "effect": -0.0027763259811726627,
           "fires_when": "the §7.5 conjunction is unmet -> trade-off, not an improvement",
@@ -165,6 +171,7 @@
             0.01566185
           ],
           "claim": "SPADE is competitive with Sobol on the map in TARGET regimes",
+          "current_interpretation": "SPADE had lower target map error than Sobol, but the difference was smaller than the 0.02 SESOI; practical competitiveness is supported.",
           "denominator": 25,
           "effect": 0.010891999999999999,
           "fires_when": "sobol beats m0 by >SESOI in a TARGET condition",
@@ -198,6 +205,7 @@
             0.037231837500000003
           ],
           "claim": "SPADE is competitive with qLogNEI on the map in TARGET regimes",
+          "current_interpretation": "SPADE had lower target map error than qLogNEI; the comparator-minus-SPADE difference exceeds the 0.02 SESOI. The archived within-SESOI wording is incorrect.",
           "denominator": 25,
           "effect": 0.0326545,
           "fires_when": "qlognei beats m0 by >SESOI in a TARGET condition",
@@ -232,6 +240,7 @@
             0.016151187714924787
           ],
           "claim": "Regret is at practical parity under a common terminal rule",
+          "current_interpretation": "The SPADE-minus-qLogNEI point-regret interval lies inside the prespecified plus-or-minus 0.02 margin, supporting practical parity rather than superiority.",
           "denominator": 25,
           "effect": 0.009374760719689424,
           "estimand_note": "both sides are rule P. §43.1: the registered r* bar was a rule A column and the mixed comparison had to be withdrawn",
@@ -253,6 +262,7 @@
         {
           "ci": null,
           "claim": "The study's cells are feasible",
+          "current_interpretation": "No analyzed primary-label row exceeded the registered feasibility ceiling. These repeated configuration counts do not validate the latent certificate as a future-response guarantee.",
           "denominator": 23600,
           "effect": 0.0,
           "fires_when": "any planned cell with tau >= tau_max reached the analysis",
@@ -271,6 +281,7 @@
         {
           "ci": null,
           "claim": "Empty-set degeneracy does not explain a pass",
+          "current_interpretation": "Eighteen posterior-check cells were downgraded because more than half of campaigns returned empty sets. This is a non-vacuity safeguard, not evidence of oracle containment.",
           "denominator": 64,
           "effect": 18.0,
           "fires_when": "any PASS cell with empty rate > 0.50",
@@ -476,6 +487,7 @@
       "primary_terminal_rule": "P",
       "rows": [
         {
+          "archived_unit": "n25",
           "arm": "doe",
           "certificate_status": "NOT_ASSESSED",
           "condition": "ackley-d6-s0.25",
@@ -483,10 +495,11 @@
           "regret_rule_p": 0.5538755574324404,
           "rounds": 3,
           "symmetric_difference": 0.45985849999999995,
-          "unit": "n25",
+          "unit": "100 campaigns on the specified external function",
           "wells": 48
         },
         {
+          "archived_unit": "n25",
           "arm": "sobol",
           "certificate_status": "NOT_ASSESSED",
           "condition": "ackley-d6-s0.25",
@@ -494,10 +507,11 @@
           "regret_rule_p": 0.7321086875322487,
           "rounds": 1,
           "symmetric_difference": 0.23825800000000016,
-          "unit": "n25",
+          "unit": "100 campaigns on the specified external function",
           "wells": 48
         },
         {
+          "archived_unit": "n25",
           "arm": "qlogei",
           "certificate_status": "NOT_ASSESSED",
           "condition": "ackley-d6-s0.25",
@@ -505,10 +519,11 @@
           "regret_rule_p": 0.6939678388811373,
           "rounds": 10,
           "symmetric_difference": 0.2359825000000001,
-          "unit": "n25",
+          "unit": "100 campaigns on the specified external function",
           "wells": 48
         },
         {
+          "archived_unit": "n25",
           "arm": "qlognei",
           "certificate_status": "NOT_ASSESSED",
           "condition": "ackley-d6-s0.25",
@@ -516,10 +531,11 @@
           "regret_rule_p": 0.6602293804518051,
           "rounds": 10,
           "symmetric_difference": 0.22333350000000002,
-          "unit": "n25",
+          "unit": "100 campaigns on the specified external function",
           "wells": 48
         },
         {
+          "archived_unit": "n25",
           "arm": "spade_cf_m0",
           "certificate_status": "INCONCLUSIVE",
           "condition": "ackley-d6-s0.25",
@@ -527,10 +543,11 @@
           "regret_rule_p": 0.7600729913138224,
           "rounds": 2,
           "symmetric_difference": 0.23855049999999992,
-          "unit": "n25",
+          "unit": "100 campaigns on the specified external function",
           "wells": 48
         },
         {
+          "archived_unit": "n25",
           "arm": "spade_random_plate2",
           "certificate_status": "INCONCLUSIVE",
           "condition": "ackley-d6-s0.25",
@@ -538,10 +555,11 @@
           "regret_rule_p": 0.7507697896649266,
           "rounds": 2,
           "symmetric_difference": 0.2388705,
-          "unit": "n25",
+          "unit": "100 campaigns on the specified external function",
           "wells": 48
         },
         {
+          "archived_unit": "n25",
           "arm": "doe",
           "certificate_status": "NOT_ASSESSED",
           "condition": "hartmann6-d6-s0.25",
@@ -549,10 +567,11 @@
           "regret_rule_p": 0.5681735317682803,
           "rounds": 3,
           "symmetric_difference": 0.22441749999999988,
-          "unit": "n25",
+          "unit": "100 campaigns on the specified external function",
           "wells": 48
         },
         {
+          "archived_unit": "n25",
           "arm": "sobol",
           "certificate_status": "NOT_ASSESSED",
           "condition": "hartmann6-d6-s0.25",
@@ -560,10 +579,11 @@
           "regret_rule_p": 0.46080918004896126,
           "rounds": 1,
           "symmetric_difference": 0.18991149999999998,
-          "unit": "n25",
+          "unit": "100 campaigns on the specified external function",
           "wells": 48
         },
         {
+          "archived_unit": "n25",
           "arm": "qlogei",
           "certificate_status": "NOT_ASSESSED",
           "condition": "hartmann6-d6-s0.25",
@@ -571,10 +591,11 @@
           "regret_rule_p": 0.29965029040703905,
           "rounds": 10,
           "symmetric_difference": 0.22586500000000004,
-          "unit": "n25",
+          "unit": "100 campaigns on the specified external function",
           "wells": 48
         },
         {
+          "archived_unit": "n25",
           "arm": "qlognei",
           "certificate_status": "NOT_ASSESSED",
           "condition": "hartmann6-d6-s0.25",
@@ -582,10 +603,11 @@
           "regret_rule_p": 0.23048735454156127,
           "rounds": 10,
           "symmetric_difference": 0.22427399999999997,
-          "unit": "n25",
+          "unit": "100 campaigns on the specified external function",
           "wells": 48
         },
         {
+          "archived_unit": "n25",
           "arm": "spade_cf_m0",
           "certificate_status": "INCONCLUSIVE",
           "condition": "hartmann6-d6-s0.25",
@@ -593,10 +615,11 @@
           "regret_rule_p": 0.42206762215312005,
           "rounds": 2,
           "symmetric_difference": 0.18482999999999994,
-          "unit": "n25",
+          "unit": "100 campaigns on the specified external function",
           "wells": 48
         },
         {
+          "archived_unit": "n25",
           "arm": "spade_random_plate2",
           "certificate_status": "INCONCLUSIVE",
           "condition": "hartmann6-d6-s0.25",
@@ -604,10 +627,11 @@
           "regret_rule_p": 0.46867004733327405,
           "rounds": 2,
           "symmetric_difference": 0.19936349999999994,
-          "unit": "n25",
+          "unit": "100 campaigns on the specified external function",
           "wells": 48
         },
         {
+          "archived_unit": "n25",
           "arm": "doe",
           "certificate_status": "NOT_ASSESSED",
           "condition": "hartmann6-d8-s0.25",
@@ -615,10 +639,11 @@
           "regret_rule_p": 0.6391421325132647,
           "rounds": 3,
           "symmetric_difference": 0.25071999999999994,
-          "unit": "n25",
+          "unit": "100 campaigns on the specified external function",
           "wells": 48
         },
         {
+          "archived_unit": "n25",
           "arm": "sobol",
           "certificate_status": "NOT_ASSESSED",
           "condition": "hartmann6-d8-s0.25",
@@ -626,10 +651,11 @@
           "regret_rule_p": 0.47963376167410693,
           "rounds": 1,
           "symmetric_difference": 0.200588,
-          "unit": "n25",
+          "unit": "100 campaigns on the specified external function",
           "wells": 48
         },
         {
+          "archived_unit": "n25",
           "arm": "qlogei",
           "certificate_status": "NOT_ASSESSED",
           "condition": "hartmann6-d8-s0.25",
@@ -637,10 +663,11 @@
           "regret_rule_p": 0.2945007902697073,
           "rounds": 10,
           "symmetric_difference": 0.23478350000000006,
-          "unit": "n25",
+          "unit": "100 campaigns on the specified external function",
           "wells": 48
         },
         {
+          "archived_unit": "n25",
           "arm": "qlognei",
           "certificate_status": "NOT_ASSESSED",
           "condition": "hartmann6-d8-s0.25",
@@ -648,10 +675,11 @@
           "regret_rule_p": 0.2620287297356133,
           "rounds": 10,
           "symmetric_difference": 0.21958149999999993,
-          "unit": "n25",
+          "unit": "100 campaigns on the specified external function",
           "wells": 48
         },
         {
+          "archived_unit": "n25",
           "arm": "spade_cf_m0",
           "certificate_status": "INCONCLUSIVE",
           "condition": "hartmann6-d8-s0.25",
@@ -659,10 +687,11 @@
           "regret_rule_p": 0.44540376238518303,
           "rounds": 2,
           "symmetric_difference": 0.19080850000000005,
-          "unit": "n25",
+          "unit": "100 campaigns on the specified external function",
           "wells": 48
         },
         {
+          "archived_unit": "n25",
           "arm": "spade_random_plate2",
           "certificate_status": "INCONCLUSIVE",
           "condition": "hartmann6-d8-s0.25",
@@ -670,10 +699,11 @@
           "regret_rule_p": 0.45403283507253056,
           "rounds": 2,
           "symmetric_difference": 0.21168249999999994,
-          "unit": "n25",
+          "unit": "100 campaigns on the specified external function",
           "wells": 48
         },
         {
+          "archived_unit": "n25",
           "arm": "doe",
           "certificate_status": "NOT_ASSESSED",
           "condition": "hill-d6-s0.1",
@@ -681,10 +711,11 @@
           "regret_rule_p": 0.30721659159104237,
           "rounds": 3,
           "symmetric_difference": 0.2579785,
-          "unit": "n25",
+          "unit": "25 Hill instances; four campaigns per instance",
           "wells": 48
         },
         {
+          "archived_unit": "n25",
           "arm": "sobol",
           "certificate_status": "NOT_ASSESSED",
           "condition": "hill-d6-s0.1",
@@ -692,10 +723,11 @@
           "regret_rule_p": 0.08547615566822646,
           "rounds": 1,
           "symmetric_difference": 0.1913060000000001,
-          "unit": "n25",
+          "unit": "25 Hill instances; four campaigns per instance",
           "wells": 48
         },
         {
+          "archived_unit": "n25",
           "arm": "qlogei",
           "certificate_status": "NOT_ASSESSED",
           "condition": "hill-d6-s0.1",
@@ -703,10 +735,11 @@
           "regret_rule_p": 0.07979852500141008,
           "rounds": 10,
           "symmetric_difference": 0.20671499999999998,
-          "unit": "n25",
+          "unit": "25 Hill instances; four campaigns per instance",
           "wells": 48
         },
         {
+          "archived_unit": "n25",
           "arm": "qlognei",
           "certificate_status": "NOT_ASSESSED",
           "condition": "hill-d6-s0.1",
@@ -714,10 +747,11 @@
           "regret_rule_p": 0.07498882256575881,
           "rounds": 10,
           "symmetric_difference": 0.2130685,
-          "unit": "n25",
+          "unit": "25 Hill instances; four campaigns per instance",
           "wells": 48
         },
         {
+          "archived_unit": "n25",
           "arm": "spade_cf_m0",
           "certificate_status": "INCONCLUSIVE",
           "condition": "hill-d6-s0.1",
@@ -725,10 +759,11 @@
           "regret_rule_p": 0.08436358328544825,
           "rounds": 2,
           "symmetric_difference": 0.18041400000000002,
-          "unit": "n25",
+          "unit": "25 Hill instances; four campaigns per instance",
           "wells": 48
         },
         {
+          "archived_unit": "n25",
           "arm": "spade_random_plate2",
           "certificate_status": "INCONCLUSIVE",
           "condition": "hill-d6-s0.1",
@@ -736,10 +771,11 @@
           "regret_rule_p": 0.08219547099036277,
           "rounds": 2,
           "symmetric_difference": 0.17853199999999994,
-          "unit": "n25",
+          "unit": "25 Hill instances; four campaigns per instance",
           "wells": 48
         },
         {
+          "archived_unit": "n25",
           "arm": "doe",
           "certificate_status": "NOT_ASSESSED",
           "condition": "hill-d6-s0.25",
@@ -747,10 +783,11 @@
           "regret_rule_p": 0.16836708986278368,
           "rounds": 3,
           "symmetric_difference": 0.25828699999999993,
-          "unit": "n25",
+          "unit": "25 Hill instances; four campaigns per instance",
           "wells": 48
         },
         {
+          "archived_unit": "n25",
           "arm": "sobol",
           "certificate_status": "NOT_ASSESSED",
           "condition": "hill-d6-s0.25",
@@ -758,10 +795,11 @@
           "regret_rule_p": 0.1221174333945115,
           "rounds": 1,
           "symmetric_difference": 0.250434,
-          "unit": "n25",
+          "unit": "25 Hill instances; four campaigns per instance",
           "wells": 48
         },
         {
+          "archived_unit": "n25",
           "arm": "qlogei",
           "certificate_status": "NOT_ASSESSED",
           "condition": "hill-d6-s0.25",
@@ -769,10 +807,11 @@
           "regret_rule_p": 0.13697342509743315,
           "rounds": 10,
           "symmetric_difference": 0.2524975,
-          "unit": "n25",
+          "unit": "25 Hill instances; four campaigns per instance",
           "wells": 48
         },
         {
+          "archived_unit": "n25",
           "arm": "qlognei",
           "certificate_status": "NOT_ASSESSED",
           "condition": "hill-d6-s0.25",
@@ -780,10 +819,11 @@
           "regret_rule_p": 0.12702005985723186,
           "rounds": 10,
           "symmetric_difference": 0.25201549999999995,
-          "unit": "n25",
+          "unit": "25 Hill instances; four campaigns per instance",
           "wells": 48
         },
         {
+          "archived_unit": "n25",
           "arm": "spade_cf_m0",
           "certificate_status": "INCONCLUSIVE",
           "condition": "hill-d6-s0.25",
@@ -791,10 +831,11 @@
           "regret_rule_p": 0.11258114514055599,
           "rounds": 2,
           "symmetric_difference": 0.24153700000000003,
-          "unit": "n25",
+          "unit": "25 Hill instances; four campaigns per instance",
           "wells": 48
         },
         {
+          "archived_unit": "n25",
           "arm": "spade_random_plate2",
           "certificate_status": "INCONCLUSIVE",
           "condition": "hill-d6-s0.25",
@@ -802,10 +843,11 @@
           "regret_rule_p": 0.11937562138469135,
           "rounds": 2,
           "symmetric_difference": 0.2411205,
-          "unit": "n25",
+          "unit": "25 Hill instances; four campaigns per instance",
           "wells": 48
         },
         {
+          "archived_unit": "n25",
           "arm": "doe",
           "certificate_status": "NOT_ASSESSED",
           "condition": "levy-d6-s0.25",
@@ -813,10 +855,11 @@
           "regret_rule_p": 0.26800131322804716,
           "rounds": 3,
           "symmetric_difference": 0.251056,
-          "unit": "n25",
+          "unit": "100 campaigns on the specified external function",
           "wells": 48
         },
         {
+          "archived_unit": "n25",
           "arm": "sobol",
           "certificate_status": "NOT_ASSESSED",
           "condition": "levy-d6-s0.25",
@@ -824,10 +867,11 @@
           "regret_rule_p": 0.07269547775458324,
           "rounds": 1,
           "symmetric_difference": 0.24813599999999997,
-          "unit": "n25",
+          "unit": "100 campaigns on the specified external function",
           "wells": 48
         },
         {
+          "archived_unit": "n25",
           "arm": "qlogei",
           "certificate_status": "NOT_ASSESSED",
           "condition": "levy-d6-s0.25",
@@ -835,10 +879,11 @@
           "regret_rule_p": 0.07679539381440736,
           "rounds": 10,
           "symmetric_difference": 0.247002,
-          "unit": "n25",
+          "unit": "100 campaigns on the specified external function",
           "wells": 48
         },
         {
+          "archived_unit": "n25",
           "arm": "qlognei",
           "certificate_status": "NOT_ASSESSED",
           "condition": "levy-d6-s0.25",
@@ -846,10 +891,11 @@
           "regret_rule_p": 0.06558171310613246,
           "rounds": 10,
           "symmetric_difference": 0.24533699999999992,
-          "unit": "n25",
+          "unit": "100 campaigns on the specified external function",
           "wells": 48
         },
         {
+          "archived_unit": "n25",
           "arm": "spade_cf_m0",
           "certificate_status": "INCONCLUSIVE",
           "condition": "levy-d6-s0.25",
@@ -857,10 +903,11 @@
           "regret_rule_p": 0.07468772836126292,
           "rounds": 2,
           "symmetric_difference": 0.2481925,
-          "unit": "n25",
+          "unit": "100 campaigns on the specified external function",
           "wells": 48
         },
         {
+          "archived_unit": "n25",
           "arm": "spade_random_plate2",
           "certificate_status": "INCONCLUSIVE",
           "condition": "levy-d6-s0.25",
@@ -868,10 +915,11 @@
           "regret_rule_p": 0.07264272715548654,
           "rounds": 2,
           "symmetric_difference": 0.24807799999999997,
-          "unit": "n25",
+          "unit": "100 campaigns on the specified external function",
           "wells": 48
         },
         {
+          "archived_unit": "n25",
           "arm": "doe",
           "certificate_status": "NOT_ASSESSED",
           "condition": "rosenbrock-d6-s0.25",
@@ -879,10 +927,11 @@
           "regret_rule_p": 0.05259493833597802,
           "rounds": 3,
           "symmetric_difference": 0.24940949999999995,
-          "unit": "n25",
+          "unit": "100 campaigns on the specified external function",
           "wells": 48
         },
         {
+          "archived_unit": "n25",
           "arm": "sobol",
           "certificate_status": "NOT_ASSESSED",
           "condition": "rosenbrock-d6-s0.25",
@@ -890,10 +939,11 @@
           "regret_rule_p": 0.027766924837433118,
           "rounds": 1,
           "symmetric_difference": 0.24664999999999995,
-          "unit": "n25",
+          "unit": "100 campaigns on the specified external function",
           "wells": 48
         },
         {
+          "archived_unit": "n25",
           "arm": "qlogei",
           "certificate_status": "NOT_ASSESSED",
           "condition": "rosenbrock-d6-s0.25",
@@ -901,10 +951,11 @@
           "regret_rule_p": 0.03473723253909708,
           "rounds": 10,
           "symmetric_difference": 0.24797399999999997,
-          "unit": "n25",
+          "unit": "100 campaigns on the specified external function",
           "wells": 48
         },
         {
+          "archived_unit": "n25",
           "arm": "qlognei",
           "certificate_status": "NOT_ASSESSED",
           "condition": "rosenbrock-d6-s0.25",
@@ -912,10 +963,11 @@
           "regret_rule_p": 0.03742981139593722,
           "rounds": 10,
           "symmetric_difference": 0.24656349999999996,
-          "unit": "n25",
+          "unit": "100 campaigns on the specified external function",
           "wells": 48
         },
         {
+          "archived_unit": "n25",
           "arm": "spade_cf_m0",
           "certificate_status": "INCONCLUSIVE",
           "condition": "rosenbrock-d6-s0.25",
@@ -923,10 +975,11 @@
           "regret_rule_p": 0.03188324652044166,
           "rounds": 2,
           "symmetric_difference": 0.24642099999999995,
-          "unit": "n25",
+          "unit": "100 campaigns on the specified external function",
           "wells": 48
         },
         {
+          "archived_unit": "n25",
           "arm": "spade_random_plate2",
           "certificate_status": "INCONCLUSIVE",
           "condition": "rosenbrock-d6-s0.25",
@@ -934,7 +987,7 @@
           "regret_rule_p": 0.027158334134027066,
           "rounds": 2,
           "symmetric_difference": 0.24683899999999992,
-          "unit": "n25",
+          "unit": "100 campaigns on the specified external function",
           "wells": 48
         }
       ]

@@ -1,0 +1,24 @@
+# Registered synthetic benchmark; no wet-lab or biological-transfer claim.
+schema: boec-spade-multi-cqa-benchmark-v1
+study_id: spade-multi-cqa-benchmark-2026-08-27
+claim_scope: computational_synthetic_only
+
+protocol:
+  dimension: 6
+  train_count: 48
+  grid_count: 4096
+  alpha: 0.95
+  gamma: 0.95
+  sigma_rel: 0.04
+  sigma_add: 0.01
+  threshold: 0.50
+  n_draws: 512
+  n_rho: 64
+  volume_rule: smallest
+  replicates: 25
+  algorithm_seeds: 2
+
+families:
+  - aligned
+  - moderate_conflict
+  - strong_conflict

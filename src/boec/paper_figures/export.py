@@ -23,7 +23,7 @@ from .figure1 import build_figure1
 from .figure2 import build_figure2
 from .figure3 import build_figure3
 from .figure4 import build_figure4
-from .qa import assert_registered_geometry, resolved_publication_font
+from .qa import assert_label_clearance, assert_registered_geometry, resolved_publication_font
 from .style import VenuePreset, get_preset
 
 
@@ -99,6 +99,10 @@ def export_bundle(bundle: FigureBundle, output_dir: Path, preset: VenuePreset | 
         width_in = preset.width_mm / 25.4
         bundle.figure.set_size_inches(width_in, bundle.figure.get_figheight(), forward=True)
         assert_registered_geometry(bundle.figure)
+        if preset.name == "plos":
+            for dpi in (preset.png_dpi, preset.tiff_dpi):
+                bundle.figure.set_dpi(dpi)
+                assert_label_clearance(bundle.figure)
         # Keep backend settings explicit at export time, independent of caller rcParams.
         export_rc = {
             "pdf.fonttype": 42,
@@ -259,6 +263,8 @@ def build_all(results_dir: Path, output_dir: Path, preset_name: str = "portable"
     manifest = {
         "built_at_utc": _manifest_time(),
         "code_commit": _git_value("rev-parse", "HEAD"),
+        "figure_code_sha256": {str(path.relative_to(Path(__file__).resolve().parents[3])): sha256_file(path)
+                               for path in sorted(Path(__file__).parent.glob("*.py"))},
         "preset": preset.__dict__,
         "sources": sources,
         "font": {

@@ -70,7 +70,7 @@ def _draw_containment_forest(
     for y_position, row in enumerate(rows):
         if not row["n"]:
             axis.text(
-                0.015,
+                0.04,
                 y_position,
                 declined_text,
                 color=_MUTED,
@@ -96,18 +96,11 @@ def _draw_containment_forest(
         point.set_gid(f"{id_prefix}:{row.get('cell_id', row.get('family'))}")
         axis.text(hi + 0.012, y_position, f"{row['x']}/{row['n']}", va="center", fontsize=preset.body_pt, color=_INK)
     axis.set_yticks(range(len(rows)), labels)
-    axis.set_ylim(len(rows) - 0.6, -0.6)
-    axis.text(
-        0.99,
-        1.01,
-        "STATUS",
-        transform=axis.transAxes,
-        ha="right",
-        va="bottom",
-        fontsize=preset.body_pt,
-        fontweight="bold",
-        color=_INK,
-    )
+    # A declined row carries a two-line label centred on its baseline. On the
+    # last row half that label falls below the default 0.6-row margin and
+    # crosses the bottom spine, so reserve a full row of space beneath it.
+    trailing_declined = bool(rows) and not rows[-1]["n"]
+    axis.set_ylim(len(rows) - (0.1 if trailing_declined else 0.6), -0.6)
     _keep_ticks_within_view(axis)
 
 
@@ -126,7 +119,7 @@ def build_figure4(data: dict, preset: VenuePreset) -> FigureBundle:
         for axis, label in zip((axis_a, axis_b, axis_c, axis_d), "abcd", strict=True):
             apply_axis_style(axis, preset)
             label_text = panel_label(axis, label, preset)
-            label_text.set_position((-0.10, 1.01))
+            label_text.set_position((-0.17, 1.04))
 
         calibration_rows = data["calibration_refinement"]
         axis_a.set_axis_off()
@@ -138,7 +131,7 @@ def build_figure4(data: dict, preset: VenuePreset) -> FigureBundle:
         for metric_axis, metric, title in zip(
             metric_axes,
             ("calibration", "refinement"),
-            ("Calibration error ↓", "Refinement ↑"),
+            ("Calibration\nerror ↓", "Refinement ↑"),
             strict=True,
         ):
             apply_axis_style(metric_axis, preset)
@@ -162,6 +155,8 @@ def build_figure4(data: dict, preset: VenuePreset) -> FigureBundle:
             metric_axis.set_title(title, loc="left", fontsize=preset.body_pt)
             metric_axis.tick_params(axis="x", labelsize=preset.body_pt)
             _keep_ticks_within_view(metric_axis)
+            if metric == "refinement":
+                metric_axis.set_xticks((0, 0.01))
 
         hill_rows = data["hill_containment"]
         _draw_containment_forest(
@@ -172,8 +167,8 @@ def build_figure4(data: dict, preset: VenuePreset) -> FigureBundle:
             preset=preset,
             declined_text="no non-empty\ncertificate",
         )
-        axis_b.set_xlabel("Cross-fit containment − nominal", fontsize=preset.body_pt)
-        axis_b.set_title("Prospective Hill\nnon-empty denominators", loc="left", fontsize=preset.body_pt)
+        axis_b.set_xlabel("Model-check pass fraction − α", fontsize=preset.body_pt)
+        axis_b.set_title("Hill posterior check\nnon-empty denominators", loc="left", fontsize=preset.body_pt)
 
         answer_rows = data["cross_family_answer_rate"]
         bars = axis_c.barh(
@@ -205,16 +200,21 @@ def build_figure4(data: dict, preset: VenuePreset) -> FigureBundle:
         )
 
         conditional_rows = data["cross_family_conditional_containment"]
-        _draw_containment_forest(
-            axis_d,
-            conditional_rows,
-            id_prefix="conditional",
-            labels=[row["family"] for row in conditional_rows],
-            preset=preset,
-            declined_text="declined\nto certify",
-        )
+        axis_d.axvline(0, color=_INK, linewidth=0.8, zorder=0)
+        axis_d.set(xlim=(-0.4, 0.5), ylim=(len(conditional_rows) - 0.6, -0.6))
+        for y_position, row in enumerate(conditional_rows):
+            if not row["n"]:
+                axis_d.text(0.02, y_position, "declined\nto certify", va="center", fontsize=preset.body_pt, color=_MUTED)
+                continue
+            point = axis_d.scatter(row["proportion"] - row["alpha"], y_position,
+                                   color=_INK, s=30, zorder=3)
+            point.set_gid(f"conditional:{row['family']}")
+            axis_d.text(0.48, y_position, f"{row['x']}/{row['n']}",
+                        ha="right", va="center", fontsize=preset.body_pt, color=_INK)
+        axis_d.set_yticks(range(len(conditional_rows)), [row["family"] for row in conditional_rows])
+        axis_d.set_xticks((-0.4, -0.2, 0, 0.2, 0.4))
         axis_d.set_xlabel("Containment − nominal", fontsize=preset.body_pt)
-        axis_d.set_title("Conditional on answering\n▼ interval wholly below nominal", loc="left", fontsize=preset.body_pt)
+        axis_d.set_title("Retrospective containment\nα=0.80; repeated cells\nDescriptive only", loc="left", fontsize=preset.body_pt)
 
     panel_data = {
         "A": {
@@ -225,7 +225,8 @@ def build_figure4(data: dict, preset: VenuePreset) -> FigureBundle:
         "B": {
             "rows": hill_rows,
             "reference": 0.0,
-            "interval": "Clopper-Pearson 95% exact",
+            "interval": "Original Clopper-Pearson 95%; no instance-cluster adjustment",
+            "estimand": "fraction whose held-out posterior containment probability meets alpha; not empirical oracle containment",
             "empty_policy": "exclude from numerator and denominator",
             "status_gutter": True,
         },
@@ -237,34 +238,37 @@ def build_figure4(data: dict, preset: VenuePreset) -> FigureBundle:
         "D": {
             "rows": conditional_rows,
             "effect": "containment minus nominal",
-            "interval": "Clopper-Pearson 95% exact",
+            "interval": "not computed; repeated cells within campaigns",
             "conditioning": "non-empty certificate cell returned an answer",
-            "warning_encoding": "red triangle plus status text",
+            "warning_encoding": "none; descriptive proportions only",
         },
     }
     assert_no_prohibited_content(panel_data)
     alt_text = (
         "Retrospective Hill calibration and refinement are shown as aligned dot strips. Prospective Hill "
-        "cross-fit containment uses exact intervals and non-empty denominators. Cross-family answer rates "
-        "distinguish declining to certify from containment conditional on answering; a red downward triangle "
-        "marks an interval wholly below nominal."
+        "model-check pass fractions use original binomial intervals and non-empty denominators, not oracle containment. Cross-family answer rates "
+        "distinguish declining to certify from containment conditional on answering. Retrospective pooled "
+        "certificate-cell counts are descriptive because cells repeat within campaigns."
     )
     caption = (
-        "Figure 4 | Reliability requires both calibration and non-vacuous certification. (a) Retrospective "
+        "Figure 4 | Calibration, posterior checks, and empirical containment are different outcomes. (a) Retrospective "
         "Hill calibration error and refinement are descriptive summaries (n=1,200 cells per method). "
-        "(b) Prospective Hill cross-fit containment relative to nominal assurance, with 95% exact intervals "
-        "and empty certificates excluded from each displayed denominator. (c) At α=0.95, campaigns returning "
+        "(b) Prospective Hill model-check pass fraction minus alpha: posterior self-consistency, not empirical containment. "
+        "Original 95% binomial intervals do not adjust for repeated Hill instances. Empty certificates are excluded "
+        "from each denominator. A downward triangle marks an unadjusted interval below alpha, not a Holm-adjusted decision. "
+        "Stored gamma labels do not change the latent certificates. (c) In the separate retrospective "
+        "five-family study at α=0.95, campaigns returning "
         "any non-empty certificate were 0/50 for Ackley, 11/50 for Hartmann6, 50/50 for Hill, 49/50 for Levy "
         "and 50/50 for Rosenbrock; zero denotes refusal to certify, not zero containment. (d) Conditional "
-        "containment is shown only when a certificate was returned; downward triangles denote intervals "
-        "wholly below nominal assurance."
+        "containment at α=0.80 pools non-empty γ×τ cells within those campaigns. These dependent cell counts "
+        "are descriptive, with no binomial intervals or cross-family validity test. Panels c and d use different assurance levels."
     )
     long_description = (
         "Panel a separates calibration error from refinement so the two reliability properties are not collapsed "
-        "into one score. Panel b reports six prospective Hill cells; one α=0.95, σ=0.25 cell returns no non-empty "
+        "into one score. Panel b reports six prospective Hill posterior-check cells, not oracle containment; one α=0.95, σ=0.25 cell returns no non-empty "
         "certificate and is explicitly marked as such. Panel c shows answer counts of 0, 11, 50, 49 and 50 out "
         "of 50 campaigns for Ackley, Hartmann6, Hill, Levy and Rosenbrock. Panel d conditions containment on an "
-        "answer: Ackley declines to certify; Hartmann6 contains 16/32 and its exact interval is wholly below the "
-        "0.8 nominal target; Hill contains 802/808, Levy 697/747 and Rosenbrock 778/845."
+        "answer at α=0.80: Ackley declines to certify; Hartmann6 contains 16/32; Hill contains 802/808, "
+        "Levy 697/747 and Rosenbrock 778/845. These are dependent cell counts without inferential intervals."
     )
     return FigureBundle("fig4", figure, panel_data, alt_text, caption, long_description)

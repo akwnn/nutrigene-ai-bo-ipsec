@@ -1,0 +1,26 @@
+{
+  "schema": "spade-licensed-archive-verification-v1",
+  "date": "2026-09-11",
+  "archive": "SPADE-code-data-local-draft-2026-09-11-r3.zip",
+  "archive_sha256": "955cbd1ada0b62851fc4235081947623b2bbaf56dbfb5c6cbaf9c0c27894c0ce",
+  "status": "LOCAL_DRAFT_NOT_FOR_PUBLIC_DEPOSIT",
+  "verified_payload_files": 497,
+  "software_license": "MIT",
+  "research_materials_license": "CC-BY-4.0",
+  "copyright_holders": ["Alana Wai Han Kwan", "Joseph Yung"],
+  "workspace_tests": {"passed": 109, "failed": 0, "seconds": 43.54},
+  "extracted_archive_tests": {"passed": 109, "failed": 0, "seconds": 42.95},
+  "prospective_release_checks": {"workspace_passed": 9, "extracted_passed": 9, "pre_release_flag_used": false},
+  "commands": [
+    "python -m pytest -q tests/test_archival_release.py tests/test_publication_bundle.py tests/test_manuscript_docx.py tests/test_paper_figure_builders.py tests/test_paper_figure_layout.py tests/test_publication_tables.py tests/test_submission_package.py --tb=short",
+    "python scripts/validate_final_spade_release.py"
+  ],
+  "extracted_environment": "Separate Python 3.11.15 environment previously installed from unchanged requirements using uncached public PyPI downloads; PYTHONPATH=src selects extracted r3 source and boec.__file__ was checked. Same macOS ARM host and installed Arial, not cross-platform validation.",
+  "scientific_state": {"development": "NO_SELECTION", "lockbox": "FROZEN_UNOPENED"},
+  "limitations": [
+    "Eight documented historical replay failures remain unresolved; no tests or reference results were weakened or replaced.",
+    "Historical replay campaigns and full suite were not rerun during this licensing update.",
+    "Private GitHub backup is not a public DOI deposit or journal submission.",
+    "Author details and declarations remain pending."
+  ]
+}
