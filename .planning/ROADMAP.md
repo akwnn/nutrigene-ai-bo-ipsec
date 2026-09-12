@@ -87,9 +87,18 @@ Publication preparation verified through 2026-09-10:
   hashes passed; the old unversioned ZIP is preserved but superseded. No raw results,
   equality gates, scientific decisions, or lockbox state were changed.
 
-Phase 6 is not complete: author declarations, code-owner licensing approval, historical
+Phase 6 is not complete: author declarations, historical
 replay disposition, author scientific/AI-disclosure approval, and a clean DOI-bearing
 archival release remain outstanding.
+
+2026-09-12 current release state: joint ownership and MIT/CC BY 4.0 licensing are
+approved. The licensed r3 snapshot contains 497 hash-verified payload files; 109
+focused tests and nine release checks passed both locally and after extraction.
+Code, manuscript, figures and the archive are backed up on the private GitHub
+`codex/publication-readiness` branch at `b91867d`. This is not a public DOI deposit
+or journal submission. The local-only and licensing-pending notes below describe
+earlier r2 history, not the current r3 license status. Author/account/fee decisions
+and scientific signoff remain required; no paid service or journal charge is approved.
 
 2026-09-11 local-only archival and replay follow-up:
 

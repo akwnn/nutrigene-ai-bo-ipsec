@@ -3,9 +3,15 @@
 **Milestone:** SPADE joint protocol  
 **Status:** stopped at the registered development gate (`NO_SELECTION`)
 **Current phase:** Phase 6 publication preparation; Phase 5 lockbox access is blocked
-**Last reconciled:** 2026-09-11
+**Last reconciled:** 2026-09-12
 
 ## Current handoff
+
+- GitHub backup verified: commit `b91867df5cfb8ce99ee491ce6df9cf659d7d8aa9`
+  was pushed to `origin/codex/publication-readiness`; remote SHA matched and the
+  repository remained PRIVATE. No main merge, public deposit or submission occurred.
+  Remaining external gates: author identity/contributions/declarations and scientific
+  signoff, account access, publication-fee plan, and DOI deposit authorization.
 
 - User decision, 2026-09-11: Alana Wai Han Kwan and Joseph Yung jointly own the
   original project code and research materials; MIT and CC BY 4.0 respectively are
@@ -119,7 +125,7 @@ current paper draft is `manuscript/SPADE-PLOS-ONE.md` with a generated Word coun
   p-values in scientific notation. Raw scientific result files and equality gates were
   not changed. `docs/RESEARCH-SUMMARY.md` is reconciled with the current manuscript.
 - Submission remains blocked by author/affiliation/contribution/funding/conflict approval,
-  code-owner agreement on licensing, scientific signoff on the implementation disclosures,
+  scientific signoff on the implementation disclosures,
   study-wide AI-tool disclosure and human review, and a clean public archival snapshot/DOI. Historical
   replay limitations remain disclosed and unresolved; do not weaken equality gates,
   replace reference results, or claim complete campaign regeneration.
