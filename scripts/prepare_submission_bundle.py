@@ -24,7 +24,7 @@ AUTHOR_ACTIONS = [
     "Approve funding and competing-interest declarations and acknowledgment permissions.",
     "Complete study-wide AI-use disclosure and human scientific/reference/code review.",
     "Approve the disclosed historical replay limitations and the scope of the claims.",
-    "Obtain code-owner licensing approval and deposit a clean public archival release with a DOI.",
+    "Deposit the clean archival release with its approved licenses and insert the DOI.",
     "Confirm related submissions/preprints, prior PLOS interactions, and editor/reviewer preferences.",
     "Obtain every author's submission approval and resolve journal-account and fee arrangements.",
 ]

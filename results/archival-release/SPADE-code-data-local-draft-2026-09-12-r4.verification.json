@@ -1,0 +1,27 @@
+{
+  "schema": "spade-licensed-archive-verification-v1",
+  "date": "2026-09-12",
+  "archive": "SPADE-code-data-local-draft-2026-09-12-r4.zip",
+  "archive_sha256": "c079338547dee3d428ddf9373ff2d0ea73cda821b5553ff17033bc14f1e55990",
+  "status": "LOCAL_DRAFT_NOT_FOR_PUBLIC_DEPOSIT",
+  "verified_payload_files": 499,
+  "software_license": "MIT",
+  "research_materials_license": "CC-BY-4.0",
+  "workspace_tests": {"passed": 116, "failed": 0, "seconds": 44.92},
+  "extracted_archive_tests": {"passed": 116, "failed": 0, "seconds": 43.60},
+  "prospective_release_checks": {"workspace_passed": 9, "extracted_passed": 9, "pre_release_flag_used": false},
+  "commands": [
+    "python -m pytest -q tests/test_archival_release.py tests/test_replay_claim_impact.py tests/test_publication_bundle.py tests/test_manuscript_docx.py tests/test_paper_figure_builders.py tests/test_paper_figure_layout.py tests/test_publication_tables.py tests/test_submission_package.py --tb=short",
+    "python scripts/validate_final_spade_release.py"
+  ],
+  "extracted_environment": "Previously clean-installed separate Python environment on the same macOS ARM host; PYTHONPATH=src selects extracted r4 source. Not cross-platform validation or full-suite verification.",
+  "historical_replay_tests": {"failed": 8, "seconds": 43.58, "references_changed": false, "exact_assertions_changed": false},
+  "visual_review": {"reading_pages": 41, "submission_pages": 37, "cover_pages": 1, "changed_pages_individually_reviewed": 17, "pixel_identical_prior_reviews_reused": 62, "observed_clipping_or_overlap": false},
+  "journal_bundle": {"file": "SPADE-PLOS-ONE-upload-draft-2026-09-12.zip", "sha256": "54c50fca9aef2339830a3648f02d5fd084c1e7e89d486850a6f3c46e2db6fddb", "verified_upload_files": 9, "unresolved_author_fields": 12},
+  "limitations": [
+    "Claim-impact audit narrows interpretation; it does not repair historical replay.",
+    "Primary map comparison recalculates from archived rows, not regenerated adaptive trajectories.",
+    "Conditional sensitivity checks do not bound untested campaigns.",
+    "Author decisions, public deposit and journal submission remain outstanding."
+  ]
+}

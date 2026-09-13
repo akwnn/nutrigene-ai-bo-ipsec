@@ -10,7 +10,20 @@
 
 This is the detailed scientific context file to give another agent. For operational state,
 read `.planning/STATE.md` first; for phase status, read `.planning/ROADMAP.md`.
-This handoff was last reconciled on 2026-09-10.
+This handoff was last reconciled on 2026-09-12.
+
+**Replay claim-impact audit (2026-09-12):** all eight exact gates still fail; no
+historical equality test or reference result was changed. The primary C2 map means
+independently recompute to 0.180414 and 0.2130685 (15.3258% relative reduction).
+Q42/Q59's failing external-function columns are not the numerical inputs to that
+contrast or to the prospective Hartmann panel. Three recorded legacy-sampler
+diagnostic scalars match C3/S1 Rule A exactly, not Q42/Q59. This is scalar evidence,
+not proof that every prospective trajectory or map replays. Current sampler defaults
+differ from recovery commit `1bf51f1`; manuscript conclusions are restricted to the
+retained regenerated benchmark. One-row classical sensitivity retains displayed
+results and ordering, and one-campaign calibration sensitivity retains displayed
+four-arm ordering. These checks do not bound untested campaigns. Full dependency
+mapping and numerical details: `.planning/debug/replay-claim-impact.md`.
 
 **Literature and comparator review (2026-09-10):** the current paper explicitly
 acknowledges the established straddle acquisition, conservative excursion sets, and

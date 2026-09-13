@@ -7,6 +7,23 @@
 
 ## Current handoff
 
+- 2026-09-12 claim-impact audit executed: `.planning/debug/replay-claim-impact.md`
+  maps all eight still-failing gates to publication inputs. C2 map means independently
+  reproduce 15.3258%; three recorded legacy adaptive probes match prospective C3/S1
+  Rule-A scalars, not the older failed references. Current sampler defaults differ
+  from the recovery version; no general replay claim is warranted. Conditional
+  one-row Fix 1 and one-campaign P7 sensitivity preserves displayed results/order.
+  Manuscript abstract/conclusions and cover letter now restrict results to the
+  retained regenerated benchmark and expressly exclude old failing adaptive columns
+  from cross-family ranking support. No scientific references or exact gates changed.
+  116 focused tests passed (44.92 s); nine release checks passed; all eight original
+  replay tests failed (43.58 s). Word visual coverage: 41 + 37 + 1 pages, including
+  17 changed pages inspected and 62 pixel-identical previously reviewed pages.
+  New dated journal bundle and code/data r4 archive supersede earlier drafts.
+  R4 has 499 payload files with verified extraction hashes; extracted verification
+  also passes 116 tests (43.60 s) and nine release checks. The dated 2026-09-12
+  journal ZIP has nine hash-verified upload files and 12 remaining author fields.
+
 - GitHub backup verified: commit `b91867df5cfb8ce99ee491ce6df9cf659d7d8aa9`
   was pushed to `origin/codex/publication-readiness`; remote SHA matched and the
   repository remained PRIVATE. No main merge, public deposit or submission occurred.

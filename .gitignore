@@ -375,6 +375,9 @@ results/archival-release/*
 !results/archival-release/SPADE-code-data-local-draft-2026-09-11-r3.zip
 !results/archival-release/SPADE-code-data-local-draft-2026-09-11-r3.zip.sha256
 !results/archival-release/SPADE-code-data-local-draft-2026-09-11-r3.verification.json
+!results/archival-release/SPADE-code-data-local-draft-2026-09-12-r4.zip
+!results/archival-release/SPADE-code-data-local-draft-2026-09-12-r4.zip.sha256
+!results/archival-release/SPADE-code-data-local-draft-2026-09-12-r4.verification.json
 
 # Superseded local journal bundle; the dated current draft remains tracked.
 manuscript/SPADE-PLOS-ONE-upload-draft.zip

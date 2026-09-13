@@ -17,6 +17,7 @@ from zipfile import ZIP_DEFLATED, ZipFile, ZipInfo
 ORACLES = "data/oracles/biphasic-hill-v8+82f6db7c8f77"
 REQUIRED_FILES = tuple(sorted({
     "LICENSE", "LICENSE-CONTENT.md",
+    ".planning/debug/replay-claim-impact.md",
     "README.md", "pyproject.toml", "requirements.txt", "requirements-publication.txt",
     "docs/FINDINGS-SPADE-FINAL.md", "docs/SPADE-FINAL-SPEC.md",
     "docs/superpowers/specs/2026-08-25-spade-joint-protocol-design.md",

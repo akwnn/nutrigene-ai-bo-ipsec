@@ -41,6 +41,14 @@ Requirements: EVAL-02 through EVAL-04, REP-02.
 
 ## Phase 6 — Publication release — ACTIVE WITH BOUNDED CLAIMS
 
+2026-09-12 replay disposition: claim-impact audit completed, not replay repair.
+Main numerical findings remain analyses of the retained regenerated benchmark;
+old failing adaptive columns are excluded from ranking support and the sampler
+version boundary is explicit. Exact failure gates remain unchanged. 116 focused
+tests and nine release checks pass; eight historical checks still fail. Updated
+Word documents have full visual coverage (79 pages, 62 pixel-identical prior reviews).
+See `.planning/debug/replay-claim-impact.md` for all eight dependencies and sensitivities.
+
 Prepare the completed 99,601-record prospective evidence body for publication, report the
 joint-protocol `NO_SELECTION` as separate negative evidence, verify primary citations,
 freeze a clean archival snapshot, and submit only claims supported by the applicable

@@ -104,6 +104,19 @@ observations and classifications; running it does not rerun those campaigns.
 Reaggregating retained rows must not be described as exact regeneration of all
 historical experiments. The manuscript discloses this limitation.
 
+The claim-impact audit in `.planning/debug/replay-claim-impact.md` traces each
+failure to the paper. Its reaggregation and conditional sensitivity checks are
+executable with `python -m pytest -q tests/test_replay_claim_impact.py`. The 15.3%
+target map contrast uses the retained regenerated prospective dataset, not the
+older failing Q42/Q59 reference columns. Current sampler defaults differ from
+the archived recovery version; passing summary checks do not prove trajectory replay.
+
+Current local drafts after that audit are
+`manuscript/SPADE-PLOS-ONE-upload-draft-2026-09-12.zip` (journal files) and
+`results/archival-release/SPADE-code-data-local-draft-2026-09-12-r4.zip`
+(code/data with licenses and the claim-impact audit). Earlier dated ZIPs are
+preserved historical drafts, not the current manuscript package.
+
 Publication still requires author-approved declarations and a public archival release
 with a DOI. Neither journal submission nor a public upload has been performed by the
 artifact-building commands above. A private GitHub backup is not a public deposit.
