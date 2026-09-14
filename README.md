@@ -15,6 +15,7 @@ Azzimonti et al. (2021); the paper does not claim that theory as new.
 ## Start here
 
 - [Paper draft](publication/manuscript/MANUSCRIPT.md)
+- [PLOS ONE package](publication/manuscript/plos-one/README.md)
 - [Review-ready Word manuscript](publication/manuscript/SPADE-MANUSCRIPT.docx)
 - [Methods](publication/manuscript/METHODS.md)
 - [Frozen protocols](publication/manuscript/PROTOCOLS.md)

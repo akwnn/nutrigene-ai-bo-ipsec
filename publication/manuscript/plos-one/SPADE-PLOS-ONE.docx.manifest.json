@@ -1,0 +1,13 @@
+{
+  "builder_sha256": "2bfa032f8f1faf860bb224c0ce3012ffc880da982c8bffe52b65d20dd6764a69",
+  "cover_letter": false,
+  "image_sha256": {
+    "../results/paper-figures/plos/fig1.png": "04a9ea81c10a69cf7676081f033e2348a61184d12cd1a2d175fa3ca1f40486f9",
+    "../results/paper-figures/plos/fig2.png": "59d2d9861ffd2204b0503f55a588a686c1b0fd5bbe8f0c87e13a86a78a6845ed",
+    "../results/paper-figures/plos/fig3.png": "04903f0d76df53ad4eb3a60e8cd4c259e334d410971de91583a6abb5adbc3eca",
+    "../results/paper-figures/plos/fig4.png": "37333063c439ce9184079fe513eca47c2d42441c2821e59a84ea5592fdc3db13"
+  },
+  "include_figures": true,
+  "output_sha256": "ed8be79d722d1b3fd7b167d20a155b317e3f9ed53bfbc18b26f483f203f213fb",
+  "source_sha256": "8265b72e669b1ea3726e5001aeda040f7d74754d78ac0a6c50f2574a2627adf8"
+}

@@ -18,3 +18,9 @@ Regenerate the Word manuscript from the canonical source and citation metadata w
 The claim ledger overrides narrative prose if a discrepancy remains. Exact commands and
 expected values are in `../evidence/reproduction-map.md`; the complete historical file
 and commit audits are in `../evidence/`.
+
+## PLOS ONE package
+
+Journal submission and Google Docs collaboration files live in
+[`plos-one/`](plos-one/README.md).
+
