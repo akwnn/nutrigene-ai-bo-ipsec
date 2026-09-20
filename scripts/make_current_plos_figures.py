@@ -137,11 +137,10 @@ def load_dc_regret():
 
 
 def fig1():
-    """Conventional top-down study flowchart; panel letters on the left of each tier."""
+    """Conventional B&W line-art study flowchart (PLOS / methods-paper style)."""
     style()
-    fig, ax = plt.subplots(figsize=(7.2, 4.0))
-    # Large top pad so title never collides with content
-    fig.subplots_adjust(left=0.08, right=0.96, top=0.88, bottom=0.05)
+    fig, ax = plt.subplots(figsize=(7.2, 3.9))
+    fig.subplots_adjust(left=0.07, right=0.97, top=0.88, bottom=0.05)
     fig.suptitle(
         "Study design under a fixed 48-well budget",
         fontsize=11, color=INK, y=0.97, fontweight="bold",
@@ -150,15 +149,19 @@ def fig1():
     ax.set_ylim(0, 10)
     ax.axis("off")
 
-    def rbox(x, y, w, h, face, edge, title, subtitle=None, title_size=8.5):
+    LINE = INK
+    FILL = "white"
+    LIGHT = "#F5F5F5"
+
+    def rbox(x, y, w, h, title, subtitle=None, title_size=8.5, fill=FILL):
         ax.add_patch(FancyBboxPatch(
             (x, y), w, h,
-            boxstyle="round,pad=0.12,rounding_size=0.22",
-            facecolor=face, edgecolor=edge, linewidth=1.4, clip_on=False,
+            boxstyle="square,pad=0",
+            facecolor=fill, edgecolor=LINE, linewidth=1.15, clip_on=False,
         ))
         cx = x + w / 2
         if subtitle:
-            ax.text(cx, y + h * 0.68, title, ha="center", va="center",
+            ax.text(cx, y + h * 0.66, title, ha="center", va="center",
                     fontsize=title_size, fontweight="bold", color=INK)
             ax.text(cx, y + h * 0.30, subtitle, ha="center", va="center",
                     fontsize=7.0, color=MUTED, linespacing=1.3)
@@ -169,39 +172,40 @@ def fig1():
     def down_arrow(x, y0, y1):
         ax.annotate(
             "", xy=(x, y1), xytext=(x, y0),
-            arrowprops=dict(arrowstyle="-|>", color=INK, lw=1.3, mutation_scale=11),
+            arrowprops=dict(arrowstyle="-|>", color=LINE, lw=1.05, mutation_scale=9),
         )
 
-    # Tier A — campaign (letter left of tier, not under title)
-    ax.text(0.15, 8.55, "A", fontsize=12, fontweight="bold", color=INK, va="center")
-    rbox(2.9, 7.85, 4.2, 1.4, "#E8F1F8", SPADE,
-         "48-well campaign", "Fixed budget; method chooses rounds")
+    # Tier labels on left
+    ax.text(0.2, 8.55, "A", fontsize=11, fontweight="bold", color=INK, va="center")
+    ax.text(0.2, 5.75, "B", fontsize=11, fontweight="bold", color=INK, va="center")
+    ax.text(0.2, 1.85, "C", fontsize=11, fontweight="bold", color=INK, va="center")
 
-    down_arrow(5.0, 7.85, 7.15)
-    ax.plot([2.5, 7.5], [7.15, 7.15], color=INK, lw=1.3)
-    down_arrow(2.5, 7.15, 6.75)
-    down_arrow(7.5, 7.15, 6.75)
+    # A — campaign
+    rbox(2.9, 7.85, 4.2, 1.35, "48-well campaign",
+         "Fixed budget; method chooses rounds", fill=LIGHT)
 
-    # Tier B — two decisions
-    ax.text(0.15, 5.75, "B", fontsize=12, fontweight="bold", color=INK, va="center")
-    rbox(0.9, 4.85, 3.2, 1.9, "#FDE9DD", QLOG,
-         "Point recipe", "Score = simple regret")
-    rbox(5.9, 4.85, 3.2, 1.9, "#DDF3E8", DOE,
-         "Operating region", "Volume / containment\nor abstain")
+    down_arrow(5.0, 7.85, 7.20)
+    ax.plot([2.5, 7.5], [7.20, 7.20], color=LINE, lw=1.05)
+    down_arrow(2.5, 7.20, 6.80)
+    down_arrow(7.5, 7.20, 6.80)
 
-    ax.plot([2.5, 2.5], [4.85, 4.15], color=INK, lw=1.3)
-    ax.plot([7.5, 7.5], [4.85, 4.15], color=INK, lw=1.3)
-    ax.plot([2.5, 7.5], [4.15, 4.15], color=INK, lw=1.3)
-    down_arrow(5.0, 4.15, 3.65)
-    ax.plot([1.9, 8.1], [3.65, 3.65], color=INK, lw=1.3)
+    # B — two decisions
+    rbox(0.95, 4.85, 3.1, 1.95, "Point recipe", "Score = simple regret")
+    rbox(5.95, 4.85, 3.1, 1.95, "Operating region",
+         "Volume / containment\nor abstain")
+
+    ax.plot([2.5, 2.5], [4.85, 4.20], color=LINE, lw=1.05)
+    ax.plot([7.5, 7.5], [4.85, 4.20], color=LINE, lw=1.05)
+    ax.plot([2.5, 7.5], [4.20, 4.20], color=LINE, lw=1.05)
+    down_arrow(5.0, 4.20, 3.70)
+    ax.plot([1.9, 8.1], [3.70, 3.70], color=LINE, lw=1.05)
     for x in (1.9, 5.0, 8.1):
-        down_arrow(x, 3.65, 3.25)
+        down_arrow(x, 3.70, 3.30)
 
-    # Tier C — methods
-    ax.text(0.15, 1.85, "C", fontsize=12, fontweight="bold", color=INK, va="center")
-    rbox(0.55, 0.35, 2.7, 2.9, "white", DOE, "SPADE", "Region-first\nMay abstain", title_size=9)
-    rbox(3.65, 0.35, 2.7, 2.9, "white", SPADE, "qLogNEI", "Noisy Bayesian\noptimization", title_size=9)
-    rbox(6.75, 0.35, 2.7, 2.9, "white", QLOG, "DoE (RSM)", "Classical response-\nsurface designs", title_size=9)
+    # C — methods
+    rbox(0.55, 0.40, 2.7, 2.90, "SPADE", "Region-first\nMay abstain", title_size=9)
+    rbox(3.65, 0.40, 2.7, 2.90, "qLogNEI", "Noisy Bayesian\noptimization", title_size=9)
+    rbox(6.75, 0.40, 2.7, 2.90, "DoE (RSM)", "Classical response-\nsurface designs", title_size=9)
     return fig
 
 

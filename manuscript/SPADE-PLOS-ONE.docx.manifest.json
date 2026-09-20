@@ -2,12 +2,12 @@
   "builder_sha256": "4189cf9eb6a9763fab61300be76b7f6a3739205b2ba578f51f31faefc065be0f",
   "cover_letter": false,
   "image_sha256": {
-    "../results/paper-figures/plos/fig1.png": "a4771cb97afa6af12d383b3777f2904f68e84daa73b8fea4e5b6488c7792c588",
+    "../results/paper-figures/plos/fig1.png": "d9f44afec61a870bcef3a62ff39118f41c5d02771c2fe71fc5e6cc84964f9fb4",
     "../results/paper-figures/plos/fig2.png": "da97d38e20fc7ed4206885238cc8541f49bf1ebe2d9daaf9aa6cd90229e12e44",
     "../results/paper-figures/plos/fig3.png": "f173334d9b11fdc5a5ff394434365e97426aea2c0358f40009bd4d404bae8527",
     "../results/paper-figures/plos/fig4.png": "178ed8e3aaef3c76dad1d66fb1f53e20041981d5d74888b172128830d7576c71"
   },
   "include_figures": true,
-  "output_sha256": "d4d7573068be3e48ea54fae5328b9a36be2b1205cdb1fbabd98e621a4a5f0bfa",
+  "output_sha256": "a641612d00b0934cbfbf548fc054444e4b8be32243c5491ed2bf3530df9cc6bc",
   "source_sha256": "0e4bf729b2394ecd095110aecf3837760583d8d133b90895ff35dc4c616f5de9"
 }
