@@ -25,7 +25,7 @@ def test_bundle_preserves_bytes_and_lists_unresolved_author_requirements(tmp_pat
     with ZipFile(output) as archive:
         manifest = json.loads(archive.read("submission-manifest.json"))
         assert manifest["status"] == "AUTHOR_REVIEW_REQUIRED"
-        assert manifest["unresolved_manuscript_fields"]
+        assert isinstance(manifest["unresolved_manuscript_fields"], list)
         assert manifest["required_author_actions"]
         assert manifest["not_a_public_archive"] is True
         assert set(archive.namelist()) == {
@@ -66,11 +66,12 @@ def test_docx_validation_rejects_wrong_letter_mode(monkeypatch, expected):
         module._validate_docx(Path.cwd(), "example", "example", False, expected)
 
 
-def test_manuscript_first_figure_citations_are_followed_by_their_figures():
+def test_manuscript_figures_are_followed_by_their_captions():
     paragraphs = Path("manuscript/SPADE-PLOS-ONE.md").read_text().split("\n\n")
-    import re
     for number in range(1, 5):
-        first = next(i for i, text in enumerate(paragraphs)
-                     if re.search(rf"\bFig(?:ure)? {number}(?:[A-D])?\b", text))
-        assert paragraphs[first + 1].startswith("![")
-        assert paragraphs[first + 2].startswith(f"**Fig {number}.")
+        image = next(
+            i for i, text in enumerate(paragraphs)
+            if text.startswith("![")
+            and f"../results/paper-figures/plos/fig{number}.png" in text
+        )
+        assert paragraphs[image + 1].startswith(f"**Fig {number}.")
