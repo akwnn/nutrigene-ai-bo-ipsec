@@ -99,15 +99,21 @@ def test_paper_citations_follow_first_appearance_and_resolve():
 
 def test_paper_retains_comparator_and_novelty_boundaries():
     text = (ROOT / "manuscript/SPADE-PLOS-ONE.md").read_text()
-    assert "TruVaR" in text and "established straddle score" in text
-    assert "no paired inferential decision for this LHS contrast" in text
-    assert "only 0.0063 above primary SPADE" in text
-    assert "below the practical threshold" in text
+    assert "TruVaR" in text
+    assert "better for the tested operating-region decision" in text
+    assert "greater certified volume" in text
+    assert "no detectable regret difference" in text
+    assert "DoE found the better point recipe" in text
+    assert "-0.0005" in text and "0.1026" in text
+    assert "66/66" in text and "85/122" in text
+    assert "not equivalence" in text
     assert "**Table 5." in text
+    assert "only 0.0063 above primary SPADE" not in text
     abstract = text.split("## Abstract\n", 1)[1].split("## Introduction", 1)[0]
     assert len(abstract.split()) <= 250
-    assert "8,300 campaign-arm executions" in abstract
-    assert "25 landscape instances" in abstract
+    assert "0.0016" not in abstract
+    assert "0.000855" in abstract
+    assert "no detectable regret difference" in abstract
 
 
 def test_manuscript_uses_current_plos_figures_and_no_phantom_supplements():
@@ -119,7 +125,9 @@ def test_manuscript_uses_current_plos_figures_and_no_phantom_supplements():
         assert (ROOT / "manuscript" / target).is_file()
     assert "**S1 Fig." not in text
     assert "Internal validity completed" not in text
-    assert "Historical replay checks" in text
+    assert "NO_SELECTION" in text
+    assert "relative noise 0.68" in text
+    assert "prospective wet-lab" in text
 
 
 def test_development_artifact_bundle_matches_its_original_selection_hashes():
