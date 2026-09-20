@@ -137,92 +137,71 @@ def load_dc_regret():
 
 
 def fig1():
-    """Study-design schematic with reserved gaps — no overlapping labels."""
+    """Conventional top-down study flowchart; panel letters on the left of each tier."""
     style()
-    fig, axes = plt.subplots(1, 3, figsize=(7.4, 3.15), gridspec_kw={"wspace": 0.18})
-    fig.subplots_adjust(left=0.03, right=0.99, top=0.82, bottom=0.06)
-    fig.suptitle("Study design under a fixed 48-well budget", fontsize=10.5, color=INK, y=0.96)
-
-    # --- A ---
-    ax = axes[0]
-    ax.set_xlim(0, 1)
-    ax.set_ylim(0, 1)
-    ax.axis("off")
-    panel_letter(ax, "A")
-    ax.set_title("Fixed campaign", fontsize=9, color=INK, pad=10)
-    ax.add_patch(FancyBboxPatch(
-        (0.08, 0.18), 0.84, 0.62, transform=ax.transAxes,
-        boxstyle="round,pad=0.02,rounding_size=0.03",
-        facecolor="#E8F1F8", edgecolor=SPADE, linewidth=1.5, clip_on=False,
-    ))
-    ax.text(0.5, 0.62, "48 wells total", transform=ax.transAxes,
-            ha="center", va="center", fontsize=10, fontweight="bold", color=INK)
-    ax.text(
-        0.5, 0.38,
-        "Same budget for every arm.\n"
-        "Each method chooses\n"
-        "round splits and what\n"
-        "to return at the end.",
-        transform=ax.transAxes, ha="center", va="center",
-        fontsize=7.5, color=MUTED, linespacing=1.35,
+    fig, ax = plt.subplots(figsize=(7.2, 4.0))
+    # Large top pad so title never collides with content
+    fig.subplots_adjust(left=0.08, right=0.96, top=0.88, bottom=0.05)
+    fig.suptitle(
+        "Study design under a fixed 48-well budget",
+        fontsize=11, color=INK, y=0.97, fontweight="bold",
     )
-
-    # --- B ---
-    ax = axes[1]
-    ax.set_xlim(0, 1)
-    ax.set_ylim(0, 1)
+    ax.set_xlim(0, 10)
+    ax.set_ylim(0, 10)
     ax.axis("off")
-    panel_letter(ax, "B")
-    ax.set_title("Two scored decisions", fontsize=9, color=INK, pad=10)
-    # top card
-    ax.add_patch(FancyBboxPatch(
-        (0.08, 0.54), 0.84, 0.32, transform=ax.transAxes,
-        boxstyle="round,pad=0.015,rounding_size=0.025",
-        facecolor="#FDE9DD", edgecolor=QLOG, linewidth=1.3, clip_on=False,
-    ))
-    ax.text(0.5, 0.76, "Point recipe", transform=ax.transAxes,
-            ha="center", va="center", fontsize=9, fontweight="bold", color=INK)
-    ax.text(0.5, 0.62, "Score = simple regret\n(one carry-forward setting)",
-            transform=ax.transAxes, ha="center", va="center",
-            fontsize=7.3, color=MUTED, linespacing=1.3)
-    # bottom card — clear gap from top (0.54 vs top of lower at 0.12+0.34=0.46 → 0.08 gap)
-    ax.add_patch(FancyBboxPatch(
-        (0.08, 0.12), 0.84, 0.34, transform=ax.transAxes,
-        boxstyle="round,pad=0.015,rounding_size=0.025",
-        facecolor="#DDF3E8", edgecolor=DOE, linewidth=1.3, clip_on=False,
-    ))
-    ax.text(0.5, 0.36, "Operating region", transform=ax.transAxes,
-            ha="center", va="center", fontsize=9, fontweight="bold", color=INK)
-    ax.text(
-        0.5, 0.22,
-        "Score = certified volume,\n"
-        "containment, or abstain",
-        transform=ax.transAxes, ha="center", va="center",
-        fontsize=7.3, color=MUTED, linespacing=1.3,
-    )
 
-    # --- C ---
-    ax = axes[2]
-    ax.set_xlim(0, 1)
-    ax.set_ylim(0, 1)
-    ax.axis("off")
-    panel_letter(ax, "C")
-    ax.set_title("Methods in this study", fontsize=9, color=INK, pad=10)
-    rows = [
-        (0.68, DOE, "SPADE", "Region-first; may abstain"),
-        (0.40, SPADE, "qLogNEI (BO)", "Point search; shared\nregion post-process"),
-        (0.12, QLOG, "DoE (RSM)", "Classical designs;\nstrong on one recipe"),
-    ]
-    for y, color, name, note in rows:
+    def rbox(x, y, w, h, face, edge, title, subtitle=None, title_size=8.5):
         ax.add_patch(FancyBboxPatch(
-            (0.06, y), 0.88, 0.22, transform=ax.transAxes,
-            boxstyle="round,pad=0.012,rounding_size=0.02",
-            facecolor="white", edgecolor=color, linewidth=1.4, clip_on=False,
+            (x, y), w, h,
+            boxstyle="round,pad=0.12,rounding_size=0.22",
+            facecolor=face, edgecolor=edge, linewidth=1.4, clip_on=False,
         ))
-        ax.text(0.5, y + 0.145, name, transform=ax.transAxes,
-                ha="center", va="center", fontsize=8.2, fontweight="bold", color=color)
-        ax.text(0.5, y + 0.05, note, transform=ax.transAxes,
-                ha="center", va="center", fontsize=6.9, color=MUTED, linespacing=1.25)
+        cx = x + w / 2
+        if subtitle:
+            ax.text(cx, y + h * 0.68, title, ha="center", va="center",
+                    fontsize=title_size, fontweight="bold", color=INK)
+            ax.text(cx, y + h * 0.30, subtitle, ha="center", va="center",
+                    fontsize=7.0, color=MUTED, linespacing=1.3)
+        else:
+            ax.text(cx, y + h / 2, title, ha="center", va="center",
+                    fontsize=title_size, fontweight="bold", color=INK)
+
+    def down_arrow(x, y0, y1):
+        ax.annotate(
+            "", xy=(x, y1), xytext=(x, y0),
+            arrowprops=dict(arrowstyle="-|>", color=INK, lw=1.3, mutation_scale=11),
+        )
+
+    # Tier A — campaign (letter left of tier, not under title)
+    ax.text(0.15, 8.55, "A", fontsize=12, fontweight="bold", color=INK, va="center")
+    rbox(2.9, 7.85, 4.2, 1.4, "#E8F1F8", SPADE,
+         "48-well campaign", "Fixed budget; method chooses rounds")
+
+    down_arrow(5.0, 7.85, 7.15)
+    ax.plot([2.5, 7.5], [7.15, 7.15], color=INK, lw=1.3)
+    down_arrow(2.5, 7.15, 6.75)
+    down_arrow(7.5, 7.15, 6.75)
+
+    # Tier B — two decisions
+    ax.text(0.15, 5.75, "B", fontsize=12, fontweight="bold", color=INK, va="center")
+    rbox(0.9, 4.85, 3.2, 1.9, "#FDE9DD", QLOG,
+         "Point recipe", "Score = simple regret")
+    rbox(5.9, 4.85, 3.2, 1.9, "#DDF3E8", DOE,
+         "Operating region", "Volume / containment\nor abstain")
+
+    ax.plot([2.5, 2.5], [4.85, 4.15], color=INK, lw=1.3)
+    ax.plot([7.5, 7.5], [4.85, 4.15], color=INK, lw=1.3)
+    ax.plot([2.5, 7.5], [4.15, 4.15], color=INK, lw=1.3)
+    down_arrow(5.0, 4.15, 3.65)
+    ax.plot([1.9, 8.1], [3.65, 3.65], color=INK, lw=1.3)
+    for x in (1.9, 5.0, 8.1):
+        down_arrow(x, 3.65, 3.25)
+
+    # Tier C — methods
+    ax.text(0.15, 1.85, "C", fontsize=12, fontweight="bold", color=INK, va="center")
+    rbox(0.55, 0.35, 2.7, 2.9, "white", DOE, "SPADE", "Region-first\nMay abstain", title_size=9)
+    rbox(3.65, 0.35, 2.7, 2.9, "white", SPADE, "qLogNEI", "Noisy Bayesian\noptimization", title_size=9)
+    rbox(6.75, 0.35, 2.7, 2.9, "white", QLOG, "DoE (RSM)", "Classical response-\nsurface designs", title_size=9)
     return fig
 
 
@@ -429,13 +408,12 @@ def main():
     save(
         fig1(), "fig1",
         "Fig 1. Study design under a fixed 48-well budget. "
-        "(A) Every compared arm uses the same 48-well campaign total; the method chooses round structure and the terminal return. "
-        "(B) The same wells can be scored as a point-recipe decision (simple regret) or as an operating-region decision "
-        "(certified volume, truth containment, or abstention). "
-        "(C) SPADE is evaluated as the region-first architecture; qLogNEI is the noisy Bayesian-optimization comparator; "
-        "DoE pipelines are classical response-surface designs that often win the single-recipe job. "
+        "(A) Every arm uses the same 48-well campaign; the method chooses round structure and the terminal return. "
+        "(B) The campaign is scored as a point-recipe decision (simple regret) and/or an operating-region decision "
+        "(certified volume, containment, or abstention). "
+        "(C) Comparators in this study: SPADE (region-first), qLogNEI (noisy Bayesian optimization), and DoE response-surface pipelines. "
         "This schematic defines the benchmark and contains no performance result.",
-        "Three-panel study schematic: fixed 48-well campaign, point versus region decisions, and compared methods.",
+        "Flowchart of fixed-well campaign, point versus region scoring, and compared methods.",
     )
     save(
         fig2(), "fig2",

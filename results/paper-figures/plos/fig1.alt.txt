@@ -1,1 +1,1 @@
-Three-panel study schematic: fixed 48-well campaign, point versus region decisions, and compared methods.
+Flowchart of fixed-well campaign, point versus region scoring, and compared methods.
