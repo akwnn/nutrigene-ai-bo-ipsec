@@ -380,11 +380,11 @@ def main():
     save(
         fig2(), "fig2",
         "Fig 2. SPADE’s primary advantage: trusted operating regions. "
-        "(A) Mean certified volume at matched five rounds (leave-one-family-out): SPADE versus qLogNEI; "
-        "locked contrast +0.000855 (95% CI [+0.000691, +0.001028], p<0.0001, n=320). "
+        "(A) Certified-volume difference (SPADE minus qLogNEI) at matched five rounds under leave-one-family-out "
+        "calibration: +0.000855 (95% CI [+0.000691, +0.001028], p<0.0001, n=320); absolute means are noted under the panel. "
         "(B) Observed truth containment among answered regions at prevalence 0.30: "
         "SPADE 66/66 versus screened DoE 85/122 and unscreened DoE 77/134.",
-        "Absolute certified-volume bars and containment bars favoring SPADE on the region decision.",
+        "Certified-volume contrast and containment bars favoring SPADE on the region decision.",
     )
     save(
         fig3(spade_q, spade_doe), "fig3",

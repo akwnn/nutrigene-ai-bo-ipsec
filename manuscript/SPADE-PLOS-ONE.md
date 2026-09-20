@@ -239,7 +239,7 @@ claim was withdrawn after extension to 32 seeds.
 
 ![SPADE operating-region advantage.](../results/paper-figures/plos/fig2.png)
 
-**Fig 2. SPADE’s primary advantage: trusted operating regions. (A) Mean certified volume at matched five rounds (leave-one-family-out): SPADE versus qLogNEI; locked contrast +0.000855 (95% CI [+0.000691, +0.001028], p<0.0001, n=320). (B) Observed truth containment among answered regions at prevalence 0.30: SPADE 66/66 versus screened DoE 85/122 and unscreened DoE 77/134.**
+**Fig 2. SPADE’s primary advantage: trusted operating regions. (A) Certified-volume difference (SPADE minus qLogNEI) at matched five rounds under leave-one-family-out calibration: +0.000855 (95% CI [+0.000691, +0.001028], p<0.0001, n=320); absolute means are noted under the panel. (B) Observed truth containment among answered regions at prevalence 0.30: SPADE 66/66 versus screened DoE 85/122 and unscreened DoE 77/134.**
 
 
 **Table 1. C3 matched-round regional comparison.**
@@ -259,9 +259,6 @@ calendar duration nor cost was measured.
 ![Point-recipe trade-off.](../results/paper-figures/plos/fig3.png)
 
 **Fig 3. Point-recipe trade-off (secondary to the region decision). (A) SPADE at five rounds minus qLogNEI at ten rounds on simple regret: no detectable difference (−0.0005, 95% CI [−0.0221, +0.0207], n=160); not claimed as equivalence. (B) SPADE at five rounds minus screened DoE at three rounds: DoE finds the better single recipe (+0.1026, 95% CI [+0.0486, +0.1578]); expected when the goal is one point rather than a region.**
-
-
-Fig 2. Point-recipe contrasts from the one-process DC comparison. (A) SPADE at five rounds minus qLogNEI at ten rounds on simple regret (n=160); shaded band is ±0.02. The estimate shows no detectable difference and does not establish equivalence. (B) SPADE at five rounds minus screened DoE at three rounds; DoE finds the better point recipe.
 
 
 ### DoE found a better point recipe but weaker regional containment
