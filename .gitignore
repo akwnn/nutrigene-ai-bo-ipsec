@@ -381,3 +381,4 @@ results/archival-release/*
 
 # Superseded local journal bundle; the dated current draft remains tracked.
 manuscript/SPADE-PLOS-ONE-upload-draft.zip
+~$*
