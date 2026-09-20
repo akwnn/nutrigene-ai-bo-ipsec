@@ -10,7 +10,29 @@
 
 This is the detailed scientific context file to give another agent. For operational state,
 read `.planning/STATE.md` first; for phase status, read `.planning/ROADMAP.md`.
-This handoff was last reconciled on 2026-09-12.
+This handoff was last reconciled on 2026-09-20.
+
+**Active PLOS thesis (2026-09-20):** the submission manuscript
+`manuscript/SPADE-PLOS-ONE.md` argues bounded operating-region superiority,
+not universal method superiority. The authoritative claim ledger is
+`manuscript/CLAIMS-AND-SOURCES.md`. Use these current-tense values only:
+
+- C3: `+0.000855`, 95% CI `[+0.000691,+0.001028]`, `p<0.0001`, `n=320`
+  dependent cells; greater certified volume at matched five rounds.
+- C1: `-0.0005`, 95% CI `[-0.0221,+0.0207]`, `p=0.96`, `n=160`;
+  no detectable point-regret difference between five-round SPADE and
+  ten-round qLogNEI. Never write matches, parity, or equivalent for this contrast.
+- C2: SPADE 66/160 answered and 66/66 contained; screened DoE 122/160 and
+  85/122; unscreened DoE 134/160 and 77/134. Adverse DoE point recipe:
+  `+0.1026`, 95% CI `[+0.0486,+0.1578]`, `p=0.0003`; DoE three rounds,
+  SPADE five.
+- Retained limits: real-noise ceiling near relative noise `0.68`,
+  joint-protocol `NO_SELECTION`, unopened/`FROZEN_UNOPENED` lockbox, and
+  no prospective wet-lab validation.
+
+Numerical records below this heading remain historical context. Do not treat
+archived Hill map-error, 15.3% latent-map, or superseded C3 wording as the
+current PLOS headline.
 
 **Replay claim-impact audit (2026-09-12):** all eight exact gates still fail; no
 historical equality test or reference result was changed. The primary C2 map means
@@ -80,11 +102,13 @@ No power artifact was authorized and the lockbox remains `FROZEN_UNOPENED`. The 
 must not state that development selection is pending, imply that this protocol passed
 cross-family validation, or pool its outcome with the 99,601-record study.
 
-Publication work should lead with the decision-rule and estimand contribution, report
-SPADE's target-regime mapping result with its calibration and mechanism limits, and treat
-`NO_SELECTION` as preregistered negative evidence against universal certification. Before
-submission, reconcile the Markdown and Word manuscripts, verify cited claims against the
-primary papers, and replace repository placeholders with a persistent archival identifier.
+Publication work should lead with the operating-region decision-guidance result
+(C3, then C1, then C2/adverse), keep `NO_SELECTION` as preregistered negative
+evidence against universal certification, and point readers to
+`manuscript/CLAIMS-AND-SOURCES.md`. Remaining work is author, account, DOI, and
+submission approval, not a further scientific rewrite. Before filing, rebuild
+Word derivatives from the tracked Markdown and replace the repository
+placeholder with a persistent archival identifier.
 
 **What this paper is not.** It is not the first BO-versus-DoE comparison, not a claim that “BO maps differently from RSM” as a new idea, and not a wet-lab validation of an ECM formulation. Rummukainen, Lapierre and Ndahiro already ran executed comparisons; Rummukainen already stated that RSM maps a region while BO concentrates near promising conditions.
 

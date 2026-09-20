@@ -3,9 +3,26 @@
 **Milestone:** SPADE joint protocol  
 **Status:** stopped at the registered development gate (`NO_SELECTION`)
 **Current phase:** Phase 6 publication preparation; Phase 5 lockbox access is blocked
-**Last reconciled:** 2026-09-12
+**Last reconciled:** 2026-09-20
 
 ## Current handoff
+
+- 2026-09-20 bounded-superiority rewrite: the approved active thesis is that
+  SPADE is better for the tested operating-region decision, not universally
+  better. Canonical sources are `manuscript/SPADE-PLOS-ONE.md` and
+  `manuscript/CLAIMS-AND-SOURCES.md`. Synchronized narrative files are the
+  cover letter, `README.md`, `docs/RESEARCH-SUMMARY.md`, this handoff, and
+  `manuscript/spade-plos-remaining-blockers.md`. Corrected current-tense values:
+  C1 `-0.0005` CI `[-0.0221,+0.0207]` p=0.96 n=160 (no detectable difference);
+  C3 `+0.000855` CI `[+0.000691,+0.001028]` p<0.0001 n=320 dependent cells;
+  adverse DoE `+0.1026` CI `[+0.0486,+0.1578]` p=0.0003 (DoE 3 rounds, SPADE 5);
+  C2 66/160, 66/66, 122/160 85/122, 134/160 77/134. Retained limits: real-noise
+  ceiling, `NO_SELECTION`, unopened lockbox, no prospective wet-lab validation.
+  Outstanding gates remain author identity/contributions/declarations and
+  scientific signoff, Joseph Yung confirmation, Zenodo/DOI deposit
+  authorization, account access, publication-fee plan, and journal submission.
+  Do not edit frozen primary results, open the lockbox, submit, or change
+  repository visibility.
 
 - 2026-09-12 claim-impact audit executed: `.planning/debug/replay-claim-impact.md`
   maps all eight still-failing gates to publication inputs. C2 map means independently

@@ -4,9 +4,24 @@ Research software for comparing point recommendations and acceptable-region maps
 under matched experimental budgets. All reported experiments are synthetic;
 the repository does not establish biological efficacy or a manufacturing guarantee.
 
-The current article is [the SPADE manuscript](manuscript/SPADE-PLOS-ONE.md), with an
-[editable Word version](manuscript/SPADE-PLOS-ONE.docx). Its four main figures are in
-`results/paper-figures/plos/`, including vector PDF/SVG, 450-dpi PNG, 600-dpi RGB TIFF,
+The current PLOS ONE article is
+[SPADE improves operating-region decisions under fixed experimental budgets](manuscript/SPADE-PLOS-ONE.md),
+with an [editable Word version](manuscript/SPADE-PLOS-ONE.docx).
+The active thesis is bounded superiority for the tested operating-region
+decision, not universal method superiority. Headline values and allowed wording
+are recorded in [the claim ledger](manuscript/CLAIMS-AND-SOURCES.md):
+
+- C3 certified volume, matched five rounds: `+0.000855`, 95% CI
+  `[+0.000691,+0.001028]`, `p<0.0001`, `n=320` dependent cells.
+- C1 point regret, five-round SPADE versus ten-round qLogNEI: `-0.0005`,
+  95% CI `[-0.0221,+0.0207]`, `p=0.96`, `n=160`; no detectable difference,
+  not equivalence.
+- C2 regional answers: SPADE 66/160 and 66/66 contained; screened DoE
+  122/160 and 85/122; unscreened DoE 134/160 and 77/134. Screened three-round
+  DoE found the better point recipe (`+0.1026`, 95% CI `[+0.0486,+0.1578]`,
+  `p=0.0003`); SPADE used five rounds.
+
+Its four main figures are in `results/paper-figures/plos/`, including vector PDF/SVG, 450-dpi PNG, 600-dpi RGB TIFF,
 source-data JSON, captions and accessible descriptions. The PLOS build uses Arial;
 install a legitimately licensed copy before rebuilding figures. Font identity is
 recorded in `results/paper-figures/build-manifest.json`.
@@ -27,8 +42,9 @@ recorded in `results/paper-figures/build-manifest.json`.
 - No protocol was selected and no lockbox outcomes were opened. Do not run lockbox
   workflows or create a power artifact on the basis of this development result.
 
-The contribution is an auditable comparison of decision criteria and their limits,
-not a universally superior optimizer or a transferable certificate.
+The contribution is decision guidance for operating-region use cases and an
+auditable record of their limits, not a universally superior optimizer or a
+transferable certificate.
 
 ## Reproducing the publication artifacts
 
@@ -81,8 +97,9 @@ and `S1_Table.csv`–`S3_Table.csv`, matching the manuscript captions. Its manif
 records hashes and outstanding author requirements. This is a local draft bundle,
 not a submission or the code/data archival deposit. Extract its individual files
 for the journal; the metadata manifest is for author review, not a supporting item.
-The cover letter retains unresolved author confirmations, including prior journal
-contact, related submissions, editor/reviewer preferences and approval to submit.
+The cover letter now states the bounded-superiority thesis and the PLOS
+declarations; remaining unresolved items are Joseph Yung confirmation, the
+archival DOI, and approval to submit.
 
 ## Validation and known limitations
 

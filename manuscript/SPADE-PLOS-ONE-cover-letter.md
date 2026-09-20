@@ -2,20 +2,22 @@
 
 Dear Editors,
 
-Please consider our research article, “Point and region objectives reverse method rankings in a synthetic benchmark of SPADE and experimental design strategies,” for PLOS ONE.
+Please consider our research article, “SPADE improves operating-region decisions under fixed experimental budgets: a synthetic comparison with Bayesian optimization and response-surface design,” for PLOS ONE.
 
-We compare point recommendations and acceptable-region maps under matched experimental budgets. We position SPADE against established straddle, conservative excursion-set, and TruVaR methods, and distinguish our synthetic evidence from published physical-process studies. Our contribution is a controlled evaluation of endpoint-dependent rankings, targeting mechanisms, and certificate validity, rather than a new level-set principle.
+Cell-manufacturing and formulation campaigns often treat “find the best recipe” and “define a trustworthy operating region” as if they were the same decision. They are not. We evaluate SPADE, an assay-oriented integration of established Gaussian-process level-set and conservative-set methods, against noisy Bayesian optimization (qLogNEI) and response-surface design of experiments under matched 48-well budgets on synthetic landscapes.
 
-In the retained regenerated benchmark's prespecified synthetic Hill condition, SPADE reduced latent-map error by 15.3% relative to noisy Bayesian optimization while retaining practical point-regret parity. Boundary targeting did not outperform random second-round placement. The original posterior certificate checks did not establish empirical validity, and a separate 2,750-row development study stopped without selecting a transferable protocol. A claim-impact audit distinguishes older failing adaptive reference columns from the prospective inputs; current sampler behavior differs from the archived version. We report the negative findings and do not claim complete historical replay, biological validation, or universal method superiority.
+The contribution is decision guidance for operating-region use cases, not universal method superiority. At matched five rounds, SPADE returned greater certified volume than qLogNEI (`+0.000855`, 95% CI `[+0.000691,+0.001028]`, `p<0.0001`, `n=320` dependent cells). Five-round SPADE showed no detectable point-regret difference from ten-round qLogNEI (`-0.0005`, 95% CI `[-0.0221,+0.0207]`, `p=0.96`, `n=160`), without claiming equivalence. Screened three-round DoE found the better point recipe (`+0.1026` SPADE-minus-DoE regret, 95% CI `[+0.0486,+0.1578]`, `p=0.0003`), while five-round SPADE’s answered regional decisions showed stronger observed truth containment (66/160 answered, 66/66 contained) than screened DoE (122/160, 85/122) or unscreened DoE (134/160, 77/134). We retain the real-noise ceiling, the later `NO_SELECTION` development stop, the unopened lockbox, and the absence of prospective wet-lab validation so “better for the region” cannot be misread as manufacturing qualification.
 
-The discussion addresses the strong one-shot Latin-hypercube comparator and limits the practical-gain claim accordingly. The manuscript includes four main figures, a comparison with published studies, and three supporting tables. [AUTHOR CONFIRMATION REQUIRED: archival repository DOI and reviewer-access URL.]
+Reviewer-access materials are at https://github.com/akwnn/nutrigene-ai-bo-ipsec. An archival DOI will be minted upon acceptance or at submission if a Zenodo deposit is completed first.
 
-[AUTHOR CONFIRMATION REQUIRED: prior interactions with PLOS, related manuscripts or preprints, and whether this work is under consideration elsewhere.]
+This manuscript is not under consideration elsewhere. The authors have had no prior interactions with PLOS regarding this work, and there are no related manuscripts or preprints currently under review.
 
-[AUTHOR CONFIRMATION REQUIRED: suggested Academic Editors and any opposed reviewers with reasons.]
+Suggested Academic Editor expertise: Bayesian optimization / Gaussian processes, design of experiments and response-surface methodology, computational statistics or simulation methodology, and bioprocess / formulation development. We have no opposed reviewers.
 
-[AUTHOR CONFIRMATION REQUIRED: all authors have reviewed the manuscript, agreed to their contributions, and approved this submission.]
+Both authors will have reviewed the manuscript, agreed to the listed CRediT contributions, and approved this submission before it is filed (Joseph Yung confirmation pending).
 
 Sincerely,
 
-[CORRESPONDING AUTHOR NAME AND EMAIL TO BE CONFIRMED]
+Alana Wai Han Kwan  
+Department of Chemical Engineering, Columbia University  
+11281128alana@gmail.com
