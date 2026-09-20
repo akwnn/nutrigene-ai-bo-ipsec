@@ -1,1 +1,1 @@
-Three-panel method-selection board for region, point, and high-noise decisions.
+Three-panel study schematic: fixed 48-well campaign, point versus region decisions, and compared methods.

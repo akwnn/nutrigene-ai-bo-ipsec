@@ -137,37 +137,103 @@ def load_dc_regret():
 
 
 def fig1():
-    """When to use what — SPADE as the region method."""
+    """Study-design schematic: fixed campaign → two decisions → method roles."""
     style()
-    fig, ax = plt.subplots(figsize=(7.2, 2.7))
-    fig.subplots_adjust(left=0.04, right=0.98, top=0.88, bottom=0.06)
+    fig = plt.figure(figsize=(7.2, 2.85))
+    fig.subplots_adjust(left=0.03, right=0.98, top=0.86, bottom=0.08)
+    ax = fig.add_subplot(111)
     ax.set_xlim(0, 1)
     ax.set_ylim(0, 1)
     ax.axis("off")
-    ax.set_title("Method selection under a fixed 48-well budget", pad=10, fontsize=10, color=INK)
+    ax.set_title("Study design under a fixed 48-well budget", pad=8, fontsize=10, color=INK)
 
-    # Three equal cards
-    cards = [
-        (0.02, "#DBEAFE", SPADE, "Need a trusted\noperating region", "→  SPADE",
-         "Larger certified volume\nHonest containment\nMay abstain if unsure"),
-        (0.35, "#ECFDF5", DOE, "Need one\ncarry-forward recipe", "→  DoE / BO",
-         "DoE often wins on regret\nCompetitive with longer BO\nDifferent job than regions"),
-        (0.68, "#F3F4F6", MUTED, "Very high\nassay-like noise", "→  Abstain",
-         "Nothing certifies safely\nReplicate / reduce noise\nbefore claiming a region"),
-    ]
-    for x, bg, accent, need, rec, why in cards:
+    # Panel letters via small tags on each column
+    def card(x, y, w, h, face, edge, title, body, letter):
         ax.add_patch(FancyBboxPatch(
-            (x, 0.08), 0.30, 0.78, transform=ax.transAxes,
-            boxstyle="round,pad=0.02,rounding_size=0.03",
-            facecolor=bg, edgecolor=accent, linewidth=1.6, clip_on=False,
+            (x, y), w, h, transform=ax.transAxes,
+            boxstyle="round,pad=0.012,rounding_size=0.02",
+            facecolor=face, edgecolor=edge, linewidth=1.4, clip_on=False,
         ))
-        ax.text(x + 0.15, 0.72, need, transform=ax.transAxes, ha="center", va="center",
-                fontsize=8.5, color=INK, fontweight="bold", linespacing=1.25)
-        ax.text(x + 0.15, 0.48, rec, transform=ax.transAxes, ha="center", va="center",
-                fontsize=11, color=accent, fontweight="bold")
-        ax.text(x + 0.15, 0.24, why, transform=ax.transAxes, ha="center", va="center",
-                fontsize=7.2, color=MUTED, linespacing=1.3)
+        ax.text(x + 0.015, y + h - 0.02, letter, transform=ax.transAxes,
+                fontsize=10, fontweight="bold", color=INK, va="top", ha="left")
+        ax.text(x + w / 2, y + h - 0.10, title, transform=ax.transAxes,
+                ha="center", va="top", fontsize=8.5, fontweight="bold", color=INK)
+        ax.text(x + w / 2, y + 0.10, body, transform=ax.transAxes,
+                ha="center", va="bottom", fontsize=7.2, color=MUTED, linespacing=1.3)
+
+    # A — campaign
+    card(
+        0.02, 0.12, 0.28, 0.72, "#E8F1F8", SPADE,
+        "One 48-well campaign",
+        "Same total wells for\nevery method arm.\nMethod chooses how to\nsplit rounds and what\nto return at the end.",
+        "A",
+    )
+    # Arrow A→B
+    ax.annotate("", xy=(0.34, 0.48), xytext=(0.31, 0.48),
+                xycoords=ax.transAxes, textcoords=ax.transAxes,
+                arrowprops=dict(arrowstyle="->", color=INK, lw=1.2))
+
+    # B — two decisions
+    ax.add_patch(FancyBboxPatch(
+        (0.35, 0.12), 0.30, 0.72, transform=ax.transAxes,
+        boxstyle="round,pad=0.012,rounding_size=0.02",
+        facecolor="#FAFAFA", edgecolor=INK, linewidth=1.2, clip_on=False,
+    ))
+    ax.text(0.365, 0.80, "B", transform=ax.transAxes, fontsize=10, fontweight="bold", color=INK, va="top")
+    ax.text(0.50, 0.78, "Two end-of-run decisions", transform=ax.transAxes,
+            ha="center", va="top", fontsize=8.5, fontweight="bold", color=INK)
+    # point box
+    ax.add_patch(FancyBboxPatch(
+        (0.37, 0.48), 0.26, 0.22, transform=ax.transAxes,
+        boxstyle="round,pad=0.01,rounding_size=0.015",
+        facecolor="#FDE9DD", edgecolor=QLOG, linewidth=1.1, clip_on=False,
+    ))
+    ax.text(0.50, 0.66, "Point recipe", transform=ax.transAxes,
+            ha="center", fontsize=8, fontweight="bold", color=INK)
+    ax.text(0.50, 0.52, "Score = simple regret\n(one carry-forward setting)",
+            transform=ax.transAxes, ha="center", va="bottom", fontsize=6.8, color=MUTED, linespacing=1.25)
+    # region box
+    ax.add_patch(FancyBboxPatch(
+        (0.37, 0.18), 0.26, 0.26, transform=ax.transAxes,
+        boxstyle="round,pad=0.01,rounding_size=0.015",
+        facecolor="#DDF3E8", edgecolor=DOE, linewidth=1.1, clip_on=False,
+    ))
+    ax.text(0.50, 0.40, "Operating region", transform=ax.transAxes,
+            ha="center", fontsize=8, fontweight="bold", color=INK)
+    ax.text(0.50, 0.21, "Score = certified volume,\ncontainment, or abstain\nif evidence is weak",
+            transform=ax.transAxes, ha="center", va="bottom", fontsize=6.8, color=MUTED, linespacing=1.2)
+
+    ax.annotate("", xy=(0.69, 0.48), xytext=(0.66, 0.48),
+                xycoords=ax.transAxes, textcoords=ax.transAxes,
+                arrowprops=dict(arrowstyle="->", color=INK, lw=1.2))
+
+    # C — methods in this study
+    ax.add_patch(FancyBboxPatch(
+        (0.70, 0.12), 0.28, 0.72, transform=ax.transAxes,
+        boxstyle="round,pad=0.012,rounding_size=0.02",
+        facecolor="#F8FAFC", edgecolor=INK, linewidth=1.2, clip_on=False,
+    ))
+    ax.text(0.715, 0.80, "C", transform=ax.transAxes, fontsize=10, fontweight="bold", color=INK, va="top")
+    ax.text(0.84, 0.78, "Methods compared here", transform=ax.transAxes,
+            ha="center", va="top", fontsize=8.5, fontweight="bold", color=INK)
+
+    rows = [
+        (0.62, SPADE, "SPADE", "Region-first; may abstain"),
+        (0.44, QLOG, "qLogNEI (BO)", "Point search; region via\nshared post-processing"),
+        (0.22, DOE, "DoE (RSM)", "Classical designs;\nstrong on one recipe"),
+    ]
+    for y, color, name, note in rows:
+        ax.add_patch(FancyBboxPatch(
+            (0.72, y), 0.24, 0.14, transform=ax.transAxes,
+            boxstyle="round,pad=0.008,rounding_size=0.012",
+            facecolor="white", edgecolor=color, linewidth=1.3, clip_on=False,
+        ))
+        ax.text(0.84, y + 0.095, name, transform=ax.transAxes,
+                ha="center", va="top", fontsize=7.5, fontweight="bold", color=color)
+        ax.text(0.84, y + 0.02, note, transform=ax.transAxes,
+                ha="center", va="bottom", fontsize=6.5, color=MUTED, linespacing=1.15)
     return fig
+
 
 
 def fig2():
@@ -371,11 +437,14 @@ def main():
 
     save(
         fig1(), "fig1",
-        "Fig 1. Method selection under a fixed 48-well budget. "
-        "Choose SPADE when the campaign must return a trusted operating region with honest abstention. "
-        "Choose a point optimizer (DoE or BO) when only one carry-forward recipe is required. "
-        "Under very high assay-like noise, abstain and replicate rather than claiming a region.",
-        "Three-panel method-selection board for region, point, and high-noise decisions.",
+        "Fig 1. Study design under a fixed 48-well budget. "
+        "(A) Every compared arm uses the same 48-well campaign total; the method chooses round structure and the terminal return. "
+        "(B) The same wells can be scored as a point-recipe decision (simple regret) or as an operating-region decision "
+        "(certified volume, truth containment, or abstention). "
+        "(C) SPADE is evaluated as the region-first architecture; qLogNEI is the noisy Bayesian-optimization comparator; "
+        "DoE pipelines are classical response-surface designs that often win the single-recipe job. "
+        "This schematic defines the benchmark and contains no performance result.",
+        "Three-panel study schematic: fixed 48-well campaign, point versus region decisions, and compared methods.",
     )
     save(
         fig2(), "fig2",
