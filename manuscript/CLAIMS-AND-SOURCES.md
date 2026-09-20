@@ -5,11 +5,12 @@ The manuscript may say SPADE is better only when the operating-region endpoint,
 matched-round setting, benchmark scope, and relevant containment/answer denominators
 are named. “Better” without those qualifiers is forbidden.
 
-The active PLOS source is on `codex/publication-readiness`. Audited consolidated
-provenance is pinned to repository commit `ec14bc7`; no local-worktree location is
-part of the evidence contract. Inspect any pinned file with
-`git show ec14bc7:<repository-path>`. To execute a pinned analyser without changing
-the active branch, create a detached temporary worktree:
+The active PLOS Markdown/DOCX remain on `codex/publication-readiness`. Current
+C1–C6/S1 reproduction uses the consolidated evidence paths on `codex/paper-ready`.
+Audited consolidated provenance is pinned to repository commit `ec14bc7`; no
+local-worktree location is part of the evidence contract. Inspect any pinned file
+with `git show ec14bc7:<repository-path>`. To execute a pinned analyser without
+changing the active branch, create a detached temporary worktree:
 
 ```bash
 REPO=$(git rev-parse --show-toplevel)
@@ -77,13 +78,18 @@ Values are for 48 wells and relative noise `0.25` unless stated otherwise.
   SPADE is better overall, or treating 320 dependent cells as independent campaigns.
 - **Estimate:** SPADE minus qLogNEI `+0.000855`, 95% CI
   `[+0.000691,+0.001028]`, `p<0.0001`, `n=320`.
-- **Active evidence:** `results/lc-{ackley,hartmann6,hill,levy,rosenbrock}.json`.
-- **Active analysis command:** `.venv/bin/python scripts/analyse_lc_confirmatory.py
-  --glob 'results/lc-*.json'`.
-- **Commit-pinned audited equivalent:** at `ec14bc7`,
-  `research/results/comparisons/lc-*.json` with
-  `software/scripts/analyse_lc_confirmatory.py --glob
-  'research/results/comparisons/lc-*.json'`.
+- **Commit-pinned evidence:** at `ec14bc7`,
+  `research/results/comparisons/lc-{ackley,hartmann6,hill,levy,rosenbrock}.json`.
+  Inspect one input with
+  `git show ec14bc7:research/results/comparisons/lc-ackley.json`.
+- **Commit-pinned analyser and command:** at `ec14bc7`,
+  `software/scripts/analyse_lc_confirmatory.py`; in the detached worktree run
+  `"$REPO/.venv/bin/python" software/scripts/analyse_lc_confirmatory.py
+  --glob 'research/results/comparisons/lc-*.json'`.
+- **Active-checkout status:** `scripts/analyse_lc_confirmatory.py` is tracked, but
+  `results/lc-*.json` is absent from a clean `codex/publication-readiness`
+  checkout. The active script alone is not a complete reproduction path and is
+  not the evidence cited for C3.
 - **Guard coverage:** `software/scripts/verify_conclusions.py` at `ec14bc7` pins the
   mean and denominator; the
   active manuscript guard pins the complete signed estimate, CI, p-value, LOFO
@@ -102,11 +108,12 @@ Values are for 48 wells and relative noise `0.25` unless stated otherwise.
   five-family/32-seed coverage, or imputing unmatched Hill/seeds.
 - **Estimate:** SPADE minus LHS `-0.0783`, 95% CI
   `[-0.1104,-0.0490]`, `n=80`.
-- **Evidence:** active SPADE inputs are
-  `results/lc-{ackley,hartmann6,levy,rosenbrock}.json`; the LHS inputs have no
-  active-branch equivalent. At `ec14bc7`, the complete pair is
+- **Commit-pinned evidence:** at `ec14bc7`, the complete pair is
   `research/results/comparisons/lc-*.json` plus
-  `research/results/comparisons/la-*.json`.
+  `research/results/comparisons/la-*.json`; neither result family is present in
+  a clean active checkout. Inspect representative inputs with
+  `git show ec14bc7:research/results/comparisons/lc-ackley.json` and
+  `git show ec14bc7:research/results/comparisons/la-ackley.json`.
 - **Command:** in the detached `ec14bc7` worktree,
   `"$REPO/.venv/bin/python" software/scripts/verify_conclusions.py`;
   `software/scripts/analyse_la_round_matched.py` is the dedicated audited analyser.
@@ -126,11 +133,16 @@ Values are for 48 wells and relative noise `0.25` unless stated otherwise.
 - **Estimate:** Spearman rho `0.9880098603391883` over 25 nested
   family-prevalence cells. Median-margin sensitivity is identical; the qLogNEI
   sensitivity is `0.9682461469`.
-- **Active evidence:** `results/tau-{ackley,hartmann6,hill,levy,rosenbrock}.json`.
-- **Active analysis command:** `.venv/bin/python scripts/analyse_tau_sweep.py`.
-- **Commit-pinned audited equivalent:** at `ec14bc7`,
-  `research/results/generalization/tau-{ackley,hartmann6,hill,levy,rosenbrock}.json`
-  with `software/scripts/analyse_tau_sweep.py`.
+- **Commit-pinned evidence:** at `ec14bc7`,
+  `research/results/generalization/tau-{ackley,hartmann6,hill,levy,rosenbrock}.json`.
+  Inspect one input with
+  `git show ec14bc7:research/results/generalization/tau-ackley.json`.
+- **Commit-pinned analyser and command:** at `ec14bc7`,
+  `software/scripts/analyse_tau_sweep.py`; in the detached worktree run
+  `"$REPO/.venv/bin/python" software/scripts/analyse_tau_sweep.py`.
+- **Active-checkout status:** `scripts/analyse_tau_sweep.py` is tracked, but
+  `results/tau-*.json` is absent from a clean active checkout. The active script
+  alone is not a complete reproduction path and is not the evidence cited for C5.
 - **Guard coverage:** `software/scripts/verify_conclusions.py` at `ec14bc7`
   validates canonical completeness
   and pins the primary rho and 25-cell count, but not every sensitivity.
@@ -146,11 +158,15 @@ Values are for 48 wells and relative noise `0.25` unless stated otherwise.
   registered lower-bound gate.
 - **Exact counts:** SPADE 40/64 answered, 40/40 contained, one-sided 95% lower
   bound `0.9278`; qLogNEI 27/64 answered and 27/27 contained.
-- **Active evidence and command:** `results/tau-hill.json`, reproduced as part of
-  `.venv/bin/python scripts/analyse_tau_sweep.py`.
-- **Commit-pinned audited equivalent:** at `ec14bc7`,
-  `research/results/generalization/tau-hill.json` with
-  `software/scripts/analyse_tau_sweep.py`.
+- **Commit-pinned evidence:** at `ec14bc7`,
+  `research/results/generalization/tau-hill.json`; inspect it with
+  `git show ec14bc7:research/results/generalization/tau-hill.json`.
+- **Commit-pinned analyser and command:** at `ec14bc7`,
+  `software/scripts/analyse_tau_sweep.py`; in the detached worktree run
+  `"$REPO/.venv/bin/python" software/scripts/analyse_tau_sweep.py`.
+- **Active-checkout status:** the tracked compatibility analyser
+  `scripts/analyse_tau_sweep.py` exists, but `results/tau-hill.json` does not.
+  C6 therefore uses only the commit-pinned analyser-plus-input pair.
 - **Guard coverage:** `software/scripts/verify_conclusions.py` at `ec14bc7` pins
   SPADE answered, contained, and lower
   bound, but not the qLogNEI counts.
