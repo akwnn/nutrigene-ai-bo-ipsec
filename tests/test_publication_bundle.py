@@ -160,6 +160,15 @@ def test_manuscript_captions_match_retained_plos_plots():
         assert match, f"missing Fig {number} caption"
         return match.group(0)
 
+    def supporting_table(number: str) -> str:
+        match = re.search(
+            rf"\*\*S{number} Table\.\*\*\s.*?(?=\n\n|\Z)",
+            text,
+            flags=re.S,
+        )
+        assert match, f"missing S{number} Table caption"
+        return " ".join(match.group(0).split())
+
     fig1, fig2, fig3, fig4 = caption("1"), caption("2"), caption("3"), caption("4")
     assert "Matched-round certified-volume comparisons" not in text
     assert "shaded practical-effect band" not in text
@@ -177,20 +186,28 @@ def test_manuscript_captions_match_retained_plos_plots():
     assert re.search(r"shaded band", fig3)
     assert re.search(r"not matched-round certified volume", fig3)
     assert re.search(r"posterior self-consistency", fig4)
-    supporting = " ".join(text.split("## Supporting information captions", 1)[1].split())
-    assert "prospective calibration and refinement" in supporting
-    assert "25 Hill landscape instances" in supporting
-    assert "latent acceptability labels" in supporting
-    assert "0.50 cutoff" in supporting
-    assert "common GP" in supporting
-    assert "12 available target-condition arms" in supporting
-    assert "40-well reference" in supporting
-    assert "seven-condition comparison" in supporting.lower()
-    assert "six matched-budget strategies" in supporting
-    assert "100 campaigns" in supporting
-    assert "not the C3 matched-round certified-volume comparison" in supporting
-    assert "kill-ledger" in supporting
-    assert "Certificate checks do not establish empirical validity" in supporting
+    s1, s2, s3 = supporting_table("1"), supporting_table("2"), supporting_table("3")
+    assert "prospective calibration" in s1
+    assert "25 Hill landscape instances" in s1
+    assert "latent acceptability labels" in s1
+    assert "0.50 cutoff" in s1
+    assert "common GP" in s1
+    assert "12 available target-condition arms" in s1
+    assert "40-well reference" in s1
+    assert "seven-condition comparison" not in s1.lower()
+    assert "kill-ledger" not in s1
+    assert "seven-condition comparison" in s2.lower()
+    assert "six matched-budget strategies" in s2
+    assert "100 campaigns" in s2
+    assert "not the C3 matched-round certified-volume comparison" in s2
+    assert "prospective calibration" not in s2
+    assert "kill-ledger" not in s2
+    assert "claim decisions" in s3
+    assert "kill-ledger" in s3
+    assert re.search(r"Original statuses.*corrected interpretation", s3, flags=re.S)
+    assert "Certificate checks do not establish empirical validity" in s3
+    assert "prospective calibration" not in s3
+    assert "seven-condition comparison" not in s3.lower()
 
 
 def test_development_artifact_bundle_matches_its_original_selection_hashes():
