@@ -11,15 +11,16 @@ The active thesis is bounded superiority for the tested operating-region
 decision, not universal method superiority. Headline values and allowed wording
 are recorded in [the claim ledger](manuscript/CLAIMS-AND-SOURCES.md):
 
-- C3 certified volume, matched five rounds: `+0.000855`, 95% CI
-  `[+0.000691,+0.001028]`, `p<0.0001`, `n=320` dependent cells.
+- C3 certified-volume difference, matched five rounds: SPADE minus qLogNEI
+  `+0.000855`, 95% CI `[+0.000691,+0.001028]`, `p<0.0001`, `n=320`
+  dependent cells.
 - C1 point regret, five-round SPADE versus ten-round qLogNEI: `-0.0005`,
   95% CI `[-0.0221,+0.0207]`, `p=0.96`, `n=160`; no detectable difference,
   not equivalence.
 - C2 regional answers: SPADE 66/160 and 66/66 contained; screened DoE
   122/160 and 85/122; unscreened DoE 134/160 and 77/134. Screened three-round
-  DoE found the better point recipe (`+0.1026`, 95% CI `[+0.0486,+0.1578]`,
-  `p=0.0003`); SPADE used five rounds.
+  DoE found the better point recipe (SPADE-minus-DoE regret `+0.1026`, 95% CI
+  `[+0.0486,+0.1578]`, `p=0.0003`); SPADE used five rounds.
 
 Its four main figures are in `results/paper-figures/plos/`, including vector PDF/SVG, 450-dpi PNG, 600-dpi RGB TIFF,
 source-data JSON, captions and accessible descriptions. The PLOS build uses Arial;

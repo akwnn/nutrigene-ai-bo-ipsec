@@ -1,9 +1,11 @@
 # SPADE PLOS ONE — remaining before submit
 
-Technical verification of the bounded-superiority rewrite is complete for the
-Markdown sources (`manuscript/SPADE-PLOS-ONE.md`, `manuscript/CLAIMS-AND-SOURCES.md`,
-cover letter, README, research summary, and `.planning/STATE.md`). Remaining work
-is author, account, and external submission work only.
+Technical verification of HEAD Markdown and hash-bound DOCX is complete
+(`manuscript/SPADE-PLOS-ONE.md`, `manuscript/CLAIMS-AND-SOURCES.md`, cover letter,
+README, research summary, `.planning/STATE.md`, and the Word derivatives).
+Scientific analysers remain pinned to paper-ready commit `ec14bc7`. Remaining
+work is author, account, and external submission work only. None of those
+external gates is complete.
 
 When a Zenodo deposit is minted, use the current manuscript title rather than
 any earlier working title recorded in `manuscript/ZENODO-DEPOSIT.md`.

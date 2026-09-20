@@ -517,21 +517,25 @@ are historical or supporting Hill terminal-rule, map-error, and certificate
 displays; they are not C3 certified-volume evidence. That comparison remains
 Table 1.
 
-**S1 Table.** Source rows for the historical terminal-rule display: measured-selection
-Rule A versus common-GP Rule P on the Hill ($d=6$, $\sigma_{\mathrm{rel}}=0.25$)
-benchmark ($n=50$ paired campaigns per method), including the
-search-versus-identification decomposition. This table supports the Rule A/Rule P
-plot, not the C1 R5-versus-R10 regret contrast.
+**S1 Table.** Archived historical supporting table of prospective calibration and
+refinement metrics from final raw rows (not a current C1 or C3 headline). Means
+use 25 Hill landscape instances with four campaign seeds averaged within each
+instance. Calibration uses latent acceptability labels, maps use a 0.50 cutoff,
+and point recommendations use a common GP. The CSV contains all 12 available
+target-condition arms, including the 40-well reference.
 
-**S2 Table.** Source rows for the historical registered-target map-error display:
-symmetric-difference map error versus Rule-P simple regret, paired
-SPADE-minus-Sobol and SPADE-minus-qLogNEI map contrasts with the ±0.02 shaded
-smallest-effect band, equal-well round costs, and descriptive Hartmann $d=6$ and
-$d=8$ robustness means. This table is not a matched-round certified-volume
+**S2 Table.** Archived historical supporting table: seven-condition comparison for
+six matched-budget strategies. Hill estimates use 25 instances with four
+campaigns per instance; external-function estimates summarize 100 campaigns on
+each specified function. Archived certificate statuses refer to posterior checks,
+not empirical validity. All listed arms use 48 wells; lower map error and Rule-P
+regret are better. This table is not the C3 matched-round certified-volume
 comparison.
 
-**S3 Table.** Source rows for the historical calibration and certificate display:
-retrospective Hill calibration/refinement cells, prospective Hill posterior
-self-consistency checks (not empirical containment against the oracle), and
-five-family answer-rate versus conditional-containment summaries. These archived
-certificate checks do not replace the C3 certified-volume result.
+**S3 Table.** Archived historical supporting table of claim decisions and current
+source-reconciled interpretations (kill-ledger). Original statuses, numerical
+results, and interpretation text are preserved in separate columns from the
+corrected interpretation. Certificate checks do not establish empirical
+validity; the Plate-2 gain is below the practical threshold, and the qLogNEI map
+contrast exceeds that threshold. Denominators retain their original units and
+are not uniformly independent campaigns.

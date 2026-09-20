@@ -163,8 +163,11 @@ def test_manuscript_captions_match_retained_plos_plots():
     fig1, fig2, fig3, fig4 = caption("1"), caption("2"), caption("3"), caption("4")
     assert "Matched-round certified-volume comparisons" not in text
     assert "shaded practical-effect band" not in text
-    assert "Plate-2 gain" not in text
-    assert "seven-condition comparison" not in text.lower()
+    abstract = text.split("## Abstract\n", 1)[1].split("## Introduction", 1)[0]
+    results = text.split("## Results\n", 1)[1].split("## Discussion", 1)[0]
+    headlines = abstract + results
+    assert "Plate-2 gain" not in headlines
+    assert "seven-condition comparison" not in headlines.lower()
     assert re.search(r"Benchmark decisions and estimands", fig1)
     assert re.search(r"Rule A versus Rule P", fig2)
     assert re.search(r"\$n=50\$", fig2)
@@ -174,11 +177,20 @@ def test_manuscript_captions_match_retained_plos_plots():
     assert re.search(r"shaded band", fig3)
     assert re.search(r"not matched-round certified volume", fig3)
     assert re.search(r"posterior self-consistency", fig4)
-    supporting = text.split("## Supporting information captions", 1)[1]
-    assert "historical terminal-rule display" in supporting
-    assert "historical registered-target map-error display" in supporting
-    assert "not a matched-round certified-volume" in supporting
-    assert "seven-condition comparison" not in supporting.lower()
+    supporting = " ".join(text.split("## Supporting information captions", 1)[1].split())
+    assert "prospective calibration and refinement" in supporting
+    assert "25 Hill landscape instances" in supporting
+    assert "latent acceptability labels" in supporting
+    assert "0.50 cutoff" in supporting
+    assert "common GP" in supporting
+    assert "12 available target-condition arms" in supporting
+    assert "40-well reference" in supporting
+    assert "seven-condition comparison" in supporting.lower()
+    assert "six matched-budget strategies" in supporting
+    assert "100 campaigns" in supporting
+    assert "not the C3 matched-round certified-volume comparison" in supporting
+    assert "kill-ledger" in supporting
+    assert "Certificate checks do not establish empirical validity" in supporting
 
 
 def test_development_artifact_bundle_matches_its_original_selection_hashes():
