@@ -1,1 +1,1 @@
-Fig 4. Additional locked SPADE evidence. (A) At three rounds SPADE has lower regret than one-shot Latin hypercube sampling (SPADE−LHS −0.0783; shown as positive SPADE advantage). (B) On the biology-shaped Hill family at prevalence 0.70, SPADE answers 40/64 trusted regions versus 27/64 for qLogNEI; both arms contain truth in every answered cell.
+Fig 4. Additional locked SPADE evidence (C4 and C6).
