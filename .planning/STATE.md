@@ -17,7 +17,9 @@
   C3 `+0.000855` CI `[+0.000691,+0.001028]` p<0.0001 n=320 dependent cells;
   adverse DoE `+0.1026` CI `[+0.0486,+0.1578]` p=0.0003 (DoE 3 rounds, SPADE 5);
   C2 66/160, 66/66, 122/160 85/122, 134/160 77/134. Retained limits: real-noise
-  ceiling, `NO_SELECTION`, unopened lockbox, no prospective wet-lab validation.
+  ceiling, original posterior certificate checks do not establish empirical or
+  calibration validity, `NO_SELECTION`, unopened lockbox, no prospective wet-lab
+  validation.
   Outstanding gates remain author identity/contributions/declarations and
   scientific signoff, Joseph Yung confirmation, Zenodo/DOI deposit
   authorization, account access, publication-fee plan, and journal submission.

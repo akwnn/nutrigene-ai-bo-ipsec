@@ -1,6 +1,6 @@
-# Matched-budget benchmarking of Bayesian optimization and response-surface methodology depends on the terminal decision rule
+# SPADE improves operating-region decisions under fixed experimental budgets: a synthetic comparison with Bayesian optimization and response-surface design
 
-**Running title.** Terminal decision rules reverse BO-versus-RSM rankings on a synthetic recipe benchmark.
+**Running title.** Fixed-budget operating-region decisions
 
 **Keywords.** Bayesian optimization; response-surface methodology; terminal decision rule; matched budget; Gaussian process; simple regret; sequential design; experimental rounds.
 
@@ -27,8 +27,9 @@ not universal method superiority. The authoritative claim ledger is
   `+0.1026`, 95% CI `[+0.0486,+0.1578]`, `p=0.0003`; DoE three rounds,
   SPADE five.
 - Retained limits: real-noise ceiling near relative noise `0.68`,
-  joint-protocol `NO_SELECTION`, unopened/`FROZEN_UNOPENED` lockbox, and
-  no prospective wet-lab validation.
+  original posterior certificate checks do not establish empirical or
+  calibration validity, joint-protocol `NO_SELECTION`,
+  unopened/`FROZEN_UNOPENED` lockbox, and no prospective wet-lab validation.
 
 Numerical records below this heading remain historical context. Do not treat
 archived Hill map-error, 15.3% latent-map, or superseded C3 wording as the
@@ -103,8 +104,9 @@ must not state that development selection is pending, imply that this protocol p
 cross-family validation, or pool its outcome with the 99,601-record study.
 
 Publication work should lead with the operating-region decision-guidance result
-(C3, then C1, then C2/adverse), keep `NO_SELECTION` as preregistered negative
-evidence against universal certification, and point readers to
+(C3, then C1, then C2/adverse), report SPADE's target-regime mapping result with
+its calibration and mechanism limits, keep `NO_SELECTION` as preregistered
+negative evidence against universal certification, and point readers to
 `manuscript/CLAIMS-AND-SOURCES.md`. Remaining work is author, account, DOI, and
 submission approval, not a further scientific rewrite. Before filing, rebuild
 Word derivatives from the tracked Markdown and replace the repository
