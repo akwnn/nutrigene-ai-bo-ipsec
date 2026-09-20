@@ -1,1 +1,1 @@
-Retrospective Hill calibration and refinement are shown as aligned dot strips. Prospective Hill model-check pass fractions use original binomial intervals and non-empty denominators, not oracle containment. Cross-family answer rates distinguish declining to certify from containment conditional on answering. Retrospective pooled certificate-cell counts are descriptive because cells repeat within campaigns.
+C4 regret advantage versus LHS and C6 Hill answer-rate comparison.

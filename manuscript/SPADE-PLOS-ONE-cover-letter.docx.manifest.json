@@ -2,7 +2,7 @@
   "builder_sha256": "2bfa032f8f1faf860bb224c0ce3012ffc880da982c8bffe52b65d20dd6764a69",
   "cover_letter": true,
   "image_sha256": {},
-  "include_figures": false,
-  "output_sha256": "c6b63b787618f7877436665b21e5471d17f6493f8e6e667da5684fc0ee2f3018",
-  "source_sha256": "2673c0dba5dd0c453920b7507c4c7322900ae74af16b44bda52d833392392d1b"
+  "include_figures": true,
+  "output_sha256": "7069cbf6de63c7e5b13c0f4d30c808f544a594b2800bdb05a8d5064f9c5b6fa0",
+  "source_sha256": "2390d3630552774c1adfeff04d62643bb519c2f02ee4d9ca373bb1cd5272106b"
 }

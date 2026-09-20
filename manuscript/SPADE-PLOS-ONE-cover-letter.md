@@ -14,7 +14,7 @@ This manuscript is not under consideration elsewhere. The authors have had no pr
 
 Suggested Academic Editor expertise: Bayesian optimization / Gaussian processes, design of experiments and response-surface methodology, computational statistics or simulation methodology, and bioprocess / formulation development. We have no opposed reviewers.
 
-Both authors will have reviewed the manuscript, agreed to the listed CRediT contributions, and approved this submission before it is filed (Joseph Yung confirmation pending).
+Both authors have reviewed the manuscript, agreed to the listed CRediT contributions and author order, and approved this submission.
 
 Sincerely,
 

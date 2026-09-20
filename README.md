@@ -1,51 +1,40 @@
 # SPADE research benchmark
 
-Research software for comparing point recommendations and acceptable-region maps
-under matched experimental budgets. All reported experiments are synthetic;
-the repository does not establish biological efficacy or a manufacturing guarantee.
+Research software and evidence for **SPADE**: a fixed-well, multi-round workflow for
+**operating-region** decisions (conservative claimed regions with abstention), compared
+with noisy Bayesian optimization (qLogNEI) and response-surface DoE on synthetic
+landscapes. All reported experiments are synthetic; the repository does **not** establish
+biological efficacy, manufacturing qualification, or regulatory design-space validity.
 
-The current PLOS ONE article is
-[SPADE improves operating-region decisions under fixed experimental budgets](manuscript/SPADE-PLOS-ONE.md),
-with an [editable Word version](manuscript/SPADE-PLOS-ONE.docx).
-The active thesis is bounded superiority for the tested operating-region
-decision, not universal method superiority. Headline values and allowed wording
-are recorded in [the claim ledger](manuscript/CLAIMS-AND-SOURCES.md):
+## Active documents
 
-- C3 certified-volume difference, matched five rounds: SPADE minus qLogNEI
-  `+0.000855`, 95% CI `[+0.000691,+0.001028]`, `p<0.0001`, `n=320`
-  dependent cells.
-- C1 point regret, five-round SPADE versus ten-round qLogNEI: `-0.0005`,
-  95% CI `[-0.0221,+0.0207]`, `p=0.96`, `n=160`; no detectable difference,
-  not equivalence.
-- C2 regional answers: SPADE 66/160 and 66/66 contained; screened DoE
-  122/160 and 85/122; unscreened DoE 134/160 and 77/134. Screened three-round
-  DoE found the better point recipe (SPADE-minus-DoE regret `+0.1026`, 95% CI
-  `[+0.0486,+0.1578]`, `p=0.0003`); SPADE used five rounds.
+| Path | Role |
+|---|---|
+| `publication/` | Audited claims bible (`CLAIMS-AND-SOURCES.md`) and canonical methods manuscript |
+| `manuscript/SPADE-PLOS-ONE.md` (+ `.docx`) | Active PLOS ONE submission package |
+| `manuscript/SPADE-PLOS-ONE-cover-letter.md` | Cover letter aligned to the same claims |
+| `results/paper-figures/plos/` | Current PLOS figures (C1–C3 framing) |
 
-Its four main figures are in `results/paper-figures/plos/`, including vector PDF/SVG, 450-dpi PNG, 600-dpi RGB TIFF,
-source-data JSON, captions and accessible descriptions. The PLOS build uses Arial;
-install a legitimately licensed copy before rebuilding figures. Font identity is
-recorded in `results/paper-figures/build-manifest.json`.
+## Strongest defensible conclusion
 
-## Evidence boundaries
+> SPADE is the better choice when a fixed-well campaign must return a **trustworthy
+> operating region** rather than only one optimized recipe.
 
-- Retrospective campaigns support terminal-rule and point-versus-region comparisons.
-- `spade-final-2026-08-23` contains 99,601 prospective records across seven conditions:
-  99,600 scored records and one structural-unavailability declaration.
-  Twelve repeated scoring configurations per campaign correspond to 8,300 campaign-arm
-  executions, not 99,600 independent experiments. Its map mask uses a 0.50 cutoff.
-  The original prospective certificate statistic measures a held-out posterior check,
-  not empirical containment against oracle truth; it does not establish certificate validity.
-- The separate joint-protocol development study contains 2,750 campaign-arm rows
-  and returned `NO_SELECTION`. The selected-protocol artifact binds five compressed
-  development shards and their manifests by SHA-256. These files are retained
-  byte-for-byte from research commit `502ea39`; they are not new simulations.
-- No protocol was selected and no lockbox outcomes were opened. Do not run lockbox
-  workflows or create a power artifact on the basis of this development result.
+Locked headline numbers (see `publication/manuscript/CLAIMS-AND-SOURCES.md`):
 
-The contribution is decision guidance for operating-region use cases and an
-auditable record of their limits, not a universally superior optimizer or a
-transferable certificate.
+- **C3 region win (matched R5):** certified volume SPADE−qLogNEI `+0.000855`
+  (95% CI `[+0.000691,+0.001028]`, `p<0.0001`, `n=320`).
+- **C1 point vs longer BO:** SPADE R5−qLogNEI R10 regret `-0.0005`
+  (95% CI `[-0.0221,+0.0207]`, `p=0.96`, `n=160`) — **no detectable difference**, not equivalence.
+- **C2 DoE trade-off:** screened DoE better on the point (`+0.1026` SPADE−DoE regret);
+  SPADE stronger on observed containment among answered regions (66/66 vs 85/122 screened).
+
+**Forbidden as current conclusions:** stale LC `+0.0016`, unsupported `+0.001353`,
+unqualified “SPADE is best,” “equivalent to qLogNEI,” or wet-lab/regulatory superiority.
+
+Older two-round map-error / 15.3% work is historical motivation only and must not lead
+the submission narrative.
+
 
 ## Reproducing the publication artifacts
 
@@ -124,7 +113,6 @@ historical experiments. The manuscript discloses this limitation.
 
 The claim-impact audit in `.planning/debug/replay-claim-impact.md` traces each
 failure to the paper. Its reaggregation and conditional sensitivity checks are
-executable with `python -m pytest -q tests/test_replay_claim_impact.py`. The 15.3%
 target map contrast uses the retained regenerated prospective dataset, not the
 older failing Q42/Q59 reference columns. Current sampler defaults differ from
 the archived recovery version; passing summary checks do not prove trajectory replay.
