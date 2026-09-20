@@ -101,7 +101,7 @@ So the headline is mostly an answer-rate result: qLogNEI almost never certifies 
 
 ![SPADE operating-region advantage.](../results/paper-figures/plos/fig2.png)
 
-**Fig 2. SPADE’s regional advantage versus qLogNEI and DoE.** (A) How much larger SPADE’s average certified volume is than qLogNEI’s at matched five rounds (+0.000855; 95% CI +0.000691 to +0.001028; p < 0.000125; n = 320), counting “no region” as zero volume. SPADE returned a region in 116/320 comparisons; qLogNEI in 6/320. (B) When each method did return a region versus DoE at prevalence 0.30: SPADE 66/66 correct; screened DoE 85/122; unscreened DoE 77/134. Counting every campaign (including no-answers): 66/160, 85/160, and 77/160 correct. (A) Certified-volume difference at matched five rounds (+0.000855, 95% CI +0.000691 to +0.001028, p < 0.000125; n = 320), with abstentions scored as zero. SPADE answered 116/320 contrasts versus 6/320 for qLogNEI. (B) Versus DoE at prevalence 0.30: containment among answered regions (SPADE 66/66; screened DoE 85/122; unscreened DoE 77/134). Unconditional contained counts are 66/160, 85/160, and 77/160. (A) Certified-volume difference (SPADE minus qLogNEI) at matched five rounds: +0.000855 (95% CI [+0.000691, +0.001028], p < 0.000125, n = 320). Absolute means were 0.000864 (SPADE) and 0.000009 (qLogNEI) on the 2,000-point grid (one point = 0.0005 of volume). (B) Observed truth containment among answered regions at prevalence 0.30: SPADE 66/66 versus screened DoE 85/122 and unscreened DoE 77/134. Unconditional contained counts are 66/160, 85/160, and 77/160.
+**Fig 2. SPADE’s regional advantage versus qLogNEI and DoE.** (A) How much larger SPADE’s average certified volume is than qLogNEI’s at matched five rounds (+0.000855; 95% CI +0.000691 to +0.001028; p < 0.000125; n = 320), counting “no region” as zero volume. SPADE returned a region in 116/320 comparisons; qLogNEI in 6/320. (B) When each method did return a region versus DoE at prevalence 0.30: SPADE 66/66 correct; screened DoE 85/122; unscreened DoE 77/134. Counting every campaign (including no-answers): 66/160, 85/160, and 77/160 correct.
 
 **Table 1. C3 matched-round regional comparison.**
 
@@ -115,7 +115,7 @@ Here the question is recipe quality, not regions (comparison C1). Both methods u
 
 ![Point-recipe trade-off.](../results/paper-figures/plos/fig3.png)
 
-**Fig 3. Point-recipe trade-off (secondary to the region decision). (A) SPADE at five rounds minus qLogNEI at ten rounds on simple regret: no detectable difference (-0.0005, 95% CI [-0.0221, +0.0207], n = 160); not claimed as equivalence. (B) SPADE at five rounds minus screened DoE at three rounds: DoE finds the better single recipe (+0.1026, 95% CI [+0.0486, +0.1578]); expected when the goal is one point rather than a region.**
+**Fig 3. Point-recipe trade-off (secondary to the region decision).** (A) SPADE at five rounds versus qLogNEI at ten rounds on simple regret: no clear difference (−0.0005; 95% CI −0.0221 to +0.0207; n = 160)—not claimed as equivalence. (B) SPADE at five rounds versus screened DoE at three rounds: DoE finds the better single recipe (+0.1026; 95% CI +0.0486 to +0.1578).
 
 ### DoE found a better point recipe but weaker regional containment
 
@@ -135,7 +135,7 @@ On trustworthy regions, the ranking flips. At the main region setting (30% of th
 
 ![Additional SPADE evidence.](../results/paper-figures/plos/fig4.png)
 
-**Fig 4. Extra SPADE checks (C4 and C6).** (A) SPADE beats one-shot Latin hypercube sampling on recipe quality at three rounds (advantage +0.0783). Sample size is n = 80 (four families × 20 seeds), not n = 160, by protocol. (B) On a biology-shaped Hill test at prevalence 0.70, SPADE answered more often than qLogNEI (40/64 versus 27/64); every answered region for both methods was correct. (A) Point-regret difference LHS minus SPADE at three rounds (+0.0783; higher favors SPADE). n = 80 because C4 uses four Latin-hypercube families × 20 shared seeds (Hill and seeds 20–31 excluded by protocol), unlike the five-family n = 160 contrasts elsewhere. (B) On biology-shaped Hill at prevalence 0.70, SPADE answered 40/64 versus 27/64 for qLogNEI; both contained truth in every answered cell (descriptive; C6). (A) Point-regret advantage of three-round SPADE over one-shot Latin hypercube sampling (LHS minus SPADE = +0.0783; n = 80; locked C4 mean). Higher values favor SPADE. (B) On the biology-shaped Hill family at prevalence 0.70, SPADE answered 40/64 regions versus 27/64 for qLogNEI; both arms contained truth in every answered cell (descriptive counts; C6).
+**Fig 4. Extra SPADE checks (C4 and C6).** (A) SPADE beats one-shot Latin hypercube sampling on recipe quality at three rounds (advantage +0.0783). Sample size is n = 80 (four families × 20 seeds), not n = 160, by protocol. (B) On a biology-shaped Hill test at prevalence 0.70, SPADE answered more often than qLogNEI (40/64 versus 27/64); every answered region for both methods was correct.
 
 ### Certifiability depended on family, prevalence, and margin-to-noise
 
