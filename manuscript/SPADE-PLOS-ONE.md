@@ -117,10 +117,12 @@ therefore did not mean equal sequential rounds.
 
 ![Benchmark decisions and estimands.](../results/paper-figures/plos/fig1.png)
 
-**Fig 1. Benchmark decisions and estimands.** A fixed 48-well campaign can support a
-point decision, a regional decision, or abstention. The schematic distinguishes wells
-from sequential rounds and defines the scores used in the comparisons; it contains no
-performance conclusion.
+**Fig 1. Benchmark decisions and estimands.** (A) Each method operates within
+one 48-well campaign. (B) The same sampled campaign supports a point decision
+or a region decision, including abstention. (C) The estimand ledger distinguishes
+the reported object, observability, score, extra wells, and rounds for each
+deliverable. This schematic defines the benchmark and contains no performance
+result.
 
 ### SPADE architecture and comparators
 
@@ -249,17 +251,36 @@ Both used 48 wells. This is no detectable regret difference, not equivalence: th
 interval extends slightly beyond the registered +/-0.02 effect boundary, and neither
 calendar duration nor cost was measured.
 
-![Point-regret and terminal-rule sensitivity.](../results/paper-figures/plos/fig2.png)
+The retained PLOS plots that follow are historical Hill terminal-rule and map-error
+displays from the existing figure builders. They are not the C1 R5-versus-R10
+interval or the C3 certified-volume contrast in Table 1.
 
-**Fig 2. Point-regret and terminal-rule evidence.** Contrasts use common terminal
-recommendation rules where specified. Positive SPADE-minus-comparator regret is worse
-for SPADE; the shaded practical-effect band is interpretive, not an equivalence test.
+![Historical Rule A versus Rule P terminal-rule comparison.](../results/paper-figures/plos/fig2.png)
 
-![Certified-volume comparisons.](../results/paper-figures/plos/fig3.png)
+**Fig 2. Historical supporting evidence: Rule A versus Rule P on identical Hill
+campaigns ($n=50$), not the C1 R5-versus-R10 contrast.** (A) Mean simple regret
+under measured-selection Rule A and common-GP model-recommendation Rule P for the
+Hill ($d=6$, $\sigma_{\mathrm{rel}}=0.25$) benchmark ($n=50$ paired campaigns per
+method). (B) Paired Rule P minus Rule A differences with 95% paired-bootstrap
+intervals; negative values favor Rule P. SPADE shows the largest reduction
+(`-0.0543`), whereas the classical design increases regret (`+0.1035`) under the
+shared GP readout. (C) For compatible arms, Rule-A regret is decomposed into
+search loss and identification loss. The ±0.02 smallest-effect band is not on
+this plot; it belongs to the map-error contrasts below.
 
-**Fig 3. Matched-round certified-volume comparisons.** Positive values favor SPADE.
-The R5 contrast is the primary regional result. The R3 comparison is shown only to
-retain the registered negative/withdrawn context and is not promoted as a positive claim.
+![Historical registered-target map error versus Rule-P regret.](../results/paper-figures/plos/fig3.png)
+
+**Fig 3. Historical supporting evidence: registered-target map error versus Rule-P
+regret, not matched-round certified volume.** (A) Registered Hill-target means for
+symmetric-difference map error and Rule-P simple regret ($n=25$ landscape-level
+means per method); lower is better on both axes. (B) Paired SPADE-minus-comparator
+contrasts with 95% intervals and the prespecified ±0.02 smallest effect size of
+interest (shaded band). SPADE has lower map error than Sobol (`-0.0109`) and
+qLogNEI (`-0.0327`), while Rule-P regret is `+0.0094` relative to qLogNEI.
+(C) Every equal-budget method consumes 48 wells, but feedback ranges from one to
+ten rounds. (D) Hartmann ($d=6$ and $d=8$) robustness values are descriptive
+means; intervals are unavailable. This plot is archived map-and-cost evidence,
+not the C3 certified-volume comparison.
 
 ### DoE found a better point recipe but weaker regional containment
 
@@ -300,11 +321,20 @@ lower bound `0.9278`). qLogNEI answered 27/64 and contained 27/27; its limitatio
 the answer count required by the registered gate, not failure to return contained
 regions.
 
-![Family, prevalence, and answer-rate summaries.](../results/paper-figures/plos/fig4.png)
+![Historical calibration, posterior checks, and containment summaries.](../results/paper-figures/plos/fig4.png)
 
-**Fig 4. Supporting calibration and certificate evidence.** Answer rate and observed
-conditional containment are separate. Intervals are model checks or conditional
-descriptive summaries as labelled; pooled cells are not independent campaigns.
+**Fig 4. Historical supporting evidence: calibration, posterior self-consistency,
+and answer-rate summaries, not C3 certified volume.** (A) Retrospective Hill
+calibration error and refinement are descriptive summaries ($n=1{,}200$ repeated
+threshold cells per method). (B) Prospective Hill fractions of non-empty campaigns
+meeting the held-out posterior check, minus $\alpha$; this is posterior
+self-consistency, not empirical containment against the oracle. Original 95%
+binomial intervals do not adjust for repeated Hill instances. (C) In the separate
+retrospective five-family study at $\alpha=0.95$, campaigns returning any
+non-empty certificate were 0/50 for Ackley, 11/50 for Hartmann6, 50/50 for Hill,
+49/50 for Levy, and 50/50 for Rosenbrock; zero denotes refusal to certify.
+(D) Conditional containment at $\alpha=0.80$ pools dependent non-empty cells.
+These archived certificate displays are not the C3 certified-volume comparison.
 
 ### Mean marginalisation diagnosed real-data posterior collapse
 
@@ -482,21 +512,26 @@ no wet-lab samples were generated for this study.
 
 ## Supporting information captions
 
-**S1 Table.** Prospective calibration and refinement metrics from final raw rows.
-Means use 25 Hill landscape instances with four campaign seeds averaged within each
-instance. Calibration uses latent acceptability labels, maps use a 0.50 cutoff, and
-point recommendations use a common GP. The CSV contains all 12 available
-target-condition arms, including the 40-well reference.
+The four retained PLOS figures are the only figure files cited here. Figures 2–4
+are historical or supporting Hill terminal-rule, map-error, and certificate
+displays; they are not C3 certified-volume evidence. That comparison remains
+Table 1.
 
-**S2 Table.** Seven-condition comparison for six matched-budget strategies. Hill
-estimates use 25 instances with four campaigns per instance; external-function estimates
-summarize 100 campaigns on each specified function. Archived certificate statuses refer
-to posterior checks, not empirical validity. All listed arms use 48 wells; lower map
-error and Rule-P regret are better.
+**S1 Table.** Source rows for the historical terminal-rule display: measured-selection
+Rule A versus common-GP Rule P on the Hill ($d=6$, $\sigma_{\mathrm{rel}}=0.25$)
+benchmark ($n=50$ paired campaigns per method), including the
+search-versus-identification decomposition. This table supports the Rule A/Rule P
+plot, not the C1 R5-versus-R10 regret contrast.
 
-**S3 Table.** Archived claim decisions and current source-reconciled interpretations.
-Original statuses, numerical results, and interpretation text are preserved separately
-from corrected interpretation. Certificate checks do not establish empirical validity,
-the Plate-2 gain is below its practical threshold, and the qLogNEI map contrast exceeds
-that threshold. Denominators retain their original units and are not uniformly
-independent campaigns.
+**S2 Table.** Source rows for the historical registered-target map-error display:
+symmetric-difference map error versus Rule-P simple regret, paired
+SPADE-minus-Sobol and SPADE-minus-qLogNEI map contrasts with the ±0.02 shaded
+smallest-effect band, equal-well round costs, and descriptive Hartmann $d=6$ and
+$d=8$ robustness means. This table is not a matched-round certified-volume
+comparison.
+
+**S3 Table.** Source rows for the historical calibration and certificate display:
+retrospective Hill calibration/refinement cells, prospective Hill posterior
+self-consistency checks (not empirical containment against the oracle), and
+five-family answer-rate versus conditional-containment summaries. These archived
+certificate checks do not replace the C3 certified-volume result.

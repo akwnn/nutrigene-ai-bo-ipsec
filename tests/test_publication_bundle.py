@@ -148,6 +148,39 @@ def test_manuscript_uses_current_plos_figures_and_no_phantom_supplements():
     assert_manuscript_retains_required_limits(text)
 
 
+def test_manuscript_captions_match_retained_plos_plots():
+    text = (ROOT / "manuscript/SPADE-PLOS-ONE.md").read_text()
+
+    def caption(number: str) -> str:
+        match = re.search(
+            rf"\*\*Fig {number}\.\s.*?(?=\n\n|\Z)",
+            text,
+            flags=re.S,
+        )
+        assert match, f"missing Fig {number} caption"
+        return match.group(0)
+
+    fig1, fig2, fig3, fig4 = caption("1"), caption("2"), caption("3"), caption("4")
+    assert "Matched-round certified-volume comparisons" not in text
+    assert "shaded practical-effect band" not in text
+    assert "Plate-2 gain" not in text
+    assert "seven-condition comparison" not in text.lower()
+    assert re.search(r"Benchmark decisions and estimands", fig1)
+    assert re.search(r"Rule A versus Rule P", fig2)
+    assert re.search(r"\$n=50\$", fig2)
+    assert "shaded band" not in fig2
+    assert re.search(r"map error versus Rule-P", fig3)
+    assert re.search(r"Hartmann", fig3)
+    assert re.search(r"shaded band", fig3)
+    assert re.search(r"not matched-round certified volume", fig3)
+    assert re.search(r"posterior self-consistency", fig4)
+    supporting = text.split("## Supporting information captions", 1)[1]
+    assert "historical terminal-rule display" in supporting
+    assert "historical registered-target map-error display" in supporting
+    assert "not a matched-round certified-volume" in supporting
+    assert "seven-condition comparison" not in supporting.lower()
+
+
 def test_development_artifact_bundle_matches_its_original_selection_hashes():
     results = ROOT / "results"
     selected = json.loads((results / "spade-selected-protocol.json").read_bytes())
