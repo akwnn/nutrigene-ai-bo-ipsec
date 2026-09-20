@@ -133,6 +133,13 @@ def test_manuscript_uses_current_plos_figures_and_no_phantom_supplements():
     text = (ROOT / "manuscript/SPADE-PLOS-ONE.md").read_text()
     targets = re.findall(r"!\[[^]]*\]\(([^)]+)\)", text)
     assert len(targets) == 4
+    assert [Path(target).name for target in targets] == [
+        "fig1.png",
+        "fig2.png",
+        "fig3.png",
+        "fig4.png",
+    ]
+    assert re.findall(r"\bFig\s+([1-4])\.", text) == ["1", "2", "3", "4"]
     for target in targets:
         assert "/plos/" in target
         assert (ROOT / "manuscript" / target).is_file()

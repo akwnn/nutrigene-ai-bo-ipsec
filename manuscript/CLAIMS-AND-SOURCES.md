@@ -5,12 +5,23 @@ The manuscript may say SPADE is better only when the operating-region endpoint,
 matched-round setting, benchmark scope, and relevant containment/answer denominators
 are named. “Better” without those qualifiers is forbidden.
 
-The active PLOS source is on `codex/publication-readiness`. Current C1–C6 and S1
-reproduction uses the consolidated audited evidence in the sibling
-`.worktrees/paper-ready` worktree. Where an equivalent result or analyser is present
-on this branch, its active path is also named below. Frozen results are not copied or
-altered merely to make paths uniform. Values are for 48 wells and relative noise
-`0.25` unless stated otherwise.
+The active PLOS source is on `codex/publication-readiness`. Audited consolidated
+provenance is pinned to repository commit `ec14bc7`; no local-worktree location is
+part of the evidence contract. Inspect any pinned file with
+`git show ec14bc7:<repository-path>`. To execute a pinned analyser without changing
+the active branch, create a detached temporary worktree:
+
+```bash
+REPO=$(git rev-parse --show-toplevel)
+AUDIT=/tmp/spade-audit-ec14bc7
+git worktree add --detach "$AUDIT" ec14bc7
+(cd "$AUDIT" && "$REPO/.venv/bin/python" <analyser>)
+git worktree remove "$AUDIT"
+```
+
+Each entry distinguishes current tracked inputs/analysers from commit-pinned audited
+inputs/analysers. Frozen results are not copied or altered merely to make paths uniform.
+Values are for 48 wells and relative noise `0.25` unless stated otherwise.
 
 ## Main claims
 
@@ -22,9 +33,12 @@ altered merely to make paths uniform. Values are for 48 wells and relative noise
   any claim that equivalence was established.
 - **Estimate:** SPADE minus qLogNEI `-0.0005`, 95% CI
   `[-0.0221,+0.0207]`, `p=0.96`, `n=160` (five families x 32 seeds).
-- **Audited evidence:** `.worktrees/paper-ready/research/results/comparisons/dc-{ackley,hartmann6,hill,levy,rosenbrock}.json`.
-- **Analysis command:** `(cd .worktrees/paper-ready && .venv/bin/python software/scripts/analyse_dc_doe_certificate.py)`.
-- **Guard coverage:** the audited `software/scripts/verify_conclusions.py` pins the
+- **Commit-pinned audited evidence:** at `ec14bc7`,
+  `research/results/comparisons/dc-{ackley,hartmann6,hill,levy,rosenbrock}.json`.
+  These DC files have no active-branch equivalent.
+- **Commit-pinned analysis command:** in the detached `ec14bc7` worktree,
+  `"$REPO/.venv/bin/python" software/scripts/analyse_dc_doe_certificate.py`.
+- **Guard coverage:** at `ec14bc7`, `software/scripts/verify_conclusions.py` pins the
   estimate, interval, and denominator; `tests/test_spade_plos_claims.py` pins the
   complete signed claim in the active manuscript.
 - **Limitation:** the interval extends slightly beyond the registered `0.02`
@@ -44,7 +58,8 @@ altered merely to make paths uniform. Values are for 48 wells and relative noise
 - **Adverse estimate:** screened DoE found the better point recipe in three rounds:
   SPADE-minus-DoE regret `+0.1026`, 95% CI `[+0.0486,+0.1578]`,
   `p=0.0003`, `n=160`; SPADE used five rounds.
-- **Audited evidence and command:** the DC files and analyser listed for C1.
+- **Evidence and command:** the commit-pinned `ec14bc7` DC files and analyser listed
+  for C1; there is no active-branch DC result/analyser equivalent.
 - **Guard coverage:** the active manuscript guard pins all answer/containment
   denominators, the signed adverse estimate, interval, p-value, and round schedules.
   The audited scalar guard is not exhaustive for C2.
@@ -58,13 +73,19 @@ altered merely to make paths uniform. Values are for 48 wells and relative noise
 - **Allowed:** under registered leave-one-family-out (LOFO) calibration, SPADE had
   greater mean certified volume than qLogNEI at five matched rounds across the
   five-family benchmark.
+- **Forbidden:** a positive three-round volume claim, an unqualified claim that
+  SPADE is better overall, or treating 320 dependent cells as independent campaigns.
 - **Estimate:** SPADE minus qLogNEI `+0.000855`, 95% CI
   `[+0.000691,+0.001028]`, `p<0.0001`, `n=320`.
 - **Active evidence:** `results/lc-{ackley,hartmann6,hill,levy,rosenbrock}.json`.
 - **Active analysis command:** `.venv/bin/python scripts/analyse_lc_confirmatory.py
   --glob 'results/lc-*.json'`.
-- **Audited evidence:** `.worktrees/paper-ready/research/results/comparisons/lc-*.json`.
-- **Guard coverage:** the audited scalar guard pins the mean and denominator; the
+- **Commit-pinned audited equivalent:** at `ec14bc7`,
+  `research/results/comparisons/lc-*.json` with
+  `software/scripts/analyse_lc_confirmatory.py --glob
+  'research/results/comparisons/lc-*.json'`.
+- **Guard coverage:** `software/scripts/verify_conclusions.py` at `ec14bc7` pins the
+  mean and denominator; the
   active manuscript guard pins the complete signed estimate, CI, p-value, LOFO
   qualification, matched-R5 setting, and dependent-cell denominator.
 - **Limitation:** `n=320` is five families x 32 seeds x two prevalence cells, not
@@ -77,12 +98,20 @@ altered merely to make paths uniform. Values are for 48 wells and relative noise
 
 - **Allowed:** at three rounds SPADE had lower regret than one-shot LHS in the
   frozen paired comparison.
+- **Forbidden:** generalizing the result to every space-filling design, implying
+  five-family/32-seed coverage, or imputing unmatched Hill/seeds.
 - **Estimate:** SPADE minus LHS `-0.0783`, 95% CI
   `[-0.1104,-0.0490]`, `n=80`.
-- **Audited evidence:** `.worktrees/paper-ready/research/results/comparisons/lc-*.json`
-  and `.worktrees/paper-ready/research/results/comparisons/la-*.json`.
-- **Analysis command:** `(cd .worktrees/paper-ready && .venv/bin/python software/scripts/verify_conclusions.py)`.
-- **Guard coverage:** the audited guard pins the mean only.
+- **Evidence:** active SPADE inputs are
+  `results/lc-{ackley,hartmann6,levy,rosenbrock}.json`; the LHS inputs have no
+  active-branch equivalent. At `ec14bc7`, the complete pair is
+  `research/results/comparisons/lc-*.json` plus
+  `research/results/comparisons/la-*.json`.
+- **Command:** in the detached `ec14bc7` worktree,
+  `"$REPO/.venv/bin/python" software/scripts/verify_conclusions.py`;
+  `software/scripts/analyse_la_round_matched.py` is the dedicated audited analyser.
+- **Guard coverage:** the commit-pinned guard checks the mean only, not the CI,
+  denominator, schedule, or pairing composition.
 - **Limitation:** the 80 pairs are four named families x 20 common seeds; unmatched
   Hill rows and seeds 20–31 are excluded, not imputed. This is not a general
   sequential-design claim.
@@ -99,7 +128,11 @@ altered merely to make paths uniform. Values are for 48 wells and relative noise
   sensitivity is `0.9682461469`.
 - **Active evidence:** `results/tau-{ackley,hartmann6,hill,levy,rosenbrock}.json`.
 - **Active analysis command:** `.venv/bin/python scripts/analyse_tau_sweep.py`.
-- **Guard coverage:** the audited conclusion guard validates canonical completeness
+- **Commit-pinned audited equivalent:** at `ec14bc7`,
+  `research/results/generalization/tau-{ackley,hartmann6,hill,levy,rosenbrock}.json`
+  with `software/scripts/analyse_tau_sweep.py`.
+- **Guard coverage:** `software/scripts/verify_conclusions.py` at `ec14bc7`
+  validates canonical completeness
   and pins the primary rho and 25-cell count, but not every sensitivity.
 - **Limitation:** cells share families and ordered prevalences and are dependent and
   nonexchangeable. No naive correlation p-value is interpreted.
@@ -111,8 +144,15 @@ altered merely to make paths uniform. Values are for 48 wells and relative noise
 - **Forbidden:** “BO cannot certify Hill.” qLogNEI also had perfect observed
   containment (27/27) but two fewer answers than the minimum needed to clear the
   registered lower-bound gate.
-- **Evidence and command:** active and audited TAU paths under C5.
-- **Guard coverage:** the audited guard pins SPADE answered, contained, and lower
+- **Exact counts:** SPADE 40/64 answered, 40/40 contained, one-sided 95% lower
+  bound `0.9278`; qLogNEI 27/64 answered and 27/27 contained.
+- **Active evidence and command:** `results/tau-hill.json`, reproduced as part of
+  `.venv/bin/python scripts/analyse_tau_sweep.py`.
+- **Commit-pinned audited equivalent:** at `ec14bc7`,
+  `research/results/generalization/tau-hill.json` with
+  `software/scripts/analyse_tau_sweep.py`.
+- **Guard coverage:** `software/scripts/verify_conclusions.py` at `ec14bc7` pins
+  SPADE answered, contained, and lower
   bound, but not the qLogNEI counts.
 - **Limitation:** the family is biology-shaped but synthetic. The claim requires
   prevalence `0.70`, relative noise `0.25`, `alpha=0.95`, `c=1`, 48 wells,
@@ -127,8 +167,10 @@ altered merely to make paths uniform. Values are for 48 wells and relative noise
   `+0.0301`, 95% CI `[+0.0169,+0.0450]`, `p<0.0001`.
 - **Forbidden:** saying the tested acquisition was genuinely threshold-targeted or
   that the targeting mechanism worked.
-- **Audited evidence:** `.worktrees/paper-ready/research/results/mechanism/tt-*.json`.
-- **Analysis command:** `(cd .worktrees/paper-ready && .venv/bin/python software/scripts/analyse_tt_theta_tau.py)`.
+- **Commit-pinned audited evidence:** at `ec14bc7`,
+  `research/results/mechanism/tt-*.json`; no active-branch TT equivalent.
+- **Analysis command:** in the detached `ec14bc7` worktree,
+  `"$REPO/.venv/bin/python" software/scripts/analyse_tt_theta_tau.py`.
 - **Guard coverage:** standalone audited analysis only; S1 is not in the active
   numeric manuscript guard.
 - **Limitation:** Hartmann6 and Ackley effects cancelled. The failed variant was not
@@ -141,9 +183,10 @@ altered merely to make paths uniform. Values are for 48 wells and relative noise
   `484x` in-house and `297x` for Hall–Ogle.
 - **Active inputs:** `data/lab/derived/candidate_campaign_coating_flow.csv` and
   `data/published/hall_ogle_2025_stage1.csv`.
-- **Audited commands:** `(cd .worktrees/paper-ready && .venv/bin/python
-  software/scripts/run_real_ipsc_certification.py)` and
-  `(cd .worktrees/paper-ready && .venv/bin/python software/scripts/certify_hall_ogle.py)`.
+- **Commit-pinned audited commands:** at `ec14bc7`,
+  `software/scripts/run_real_ipsc_certification.py` and
+  `software/scripts/certify_hall_ogle.py`; execute them in the detached worktree
+  using the shared project virtual environment as shown above.
 - **Guard coverage:** supporting stdout-reproduced diagnostics; no structured
   active result object or numerical guard covers the ratios.
 - **Limitation:** retrospective support only, not prospective SPADE validation.
@@ -152,8 +195,9 @@ altered merely to make paths uniform. Values are for 48 wells and relative noise
 
 - **Allowed:** observation-prediction leave-one-out inflation was `c=0.712`
   in-house and `c=0.526` for Hall–Ogle.
-- **Inputs and commands:** S2 inputs plus the audited
-  `software/scripts/calibrate_real_assay_loo.py` and Hall–Ogle command.
+- **Inputs and commands:** the active S2 inputs plus commit-pinned `ec14bc7`
+  `software/scripts/calibrate_real_assay_loo.py` and
+  `software/scripts/certify_hall_ogle.py`.
 - **Guard coverage:** stdout-only support, unguarded.
 - **Limitation:** LOO predicts held-out observations, not independently identified
   latent-function uncertainty. Replicate tubes remain necessary.

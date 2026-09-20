@@ -90,16 +90,30 @@ fixed landscapes with design and noise varying by seed. Known latent truth was u
 for synthetic scoring. These landscapes are structural test functions, not fits to
 endothelial-cell measurements.
 
+For latent normalized response $f(x)$ on $x\in[0,1]^6$, the threshold $\tau$
+was the instance-specific truth quantile that produced the registered target prevalence
+$p$. The acceptable region was
+$\Gamma_\tau=\{x:f(x)\geq\tau\}$. Thresholds were computed on a 20,000-point Sobol
+truth grid with seed 0. A 2,000-point Sobol certificate-candidate and scoring subset
+at the same seed was used for posterior-region construction and truth-containment
+scoring. Each certificate used 4,096 joint posterior draws and 64 nested Vorob'ev levels.
+
 DC supplied the one-process point comparison (C1) and DoE comparison (C2). LC supplied
 the leave-one-family-out matched-round comparison (C3). TAU supplied the prevalence and
 margin-to-noise analyses (C5/C6). TT tested the proposed targeting mechanism (S1).
 Retrospective in-house and published Hall–Ogle data supplied supporting uncertainty
 diagnostics (S2/S3), not prospective validation.
 
-All synthetic arms used 48 wells. SPADE R5 used a 16-point opening followed by four
-eight-well batches. SPADE R3 used `32+8+8`. qLogNEI R10 used its registered
-opening and later batches totalling 48 wells. The tested DoE pipelines used three
-operational rounds. Equal wells therefore did not mean equal sequential rounds.
+All synthetic arms used 48 wells. SPADE R3 used `32+8+8`; SPADE R5 used
+`16+8+8+8+8`. Matched qLogNEI R3 and R5 used the same respective allocations.
+qLogNEI R10 used a 14-point Sobol opening, eight batches of four, and a final batch
+of two (`14+4+4+4+4+4+4+4+4+2`). The screened DoE R3 workflow used a 20-run
+six-factor screen, a 27-run four-factor face-centred response-surface design, and one
+confirmation well (`20+27+1`). The registered unscreened comparator omitted screening,
+used one 47-run full-dimensional face-centred central-composite design, and measured
+one confirmation (`47+1`); it retained the protocol's DoE R3 comparator label even
+though its executed measurements comprise design and confirmation stages. Equal wells
+therefore did not mean equal sequential rounds.
 
 ![Benchmark decisions and estimands.](../results/paper-figures/plos/fig1.png)
 
@@ -110,18 +124,35 @@ performance conclusion.
 
 ### SPADE architecture and comparators
 
-SPADE fits a GP to normalized coordinates, outcomes, and plug-in per-well observation
-variances. A space-filling opening is followed by adaptive high-response sampling and
-model refitting. The implemented historical acquisition is retained because the
-target-aligned replacement did not improve aggregate certified volume and worsened
-regret; no claim here attributes the results to successful threshold targeting.
+Observations followed
+$y(x)=f(x)(1+\epsilon)+\eta$, with
+$\epsilon\sim\mathcal N(0,\sigma_{\mathrm{rel}}^2)$,
+$\sigma_{\mathrm{rel}}=0.25$, and
+$\eta\sim\mathcal N(0,0.01^2)$. SPADE and qLogNEI supplied the GP with the
+raw-unit plug-in variance
+$\max(y^2\sigma_{\mathrm{rel}}^2+0.01^2,0.01^2)$, computed from the observed
+value rather than latent truth. The DoE adapters lacked per-well variances and used
+their registered arm-constant plug-in
+$\sigma_{\mathrm{rel}}^2\overline{|y|}^2$.
 
-For each arm, posterior draws on the registered finite candidate grid define excursion
-sets above the decision threshold. The common downstream estimator scans 64 nested
-Vorob'ev candidates and returns the largest scanned candidate whose same-draw posterior
-joint containment reaches `alpha=0.95`. “Largest” means largest in that finite nested
-family, not a global optimum over all continuous subsets. If no non-empty candidate
-passes, the procedure abstains.
+The common outcome model was a fixed-noise `SingleTaskGP` with explicit unit-box input
+normalization, standardized outcomes, a fitted constant mean, and a scaled Matérn-5/2
+kernel with automatic relevance determination and a dimension-scaled length-scale
+prior. Hyperparameters were fitted by exact marginal likelihood. SPADE began with the
+Sobol space-filling opening, refitted after every later batch, and used its registered
+conservative-set straddle implementation for adaptive high-response sampling. The
+implemented historical acquisition is retained because the target-aligned replacement
+did not demonstrate improvement or earn adoption and worsened regret; no claim here
+attributes the results to successful threshold targeting.
+
+For posterior draw $b$, the finite-grid excursion set was
+$\Gamma_\tau^{(b)}=\{x:f^{(b)}(x)\geq\tau\}$ on the 2,000-point scoring grid.
+The 4,096 draws formed a coverage function and 64 nested Vorob'ev candidates. For each
+inflation $c\in\{1.0,1.5,2.0,3.0\}$, the common downstream estimator returned the
+largest scanned candidate whose same-draw Monte Carlo posterior joint containment
+reached `alpha=0.95`. “Largest” means largest in that finite nested family, not a
+global optimum over all continuous subsets. If no non-empty candidate passed, the
+procedure abstained.
 
 qLogNEI used the same GP outcome model and well budget while allocating batches by
 noisy expected improvement. Its observations were passed through the common posterior
@@ -133,11 +164,18 @@ do not represent all BO or classical-design methods.
 
 ### Outcomes and calibration
 
-Simple regret grades one recommended point against the known synthetic optimum. A
-regional answer is a non-empty returned conservative set. Truth containment records
-whether that set is a subset of the known synthetic acceptable region. Certified volume
-is its candidate-grid fraction. Answer and containment denominators are always reported
-together; abstention is not counted as containment.
+The terminal point recommendation was the visited condition with the largest observed
+response; it was then scored by latent truth. Because each family was normalized to
+optimum one, simple regret was $1-f(\widehat x)$. This prevents crediting a method
+for visiting a strong point that its noisy observations did not identify.
+
+A regional `answered` outcome was a non-empty returned conservative set. `contained`
+recorded whether an answered set was a subset of the known synthetic acceptable region;
+answer rate was answered divided by eligible cells, conditional empirical containment
+was contained divided by answered, and certified volume was the returned fraction of
+the 2,000-point scoring grid. Abstention was not counted as containment. The registered
+cross-cell gate required a one-sided 95% Clopper–Pearson lower bound of at least 0.90
+among answered cells and answer rate of at least 0.05.
 
 C3 selected the smallest posterior inflation `c` that passed the registered rule on
 four families and evaluated volume on the held-out fifth family. It pooled prevalence
@@ -168,13 +206,14 @@ boundary was not interpreted as equivalence. The C5 Spearman coefficient is desc
 over 25 nested, nonexchangeable family-prevalence cells; no naive independence-based
 p-value is interpreted.
 
-### Reproducibility and artificial intelligence assistance
+### Reproducibility
 
 Analyses used Python 3.11 with PyTorch, GPyTorch, BoTorch, NumPy, SciPy, pandas, and
 scikit-learn. Frozen inputs, producing commands, exact estimates, guard coverage, and
 limitations are indexed in `manuscript/CLAIMS-AND-SOURCES.md`. The active PLOS source
-remains in this repository; audited C1–C6/S1 reproduction is retained in the sibling
-consolidated evidence worktree. No frozen result was changed for this rewrite.
+remains in this repository. Consolidated C1–C6/S1 provenance is pinned to repository
+commit `ec14bc7`; the ledger gives portable `git show` and detached-worktree
+instructions. No frozen result was changed for this rewrite.
 
 ### Artificial intelligence assistance
 
@@ -202,12 +241,6 @@ claim was withdrawn after extension to 32 seeds.
 |---|---:|---:|---:|---|---|---|---|
 | Five synthetic families; SPADE vs qLogNEI | 0.30 and 0.10 | 0.25 | 0.95 | LOFO inflation over `c={1,1.5,2,3}` | 48; R5 vs R5 | 32/family; 320 dependent family-seed-prevalence cells | Volume difference `+0.000855` |
 
-![Certified-volume comparisons.](../results/paper-figures/plos/fig3.png)
-
-**Fig 3. Matched-round certified-volume comparisons.** Positive values favor SPADE.
-The R5 contrast is the primary regional result. The R3 comparison is shown only to
-retain the registered negative/withdrawn context and is not promoted as a positive claim.
-
 ### Point regret showed no detectable difference from longer qLogNEI
 
 In DC, SPADE R5 minus qLogNEI R10 regret was `-0.0005` (95% CI
@@ -221,6 +254,12 @@ calendar duration nor cost was measured.
 **Fig 2. Point-regret and terminal-rule evidence.** Contrasts use common terminal
 recommendation rules where specified. Positive SPADE-minus-comparator regret is worse
 for SPADE; the shaded practical-effect band is interpretive, not an equivalence test.
+
+![Certified-volume comparisons.](../results/paper-figures/plos/fig3.png)
+
+**Fig 3. Matched-round certified-volume comparisons.** Positive values favor SPADE.
+The R5 contrast is the primary regional result. The R3 comparison is shown only to
+retain the registered negative/withdrawn context and is not promoted as a positive claim.
 
 ### DoE found a better point recipe but weaker regional containment
 
