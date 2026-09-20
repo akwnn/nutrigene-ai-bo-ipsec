@@ -9,6 +9,9 @@ from zipfile import ZipFile
 import pytest
 
 from test_spade_plos_claims import (
+    assert_coherent_adverse_doe_claim,
+    assert_coherent_c1_regret_claim,
+    assert_coherent_c3_volume_claim,
     assert_manuscript_forbids_unqualified_superiority,
     assert_manuscript_pins_c1_regret,
     assert_manuscript_pins_c2_containment_and_adverse_doe,
@@ -119,10 +122,11 @@ def test_paper_retains_comparator_and_novelty_boundaries():
     abstract = text.split("## Abstract\n", 1)[1].split("## Introduction", 1)[0]
     assert len(abstract.split()) <= 250
     assert "0.0016" not in abstract
-    assert "0.000855" in abstract and "0.000691" in abstract and "0.001028" in abstract
+    assert_coherent_c1_regret_claim(abstract)
+    assert_coherent_c3_volume_claim(abstract)
+    assert_coherent_adverse_doe_claim(abstract)
     assert re.search(r"no detectable (?:regret )?difference", abstract, flags=re.IGNORECASE)
     assert re.search(r"\bn\s*=\s*320\b", abstract)
-    assert re.search(r"0\.1026", abstract)
 
 
 def test_manuscript_uses_current_plos_figures_and_no_phantom_supplements():
