@@ -21,15 +21,15 @@ of established Gaussian-process level-set and conservative-set methods, against 
 Bayesian optimization (qLogNEI) and a response-surface design of experiments (DoE) on
 synthetic families under 48-well budgets. Primary matched-round evidence came first: at
 five rounds, SPADE returned greater certified volume than qLogNEI
-(`+0.000855`, 95% CI `[+0.000691,+0.001028]`, `p<0.0001`; `n=320`
-dependent family-seed-prevalence cells under leave-one-family-out calibration). Thus SPADE
+(+0.000855, 95% CI [+0.000691, +0.001028], p < 0.0001, n = 320 dependent
+family-seed-prevalence cells under leave-one-family-out calibration). Thus SPADE
 was better for the tested operating-region decision, not universally better. In the
 one-process point comparison, five-round SPADE showed no detectable regret difference
-from ten-round qLogNEI (`-0.0005`, 95% CI `[-0.0221,+0.0207]`, `p=0.96`;
-`n=160`), but the interval did not establish equivalence. The adverse DoE result was
+from ten-round qLogNEI (-0.0005, 95% CI [-0.0221, +0.0207], p = 0.96, n = 160),
+but the interval did not establish equivalence. The adverse DoE result was
 substantial: screened three-round DoE found the better point recipe
-(`+0.1026` SPADE-minus-DoE regret, 95% CI `[+0.0486,+0.1578]`,
-`p=0.0003`), while five-round SPADE answered 66/160 regional decisions and
+(+0.1026 SPADE-minus-DoE regret, 95% CI [+0.0486, +0.1578], p = 0.0003),
+while five-round SPADE answered 66/160 regional decisions and
 contained truth in 66/66, compared with 85/122 and 77/134 contained answers for
 screened and unscreened DoE. Flat-cell intervals are conditional and dependence may make
 them too narrow. Results are limited to the tested synthetic benchmark, moderate noise,
@@ -84,7 +84,7 @@ assay-specific calibration. Finally, S1, a real-noise ceiling, and a later
 
 The confirmatory DC and LC programs used five synthetic response families—Ackley,
 Hartmann6, biphasic Hill, Levy, and Rosenbrock—32 deterministic seeds per family,
-six normalized factors, 48 measured wells, and relative observation noise `0.25`.
+six normalized factors, 48 measured wells, and relative observation noise 0.25.
 TAU used 64 seeds per family. Hill varied by registered instance; other evaluators used
 fixed landscapes with design and noise varying by seed. Known latent truth was used only
 for synthetic scoring. These landscapes are structural test functions, not fits to
@@ -104,16 +104,7 @@ margin-to-noise analyses (C5/C6). TT tested the proposed targeting mechanism (S1
 Retrospective in-house and published Hall–Ogle data supplied supporting uncertainty
 diagnostics (S2/S3), not prospective validation.
 
-All synthetic arms used 48 wells. SPADE R3 used `32+8+8`; SPADE R5 used
-`16+8+8+8+8`. Matched qLogNEI R3 and R5 used the same respective allocations.
-qLogNEI R10 used a 14-point Sobol opening, eight batches of four, and a final batch
-of two (`14+4+4+4+4+4+4+4+4+2`). The screened DoE R3 workflow used a 20-run
-six-factor screen, a 27-run four-factor face-centred response-surface design, and one
-confirmation well (`20+27+1`). The registered unscreened comparator omitted screening,
-used one 47-run full-dimensional face-centred central-composite design, and measured
-one confirmation (`47+1`); it retained the protocol's DoE R3 comparator label even
-though its executed measurements comprise design and confirmation stages. Equal wells
-therefore did not mean equal sequential rounds.
+All synthetic arms used 48 wells. SPADE at three rounds used an opening of 32 followed by two batches of 8; SPADE at five rounds used an opening of 16 followed by four batches of 8. Matched qLogNEI R3 and R5 used the same respective allocations. qLogNEI R10 used a 14-point Sobol opening, eight batches of four, and a final batch of two. The screened DoE R3 workflow used a 20-run six-factor screen, a 27-run four-factor face-centred response-surface design, and one confirmation well. The registered unscreened comparator omitted screening, used one 47-run full-dimensional face-centred central-composite design, and measured one confirmation well; it retained the protocol's DoE R3 comparator label even though its executed measurements comprise design and confirmation stages. Equal wells therefore did not mean equal sequential rounds.
 
 ![Method selection under fixed wells.](../results/paper-figures/plos/fig1.png)
 
@@ -152,7 +143,7 @@ $\Gamma_\tau^{(b)}=\{x:f^{(b)}(x)\geq\tau\}$ on the 2,000-point scoring grid.
 The 4,096 draws formed a coverage function and 64 nested Vorob'ev candidates. For each
 inflation $c\in\{1.0,1.5,2.0,3.0\}$, the common downstream estimator returned the
 largest scanned candidate whose same-draw Monte Carlo posterior joint containment
-reached `alpha=0.95`. “Largest” means largest in that finite nested family, not a
+reached alpha=0.95. “Largest” means largest in that finite nested family, not a
 global optimum over all continuous subsets. If no non-empty candidate passed, the
 procedure abstained.
 
@@ -171,7 +162,7 @@ response; it was then scored by latent truth. Because each family was normalized
 optimum one, simple regret was $1-f(\widehat x)$. This prevents crediting a method
 for visiting a strong point that its noisy observations did not identify.
 
-A regional `answered` outcome was a non-empty returned conservative set. `contained`
+A regional answered outcome was a non-empty returned conservative set. contained
 recorded whether an answered set was a subset of the known synthetic acceptable region;
 answer rate was answered divided by eligible cells, conditional empirical containment
 was contained divided by answered, and certified volume was the returned fraction of
@@ -179,12 +170,12 @@ the 2,000-point scoring grid. Abstention was not counted as containment. The reg
 cross-cell gate required a one-sided 95% Clopper–Pearson lower bound of at least 0.90
 among answered cells and answer rate of at least 0.05.
 
-C3 selected the smallest posterior inflation `c` that passed the registered rule on
+C3 selected the smallest posterior inflation c that passed the registered rule on
 four families and evaluated volume on the held-out fifth family. It pooled prevalence
 0.30 and 0.10, yielding five families x 32 seeds x two prevalences = 320 dependent
-family-seed-prevalence cells. C2 used a weaker procedure: SPADE selected `c=1` within
+family-seed-prevalence cells. C2 used a weaker procedure: SPADE selected c=1 within
 the DC cells themselves. Neither DoE arm passed at any tested inflation, so its reported
-counts are fallback diagnostics at baseline `c=1`. C2 is within-sample and not
+counts are fallback diagnostics at baseline c=1. C2 is within-sample and not
 transportable; it is not the held-out-family calibration used for C3.
 
 Earlier prospective map scoring used a fixed 0.50 cutoff. Its archived certificate
@@ -231,49 +222,49 @@ was used to create experimental data.
 
 Table 1 states the local certification dimensions for C3. Under registered LOFO
 calibration, five-round SPADE returned greater certified volume than five-round qLogNEI:
-the SPADE-minus-qLogNEI difference was `+0.000855` (95% CI
-`[+0.000691,+0.001028]`, `p<0.0001`; `n=320` dependent cells).
+the SPADE-minus-qLogNEI difference was +0.000855 (95% CI
+[+0.000691, +0.001028], p < 0.0001, n = 320 dependent cells).
 This is the primary result supporting SPADE for the tested operating-region decision.
 It does not establish a universal method ranking. The analogous positive three-round
 claim was withdrawn after extension to 32 seeds.
 
 ![SPADE operating-region advantage.](../results/paper-figures/plos/fig2.png)
 
-**Fig 2. SPADE’s primary advantage: trusted operating regions. (A) Certified-volume difference (SPADE minus qLogNEI) at matched five rounds under leave-one-family-out calibration: +0.000855 (95% CI [+0.000691, +0.001028], p<0.0001, n=320); absolute means are noted under the panel. (B) Observed truth containment among answered regions at prevalence 0.30: SPADE 66/66 versus screened DoE 85/122 and unscreened DoE 77/134.**
+**Fig 2. SPADE’s primary advantage: trusted operating regions. (A) Certified-volume difference (SPADE minus qLogNEI) at matched five rounds under leave-one-family-out calibration: +0.000855 (95% CI [+0.000691, +0.001028], p < 0.0001, n = 320); absolute means are noted under the panel. (B) Observed truth containment among answered regions at prevalence 0.30: SPADE 66/66 versus screened DoE 85/122 and unscreened DoE 77/134.**
 
 
 **Table 1. C3 matched-round regional comparison.**
 
 | Scope | Prevalence | Noise | Assurance | Calibration | Wells; rounds | Seeds and denominator | Result |
 |---|---:|---:|---:|---|---|---|---|
-| Five synthetic families; SPADE vs qLogNEI | 0.30 and 0.10 | 0.25 | 0.95 | LOFO inflation over `c={1,1.5,2,3}` | 48; R5 vs R5 | 32/family; 320 dependent family-seed-prevalence cells | Volume difference `+0.000855` |
+| Five synthetic families; SPADE vs qLogNEI | 0.30 and 0.10 | 0.25 | 0.95 | LOFO inflation over c={1,1.5,2,3} | 48; R5 vs R5 | 32/family; 320 dependent family-seed-prevalence cells | Volume difference +0.000855 |
 
 ### Point regret showed no detectable difference from longer qLogNEI
 
-In DC, SPADE R5 minus qLogNEI R10 regret was `-0.0005` (95% CI
-`[-0.0221,+0.0207]`, `p=0.96`; `n=160`, five families x 32 seeds).
+In DC, SPADE R5 minus qLogNEI R10 regret was -0.0005 (95% CI
+[-0.0221, +0.0207], p = 0.96, n = 160, five families x 32 seeds).
 Both used 48 wells. This is no detectable regret difference, not equivalence: the
-interval extends slightly beyond the registered +/-0.02 effect boundary, and neither
+interval extends slightly beyond the registered ±0.02 effect boundary, and neither
 calendar duration nor cost was measured.
 
 ![Point-recipe trade-off.](../results/paper-figures/plos/fig3.png)
 
-**Fig 3. Point-recipe trade-off (secondary to the region decision). (A) SPADE at five rounds minus qLogNEI at ten rounds on simple regret: no detectable difference (−0.0005, 95% CI [−0.0221, +0.0207], n=160); not claimed as equivalence. (B) SPADE at five rounds minus screened DoE at three rounds: DoE finds the better single recipe (+0.1026, 95% CI [+0.0486, +0.1578]); expected when the goal is one point rather than a region.**
+**Fig 3. Point-recipe trade-off (secondary to the region decision). (A) SPADE at five rounds minus qLogNEI at ten rounds on simple regret: no detectable difference (-0.0005, 95% CI [-0.0221, +0.0207], n = 160); not claimed as equivalence. (B) SPADE at five rounds minus screened DoE at three rounds: DoE finds the better single recipe (+0.1026, 95% CI [+0.0486, +0.1578]); expected when the goal is one point rather than a region.**
 
 
 ### DoE found a better point recipe but weaker regional containment
 
 The adverse point result is essential: screened DoE found the better point recipe in
-three rounds. SPADE R5 minus screened-DoE R3 regret was `+0.1026` (95% CI
-`[+0.0486,+0.1578]`, `p=0.0003`; `n=160`). SPADE used five rounds.
+three rounds. SPADE R5 minus screened-DoE R3 regret was +0.1026 (95% CI
+[+0.0486, +0.1578], p = 0.0003, n = 160). SPADE used five rounds.
 
-Regional evidence moved in the opposite direction (Table 2). At prevalence `0.30`,
-relative noise `0.25`, assurance `0.95`, 48 wells, and five families x 32 seeds,
-SPADE selected `c=1` within the same DC sample, answered 66/160, and contained truth
-in 66/66 answered regions (observed conditional containment `1.0000`, ordinary
-binomial lower bound `0.9556`). Neither DoE arm passed at any inflation, so baseline
-`c=1` diagnostics are reported: screened DoE answered 122/160 and contained 85/122
-(`0.6967`); unscreened DoE answered 134/160 and contained 77/134 (`0.5746`).
+Regional evidence moved in the opposite direction (Table 2). At prevalence 0.30,
+relative noise 0.25, assurance 0.95, 48 wells, and five families x 32 seeds,
+SPADE selected c=1 within the same DC sample, answered 66/160, and contained truth
+in 66/66 answered regions (observed conditional containment 1.0000, ordinary
+binomial lower bound 0.9556). Neither DoE arm passed at any inflation, so baseline
+c=1 diagnostics are reported: screened DoE answered 122/160 and contained 85/122
+(0.6967); unscreened DoE answered 134/160 and contained 77/134 (0.5746).
 These within-sample descriptive results do not condemn DoE as a class or establish
 transportable coverage.
 
@@ -281,9 +272,9 @@ transportable coverage.
 
 | Arm | Scope | Prevalence; noise; assurance | Wells; rounds; seeds | Inflation rule | Answered | Contained among answers |
 |---|---|---|---|---|---:|---:|
-| SPADE | Five families | 0.30; 0.25; 0.95 | 48; R5; 32/family | Within-DC selected `c=1` | 66/160 | 66/66 |
-| Screened DoE | Five families | 0.30; 0.25; 0.95 | 48; R3; 32/family | No passing `c`; baseline `c=1` fallback | 122/160 | 85/122 |
-| Unscreened DoE | Five families | 0.30; 0.25; 0.95 | 48; R3; 32/family | No passing `c`; baseline `c=1` fallback | 134/160 | 77/134 |
+| SPADE | Five families | 0.30; 0.25; 0.95 | 48; R5; 32/family | Within-DC selected c=1 | 66/160 | 66/66 |
+| Screened DoE | Five families | 0.30; 0.25; 0.95 | 48; R3; 32/family | No passing c; baseline c=1 fallback | 122/160 | 85/122 |
+| Unscreened DoE | Five families | 0.30; 0.25; 0.95 | 48; R3; 32/family | No passing c; baseline c=1 fallback | 134/160 | 77/134 |
 
 ![Additional SPADE evidence.](../results/paper-figures/plos/fig4.png)
 
@@ -292,25 +283,25 @@ transportable coverage.
 ### Certifiability depended on family, prevalence, and margin-to-noise
 
 Across five families and prevalences 0.70, 0.50, 0.30, 0.20, and 0.10, SPADE answer
-rate at `c=1`, `alpha=0.95`, 48 wells, R5, relative noise `0.25`, and 64 seeds per
+rate at c=1, alpha=0.95, 48 wells, R5, relative noise 0.25, and 64 seeds per
 family was descriptively associated with mean seed-specific true margin-to-noise
-(Spearman rho `0.9880098603391883`; 25 nested family-prevalence cells). The diagnostic
+(Spearman rho = 0.988; 25 nested family-prevalence cells). The diagnostic
 uses latent truth and is explanatory, not available prospectively. Shared families and
 ordered prevalences make the cells dependent and nonexchangeable.
 
-For the biology-shaped but synthetic Hill family at prevalence `0.70`, under those
+For the biology-shaped but synthetic Hill family at prevalence 0.70, under those
 same settings, SPADE answered 40/64 and contained truth in 40/40 (ordinary-binomial
-lower bound `0.9278`). qLogNEI answered 27/64 and contained 27/27; its limitation was
+lower bound 0.9278). qLogNEI answered 27/64 and contained 27/27; its limitation was
 the answer count required by the registered gate, not failure to return contained
 regions.
 
 ### Mean marginalisation diagnosed real-data posterior collapse
 
 Treating the fitted GP mean as fixed had little effect in synthetic diagnostics:
-mean-marginalised posterior width increased by `1.004x–1.011x`. The same correction
-increased mean posterior marginal SD approximately `484x` for the in-house candidate
-dataset and `297x` for published Hall–Ogle data. Observation-prediction LOO inflation
-was assay-specific (`c=0.712` in-house and `c=0.526` published). These S2/S3 values are
+mean-marginalised posterior width increased by 1.004x–1.011x. The same correction
+increased mean posterior marginal SD approximately 484x for the in-house candidate
+dataset and 297x for published Hall–Ogle data. Observation-prediction LOO inflation
+was assay-specific (c=0.712 in-house and c=0.526 published). These S2/S3 values are
 retrospective, stdout-reproduced support without structured numerical guards. LOO
 prediction does not identify latent-function uncertainty, and the in-house CD31 gates
 remain `awaiting_human_signoff`.
@@ -318,9 +309,9 @@ remain `awaiting_human_signoff`.
 ### Failed targeting, the real-noise ceiling, and the unopened lockbox
 
 The target-aligned acquisition did not earn adoption. Relative to committed SPADE, its
-certified-volume change was `+0.000425` (95% CI
-`[-0.000022,+0.000875]`) and its regret was worse by `+0.0301`
-(95% CI `[+0.0169,+0.0450]`, `p<0.0001`). Family effects cancelled. This failure is
+certified-volume change was +0.000425 (95% CI
+[-0.000022, +0.000875]) and its regret was worse by +0.0301
+(95% CI [+0.0169, +0.0450], p < 0.0001). Family effects cancelled. This failure is
 why SPADE's value is described architecturally rather than as a successful targeting
 mechanism.
 
@@ -368,7 +359,7 @@ regional result to successful threshold targeting.
 ### Scope and limitations
 
 All comparative landscapes were synthetic, the domain was evaluated on finite grids,
-and headline noise was `0.25`. Families, seeds, target prevalences, kernels, acquisition
+and headline noise was 0.25. Families, seeds, target prevalences, kernels, acquisition
 implementations, and one 48-well budget bound the result. The tested DoE is one
 low-order response-surface pipeline and qLogNEI is one BO acquisition.
 

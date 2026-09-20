@@ -250,8 +250,15 @@ def add_inline(paragraph, text: str, size: float = 12) -> None:
             run.bold = True
             set_run_font(run, size=size)
         elif token.startswith("`"):
-            run = paragraph.add_run(token[1:-1])
-            set_run_font(run, name="Courier New", size=max(size - 1, 8))
+            inner = token[1:-1]
+            run = paragraph.add_run(inner)
+            # Paths/filenames stay monospaced; short identifiers use body font
+            # (italic) so the manuscript does not look like source code.
+            if ("/" in inner) or inner.endswith((".md", ".py", ".json", ".docx", ".txt")):
+                set_run_font(run, name="Courier New", size=max(size - 1, 9))
+            else:
+                run.italic = True
+                set_run_font(run, size=size)
         else:
             run = paragraph.add_run(token[1:-1])
             run.italic = True
