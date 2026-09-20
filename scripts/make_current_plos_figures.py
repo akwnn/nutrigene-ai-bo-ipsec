@@ -137,101 +137,92 @@ def load_dc_regret():
 
 
 def fig1():
-    """Study-design schematic: fixed campaign → two decisions → method roles."""
+    """Study-design schematic with reserved gaps — no overlapping labels."""
     style()
-    fig = plt.figure(figsize=(7.2, 2.85))
-    fig.subplots_adjust(left=0.03, right=0.98, top=0.86, bottom=0.08)
-    ax = fig.add_subplot(111)
+    fig, axes = plt.subplots(1, 3, figsize=(7.4, 3.15), gridspec_kw={"wspace": 0.18})
+    fig.subplots_adjust(left=0.03, right=0.99, top=0.82, bottom=0.06)
+    fig.suptitle("Study design under a fixed 48-well budget", fontsize=10.5, color=INK, y=0.96)
+
+    # --- A ---
+    ax = axes[0]
     ax.set_xlim(0, 1)
     ax.set_ylim(0, 1)
     ax.axis("off")
-    ax.set_title("Study design under a fixed 48-well budget", pad=8, fontsize=10, color=INK)
-
-    # Panel letters via small tags on each column
-    def card(x, y, w, h, face, edge, title, body, letter):
-        ax.add_patch(FancyBboxPatch(
-            (x, y), w, h, transform=ax.transAxes,
-            boxstyle="round,pad=0.012,rounding_size=0.02",
-            facecolor=face, edgecolor=edge, linewidth=1.4, clip_on=False,
-        ))
-        ax.text(x + 0.015, y + h - 0.02, letter, transform=ax.transAxes,
-                fontsize=10, fontweight="bold", color=INK, va="top", ha="left")
-        ax.text(x + w / 2, y + h - 0.10, title, transform=ax.transAxes,
-                ha="center", va="top", fontsize=8.5, fontweight="bold", color=INK)
-        ax.text(x + w / 2, y + 0.10, body, transform=ax.transAxes,
-                ha="center", va="bottom", fontsize=7.2, color=MUTED, linespacing=1.3)
-
-    # A — campaign
-    card(
-        0.02, 0.12, 0.28, 0.72, "#E8F1F8", SPADE,
-        "One 48-well campaign",
-        "Same total wells for\nevery method arm.\nMethod chooses how to\nsplit rounds and what\nto return at the end.",
-        "A",
+    panel_letter(ax, "A")
+    ax.set_title("Fixed campaign", fontsize=9, color=INK, pad=10)
+    ax.add_patch(FancyBboxPatch(
+        (0.08, 0.18), 0.84, 0.62, transform=ax.transAxes,
+        boxstyle="round,pad=0.02,rounding_size=0.03",
+        facecolor="#E8F1F8", edgecolor=SPADE, linewidth=1.5, clip_on=False,
+    ))
+    ax.text(0.5, 0.62, "48 wells total", transform=ax.transAxes,
+            ha="center", va="center", fontsize=10, fontweight="bold", color=INK)
+    ax.text(
+        0.5, 0.38,
+        "Same budget for every arm.\n"
+        "Each method chooses\n"
+        "round splits and what\n"
+        "to return at the end.",
+        transform=ax.transAxes, ha="center", va="center",
+        fontsize=7.5, color=MUTED, linespacing=1.35,
     )
-    # Arrow A→B
-    ax.annotate("", xy=(0.34, 0.48), xytext=(0.31, 0.48),
-                xycoords=ax.transAxes, textcoords=ax.transAxes,
-                arrowprops=dict(arrowstyle="->", color=INK, lw=1.2))
 
-    # B — two decisions
+    # --- B ---
+    ax = axes[1]
+    ax.set_xlim(0, 1)
+    ax.set_ylim(0, 1)
+    ax.axis("off")
+    panel_letter(ax, "B")
+    ax.set_title("Two scored decisions", fontsize=9, color=INK, pad=10)
+    # top card
     ax.add_patch(FancyBboxPatch(
-        (0.35, 0.12), 0.30, 0.72, transform=ax.transAxes,
-        boxstyle="round,pad=0.012,rounding_size=0.02",
-        facecolor="#FAFAFA", edgecolor=INK, linewidth=1.2, clip_on=False,
+        (0.08, 0.54), 0.84, 0.32, transform=ax.transAxes,
+        boxstyle="round,pad=0.015,rounding_size=0.025",
+        facecolor="#FDE9DD", edgecolor=QLOG, linewidth=1.3, clip_on=False,
     ))
-    ax.text(0.365, 0.80, "B", transform=ax.transAxes, fontsize=10, fontweight="bold", color=INK, va="top")
-    ax.text(0.50, 0.78, "Two end-of-run decisions", transform=ax.transAxes,
-            ha="center", va="top", fontsize=8.5, fontweight="bold", color=INK)
-    # point box
+    ax.text(0.5, 0.76, "Point recipe", transform=ax.transAxes,
+            ha="center", va="center", fontsize=9, fontweight="bold", color=INK)
+    ax.text(0.5, 0.62, "Score = simple regret\n(one carry-forward setting)",
+            transform=ax.transAxes, ha="center", va="center",
+            fontsize=7.3, color=MUTED, linespacing=1.3)
+    # bottom card — clear gap from top (0.54 vs top of lower at 0.12+0.34=0.46 → 0.08 gap)
     ax.add_patch(FancyBboxPatch(
-        (0.37, 0.48), 0.26, 0.22, transform=ax.transAxes,
-        boxstyle="round,pad=0.01,rounding_size=0.015",
-        facecolor="#FDE9DD", edgecolor=QLOG, linewidth=1.1, clip_on=False,
+        (0.08, 0.12), 0.84, 0.34, transform=ax.transAxes,
+        boxstyle="round,pad=0.015,rounding_size=0.025",
+        facecolor="#DDF3E8", edgecolor=DOE, linewidth=1.3, clip_on=False,
     ))
-    ax.text(0.50, 0.66, "Point recipe", transform=ax.transAxes,
-            ha="center", fontsize=8, fontweight="bold", color=INK)
-    ax.text(0.50, 0.52, "Score = simple regret\n(one carry-forward setting)",
-            transform=ax.transAxes, ha="center", va="bottom", fontsize=6.8, color=MUTED, linespacing=1.25)
-    # region box
-    ax.add_patch(FancyBboxPatch(
-        (0.37, 0.18), 0.26, 0.26, transform=ax.transAxes,
-        boxstyle="round,pad=0.01,rounding_size=0.015",
-        facecolor="#DDF3E8", edgecolor=DOE, linewidth=1.1, clip_on=False,
-    ))
-    ax.text(0.50, 0.40, "Operating region", transform=ax.transAxes,
-            ha="center", fontsize=8, fontweight="bold", color=INK)
-    ax.text(0.50, 0.21, "Score = certified volume,\ncontainment, or abstain\nif evidence is weak",
-            transform=ax.transAxes, ha="center", va="bottom", fontsize=6.8, color=MUTED, linespacing=1.2)
+    ax.text(0.5, 0.36, "Operating region", transform=ax.transAxes,
+            ha="center", va="center", fontsize=9, fontweight="bold", color=INK)
+    ax.text(
+        0.5, 0.22,
+        "Score = certified volume,\n"
+        "containment, or abstain",
+        transform=ax.transAxes, ha="center", va="center",
+        fontsize=7.3, color=MUTED, linespacing=1.3,
+    )
 
-    ax.annotate("", xy=(0.69, 0.48), xytext=(0.66, 0.48),
-                xycoords=ax.transAxes, textcoords=ax.transAxes,
-                arrowprops=dict(arrowstyle="->", color=INK, lw=1.2))
-
-    # C — methods in this study
-    ax.add_patch(FancyBboxPatch(
-        (0.70, 0.12), 0.28, 0.72, transform=ax.transAxes,
-        boxstyle="round,pad=0.012,rounding_size=0.02",
-        facecolor="#F8FAFC", edgecolor=INK, linewidth=1.2, clip_on=False,
-    ))
-    ax.text(0.715, 0.80, "C", transform=ax.transAxes, fontsize=10, fontweight="bold", color=INK, va="top")
-    ax.text(0.84, 0.78, "Methods compared here", transform=ax.transAxes,
-            ha="center", va="top", fontsize=8.5, fontweight="bold", color=INK)
-
+    # --- C ---
+    ax = axes[2]
+    ax.set_xlim(0, 1)
+    ax.set_ylim(0, 1)
+    ax.axis("off")
+    panel_letter(ax, "C")
+    ax.set_title("Methods in this study", fontsize=9, color=INK, pad=10)
     rows = [
-        (0.62, SPADE, "SPADE", "Region-first; may abstain"),
-        (0.44, QLOG, "qLogNEI (BO)", "Point search; region via\nshared post-processing"),
-        (0.22, DOE, "DoE (RSM)", "Classical designs;\nstrong on one recipe"),
+        (0.68, DOE, "SPADE", "Region-first; may abstain"),
+        (0.40, SPADE, "qLogNEI (BO)", "Point search; shared\nregion post-process"),
+        (0.12, QLOG, "DoE (RSM)", "Classical designs;\nstrong on one recipe"),
     ]
     for y, color, name, note in rows:
         ax.add_patch(FancyBboxPatch(
-            (0.72, y), 0.24, 0.14, transform=ax.transAxes,
-            boxstyle="round,pad=0.008,rounding_size=0.012",
-            facecolor="white", edgecolor=color, linewidth=1.3, clip_on=False,
+            (0.06, y), 0.88, 0.22, transform=ax.transAxes,
+            boxstyle="round,pad=0.012,rounding_size=0.02",
+            facecolor="white", edgecolor=color, linewidth=1.4, clip_on=False,
         ))
-        ax.text(0.84, y + 0.095, name, transform=ax.transAxes,
-                ha="center", va="top", fontsize=7.5, fontweight="bold", color=color)
-        ax.text(0.84, y + 0.02, note, transform=ax.transAxes,
-                ha="center", va="bottom", fontsize=6.5, color=MUTED, linespacing=1.15)
+        ax.text(0.5, y + 0.145, name, transform=ax.transAxes,
+                ha="center", va="center", fontsize=8.2, fontweight="bold", color=color)
+        ax.text(0.5, y + 0.05, note, transform=ax.transAxes,
+                ha="center", va="center", fontsize=6.9, color=MUTED, linespacing=1.25)
     return fig
 
 
