@@ -1,4 +1,4 @@
-# SPADE improves operating-region decisions under fixed experimental budgets: a synthetic comparison with Bayesian optimization and response-surface design
+# Operating-region and point-recipe decisions rank experimental designs differently under a fixed 48-well budget: a synthetic SPADE comparison with Bayesian optimization and response-surface design
 
 **Short title:** Fixed-budget operating-region decisions
 
@@ -10,9 +10,21 @@
 
 **Author emails:** Alana Wai Han Kwan, 11281128alana@gmail.com; Joseph Yung, josephyung33@gmail.com
 
+## Competing interests
+
+The authors have declared that no competing interests exist. No commercial entity funded, owned, or directed this analysis. Retrospective in-house assay files used only for supporting uncertainty diagnostics (Supporting Information) were academic research materials and conferred no financial interest.
+
+## Funding
+
+This work received no specific grant from any funding agency in the public, commercial, or not-for-profit sectors. Computational resources were provided by the authors’ academic affiliations.
+
+## Ethics statement
+
+All primary experiments were computer simulations on synthetic response surfaces. No new human participants, animals, cell lines, or biological specimens were generated for this study, and no institutional review board approval was required for the synthetic benchmark. Retrospective in-house assay files used in supporting diagnostics were previously collected academic materials; no new human or animal sampling was performed for this manuscript.
+
 ## Abstract
 
-An experimental campaign may need one optimized recipe or a conservative operating region; these are different decisions. We evaluated SPADE, an assay-oriented integration of established Gaussian-process level-set and conservative-set methods, against noisy Bayesian optimization (qLogNEI) and a response-surface design of experiments (DoE) on synthetic families under 48-well budgets. Primary matched-round evidence came first: at five rounds, SPADE returned greater certified volume than qLogNEI (+0.000855, 95% CI [+0.000691, +0.001028], p < 0.0001, n = 320 dependent family-seed-prevalence cells under leave-one-family-out calibration). Thus SPADE was better for the tested operating-region decision, not universally better. In the one-process point comparison, five-round SPADE showed no detectable regret difference from ten-round qLogNEI (-0.0005, 95% CI [-0.0221, +0.0207], p = 0.96, n = 160), but the interval did not establish equivalence. The adverse DoE result was substantial: screened three-round DoE found the better point recipe (+0.1026 SPADE-minus-DoE regret, 95% CI [+0.0486, +0.1578], p = 0.0003), while five-round SPADE answered 66/160 regional decisions and contained truth in 66/66, compared with 85/122 and 77/134 contained answers for screened and unscreened DoE. Flat-cell intervals are conditional and dependence may make them too narrow. Results are limited to the tested synthetic benchmark, moderate noise, finite grids, and calibration rules; they do not establish regulatory qualification or prospective wet-lab performance.
+An experimental campaign may need one optimized recipe or a conservative operating region; these are different decisions. We evaluated SPADE (Synthetic Posterior Abstaining Design for Excursions), an assay-oriented integration of established Gaussian-process level-set and conservative-set methods, against noisy Bayesian optimization (qLogNEI) and a response-surface design of experiments (DoE) on synthetic families under 48-well budgets. At matched five rounds, SPADE returned greater certified volume than qLogNEI (mean volumes 0.000864 versus 0.000009 on the 2,000-point scoring grid, about a 92-fold ratio; difference +0.000855, 95% CI [+0.000691, +0.001028], p < 0.000125, n = 320 dependent cells). One grid point equals 0.0005 of volume, so the mean difference is about 1.7 grid points; no smallest effect of interest was registered for volume, and we interpret the contrast as directional support for the tested region decision rather than universal superiority. Five-round SPADE showed no detectable point-regret difference from ten-round qLogNEI (−0.0005, 95% CI [−0.0221, +0.0207], p = 0.96, n = 160), without claiming equivalence. Screened three-round DoE found the better point recipe (+0.1026 SPADE-minus-DoE regret). For regions at prevalence 0.30, SPADE answered 66/160 campaigns and contained truth in all 66 answers, whereas screened DoE answered 122/160 with 85 contained and unscreened DoE answered 134/160 with 77 contained. Per eligible campaign, contained counts were 66/160 (SPADE) versus 85/160 and 77/160 (DoE arms): DoE returns more correct regions only because it answers more often, including wrong certificates. Under an asymmetric loss that treats a false certified region as worse than abstention, SPADE’s 66/66 conditional record is the relevant regional score. Results are limited to the tested synthetic benchmark, moderate noise, finite grids, and calibration rules; they do not establish regulatory qualification or prospective wet-lab performance.
 
 ## Introduction
 
@@ -22,11 +34,11 @@ The decision made after sampling matters as much as the sampling rule. One labor
 
 Region estimation is not new. Gaussian-process (GP) level-set classification and boundary-focused batch sampling are established [13], as are conservative excursion-set estimators based on posterior inclusion [14] and methods such as TruVaR that connect optimization with level-set learning [15]. qLogNEI is a modern noisy expected-improvement method [16]. Proper scoring separates probabilistic forecasts from downstream decisions [17], while BoTorch supplies established computational components [18]. Recent synthetic batch-BO work further shows that noise and geometry can alter rankings [19], and good simulation-study practice requires explicit estimands and data-generating scope [20].
 
-SPADE is an assay-oriented architecture built from these established ingredients, not a new excursion-set theory. It combines a space-filling opening, adaptive high-response sampling, a common posterior conservative-set estimator that can also score comparator observations, and abstention. Its acquisition should not be described as successfully threshold-targeted: a registered target-aligned variant failed its adoption gate. The scientific question is instead whether this architecture improves the tested regional decision while honestly retaining point-optimization trade-offs.
+SPADE (Synthetic Posterior Abstaining Design for Excursions) is an assay-oriented architecture built from these established ingredients, not a new excursion-set theory. It combines a space-filling opening, adaptive high-response sampling, a common posterior conservative-set estimator that can also score comparator observations, and abstention. Its acquisition should not be described as successfully threshold-targeted: a registered target-aligned variant failed its adoption gate. The scientific question is instead whether this architecture improves the tested regional decision while honestly retaining point-optimization trade-offs.
 
-We report six linked findings. C3 asks whether matched five-round SPADE returns greater certified volume than qLogNEI. C1 asks whether five-round SPADE differs detectably from ten-round qLogNEI on point regret. C2 compares regional containment and point regret with one screened and one unscreened response-surface DoE pipeline. C5 and C6 examine family/prevalence scope. S2 and S3 diagnose real-data posterior collapse and assay-specific calibration. Finally, S1, a real-noise ceiling, and a later `NO_SELECTION` development gate define where positive interpretation must stop.
+We report linked findings labeled C1–C6 and S1–S3. C3 asks whether matched five-round SPADE returns greater certified volume than qLogNEI. C1 asks whether five-round SPADE differs detectably from ten-round qLogNEI on point regret. C2 compares regional containment and point regret with one screened and one unscreened response-surface DoE pipeline. C4 asks whether three-round SPADE improves point regret relative to one-shot Latin hypercube sampling. C5 and C6 examine family/prevalence scope. Supporting analyses S2 and S3 diagnose real-data posterior collapse and assay-specific calibration (reported as supporting information summaries). Finally, S1, a real-noise ceiling, and a later development gate that selected no protocol define where positive interpretation must stop.
 
-## Materials and methods
+## Materials and Methods
 
 ### Study design and evidence roles
 
@@ -40,8 +52,7 @@ All synthetic arms used 48 wells. SPADE at three rounds used an opening of 32 fo
 
 ![Method selection under fixed wells.](../results/paper-figures/plos/fig1.png)
 
-**Fig 1. Method selection under a fixed 48-well budget. Choose SPADE when the campaign must return a trusted operating region with honest abstention. Choose a point optimizer (DoE or BO) when only one carry-forward recipe is required. Under very high assay-like noise, abstain and replicate rather than claiming a region.**
-one 48-well campaign. (B) The same sampled campaign supports a point decision or a region decision, including abstention. (C) The estimand ledger distinguishes the reported object, observability, score, extra wells, and rounds for each deliverable. This schematic defines the benchmark and contains no performance result.
+**Fig 1. Method selection under a fixed 48-well budget.** (A) Choose SPADE when the campaign must return a trusted operating region with honest abstention. (B) Choose a point optimizer (DoE or Bayesian optimization) when only one carry-forward recipe is required. (C) Under very high assay-like noise, abstain and replicate rather than claiming a region. This schematic defines the decision framing and contains no performance result.
 
 ### SPADE architecture and comparators
 
@@ -65,7 +76,7 @@ Earlier prospective map scoring used a fixed 0.50 cutoff. Its archived certifica
 
 ### Statistical analysis
 
-Contrasts were paired by family and seed or by family, seed, and prevalence. Frozen analysers used 8,000 ordinary nonparametric resamples of flat contrast rows, percentile intervals, and two-sided bootstrap tail-area proportions relative to zero. The flat-cell bootstrap treats cells as exchangeable. Because rows can share families, landscapes, seeds, prevalences, and campaigns, its intervals are conditional descriptive summaries and may be too narrow under dependence; cells are not independent campaigns. Pooled Clopper–Pearson bounds similarly assume an ordinary binomial model.
+Contrasts were paired by family and seed or by family, seed, and prevalence. Frozen analysers used 8,000 ordinary nonparametric resamples of flat contrast rows, percentile intervals, and two-sided bootstrap tail-area proportions relative to zero. With 8,000 resamples the finest non-zero two-sided tail probability that can be reported is 1/8,000 = 0.000125; we therefore write p < 0.000125 rather than a finer bound. Point regret used a registered smallest effect of interest of ±0.02. No smallest effect of interest was registered for certified volume; volume contrasts are interpreted as directional evidence for the tested regional decision. The flat-cell bootstrap treats cells as exchangeable. Because rows can share families, landscapes, seeds, prevalences, and campaigns, its intervals are conditional descriptive summaries and may be too narrow under dependence; cells are not independent campaigns. Pooled Clopper–Pearson bounds similarly assume an ordinary binomial model.
 
 The regret smallest effect of interest was 0.02. An interval extending beyond that boundary was not interpreted as equivalence. The C5 Spearman coefficient is descriptive over 25 nested, nonexchangeable family-prevalence cells; no naive independence-based p-value is interpreted.
 
@@ -81,11 +92,11 @@ OpenAI Codex (GPT-based coding assistant) assisted with manuscript drafting and 
 
 ### Matched five-round SPADE returned greater certified volume
 
-Table 1 states the local certification dimensions for C3. Under registered LOFO calibration, five-round SPADE returned greater certified volume than five-round qLogNEI: the SPADE-minus-qLogNEI difference was +0.000855 (95% CI [+0.000691, +0.001028], p < 0.0001, n = 320 dependent cells). This is the primary result supporting SPADE for the tested operating-region decision. It does not establish a universal method ranking. The analogous positive three-round claim was withdrawn after extension to 32 seeds.
+Table 1 states the local certification dimensions for C3. Under registered leave-one-family-out calibration, five-round SPADE returned greater certified volume than five-round qLogNEI. Mean certified volumes on the 2,000-point scoring grid were 0.000864 for SPADE and 0.000009 for qLogNEI (about a 92-fold ratio). The SPADE-minus-qLogNEI difference was +0.000855 (95% CI [+0.000691, +0.001028], p < 0.000125, n = 320 dependent cells). Because certified volume is a fraction of that grid, one grid point equals 0.0005 of volume; the mean difference is about 1.7 grid points. No smallest effect of interest was registered for volume, so we treat this as directional support for the tested operating-region decision rather than a universal method ranking. The analogous positive three-round claim was withdrawn after extension to 32 seeds.
 
 ![SPADE operating-region advantage.](../results/paper-figures/plos/fig2.png)
 
-**Fig 2. SPADE’s primary advantage: trusted operating regions. (A) Certified-volume difference (SPADE minus qLogNEI) at matched five rounds under leave-one-family-out calibration: +0.000855 (95% CI [+0.000691, +0.001028], p < 0.0001, n = 320); absolute means are noted under the panel. (B) Observed truth containment among answered regions at prevalence 0.30: SPADE 66/66 versus screened DoE 85/122 and unscreened DoE 77/134.**
+**Fig 2. SPADE’s primary advantage: trusted operating regions.** (A) Certified-volume difference (SPADE minus qLogNEI) at matched five rounds: +0.000855 (95% CI [+0.000691, +0.001028], p < 0.000125, n = 320). Absolute means were 0.000864 (SPADE) and 0.000009 (qLogNEI) on the 2,000-point grid (one point = 0.0005 of volume). (B) Observed truth containment among answered regions at prevalence 0.30: SPADE 66/66 versus screened DoE 85/122 and unscreened DoE 77/134. Unconditional contained counts are 66/160, 85/160, and 77/160.
 
 **Table 1. C3 matched-round regional comparison.**
 
@@ -105,19 +116,21 @@ In DC, SPADE R5 minus qLogNEI R10 regret was -0.0005 (95% CI [-0.0221, +0.0207],
 
 The adverse point result is essential: screened DoE found the better point recipe in three rounds. SPADE R5 minus screened-DoE R3 regret was +0.1026 (95% CI [+0.0486, +0.1578], p = 0.0003, n = 160). SPADE used five rounds.
 
-Regional evidence moved in the opposite direction (Table 2). At prevalence 0.30, relative noise 0.25, assurance 0.95, 48 wells, and five families x 32 seeds, SPADE selected c=1 within the same DC sample, answered 66/160, and contained truth in 66/66 answered regions (observed conditional containment 1.0000, ordinary binomial lower bound 0.9556). Neither DoE arm passed at any inflation, so baseline c=1 diagnostics are reported: screened DoE answered 122/160 and contained 85/122 (0.6967); unscreened DoE answered 134/160 and contained 77/134 (0.5746). These within-sample descriptive results do not condemn DoE as a class or establish transportable coverage.
+Regional evidence moved in the opposite direction (Table 2). At prevalence 0.30, relative noise 0.25, assurance 0.95, 48 wells, and five families × 32 seeds, SPADE selected inflation c = 1 within the same comparison sample, answered 66/160 campaigns, and contained truth in 66/66 answered regions (conditional containment 1.0000; ordinary binomial lower bound 0.9556). Neither DoE arm passed at any tested inflation, so DoE counts are fallback diagnostics at baseline c = 1: screened DoE answered 122/160 with 85 contained (0.6967 among answers); unscreened DoE answered 134/160 with 77 contained (0.5746). SPADE’s inflation was selected on these cells while the DoE arms had no passing inflation to select, so the comparison is not calibration-matched; it reports what each pipeline returns under its own best available setting. Per eligible campaign, contained counts were 66/160 for SPADE versus 85/160 (screened DoE) and 77/160 (unscreened DoE). DoE therefore returns more correct regions on an unconditional count only because it answers more often, including incorrect certificates (37 wrong among screened answers; 57 wrong among unscreened answers). SPADE abstains more often (94/160). Under an asymmetric loss in which a false certified region is treated as a manufacturing failure and abstention is treated as a request for more data, the conditional 66/66 record is the primary regional score and the unconditional gap does not overturn it. These within-sample descriptive results do not condemn DoE as a class or establish transportable coverage.
 
 **Table 2. C2 regional answers and point trade-off.**
 
-| Arm | Scope | Prevalence; noise; assurance | Wells; rounds; seeds | Inflation rule | Answered | Contained among answers |
-|---|---|---|---|---|---:|---:|
-| SPADE | Five families | 0.30; 0.25; 0.95 | 48; R5; 32/family | Within-DC selected c=1 | 66/160 | 66/66 |
-| Screened DoE | Five families | 0.30; 0.25; 0.95 | 48; R3; 32/family | No passing c; baseline c=1 fallback | 122/160 | 85/122 |
-| Unscreened DoE | Five families | 0.30; 0.25; 0.95 | 48; R3; 32/family | No passing c; baseline c=1 fallback | 134/160 | 77/134 |
+| Arm | Scope | Prevalence; noise; assurance | Wells; rounds; seeds | Inflation rule | Answered | Contained among answers | Contained among eligible |
+|---|---|---|---|---|---:|---:|---:|
+| SPADE | Five families | 0.30; 0.25; 0.95 | 48; R5; 32/family | Within-sample selected c=1 | 66/160 | 66/66 | 66/160 |
+| Screened DoE | Five families | 0.30; 0.25; 0.95 | 48; R3; 32/family | No passing c; baseline c=1 fallback | 122/160 | 85/122 | 85/160 |
+| Unscreened DoE | Five families | 0.30; 0.25; 0.95 | 48; R2* (protocol label R3); 32/family | No passing c; baseline c=1 fallback | 134/160 | 77/134 | 77/160 |
+
+\*Unscreened DoE executes a design stage plus one confirmation well (two measurement stages) but retains the protocol’s “R3” comparator label.
 
 ![Additional SPADE evidence.](../results/paper-figures/plos/fig4.png)
 
-**Fig 4. Additional locked SPADE evidence. (A) At three rounds SPADE has lower regret than one-shot Latin hypercube sampling (SPADE−LHS −0.0783; shown as positive SPADE advantage). (B) On the biology-shaped Hill family at prevalence 0.70, SPADE answers 40/64 trusted regions versus 27/64 for qLogNEI; both arms contain truth in every answered cell.**
+**Fig 4. Additional locked SPADE evidence (C4 and C6).** (A) Point-regret advantage of three-round SPADE over one-shot Latin hypercube sampling (LHS minus SPADE = +0.0783; n = 80; locked C4 mean). Higher values favor SPADE. (B) On the biology-shaped Hill family at prevalence 0.70, SPADE answered 40/64 regions versus 27/64 for qLogNEI; both arms contained truth in every answered cell (descriptive counts; C6).
 
 ### Certifiability depended on family, prevalence, and margin-to-noise
 
@@ -125,17 +138,17 @@ Across five families and prevalences 0.70, 0.50, 0.30, 0.20, and 0.10, SPADE ans
 
 For the biology-shaped but synthetic Hill family at prevalence 0.70, under those same settings, SPADE answered 40/64 and contained truth in 40/40 (ordinary-binomial lower bound 0.9278). qLogNEI answered 27/64 and contained 27/27; its limitation was the answer count required by the registered gate, not failure to return contained regions.
 
-### Mean marginalisation diagnosed real-data posterior collapse
+### Supporting real-data diagnostics (summarized; full rows in Supporting Information)
 
-Treating the fitted GP mean as fixed had little effect in synthetic diagnostics: mean-marginalised posterior width increased by 1.004x–1.011x. The same correction increased mean posterior marginal SD approximately 484x for the in-house candidate dataset and 297x for published Hall–Ogle data. Observation-prediction LOO inflation was assay-specific (c=0.712 in-house and c=0.526 published). These S2/S3 values are retrospective, stdout-reproduced support without structured numerical guards. LOO prediction does not identify latent-function uncertainty, and the in-house CD31 gates remain `awaiting_human_signoff`.
+Treating the fitted GP mean as fixed had little effect in synthetic diagnostics: mean-marginalised posterior width increased by 1.004x–1.011x. The same correction increased mean posterior marginal SD approximately 484x for the in-house candidate dataset and 297x for published Hall–Ogle data. Observation-prediction LOO inflation was assay-specific (c=0.712 in-house and c=0.526 published). These S2/S3 values are retrospective, stdout-reproduced support without structured numerical guards. LOO prediction does not identify latent-function uncertainty, and the in-house CD31 gates remain awaiting human confirmation.
 
 ### Failed targeting, the real-noise ceiling, and the unopened lockbox
 
-The target-aligned acquisition did not earn adoption. Relative to committed SPADE, its certified-volume change was +0.000425 (95% CI [-0.000022, +0.000875]) and its regret was worse by +0.0301 (95% CI [+0.0169, +0.0450], p < 0.0001). Family effects cancelled. This failure is why SPADE's value is described architecturally rather than as a successful targeting mechanism.
+The target-aligned acquisition did not earn adoption. Relative to committed SPADE, its certified-volume change was +0.000425 (95% CI [-0.000022, +0.000875]) and its regret was worse by +0.0301 (95% CI [+0.0169, +0.0450], p < 0.000125). Family effects cancelled. This failure is why SPADE's value is described architecturally rather than as a successful targeting mechanism.
 
 At measured real-assay relative noise 0.68, no tested arm certified. Replication and independent noise identification are therefore prerequisites for prospective use at that noise level.
 
-A later future-response development grid evaluated nine candidate protocols on five families. Table 3 reports its preserved ranges; every candidate missed the registered containment floor on at least one family. The selector returned `NO_SELECTION`, no power artifact was authorized, and the lockbox remained `FROZEN_UNOPENED`. No lockbox evidence was opened.
+A later future-response development grid evaluated nine candidate protocols on five families. Table 3 reports its preserved ranges; every candidate missed the registered containment floor on at least one family. The selector returned a development outcome that selected no protocol, no post-hoc power calculation was authorized, and the held-out confirmation store remained a frozen, unopened confirmation store. No lockbox evidence was opened.
 
 **Table 3. Joint-protocol development ranges across nine candidates.**
 
@@ -161,7 +174,7 @@ All comparative landscapes were synthetic, the domain was evaluated on finite gr
 
 Inference is conditional on the frozen benchmark. The flat-cell bootstrap may be too narrow because repeated family-seed-prevalence cells are dependent. Pooled binomial bounds do not become cluster-aware merely because they are exact under an ordinary Bernoulli model. C2 calibration is within-sample; only C3 holds a family out during inflation selection. Neither procedure supplies distribution-free or regulatory coverage.
 
-The real-data analyses are retrospective diagnostics. They do not establish recipe equivalence, manufacturing qualification, regulatory validation, or prospective wet-lab performance. The relative-noise ceiling, unsigned in-house gates, missing replicate-tube noise identification, joint-protocol `NO_SELECTION`, and unopened lockbox preclude such claims.
+The real-data analyses are retrospective diagnostics. They do not establish recipe equivalence, manufacturing qualification, regulatory validation, or prospective wet-lab performance. The relative-noise ceiling, unsigned in-house gates, missing replicate-tube noise identification, joint-protocol a development outcome that selected no protocol, and unopened lockbox preclude such claims.
 
 ### Relationship to published and retained evidence
 
@@ -193,11 +206,11 @@ Table 4 situates the contribution. Physical and biological optimization studies 
 
 SPADE performed better for the tested operating-region decision: at matched five rounds it returned greater certified volume than qLogNEI, and its answered DC regions had stronger observed containment than the tested DoE pipelines. That regional conclusion coexists with no detectable point-regret difference from longer qLogNEI, an interval that did not establish equivalence, and a clear adverse result in which three-round DoE found a better point recipe than five-round SPADE.
 
-Choose SPADE when a moderate-noise, fixed-well campaign must return a conservative operating region and may abstain; choose a point optimizer when only one recipe is required. These computational results do not establish recipe equivalence, manufacturing qualification, regulatory validation, or prospective wet-lab performance.
+Choose SPADE when a moderate-noise, fixed-well campaign must return a conservative operating region and may abstain; choose a point optimizer when only one recipe is required. SPADE’s regional advantage is conditional honesty among answered campaigns, not a higher unconditional hit rate than DoE. These computational results do not establish recipe equivalence, manufacturing qualification, regulatory validation, or prospective wet-lab performance.
 
 ## Data availability statement
 
-Primary result files, analysis scripts, protocols, and supporting tables are available in the project repository at https://github.com/akwnn/nutrigene-ai-bo-ipsec. Original software is released under the MIT License; original research materials (manuscript, figures, synthetic datasets, and retained results) are released under CC BY 4.0 (see `LICENSE` and `LICENSE-CONTENT.md`). Audited reproduction paths are indexed in `manuscript/CLAIMS-AND-SOURCES.md`. A DOI-bearing archival deposit remains pending; the repository is the current source of the materials described here.
+Primary result files, analysis scripts, protocols, and supporting tables are available in the project repository at https://github.com/akwnn/nutrigene-ai-bo-ipsec (commit ec14bc7 anchors the audited publication package; the submission branch carries the PLOS manuscript rebuilds). Original software is released under the MIT License; original research materials are released under CC BY 4.0 (see LICENSE and LICENSE-CONTENT.md). Audited claim sources are indexed in publication/manuscript/CLAIMS-AND-SOURCES.md. A DOI-bearing Zenodo (or equivalent) archival snapshot of the submission package will be minted at or before journal submission and will replace this placeholder (see manuscript/ZENODO-DEPOSIT.md). Until that DOI is issued, the GitHub repository is the working source of the materials described here.
 
 ## Author contributions
 

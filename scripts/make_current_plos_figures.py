@@ -317,10 +317,10 @@ def fig4():
     ax.barh([0], [advantage], color=SPADE, edgecolor=INK, height=0.45, linewidth=0.8)
     ax.set_yticks([0])
     ax.set_yticklabels(["SPADE R3 vs\none-shot LHS"])
-    ax.set_xlabel("Regret advantage for SPADE\n(LHS regret − SPADE regret)")
+    ax.set_xlabel("Point-regret difference\n(LHS − SPADE; higher favors SPADE)")
     ax.set_xlim(0, 0.12)
     ax.set_title("Beats one-shot space-filling (C4)", pad=8, fontsize=9)
-    ax.text(advantage + 0.003, 0, f"{advantage:.3f}\n(locked −0.0783\nSPADE−LHS)",
+    ax.text(advantage + 0.003, 0, f"{advantage:.3f}\n(locked C4:\nLHS−SPADE)",
             va="center", ha="left", fontsize=7.2, color=INK, linespacing=1.2)
     ax.text(0.5, -0.22, "n=80 · four LA families × 20 seeds", transform=ax.transAxes,
             ha="center", va="top", fontsize=7.0, color=MUTED, clip_on=False)

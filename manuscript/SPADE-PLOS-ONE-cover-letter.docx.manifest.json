@@ -1,8 +1,8 @@
 {
-  "builder_sha256": "7940541c32a0799fc06230296f95add93a08a0af2ba18aed103fb8ad2f559b96",
+  "builder_sha256": "4189cf9eb6a9763fab61300be76b7f6a3739205b2ba578f51f31faefc065be0f",
   "cover_letter": true,
   "image_sha256": {},
   "include_figures": true,
-  "output_sha256": "db51bd406e6cb36ef184a3a95b28339e8b98a8fe8ec4f6cc1bcd1b7b04cacf93",
-  "source_sha256": "b13b2991c893f57e1dd6b19f155cc3729fd804e7a8d673a276b0135047553702"
+  "output_sha256": "ce14871da8c14b97d42f1f63d0c113ef2d836f0b54dbe5fe9972b189052d4340",
+  "source_sha256": "4c8b6f17861d00b0e54eef02f34b1f320bd130c27925d57d45dfd2a07c8affd9"
 }

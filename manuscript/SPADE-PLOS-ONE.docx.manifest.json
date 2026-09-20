@@ -5,9 +5,9 @@
     "../results/paper-figures/plos/fig1.png": "385ca9e35685996fdf01da3ba21a95d35c7652440672c0fe7851eccc85b273be",
     "../results/paper-figures/plos/fig2.png": "da97d38e20fc7ed4206885238cc8541f49bf1ebe2d9daaf9aa6cd90229e12e44",
     "../results/paper-figures/plos/fig3.png": "f173334d9b11fdc5a5ff394434365e97426aea2c0358f40009bd4d404bae8527",
-    "../results/paper-figures/plos/fig4.png": "7b140237dd7b8d04d360e89e9e14d48c5806f670dd6e76de5082e0a2bbbf7d91"
+    "../results/paper-figures/plos/fig4.png": "178ed8e3aaef3c76dad1d66fb1f53e20041981d5d74888b172128830d7576c71"
   },
   "include_figures": true,
-  "output_sha256": "b362c76a519b00fe1016326f2a65b47ccf8a6b37bb4f7ca1e6b3b05d372d3900",
-  "source_sha256": "663f00f7dc179ed36fd4e5402fbec7e9b7216a7dd6ecc448c44485f74810b942"
+  "output_sha256": "8726a5bba62ec1a26b05aa6703af09c79765cc3e0fe81f43599245b5d6805c96",
+  "source_sha256": "be7f74aeb2048786b1b7eea8d5c99573014e89430b3b3da354253b59f9ebe511"
 }

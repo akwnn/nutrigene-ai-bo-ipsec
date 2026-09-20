@@ -1,31 +1,14 @@
-# Archival DOI path (Zenodo)
+# Zenodo deposit (DOI for PLOS)
 
-## Why
-PLOS wants a stable public archive. GitHub is fine for review; a Zenodo DOI is the archival deposit.
+PLOS needs a stable archive DOI, not only GitHub.
 
-## What to upload
-Prefer a clean release ZIP of:
-- `manuscript/` (md + figures used)
-- `results/` needed for claims (or the release bundle already used for upload drafts)
-- `LICENSE`, `LICENSE-CONTENT.md`, `README.md`
-- analysis scripts cited in Software and reproducibility
+## Steps (~30–60 minutes)
+1. Create a free Zenodo account (https://zenodo.org) and link GitHub if you want one-click.
+2. Prefer: Zenodo ↔ GitHub release of `codex/publication-readiness` (or tag the submission commit).
+   Or: New upload → upload a zip of the repo at the submission commit plus `publication/`, `manuscript/`, and `research/results/comparisons/`.
+3. Title: `SPADE PLOS ONE submission package (nutrigene-ai-bo-ipsec)`.
+4. Creators: Alana Wai Han Kwan; Joseph Yung. License: MIT for code / CC-BY-4.0 for content as in the repo.
+5. Publish → copy the DOI (for example `10.5281/zenodo.xxxxxxx`).
+6. Paste the DOI into `manuscript/SPADE-PLOS-ONE.md` Data availability (replace the placeholder sentence) and rebuild the DOCX.
 
-Existing draft bundles (local):
-- `manuscript/SPADE-PLOS-ONE-upload-draft-2026-09-12.zip` (and earlier dated ZIPs)
-
-## Steps
-1. Create a GitHub release tag on `codex/publication-readiness` (or the final submission commit), e.g. `v1.0.0-plos-submission`.
-2. Go to https://zenodo.org → New upload → upload the release ZIP (or enable GitHub–Zenodo webhook on the repo).
-3. Metadata draft:
-   - **Title:** Point and region objectives reverse method rankings in a synthetic benchmark of SPADE and experimental design strategies
-   - **Creators:** Kwan, Alana Wai Han; Yung, Joseph
-   - **Affiliations:** Columbia University (ChemE; IEOR)
-   - **License:** dual — code MIT; research content CC BY 4.0 (describe in description; Zenodo often wants one primary license — use CC BY 4.0 for the research archive and point to MIT for software in the description)
-   - **Description:** Short abstract + link to https://github.com/akwnn/nutrigene-ai-bo-ipsec commit `c4f58d3` / final tag
-   - **Related identifiers:** GitHub URL; later PLOS article DOI when published
-4. Publish → copy the DOI into `SPADE-PLOS-ONE.md` Data availability and the cover letter.
-5. Rebuild DOCX.
-
-## Do not
-- Invent a DOI before Zenodo issues one
-- Upload secrets, `.venv`, credentials, or private lab records
+Anchor commit for the audited science bible: `ec14bc7`. Submission manuscript rebuilds live on `codex/publication-readiness`.
