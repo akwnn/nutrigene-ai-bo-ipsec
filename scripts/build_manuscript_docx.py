@@ -375,9 +375,65 @@ def add_caption(document: Document, text: str) -> None:
     add_inline(paragraph, text, size=10)
 
 
+def unwrap_hard_wrapped_prose(lines: list[str]) -> list[str]:
+    """Join hard-wrapped prose lines so Word gets one paragraph per blank-line break."""
+    def special(s: str) -> bool:
+        s = s.strip()
+        if not s:
+            return True
+        if s.startswith(("#", "|", "![", "$$", "**Fig ", "**Table ", "**S", ">", "```")):
+            return True
+        if s in ("\\[", "\\]"):
+            return True
+        if re.match(r"^[-*]\s", s) or re.match(r"^\d+\.\s", s):
+            return True
+        return False
+
+    out: list[str] = []
+    buf: list[str] = []
+    fence = False
+    eq = False
+
+    def flush() -> None:
+        nonlocal buf
+        if buf:
+            out.append(" ".join(x.strip() for x in buf))
+            buf = []
+
+    for line in lines:
+        s = line.strip()
+        if s.startswith("```"):
+            flush()
+            fence = not fence
+            out.append(line)
+            continue
+        if fence:
+            out.append(line)
+            continue
+        if s == "\\[":
+            flush()
+            eq = True
+            out.append(line)
+            continue
+        if eq:
+            out.append(line)
+            if s == "\\]":
+                eq = False
+            continue
+        if special(line):
+            flush()
+            out.append(line)
+            continue
+        buf.append(line)
+    flush()
+    return out
+
+
+
 def build(markdown_path: Path, output_path: Path, *, include_figures: bool = True,
           cover_letter: bool = False) -> None:
     lines = markdown_path.read_text(encoding="utf-8").splitlines()
+    lines = unwrap_hard_wrapped_prose(lines)
     document = Document()
     configure_document(document)
     if cover_letter:

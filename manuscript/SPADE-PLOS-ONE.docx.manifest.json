@@ -1,5 +1,5 @@
 {
-  "builder_sha256": "7940541c32a0799fc06230296f95add93a08a0af2ba18aed103fb8ad2f559b96",
+  "builder_sha256": "4189cf9eb6a9763fab61300be76b7f6a3739205b2ba578f51f31faefc065be0f",
   "cover_letter": false,
   "image_sha256": {
     "../results/paper-figures/plos/fig1.png": "385ca9e35685996fdf01da3ba21a95d35c7652440672c0fe7851eccc85b273be",
@@ -8,6 +8,6 @@
     "../results/paper-figures/plos/fig4.png": "7b140237dd7b8d04d360e89e9e14d48c5806f670dd6e76de5082e0a2bbbf7d91"
   },
   "include_figures": true,
-  "output_sha256": "2c1c25b7a1390ee82829ded6cb565a1e3873c62c5f31bbdaabacc1b556a9a813",
-  "source_sha256": "e978999a1f77ac90d9d5168d6216ed5ef4f916be1ad72ba2cf8a20288a6af599"
+  "output_sha256": "b362c76a519b00fe1016326f2a65b47ccf8a6b37bb4f7ca1e6b3b05d372d3900",
+  "source_sha256": "663f00f7dc179ed36fd4e5402fbec7e9b7216a7dd6ecc448c44485f74810b942"
 }
