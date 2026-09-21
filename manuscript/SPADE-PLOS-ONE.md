@@ -48,7 +48,7 @@ For latent normalized response $f(x)$ on $x\in[0,1]^6$, the threshold $\tau$ was
 
 DC supplied the one-process point comparison and the DoE comparison. LC supplied the leave-one-family-out matched-round volume comparison. TAU supplied the prevalence and margin-to-noise analyses. A separate targeting-test program (TT) tested the proposed targeting mechanism. Retrospective in-house and published Hall–Ogle data supplied supporting uncertainty diagnostics, not prospective validation.
 
-All synthetic arms used 48 wells. SPADE at three rounds used an opening of 32 followed by two batches of 8; SPADE at five rounds used an opening of 16 followed by four batches of 8. Matched qLogNEI R3 and R5 used the same respective allocations. qLogNEI R10 used a 14-point Sobol opening, eight batches of four, and a final batch of two. The screened DoE R3 workflow used a 20-run six-factor screen, a 27-run four-factor face-centred response-surface design, and one confirmation well. The registered unscreened comparator omitted screening, used one 47-run full-dimensional face-centred central-composite design, and measured one confirmation well; it retained the protocol's DoE R3 comparator label even though its executed measurements comprise design and confirmation stages. Equal wells therefore did not mean equal sequential rounds.
+All synthetic arms used 48 wells. We write Rn for an n-round schedule (for example, R5 means five sequential rounds). SPADE at three rounds used an opening of 32 followed by two batches of 8; SPADE at five rounds used an opening of 16 followed by four batches of 8. Matched qLogNEI R3 and R5 used the same respective allocations. qLogNEI R10 used a 14-point Sobol opening, eight batches of four, and a final batch of two. The screened DoE R3 workflow used a 20-run six-factor screen, a 27-run four-factor face-centred response-surface design, and one confirmation well. The registered unscreened comparator omitted screening, used one 47-run full-dimensional face-centred central-composite design, and measured one confirmation well; it retained the protocol's DoE R3 comparator label even though its executed measurements comprise design and confirmation stages. Equal wells therefore did not mean equal sequential rounds.
 
 ![Method selection under fixed wells.](../results/paper-figures/plos/fig1.png)
 
@@ -132,7 +132,7 @@ On trustworthy regions, the ranking flips. At the main region setting (30% of th
 | Screened DoE | Five families | 0.30; 0.25; 0.95 | 48; R3; 32/family | No passing c; baseline c=1 fallback | 122/160 | 85/122 | 85/160 |
 | Unscreened DoE | Five families | 0.30; 0.25; 0.95 | 48; R2* (protocol label R3); 32/family | No passing c; baseline c=1 fallback | 134/160 | 77/134 | 77/160 |
 
-\*Unscreened DoE executes a design stage plus one confirmation well (two measurement stages) but retains the protocol’s “R3” comparator label.
+*Unscreened DoE executes a design stage plus one confirmation well (two measurement stages) but retains the protocol’s “R3” comparator label.
 
 ![Additional SPADE evidence.](../results/paper-figures/plos/fig4.png)
 
