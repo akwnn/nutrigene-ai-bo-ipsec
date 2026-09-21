@@ -1,6 +1,7 @@
 # SPADE PLOS ONE — remaining before submit
 
 ## Done (2026-09-20 audit pass)
+- Dropped internal C1–C6 / S1–S3 claim codes from the manuscript (kept in publication/CLAIMS-AND-SOURCES.md)
 - Competing interests / Funding / Ethics statements
 - Absolute certified-volume means + grid-resolution note in abstract/Results
 - Bootstrap p-floor wording (`p < 0.000125`)
