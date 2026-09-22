@@ -112,9 +112,9 @@ Table 1a reports leave-one-family-out answer counts by family. SPADE answered mo
 |---|---:|---:|---:|---|---|---|---|
 | Five synthetic families; SPADE vs qLogNEI | 0.30 and 0.10 | 0.25 | 0.95 | LOFO inflation over c={1,1.5,2,3} | 48; R5 vs R5 | 32/family; 320 dependent family-seed-prevalence cells | Volume difference +0.000855 |
 
-**Table 1a. Leave-one-family-out answer counts by family (SPADE vs qLogNEI, R5).** Each cell pools prevalences 0.30 and 0.10 (64 family–seed–prevalence cells). Inflation \(c\) is selected on the other four families; volume scoring uses the held-out family’s selected \(c\) (or baseline \(c=1\) with forced zero volume when no \(c\) passes). Totals match the 116/320 versus 6/320 headline.
+**Table 1a. Leave-one-family-out answer counts by family (SPADE vs qLogNEI, R5).** Each cell pools prevalences 0.30 and 0.10 (64 family–seed–prevalence cells). Inflation c is selected on the other four families; volume scoring uses the held-out family’s selected c (or baseline c=1 with forced zero volume when no c passes). Totals match the 116/320 versus 6/320 headline.
 
-| Family | SPADE answers | qLogNEI answers | SPADE selected \(c\) | qLogNEI selected \(c\) |
+| Family | SPADE answers | qLogNEI answers | SPADE selected c | qLogNEI selected c |
 |---|---:|---:|---:|---|
 | Ackley | 52/64 | 6/64 | 1.0 | 3.0 |
 | Hartmann6 | 58/64 | 0/64 | 1.5 | none |
